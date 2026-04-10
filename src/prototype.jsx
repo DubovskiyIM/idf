@@ -7,7 +7,7 @@ import { useEngine } from "./runtime/engine.js";
 const crystallizedModules = import.meta.glob("./crystallized/*.jsx", { eager: true });
 
 export default function App() {
-  const { tasks, log, signals, stats, links, exec, isApplicable } = useEngine();
+  const { world, worldConfirmed, effects, signals, stats, links, exec, isApplicable } = useEngine();
   const [input, setInput] = useState("");
   const [editId, setEditId] = useState(null);
   const [editVal, setEditVal] = useState("");
@@ -23,7 +23,7 @@ export default function App() {
     <div style={{ height: "100vh", display: "flex", flexDirection: "column", background: "#0c0e14", color: "#c9cdd4", fontFamily: "ui-monospace, 'SF Mono', 'Cascadia Code', monospace", fontSize: 13, overflow: "hidden" }}>
       <div style={{ padding: "12px 20px", borderBottom: "1px solid #1e2230", display: "flex", alignItems: "center", gap: 16, flexShrink: 0 }}>
         <span style={{ fontSize: 15, fontWeight: 700, color: "#e2e5eb", letterSpacing: "0.02em" }}>Intent-Driven Frontend</span>
-        <span style={{ fontSize: 11, color: "#f59e0b", background: "#f59e0b18", padding: "2px 8px", borderRadius: 4, border: "1px solid #f59e0b30" }}>prototype 0.1</span>
+        <span style={{ fontSize: 11, color: "#f59e0b", background: "#f59e0b18", padding: "2px 8px", borderRadius: 4, border: "1px solid #f59e0b30" }}>prototype 0.2</span>
         {hasCrystallized && (
           <div style={{ display: "flex", background: "#1e2230", borderRadius: 6, padding: 2 }}>
             {["manual", "crystallized"].map(m => (
@@ -145,11 +145,11 @@ export default function App() {
                 </div>
 
                 {/* Projection: task_list — with applicable intents per item */}
-                {tasks.length === 0 ? (
+                {world.length === 0 ? (
                   <div style={{ textAlign: "center", padding: 40, color: "#9ca3af", fontFamily: "system-ui, sans-serif", fontSize: 14 }}>Нет задач. Добавьте первую.</div>
                 ) : (
                   <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-                    {[...tasks].sort((a, b) => b.createdAt - a.createdAt).map(task => {
+                    {[...world].sort((a, b) => b.createdAt - a.createdAt).map(task => {
                       const done = task.status === "completed";
                       const isEditing = editId === task.id;
                       return (
@@ -190,8 +190,8 @@ export default function App() {
               </div>
             ) : (
               <div style={{ maxWidth: 560, margin: "0 auto", padding: 24 }}>
-                {CrystallizedTaskStats && <CrystallizedTaskStats world={tasks} exec={exec} isApplicable={isApplicable} signals={signals} />}
-                {CrystallizedTaskList && <CrystallizedTaskList world={tasks} exec={exec} isApplicable={isApplicable} signals={signals} />}
+                {CrystallizedTaskStats && <CrystallizedTaskStats world={world} exec={exec} isApplicable={isApplicable} signals={signals} effects={effects} />}
+                {CrystallizedTaskList && <CrystallizedTaskList world={world} exec={exec} isApplicable={isApplicable} signals={signals} effects={effects} />}
               </div>
             )}
           </div>
@@ -199,22 +199,39 @@ export default function App() {
 
         {/* RIGHT: Effect stream */}
         <div style={{ width: 300, borderLeft: "1px solid #1e2230", display: "flex", flexDirection: "column", flexShrink: 0 }}>
-          <div style={{ padding: "8px 12px", borderBottom: "1px solid #1e2230", fontSize: 10, color: "#6b7280", textTransform: "uppercase", letterSpacing: "0.08em" }}>Поток эффектов Φ</div>
+          <div style={{ padding: "8px 12px", borderBottom: "1px solid #1e2230", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+            <span style={{ fontSize: 10, color: "#6b7280", textTransform: "uppercase", letterSpacing: "0.08em" }}>Поток эффектов Φ</span>
+            <span style={{ fontSize: 10, color: "#4b5068" }}>{effects.length} эффектов</span>
+          </div>
           <div style={{ flex: 1, overflow: "auto", padding: 8 }}>
-            {log.length === 0 ? (
+            {effects.length === 0 ? (
               <div style={{ padding: 16, color: "#4b5068", fontSize: 11, textAlign: "center" }}>Пусто. Выполните намерение.</div>
-            ) : log.map(e => (
-              <div key={e.id} style={{ padding: "6px 8px", marginBottom: 4, borderRadius: 4, background: "#13151d", border: "1px solid #1e2230", fontSize: 11 }}>
-                <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 2 }}>
-                  <span style={{ color: { add: "#34d399", replace: "#60a5fa", remove: "#f87171" }[e.α] || "#9ca3af" }}>
-                    {e.α}
-                  </span>
-                  <span style={{ color: "#22c55e", fontSize: 10 }}>● confirmed</span>
+            ) : [...effects].reverse().map(e => {
+              const statusColors = { proposed: "#f59e0b", confirmed: "#22c55e", rejected: "#ef4444" };
+              const statusLabels = { proposed: "● proposed", confirmed: "● confirmed", rejected: "● rejected" };
+              return (
+                <div key={e.id} style={{
+                  padding: "6px 8px", marginBottom: 4, borderRadius: 4, fontSize: 11,
+                  background: e.status === "rejected" ? "#1a0f0f" : "#13151d",
+                  border: `1px solid ${e.status === "proposed" ? "#f59e0b30" : e.status === "rejected" ? "#ef444430" : "#1e2230"}`,
+                  opacity: e.status === "rejected" ? 0.6 : 1,
+                }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 2 }}>
+                    <span style={{ color: { add: "#34d399", replace: "#60a5fa", remove: "#f87171" }[e.alpha] || "#9ca3af" }}>
+                      {e.alpha}
+                    </span>
+                    <span style={{ color: statusColors[e.status], fontSize: 10 }}>
+                      {statusLabels[e.status]}
+                    </span>
+                  </div>
+                  <div style={{ color: e.status === "rejected" ? "#ef4444" : "#c9cdd4", textDecoration: e.status === "rejected" ? "line-through" : "none" }}>
+                    {e.desc}
+                  </div>
+                  {e.reason && <div style={{ color: "#ef4444", fontSize: 10, marginTop: 2 }}>причина: {e.reason}</div>}
+                  <div style={{ color: "#4b5068", fontSize: 10, marginTop: 2 }}>ε: {e.intent_id} · {e.time}</div>
                 </div>
-                <div style={{ color: "#c9cdd4" }}>{e.desc}</div>
-                <div style={{ color: "#4b5068", fontSize: 10, marginTop: 2 }}>ε: {e.intentId} · {e.time}</div>
-              </div>
-            ))}
+              );
+            })}
           </div>
           <div style={{ borderTop: "1px solid #1e2230" }}>
             <div style={{ padding: "8px 12px", fontSize: 10, color: "#6b7280", textTransform: "uppercase", letterSpacing: "0.08em" }}>Сигналы Σ</div>

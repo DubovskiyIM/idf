@@ -24,12 +24,16 @@ const PRIORITY_COLORS = {
   low: { bg: "#f0fdf4", border: "#bbf7d0", dot: "#22c55e", label: "Низкий" },
 };
 
-export default function TaskListProjection({ world, exec, isApplicable }) {
+export default function TaskListProjection({ world, exec, isApplicable, effects }) {
   const [input, setInput] = useState("");
   const [editId, setEditId] = useState(null);
   const [editVal, setEditVal] = useState("");
   const [priorityOpenId, setPriorityOpenId] = useState(null);
   const [showArchived, setShowArchived] = useState(false);
+
+  // Найти proposed-эффекты для сущности
+  const proposedFor = (taskId) =>
+    (effects || []).some(e => e.status === "proposed" && e.context?.id === taskId);
 
   const active = world.filter(t => t.status !== "archived");
   const archived = world.filter(t => t.status === "archived");
@@ -74,7 +78,8 @@ export default function TaskListProjection({ world, exec, isApplicable }) {
                 boxShadow: "0 1px 2px #0001",
                 border: `1px solid ${pc ? pc.border : "#e5e7eb"}`,
                 borderLeft: task.pinned ? "3px solid #ec4899" : undefined,
-                transition: "all 0.15s"
+                transition: "all 0.15s",
+                opacity: proposedFor(task.id) ? 0.6 : 1,
               }}>
                 {/* Антагонист: complete ⇌ uncomplete */}
                 <button onClick={() => exec(done ? "uncomplete_task" : "complete_task", { id: task.id })}
