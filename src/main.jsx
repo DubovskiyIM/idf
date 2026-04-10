@@ -10,6 +10,7 @@ function Root() {
     <BrowserRouter>
       <Routes>
         <Route path="/messenger" element={<StandaloneApp domainId="messenger" />} />
+        <Route path="/messenger-v2" element={<StandaloneApp domainId="messenger-v2" />} />
         <Route path="/booking" element={<StandaloneApp domainId="booking" />} />
         <Route path="/planning" element={<StandaloneApp domainId="planning" />} />
         <Route path="/workflow" element={<StandaloneApp domainId="workflow" />} />
