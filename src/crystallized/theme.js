@@ -52,6 +52,12 @@ export const VARIANTS = {
     borderWidth: 2, shadow: "0 2px 8px #0002",
     font: "'Nunito', 'Segoe UI', system-ui, sans-serif",
   },
+  brutalist: {
+    radius: 0, padding: 12, gap: 4,
+    fontSize: { h1: 28, h2: 20, body: 14, small: 12, tiny: 10 },
+    borderWidth: 3, shadow: "4px 4px 0 #000",
+    font: "'Courier New', Courier, monospace",
+  },
 };
 
 // Статусные цвета (одинаковы для обоих доменов)

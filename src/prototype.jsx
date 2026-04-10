@@ -98,7 +98,7 @@ export default function App() {
       {/* HEADER */}
       <div style={{ padding: "10px 20px", borderBottom: "1px solid #1e2230", display: "flex", alignItems: "center", gap: 12, flexShrink: 0 }}>
         <span style={{ fontSize: 15, fontWeight: 700, color: "#e2e5eb" }}>IDF</span>
-        <span style={{ fontSize: 11, color: "#f59e0b", background: "#f59e0b18", padding: "2px 8px", borderRadius: 4, border: "1px solid #f59e0b30" }}>v0.6</span>
+        <span style={{ fontSize: 11, color: "#f59e0b", background: "#f59e0b18", padding: "2px 8px", borderRadius: 4, border: "1px solid #f59e0b30" }}>v1.0</span>
 
         {/* Переключатель доменов */}
         <div style={{ display: "flex", background: "#1e2230", borderRadius: 6, padding: 2 }}>
@@ -160,6 +160,7 @@ export default function App() {
               <option value="clean">Clean</option>
               <option value="dense">Dense</option>
               <option value="playful">Playful</option>
+              <option value="brutalist">Brutalist</option>
             </select>
           </>
         )}
@@ -190,9 +191,9 @@ export default function App() {
         </div>
       )}
       {topView === "ontology" && (
-        <div style={{ flex: 1, overflow: "auto", background: "#fafafa", color: "#1a1a2e" }}>
+        <div style={{ flex: 1, overflow: "auto", background: "#0c0e14", color: "#e2e5eb" }}>
           <div style={{ maxWidth: 640, margin: "0 auto", padding: 24 }}>
-            <OntologyInspector world={world} domain={domain} />
+            <OntologyInspector world={world} domain={domain} dark />
           </div>
         </div>
       )}
