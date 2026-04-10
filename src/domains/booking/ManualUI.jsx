@@ -3,7 +3,7 @@ import { useState, useMemo } from "react";
 const SLOT_STATUS_COLORS = { free: "#22c55e", held: "#f59e0b", booked: "#6366f1", blocked: "#6b7280" };
 const BOOKING_STATUS_COLORS = { draft: "#f59e0b", confirmed: "#6366f1", completed: "#22c55e", cancelled: "#ef4444", no_show: "#f59e0b" };
 
-export default function BookingUI({ world, drafts, exec }) {
+export default function BookingUI({ world, worldForIntent, drafts, exec, overlay, overlayEntityIds, startInvestigation, commitInvestigation, cancelInvestigation }) {
   const [view, setView] = useState("catalog");
   const [selectedDate, setSelectedDate] = useState(null);
 
@@ -134,16 +134,59 @@ export default function BookingUI({ world, drafts, exec }) {
       {/* Draft */}
       {view === "draft" && draft && (
         <div>
-          <h2 style={{ fontSize: 18, fontWeight: 700, margin: "0 0 16px", color: "#1a1a2e" }}>Черновик Δ</h2>
-          <div style={{ background: "#fff", borderRadius: 8, padding: 20, border: "2px dashed #f59e0b" }}>
+          <h2 style={{ fontSize: 18, fontWeight: 700, margin: "0 0 16px", color: "#1a1a2e" }}>
+            Черновик Δ {overlay && <span style={{ fontSize: 13, color: "#8b5cf6" }}>→ Overlay(I) preview</span>}
+          </h2>
+          <div style={{ background: "#fff", borderRadius: 8, padding: 20, border: overlay ? "2px solid #8b5cf6" : "2px dashed #f59e0b" }}>
             <div style={{ marginBottom: 8 }}><b>Услуга:</b> {draft.serviceName} ({draft.duration} мин) · {draft.price} ₽</div>
-            <div style={{ marginBottom: 16 }}>
+            <div style={{ marginBottom: 8 }}>
               <b>Слот:</b> {draft.slotId ? (() => { const s = (world.slots || []).find(s => s.id === draft.slotId); return s ? `${s.date} ${s.startTime}` : draft.slotId; })() : <span style={{ color: "#f59e0b" }}>не выбран — <button onClick={() => setView("schedule")} style={{ background: "none", border: "none", color: "#6366f1", cursor: "pointer", textDecoration: "underline" }}>выбрать</button></span>}
             </div>
+
+            {/* Overlay(I) — предпросмотр результата */}
+            {overlay && (
+              <div style={{ marginBottom: 12, padding: 12, background: "#f5f3ff", borderRadius: 8, border: "1px solid #c4b5fd" }}>
+                <div style={{ fontSize: 12, fontWeight: 600, color: "#8b5cf6", marginBottom: 6 }}>Предпросмотр (Overlay):</div>
+                <div style={{ fontSize: 12, color: "#1a1a2e" }}>
+                  {overlay.effects.map((ef, i) => (
+                    <div key={i} style={{ marginBottom: 2 }}>
+                      <span style={{ color: { add: "#22c55e", replace: "#6366f1", remove: "#ef4444" }[ef.alpha] || "#6b7280" }}>{ef.alpha}</span>
+                      {" "}{ef.desc}
+                    </div>
+                  ))}
+                </div>
+                <div style={{ fontSize: 10, color: "#6b7280", marginTop: 6 }}>
+                  World(t) ⊕ Overlay(I) — {overlay.effects.length} эффектов будут применены
+                </div>
+              </div>
+            )}
+
             <div style={{ display: "flex", gap: 8 }}>
-              <button onClick={() => { exec("confirm_booking"); setView("bookings"); }} disabled={!draft.slotId}
-                style={{ padding: "10px 24px", borderRadius: 6, border: "none", background: draft.slotId ? "#6366f1" : "#d1d5db", color: "#fff", fontSize: 14, cursor: draft.slotId ? "pointer" : "default", fontWeight: 600 }}>Подтвердить</button>
-              <button onClick={() => { exec("abandon_draft"); setView("catalog"); }}
+              {!overlay && draft.slotId && (
+                <button onClick={() => startInvestigation("confirm_booking", {})}
+                  style={{ padding: "10px 24px", borderRadius: 6, border: "2px solid #8b5cf6", background: "#f5f3ff", color: "#8b5cf6", fontSize: 14, cursor: "pointer", fontWeight: 600 }}>
+                  👁 Предпросмотр
+                </button>
+              )}
+              {overlay && (
+                <button onClick={() => { commitInvestigation(); setView("bookings"); }}
+                  style={{ padding: "10px 24px", borderRadius: 6, border: "none", background: "#6366f1", color: "#fff", fontSize: 14, cursor: "pointer", fontWeight: 600 }}>
+                  ✓ Подтвердить
+                </button>
+              )}
+              {overlay && (
+                <button onClick={cancelInvestigation}
+                  style={{ padding: "10px 24px", borderRadius: 6, border: "1px solid #d1d5db", background: "#fff", color: "#6b7280", fontSize: 14, cursor: "pointer" }}>
+                  Отмена overlay
+                </button>
+              )}
+              {!overlay && (
+                <button onClick={() => { exec("confirm_booking"); setView("bookings"); }} disabled={!draft.slotId}
+                  style={{ padding: "10px 24px", borderRadius: 6, border: "none", background: draft.slotId ? "#6366f1" : "#d1d5db", color: "#fff", fontSize: 14, cursor: draft.slotId ? "pointer" : "default", fontWeight: 600 }}>
+                  Подтвердить (без preview)
+                </button>
+              )}
+              <button onClick={() => { cancelInvestigation(); exec("abandon_draft"); setView("catalog"); }}
                 style={{ padding: "10px 24px", borderRadius: 6, border: "1px solid #d1d5db", background: "#fff", color: "#6b7280", fontSize: 14, cursor: "pointer" }}>Отменить</button>
             </div>
           </div>

@@ -49,7 +49,8 @@ export default function App() {
 
   const domain = DOMAINS[domainId];
   const engine = useEngine(domain);
-  const { world, drafts, effects, signals, links, exec } = engine;
+  const { world, worldForIntent, drafts, effects, signals, links, exec,
+    overlay, overlayEntityIds, startInvestigation, commitInvestigation, cancelInvestigation } = engine;
 
   // Синхронизировать онтологию с сервером при смене домена
   useEffect(() => {
@@ -271,7 +272,9 @@ export default function App() {
             <div style={{ flex: 1, overflow: "auto", background: theme === "dark" && mode === "crystallized" ? "#0c0e14" : "#fafafa", color: theme === "dark" && mode === "crystallized" ? "#e2e5eb" : "#1a1a2e" }}>
               <div style={{ maxWidth: 700, margin: "0 auto", padding: 24 }}>
                 {mode === "manual" ? (
-                  <domain.UI world={world} drafts={drafts} exec={exec} effects={effects} viewer={viewer} layer={layer} />
+                  <domain.UI world={world} worldForIntent={worldForIntent} drafts={drafts} exec={exec} effects={effects}
+                    viewer={viewer} layer={layer} overlay={overlay} overlayEntityIds={overlayEntityIds}
+                    startInvestigation={startInvestigation} commitInvestigation={commitInvestigation} cancelInvestigation={cancelInvestigation} />
                 ) : domainId === "workflow" ? (
                   <WorkflowCanvas world={world} exec={exec} theme={theme} variant={variant} viewer={viewer} layer={layer} />
                 ) : domainId === "planning" ? (

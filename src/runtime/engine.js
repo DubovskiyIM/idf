@@ -88,10 +88,62 @@ export function useEngine(domain) {
   const typeMap = useMemo(() => buildTypeMap(domain.ONTOLOGY), [domain]);
   const activeEffects = useMemo(() => filterByStatus(effects, "confirmed", "proposed"), [effects]);
   const worldSemantic = useMemo(() => fold(activeEffects, typeMap), [activeEffects, typeMap]);
-  // Π: применить косметические эффекты (позиции, визуальные свойства) поверх семантического мира
   const world = useMemo(() => applyPresentation(worldSemantic, activeEffects, typeMap), [worldSemantic, activeEffects, typeMap]);
   const drafts = useMemo(() => foldDrafts(activeEffects), [activeEffects]);
   const links = useMemo(() => deriveLinks(domain.INTENTS), [domain]);
+
+  // === Overlay(I) — провизорное наложение для многофазных намерений ===
+  const [overlay, setOverlay] = useState(null); // { intentId, ctx, effects: [] }
+
+  // World_for(I) = World(t) ⊕ Overlay(I) ⊕ Δ(user)
+  const worldForIntent = useMemo(() => {
+    if (!overlay || !overlay.effects?.length) return world;
+    // Применить overlay-эффекты поверх world
+    const overlayEffects = overlay.effects.map(e => ({ ...e, status: "confirmed" }));
+    const allEffects = [...activeEffects, ...overlayEffects];
+    const merged = fold(allEffects, typeMap);
+    return applyPresentation(merged, allEffects, typeMap);
+  }, [world, overlay, activeEffects, typeMap]);
+
+  // IDs сущностей, затронутых overlay (для ghost-отображения)
+  const overlayEntityIds = useMemo(() => {
+    if (!overlay?.effects?.length) return new Set();
+    return new Set(overlay.effects.map(e => e.context?.id).filter(Boolean));
+  }, [overlay]);
+
+  const startInvestigation = useCallback((intentId, ctx = {}) => {
+    const built = domain.buildEffects(intentId, ctx, world, drafts);
+    if (!built) return;
+    setOverlay({ intentId, ctx, effects: built });
+  }, [world, drafts, domain]);
+
+  const commitInvestigation = useCallback(() => {
+    if (!overlay) return;
+    // Overlay → реальные эффекты в Φ
+    const built = overlay.effects;
+    for (let i = 1; i < built.length; i++) built[i].parent_id = built[i - 1].id;
+    setEffects(prev => {
+      const lastUserEffect = [...prev].reverse().find(e => e.intent_id !== "_seed" && e.intent_id !== "_sync" && e.status !== "rejected");
+      if (lastUserEffect && built[0].parent_id === null) built[0].parent_id = lastUserEffect.id;
+      return [...prev, ...built];
+    });
+    for (const effect of built) {
+      fetch("/api/effects", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(effect),
+      }).catch(() => {
+        setEffects(prev => prev.map(ef =>
+          ef.id === effect.id ? { ...ef, status: "confirmed", resolved_at: Date.now() } : ef
+        ));
+      });
+    }
+    setOverlay(null);
+  }, [overlay]);
+
+  const cancelInvestigation = useCallback(() => {
+    setOverlay(null);
+  }, []);
 
   const exec = useCallback((intentId, ctx = {}) => {
     const built = domain.buildEffects(intentId, ctx, world, drafts);
@@ -155,5 +207,11 @@ export function useEngine(domain) {
     return true;
   }, [domain]);
 
-  return { world, drafts, effects, signals, links, exec, isApplicable, domain };
+  return {
+    world, worldForIntent, drafts, effects, signals, links,
+    exec, isApplicable, domain,
+    // Overlay(I) — многофазные намерения
+    overlay, overlayEntityIds,
+    startInvestigation, commitInvestigation, cancelInvestigation,
+  };
 }
