@@ -3,8 +3,12 @@ const cors = require("cors");
 const effectsRouter = require("./routes/effects.js");
 const artifactsRouter = require("./routes/artifacts.js");
 
+const { seed } = require("./seed.js");
+
 const app = express();
 const PORT = 3001;
+
+seed();
 
 app.use(cors());
 app.use(express.json());

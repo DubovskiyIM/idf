@@ -1,29 +1,43 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { INTENTS } from "./runtime/intents.js";
 import { PROJECTIONS } from "./runtime/projections.js";
-import { PARTICLE_COLORS, ALPHA_LABELS, LINK_COLORS } from "./runtime/constants.js";
+import { PARTICLE_COLORS, ALPHA_LABELS, LINK_COLORS, SLOT_STATUS_COLORS, BOOKING_STATUS_COLORS } from "./runtime/constants.js";
 import { useEngine } from "./runtime/engine.js";
 
 const crystallizedModules = import.meta.glob("./crystallized/*.jsx", { eager: true });
 
 export default function App() {
-  const { world, worldConfirmed, effects, signals, stats, links, exec, isApplicable } = useEngine();
-  const [input, setInput] = useState("");
-  const [editId, setEditId] = useState(null);
-  const [editVal, setEditVal] = useState("");
+  const { world, drafts, effects, signals, stats, links, exec, isApplicable } = useEngine();
+  const [view, setView] = useState("catalog");
+  const [selectedDate, setSelectedDate] = useState(null);
   const [tab, setTab] = useState("intents");
-
-  const hasCrystallized = Object.keys(crystallizedModules).length > 0;
   const [mode, setMode] = useState("manual");
 
-  const CrystallizedTaskList = crystallizedModules["./crystallized/task_list.jsx"]?.default;
-  const CrystallizedTaskStats = crystallizedModules["./crystallized/task_stats.jsx"]?.default;
+  const hasCrystallized = Object.keys(crystallizedModules).length > 0;
+  const CServiceCatalog = crystallizedModules["./crystallized/service_catalog.jsx"]?.default;
+  const CSchedule = crystallizedModules["./crystallized/specialist_schedule.jsx"]?.default;
+  const CMyBookings = crystallizedModules["./crystallized/my_bookings.jsx"]?.default;
+
+  // Даты для расписания
+  const dates = useMemo(() => {
+    const allDates = [...new Set((world.slots || []).map(s => s.date))].sort();
+    if (!selectedDate && allDates.length > 0) setSelectedDate(allDates[0]);
+    return allDates;
+  }, [world.slots]);
+
+  const slotsForDate = useMemo(
+    () => (world.slots || []).filter(s => s.date === selectedDate).sort((a, b) => a.startTime.localeCompare(b.startTime)),
+    [world.slots, selectedDate]
+  );
+
+  const draft = drafts[0] || null;
 
   return (
     <div style={{ height: "100vh", display: "flex", flexDirection: "column", background: "#0c0e14", color: "#c9cdd4", fontFamily: "ui-monospace, 'SF Mono', 'Cascadia Code', monospace", fontSize: 13, overflow: "hidden" }}>
+      {/* HEADER */}
       <div style={{ padding: "12px 20px", borderBottom: "1px solid #1e2230", display: "flex", alignItems: "center", gap: 16, flexShrink: 0 }}>
         <span style={{ fontSize: 15, fontWeight: 700, color: "#e2e5eb", letterSpacing: "0.02em" }}>Intent-Driven Frontend</span>
-        <span style={{ fontSize: 11, color: "#f59e0b", background: "#f59e0b18", padding: "2px 8px", borderRadius: 4, border: "1px solid #f59e0b30" }}>prototype 0.2</span>
+        <span style={{ fontSize: 11, color: "#f59e0b", background: "#f59e0b18", padding: "2px 8px", borderRadius: 4, border: "1px solid #f59e0b30" }}>prototype 0.3 · booking</span>
         {hasCrystallized && (
           <div style={{ display: "flex", background: "#1e2230", borderRadius: 6, padding: 2 }}>
             {["manual", "crystallized"].map(m => (
@@ -39,11 +53,13 @@ export default function App() {
           </div>
         )}
         <div style={{ flex: 1 }} />
-        <span style={{ fontSize: 11, color: "#6b7280" }}>{Object.keys(INTENTS).length} намерений · {Object.keys(PROJECTIONS).length} проекции · {links.length} связей</span>
+        <span style={{ fontSize: 11, color: "#6b7280" }}>
+          {Object.keys(INTENTS).length} намерений · {stats.slots_free} свободных · {stats.bookings_confirmed} записей · {stats.drafts} черновиков
+        </span>
       </div>
 
       <div style={{ flex: 1, display: "flex", minHeight: 0 }}>
-        {/* LEFT: Source panel */}
+        {/* LEFT: Definitions */}
         <div style={{ width: 340, borderRight: "1px solid #1e2230", display: "flex", flexDirection: "column", flexShrink: 0 }}>
           <div style={{ display: "flex", borderBottom: "1px solid #1e2230" }}>
             {["intents", "algebra"].map(t => (
@@ -67,7 +83,7 @@ export default function App() {
                           <span style={{ fontSize: 10, color: PARTICLE_COLORS[pName] || "#6b7280", minWidth: 75, flexShrink: 0, paddingTop: 1 }}>{pName}</span>
                           <div style={{ fontSize: 11, color: "#9ca3af", lineHeight: 1.4 }}>
                             {pName === "effects" ? vals.map((e, i) => (
-                              <span key={i} style={{ display: "inline-block", background: "#34d39915", color: "#34d399", padding: "1px 5px", borderRadius: 3, marginRight: 3, fontSize: 10 }}>{ALPHA_LABELS[e.α]} {e.target}</span>
+                              <span key={i} style={{ display: "inline-block", background: "#34d39915", color: "#34d399", padding: "1px 5px", borderRadius: 3, marginRight: 3, fontSize: 10 }}>{ALPHA_LABELS[e.α]} {e.target}{e.ttl ? ` (ttl:${e.ttl/1000}s)` : ""}</span>
                             )) : vals.map((v, i) => (
                               <span key={i}>{typeof v === "object" ? JSON.stringify(v) : v}{i < vals.length - 1 ? ", " : ""}</span>
                             ))}
@@ -97,103 +113,245 @@ export default function App() {
                     <span style={{ fontSize: 10, color: "#6b7280", marginLeft: "auto" }}>{l.label}</span>
                   </div>
                 ))}
-                <div style={{ fontSize: 11, color: "#6b7280", marginTop: 8, lineHeight: 1.5 }}>
-                  Связи выведены из пересечения частиц. Антагонисты определяют кнопки отмены. Последовательные связи — граф доступности.
-                </div>
               </div>
             )}
           </div>
         </div>
 
-        {/* CENTER: Crystallized app */}
+        {/* CENTER: Booking UI */}
         <div style={{ flex: 1, display: "flex", flexDirection: "column", minWidth: 0 }}>
-          <div style={{ padding: "8px 16px", borderBottom: "1px solid #1e2230", display: "flex", alignItems: "center", gap: 8, background: "#10121a" }}>
-            <span style={{ fontSize: 10, color: "#f59e0b", textTransform: "uppercase", letterSpacing: "0.1em" }}>
-              {mode === "crystallized" && hasCrystallized ? "кристаллизованный UI" : "ручной UI"}
-            </span>
-            <span style={{ fontSize: 10, color: "#4b5068" }}>
-              {mode === "crystallized" && hasCrystallized
-                ? "— сгенерирован Claude Code из определений намерений"
-                : `— выведен из ${Object.keys(INTENTS).length} намерений, ни один компонент не написан вручную`}
-            </span>
+          {/* View tabs */}
+          <div style={{ display: "flex", borderBottom: "1px solid #1e2230", background: "#10121a" }}>
+            {[
+              { id: "catalog", label: "Каталог" },
+              { id: "schedule", label: "Расписание" },
+              { id: "bookings", label: "Мои записи" },
+            ].map(v => (
+              <button key={v.id} onClick={() => setView(v.id)} style={{
+                padding: "8px 16px", border: "none", cursor: "pointer", fontSize: 12,
+                background: view === v.id ? "#161923" : "transparent",
+                color: view === v.id ? "#e2e5eb" : "#6b7280",
+                borderBottom: view === v.id ? "2px solid #f59e0b" : "2px solid transparent",
+              }}>{v.label}</button>
+            ))}
+            {draft && (
+              <button onClick={() => setView("draft")} style={{
+                padding: "8px 16px", border: "none", cursor: "pointer", fontSize: 12,
+                background: view === "draft" ? "#161923" : "transparent",
+                color: "#f59e0b",
+                borderBottom: view === "draft" ? "2px solid #f59e0b" : "2px solid transparent",
+              }}>Черновик Δ</button>
+            )}
           </div>
+
           <div style={{ flex: 1, overflow: "auto", background: "#fafafa", color: "#1a1a2e" }}>
-            {mode === "manual" || !hasCrystallized ? (
-              <div style={{ maxWidth: 560, margin: "0 auto", padding: 24 }}>
-                {/* Projection: task_stats */}
-                <div style={{ display: "flex", gap: 12, marginBottom: 20 }}>
-                  {[
-                    { label: "Всего", val: stats.total, color: "#6366f1" },
-                    { label: "В работе", val: stats.pending, color: "#f59e0b" },
-                    { label: "Готово", val: stats.completed, color: "#22c55e" }
-                  ].map(s => (
-                    <div key={s.label} style={{ flex: 1, background: "#fff", borderRadius: 8, padding: "12px 16px", boxShadow: "0 1px 3px #0001", border: "1px solid #e5e7eb" }}>
-                      <div style={{ fontSize: 22, fontWeight: 700, color: s.color, fontFamily: "system-ui, sans-serif" }}>{s.val}</div>
-                      <div style={{ fontSize: 12, color: "#6b7280", fontFamily: "system-ui, sans-serif" }}>{s.label}</div>
-                    </div>
-                  ))}
-                </div>
+            <div style={{ maxWidth: 640, margin: "0 auto", padding: 24 }}>
 
-                {/* Intent: add_task (entry point — creates entity) */}
-                <div style={{ display: "flex", gap: 8, marginBottom: 20 }}>
-                  <input value={input} onChange={e => setInput(e.target.value)} onKeyDown={e => { if (e.key === "Enter") { exec("add_task", { title: input }); setInput(""); } }}
-                    placeholder="Новая задача..." style={{ flex: 1, padding: "10px 14px", borderRadius: 8, border: "1px solid #d1d5db", fontSize: 14, fontFamily: "system-ui, sans-serif", outline: "none", background: "#fff" }} />
-                  <button onClick={() => { exec("add_task", { title: input }); setInput(""); }}
-                    style={{ padding: "10px 20px", borderRadius: 8, border: "none", background: "#6366f1", color: "#fff", fontSize: 14, fontFamily: "system-ui, sans-serif", cursor: "pointer", fontWeight: 600, whiteSpace: "nowrap" }}>
-                    + Добавить
-                  </button>
-                </div>
-
-                {/* Projection: task_list — with applicable intents per item */}
-                {world.length === 0 ? (
-                  <div style={{ textAlign: "center", padding: 40, color: "#9ca3af", fontFamily: "system-ui, sans-serif", fontSize: 14 }}>Нет задач. Добавьте первую.</div>
-                ) : (
-                  <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-                    {[...world].sort((a, b) => b.createdAt - a.createdAt).map(task => {
-                      const done = task.status === "completed";
-                      const isEditing = editId === task.id;
-                      return (
-                        <div key={task.id} style={{ display: "flex", alignItems: "center", gap: 10, background: "#fff", borderRadius: 8, padding: "10px 14px", boxShadow: "0 1px 2px #0001", border: "1px solid #e5e7eb", transition: "all 0.15s" }}>
-                          {/* Antagonist pair: complete ⇌ uncomplete — auto-derived */}
-                          <button onClick={() => exec(done ? "uncomplete_task" : "complete_task", { id: task.id })}
-                            title={done ? "Вернуть в работу (⇌ антагонист)" : "Завершить"}
-                            style={{ width: 22, height: 22, borderRadius: 6, border: done ? "2px solid #22c55e" : "2px solid #d1d5db", background: done ? "#22c55e" : "transparent", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, transition: "all 0.15s", fontSize: 12, color: "#fff" }}>
-                            {done ? "✓" : ""}
+              {/* CRYSTALLIZED MODE */}
+              {mode === "crystallized" && hasCrystallized ? (
+                <>
+                  {view === "catalog" && CServiceCatalog && <CServiceCatalog world={world} exec={exec} drafts={drafts} effects={effects} />}
+                  {view === "schedule" && CSchedule && <CSchedule world={world} exec={exec} drafts={drafts} effects={effects} />}
+                  {view === "bookings" && CMyBookings && <CMyBookings world={world} exec={exec} effects={effects} />}
+                  {view === "draft" && draft && (
+                    <div>
+                      <h2 style={{ fontSize: 18, fontWeight: 700, fontFamily: "system-ui, sans-serif", marginBottom: 16, color: "#1a1a2e" }}>
+                        Черновик Δ <span style={{ color: "#f59e0b", fontSize: 13 }}>(кристаллизованный)</span>
+                      </h2>
+                      <div style={{ background: "#fff", borderRadius: 8, padding: 20, border: "2px dashed #f59e0b", fontFamily: "system-ui, sans-serif" }}>
+                        <div style={{ fontSize: 14, marginBottom: 8 }}><b>Услуга:</b> {draft.serviceName} ({draft.duration} мин)</div>
+                        <div style={{ fontSize: 14, marginBottom: 8 }}><b>Цена:</b> {draft.price} ₽</div>
+                        <div style={{ fontSize: 14, marginBottom: 16 }}>
+                          <b>Слот:</b> {draft.slotId ? (() => { const s = (world.slots || []).find(s => s.id === draft.slotId); return s ? `${s.date} в ${s.startTime}` : draft.slotId; })() : <span style={{ color: "#f59e0b" }}>не выбран</span>}
+                        </div>
+                        <div style={{ display: "flex", gap: 8 }}>
+                          <button onClick={() => { exec("confirm_booking"); setView("bookings"); }} disabled={!draft.slotId}
+                            style={{ padding: "10px 24px", borderRadius: 6, border: "none", background: draft.slotId ? "#6366f1" : "#d1d5db", color: "#fff", fontSize: 14, fontFamily: "system-ui, sans-serif", cursor: draft.slotId ? "pointer" : "default", fontWeight: 600 }}>
+                            Подтвердить
                           </button>
-
-                          {isEditing ? (
-                            <input autoFocus value={editVal} onChange={e => setEditVal(e.target.value)}
-                              onKeyDown={e => { if (e.key === "Enter") { exec("edit_task", { id: task.id, newTitle: editVal }); setEditId(null); } if (e.key === "Escape") setEditId(null); }}
-                              onBlur={() => { if (editVal.trim()) { exec("edit_task", { id: task.id, newTitle: editVal }); setEditId(null); } else setEditId(null); }}
-                              style={{ flex: 1, padding: "4px 8px", borderRadius: 4, border: "1px solid #6366f1", fontSize: 14, fontFamily: "system-ui, sans-serif", outline: "none" }} />
-                          ) : (
-                            <span onDoubleClick={() => { setEditId(task.id); setEditVal(task.title); }}
-                              style={{ flex: 1, fontSize: 14, fontFamily: "system-ui, sans-serif", color: done ? "#9ca3af" : "#1a1a2e", textDecoration: done ? "line-through" : "none", cursor: "default", userSelect: "none" }}>
-                              {task.title}
-                            </span>
-                          )}
-
-                          {/* Intent: delete_task — always applicable */}
-                          <button onClick={() => exec("delete_task", { id: task.id })}
-                            style={{ background: "none", border: "none", cursor: "pointer", color: "#d1d5db", fontSize: 16, padding: "2px 4px", borderRadius: 4, lineHeight: 1 }}
-                            onMouseEnter={e => e.target.style.color = "#ef4444"} onMouseLeave={e => e.target.style.color = "#d1d5db"}>
-                            ×
+                          <button onClick={() => { exec("abandon_draft"); setView("catalog"); }}
+                            style={{ padding: "10px 24px", borderRadius: 6, border: "1px solid #d1d5db", background: "#fff", color: "#6b7280", fontSize: 14, fontFamily: "system-ui, sans-serif", cursor: "pointer" }}>
+                            Отменить
                           </button>
                         </div>
+                      </div>
+                    </div>
+                  )}
+                </>
+              ) : (
+              <>
+
+              {/* CATALOG */}
+              {view === "catalog" && (
+                <div>
+                  <h2 style={{ fontSize: 18, fontWeight: 700, fontFamily: "system-ui, sans-serif", marginBottom: 16, color: "#1a1a2e" }}>
+                    {(world.specialists || [])[0]?.name || "Специалист"} — {(world.specialists || [])[0]?.specialization || ""}
+                  </h2>
+                  <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                    {(world.services || []).filter(s => s.active).map(service => (
+                      <div key={service.id} style={{ display: "flex", alignItems: "center", gap: 12, background: "#fff", borderRadius: 8, padding: "14px 16px", border: "1px solid #e5e7eb", boxShadow: "0 1px 3px #0001" }}>
+                        <div style={{ flex: 1, fontFamily: "system-ui, sans-serif" }}>
+                          <div style={{ fontSize: 15, fontWeight: 600, color: "#1a1a2e" }}>{service.name}</div>
+                          <div style={{ fontSize: 13, color: "#6b7280", marginTop: 2 }}>{service.duration} мин</div>
+                        </div>
+                        <div style={{ fontSize: 16, fontWeight: 700, color: "#6366f1", fontFamily: "system-ui, sans-serif", marginRight: 12 }}>{service.price} ₽</div>
+                        <button onClick={() => { exec("select_service", { serviceId: service.id }); setView("schedule"); }}
+                          disabled={!!draft}
+                          style={{ padding: "8px 16px", borderRadius: 6, border: "none", background: draft ? "#d1d5db" : "#6366f1", color: "#fff", fontSize: 13, fontFamily: "system-ui, sans-serif", cursor: draft ? "default" : "pointer", fontWeight: 600 }}>
+                          Выбрать
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                  {draft && <div style={{ marginTop: 12, fontSize: 12, color: "#f59e0b", fontFamily: "system-ui, sans-serif" }}>У вас есть незавершённый черновик. Завершите или отмените его.</div>}
+                </div>
+              )}
+
+              {/* SCHEDULE */}
+              {view === "schedule" && (
+                <div>
+                  <h2 style={{ fontSize: 18, fontWeight: 700, fontFamily: "system-ui, sans-serif", marginBottom: 16, color: "#1a1a2e" }}>Расписание</h2>
+                  {/* Date selector */}
+                  <div style={{ display: "flex", gap: 6, marginBottom: 16, flexWrap: "wrap" }}>
+                    {dates.map(d => {
+                      const dt = new Date(d + "T00:00:00");
+                      const dayName = dt.toLocaleDateString("ru", { weekday: "short" });
+                      const dayNum = dt.getDate();
+                      return (
+                        <button key={d} onClick={() => setSelectedDate(d)} style={{
+                          padding: "6px 12px", borderRadius: 6, border: selectedDate === d ? "2px solid #6366f1" : "1px solid #e5e7eb",
+                          background: selectedDate === d ? "#eef2ff" : "#fff", cursor: "pointer", fontSize: 12, fontFamily: "system-ui, sans-serif",
+                          color: selectedDate === d ? "#6366f1" : "#1a1a2e", fontWeight: selectedDate === d ? 600 : 400,
+                        }}>
+                          {dayName} {dayNum}
+                        </button>
                       );
                     })}
                   </div>
-                )}
-                <div style={{ marginTop: 16, fontSize: 11, color: "#9ca3af", fontFamily: "system-ui, sans-serif", textAlign: "center" }}>
-                  Двойной клик — редактировать · Чекбокс — завершить/вернуть (⇌ антагонист)
+                  {/* Slots grid */}
+                  <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                    {slotsForDate.map(slot => (
+                      <div key={slot.id} style={{
+                        display: "flex", alignItems: "center", gap: 12, background: "#fff", borderRadius: 8, padding: "10px 14px",
+                        border: `1px solid ${SLOT_STATUS_COLORS[slot.status]}30`,
+                        borderLeft: `3px solid ${SLOT_STATUS_COLORS[slot.status]}`,
+                        opacity: slot.status === "blocked" ? 0.5 : 1,
+                      }}>
+                        <span style={{ fontSize: 15, fontWeight: 600, fontFamily: "system-ui, sans-serif", color: "#1a1a2e", minWidth: 100 }}>
+                          {slot.startTime} — {slot.endTime}
+                        </span>
+                        <span style={{ fontSize: 11, color: SLOT_STATUS_COLORS[slot.status], fontWeight: 600, textTransform: "uppercase", minWidth: 70 }}>
+                          {slot.status}
+                        </span>
+                        <div style={{ flex: 1 }} />
+                        {slot.status === "free" && draft && !draft.slotId && (
+                          <button onClick={() => { exec("select_slot", { slotId: slot.id }); setView("draft"); }}
+                            style={{ padding: "6px 14px", borderRadius: 6, border: "none", background: "#22c55e", color: "#fff", fontSize: 12, fontFamily: "system-ui, sans-serif", cursor: "pointer", fontWeight: 600 }}>
+                            Выбрать
+                          </button>
+                        )}
+                        {slot.status === "free" && !draft && (
+                          <button onClick={() => exec("block_slot", { slotId: slot.id })}
+                            style={{ padding: "6px 14px", borderRadius: 6, border: "1px solid #d1d5db", background: "#fff", color: "#6b7280", fontSize: 12, fontFamily: "system-ui, sans-serif", cursor: "pointer" }}>
+                            Блокировать
+                          </button>
+                        )}
+                        {slot.status === "held" && (
+                          <span style={{ fontSize: 11, color: "#f59e0b", fontFamily: "system-ui, sans-serif" }}>удержан (TTL 10м)</span>
+                        )}
+                      </div>
+                    ))}
+                    {slotsForDate.length === 0 && (
+                      <div style={{ textAlign: "center", padding: 40, color: "#9ca3af", fontFamily: "system-ui, sans-serif" }}>Нет слотов на эту дату</div>
+                    )}
+                  </div>
                 </div>
-              </div>
-            ) : (
-              <div style={{ maxWidth: 560, margin: "0 auto", padding: 24 }}>
-                {CrystallizedTaskStats && <CrystallizedTaskStats world={world} exec={exec} isApplicable={isApplicable} signals={signals} effects={effects} />}
-                {CrystallizedTaskList && <CrystallizedTaskList world={world} exec={exec} isApplicable={isApplicable} signals={signals} effects={effects} />}
-              </div>
-            )}
+              )}
+
+              {/* BOOKINGS */}
+              {view === "bookings" && (
+                <div>
+                  <h2 style={{ fontSize: 18, fontWeight: 700, fontFamily: "system-ui, sans-serif", marginBottom: 16, color: "#1a1a2e" }}>Мои записи</h2>
+                  {(world.bookings || []).length === 0 ? (
+                    <div style={{ textAlign: "center", padding: 40, color: "#9ca3af", fontFamily: "system-ui, sans-serif" }}>Нет записей</div>
+                  ) : (
+                    <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                      {(world.bookings || []).sort((a, b) => b.createdAt - a.createdAt).map(booking => (
+                        <div key={booking.id} style={{
+                          display: "flex", alignItems: "center", gap: 12, background: "#fff", borderRadius: 8, padding: "12px 16px",
+                          border: "1px solid #e5e7eb", borderLeft: `3px solid ${BOOKING_STATUS_COLORS[booking.status]}`,
+                          opacity: booking.status === "cancelled" ? 0.5 : 1,
+                        }}>
+                          <div style={{ flex: 1, fontFamily: "system-ui, sans-serif" }}>
+                            <div style={{ fontSize: 14, fontWeight: 600, color: "#1a1a2e" }}>{booking.serviceName}</div>
+                            <div style={{ fontSize: 12, color: "#6b7280" }}>{booking.date} в {booking.startTime} · {booking.price} ₽</div>
+                          </div>
+                          <span style={{ fontSize: 11, fontWeight: 600, color: BOOKING_STATUS_COLORS[booking.status], textTransform: "uppercase" }}>
+                            {booking.status}
+                          </span>
+                          {booking.status === "confirmed" && (
+                            <>
+                              <button onClick={() => exec("complete_booking", { id: booking.id })}
+                                style={{ padding: "6px 12px", borderRadius: 6, border: "none", background: "#22c55e", color: "#fff", fontSize: 12, fontFamily: "system-ui, sans-serif", cursor: "pointer" }}>
+                                Завершить
+                              </button>
+                              <button onClick={() => exec("cancel_booking", { id: booking.id })}
+                                style={{ padding: "6px 12px", borderRadius: 6, border: "1px solid #ef4444", background: "#fff", color: "#ef4444", fontSize: 12, fontFamily: "system-ui, sans-serif", cursor: "pointer" }}>
+                                Отменить
+                              </button>
+                            </>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* DRAFT */}
+              {view === "draft" && (
+                <div>
+                  <h2 style={{ fontSize: 18, fontWeight: 700, fontFamily: "system-ui, sans-serif", marginBottom: 16, color: "#1a1a2e" }}>
+                    Черновик бронирования <span style={{ color: "#f59e0b", fontSize: 14 }}>Δ</span>
+                  </h2>
+                  {draft ? (
+                    <div style={{ background: "#fff", borderRadius: 8, padding: 20, border: "2px dashed #f59e0b", fontFamily: "system-ui, sans-serif" }}>
+                      <div style={{ fontSize: 14, marginBottom: 8 }}><b>Услуга:</b> {draft.serviceName} ({draft.duration} мин)</div>
+                      <div style={{ fontSize: 14, marginBottom: 8 }}><b>Цена:</b> {draft.price} ₽</div>
+                      <div style={{ fontSize: 14, marginBottom: 16 }}>
+                        <b>Слот:</b> {draft.slotId ? (
+                          (() => {
+                            const slot = (world.slots || []).find(s => s.id === draft.slotId);
+                            return slot ? `${slot.date} в ${slot.startTime}` : draft.slotId;
+                          })()
+                        ) : (
+                          <span style={{ color: "#f59e0b" }}>не выбран — <button onClick={() => setView("schedule")} style={{ background: "none", border: "none", color: "#6366f1", cursor: "pointer", textDecoration: "underline", fontSize: 14, fontFamily: "system-ui, sans-serif", padding: 0 }}>выбрать в расписании</button></span>
+                        )}
+                      </div>
+                      <div style={{ display: "flex", gap: 8 }}>
+                        <button onClick={() => { exec("confirm_booking"); setView("bookings"); }}
+                          disabled={!draft.slotId}
+                          style={{ padding: "10px 24px", borderRadius: 6, border: "none", background: draft.slotId ? "#6366f1" : "#d1d5db", color: "#fff", fontSize: 14, fontFamily: "system-ui, sans-serif", cursor: draft.slotId ? "pointer" : "default", fontWeight: 600 }}>
+                          Подтвердить запись
+                        </button>
+                        <button onClick={() => { exec("abandon_draft"); setView("catalog"); }}
+                          style={{ padding: "10px 24px", borderRadius: 6, border: "1px solid #d1d5db", background: "#fff", color: "#6b7280", fontSize: 14, fontFamily: "system-ui, sans-serif", cursor: "pointer" }}>
+                          Отменить
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <div style={{ textAlign: "center", padding: 40, color: "#9ca3af", fontFamily: "system-ui, sans-serif" }}>
+                      Нет активного черновика. <button onClick={() => setView("catalog")} style={{ background: "none", border: "none", color: "#6366f1", cursor: "pointer", textDecoration: "underline", fontSize: 14, fontFamily: "system-ui, sans-serif" }}>Выбрать услугу</button>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              </>
+              )}
+
+            </div>
           </div>
         </div>
 
@@ -201,12 +359,12 @@ export default function App() {
         <div style={{ width: 300, borderLeft: "1px solid #1e2230", display: "flex", flexDirection: "column", flexShrink: 0 }}>
           <div style={{ padding: "8px 12px", borderBottom: "1px solid #1e2230", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
             <span style={{ fontSize: 10, color: "#6b7280", textTransform: "uppercase", letterSpacing: "0.08em" }}>Поток эффектов Φ</span>
-            <span style={{ fontSize: 10, color: "#4b5068" }}>{effects.length} эффектов</span>
+            <span style={{ fontSize: 10, color: "#4b5068" }}>{effects.filter(e => e.intent_id !== "_seed").length} эффектов</span>
           </div>
           <div style={{ flex: 1, overflow: "auto", padding: 8 }}>
-            {effects.length === 0 ? (
+            {effects.filter(e => e.intent_id !== "_seed").length === 0 ? (
               <div style={{ padding: 16, color: "#4b5068", fontSize: 11, textAlign: "center" }}>Пусто. Выполните намерение.</div>
-            ) : [...effects].reverse().map(e => {
+            ) : [...effects].filter(e => e.intent_id !== "_seed").reverse().map(e => {
               const statusColors = { proposed: "#f59e0b", confirmed: "#22c55e", rejected: "#ef4444" };
               const statusLabels = { proposed: "● proposed", confirmed: "● confirmed", rejected: "● rejected" };
               return (
@@ -228,6 +386,7 @@ export default function App() {
                     {e.desc}
                   </div>
                   {e.reason && <div style={{ color: "#ef4444", fontSize: 10, marginTop: 2 }}>причина: {e.reason}</div>}
+                  {e.ttl && e.status === "confirmed" && <div style={{ color: "#f59e0b", fontSize: 10, marginTop: 2 }}>TTL: {e.ttl/1000}s</div>}
                   <div style={{ color: "#4b5068", fontSize: 10, marginTop: 2 }}>ε: {e.intent_id} · {e.time}</div>
                 </div>
               );

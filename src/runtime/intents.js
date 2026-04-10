@@ -1,72 +1,80 @@
 export const INTENTS = {
-  add_task: {
-    name: "Добавить задачу", particles: {
-      entities: ["task: Task"], conditions: [],
-      effects: [{ α: "add", target: "tasks", σ: "account" }],
-      witnesses: ["tasks.count"], confirmation: "click"
-    }, antagonist: null, creates: "Task"
+  select_service: {
+    name: "Выбрать услугу", particles: {
+      entities: ["service: Service", "specialist: Specialist"],
+      conditions: ["service.active = true"],
+      effects: [{ α: "add", target: "drafts", σ: "session" }],
+      witnesses: ["service.name", "service.duration", "service.price", "specialist.name"],
+      confirmation: "click"
+    }, antagonist: null, creates: "Booking(draft)"
   },
-  complete_task: {
-    name: "Завершить задачу", particles: {
-      entities: ["task: Task"], conditions: ["task.status = 'pending'"],
-      effects: [{ α: "replace", target: "task.status", value: "completed", σ: "account" }],
-      witnesses: ["task.title"], confirmation: "click"
-    }, antagonist: "uncomplete_task", creates: null
+  select_slot: {
+    name: "Выбрать слот", particles: {
+      entities: ["slot: TimeSlot", "draft: Booking(draft)"],
+      conditions: ["slot.status = 'free'"],
+      effects: [{ α: "replace", target: "slot.status", value: "held", σ: "shared", ttl: 600000 }],
+      witnesses: ["slot.date", "slot.startTime", "service.duration"],
+      confirmation: "click"
+    }, antagonist: null, creates: null
   },
-  uncomplete_task: {
-    name: "Вернуть в работу", particles: {
-      entities: ["task: Task"], conditions: ["task.status = 'completed'"],
-      effects: [{ α: "replace", target: "task.status", value: "pending", σ: "account" }],
-      witnesses: ["task.title"], confirmation: "click"
-    }, antagonist: "complete_task", creates: null
+  confirm_booking: {
+    name: "Подтвердить запись", particles: {
+      entities: ["draft: Booking(draft)"],
+      conditions: ["draft.slotId != null", "draft.serviceId != null"],
+      effects: [
+        { α: "add", target: "bookings", σ: "account" },
+        { α: "replace", target: "slot.status", value: "booked", σ: "shared" }
+      ],
+      witnesses: ["service.name", "service.price", "slot.date", "slot.startTime", "specialist.name"],
+      confirmation: "click"
+    }, antagonist: "cancel_booking", creates: "Booking(confirmed)"
   },
-  delete_task: {
-    name: "Удалить задачу", particles: {
-      entities: ["task: Task"], conditions: [],
-      effects: [{ α: "remove", target: "tasks", σ: "account" }],
-      witnesses: ["task.title"], confirmation: "click"
-    }, antagonist: null, creates: null, irreversibility: "high"
+  cancel_booking: {
+    name: "Отменить запись", particles: {
+      entities: ["booking: Booking"],
+      conditions: ["booking.status = 'confirmed'"],
+      effects: [
+        { α: "replace", target: "booking.status", value: "cancelled", σ: "account" },
+        { α: "replace", target: "slot.status", value: "free", σ: "shared" }
+      ],
+      witnesses: ["booking.serviceName", "booking.date", "booking.startTime"],
+      confirmation: "click"
+    }, antagonist: "confirm_booking", creates: null
   },
-  edit_task: {
-    name: "Переименовать", particles: {
-      entities: ["task: Task"], conditions: [],
-      effects: [{ α: "replace", target: "task.title", σ: "account" }],
-      witnesses: ["task.title (текущее)"], confirmation: "click"
-    }, antagonist: null, creates: null, phase: "investigation"
+  abandon_draft: {
+    name: "Отменить черновик", particles: {
+      entities: ["draft: Booking(draft)"],
+      conditions: [],
+      effects: [{ α: "remove", target: "drafts", σ: "session" }],
+      witnesses: ["draft.serviceName"],
+      confirmation: "click"
+    }, antagonist: null, creates: null
   },
-  pin_task: {
-    name: "Закрепить задачу", particles: {
-      entities: ["task: Task"], conditions: ["task.pinned = false"],
-      effects: [{ α: "replace", target: "task.pinned", value: true, σ: "account" }],
-      witnesses: ["task.title"], confirmation: "click"
-    }, antagonist: "unpin_task", creates: null
+  complete_booking: {
+    name: "Завершить приём", particles: {
+      entities: ["booking: Booking"],
+      conditions: ["booking.status = 'confirmed'", "booking.slot.endTime <= now"],
+      effects: [{ α: "replace", target: "booking.status", value: "completed", σ: "account" }],
+      witnesses: ["booking.serviceName", "booking.date"],
+      confirmation: "click"
+    }, antagonist: null, creates: null
   },
-  unpin_task: {
-    name: "Открепить задачу", particles: {
-      entities: ["task: Task"], conditions: ["task.pinned = true"],
-      effects: [{ α: "replace", target: "task.pinned", value: false, σ: "account" }],
-      witnesses: ["task.title"], confirmation: "click"
-    }, antagonist: "pin_task", creates: null
+  add_service: {
+    name: "Добавить услугу", particles: {
+      entities: ["service: Service"],
+      conditions: [],
+      effects: [{ α: "add", target: "services", σ: "account" }],
+      witnesses: ["specialist.services.count"],
+      confirmation: "click"
+    }, antagonist: null, creates: "Service"
   },
-  set_priority: {
-    name: "Установить приоритет", particles: {
-      entities: ["task: Task"], conditions: [],
-      effects: [{ α: "replace", target: "task.priority", σ: "account" }],
-      witnesses: ["task.title", "task.priority (текущий)"], confirmation: "click"
-    }, antagonist: null, creates: null, phase: "investigation"
-  },
-  duplicate_task: {
-    name: "Дублировать задачу", particles: {
-      entities: ["task: Task"], conditions: [],
-      effects: [{ α: "add", target: "tasks", σ: "account" }],
-      witnesses: ["task.title"], confirmation: "click"
-    }, antagonist: null, creates: "Task"
-  },
-  archive_task: {
-    name: "Архивировать задачу", particles: {
-      entities: ["task: Task"], conditions: ["task.status = 'completed'"],
-      effects: [{ α: "replace", target: "task.status", value: "archived", σ: "account" }],
-      witnesses: ["task.title", "task.completedAt"], confirmation: "click"
-    }, antagonist: null, creates: null, irreversibility: "medium"
+  block_slot: {
+    name: "Заблокировать слот", particles: {
+      entities: ["slot: TimeSlot"],
+      conditions: ["slot.status = 'free'"],
+      effects: [{ α: "replace", target: "slot.status", value: "blocked", σ: "shared" }],
+      witnesses: ["slot.date", "slot.startTime"],
+      confirmation: "click"
+    }, antagonist: null, creates: null
   }
 };

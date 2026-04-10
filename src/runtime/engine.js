@@ -1,167 +1,232 @@
-import { useState, useMemo, useCallback, useEffect, useRef } from "react";
+import { useState, useMemo, useCallback, useEffect } from "react";
 import { v4 as uuid } from "uuid";
 import { INTENTS } from "./intents.js";
 import { deriveLinks } from "./links.js";
-import { fold, filterByStatus } from "./fold.js";
+import { fold, foldDrafts, filterByStatus } from "./fold.js";
 
 const ts = () => {
   const d = new Date();
   return d.toLocaleTimeString("ru", { hour: "2-digit", minute: "2-digit", second: "2-digit", fractionalSecondDigits: 2 });
 };
 
-// Описания эффектов для лога
-function describeEffect(intentId, alpha, ctx) {
+function describeEffect(intentId, alpha, ctx, target) {
+  // Вторичные эффекты описываются по target, а не по intent_id
+  if (target) {
+    if (target.startsWith("drafts")) return `📋 Черновик: ${alpha} ${ctx.serviceName || ctx.slotId || ctx.id || ""}`;
+    if (target === "slot.status" && intentId !== "select_slot" && intentId !== "block_slot") {
+      const val = ctx.status || "";
+      return `🔄 Слот ${ctx.id}: → ${val || alpha}`;
+    }
+  }
+
   switch (intentId) {
-    case "add_task": return `+ "${ctx.title}"`;
-    case "complete_task": return `✓ "${ctx.title || ctx.id}" → completed`;
-    case "uncomplete_task": return `↩ "${ctx.title || ctx.id}" → pending`;
-    case "delete_task": return `✕ "${ctx.title || ctx.id}"`;
-    case "edit_task": return `✎ "${ctx.title || ctx.id}" → "${ctx.newTitle}"`;
-    case "pin_task": return `📌 "${ctx.title || ctx.id}" закреплена`;
-    case "unpin_task": return `📌 "${ctx.title || ctx.id}" откреплена`;
-    case "set_priority": return `⚡ "${ctx.title || ctx.id}" → приоритет ${ctx.priority}`;
-    case "duplicate_task": return `⧉ "${ctx.title || ctx.id}" → дубликат`;
-    case "archive_task": return `📦 "${ctx.title || ctx.id}" → архив`;
+    case "select_service": return `📋 Выбрана услуга: ${ctx.serviceName || ctx.name || ctx.id}`;
+    case "select_slot": return `🕐 Слот удержан: ${ctx.date || "?"} ${ctx.startTime || "?"} (TTL 10м)`;
+    case "confirm_booking": return `✓ Запись подтверждена: ${ctx.serviceName || ""} ${ctx.date || ""} ${ctx.startTime || ""}`.trim();
+    case "cancel_booking": return `✕ Запись отменена: ${ctx.serviceName || ctx.id}`;
+    case "abandon_draft": return `↩ Черновик отменён`;
+    case "complete_booking": return `✓ Приём завершён: ${ctx.serviceName || ctx.id}`;
+    case "add_service": return `+ Услуга: ${ctx.name} (${ctx.price}₽)`;
+    case "block_slot": return `🔒 Слот заблокирован: ${ctx.date} ${ctx.startTime}`;
+    case "_seed": return `seed: ${alpha} ${ctx.id || ""}`;
     default: return `${alpha} ${intentId}`;
   }
 }
 
-// Какой сигнал эмитировать при confirmed
 function signalForIntent(intentId) {
   switch (intentId) {
-    case "add_task": return { κ: "analytics", desc: "task_created" };
-    case "duplicate_task": return { κ: "analytics", desc: "task_duplicated" };
-    case "delete_task": return { κ: "notification", desc: "Задача удалена" };
-    case "archive_task": return { κ: "notification", desc: "Задача архивирована" };
+    case "confirm_booking": return { κ: "notification", desc: "Запись подтверждена" };
+    case "cancel_booking": return { κ: "notification", desc: "Запись отменена" };
+    case "complete_booking": return { κ: "notification", desc: "Приём завершён" };
     default: return null;
   }
 }
 
-// Построить объект эффекта из намерения
-function buildEffect(intentId, ctx, world) {
-  const intent = INTENTS[intentId];
-  if (!intent) return null;
-
-  const ef = intent.particles.effects[0];
-  const id = uuid();
+function buildEffects(intentId, ctx, world, drafts) {
   const now = Date.now();
-
-  const effect = {
-    id,
-    intent_id: intentId,
-    alpha: ef.α,
-    target: ef.target,
-    scope: ef.σ || "account",
-    parent_id: null,
-    status: "proposed",
-    ttl: null,
-    created_at: now,
-    resolved_at: null,
-    desc: describeEffect(intentId, ef.α, ctx),
-    time: ts(),
-  };
+  const effects = [];
 
   switch (intentId) {
-    case "add_task": {
-      if (!ctx.title?.trim()) return null;
-      const taskId = `t_${now}`;
-      effect.value = null;
-      effect.context = { id: taskId, title: ctx.title.trim(), status: "pending", priority: null, pinned: false, createdAt: now };
+    case "select_service": {
+      const service = (world.services || []).find(s => s.id === ctx.serviceId);
+      if (!service || !service.active) return null;
+      const draftId = `draft_${now}`;
+      effects.push({
+        id: uuid(), intent_id: intentId, alpha: "add", target: "drafts",
+        scope: "session", value: null,
+        context: { id: draftId, serviceId: service.id, serviceName: service.name,
+                   specialistId: service.specialistId, price: service.price,
+                   duration: service.duration, slotId: null, status: "draft", createdAt: now },
+        parent_id: null, status: "proposed", ttl: null, created_at: now,
+        desc: describeEffect(intentId, "add", { serviceName: service.name }), time: ts(),
+      });
       break;
     }
-    case "complete_task": {
-      const t = world.find(x => x.id === ctx.id);
-      if (!t || t.status !== "pending") return null;
-      effect.value = "completed";
-      effect.context = { id: ctx.id, title: t.title };
+    case "select_slot": {
+      const slot = (world.slots || []).find(s => s.id === ctx.slotId);
+      if (!slot || slot.status !== "free") return null;
+      const draft = drafts[0];
+      if (!draft) return null;
+
+      effects.push({
+        id: uuid(), intent_id: intentId, alpha: "replace", target: "slot.status",
+        scope: "shared", value: "held",
+        context: { id: slot.id, date: slot.date, startTime: slot.startTime },
+        parent_id: null, status: "proposed", ttl: 600000, created_at: now,
+        desc: describeEffect(intentId, "replace", { date: slot.date, startTime: slot.startTime }), time: ts(),
+      });
+
+      effects.push({
+        id: uuid(), intent_id: intentId, alpha: "replace", target: "drafts.slotId",
+        scope: "session", value: slot.id,
+        context: { id: draft.id, slotId: slot.id },
+        parent_id: null, status: "proposed", ttl: null, created_at: now,
+        desc: `📋 Черновик: слот ${slot.date} ${slot.startTime}`, time: ts(),
+      });
       break;
     }
-    case "uncomplete_task": {
-      const t = world.find(x => x.id === ctx.id);
-      if (!t || t.status !== "completed") return null;
-      effect.value = "pending";
-      effect.context = { id: ctx.id, title: t.title };
+    case "confirm_booking": {
+      const draft = drafts[0];
+      if (!draft || !draft.slotId || !draft.serviceId) return null;
+      const slot = (world.slots || []).find(s => s.id === draft.slotId);
+      if (!slot) return null;
+
+      const bookingId = `bk_${now}`;
+
+      effects.push({
+        id: uuid(), intent_id: intentId, alpha: "add", target: "bookings",
+        scope: "account", value: null,
+        context: { id: bookingId, specialistId: draft.specialistId, serviceId: draft.serviceId,
+                   serviceName: draft.serviceName, slotId: draft.slotId, price: draft.price,
+                   date: slot.date, startTime: slot.startTime,
+                   status: "confirmed", createdAt: now },
+        parent_id: null, status: "proposed", ttl: null, created_at: now,
+        desc: describeEffect(intentId, "add", { serviceName: draft.serviceName, date: slot.date, startTime: slot.startTime }), time: ts(),
+      });
+
+      effects.push({
+        id: uuid(), intent_id: intentId, alpha: "replace", target: "slot.status",
+        scope: "shared", value: "booked",
+        context: { id: draft.slotId },
+        parent_id: null, status: "proposed", ttl: null, created_at: now,
+        desc: `🔒 Слот забронирован`, time: ts(),
+      });
+
+      effects.push({
+        id: uuid(), intent_id: intentId, alpha: "remove", target: "drafts",
+        scope: "session", value: null,
+        context: { id: draft.id },
+        parent_id: null, status: "proposed", ttl: null, created_at: now,
+        desc: `📋 Черновик промотирован`, time: ts(),
+      });
       break;
     }
-    case "delete_task": {
-      const t = world.find(x => x.id === ctx.id);
-      if (!t) return null;
-      effect.context = { id: ctx.id, title: t.title };
-      effect.value = null;
+    case "cancel_booking": {
+      const booking = (world.bookings || []).find(b => b.id === ctx.id);
+      if (!booking || booking.status !== "confirmed") return null;
+
+      effects.push({
+        id: uuid(), intent_id: intentId, alpha: "replace", target: "booking.status",
+        scope: "account", value: "cancelled",
+        context: { id: booking.id, serviceName: booking.serviceName },
+        parent_id: null, status: "proposed", ttl: null, created_at: now,
+        desc: describeEffect(intentId, "replace", { serviceName: booking.serviceName }), time: ts(),
+      });
+
+      effects.push({
+        id: uuid(), intent_id: intentId, alpha: "replace", target: "slot.status",
+        scope: "shared", value: "free",
+        context: { id: booking.slotId },
+        parent_id: null, status: "proposed", ttl: null, created_at: now,
+        desc: `🔓 Слот освобождён`, time: ts(),
+      });
       break;
     }
-    case "edit_task": {
-      const t = world.find(x => x.id === ctx.id);
-      if (!t || !ctx.newTitle?.trim()) return null;
-      effect.value = ctx.newTitle.trim();
-      effect.context = { id: ctx.id, title: t.title, newTitle: ctx.newTitle.trim() };
+    case "abandon_draft": {
+      const draft = drafts[0];
+      if (!draft) return null;
+
+      effects.push({
+        id: uuid(), intent_id: intentId, alpha: "remove", target: "drafts",
+        scope: "session", value: null,
+        context: { id: draft.id, serviceName: draft.serviceName },
+        parent_id: null, status: "proposed", ttl: null, created_at: now,
+        desc: describeEffect(intentId, "remove", {}), time: ts(),
+      });
+
+      if (draft.slotId) {
+        effects.push({
+          id: uuid(), intent_id: intentId, alpha: "replace", target: "slot.status",
+          scope: "shared", value: "free",
+          context: { id: draft.slotId },
+          parent_id: null, status: "proposed", ttl: null, created_at: now,
+          desc: `🔓 Слот освобождён`, time: ts(),
+        });
+      }
       break;
     }
-    case "pin_task": {
-      const t = world.find(x => x.id === ctx.id);
-      if (!t || t.pinned) return null;
-      effect.value = true;
-      effect.context = { id: ctx.id, title: t.title };
+    case "complete_booking": {
+      const booking = (world.bookings || []).find(b => b.id === ctx.id);
+      if (!booking || booking.status !== "confirmed") return null;
+
+      effects.push({
+        id: uuid(), intent_id: intentId, alpha: "replace", target: "booking.status",
+        scope: "account", value: "completed",
+        context: { id: booking.id, serviceName: booking.serviceName },
+        parent_id: null, status: "proposed", ttl: null, created_at: now,
+        desc: describeEffect(intentId, "replace", { serviceName: booking.serviceName }), time: ts(),
+      });
       break;
     }
-    case "unpin_task": {
-      const t = world.find(x => x.id === ctx.id);
-      if (!t || !t.pinned) return null;
-      effect.value = false;
-      effect.context = { id: ctx.id, title: t.title };
+    case "add_service": {
+      if (!ctx.name?.trim() || !ctx.price || !ctx.duration) return null;
+      const serviceId = `svc_${now}`;
+      effects.push({
+        id: uuid(), intent_id: intentId, alpha: "add", target: "services",
+        scope: "account", value: null,
+        context: { id: serviceId, specialistId: ctx.specialistId || "sp_anna",
+                   name: ctx.name.trim(), duration: ctx.duration, price: ctx.price, active: true },
+        parent_id: null, status: "proposed", ttl: null, created_at: now,
+        desc: describeEffect(intentId, "add", { name: ctx.name, price: ctx.price }), time: ts(),
+      });
       break;
     }
-    case "set_priority": {
-      const t = world.find(x => x.id === ctx.id);
-      if (!t) return null;
-      effect.value = ctx.priority;
-      effect.context = { id: ctx.id, title: t.title, priority: ctx.priority };
-      break;
-    }
-    case "duplicate_task": {
-      const t = world.find(x => x.id === ctx.id);
-      if (!t) return null;
-      const dupId = `t_${now}`;
-      effect.value = null;
-      effect.context = { id: dupId, title: `${t.title} (копия)`, status: "pending", priority: t.priority || null, pinned: false, createdAt: now };
-      break;
-    }
-    case "archive_task": {
-      const t = world.find(x => x.id === ctx.id);
-      if (!t || t.status !== "completed") return null;
-      effect.value = "archived";
-      effect.context = { id: ctx.id, title: t.title };
+    case "block_slot": {
+      const slot = (world.slots || []).find(s => s.id === ctx.slotId);
+      if (!slot || slot.status !== "free") return null;
+      effects.push({
+        id: uuid(), intent_id: intentId, alpha: "replace", target: "slot.status",
+        scope: "shared", value: "blocked",
+        context: { id: slot.id, date: slot.date, startTime: slot.startTime },
+        parent_id: null, status: "proposed", ttl: null, created_at: now,
+        desc: describeEffect(intentId, "replace", { date: slot.date, startTime: slot.startTime }), time: ts(),
+      });
       break;
     }
     default:
       return null;
   }
 
-  return effect;
+  return effects.length > 0 ? effects : null;
 }
 
 export function useEngine() {
   const [effects, setEffects] = useState([]);
   const [signals, setSignals] = useState([]);
-  const signalsRef = useRef(signals);
-  signalsRef.current = signals;
 
-  // Загрузить эффекты с сервера при монтировании
   useEffect(() => {
     fetch("/api/effects")
       .then(r => r.json())
       .then(data => {
-        // Добавить desc и time к загруженным эффектам
         setEffects(data.map(ef => ({
           ...ef,
-          desc: ef.desc || describeEffect(ef.intent_id, ef.alpha, ef.context || {}),
+          desc: ef.desc || describeEffect(ef.intent_id, ef.alpha, ef.context || {}, ef.target),
           time: ef.time || new Date(ef.created_at).toLocaleTimeString("ru", { hour: "2-digit", minute: "2-digit", second: "2-digit" }),
         })));
       })
-      .catch(() => {}); // сервер недоступен — работаем локально
+      .catch(() => {});
   }, []);
 
-  // SSE-подписка
   useEffect(() => {
     const es = new EventSource("/api/effects/stream");
 
@@ -171,7 +236,6 @@ export function useEngine() {
         const updated = prev.map(ef =>
           ef.id === id ? { ...ef, status: "confirmed", resolved_at: Date.now() } : ef
         );
-        // Эмитировать сигнал при confirmed
         const ef = updated.find(x => x.id === id);
         if (ef) {
           const sig = signalForIntent(ef.intent_id);
@@ -204,72 +268,57 @@ export function useEngine() {
     });
 
     es.onerror = () => {};
-
     return () => es.close();
   }, []);
 
-  // Два мира: оптимистичный и канонический
-  const worldOptimistic = useMemo(
-    () => fold(filterByStatus(effects, "confirmed", "proposed")),
-    [effects]
-  );
-  const worldConfirmed = useMemo(
-    () => fold(filterByStatus(effects, "confirmed")),
+  const activeEffects = useMemo(
+    () => filterByStatus(effects, "confirmed", "proposed"),
     [effects]
   );
 
+  const world = useMemo(() => fold(activeEffects), [activeEffects]);
+  const drafts = useMemo(() => foldDrafts(activeEffects), [activeEffects]);
+
   const stats = useMemo(() => ({
-    total: worldOptimistic.length,
-    pending: worldOptimistic.filter(t => t.status === "pending").length,
-    completed: worldOptimistic.filter(t => t.status === "completed").length,
-  }), [worldOptimistic]);
+    slots_free: (world.slots || []).filter(s => s.status === "free").length,
+    slots_held: (world.slots || []).filter(s => s.status === "held").length,
+    slots_booked: (world.slots || []).filter(s => s.status === "booked").length,
+    bookings_confirmed: (world.bookings || []).filter(b => b.status === "confirmed").length,
+    bookings_completed: (world.bookings || []).filter(b => b.status === "completed").length,
+    drafts: drafts.length,
+  }), [world, drafts]);
 
   const links = useMemo(deriveLinks, []);
 
   const exec = useCallback((intentId, ctx = {}) => {
-    const effect = buildEffect(intentId, ctx, worldOptimistic);
-    if (!effect) return;
+    const built = buildEffects(intentId, ctx, world, drafts);
+    if (!built) return;
 
-    // Оптимистично добавляем в локальный Φ
-    setEffects(prev => [...prev, effect]);
+    setEffects(prev => [...prev, ...built]);
 
-    // Отправляем на сервер
-    fetch("/api/effects", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(effect),
-    }).catch(() => {
-      // Сервер недоступен — подтверждаем локально
-      setEffects(prev => prev.map(ef =>
-        ef.id === effect.id ? { ...ef, status: "confirmed", resolved_at: Date.now() } : ef
-      ));
-      const sig = signalForIntent(intentId);
-      if (sig) {
-        setSignals(p => [{ id: uuid(), κ: sig.κ, desc: sig.desc, time: ts(), effectId: effect.id }, ...p].slice(0, 20));
-      }
-    });
-  }, [worldOptimistic]);
+    for (const effect of built) {
+      fetch("/api/effects", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(effect),
+      }).catch(() => {
+        setEffects(prev => prev.map(ef =>
+          ef.id === effect.id ? { ...ef, status: "confirmed", resolved_at: Date.now() } : ef
+        ));
+      });
+    }
+  }, [world, drafts]);
 
   const isApplicable = useCallback((intentId, ctx) => {
     const i = INTENTS[intentId];
     if (!i) return false;
     for (const c of i.particles.conditions) {
-      if (c === "task.status = 'pending'" && ctx.task?.status !== "pending") return false;
-      if (c === "task.status = 'completed'" && ctx.task?.status !== "completed") return false;
-      if (c === "task.pinned = false" && ctx.task?.pinned !== false) return false;
-      if (c === "task.pinned = true" && ctx.task?.pinned !== true) return false;
+      if (c === "service.active = true" && ctx.entity?.active !== true) return false;
+      if (c === "slot.status = 'free'" && ctx.entity?.status !== "free") return false;
+      if (c === "booking.status = 'confirmed'" && ctx.entity?.status !== "confirmed") return false;
     }
     return true;
   }, []);
 
-  return {
-    world: worldOptimistic,
-    worldConfirmed,
-    effects,
-    signals,
-    stats,
-    links,
-    exec,
-    isApplicable,
-  };
+  return { world, drafts, effects, signals, stats, links, exec, isApplicable };
 }

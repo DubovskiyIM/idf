@@ -71,6 +71,21 @@ router.post("/", (req, res) => {
         "UPDATE effects SET status = 'confirmed', resolved_at = ? WHERE id = ?"
       ).run(now, ef.id);
       broadcast("effect:confirmed", { id: ef.id });
+
+      // Планировать TTL-истечение если есть
+      if (ef.ttl) {
+        setTimeout(() => {
+          const current = db.prepare("SELECT status FROM effects WHERE id = ?").get(ef.id);
+          if (current && current.status === "confirmed") {
+            const ttlNow = Date.now();
+            db.prepare(
+              "UPDATE effects SET status = 'rejected', resolved_at = ? WHERE id = ?"
+            ).run(ttlNow, ef.id);
+            const ttlCascaded = cascadeReject(ef.id);
+            broadcast("effect:rejected", { id: ef.id, reason: "TTL expired", cascaded: ttlCascaded });
+          }
+        }, ef.ttl);
+      }
     } else {
       db.prepare(
         "UPDATE effects SET status = 'rejected', resolved_at = ? WHERE id = ?"

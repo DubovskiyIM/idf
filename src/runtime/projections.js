@@ -1,4 +1,17 @@
 export const PROJECTIONS = {
-  task_list: { name: "Список задач", query: "все задачи, сортировка по дате", witnesses: ["title", "status", "createdAt"] },
-  task_stats: { name: "Статистика", query: "количество по статусам", witnesses: ["pending.count", "completed.count"] }
+  service_catalog: {
+    name: "Каталог услуг",
+    query: "все активные услуги с ценами и длительностью",
+    witnesses: ["name", "duration", "price", "specialist.name"]
+  },
+  specialist_schedule: {
+    name: "Расписание",
+    query: "слоты специалиста на выбранную неделю со статусами",
+    witnesses: ["date", "startTime", "endTime", "status"]
+  },
+  my_bookings: {
+    name: "Мои записи",
+    query: "все записи текущего клиента, будущие и прошлые",
+    witnesses: ["specialist.name", "service.name", "slot.date", "slot.startTime", "status"]
+  }
 };
