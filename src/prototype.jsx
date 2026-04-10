@@ -15,6 +15,7 @@ import PlanningUI from "./domains/planning/ManualUI.jsx";
 // Кристаллизованные проекции
 import PollOverview from "./crystallized/poll_overview.jsx";
 import VotingMatrix from "./crystallized/voting_matrix.jsx";
+import { getStyles } from "./crystallized/theme.js";
 import ServiceCatalog from "./crystallized/service_catalog.jsx";
 import SpecialistSchedule from "./crystallized/specialist_schedule.jsx";
 import MyBookings from "./crystallized/my_bookings.jsx";
@@ -28,9 +29,14 @@ export default function App() {
   const [domainId, setDomainId] = useState("booking");
   const [topView, setTopView] = useState(null); // null | "graph" | "ontology"
   const [tab, setTab] = useState("intents");
-  const [mode, setMode] = useState("manual"); // "manual" | "crystallized"
-  const [theme, setTheme] = useState("light"); // "light" | "dark"
-  const [variant, setVariant] = useState("clean"); // "clean" | "dense" | "playful"
+  const [bookingView, setBookingView] = useState("catalog"); // catalog | schedule | bookings | draft
+  const [mode, setMode] = useState(() => localStorage.getItem("idf_mode") || "manual");
+  const [theme, setTheme] = useState(() => localStorage.getItem("idf_theme") || "light");
+  const [variant, setVariant] = useState(() => localStorage.getItem("idf_variant") || "clean");
+
+  const setAndSaveMode = (v) => { setMode(v); localStorage.setItem("idf_mode", v); };
+  const setAndSaveTheme = (v) => { setTheme(v); localStorage.setItem("idf_theme", v); };
+  const setAndSaveVariant = (v) => { setVariant(v); localStorage.setItem("idf_variant", v); };
 
   const domain = DOMAINS[domainId];
   const engine = useEngine(domain);
@@ -94,7 +100,7 @@ export default function App() {
         {/* Режим: ручной / кристаллизованный */}
         <div style={{ display: "flex", background: "#1e2230", borderRadius: 6, padding: 2 }}>
           {["manual", "crystallized"].map(m => (
-            <button key={m} onClick={() => setMode(m)} style={{
+            <button key={m} onClick={() => setAndSaveMode(m)} style={{
               padding: "4px 10px", borderRadius: 4, border: "none", cursor: "pointer", fontSize: 10,
               background: mode === m ? "#f59e0b" : "transparent",
               color: mode === m ? "#0c0e14" : "#6b7280", fontWeight: mode === m ? 600 : 400
@@ -105,12 +111,12 @@ export default function App() {
         {/* Тема + вариант (только для кристаллизованного) */}
         {mode === "crystallized" && (
           <>
-            <select value={theme} onChange={e => setTheme(e.target.value)}
+            <select value={theme} onChange={e => setAndSaveTheme(e.target.value)}
               style={{ fontSize: 10, padding: "3px 6px", borderRadius: 4, border: "1px solid #1e2230", background: "#1e2230", color: "#9ca3af", cursor: "pointer" }}>
               <option value="light">☀ Light</option>
               <option value="dark">🌙 Dark</option>
             </select>
-            <select value={variant} onChange={e => setVariant(e.target.value)}
+            <select value={variant} onChange={e => setAndSaveVariant(e.target.value)}
               style={{ fontSize: 10, padding: "3px 6px", borderRadius: 4, border: "1px solid #1e2230", background: "#1e2230", color: "#9ca3af", cursor: "pointer" }}>
               <option value="clean">Clean</option>
               <option value="dense">Dense</option>
@@ -218,13 +224,65 @@ export default function App() {
                   </>
                 ) : (
                   <>
-                    <ServiceCatalog world={world} exec={exec} drafts={drafts} theme={theme} variant={variant} />
-                    <div style={{ marginTop: 24 }}>
-                      <SpecialistSchedule world={world} exec={exec} drafts={drafts} theme={theme} variant={variant} />
+                    {/* Booking кристаллизованный — вкладки */}
+                    <div style={{ display: "flex", gap: 6, marginBottom: 16 }}>
+                      {[
+                        { id: "catalog", label: "Каталог" },
+                        { id: "schedule", label: "Расписание" },
+                        { id: "bookings", label: "Записи" },
+                      ].map(v => (
+                        <button key={v.id} onClick={() => setBookingView(v.id)}
+                          style={{ padding: "6px 14px", borderRadius: 6, border: bookingView === v.id ? `2px solid ${theme === "dark" ? "#818cf8" : "#6366f1"}` : `1px solid ${theme === "dark" ? "#1e2230" : "#d1d5db"}`,
+                            background: bookingView === v.id ? (theme === "dark" ? "#1e1b4b" : "#eef2ff") : (theme === "dark" ? "#13151d" : "#fff"),
+                            color: theme === "dark" ? "#e2e5eb" : "#1a1a2e", fontSize: 12, cursor: "pointer", fontFamily: "system-ui, sans-serif" }}>
+                          {v.label}
+                        </button>
+                      ))}
+                      {(drafts || []).length > 0 && (
+                        <button onClick={() => setBookingView("draft")}
+                          style={{ padding: "6px 14px", borderRadius: 6, border: `2px dashed ${theme === "dark" ? "#fbbf24" : "#f59e0b"}`,
+                            background: bookingView === "draft" ? (theme === "dark" ? "#422006" : "#fffbeb") : "transparent",
+                            color: theme === "dark" ? "#fbbf24" : "#f59e0b", fontSize: 12, cursor: "pointer", fontFamily: "system-ui, sans-serif" }}>
+                          Черновик Δ
+                        </button>
+                      )}
                     </div>
-                    <div style={{ marginTop: 24 }}>
+                    {bookingView === "catalog" && (
+                      <ServiceCatalog world={world} exec={(...args) => { exec(...args); setBookingView("schedule"); }} drafts={drafts} theme={theme} variant={variant} />
+                    )}
+                    {bookingView === "schedule" && (
+                      <SpecialistSchedule world={world} exec={(...args) => { exec(...args); if (args[0] === "select_slot") setBookingView("draft"); }} drafts={drafts} theme={theme} variant={variant} />
+                    )}
+                    {bookingView === "bookings" && (
                       <MyBookings world={world} exec={exec} theme={theme} variant={variant} />
-                    </div>
+                    )}
+                    {bookingView === "draft" && (drafts || []).length > 0 && (() => {
+                      const draft = drafts[0];
+                      const slot = (world.slots || []).find(s => s.id === draft.slotId);
+                      const s = getStyles(theme, variant);
+                      return (
+                        <div style={s.container}>
+                          <h2 style={{ ...s.heading("h1"), marginBottom: s.v.gap }}>Черновик Δ</h2>
+                          <div style={{ ...s.card, border: `2px dashed ${s.t.warning}` }}>
+                            <div style={{ ...s.text("body"), marginBottom: 8 }}><b>Услуга:</b> {draft.serviceName} ({draft.duration} мин) · {draft.price} ₽</div>
+                            <div style={{ ...s.text("body"), marginBottom: 16 }}>
+                              <b>Слот:</b> {slot ? `${slot.date} ${slot.startTime}` : <span style={{ color: s.t.warning }}>не выбран — <button onClick={() => setBookingView("schedule")} style={{ background: "none", border: "none", color: s.t.accent, cursor: "pointer", textDecoration: "underline", fontSize: s.v.fontSize.body, fontFamily: s.v.font }}>выбрать</button></span>}
+                            </div>
+                            <div style={{ display: "flex", gap: s.v.gap }}>
+                              <button onClick={() => { exec("confirm_booking"); setBookingView("bookings"); }}
+                                disabled={!draft.slotId} style={draft.slotId ? s.button() : { ...s.button("muted"), cursor: "default" }}>Подтвердить</button>
+                              <button onClick={() => { exec("abandon_draft"); setBookingView("catalog"); }}
+                                style={s.buttonOutline()}>Отменить</button>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })()}
+                    {bookingView === "draft" && (drafts || []).length === 0 && (
+                      <div style={{ textAlign: "center", padding: 40, color: "#9ca3af", fontFamily: "system-ui, sans-serif" }}>
+                        Нет черновика. <button onClick={() => setBookingView("catalog")} style={{ background: "none", border: "none", color: "#6366f1", cursor: "pointer", textDecoration: "underline" }}>Выбрать услугу</button>
+                      </div>
+                    )}
                   </>
                 )}
               </div>

@@ -1,8 +1,14 @@
 const db = require("./db.js");
 
+// Автогенерация: этот маппинг должен совпадать с buildTypeMap из fold.js.
+// На сервере содержим union всех доменов. При добавлении нового домена — добавить сюда.
+// TODO: автоматическая деривация через API /api/ontology
 const SINGULAR_TO_PLURAL = {
+  draft: "drafts",
+  // booking domain
   slot: "slots", booking: "bookings", service: "services",
   specialist: "specialists", review: "reviews",
+  // planning domain
   poll: "polls", option: "options", participant: "participants",
   vote: "votes", meeting: "meetings"
 };

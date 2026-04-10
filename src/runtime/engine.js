@@ -1,7 +1,7 @@
 import { useState, useMemo, useCallback, useEffect } from "react";
 import { v4 as uuid } from "uuid";
 import { deriveLinks } from "./links.js";
-import { fold, foldDrafts, filterByStatus } from "./fold.js";
+import { fold, foldDrafts, filterByStatus, buildTypeMap } from "./fold.js";
 
 const ts = () => new Date().toLocaleTimeString("ru", { hour: "2-digit", minute: "2-digit", second: "2-digit", fractionalSecondDigits: 2 });
 
@@ -85,8 +85,9 @@ export function useEngine(domain) {
     return () => es.close();
   }, [domain, reloadEffects]);
 
+  const typeMap = useMemo(() => buildTypeMap(domain.ONTOLOGY), [domain]);
   const activeEffects = useMemo(() => filterByStatus(effects, "confirmed", "proposed"), [effects]);
-  const world = useMemo(() => fold(activeEffects), [activeEffects]);
+  const world = useMemo(() => fold(activeEffects, typeMap), [activeEffects, typeMap]);
   const drafts = useMemo(() => foldDrafts(activeEffects), [activeEffects]);
   const links = useMemo(() => deriveLinks(domain.INTENTS), [domain]);
 

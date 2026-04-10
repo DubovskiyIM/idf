@@ -1,26 +1,32 @@
-const SINGULAR_TO_PLURAL = {
-  slot: "slots", booking: "bookings", service: "services",
-  specialist: "specialists", review: "reviews", draft: "drafts",
-  poll: "polls", option: "options", participant: "participants",
-  vote: "votes", meeting: "meetings"
-};
+/**
+ * Построить маппинг singular→plural из онтологии.
+ * "Specialist" → specialist → specialists
+ * Плюс hardcoded "draft" → "drafts" (всегда нужен для Δ).
+ */
+export function buildTypeMap(ontology) {
+  const map = { draft: "drafts" };
+  if (ontology?.entities) {
+    for (const entityName of Object.keys(ontology.entities)) {
+      const singular = entityName.toLowerCase();
+      // Простая плюрализация: добавить "s", кроме исключений
+      const plural = singular.endsWith("s") ? singular + "es" : singular + "s";
+      map[singular] = plural;
+    }
+  }
+  return map;
+}
 
-function getCollectionType(target) {
+function getCollectionType(target, typeMap) {
   const base = target.split(".")[0];
-  return SINGULAR_TO_PLURAL[base] || base;
+  return typeMap[base] || base;
 }
 
 /**
- * fold(effects) → world (объект по типам сущностей)
+ * fold(effects, typeMap) → world (объект по типам сущностей)
  *
  * По манифесту: World(t) = fold(⊕, ∅, sort≺(Φ_confirmed ↓ t))
- * target определяет тип: "slots" → world.slots, "slot.status" → world.slots
- * Эффекты с target "drafts" или "drafts.*" игнорируются (это Δ).
- *
- * @param {Array} effects — эффекты для свёртки (порядок по created_at)
- * @returns {Object} — { specialists: [], services: [], slots: [], bookings: [] }
  */
-export function fold(effects) {
+export function fold(effects, typeMap = {}) {
   const collections = {};
 
   for (const ef of effects) {
@@ -28,7 +34,7 @@ export function fold(effects) {
 
     const ctx = ef.context || {};
     const val = ef.value;
-    const collType = getCollectionType(ef.target);
+    const collType = getCollectionType(ef.target, typeMap);
 
     if (!collections[collType]) collections[collType] = {};
 
