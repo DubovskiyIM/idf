@@ -14,12 +14,13 @@ describe("wrapByConfirmation", () => {
     expect(wrap.intentId).toBe("delete_message");
   });
 
-  it("confirmation:click + параметры → intentButton opens popover", () => {
+  it("confirmation:click + параметры → intentButton + formModal overlay", () => {
     const wrap = wrapByConfirmation(baseIntent("click"), "pin_message",
       [{ name: "reason", control: "text" }]);
-    expect(wrap.type).toBe("intentButton");
-    expect(wrap.opens).toBe("overlay");
-    expect(wrap.overlayKey).toBeDefined();
+    expect(wrap.trigger.type).toBe("intentButton");
+    expect(wrap.trigger.opens).toBe("overlay");
+    expect(wrap.overlay.type).toBe("formModal");
+    expect(wrap.overlay.parameters).toHaveLength(1);
   });
 
   it("confirmation:enter → composerEntry (будет собрано в composer Слоем 2)", () => {

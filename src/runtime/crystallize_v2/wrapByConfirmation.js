@@ -51,12 +51,21 @@ export function wrapByConfirmation(intent, intentId, parameters) {
       if (parameters.length === 0) {
         return baseButton;
       }
-      // С параметрами — opens popover overlay
+      // С параметрами — открывается formModal, как и "form", но без widget-заголовка.
+      // Типовой случай: edit_message (phase:investigation + точечный witness → editable).
       const key = makeOverlayKey(intentId);
       return {
-        ...baseButton,
-        opens: "overlay",
-        overlayKey: key,
+        trigger: { ...baseButton, opens: "overlay", overlayKey: key },
+        overlay: {
+          type: "formModal",
+          key,
+          intentId,
+          witnessPanel: (intent.particles.witnesses || [])
+            .filter(w => w.includes("."))
+            .map(w => ({ type: "text", bind: w })),
+          parameters,
+        },
+        antagonist,
       };
     }
 
