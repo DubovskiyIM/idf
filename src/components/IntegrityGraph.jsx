@@ -60,9 +60,28 @@ function getResolutions(issue) {
       );
       break;
     case "ontology_coverage":
+    case "anchoring_entity":
       resolutions.push(
-        { icon: "📦", label: "Добавить в онтологию", desc: `Добавить сущность в ONTOLOGY.entities.` },
-        { icon: "🔧", label: "Исправить имя", desc: `Возможно опечатка — проверить написание типа в particles.entities.` },
+        { icon: "📦", label: "Добавить в онтологию", desc: `Добавить сущность в ONTOLOGY.entities с полями и типом.` },
+        { icon: "🔧", label: "Исправить имя", desc: `Возможно опечатка — проверить написание типа.` },
+      );
+      break;
+    case "anchoring_effect":
+      resolutions.push(
+        { icon: "📦", label: "Добавить сущность", desc: `Добавить коллекцию в ONTOLOGY.entities.` },
+        { icon: "🎯", label: "Исправить target", desc: `Target эффекта может содержать опечатку.` },
+      );
+      break;
+    case "anchoring_field":
+      resolutions.push(
+        { icon: "➕", label: "Добавить поле", desc: `Добавить поле в ONTOLOGY.entities.[тип].fields.` },
+        { icon: "🔧", label: "Исправить target", desc: `Возможно поле называется иначе в онтологии.` },
+      );
+      break;
+    case "anchoring_witness":
+      resolutions.push(
+        { icon: "➕", label: "Добавить поле в онтологию", desc: `Свидетельство ссылается на поле, которого нет — добавить.` },
+        { icon: "✎", label: "Исправить witness", desc: `Возможно опечатка в имени поля.` },
       );
       break;
     default:
