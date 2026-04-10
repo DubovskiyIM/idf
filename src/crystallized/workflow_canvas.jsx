@@ -37,7 +37,9 @@ export default function WorkflowCanvasProjection({ world, exec, theme = "light",
   const selectedNode = wfNodes.find(n => n.id === selectedNodeId);
   const canEdit = wf && (wf.status === "draft" || wf.status === "saved");
 
-  const rfNodes = useMemo(() => wfNodes.map(n => ({
+  const graphKey = useMemo(() => wfNodes.map(n => n.id).sort().join(",") + "|" + wfEdges.map(e => e.id).sort().join(",") + theme + variant, [wfNodes, wfEdges, theme, variant]);
+
+  const initialNodes = useMemo(() => wfNodes.map(n => ({
     id: n.id,
     position: { x: n.x || 0, y: n.y || 0 },
     data: { label: `${NODE_META[n.type]?.emoji || ""} ${n.label}` },
@@ -47,7 +49,7 @@ export default function WorkflowCanvasProjection({ world, exec, theme = "light",
       borderRadius: s.v.radius, padding: `${s.v.padding / 2}px ${s.v.padding}px`,
       fontSize: s.v.fontSize.small, color: s.t.text, fontFamily: s.v.font,
     },
-  })), [wfNodes, theme, s]);
+  })), [graphKey]);
 
   const rfEdges = useMemo(() => wfEdges.map(e => ({
     id: e.id, source: e.source, target: e.target,
@@ -56,12 +58,8 @@ export default function WorkflowCanvasProjection({ world, exec, theme = "light",
     style: { stroke: s.t.accent, strokeWidth: 2 },
   })), [wfEdges, wf?.status, s]);
 
-  const onNodesChange = useCallback((changes) => {
-    for (const c of changes) {
-      if (c.type === "position" && c.position && !c.dragging) {
-        exec("move_node", { id: c.id, x: Math.round(c.position.x), y: Math.round(c.position.y) });
-      }
-    }
+  const onNodeDragStop = useCallback((_, node) => {
+    exec("move_node", { id: node.id, x: Math.round(node.position.x), y: Math.round(node.position.y) });
   }, [exec]);
 
   const onConnect = useCallback((params) => {
@@ -138,8 +136,9 @@ export default function WorkflowCanvasProjection({ world, exec, theme = "light",
       {/* React Flow */}
       <div style={{ height: 420, borderRadius: s.v.radius, border: `1px solid ${s.t.border}`, overflow: "hidden" }}>
         <ReactFlow
-          nodes={rfNodes} edges={rfEdges}
-          onNodesChange={onNodesChange}
+          key={graphKey}
+          defaultNodes={initialNodes} defaultEdges={rfEdges}
+          onNodeDragStop={canEdit ? onNodeDragStop : undefined}
           onConnect={canEdit ? onConnect : undefined}
           onEdgesDelete={canEdit ? onEdgesDelete : undefined}
           onNodesDelete={canEdit ? onNodesDelete : undefined}

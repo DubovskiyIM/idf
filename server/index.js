@@ -9,8 +9,11 @@ const PORT = 3001;
 app.use(cors());
 app.use(express.json());
 
+const workflowsRouter = require("./routes/workflows.js");
+
 app.use("/api/effects", effectsRouter);
 app.use("/api", artifactsRouter);
+app.use("/api/workflows", workflowsRouter);
 
 const { startSync, setBroadcast } = require("./boundary.js");
 const { executeWorkflow, setBroadcast: setExecBroadcast } = require("./executor.js");

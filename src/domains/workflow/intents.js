@@ -100,5 +100,62 @@ export const INTENTS = {
       witnesses: ["running_nodes"],
       confirmation: "click"
     }, antagonist: null, creates: null
+  },
+  rename_node: {
+    name: "Переименовать узел", particles: {
+      entities: ["node: Node"],
+      conditions: [],
+      effects: [{ α: "replace", target: "node.label", σ: "account" }],
+      witnesses: ["node.label (текущий)"],
+      confirmation: "click"
+    }, antagonist: null, creates: null
+  },
+  delete_workflow: {
+    name: "Удалить workflow", particles: {
+      entities: ["workflow: Workflow"],
+      conditions: ["workflow.status != 'running'"],
+      effects: [
+        { α: "remove", target: "workflows", σ: "account" },
+        { α: "remove", target: "nodes", σ: "account" },
+        { α: "remove", target: "edges", σ: "account" }
+      ],
+      witnesses: ["workflow.title", "nodes.count"],
+      confirmation: "click"
+    }, antagonist: null, creates: null, irreversibility: "high"
+  },
+  duplicate_workflow: {
+    name: "Дублировать workflow", particles: {
+      entities: ["workflow: Workflow"],
+      conditions: [],
+      effects: [
+        { α: "add", target: "workflows", σ: "account" },
+        { α: "add", target: "nodes", σ: "account" },
+        { α: "add", target: "edges", σ: "account" }
+      ],
+      witnesses: ["workflow.title", "nodes.count", "edges.count"],
+      confirmation: "click"
+    }, antagonist: null, creates: "Workflow", extended: true
+  },
+  add_custom_node_type: {
+    name: "Создать тип узла", particles: {
+      entities: ["nodeType: NodeType"],
+      conditions: [],
+      effects: [{ α: "add", target: "nodetypes", σ: "account" }],
+      witnesses: ["existing_types"],
+      confirmation: "form"
+    }, antagonist: null, creates: "NodeType"
+  },
+  import_workflow: {
+    name: "Импортировать", particles: {
+      entities: ["workflow: Workflow"],
+      conditions: [],
+      effects: [
+        { α: "add", target: "workflows", σ: "account" },
+        { α: "add", target: "nodes", σ: "account" },
+        { α: "add", target: "edges", σ: "account" }
+      ],
+      witnesses: ["json_preview"],
+      confirmation: "file"
+    }, antagonist: null, creates: "Workflow"
   }
 };

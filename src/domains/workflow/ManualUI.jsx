@@ -1,5 +1,5 @@
 import { useState, useMemo, useCallback } from "react";
-import { ReactFlow, Background, Controls, MiniMap, useNodesState, useEdgesState, addEdge, Panel } from "@xyflow/react";
+import { ReactFlow, Background, Controls, MiniMap } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
 
 const inputStyle = { width: "100%", padding: "6px 10px", borderRadius: 6, border: "1px solid #d1d5db", fontSize: 12, fontFamily: "ui-monospace, monospace", outline: "none", background: "#fff", color: "#1a1a2e" };
@@ -115,8 +115,10 @@ export default function WorkflowUI({ world, exec }) {
   const wfEdges = allEdges.filter(e => e.workflowId === selectedWfId);
   const selectedNode = wfNodes.find(n => n.id === selectedNodeId);
 
-  // Конвертация в формат React Flow
-  const rfNodes = useMemo(() => wfNodes.map(n => ({
+  // Ключ для пересоздания React Flow при изменении графа (добавление/удаление узлов)
+  const graphKey = useMemo(() => wfNodes.map(n => n.id).sort().join(",") + "|" + wfEdges.map(e => e.id).sort().join(","), [wfNodes, wfEdges]);
+
+  const initialNodes = useMemo(() => wfNodes.map(n => ({
     id: n.id,
     position: { x: n.x || 0, y: n.y || 0 },
     data: { label: `${NODE_TYPES_META[n.type]?.emoji || ""} ${n.label}`, node: n },
@@ -126,9 +128,9 @@ export default function WorkflowUI({ world, exec }) {
       borderRadius: 8, padding: "8px 12px", fontSize: 12,
       color: "#1a1a2e", fontFamily: "system-ui, sans-serif",
     },
-  })), [wfNodes]);
+  })), [graphKey]);
 
-  const rfEdges = useMemo(() => wfEdges.map(e => ({
+  const initialEdges = useMemo(() => wfEdges.map(e => ({
     id: e.id,
     source: e.source,
     target: e.target,
@@ -136,14 +138,10 @@ export default function WorkflowUI({ world, exec }) {
     targetHandle: e.targetHandle,
     animated: selectedWf?.status === "running",
     style: { stroke: "#6366f1" },
-  })), [wfEdges, selectedWf?.status]);
+  })), [graphKey, selectedWf?.status]);
 
-  const onNodesChange = useCallback((changes) => {
-    for (const change of changes) {
-      if (change.type === "position" && change.position && !change.dragging) {
-        exec("move_node", { id: change.id, x: Math.round(change.position.x), y: Math.round(change.position.y) });
-      }
-    }
+  const onNodeDragStop = useCallback((_, node) => {
+    exec("move_node", { id: node.id, x: Math.round(node.position.x), y: Math.round(node.position.y) });
   }, [exec]);
 
   const onConnect = useCallback((params) => {
@@ -193,6 +191,12 @@ export default function WorkflowUI({ world, exec }) {
                 <div style={{ fontSize: 12, color: "#6b7280" }}>{allNodes.filter(n => n.workflowId === wf.id).length} узлов · {allEdges.filter(e => e.workflowId === wf.id).length} связей</div>
               </div>
               <span style={{ fontSize: 11, fontWeight: 600, color: WORKFLOW_STATUS_COLORS[wf.status], textTransform: "uppercase" }}>{wf.status}</span>
+              <button onClick={(e) => { e.stopPropagation(); exec("duplicate_workflow", { workflowId: wf.id }); }}
+                style={{ padding: "3px 8px", borderRadius: 4, border: "1px solid #d1d5db", background: "#fff", color: "#6b7280", fontSize: 10, cursor: "pointer" }}>⧉</button>
+              {wf.status !== "running" && (
+                <button onClick={(e) => { e.stopPropagation(); exec("delete_workflow", { workflowId: wf.id }); }}
+                  style={{ padding: "3px 8px", borderRadius: 4, border: "1px solid #ef4444", background: "#fff", color: "#ef4444", fontSize: 10, cursor: "pointer" }}>✕</button>
+              )}
             </div>
           ))}
         </div>
@@ -243,9 +247,10 @@ export default function WorkflowUI({ world, exec }) {
       {/* React Flow canvas */}
       <div style={{ height: 400, borderRadius: 8, border: "1px solid #e5e7eb", overflow: "hidden" }}>
         <ReactFlow
-          nodes={rfNodes}
-          edges={rfEdges}
-          onNodesChange={onNodesChange}
+          key={graphKey}
+          defaultNodes={initialNodes}
+          defaultEdges={initialEdges}
+          onNodeDragStop={canEdit ? onNodeDragStop : undefined}
           onConnect={canEdit ? onConnect : undefined}
           onEdgesDelete={canEdit ? onEdgesDelete : undefined}
           onNodesDelete={canEdit ? onNodesDelete : undefined}

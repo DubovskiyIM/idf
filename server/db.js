@@ -6,7 +6,7 @@ const DB_PATH = path.join(__dirname, "idf.db");
 const db = new Database(DB_PATH);
 
 db.pragma("journal_mode = WAL");
-db.pragma("foreign_keys = ON");
+db.pragma("foreign_keys = OFF");
 
 db.exec(`
   CREATE TABLE IF NOT EXISTS effects (

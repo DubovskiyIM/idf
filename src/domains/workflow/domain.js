@@ -30,7 +30,13 @@ export function describeEffect(intentId, alpha, ctx, target) {
     case "save_workflow": return `💾 Сохранено`;
     case "execute_workflow": return `▶ Запуск пайплайна`;
     case "stop_execution": return `⏹ Остановлено`;
+    case "rename_node": return `✎ Переименован: ${ctx.label || ctx.id}`;
+    case "delete_workflow": return `✕ Workflow удалён: ${ctx.title || ctx.id}`;
+    case "duplicate_workflow": return `⧉ Дубликат: ${ctx.title || ctx.id}`;
+    case "add_custom_node_type": return `+ Тип узла: ${ctx.name || ctx.id}`;
+    case "import_workflow": return `📥 Импорт: ${ctx.title || "workflow"}`;
     case "_seed": return `seed: ${alpha} ${ctx.id || ""}`;
+    case "_executor": return `⚡ ${alpha} ${ctx.id?.slice(0, 12) || ""}`;
     default: return `${alpha} ${intentId}`;
   }
 }
@@ -145,6 +151,89 @@ export function buildEffects(intentId, ctx, world, drafts) {
       if (wf) {
         ef({ alpha: "replace", target: "workflow.status", scope: "account", value: "saved",
           context: { id: wf.id }, desc: "📊 Workflow → saved" });
+      }
+      break;
+    }
+    case "rename_node": {
+      const node = (world.nodes || []).find(n => n.id === ctx.id);
+      if (!node || !ctx.label?.trim()) return null;
+      ef({ alpha: "replace", target: "node.label", scope: "account", value: ctx.label.trim(),
+        context: { id: node.id }, desc: `✎ ${node.label} → ${ctx.label.trim()}` });
+      break;
+    }
+    case "delete_workflow": {
+      const wf = (world.workflows || []).find(w => w.id === ctx.workflowId);
+      if (!wf || wf.status === "running") return null;
+      // Каскад: удалить все рёбра и узлы
+      const wfEdges = (world.edges || []).filter(e => e.workflowId === wf.id);
+      const wfNodes = (world.nodes || []).filter(n => n.workflowId === wf.id);
+      for (const e of wfEdges) ef({ alpha: "remove", target: "edges", scope: "account", value: null, context: { id: e.id }, desc: `✂ Ребро` });
+      for (const n of wfNodes) ef({ alpha: "remove", target: "nodes", scope: "account", value: null, context: { id: n.id }, desc: `✕ Узел ${n.label}` });
+      ef({ alpha: "remove", target: "workflows", scope: "account", value: null, context: { id: wf.id, title: wf.title }, desc: `✕ Workflow: ${wf.title}` });
+      break;
+    }
+    case "duplicate_workflow": {
+      const wf = (world.workflows || []).find(w => w.id === ctx.workflowId);
+      if (!wf) return null;
+      const newWfId = `wf_${now}`;
+      const idMap = {}; // старый id → новый id
+      ef({ alpha: "add", target: "workflows", scope: "account", value: null,
+        context: { id: newWfId, title: `${wf.title} (копия)`, status: "draft", createdAt: now },
+        desc: `⧉ Копия: ${wf.title}` });
+      // Копировать узлы
+      const wfNodes = (world.nodes || []).filter(n => n.workflowId === wf.id);
+      for (const n of wfNodes) {
+        const newId = `node_${now}_${Math.random().toString(36).slice(2, 6)}`;
+        idMap[n.id] = newId;
+        ef({ alpha: "add", target: "nodes", scope: "account", value: null,
+          context: { id: newId, workflowId: newWfId, type: n.type, label: n.label, x: n.x + 20, y: n.y + 20, config: n.config || {} },
+          desc: `+ Узел: ${n.label}` });
+      }
+      // Копировать рёбра с ремаппингом
+      const wfEdges = (world.edges || []).filter(e => e.workflowId === wf.id);
+      for (const e of wfEdges) {
+        const newSource = idMap[e.source];
+        const newTarget = idMap[e.target];
+        if (newSource && newTarget) {
+          ef({ alpha: "add", target: "edges", scope: "account", value: null,
+            context: { id: `edge_${now}_${Math.random().toString(36).slice(2, 6)}`, workflowId: newWfId, source: newSource, target: newTarget, sourceHandle: e.sourceHandle, targetHandle: e.targetHandle },
+            desc: `🔗 Связь скопирована` });
+        }
+      }
+      break;
+    }
+    case "add_custom_node_type": {
+      if (!ctx.name?.trim()) return null;
+      const typeId = ctx.name.trim().toLowerCase().replace(/\s+/g, "_");
+      ef({ alpha: "add", target: "nodetypes", scope: "account", value: null,
+        context: { id: typeId, name: ctx.name.trim(), category: ctx.category || "custom", inputs: ctx.inputs || ["data"], outputs: ctx.outputs || ["result"], configSchema: ctx.configSchema || {} },
+        desc: `+ Тип узла: ${ctx.name}` });
+      break;
+    }
+    case "import_workflow": {
+      if (!ctx.json) return null;
+      let data;
+      try { data = typeof ctx.json === "string" ? JSON.parse(ctx.json) : ctx.json; } catch { return null; }
+      if (!data.title || !data.nodes) return null;
+      const newWfId = `wf_${now}`;
+      const idMap = {};
+      ef({ alpha: "add", target: "workflows", scope: "account", value: null,
+        context: { id: newWfId, title: data.title, status: "draft", createdAt: now },
+        desc: `📥 Импорт: ${data.title}` });
+      for (const n of (data.nodes || [])) {
+        const newId = `node_${now}_${Math.random().toString(36).slice(2, 6)}`;
+        idMap[n.id] = newId;
+        ef({ alpha: "add", target: "nodes", scope: "account", value: null,
+          context: { id: newId, workflowId: newWfId, type: n.type, label: n.label, x: n.x || 100, y: n.y || 100, config: n.config || {} },
+          desc: `+ ${n.label}` });
+      }
+      for (const e of (data.edges || [])) {
+        const s = idMap[e.source], t = idMap[e.target];
+        if (s && t) {
+          ef({ alpha: "add", target: "edges", scope: "account", value: null,
+            context: { id: `edge_${now}_${Math.random().toString(36).slice(2, 6)}`, workflowId: newWfId, source: s, target: t },
+            desc: `🔗 Связь` });
+        }
       }
       break;
     }

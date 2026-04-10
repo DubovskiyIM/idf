@@ -30,7 +30,7 @@ const DOMAINS = {
 };
 
 export default function App() {
-  const [domainId, setDomainId] = useState("booking");
+  const [domainId, setDomainId] = useState(() => localStorage.getItem("idf_domain") || "booking");
   const [topView, setTopView] = useState(null); // null | "graph" | "ontology"
   const [tab, setTab] = useState("intents");
   const [bookingView, setBookingView] = useState("catalog"); // catalog | schedule | bookings | draft
@@ -46,21 +46,28 @@ export default function App() {
   const engine = useEngine(domain);
   const { world, drafts, effects, signals, links, exec } = engine;
 
-  // При смене домена: сбросить эффекты на сервере, загрузить seed
+  // При смене домена: загрузить seed если нужно, не удалять данные других доменов
   const switchDomain = useCallback(async (newDomainId) => {
     const newDomain = DOMAINS[newDomainId];
-    // Сбросить
-    await fetch("/api/effects", { method: "DELETE" }).catch(() => {});
-    // Загрузить seed нового домена
+    // Проверить: есть ли seed-данные этого домена в БД
     const seedEffects = newDomain.getSeedEffects();
     if (seedEffects.length > 0) {
-      await fetch("/api/effects/seed", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(seedEffects),
-      }).catch(() => {});
+      // Проверить через API есть ли уже seed этого домена
+      try {
+        const res = await fetch("/api/effects");
+        const existing = await res.json();
+        const hasSeed = existing.some(e => e.intent_id === "_seed" && seedEffects.some(s => s.context?.id && JSON.stringify(e.context)?.includes(s.context.id)));
+        if (!hasSeed) {
+          await fetch("/api/effects/seed", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(seedEffects),
+          });
+        }
+      } catch {}
     }
     setDomainId(newDomainId);
+    localStorage.setItem("idf_domain", newDomainId);
     setTopView(null);
   }, []);
 

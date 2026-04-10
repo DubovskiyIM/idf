@@ -13,6 +13,15 @@ export const ONTOLOGY = {
       fields: ["id", "workflowId", "source", "target", "sourceHandle", "targetHandle"],
       type: "internal"
     },
+    NodeType: {
+      fields: ["id", "name", "category", "inputs", "outputs", "configSchema"],
+      type: "internal"
+    },
+    NodeResult: {
+      fields: ["id", "executionId", "nodeId", "status", "output", "error", "duration"],
+      statuses: ["pending", "running", "completed", "failed", "skipped"],
+      type: "internal"
+    },
     Execution: {
       fields: ["id", "workflowId", "status", "startedAt", "completedAt", "results"],
       statuses: ["pending", "running", "completed", "failed", "stopped"],
