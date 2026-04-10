@@ -1,6 +1,8 @@
 const SINGULAR_TO_PLURAL = {
   slot: "slots", booking: "bookings", service: "services",
-  specialist: "specialists", review: "reviews", draft: "drafts"
+  specialist: "specialists", review: "reviews", draft: "drafts",
+  poll: "polls", option: "options", participant: "participants",
+  vote: "votes", meeting: "meetings"
 };
 
 function getCollectionType(target) {

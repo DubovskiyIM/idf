@@ -1,14 +1,14 @@
 import { useState, useMemo } from "react";
-import { ONTOLOGY } from "../runtime/ontology.js";
-import { INTENTS } from "../runtime/intents.js";
-import { PROJECTIONS } from "../runtime/projections.js";
 
 const TYPE_COLORS = {
   internal: "#22c55e",
   mirror: "#60a5fa",
 };
 
-export default function OntologyInspector({ world }) {
+export default function OntologyInspector({ world, domain }) {
+  const ONTOLOGY = domain?.ONTOLOGY || { entities: {}, predicates: {} };
+  const INTENTS = domain?.INTENTS || {};
+  const PROJECTIONS = domain?.PROJECTIONS || {};
   const [expandedEntity, setExpandedEntity] = useState(null);
 
   // Связи: какие намерения используют какую сущность

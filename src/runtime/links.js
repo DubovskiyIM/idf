@@ -1,6 +1,5 @@
-import { INTENTS } from "./intents.js";
-
-export function deriveLinks() {
+export function deriveLinks(INTENTS) {
+  if (!INTENTS) return [];
   const links = [];
   const ids = Object.keys(INTENTS);
   for (const id of ids) {

@@ -2,7 +2,9 @@ const db = require("./db.js");
 
 const SINGULAR_TO_PLURAL = {
   slot: "slots", booking: "bookings", service: "services",
-  specialist: "specialists", review: "reviews"
+  specialist: "specialists", review: "reviews",
+  poll: "polls", option: "options", participant: "participants",
+  vote: "votes", meeting: "meetings"
 };
 
 function foldWorld() {

@@ -112,6 +112,34 @@ router.delete("/", (req, res) => {
   res.json({ ok: true });
 });
 
+// POST /api/effects/seed — загрузить seed-данные (массив эффектов)
+router.post("/seed", (req, res) => {
+  const effects = req.body;
+  if (!Array.isArray(effects)) return res.status(400).json({ error: "Expected array" });
+
+  const insert = db.prepare(`
+    INSERT INTO effects (id, intent_id, alpha, target, value, scope, parent_id, status, ttl, context, created_at, resolved_at)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+  `);
+
+  const insertMany = db.transaction((effs) => {
+    for (const ef of effs) {
+      insert.run(
+        ef.id, ef.intent_id, ef.alpha, ef.target,
+        ef.value != null ? JSON.stringify(ef.value) : null,
+        ef.scope || "account", ef.parent_id || null,
+        ef.status || "confirmed", ef.ttl || null,
+        ef.context ? JSON.stringify(ef.context) : null,
+        ef.created_at, ef.resolved_at || ef.created_at
+      );
+    }
+  });
+
+  insertMany(effects);
+  broadcast("effects:reset", {}); // trigger reload on clients
+  res.status(201).json({ ok: true, count: effects.length });
+});
+
 router.broadcast = broadcast;
 
 module.exports = router;
