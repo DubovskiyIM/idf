@@ -7,6 +7,27 @@ import { inferParameters } from "./inferParameters.js";
 import { inferControlType } from "./inferControlType.js";
 import { wrapByConfirmation } from "./wrapByConfirmation.js";
 
+// Witnesses, которые обозначают *результат* специализированного захвата
+// (голосовая запись, стикер, GIF, геолокация, опрос). Такие интенты требуют
+// кастомных виджетов, которых в M1 нет — пропускаем целиком, не пытаясь
+// строить абстрактную форму из их частиц.
+const CAPTURE_WITNESSES = new Set([
+  "recording_duration",
+  "sticker_id", "sticker_pack", "sticker_image",
+  "gif_url",
+  "latitude", "longitude",
+  "video_duration", "video_size",
+  "question", "options",
+  "poll_results",
+  "wallpaper_preview", "album_cover",
+  "contacts_file",
+]);
+
+function needsCustomCapture(intent) {
+  const witnesses = intent.particles?.witnesses || [];
+  return witnesses.some(w => CAPTURE_WITNESSES.has(w));
+}
+
 export function assignToSlots(INTENTS, projection, ONTOLOGY) {
   const slots = {
     header: [],
@@ -51,6 +72,10 @@ export function assignToSlots(INTENTS, projection, ONTOLOGY) {
 
     // Применимость к проекции
     if (!appliesToProjection(intent, projection)) continue;
+
+    // M1: пропускаем интенты, требующие кастомных виджетов захвата.
+    // Голосовые, стикеры, GIF, геолокация, опросы — всё это придёт в M2+.
+    if (needsCustomCapture(intent)) continue;
 
     const parameters = inferParameters(intent, ONTOLOGY).map(p => ({
       ...p,
@@ -222,12 +247,13 @@ function buildBody(projection) {
 
 function buildComposer(intentId, intent, parameters, INTENTS) {
   const primaryParam = parameters[0]?.name || "text";
-  // attach-намерения: остальные creates:Message с confirmation:"file" или "click"
+  // attach-намерения: остальные creates:Message с confirmation:"file"
+  // (голосовые/стикеры/GIF пропускаем — для них нужны кастомные виджеты захвата).
   const attachments = [];
   for (const [id, i] of Object.entries(INTENTS)) {
     if (id === intentId) continue;
-    if (i.creates === "Message" &&
-        (i.particles?.confirmation === "file" || i.particles?.confirmation === "click")) {
+    if (needsCustomCapture(i)) continue;
+    if (i.creates === "Message" && i.particles?.confirmation === "file") {
       attachments.push(id);
     }
   }
