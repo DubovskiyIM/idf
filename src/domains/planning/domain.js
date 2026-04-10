@@ -22,6 +22,12 @@ export function describeEffect(intentId, alpha, ctx, target) {
     case "vote_no": return `✕ ${ctx.participantName || "?"}: недоступен ${ctx.date} ${ctx.startTime}`;
     case "close_poll": return `⏹ Голосование закрыто`;
     case "resolve_poll": return `✓ Встреча назначена: ${ctx.date} ${ctx.startTime}`;
+    case "cancel_poll": return `✕ Опрос отменён: ${ctx.title || ctx.id}`;
+    case "cancel_meeting": return `✕ Встреча отменена: ${ctx.title || ctx.id}`;
+    case "decline_invitation": return `👤 ${ctx.name || "?"} отклонил`;
+    case "vote_maybe": return `? ${ctx.participantName || "?"}: возможно ${ctx.date} ${ctx.startTime}`;
+    case "suggest_alternative": return `💡 Предложение: ${ctx.date} ${ctx.startTime}–${ctx.endTime}`;
+    case "set_deadline": return `⏰ Дедлайн: ${ctx.deadline || ctx.value}`;
     case "_seed": return `seed: ${alpha} ${ctx.id || ""}`;
     default: return `${alpha} ${intentId}`;
   }
@@ -31,6 +37,9 @@ export function signalForIntent(intentId) {
   switch (intentId) {
     case "open_poll": return { κ: "notification", desc: "Голосование открыто" };
     case "resolve_poll": return { κ: "notification", desc: "Встреча назначена" };
+    case "cancel_poll": return { κ: "notification", desc: "Опрос отменён" };
+    case "cancel_meeting": return { κ: "notification", desc: "Встреча отменена" };
+    case "decline_invitation": return { κ: "notification", desc: "Приглашение отклонено" };
     default: return null;
   }
 }
@@ -116,6 +125,62 @@ export function buildEffects(intentId, ctx, world, drafts) {
       ef({ alpha: "add", target: "meetings", scope: "account", value: null,
         context: { id: `mtg_${now}`, pollId: poll.id, title: poll.title, date: option.date, startTime: option.startTime, endTime: option.endTime, participantIds: participants.map(p => p.id), status: "confirmed", createdAt: now },
         desc: describeEffect(intentId, "add", { date: option.date, startTime: option.startTime }) });
+      break;
+    }
+    case "cancel_poll": {
+      const poll = (world.polls || []).find(p => p.id === ctx.pollId);
+      if (!poll || poll.status === "resolved" || poll.status === "cancelled") return null;
+      ef({ alpha: "replace", target: "poll.status", scope: "account", value: "cancelled",
+        context: { id: poll.id },
+        desc: `✕ Опрос отменён: ${poll.title}` });
+      break;
+    }
+    case "cancel_meeting": {
+      const meeting = (world.meetings || []).find(m => m.id === ctx.id);
+      if (!meeting || meeting.status !== "confirmed") return null;
+      ef({ alpha: "replace", target: "meeting.status", scope: "account", value: "cancelled",
+        context: { id: meeting.id },
+        desc: `✕ Встреча отменена: ${meeting.title}` });
+      break;
+    }
+    case "decline_invitation": {
+      const participant = (world.participants || []).find(p => p.id === ctx.participantId);
+      if (!participant || participant.status === "declined") return null;
+      ef({ alpha: "replace", target: "participant.status", scope: "account", value: "declined",
+        context: { id: participant.id, name: participant.name },
+        desc: `👤 ${participant.name} отклонил приглашение` });
+      break;
+    }
+    case "vote_maybe": {
+      const option = (world.options || []).find(o => o.id === ctx.optionId);
+      if (!option) return null;
+      const poll = (world.polls || []).find(p => p.id === option.pollId);
+      if (!poll || poll.status !== "open") return null;
+      const participant = (world.participants || []).find(p => p.id === ctx.participantId);
+      if (!participant) return null;
+      const existing = (world.votes || []).find(v => v.participantId === ctx.participantId && v.optionId === ctx.optionId);
+      if (existing) return null;
+      ef({ alpha: "add", target: "votes", scope: "account", value: null,
+        context: { id: `vote_${now}_${Math.random().toString(36).slice(2, 6)}`, participantId: participant.id, participantName: participant.name, optionId: option.id, pollId: poll.id, value: "maybe", date: option.date, startTime: option.startTime },
+        desc: `? ${participant.name}: возможно ${option.date} ${option.startTime}` });
+      break;
+    }
+    case "suggest_alternative": {
+      const poll = (world.polls || []).find(p => p.id === ctx.pollId);
+      if (!poll || poll.status !== "open") return null;
+      if (!ctx.date || !ctx.startTime || !ctx.endTime) return null;
+      ef({ alpha: "add", target: "options", scope: "account", value: null,
+        context: { id: `opt_${now}_${Math.random().toString(36).slice(2, 6)}`, pollId: ctx.pollId, date: ctx.date, startTime: ctx.startTime, endTime: ctx.endTime, suggestedBy: ctx.participantId || null },
+        desc: `💡 Предложен вариант: ${ctx.date} ${ctx.startTime}–${ctx.endTime}` });
+      break;
+    }
+    case "set_deadline": {
+      const poll = (world.polls || []).find(p => p.id === ctx.pollId);
+      if (!poll || poll.status !== "open") return null;
+      if (!ctx.deadline) return null;
+      ef({ alpha: "replace", target: "poll.deadline", scope: "account", value: ctx.deadline,
+        context: { id: poll.id },
+        desc: `⏰ Дедлайн: ${ctx.deadline}` });
       break;
     }
     default: return null;

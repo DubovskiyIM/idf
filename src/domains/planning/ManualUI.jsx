@@ -2,6 +2,7 @@ import { useState, useMemo } from "react";
 
 const POLL_STATUS_COLORS = { draft: "#6b7280", open: "#22c55e", closed: "#f59e0b", resolved: "#6366f1", cancelled: "#ef4444" };
 const VOTE_COLORS = { yes: "#22c55e", no: "#ef4444", maybe: "#f59e0b" };
+const VOTE_LABELS = { yes: "✓ Доступен", no: "✕ Недоступен", maybe: "? Возможно" };
 
 export default function PlanningUI({ world, drafts, exec }) {
   const [view, setView] = useState("polls");
@@ -29,7 +30,7 @@ export default function PlanningUI({ world, drafts, exec }) {
     const counts = {};
     for (const opt of pollOptions) {
       const optVotes = pollVotes.filter(v => v.optionId === opt.id);
-      counts[opt.id] = { yes: optVotes.filter(v => v.value === "yes").length, no: optVotes.filter(v => v.value === "no").length };
+      counts[opt.id] = { yes: optVotes.filter(v => v.value === "yes").length, no: optVotes.filter(v => v.value === "no").length, maybe: optVotes.filter(v => v.value === "maybe").length };
     }
     return counts;
   }, [pollOptions, pollVotes]);
@@ -88,7 +89,16 @@ export default function PlanningUI({ world, drafts, exec }) {
       {/* Детали опроса */}
       {view === "polls" && selectedPoll && (
         <div>
-          <button onClick={() => setSelectedPollId(null)} style={{ background: "none", border: "none", color: "#6366f1", cursor: "pointer", fontSize: 12, marginBottom: 12 }}>← Назад к опросам</button>
+          <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 12 }}>
+            <button onClick={() => setSelectedPollId(null)} style={{ background: "none", border: "none", color: "#6366f1", cursor: "pointer", fontSize: 12 }}>← Назад</button>
+            <div style={{ flex: 1 }} />
+            {selectedPoll.status !== "resolved" && selectedPoll.status !== "cancelled" && (
+              <button onClick={() => { exec("cancel_poll", { pollId: selectedPoll.id }); setSelectedPollId(null); }}
+                style={{ padding: "4px 12px", borderRadius: 4, border: "1px solid #ef4444", background: "#fff", color: "#ef4444", fontSize: 11, cursor: "pointer" }}>
+                Отменить опрос
+              </button>
+            )}
+          </div>
           <h2 style={{ fontSize: 18, fontWeight: 700, marginBottom: 4, color: "#1a1a2e" }}>{selectedPoll.title}</h2>
           <div style={{ fontSize: 12, color: POLL_STATUS_COLORS[selectedPoll.status], fontWeight: 600, textTransform: "uppercase", marginBottom: 16 }}>{selectedPoll.status}</div>
 
@@ -141,12 +151,23 @@ export default function PlanningUI({ world, drafts, exec }) {
               <div style={{ marginBottom: 12 }}>
                 <div style={{ fontSize: 11, color: "#6b7280", textTransform: "uppercase", marginBottom: 6 }}>Голосовать как:</div>
                 <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
-                  {pollParticipants.map(p => (
+                  {pollParticipants.filter(p => p.status !== "declined").map(p => (
                     <button key={p.id} onClick={() => setVotingAs(p.id)}
                       style={{ padding: "4px 12px", borderRadius: 20, border: votingAs === p.id ? "2px solid #6366f1" : "1px solid #d1d5db", background: votingAs === p.id ? "#eef2ff" : "#fff", fontSize: 12, cursor: "pointer", color: "#1a1a2e" }}>
                       {p.name}
                     </button>
                   ))}
+                  {votingAs && (
+                    <button onClick={() => { exec("decline_invitation", { participantId: votingAs }); setVotingAs(null); }}
+                      style={{ padding: "4px 12px", borderRadius: 20, border: "1px solid #ef4444", background: "#fff", fontSize: 11, cursor: "pointer", color: "#ef4444" }}>
+                      Отклонить
+                    </button>
+                  )}
+                  {pollParticipants.filter(p => p.status === "declined").length > 0 && (
+                    <span style={{ fontSize: 10, color: "#ef4444" }}>
+                      отклонили: {pollParticipants.filter(p => p.status === "declined").map(p => p.name).join(", ")}
+                    </span>
+                  )}
                 </div>
               </div>
               {/* Матрица голосов */}
@@ -159,26 +180,48 @@ export default function PlanningUI({ world, drafts, exec }) {
                       <div style={{ flex: 1 }}>
                         <div style={{ fontSize: 14, fontWeight: 600, color: "#1a1a2e" }}>{opt.date} {opt.startTime}–{opt.endTime}</div>
                         <div style={{ fontSize: 11, color: "#6b7280" }}>
-                          <span style={{ color: VOTE_COLORS.yes }}>✓ {vc.yes}</span> · <span style={{ color: VOTE_COLORS.no }}>✕ {vc.no}</span>
+                          <span style={{ color: VOTE_COLORS.yes }}>✓ {vc.yes}</span> · <span style={{ color: VOTE_COLORS.maybe }}>? {vc.maybe || 0}</span> · <span style={{ color: VOTE_COLORS.no }}>✕ {vc.no}</span>
                         </div>
                       </div>
                       {votingAs && !myVote && (
                         <>
                           <button onClick={() => exec("vote_yes", { optionId: opt.id, participantId: votingAs })}
                             style={{ padding: "4px 12px", borderRadius: 4, border: "none", background: "#22c55e", color: "#fff", fontSize: 11, cursor: "pointer" }}>✓ Да</button>
+                          <button onClick={() => exec("vote_maybe", { optionId: opt.id, participantId: votingAs })}
+                            style={{ padding: "4px 12px", borderRadius: 4, border: "1px solid #f59e0b", background: "#fff", color: "#f59e0b", fontSize: 11, cursor: "pointer" }}>? Возм.</button>
                           <button onClick={() => exec("vote_no", { optionId: opt.id, participantId: votingAs })}
                             style={{ padding: "4px 12px", borderRadius: 4, border: "none", background: "#ef4444", color: "#fff", fontSize: 11, cursor: "pointer" }}>✕ Нет</button>
                         </>
                       )}
                       {myVote && (
                         <span style={{ fontSize: 12, fontWeight: 600, color: VOTE_COLORS[myVote.value] }}>
-                          {myVote.value === "yes" ? "✓ Доступен" : "✕ Недоступен"}
+                          {myVote.value === "yes" ? "✓ Доступен" : myVote.value === "maybe" ? "? Возможно" : "✕ Недоступен"}
                         </span>
                       )}
                     </div>
                   );
                 })}
               </div>
+              {/* suggest_alternative */}
+              {votingAs && (
+                <div style={{ marginBottom: 12, padding: 12, background: "#f9fafb", borderRadius: 8, border: "1px dashed #d1d5db" }}>
+                  <div style={{ fontSize: 11, color: "#6b7280", marginBottom: 6 }}>💡 Предложить другое время:</div>
+                  <div style={{ display: "flex", gap: 6 }}>
+                    <input type="date" id="sugDate" style={{ padding: "4px 6px", borderRadius: 4, border: "1px solid #d1d5db", fontSize: 11 }} />
+                    <input type="time" id="sugStart" style={{ padding: "4px 6px", borderRadius: 4, border: "1px solid #d1d5db", fontSize: 11 }} />
+                    <input type="time" id="sugEnd" style={{ padding: "4px 6px", borderRadius: 4, border: "1px solid #d1d5db", fontSize: 11 }} />
+                    <button onClick={() => {
+                      const d = document.getElementById("sugDate").value;
+                      const s = document.getElementById("sugStart").value;
+                      const e = document.getElementById("sugEnd").value;
+                      if (d && s && e) exec("suggest_alternative", { pollId: selectedPoll.id, date: d, startTime: s, endTime: e, participantId: votingAs });
+                    }} style={{ padding: "4px 10px", borderRadius: 4, border: "none", background: "#6366f1", color: "#fff", fontSize: 11, cursor: "pointer" }}>
+                      Предложить
+                    </button>
+                  </div>
+                </div>
+              )}
+
               {/* Закрыть */}
               <button onClick={() => exec("close_poll", { pollId: selectedPoll.id })}
                 style={{ padding: "10px 24px", borderRadius: 6, border: "1px solid #f59e0b", background: "#fff", color: "#f59e0b", fontSize: 14, cursor: "pointer", fontWeight: 600 }}>
@@ -216,10 +259,28 @@ export default function PlanningUI({ world, drafts, exec }) {
             <div style={{ background: "#f0fdf4", borderRadius: 8, padding: 16, border: "1px solid #bbf7d0" }}>
               <div style={{ fontSize: 14, fontWeight: 600, color: "#22c55e", marginBottom: 4 }}>✓ Встреча назначена</div>
               {meetings.filter(m => m.pollId === selectedPoll.id).map(m => (
-                <div key={m.id} style={{ fontSize: 13, color: "#1a1a2e" }}>
-                  {m.date} {m.startTime}–{m.endTime} · {m.participantIds?.length || 0} участников
+                <div key={m.id} style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                  <span style={{ fontSize: 13, color: "#1a1a2e", flex: 1 }}>
+                    {m.date} {m.startTime}–{m.endTime} · {m.participantIds?.length || 0} участников
+                  </span>
+                  {m.status === "confirmed" && (
+                    <button onClick={() => exec("cancel_meeting", { id: m.id })}
+                      style={{ padding: "4px 10px", borderRadius: 4, border: "1px solid #ef4444", background: "#fff", color: "#ef4444", fontSize: 11, cursor: "pointer" }}>
+                      Отменить
+                    </button>
+                  )}
+                  {m.status === "cancelled" && (
+                    <span style={{ fontSize: 11, color: "#ef4444", fontWeight: 600 }}>ОТМЕНЕНА</span>
+                  )}
                 </div>
               ))}
+            </div>
+          )}
+
+          {/* CANCELLED */}
+          {selectedPoll.status === "cancelled" && (
+            <div style={{ background: "#fef2f2", borderRadius: 8, padding: 16, border: "1px solid #fecaca", textAlign: "center", color: "#ef4444", fontWeight: 600 }}>
+              Опрос отменён
             </div>
           )}
         </div>

@@ -1,142 +1,95 @@
 /*
  * Кристаллизованная проекция: service_catalog
- * Источник: PROJECTIONS.service_catalog
- * Свидетельства: name, duration, price, specialist.name
- *
- * Намерения (3): select_service, add_service, (delete_review — косвенно через reviews)
- * Сущности: Service (internal), Specialist (internal), Review (internal)
- * Кристаллизовано из 14 намерений · 5 сущностей
+ * Домен: booking · 14 намерений · 5 сущностей
+ * Намерения: select_service, add_service, leave_review, delete_review
  */
 
 import { useState, useMemo } from "react";
+import { getStyles } from "./theme.js";
 
-export default function ServiceCatalogProjection({ world, exec, drafts, effects }) {
-  const [showAddForm, setShowAddForm] = useState(false);
-  const [newName, setNewName] = useState("");
-  const [newDuration, setNewDuration] = useState(60);
-  const [newPrice, setNewPrice] = useState(1000);
+export default function ServiceCatalogProjection({ world, exec, drafts, theme = "light", variant = "clean" }) {
+  const s = getStyles(theme, variant);
+  const [showAdd, setShowAdd] = useState(false);
+  const [name, setName] = useState("");
+  const [duration, setDuration] = useState(60);
+  const [price, setPrice] = useState(1000);
 
   const specialist = (world.specialists || [])[0];
-  const services = (world.services || []).filter(s => s.active);
+  const services = (world.services || []).filter(svc => svc.active);
   const reviews = world.reviews || [];
   const hasDraft = (drafts || []).length > 0;
 
-  // Средний рейтинг специалиста
   const avgRating = useMemo(() => {
     if (reviews.length === 0) return null;
-    const sum = reviews.reduce((a, r) => a + (r.rating || 0), 0);
-    return (sum / reviews.length).toFixed(1);
+    return (reviews.reduce((a, r) => a + (r.rating || 0), 0) / reviews.length).toFixed(1);
   }, [reviews]);
 
   return (
-    <div>
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 16 }}>
+    <div style={s.container}>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: s.v.gap * 2 }}>
         <div>
-          <h2 style={{ fontSize: 18, fontWeight: 700, fontFamily: "system-ui, sans-serif", margin: 0, color: "#1a1a2e" }}>
+          <h2 style={s.heading("h1")}>
             {specialist?.name || "Специалист"}
-            {avgRating && <span style={{ fontSize: 14, fontWeight: 400, color: "#f59e0b", marginLeft: 8 }}>★ {avgRating}</span>}
+            {avgRating && <span style={{ fontSize: s.v.fontSize.body, fontWeight: 400, color: s.t.warning, marginLeft: 8 }}>★ {avgRating}</span>}
           </h2>
-          <div style={{ fontSize: 13, color: "#6b7280", fontFamily: "system-ui, sans-serif", marginTop: 2 }}>
-            {specialist?.specialization || ""} · {services.length} услуг · {reviews.length} отзывов
-          </div>
+          <div style={s.text("small")}>{specialist?.specialization} · {services.length} услуг · {reviews.length} отзывов</div>
         </div>
-        <button onClick={() => setShowAddForm(!showAddForm)}
-          style={{ padding: "6px 14px", borderRadius: 6, border: "1px solid #d1d5db", background: "#fff", color: "#6b7280", fontSize: 12, fontFamily: "system-ui, sans-serif", cursor: "pointer" }}>
-          {showAddForm ? "Отмена" : "+ Добавить услугу"}
-        </button>
+        <button onClick={() => setShowAdd(!showAdd)} style={s.buttonOutline()}>{showAdd ? "Отмена" : "+ Услуга"}</button>
       </div>
 
-      {/* Намерение: add_service — creates: Service */}
-      {showAddForm && (
-        <div style={{ background: "#f9fafb", borderRadius: 8, padding: 16, border: "1px dashed #d1d5db", marginBottom: 16, fontFamily: "system-ui, sans-serif" }}>
-          <div style={{ display: "flex", gap: 8, marginBottom: 8 }}>
-            <input value={newName} onChange={e => setNewName(e.target.value)} placeholder="Название услуги"
-              style={{ flex: 1, padding: "8px 12px", borderRadius: 6, border: "1px solid #d1d5db", fontSize: 13, outline: "none" }} />
+      {showAdd && (
+        <div style={{ ...s.card, border: `1px dashed ${s.t.border}`, marginBottom: s.v.gap * 2 }}>
+          <div style={{ display: "flex", gap: s.v.gap, marginBottom: s.v.gap }}>
+            <input value={name} onChange={e => setName(e.target.value)} placeholder="Название"
+              style={{ flex: 1, padding: s.v.padding / 2, borderRadius: s.v.radius / 2, border: `1px solid ${s.t.border}`, fontSize: s.v.fontSize.small, fontFamily: s.v.font, background: s.t.surface, color: s.t.text, outline: "none" }} />
           </div>
-          <div style={{ display: "flex", gap: 8, marginBottom: 12 }}>
+          <div style={{ display: "flex", gap: s.v.gap, marginBottom: s.v.gap }}>
             <div style={{ flex: 1 }}>
-              <label style={{ fontSize: 11, color: "#6b7280", display: "block", marginBottom: 4 }}>Длительность (мин)</label>
-              <input type="number" value={newDuration} onChange={e => setNewDuration(+e.target.value)}
-                style={{ width: "100%", padding: "8px 12px", borderRadius: 6, border: "1px solid #d1d5db", fontSize: 13, outline: "none" }} />
+              <div style={{ ...s.text("tiny"), marginBottom: 4 }}>Длительность (мин)</div>
+              <input type="number" value={duration} onChange={e => setDuration(+e.target.value)}
+                style={{ width: "100%", padding: s.v.padding / 2, borderRadius: s.v.radius / 2, border: `1px solid ${s.t.border}`, fontSize: s.v.fontSize.small, background: s.t.surface, color: s.t.text, outline: "none" }} />
             </div>
             <div style={{ flex: 1 }}>
-              <label style={{ fontSize: 11, color: "#6b7280", display: "block", marginBottom: 4 }}>Цена (₽)</label>
-              <input type="number" value={newPrice} onChange={e => setNewPrice(+e.target.value)}
-                style={{ width: "100%", padding: "8px 12px", borderRadius: 6, border: "1px solid #d1d5db", fontSize: 13, outline: "none" }} />
+              <div style={{ ...s.text("tiny"), marginBottom: 4 }}>Цена (₽)</div>
+              <input type="number" value={price} onChange={e => setPrice(+e.target.value)}
+                style={{ width: "100%", padding: s.v.padding / 2, borderRadius: s.v.radius / 2, border: `1px solid ${s.t.border}`, fontSize: s.v.fontSize.small, background: s.t.surface, color: s.t.text, outline: "none" }} />
             </div>
           </div>
-          <button onClick={() => {
-            exec("add_service", { name: newName, duration: newDuration, price: newPrice });
-            setNewName(""); setNewDuration(60); setNewPrice(1000); setShowAddForm(false);
-          }}
-            disabled={!newName.trim()}
-            style={{ padding: "8px 16px", borderRadius: 6, border: "none", background: newName.trim() ? "#6366f1" : "#d1d5db", color: "#fff", fontSize: 13, fontFamily: "system-ui, sans-serif", cursor: newName.trim() ? "pointer" : "default", fontWeight: 600 }}>
-            Добавить
-          </button>
+          <button onClick={() => { exec("add_service", { name, duration, price }); setName(""); setShowAdd(false); }}
+            disabled={!name.trim()} style={s.button()}>Добавить</button>
         </div>
       )}
 
-      {/* Каталог услуг */}
-      <div style={{ display: "flex", flexDirection: "column", gap: 8, marginBottom: 24 }}>
-        {services.map(service => (
-          <div key={service.id} style={{
-            display: "flex", alignItems: "center", gap: 12, background: "#fff", borderRadius: 8,
-            padding: "14px 16px", border: "1px solid #e5e7eb", boxShadow: "0 1px 3px #0001",
-          }}>
-            <div style={{ flex: 1, fontFamily: "system-ui, sans-serif" }}>
-              <div style={{ fontSize: 15, fontWeight: 600, color: "#1a1a2e" }}>{service.name}</div>
-              <div style={{ fontSize: 13, color: "#6b7280", marginTop: 2 }}>{service.duration} мин</div>
+      <div style={{ display: "flex", flexDirection: "column", gap: s.v.gap }}>
+        {services.map(svc => (
+          <div key={svc.id} style={{ ...s.card, display: "flex", alignItems: "center", gap: s.v.gap }}>
+            <div style={{ flex: 1 }}>
+              <div style={s.heading("h2")}>{svc.name}</div>
+              <div style={s.text("small")}>{svc.duration} мин {svc.duration > 60 ? `(${Math.ceil(svc.duration/60)} слота)` : ""}</div>
             </div>
-            <div style={{ fontSize: 16, fontWeight: 700, color: "#6366f1", fontFamily: "system-ui, sans-serif", marginRight: 12 }}>
-              {service.price} ₽
-            </div>
-            <button onClick={() => exec("select_service", { serviceId: service.id })}
-              disabled={hasDraft}
-              style={{
-                padding: "8px 16px", borderRadius: 6, border: "none",
-                background: hasDraft ? "#d1d5db" : "#6366f1", color: "#fff",
-                fontSize: 13, fontFamily: "system-ui, sans-serif",
-                cursor: hasDraft ? "default" : "pointer", fontWeight: 600
-              }}>
-              Выбрать
-            </button>
+            <div style={{ fontSize: s.v.fontSize.h2, fontWeight: 700, color: s.t.accent, fontFamily: s.v.font }}>{svc.price} ₽</div>
+            <button onClick={() => exec("select_service", { serviceId: svc.id })}
+              disabled={hasDraft} style={hasDraft ? { ...s.button("muted"), cursor: "default" } : s.button()}>Выбрать</button>
           </div>
         ))}
       </div>
 
-      {hasDraft && (
-        <div style={{ marginTop: 12, fontSize: 12, color: "#f59e0b", fontFamily: "system-ui, sans-serif" }}>
-          У вас есть незавершённый черновик Δ. Завершите или отмените его.
-        </div>
-      )}
+      {hasDraft && <div style={{ ...s.text("small"), color: s.t.warning, marginTop: s.v.gap }}>Черновик Δ активен</div>}
 
-      {/* Отзывы */}
       {reviews.length > 0 && (
         <>
-          <div style={{ fontSize: 11, color: "#6b7280", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 8, fontFamily: "system-ui, sans-serif" }}>
-            Отзывы ({reviews.length})
-          </div>
-          <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-            {reviews.sort((a, b) => b.createdAt - a.createdAt).map(review => (
-              <div key={review.id} style={{
-                background: "#fff", borderRadius: 8, padding: "10px 14px",
-                border: "1px solid #e5e7eb", fontFamily: "system-ui, sans-serif",
-                display: "flex", alignItems: "center", gap: 10,
-              }}>
-                <span style={{ fontSize: 16, color: "#f59e0b", minWidth: 40 }}>{"★".repeat(review.rating)}</span>
-                <div style={{ flex: 1 }}>
-                  <div style={{ fontSize: 12, color: "#1a1a2e" }}>{review.serviceName}</div>
-                  {review.text && <div style={{ fontSize: 11, color: "#6b7280", marginTop: 2 }}>{review.text}</div>}
-                </div>
-                {/* Намерение: delete_review — irreversibility: medium */}
-                <button onClick={() => exec("delete_review", { id: review.id })}
-                  style={{ background: "none", border: "none", cursor: "pointer", color: "#d1d5db", fontSize: 14 }}
-                  onMouseEnter={e => e.target.style.color = "#ef4444"} onMouseLeave={e => e.target.style.color = "#d1d5db"}>
-                  ×
-                </button>
+          <div style={{ ...s.text("tiny"), textTransform: "uppercase", letterSpacing: "0.05em", marginTop: s.v.gap * 3, marginBottom: s.v.gap }}>Отзывы ({reviews.length})</div>
+          {reviews.sort((a, b) => b.createdAt - a.createdAt).map(r => (
+            <div key={r.id} style={{ ...s.card, display: "flex", alignItems: "center", gap: s.v.gap, marginBottom: s.v.gap / 2 }}>
+              <span style={{ color: s.t.warning, fontSize: s.v.fontSize.body, minWidth: 50 }}>{"★".repeat(r.rating)}</span>
+              <div style={{ flex: 1 }}>
+                <div style={s.text("small")}>{r.serviceName}</div>
+                {r.text && <div style={s.text("tiny")}>{r.text}</div>}
               </div>
-            ))}
-          </div>
+              <button onClick={() => exec("delete_review", { id: r.id })}
+                style={{ background: "none", border: "none", cursor: "pointer", color: s.t.textMuted, fontSize: 14 }}>×</button>
+            </div>
+          ))}
         </>
       )}
     </div>

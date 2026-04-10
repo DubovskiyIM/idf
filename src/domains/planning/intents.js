@@ -73,5 +73,59 @@ export const INTENTS = {
       witnesses: ["winning_option.date", "votes_yes.count", "votes_no.count"],
       confirmation: "click"
     }, antagonist: null, creates: "Meeting"
+  },
+  cancel_poll: {
+    name: "Отменить опрос", particles: {
+      entities: ["poll: Poll"],
+      conditions: ["poll.status IN ('draft','open','closed')"],
+      effects: [{ α: "replace", target: "poll.status", value: "cancelled", σ: "account" }],
+      witnesses: ["poll.title", "participants.count"],
+      confirmation: "click"
+    }, antagonist: null, creates: null, irreversibility: "high"
+  },
+  cancel_meeting: {
+    name: "Отменить встречу", particles: {
+      entities: ["meeting: Meeting"],
+      conditions: ["meeting.status = 'confirmed'"],
+      effects: [{ α: "replace", target: "meeting.status", value: "cancelled", σ: "account" }],
+      witnesses: ["meeting.title", "meeting.date", "participants.count"],
+      confirmation: "click"
+    }, antagonist: "resolve_poll", creates: null, irreversibility: "high"
+  },
+  decline_invitation: {
+    name: "Отклонить приглашение", particles: {
+      entities: ["participant: Participant"],
+      conditions: ["participant.status = 'active'"],
+      effects: [{ α: "replace", target: "participant.status", value: "declined", σ: "account" }],
+      witnesses: ["poll.title"],
+      confirmation: "click"
+    }, antagonist: null, creates: null
+  },
+  vote_maybe: {
+    name: "Возможно", particles: {
+      entities: ["option: TimeOption", "participant: Participant"],
+      conditions: ["poll.status = 'open'"],
+      effects: [{ α: "add", target: "votes", σ: "account" }],
+      witnesses: ["option.date", "option.startTime"],
+      confirmation: "click"
+    }, antagonist: null, creates: "Vote(maybe)"
+  },
+  suggest_alternative: {
+    name: "Предложить время", particles: {
+      entities: ["poll: Poll", "option: TimeOption"],
+      conditions: ["poll.status = 'open'"],
+      effects: [{ α: "add", target: "options", σ: "account" }],
+      witnesses: ["poll.title", "existing_options"],
+      confirmation: "click"
+    }, antagonist: null, creates: "TimeOption"
+  },
+  set_deadline: {
+    name: "Установить дедлайн", particles: {
+      entities: ["poll: Poll"],
+      conditions: ["poll.status = 'open'"],
+      effects: [{ α: "replace", target: "poll.deadline", σ: "account" }],
+      witnesses: ["poll.current_deadline", "votes.count"],
+      confirmation: "click"
+    }, antagonist: null, creates: null
   }
 };

@@ -12,9 +12,12 @@ import * as planningDomain from "./domains/planning/domain.js";
 import BookingUI from "./domains/booking/ManualUI.jsx";
 import PlanningUI from "./domains/planning/ManualUI.jsx";
 
-// Кристаллизованные проекции planning
+// Кристаллизованные проекции
 import PollOverview from "./crystallized/poll_overview.jsx";
 import VotingMatrix from "./crystallized/voting_matrix.jsx";
+import ServiceCatalog from "./crystallized/service_catalog.jsx";
+import SpecialistSchedule from "./crystallized/specialist_schedule.jsx";
+import MyBookings from "./crystallized/my_bookings.jsx";
 
 const DOMAINS = {
   booking: { ...bookingDomain, UI: BookingUI },
@@ -89,17 +92,15 @@ export default function App() {
         </div>
 
         {/* Режим: ручной / кристаллизованный */}
-        {domainId === "planning" && (
-          <div style={{ display: "flex", background: "#1e2230", borderRadius: 6, padding: 2 }}>
-            {["manual", "crystallized"].map(m => (
-              <button key={m} onClick={() => setMode(m)} style={{
-                padding: "4px 10px", borderRadius: 4, border: "none", cursor: "pointer", fontSize: 10,
-                background: mode === m ? "#f59e0b" : "transparent",
-                color: mode === m ? "#0c0e14" : "#6b7280", fontWeight: mode === m ? 600 : 400
-              }}>{m === "manual" ? "Ручной" : "Кристалл."}</button>
-            ))}
-          </div>
-        )}
+        <div style={{ display: "flex", background: "#1e2230", borderRadius: 6, padding: 2 }}>
+          {["manual", "crystallized"].map(m => (
+            <button key={m} onClick={() => setMode(m)} style={{
+              padding: "4px 10px", borderRadius: 4, border: "none", cursor: "pointer", fontSize: 10,
+              background: mode === m ? "#f59e0b" : "transparent",
+              color: mode === m ? "#0c0e14" : "#6b7280", fontWeight: mode === m ? 600 : 400
+            }}>{m === "manual" ? "Ручной" : "Кристалл."}</button>
+          ))}
+        </div>
 
         {/* Тема + вариант (только для кристаллизованного) */}
         {mode === "crystallized" && (
@@ -206,13 +207,23 @@ export default function App() {
             </div>
             <div style={{ flex: 1, overflow: "auto", background: theme === "dark" && mode === "crystallized" ? "#0c0e14" : "#fafafa", color: theme === "dark" && mode === "crystallized" ? "#e2e5eb" : "#1a1a2e" }}>
               <div style={{ maxWidth: 700, margin: "0 auto", padding: 24 }}>
-                {mode === "manual" || domainId !== "planning" ? (
+                {mode === "manual" ? (
                   <domain.UI world={world} drafts={drafts} exec={exec} effects={effects} />
-                ) : (
+                ) : domainId === "planning" ? (
                   <>
                     <PollOverview world={world} exec={exec} theme={theme} variant={variant} />
                     <div style={{ marginTop: 24 }}>
                       <VotingMatrix world={world} theme={theme} variant={variant} />
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <ServiceCatalog world={world} exec={exec} drafts={drafts} theme={theme} variant={variant} />
+                    <div style={{ marginTop: 24 }}>
+                      <SpecialistSchedule world={world} exec={exec} drafts={drafts} theme={theme} variant={variant} />
+                    </div>
+                    <div style={{ marginTop: 24 }}>
+                      <MyBookings world={world} exec={exec} theme={theme} variant={variant} />
                     </div>
                   </>
                 )}

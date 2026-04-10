@@ -1,167 +1,111 @@
 /*
  * Кристаллизованная проекция: specialist_schedule
- * Источник: PROJECTIONS.specialist_schedule
- * Свидетельства: date, startTime, endTime, status
- *
- * Намерения (4): select_slot (TTL), block_slot, unblock_slot (⇌), reschedule_booking (target)
- * Сущности: TimeSlot (mirror), Booking (internal)
- * Кристаллизовано из 14 намерений · 5 сущностей
+ * Домен: booking · Намерения: select_slot (TTL), block_slot, unblock_slot (⇌), reschedule_booking
  */
 
 import { useState, useMemo } from "react";
+import { getStyles } from "./theme.js";
 
-const STATUS_CONFIG = {
-  free: { bg: "#f0fdf4", border: "#bbf7d0", text: "#22c55e", label: "свободен" },
-  held: { bg: "#fffbeb", border: "#fed7aa", text: "#f59e0b", label: "удержан" },
-  booked: { bg: "#eef2ff", border: "#c7d2fe", text: "#6366f1", label: "забронирован" },
-  blocked: { bg: "#f3f4f6", border: "#d1d5db", text: "#6b7280", label: "заблокирован" },
-};
-
-export default function SpecialistScheduleProjection({ world, exec, drafts, effects }) {
+export default function SpecialistScheduleProjection({ world, exec, drafts, theme = "light", variant = "clean" }) {
+  const s = getStyles(theme, variant);
   const [selectedDate, setSelectedDate] = useState(null);
-  const [rescheduleBookingId, setRescheduleBookingId] = useState(null);
+  const [rescheduleId, setRescheduleId] = useState(null);
 
   const dates = useMemo(() => {
-    const all = [...new Set((world.slots || []).map(s => s.date))].sort();
+    const all = [...new Set((world.slots || []).map(sl => sl.date))].sort();
     if (!selectedDate && all.length > 0) setSelectedDate(all[0]);
     return all;
   }, [world.slots]);
 
   const slotsForDate = useMemo(
-    () => (world.slots || []).filter(s => s.date === selectedDate).sort((a, b) => a.startTime.localeCompare(b.startTime)),
+    () => (world.slots || []).filter(sl => sl.date === selectedDate).sort((a, b) => a.startTime.localeCompare(b.startTime)),
     [world.slots, selectedDate]
   );
 
   const draft = (drafts || [])[0];
-  const canSelectSlot = draft && !draft.slotId;
-
-  // Бронирования для переноса
-  const confirmedBookings = (world.bookings || []).filter(b => b.status === "confirmed");
+  const canSelect = draft && !draft.slotId;
+  const confirmed = (world.bookings || []).filter(b => b.status === "confirmed");
 
   return (
-    <div>
-      <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 16 }}>
-        <h2 style={{ fontSize: 18, fontWeight: 700, fontFamily: "system-ui, sans-serif", margin: 0, color: "#1a1a2e" }}>
-          Расписание
-        </h2>
-        {draft && (
-          <span style={{ fontSize: 12, color: "#f59e0b", fontFamily: "system-ui, sans-serif" }}>
-            выберите слот для: {draft.serviceName} ({draft.duration} мин)
+    <div style={s.container}>
+      <div style={{ display: "flex", alignItems: "center", gap: s.v.gap, marginBottom: s.v.gap }}>
+        <h2 style={s.heading("h1")}>Расписание</h2>
+        {draft && <span style={{ ...s.badge("draft") }}>выберите слот: {draft.serviceName}</span>}
+        {rescheduleId && (
+          <span style={{ ...s.badge("open") }}>
+            перенос — выберите новый слот
+            <button onClick={() => setRescheduleId(null)} style={{ background: "none", border: "none", color: s.t.danger, cursor: "pointer", marginLeft: 4 }}>×</button>
           </span>
         )}
-        {rescheduleBookingId && (
-          <span style={{ fontSize: 12, color: "#8b5cf6", fontFamily: "system-ui, sans-serif" }}>
-            выберите новый слот для переноса
-            <button onClick={() => setRescheduleBookingId(null)}
-              style={{ background: "none", border: "none", color: "#ef4444", cursor: "pointer", marginLeft: 6, fontSize: 12 }}>отмена</button>
-          </span>
-        )}
-        {!draft && !rescheduleBookingId && confirmedBookings.length > 0 && (
-          <select onChange={e => { if (e.target.value) setRescheduleBookingId(e.target.value); }}
-            value="" style={{ fontSize: 11, padding: "4px 8px", borderRadius: 4, border: "1px solid #d1d5db", color: "#6b7280", fontFamily: "system-ui, sans-serif" }}>
-            <option value="">↔ Перенести запись...</option>
-            {confirmedBookings.map(b => (
-              <option key={b.id} value={b.id}>{b.serviceName} ({b.date} {b.startTime})</option>
-            ))}
+        {!draft && !rescheduleId && confirmed.length > 0 && (
+          <select onChange={e => { if (e.target.value) setRescheduleId(e.target.value); }} value=""
+            style={{ fontSize: s.v.fontSize.tiny, padding: "3px 6px", borderRadius: s.v.radius / 2, border: `1px solid ${s.t.border}`, background: s.t.surface, color: s.t.textSecondary, fontFamily: s.v.font }}>
+            <option value="">↔ Перенести...</option>
+            {confirmed.map(b => <option key={b.id} value={b.id}>{b.serviceName} ({b.date})</option>)}
           </select>
         )}
       </div>
 
-      {/* Переключатель дат */}
-      <div style={{ display: "flex", gap: 6, marginBottom: 16, flexWrap: "wrap" }}>
+      {/* Даты */}
+      <div style={{ display: "flex", gap: s.v.gap / 2, marginBottom: s.v.gap * 2, flexWrap: "wrap" }}>
         {dates.map(d => {
           const dt = new Date(d + "T00:00:00");
-          const dayName = dt.toLocaleDateString("ru", { weekday: "short" });
-          const dayNum = dt.getDate();
-          const freeCount = (world.slots || []).filter(s => s.date === d && s.status === "free").length;
+          const freeCount = (world.slots || []).filter(sl => sl.date === d && sl.status === "free").length;
           return (
             <button key={d} onClick={() => setSelectedDate(d)} style={{
-              padding: "8px 14px", borderRadius: 8,
-              border: selectedDate === d ? "2px solid #6366f1" : "1px solid #e5e7eb",
-              background: selectedDate === d ? "#eef2ff" : "#fff",
-              cursor: "pointer", fontSize: 12, fontFamily: "system-ui, sans-serif",
-              color: selectedDate === d ? "#6366f1" : "#1a1a2e",
-              fontWeight: selectedDate === d ? 600 : 400, textAlign: "center", minWidth: 70,
+              padding: `${s.v.padding / 2}px ${s.v.padding}px`, borderRadius: s.v.radius,
+              border: selectedDate === d ? `2px solid ${s.t.accent}` : `1px solid ${s.t.border}`,
+              background: selectedDate === d ? s.t.accentBg : s.t.surface,
+              cursor: "pointer", fontFamily: s.v.font, color: s.t.text, textAlign: "center", minWidth: 60,
             }}>
-              <div>{dayName}</div>
-              <div style={{ fontSize: 16, fontWeight: 700 }}>{dayNum}</div>
-              <div style={{ fontSize: 10, color: "#6b7280" }}>{freeCount > 0 ? `${freeCount} своб.` : "нет"}</div>
+              <div style={{ fontSize: s.v.fontSize.small }}>{dt.toLocaleDateString("ru", { weekday: "short" })}</div>
+              <div style={{ fontSize: s.v.fontSize.h2, fontWeight: 700 }}>{dt.getDate()}</div>
+              <div style={{ fontSize: s.v.fontSize.tiny, color: s.t.textMuted }}>{freeCount > 0 ? `${freeCount} св.` : "—"}</div>
             </button>
           );
         })}
       </div>
 
-      {/* Сетка слотов */}
-      <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+      {/* Слоты */}
+      <div style={{ display: "flex", flexDirection: "column", gap: s.v.gap / 2 }}>
         {slotsForDate.map(slot => {
-          const sc = STATUS_CONFIG[slot.status] || STATUS_CONFIG.free;
-          // Найти бронирование для этого слота
           const booking = (world.bookings || []).find(b => b.slotId === slot.id && b.status !== "cancelled");
-
           return (
             <div key={slot.id} style={{
-              display: "flex", alignItems: "center", gap: 12,
-              background: sc.bg, borderRadius: 8, padding: "10px 14px",
-              border: `1px solid ${sc.border}`, borderLeft: `3px solid ${sc.text}`,
-              opacity: slot.status === "blocked" ? 0.6 : 1,
+              ...s.card, display: "flex", alignItems: "center", gap: s.v.gap,
+              borderLeft: `3px solid ${s.statusColor(slot.status)}`,
+              opacity: slot.status === "blocked" ? 0.5 : 1, padding: `${s.v.padding * 0.6}px ${s.v.padding}px`,
             }}>
-              <span style={{ fontSize: 15, fontWeight: 600, fontFamily: "system-ui, sans-serif", color: "#1a1a2e", minWidth: 110 }}>
-                {slot.startTime} — {slot.endTime}
-              </span>
-              <span style={{ fontSize: 11, color: sc.text, fontWeight: 600, textTransform: "uppercase", minWidth: 100 }}>
-                {sc.label}
-              </span>
-              {/* Инфо о бронировании */}
-              {booking && (
-                <span style={{ fontSize: 11, color: "#6b7280", fontFamily: "system-ui, sans-serif" }}>
-                  {booking.serviceName}
-                </span>
-              )}
-              {slot.status === "held" && (
-                <span style={{ fontSize: 10, color: "#f59e0b", fontFamily: "system-ui, sans-serif" }}>TTL 10м</span>
-              )}
+              <span style={{ ...s.heading("h2"), minWidth: 100 }}>{slot.startTime}—{slot.endTime}</span>
+              <span style={s.badge(slot.status)}>{slot.status}</span>
+              {booking && <span style={s.text("small")}>{booking.serviceName}</span>}
+              {slot.status === "held" && <span style={{ ...s.text("tiny"), color: s.t.warning }}>TTL 10м</span>}
               <div style={{ flex: 1 }} />
-
-              {/* Намерение: select_slot — выбор для нового бронирования */}
-              {slot.status === "free" && canSelectSlot && (
-                <button onClick={() => exec("select_slot", { slotId: slot.id })}
-                  style={{ padding: "6px 14px", borderRadius: 6, border: "none", background: "#22c55e", color: "#fff", fontSize: 12, fontFamily: "system-ui, sans-serif", cursor: "pointer", fontWeight: 600 }}>
-                  Выбрать
-                </button>
+              {slot.status === "free" && canSelect && (
+                <button onClick={() => exec("select_slot", { slotId: slot.id })} style={s.button("success")}>Выбрать</button>
               )}
-              {/* Намерение: reschedule_booking — выбор нового слота для переноса */}
-              {slot.status === "free" && rescheduleBookingId && (
-                <button onClick={() => { exec("reschedule_booking", { id: rescheduleBookingId, newSlotId: slot.id }); setRescheduleBookingId(null); }}
-                  style={{ padding: "6px 14px", borderRadius: 6, border: "none", background: "#8b5cf6", color: "#fff", fontSize: 12, fontFamily: "system-ui, sans-serif", cursor: "pointer", fontWeight: 600 }}>
-                  Перенести сюда
-                </button>
+              {slot.status === "free" && rescheduleId && (
+                <button onClick={() => { exec("reschedule_booking", { id: rescheduleId, newSlotId: slot.id }); setRescheduleId(null); }}
+                  style={s.button("accent")}>Перенести сюда</button>
               )}
-              {/* Намерение: block_slot */}
-              {slot.status === "free" && !draft && !rescheduleBookingId && (
-                <button onClick={() => exec("block_slot", { slotId: slot.id })}
-                  style={{ padding: "6px 14px", borderRadius: 6, border: "1px solid #d1d5db", background: "#fff", color: "#6b7280", fontSize: 12, fontFamily: "system-ui, sans-serif", cursor: "pointer" }}>
-                  Блокировать
-                </button>
+              {slot.status === "free" && !draft && !rescheduleId && (
+                <button onClick={() => exec("block_slot", { slotId: slot.id })} style={s.buttonOutline("muted")}>Блок.</button>
               )}
-              {/* Намерение: unblock_slot — ⇌ антагонист block_slot */}
               {slot.status === "blocked" && (
-                <button onClick={() => exec("unblock_slot", { slotId: slot.id })}
-                  style={{ padding: "6px 14px", borderRadius: 6, border: "1px solid #22c55e", background: "#fff", color: "#22c55e", fontSize: 12, fontFamily: "system-ui, sans-serif", cursor: "pointer" }}>
-                  Разблокировать
-                </button>
+                <button onClick={() => exec("unblock_slot", { slotId: slot.id })} style={s.buttonOutline("success")}>Разблок.</button>
               )}
             </div>
           );
         })}
-        {slotsForDate.length === 0 && (
-          <div style={{ textAlign: "center", padding: 40, color: "#9ca3af", fontFamily: "system-ui, sans-serif" }}>Нет слотов</div>
-        )}
+        {slotsForDate.length === 0 && <div style={{ textAlign: "center", padding: 40, ...s.text() }}>Нет слотов</div>}
       </div>
 
       {/* Легенда */}
-      <div style={{ display: "flex", gap: 16, marginTop: 16, fontSize: 11, fontFamily: "system-ui, sans-serif" }}>
-        {Object.entries(STATUS_CONFIG).map(([status, sc]) => (
-          <span key={status} style={{ color: sc.text }}>● {sc.label}</span>
+      <div style={{ display: "flex", gap: s.v.gap * 2, marginTop: s.v.gap, fontSize: s.v.fontSize.tiny }}>
+        {["free", "held", "booked", "blocked"].map(st => (
+          <span key={st} style={{ color: s.statusColor(st), display: "flex", alignItems: "center", gap: 3 }}>
+            <span style={{ width: 6, height: 6, borderRadius: "50%", background: s.statusColor(st), display: "inline-block" }} /> {st}
+          </span>
         ))}
       </div>
     </div>
