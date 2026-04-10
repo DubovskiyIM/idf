@@ -13,8 +13,23 @@ app.use("/api/effects", effectsRouter);
 app.use("/api", artifactsRouter);
 
 const { startSync, setBroadcast } = require("./boundary.js");
+const { executeWorkflow, setBroadcast: setExecBroadcast } = require("./executor.js");
 setBroadcast(effectsRouter.broadcast);
+setExecBroadcast(effectsRouter.broadcast);
 startSync();
+
+// Endpoint для исполнения workflow
+app.post("/api/execute/:workflowId", async (req, res) => {
+  try {
+    res.json({ ok: true, status: "started" });
+    // Исполнение асинхронно — результаты стримятся через SSE
+    executeWorkflow(req.params.workflowId).catch(err => {
+      console.error("  [executor] Ошибка:", err.message);
+    });
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
+});
 
 app.listen(PORT, () => {
   console.log(`IDF сервер запущен: http://localhost:${PORT}`);

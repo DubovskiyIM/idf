@@ -7,15 +7,18 @@ import OntologyInspector from "./components/OntologyInspector.jsx";
 // Домены
 import * as bookingDomain from "./domains/booking/domain.js";
 import * as planningDomain from "./domains/planning/domain.js";
+import * as workflowDomain from "./domains/workflow/domain.js";
 
 // Manual UI
 import BookingUI from "./domains/booking/ManualUI.jsx";
 import PlanningUI from "./domains/planning/ManualUI.jsx";
+import WorkflowUI from "./domains/workflow/ManualUI.jsx";
 
 // Кристаллизованные проекции
 import PollOverview from "./crystallized/poll_overview.jsx";
 import VotingMatrix from "./crystallized/voting_matrix.jsx";
 import { getStyles } from "./crystallized/theme.js";
+import WorkflowCanvas from "./crystallized/workflow_canvas.jsx";
 import ServiceCatalog from "./crystallized/service_catalog.jsx";
 import SpecialistSchedule from "./crystallized/specialist_schedule.jsx";
 import MyBookings from "./crystallized/my_bookings.jsx";
@@ -23,6 +26,7 @@ import MyBookings from "./crystallized/my_bookings.jsx";
 const DOMAINS = {
   booking: { ...bookingDomain, UI: BookingUI },
   planning: { ...planningDomain, UI: PlanningUI },
+  workflow: { ...workflowDomain, UI: WorkflowUI },
 };
 
 export default function App() {
@@ -215,6 +219,8 @@ export default function App() {
               <div style={{ maxWidth: 700, margin: "0 auto", padding: 24 }}>
                 {mode === "manual" ? (
                   <domain.UI world={world} drafts={drafts} exec={exec} effects={effects} />
+                ) : domainId === "workflow" ? (
+                  <WorkflowCanvas world={world} exec={exec} theme={theme} variant={variant} />
                 ) : domainId === "planning" ? (
                   <>
                     <PollOverview world={world} exec={exec} theme={theme} variant={variant} />

@@ -10,7 +10,10 @@ const SINGULAR_TO_PLURAL = {
   specialist: "specialists", review: "reviews",
   // planning domain
   poll: "polls", option: "options", participant: "participants",
-  vote: "votes", meeting: "meetings"
+  vote: "votes", meeting: "meetings",
+  // workflow domain
+  workflow: "workflows", node: "nodes", edge: "edges",
+  execution: "executions", noderesult: "noderesults"
 };
 
 function foldWorld() {
