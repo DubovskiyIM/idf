@@ -42,11 +42,22 @@ app.post("/api/execute/:workflowId", async (req, res) => {
   }
 });
 
-app.listen(PORT, () => {
+// Auth routes
+const authRouter = require("./routes/auth.js");
+app.use("/api/auth", authRouter);
+
+// WebSocket
+const http = require("http");
+const server = http.createServer(app);
+const { setupWebSocket } = require("./ws.js");
+setupWebSocket(server);
+
+server.listen(PORT, () => {
   console.log(`IDF сервер запущен: http://localhost:${PORT}`);
+  console.log(`  WebSocket: ws://localhost:${PORT}/ws`);
+  console.log(`  POST /api/auth/register  — регистрация`);
+  console.log(`  POST /api/auth/login     — вход`);
+  console.log(`  GET  /api/auth/users     — все пользователи`);
   console.log(`  POST /api/effects        — создать эффект`);
-  console.log(`  GET  /api/effects        — все эффекты`);
   console.log(`  GET  /api/effects/stream — SSE-стрим`);
-  console.log(`  POST /api/artifacts      — сохранить артефакт`);
-  console.log(`  GET  /api/ontology       — онтология`);
 });

@@ -21,6 +21,7 @@ updateTypeMap({ entities: {
   Slot: {}, Booking: {}, Service: {}, Specialist: {}, Review: {},
   Poll: {}, Option: {}, Participant: {}, Vote: {}, Meeting: {},
   Workflow: {}, Node: {}, Edge: {}, Execution: {}, NodeResult: {}, NodeType: {},
+  User: {}, Contact: {}, Conversation: {}, Message: {},
 }});
 
 function foldWorld() {

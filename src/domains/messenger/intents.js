@@ -1,0 +1,123 @@
+// 100 намерений мессенджера — стресс-тест ядра IDF
+// Категории: сообщения (25), беседы (20), контакты (15), профиль (10), группы (15), медиа (10), звонки (5)
+
+const intent = (name, entities, conditions, effects, witnesses, conf, extra = {}) => ({
+  name, particles: { entities, conditions, effects, witnesses, confirmation: conf }, antagonist: null, creates: null, ...extra
+});
+const ef = (α, target, σ = "account", extra = {}) => ({ α, target, σ, ...extra });
+
+export const INTENTS = {
+  // ===== СООБЩЕНИЯ (25) =====
+  send_message: intent("Отправить сообщение", ["message: Message", "conversation: Conversation"], [], [ef("add", "messages")], ["conversation.title", "draft_text"], "enter", { creates: "Message" }),
+  edit_message: intent("Редактировать", ["message: Message"], ["message.senderId = me.id"], [ef("replace", "message.content")], ["message.content"], "click", { phase: "investigation" }),
+  delete_message: intent("Удалить сообщение", ["message: Message"], ["message.senderId = me.id"], [ef("replace", "message.deletedFor")], ["message.content"], "click"),
+  reply_to_message: intent("Ответить", ["message: Message", "conversation: Conversation"], [], [ef("add", "messages")], ["original_message.content"], "enter", { creates: "Message" }),
+  forward_message: intent("Переслать", ["message: Message", "conversation: Conversation"], [], [ef("add", "messages")], ["message.content", "target_conversation.title"], "click", { creates: "Message" }),
+  pin_message: intent("Закрепить сообщение", ["message: Message"], [], [ef("replace", "message.pinned", "account", { value: true })], ["message.content"], "click"),
+  unpin_message: intent("Открепить сообщение", ["message: Message"], ["message.pinned = true"], [ef("replace", "message.pinned", "account", { value: false })], [], "click", { antagonist: "pin_message" }),
+  react_to_message: intent("Реакция", ["message: Message"], [], [ef("add", "reactions")], ["message.content", "available_reactions"], "click", { creates: "Reaction" }),
+  remove_reaction: intent("Убрать реакцию", ["reaction: Reaction"], [], [ef("remove", "reactions")], [], "click"),
+  bookmark_message: intent("Сохранить в избранное", ["message: Message"], [], [ef("add", "bookmarks")], ["message.content"], "click", { creates: "Bookmark" }),
+  remove_bookmark: intent("Убрать из избранного", ["bookmark: Bookmark"], [], [ef("remove", "bookmarks")], [], "click"),
+  report_message: intent("Пожаловаться", ["message: Message"], [], [ef("add", "reports")], ["message.content", "report_reason"], "form", { creates: "Report", irreversibility: "high" }),
+  translate_message: intent("Перевести", ["message: Message"], [], [], ["message.content", "translated_text"], "click"),
+  send_voice_message: intent("Голосовое сообщение", ["message: Message"], [], [ef("add", "messages")], ["recording_duration"], "click", { creates: "Message" }),
+  schedule_message: intent("Запланировать сообщение", ["message: Message"], [], [ef("add", "messages", "account", { ttl: null })], ["content", "scheduled_time"], "form", { creates: "Message" }),
+  bulk_delete_messages: intent("Массовое удаление", ["message: Message[]"], [], [ef("replace", "message.deletedFor")], ["selected_count"], "click", { extended: true }),
+  search_messages: intent("Поиск по сообщениям", [], [], [], ["query", "results"], "form"),
+  message_info: intent("Информация о сообщении", ["message: Message"], [], [], ["read_by", "delivered_to", "created_at"], "click"),
+  copy_message: intent("Копировать текст", ["message: Message"], [], [], ["message.content"], "click"),
+  select_messages: intent("Выделить сообщения", ["message: Message[]"], [], [], ["selected_count"], "click"),
+  mark_as_unread: intent("Отметить непрочитанным", ["participant: Participant"], [], [ef("replace", "participant.lastReadAt")], [], "click"),
+  send_sticker: intent("Отправить стикер", ["message: Message"], [], [ef("add", "messages")], ["sticker_pack", "sticker_id"], "click", { creates: "Message" }),
+  send_gif: intent("Отправить GIF", ["message: Message"], [], [ef("add", "messages")], ["gif_url"], "click", { creates: "Message" }),
+  send_location: intent("Отправить геолокацию", ["message: Message"], [], [ef("add", "messages")], ["latitude", "longitude"], "click", { creates: "Message" }),
+  send_poll: intent("Создать опрос", ["message: Message"], [], [ef("add", "messages"), ef("add", "polls")], ["question", "options"], "form", { creates: "Message" }),
+
+  // ===== БЕСЕДЫ (20) =====
+  create_direct_chat: intent("Личный чат", ["conversation: Conversation", "user: User"], [], [ef("add", "conversations"), ef("add", "participants")], ["user.name"], "click", { creates: "Conversation" }),
+  create_group: intent("Групповой чат", ["conversation: Conversation"], [], [ef("add", "conversations"), ef("add", "participants")], [], "form", { creates: "Conversation" }),
+  add_to_group: intent("Добавить в группу", ["conversation: Conversation", "user: User"], ["conversation.type = 'group'"], [ef("add", "participants")], ["user.name", "conversation.title"], "click", { creates: "Participant" }),
+  leave_group: intent("Покинуть группу", ["participant: Participant"], ["conversation.type = 'group'"], [ef("remove", "participants")], ["conversation.title"], "click"),
+  remove_from_group: intent("Удалить из группы", ["participant: Participant"], ["conversation.type = 'group'"], [ef("remove", "participants")], ["user.name"], "click", { irreversibility: "medium" }),
+  mark_as_read: intent("Прочитать", ["participant: Participant"], [], [ef("replace", "participant.lastReadAt")], [], "auto"),
+  mute_conversation: intent("Заглушить", ["participant: Participant"], [], [ef("replace", "participant.muted", "account", { value: true })], ["conversation.title"], "click", { antagonist: "unmute_conversation" }),
+  unmute_conversation: intent("Включить звук", ["participant: Participant"], ["participant.muted = true"], [ef("replace", "participant.muted", "account", { value: false })], ["conversation.title"], "click", { antagonist: "mute_conversation" }),
+  pin_conversation: intent("Закрепить беседу", ["participant: Participant"], [], [ef("replace", "participant.pinned", "account", { value: true })], [], "click"),
+  unpin_conversation: intent("Открепить беседу", ["participant: Participant"], ["participant.pinned = true"], [ef("replace", "participant.pinned", "account", { value: false })], [], "click", { antagonist: "pin_conversation" }),
+  rename_group: intent("Переименовать группу", ["conversation: Conversation"], ["conversation.type = 'group'"], [ef("replace", "conversation.title")], ["conversation.title"], "click", { phase: "investigation" }),
+  set_group_avatar: intent("Аватар группы", ["conversation: Conversation"], ["conversation.type = 'group'"], [ef("replace", "conversation.avatar")], [], "file"),
+  set_group_description: intent("Описание группы", ["conversation: Conversation"], ["conversation.type = 'group'"], [ef("replace", "conversation.description")], ["conversation.description"], "form"),
+  archive_conversation: intent("Архивировать", ["participant: Participant"], [], [ef("replace", "participant.archived", "account", { value: true })], ["conversation.title"], "click"),
+  unarchive_conversation: intent("Разархивировать", ["participant: Participant"], ["participant.archived = true"], [ef("replace", "participant.archived", "account", { value: false })], [], "click", { antagonist: "archive_conversation" }),
+  delete_conversation: intent("Удалить беседу", ["conversation: Conversation"], [], [ef("replace", "conversation.deletedFor")], ["conversation.title", "messages.count"], "click", { irreversibility: "high" }),
+  clear_history: intent("Очистить историю", ["conversation: Conversation"], [], [ef("replace", "conversation.clearedAt")], ["messages.count"], "click", { irreversibility: "high" }),
+  export_chat: intent("Экспортировать чат", ["conversation: Conversation"], [], [], ["conversation.title", "messages.count"], "click"),
+  create_channel: intent("Создать канал", ["conversation: Conversation"], [], [ef("add", "conversations"), ef("add", "participants")], [], "form", { creates: "Conversation" }),
+  set_slow_mode: intent("Медленный режим", ["conversation: Conversation"], ["conversation.type = 'group'"], [ef("replace", "conversation.slowMode")], ["current_interval"], "form"),
+
+  // ===== КОНТАКТЫ (15) =====
+  add_contact: intent("Добавить контакт", ["contact: Contact"], [], [ef("add", "contacts")], ["user.name"], "click", { creates: "Contact(pending)" }),
+  accept_contact: intent("Принять запрос", ["contact: Contact"], ["contact.status = 'pending'"], [ef("replace", "contact.status", "account", { value: "accepted" })], ["user.name"], "click", { antagonist: "reject_contact" }),
+  reject_contact: intent("Отклонить", ["contact: Contact"], ["contact.status = 'pending'"], [ef("replace", "contact.status", "account", { value: "rejected" })], ["user.name"], "click", { antagonist: "accept_contact" }),
+  block_contact: intent("Заблокировать", ["contact: Contact"], ["contact.status = 'accepted'"], [ef("replace", "contact.status", "account", { value: "blocked" })], ["user.name"], "click", { irreversibility: "medium" }),
+  unblock_contact: intent("Разблокировать", ["contact: Contact"], ["contact.status = 'blocked'"], [ef("replace", "contact.status", "account", { value: "accepted" })], ["user.name"], "click", { antagonist: "block_contact" }),
+  delete_contact: intent("Удалить контакт", ["contact: Contact"], [], [ef("remove", "contacts")], ["contact.name"], "click", { irreversibility: "medium" }),
+  set_contact_nickname: intent("Никнейм контакта", ["contact: Contact"], ["contact.status = 'accepted'"], [ef("replace", "contact.nickname")], ["contact.name", "contact.nickname"], "form"),
+  share_contact: intent("Поделиться контактом", ["contact: Contact", "conversation: Conversation"], [], [ef("add", "messages")], ["contact.name"], "click", { creates: "Message" }),
+  import_contacts: intent("Импорт контактов", [], [], [ef("add", "contacts")], ["contacts_file"], "file", { extended: true }),
+  search_contacts: intent("Поиск контактов", [], [], [], ["query", "results"], "form"),
+  create_contact_group: intent("Группа контактов", [], [], [ef("add", "contactgroups")], ["group_name"], "form", { creates: "ContactGroup" }),
+  add_to_contact_group: intent("В группу контактов", ["contact: Contact", "contactGroup: ContactGroup"], [], [ef("replace", "contact.groupId")], ["contact.name", "group.name"], "click"),
+  remove_from_contact_group: intent("Из группы контактов", ["contact: Contact"], [], [ef("replace", "contact.groupId", "account", { value: null })], ["contact.name"], "click"),
+  invite_by_link: intent("Пригласить по ссылке", [], [], [ef("add", "invitelinks")], ["invite_url"], "click", { creates: "InviteLink" }),
+  revoke_invite_link: intent("Отозвать ссылку", ["inviteLink: InviteLink"], [], [ef("remove", "invitelinks")], ["invite_url"], "click"),
+
+  // ===== ПРОФИЛЬ (10) =====
+  update_profile: intent("Обновить профиль", ["user: User"], [], [ef("replace", "user.name"), ef("replace", "user.avatar")], ["user.name", "user.avatar"], "form", { phase: "investigation" }),
+  set_status_message: intent("Статус-сообщение", ["user: User"], [], [ef("replace", "user.statusMessage")], ["user.statusMessage"], "form"),
+  set_avatar: intent("Установить аватар", ["user: User"], [], [ef("replace", "user.avatar")], [], "file"),
+  delete_avatar: intent("Удалить аватар", ["user: User"], [], [ef("replace", "user.avatar", "account", { value: "" })], [], "click"),
+  set_privacy_settings: intent("Настройки приватности", ["user: User"], [], [ef("replace", "user.privacy")], ["current_settings"], "form"),
+  set_notification_settings: intent("Уведомления", ["user: User"], [], [ef("replace", "user.notifications")], ["current_settings"], "form"),
+  set_theme: intent("Тема оформления", ["user: User"], [], [ef("replace", "user.theme")], ["current_theme"], "click"),
+  set_language: intent("Язык", ["user: User"], [], [ef("replace", "user.language")], ["current_language"], "click"),
+  enable_2fa: intent("Включить 2FA", ["user: User"], [], [ef("replace", "user.twoFactor", "account", { value: true })], [], "form"),
+  delete_account: intent("Удалить аккаунт", ["user: User"], [], [ef("remove", "users")], ["user.name", "conversations.count", "messages.count"], "form", { irreversibility: "high" }),
+
+  // ===== ГРУППЫ/АДМИН (15) =====
+  promote_to_admin: intent("Назначить админом", ["participant: Participant"], ["participant.role = 'member'"], [ef("replace", "participant.role", "account", { value: "admin" })], ["user.name"], "click"),
+  demote_admin: intent("Снять админа", ["participant: Participant"], ["participant.role = 'admin'"], [ef("replace", "participant.role", "account", { value: "member" })], ["user.name"], "click", { antagonist: "promote_to_admin" }),
+  transfer_ownership: intent("Передать владение", ["participant: Participant"], [], [ef("replace", "participant.role", "account", { value: "owner" })], ["user.name"], "click", { irreversibility: "high" }),
+  set_group_permissions: intent("Права группы", ["conversation: Conversation"], ["conversation.type = 'group'"], [ef("replace", "conversation.permissions")], ["current_permissions"], "form"),
+  ban_user: intent("Забанить", ["participant: Participant"], [], [ef("replace", "participant.banned", "account", { value: true })], ["user.name"], "click", { irreversibility: "medium" }),
+  unban_user: intent("Разбанить", ["participant: Participant"], ["participant.banned = true"], [ef("replace", "participant.banned", "account", { value: false })], ["user.name"], "click", { antagonist: "ban_user" }),
+  set_join_approval: intent("Одобрение вступления", ["conversation: Conversation"], [], [ef("replace", "conversation.joinApproval", "account", { value: true })], [], "click"),
+  approve_join_request: intent("Одобрить вступление", ["joinRequest: JoinRequest"], ["joinRequest.status = 'pending'"], [ef("replace", "joinRequest.status", "account", { value: "approved" }), ef("add", "participants")], ["user.name"], "click"),
+  reject_join_request: intent("Отклонить вступление", ["joinRequest: JoinRequest"], ["joinRequest.status = 'pending'"], [ef("replace", "joinRequest.status", "account", { value: "rejected" })], ["user.name"], "click", { antagonist: "approve_join_request" }),
+  set_welcome_message: intent("Приветствие", ["conversation: Conversation"], ["conversation.type = 'group'"], [ef("replace", "conversation.welcomeMessage")], ["conversation.welcomeMessage"], "form"),
+  set_auto_delete: intent("Автоудаление", ["conversation: Conversation"], [], [ef("replace", "conversation.autoDeleteInterval")], ["current_interval"], "form"),
+  set_group_rules: intent("Правила группы", ["conversation: Conversation"], ["conversation.type = 'group'"], [ef("replace", "conversation.rules")], ["conversation.rules"], "form"),
+  pin_group_message: intent("Закрепить в группе", ["message: Message", "conversation: Conversation"], ["conversation.type = 'group'"], [ef("replace", "conversation.pinnedMessageId")], ["message.content"], "click"),
+  create_sticker_pack: intent("Создать стикерпак", [], [], [ef("add", "stickerpacks")], ["pack_name"], "form", { creates: "StickerPack" }),
+  add_sticker_to_pack: intent("Добавить стикер", ["stickerPack: StickerPack"], [], [ef("add", "stickers")], ["sticker_image"], "file", { creates: "Sticker" }),
+
+  // ===== МЕДИА (10) =====
+  send_image: intent("Отправить фото", ["message: Message"], [], [ef("add", "messages")], ["image_preview"], "file", { creates: "Message" }),
+  send_video: intent("Отправить видео", ["message: Message"], [], [ef("add", "messages")], ["video_duration", "video_size"], "file", { creates: "Message" }),
+  send_document: intent("Отправить документ", ["message: Message"], [], [ef("add", "messages")], ["file_name", "file_size"], "file", { creates: "Message" }),
+  send_contact_card: intent("Визитка", ["message: Message", "user: User"], [], [ef("add", "messages")], ["user.name", "user.phone"], "click", { creates: "Message" }),
+  vote_poll: intent("Голосовать в опросе", ["poll: Poll"], ["poll.status = 'open'"], [ef("add", "pollvotes")], ["poll.question", "selected_option"], "click", { creates: "PollVote" }),
+  close_poll: intent("Закрыть опрос", ["poll: Poll"], ["poll.status = 'open'"], [ef("replace", "poll.status", "account", { value: "closed" })], ["poll.question", "results"], "click"),
+  create_album: intent("Создать альбом", [], [], [ef("add", "albums")], ["album_title"], "form", { creates: "Album" }),
+  add_to_album: intent("В альбом", ["message: Message", "album: Album"], [], [ef("replace", "message.albumId")], ["album.title"], "click"),
+  set_chat_wallpaper: intent("Обои чата", ["conversation: Conversation"], [], [ef("replace", "conversation.wallpaper")], ["wallpaper_preview"], "file"),
+  record_voice_note: intent("Голосовая заметка", [], [], [ef("add", "messages")], ["duration"], "click", { creates: "Message" }),
+
+  // ===== ЗВОНКИ (5) =====
+  start_voice_call: intent("Голосовой звонок", ["conversation: Conversation"], [], [ef("add", "calls")], ["conversation.title"], "click", { creates: "Call" }),
+  start_video_call: intent("Видеозвонок", ["conversation: Conversation"], [], [ef("add", "calls")], ["conversation.title"], "click", { creates: "Call" }),
+  end_call: intent("Завершить звонок", ["call: Call"], ["call.status = 'active'"], [ef("replace", "call.status", "account", { value: "ended" })], ["call.duration"], "click"),
+  mute_mic: intent("Выключить микрофон", ["call: Call"], ["call.status = 'active'"], [ef("replace", "call.micMuted", "account", { value: true })], [], "click"),
+  toggle_video: intent("Вкл/выкл камеру", ["call: Call"], ["call.status = 'active'"], [ef("replace", "call.videoEnabled")], [], "click"),
+};

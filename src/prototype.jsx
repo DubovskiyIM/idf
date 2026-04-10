@@ -4,22 +4,26 @@ import { PARTICLE_COLORS, ALPHA_LABELS, LINK_COLORS } from "./runtime/constants.
 import CausalityGraph from "./components/CausalityGraph.jsx";
 import OntologyInspector from "./components/OntologyInspector.jsx";
 import IntegrityGraph from "./components/IntegrityGraph.jsx";
+import ArtifactView from "./components/ArtifactView.jsx";
 
 // Домены
 import * as bookingDomain from "./domains/booking/domain.js";
 import * as planningDomain from "./domains/planning/domain.js";
 import * as workflowDomain from "./domains/workflow/domain.js";
+import * as messengerDomain from "./domains/messenger/domain.js";
 
 // Manual UI
 import BookingUI from "./domains/booking/ManualUI.jsx";
 import PlanningUI from "./domains/planning/ManualUI.jsx";
 import WorkflowUI from "./domains/workflow/ManualUI.jsx";
+import MessengerUI from "./domains/messenger/ManualUI.jsx";
 
 // Кристаллизованные проекции
 import PollOverview from "./crystallized/poll_overview.jsx";
 import VotingMatrix from "./crystallized/voting_matrix.jsx";
 import { getStyles } from "./crystallized/theme.js";
 import WorkflowCanvas from "./crystallized/workflow_canvas.jsx";
+import MessengerChat from "./crystallized/messenger_chat.jsx";
 import ServiceCatalog from "./crystallized/service_catalog.jsx";
 import SpecialistSchedule from "./crystallized/specialist_schedule.jsx";
 import MyBookings from "./crystallized/my_bookings.jsx";
@@ -28,6 +32,7 @@ const DOMAINS = {
   booking: { ...bookingDomain, UI: BookingUI },
   planning: { ...planningDomain, UI: PlanningUI },
   workflow: { ...workflowDomain, UI: WorkflowUI },
+  messenger: { ...messengerDomain, UI: MessengerUI },
 };
 
 export default function App() {
@@ -134,6 +139,12 @@ export default function App() {
               color: topView === "integrity" ? "#0c0e14" : "#6b7280", fontWeight: topView === "integrity" ? 600 : 400 }}>
             Целостность
           </button>
+          <button onClick={() => setTopView(topView === "artifacts" ? null : "artifacts")}
+            style={{ padding: "4px 12px", borderRadius: 4, border: "none", cursor: "pointer", fontSize: 11,
+              background: topView === "artifacts" ? "#8b5cf6" : "#1e2230",
+              color: topView === "artifacts" ? "#fff" : "#6b7280", fontWeight: topView === "artifacts" ? 600 : 400 }}>
+            🔮 Артефакты
+          </button>
         </div>
 
         {/* Режим: ручной / кристаллизованный */}
@@ -194,6 +205,13 @@ export default function App() {
         <div style={{ flex: 1, overflow: "auto", background: "#0c0e14", color: "#e2e5eb" }}>
           <div style={{ maxWidth: 640, margin: "0 auto", padding: 24 }}>
             <OntologyInspector world={world} domain={domain} dark />
+          </div>
+        </div>
+      )}
+      {topView === "artifacts" && (
+        <div style={{ flex: 1, overflow: "auto", background: "#fafafa", color: "#1a1a2e" }}>
+          <div style={{ maxWidth: 700, margin: "0 auto", padding: 24 }}>
+            <ArtifactView domain={domain} world={world} exec={exec} viewer={viewer} />
           </div>
         </div>
       )}
@@ -276,6 +294,8 @@ export default function App() {
                   <domain.UI world={world} worldForIntent={worldForIntent} drafts={drafts} exec={exec} effects={effects}
                     viewer={viewer} layer={layer} overlay={overlay} overlayEntityIds={overlayEntityIds}
                     startInvestigation={startInvestigation} commitInvestigation={commitInvestigation} cancelInvestigation={cancelInvestigation} />
+                ) : domainId === "messenger" ? (
+                  <MessengerChat world={world} exec={exec} theme={theme} variant={variant} />
                 ) : domainId === "workflow" ? (
                   <WorkflowCanvas world={world} exec={exec} theme={theme} variant={variant} viewer={viewer} layer={layer} />
                 ) : domainId === "planning" ? (

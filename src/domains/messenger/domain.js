@@ -1,0 +1,184 @@
+import { v4 as uuid } from "uuid";
+
+export { INTENTS } from "./intents.js";
+export { PROJECTIONS } from "./projections.js";
+export { ONTOLOGY } from "./ontology.js";
+import { INTENTS } from "./intents.js";
+
+export const DOMAIN_ID = "messenger";
+export const DOMAIN_NAME = "Мессенджер";
+
+const ts = () => new Date().toLocaleTimeString("ru", { hour: "2-digit", minute: "2-digit", second: "2-digit", fractionalSecondDigits: 2 });
+
+export function describeEffect(intentId, alpha, ctx, target) {
+  const intent = INTENTS[intentId];
+  const name = intent?.name || intentId;
+  switch (intentId) {
+    case "send_message": case "reply_to_message": return `💬 ${ctx.senderName || "?"}: ${(ctx.content || "").slice(0, 30)}`;
+    case "edit_message": return `✎ Сообщение отредактировано`;
+    case "delete_message": return `✕ Сообщение удалено`;
+    case "create_direct_chat": return `💬 Чат с ${ctx.contactName || ctx.id}`;
+    case "create_group": return `👥 Группа: ${ctx.title || ctx.id}`;
+    case "add_contact": return `👤 Запрос: ${ctx.contactName || ctx.id}`;
+    case "accept_contact": return `✓ Контакт принят`;
+    case "_seed": return `seed: ${alpha} ${ctx.id || ""}`;
+    default: return `${name}: ${alpha} ${target || ""}`;
+  }
+}
+
+export function signalForIntent(intentId) {
+  switch (intentId) {
+    case "send_message": case "reply_to_message": case "forward_message": return { κ: "notification", desc: "Новое сообщение" };
+    case "add_contact": return { κ: "notification", desc: "Запрос контакта" };
+    case "start_voice_call": case "start_video_call": return { κ: "notification", desc: "Входящий звонок" };
+    default: return null;
+  }
+}
+
+/**
+ * Generic buildEffects: генерирует эффекты из определения намерения.
+ * Специфичные case — для намерений со сложной логикой.
+ * Остальные 85+ — generic из INTENTS[intentId].particles.effects.
+ */
+export function buildEffects(intentId, ctx, world, drafts) {
+  const now = Date.now();
+  const effects = [];
+  const ef = (props) => effects.push({ id: uuid(), intent_id: intentId, parent_id: null, status: "proposed", ttl: null, created_at: now, time: ts(), ...props });
+
+  // === Специфичные case (сложная логика) ===
+  switch (intentId) {
+    case "send_message": {
+      if (!ctx.content?.trim() || !ctx.conversationId) return null;
+      ef({ alpha: "add", target: "messages", scope: "account", value: null,
+        context: { id: `msg_${now}_${Math.random().toString(36).slice(2, 6)}`, conversationId: ctx.conversationId,
+          senderId: ctx.userId, senderName: ctx.userName, type: "text", content: ctx.content.trim(),
+          replyToId: ctx.replyToId || null, status: "sent", createdAt: now },
+        desc: describeEffect(intentId, "add", { senderName: ctx.userName, content: ctx.content }) });
+      ef({ alpha: "replace", target: "conversation.lastMessageAt", scope: "account", value: now,
+        context: { id: ctx.conversationId }, desc: "lastMessageAt" });
+      return effects;
+    }
+    case "reply_to_message": {
+      if (!ctx.content?.trim() || !ctx.conversationId || !ctx.replyToId) return null;
+      ef({ alpha: "add", target: "messages", scope: "account", value: null,
+        context: { id: `msg_${now}_${Math.random().toString(36).slice(2, 6)}`, conversationId: ctx.conversationId,
+          senderId: ctx.userId, senderName: ctx.userName, type: "text", content: ctx.content.trim(),
+          replyToId: ctx.replyToId, status: "sent", createdAt: now },
+        desc: describeEffect(intentId, "add", { senderName: ctx.userName, content: ctx.content }) });
+      ef({ alpha: "replace", target: "conversation.lastMessageAt", scope: "account", value: now,
+        context: { id: ctx.conversationId }, desc: "lastMessageAt" });
+      return effects;
+    }
+    case "edit_message": {
+      const msg = (world.messages || []).find(m => m.id === ctx.id);
+      if (!msg || msg.senderId !== ctx.userId) return null;
+      ef({ alpha: "replace", target: "message.content", scope: "account", value: ctx.content,
+        context: { id: msg.id }, desc: describeEffect(intentId, "replace", {}) });
+      ef({ alpha: "replace", target: "message.editedAt", scope: "account", value: now,
+        context: { id: msg.id }, desc: "editedAt" });
+      return effects;
+    }
+    case "delete_message": {
+      const msg = (world.messages || []).find(m => m.id === ctx.id);
+      if (!msg) return null;
+      ef({ alpha: "replace", target: "message.deletedFor", scope: "account", value: ctx.forAll ? ["*"] : [ctx.userId],
+        context: { id: msg.id }, desc: describeEffect(intentId, "replace", {}) });
+      return effects;
+    }
+    case "create_direct_chat": {
+      if (!ctx.contactUserId) return null;
+      const convId = `conv_${now}`;
+      ef({ alpha: "add", target: "conversations", scope: "account", value: null,
+        context: { id: convId, type: "direct", title: ctx.contactName || "", createdBy: ctx.userId, participantIds: [ctx.userId, ctx.contactUserId], lastMessageAt: now, createdAt: now },
+        desc: describeEffect(intentId, "add", { contactName: ctx.contactName }) });
+      ef({ alpha: "add", target: "participants", scope: "account", value: null,
+        context: { id: `p_${now}_1`, conversationId: convId, userId: ctx.userId, role: "member", joinedAt: now, lastReadAt: now }, desc: "участник" });
+      ef({ alpha: "add", target: "participants", scope: "account", value: null,
+        context: { id: `p_${now}_2`, conversationId: convId, userId: ctx.contactUserId, role: "member", joinedAt: now, lastReadAt: now }, desc: "участник" });
+      return effects;
+    }
+    case "create_group": {
+      if (!ctx.title?.trim()) return null;
+      const convId = `conv_${now}`;
+      ef({ alpha: "add", target: "conversations", scope: "account", value: null,
+        context: { id: convId, type: "group", title: ctx.title.trim(), createdBy: ctx.userId, participantIds: [ctx.userId, ...(ctx.memberIds || [])], lastMessageAt: now, createdAt: now },
+        desc: describeEffect(intentId, "add", { title: ctx.title }) });
+      ef({ alpha: "add", target: "participants", scope: "account", value: null,
+        context: { id: `p_${now}_owner`, conversationId: convId, userId: ctx.userId, role: "owner", joinedAt: now, lastReadAt: now }, desc: "владелец" });
+      for (const mId of (ctx.memberIds || [])) {
+        ef({ alpha: "add", target: "participants", scope: "account", value: null,
+          context: { id: `p_${now}_${Math.random().toString(36).slice(2, 6)}`, conversationId: convId, userId: mId, role: "member", joinedAt: now, lastReadAt: now }, desc: "участник" });
+      }
+      return effects;
+    }
+    case "mark_as_read": {
+      const p = (world.participants || []).find(pt => pt.conversationId === ctx.conversationId && pt.userId === ctx.userId);
+      if (!p) return null;
+      ef({ alpha: "replace", target: "participant.lastReadAt", scope: "account", value: now,
+        context: { id: p.id }, desc: "прочитано" });
+      return effects;
+    }
+    case "add_contact": {
+      if (!ctx.contactId) return null;
+      ef({ alpha: "add", target: "contacts", scope: "account", value: null,
+        context: { id: `c_${now}`, userId: ctx.userId, contactId: ctx.contactId, contactName: ctx.contactName, status: "pending", createdAt: now },
+        desc: describeEffect(intentId, "add", { contactName: ctx.contactName }) });
+      return effects;
+    }
+  }
+
+  // === Generic handler для остальных 85+ намерений ===
+  const intent = INTENTS[intentId];
+  if (!intent) return null;
+
+  const intentEffects = intent.particles.effects || [];
+  if (intentEffects.length === 0) return null; // проекция, не намерение
+
+  for (const iEf of intentEffects) {
+    const alpha = iEf.α;
+    const target = iEf.target;
+    const scope = iEf.σ || "account";
+
+    switch (alpha) {
+      case "add": {
+        const entityId = ctx.id || `${target.slice(0, 4)}_${now}_${Math.random().toString(36).slice(2, 6)}`;
+        ef({ alpha: "add", target, scope, value: null,
+          context: { id: entityId, ...ctx, createdAt: now },
+          desc: describeEffect(intentId, "add", ctx, target) });
+        break;
+      }
+      case "replace": {
+        const entityId = ctx.id || ctx.entityId;
+        if (!entityId) {
+          // Попробовать найти сущность по типу из world
+          const collBase = target.split(".")[0];
+          const plural = collBase.endsWith("s") ? collBase + "es" : collBase + "s";
+          const collection = world[plural] || world[collBase + "s"] || [];
+          const entity = collection.find(e => e.id === ctx.id) || collection[0];
+          if (entity) {
+            const field = target.includes(".") ? target.split(".").pop() : target;
+            ef({ alpha: "replace", target, scope, value: iEf.value !== undefined ? iEf.value : ctx.value,
+              context: { id: entity.id }, desc: describeEffect(intentId, "replace", ctx, target) });
+          }
+        } else {
+          const field = target.includes(".") ? target.split(".").pop() : target;
+          ef({ alpha: "replace", target, scope, value: iEf.value !== undefined ? iEf.value : ctx.value,
+            context: { id: entityId }, desc: describeEffect(intentId, "replace", ctx, target) });
+        }
+        break;
+      }
+      case "remove": {
+        const entityId = ctx.id || ctx.entityId;
+        if (entityId) {
+          ef({ alpha: "remove", target, scope, value: null,
+            context: { id: entityId }, desc: describeEffect(intentId, "remove", ctx, target) });
+        }
+        break;
+      }
+    }
+  }
+
+  return effects.length > 0 ? effects : null;
+}
+
+export function getSeedEffects() { return []; }
