@@ -11,3 +11,7 @@ yarn-error.log*
 .vscode/*
 .idea
 server/idf.db
+
+# macOS
+.DS_Store
+**/.DS_Store
