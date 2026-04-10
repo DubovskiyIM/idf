@@ -11,6 +11,11 @@ yarn-error.log*
 .vscode/*
 .idea
 server/idf.db
+server/idf.db-wal
+server/idf.db-shm
+
+# Build output
+/dist
 
 # macOS
 .DS_Store
