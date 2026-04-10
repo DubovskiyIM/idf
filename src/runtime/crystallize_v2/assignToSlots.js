@@ -85,7 +85,13 @@ export function assignToSlots(INTENTS, projection, ONTOLOGY) {
     if (hasOverlay) {
       slots.overlay.push(wrapped.overlay);
       if (isPerItem) {
-        addItemIntent({ intentId: id, opens: "overlay", overlayKey: wrapped.overlay.key, label: intent.name });
+        addItemIntent({
+          intentId: id,
+          opens: "overlay",
+          overlayKey: wrapped.overlay.key,
+          label: intent.name,
+          conditions: intent.particles.conditions || [],
+        });
       } else {
         slots.toolbar.push(wrapped.trigger);
       }
@@ -94,7 +100,11 @@ export function assignToSlots(INTENTS, projection, ONTOLOGY) {
 
     // Per-item intent (plain click, no params) → body.item.intents
     if (isPerItem && wrapped.type === "intentButton") {
-      addItemIntent({ intentId: id, label: intent.name });
+      addItemIntent({
+        intentId: id,
+        label: intent.name,
+        conditions: intent.particles.conditions || [],
+      });
       continue;
     }
 

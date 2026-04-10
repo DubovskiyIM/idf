@@ -1,6 +1,6 @@
 import { useState } from "react";
 import SlotRenderer from "../SlotRenderer.jsx";
-import { resolve, evalCondition } from "../eval.js";
+import { resolve, evalCondition, evalIntentCondition } from "../eval.js";
 
 export function Row({ node, ctx, item }) {
   return (
@@ -48,7 +48,13 @@ function fireItemIntent(spec, ctx, item) {
 
 export function Card({ node, ctx, item }) {
   const [menuOpen, setMenuOpen] = useState(false);
-  const allIntents = (node.intents || []).map(normalizeIntent);
+  const allIntents = (node.intents || [])
+    .map(normalizeIntent)
+    .filter(spec => {
+      // Фильтруем по условиям намерения против item + viewer.
+      const conditions = spec.conditions || [];
+      return conditions.every(c => evalIntentCondition(c, item, ctx.viewer));
+    });
   const visible = allIntents.slice(0, MAX_VISIBLE_ITEM_INTENTS);
   const hidden = allIntents.slice(MAX_VISIBLE_ITEM_INTENTS);
 
