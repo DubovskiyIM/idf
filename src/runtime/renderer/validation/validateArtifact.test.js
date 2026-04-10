@@ -69,4 +69,49 @@ describe("validateArtifact", () => {
     expect(r.ok).toBe(false);
     expect(r.errors.some(e => e.includes("duplicate"))).toBe(true);
   });
+
+  it("накапливает несколько ошибок сразу (не early-return)", () => {
+    const bad = {
+      // ни версии, ни archetype, ни slots
+      projection: "foo",
+    };
+    const r = validateArtifact(bad);
+    expect(r.ok).toBe(false);
+    // Должны накопиться минимум 3 ошибки: version, archetype, slots
+    expect(r.errors.length).toBeGreaterThanOrEqual(3);
+    expect(r.errors.some(e => e.includes("version"))).toBe(true);
+    expect(r.errors.some(e => e.includes("archetype"))).toBe(true);
+    expect(r.errors.some(e => e.includes("slots"))).toBe(true);
+  });
+
+  it("отклоняет неизвестный parameter.control", () => {
+    const bad = {
+      ...validFeed,
+      slots: {
+        ...validFeed.slots,
+        overlay: [
+          { type: "formModal", key: "k1", intentId: "x",
+            parameters: [{ name: "foo", control: "hologram" }] },
+        ],
+      },
+    };
+    const r = validateArtifact(bad);
+    expect(r.ok).toBe(false);
+    expect(r.errors.some(e => e.includes("hologram") || e.includes("control"))).toBe(true);
+  });
+
+  it("отклоняет overlay без key", () => {
+    const bad = {
+      ...validFeed,
+      slots: {
+        ...validFeed.slots,
+        overlay: [
+          { type: "formModal", intentId: "x", parameters: [] },
+        ],
+      },
+    };
+    const r = validateArtifact(bad);
+    expect(r.ok).toBe(false);
+    expect(r.errors.some(e => e.includes("key"))).toBe(true);
+  });
 });

@@ -31,38 +31,40 @@ export function validateArtifact(artifact) {
   else if (!KNOWN_ARCHETYPES.includes(artifact.archetype)) {
     errors.push(`unknown archetype: ${artifact.archetype}`);
   }
-  if (!artifact.slots || typeof artifact.slots !== "object") {
+  const hasSlots = artifact.slots && typeof artifact.slots === "object";
+  if (!hasSlots) {
     errors.push("slots is required and must be an object");
-    return { ok: errors.length === 0, errors };
   }
 
-  // Обязательные слоты для архетипа
-  const required = REQUIRED_SLOTS_BY_ARCHETYPE[artifact.archetype] || [];
-  for (const slotName of required) {
-    if (!artifact.slots[slotName]) {
-      errors.push(`slot "${slotName}" is required for archetype "${artifact.archetype}"`);
+  if (hasSlots) {
+    // Обязательные слоты для архетипа
+    const required = REQUIRED_SLOTS_BY_ARCHETYPE[artifact.archetype] || [];
+    for (const slotName of required) {
+      if (!artifact.slots[slotName]) {
+        errors.push(`slot "${slotName}" is required for archetype "${artifact.archetype}"`);
+      }
     }
-  }
 
-  // Дубликаты key в overlay
-  const overlay = artifact.slots.overlay || [];
-  const keys = new Set();
-  for (const o of overlay) {
-    if (!o.key) {
-      errors.push(`overlay entry missing "key": ${JSON.stringify(o).slice(0, 80)}`);
-      continue;
+    // Дубликаты key в overlay
+    const overlay = Array.isArray(artifact.slots.overlay) ? artifact.slots.overlay : [];
+    const keys = new Set();
+    for (const o of overlay) {
+      if (!o.key) {
+        errors.push(`overlay entry missing "key": ${JSON.stringify(o).slice(0, 80)}`);
+        continue;
+      }
+      if (keys.has(o.key)) errors.push(`duplicate overlay key: ${o.key}`);
+      keys.add(o.key);
     }
-    if (keys.has(o.key)) errors.push(`duplicate overlay key: ${o.key}`);
-    keys.add(o.key);
-  }
 
-  // Параметр-типы в formModal и bulkWizard
-  for (const o of overlay) {
-    if (o.type === "formModal" || o.type === "bulkWizard") {
-      const params = o.parameters || [];
-      for (const p of params) {
-        if (p.control && !KNOWN_PARAMETER_TYPES.includes(p.control)) {
-          errors.push(`unknown parameter control type: "${p.control}" in overlay ${o.key}`);
+    // Параметр-типы в formModal и bulkWizard
+    for (const o of overlay) {
+      if (o.type === "formModal" || o.type === "bulkWizard") {
+        const params = o.parameters || [];
+        for (const p of params) {
+          if (p.control && !KNOWN_PARAMETER_TYPES.includes(p.control)) {
+            errors.push(`unknown parameter control type: "${p.control}" in overlay ${o.key}`);
+          }
         }
       }
     }
