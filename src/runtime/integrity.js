@@ -1,10 +1,9 @@
 /**
- * Правила целостности (раздел 13 манифеста).
+ * Правила целостности (раздел 13 манифеста) + алгебра композиции (раздел 11).
  * Проверяются перед кристаллизацией.
- *
- * Принимает: INTENTS, PROJECTIONS, ONTOLOGY
- * Возвращает: { passed, issues[] }
  */
+
+import { checkAlgebraIntegrity } from "./algebra.js";
 
 export function checkIntegrity(INTENTS, PROJECTIONS, ONTOLOGY) {
   const issues = [];
@@ -160,6 +159,18 @@ export function checkIntegrity(INTENTS, PROJECTIONS, ONTOLOGY) {
         }
       }
     }
+  }
+
+  // === 7. Алгебра композиции (раздел 11) ===
+  const algebraConflicts = checkAlgebraIntegrity(INTENTS);
+  for (const conflict of algebraConflicts) {
+    issues.push({
+      rule: "algebra_composition",
+      level: "error",
+      intent: `${conflict.intent1} ⊗ ${conflict.intent2}`,
+      message: `⊥ Конфликт: ${conflict.intent1Name} × ${conflict.intent2Name}`,
+      detail: conflict.detail,
+    });
   }
 
   const errors = issues.filter(i => i.level === "error").length;
