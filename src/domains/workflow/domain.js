@@ -164,42 +164,42 @@ export function buildEffects(intentId, ctx, world, drafts) {
     case "delete_workflow": {
       const wf = (world.workflows || []).find(w => w.id === ctx.workflowId);
       if (!wf || wf.status === "running") return null;
-      // Каскад: удалить все рёбра и узлы
       const wfEdges = (world.edges || []).filter(e => e.workflowId === wf.id);
       const wfNodes = (world.nodes || []).filter(n => n.workflowId === wf.id);
-      for (const e of wfEdges) ef({ alpha: "remove", target: "edges", scope: "account", value: null, context: { id: e.id }, desc: `✂ Ребро` });
-      for (const n of wfNodes) ef({ alpha: "remove", target: "nodes", scope: "account", value: null, context: { id: n.id }, desc: `✕ Узел ${n.label}` });
-      ef({ alpha: "remove", target: "workflows", scope: "account", value: null, context: { id: wf.id, title: wf.title }, desc: `✕ Workflow: ${wf.title}` });
+      // Batch: один эффект вместо N+M+1
+      const subEffects = [
+        ...wfEdges.map(e => ({ alpha: "remove", target: "edges", context: { id: e.id } })),
+        ...wfNodes.map(n => ({ alpha: "remove", target: "nodes", context: { id: n.id } })),
+        { alpha: "remove", target: "workflows", context: { id: wf.id } },
+      ];
+      ef({ alpha: "batch", target: "workflows", scope: "account", value: subEffects,
+        context: { id: wf.id, title: wf.title }, desc: `✕ Workflow: ${wf.title} (${wfNodes.length} узлов, ${wfEdges.length} рёбер)` });
       break;
     }
     case "duplicate_workflow": {
       const wf = (world.workflows || []).find(w => w.id === ctx.workflowId);
       if (!wf) return null;
       const newWfId = `wf_${now}`;
-      const idMap = {}; // старый id → новый id
-      ef({ alpha: "add", target: "workflows", scope: "account", value: null,
-        context: { id: newWfId, title: `${wf.title} (копия)`, status: "draft", createdAt: now },
-        desc: `⧉ Копия: ${wf.title}` });
-      // Копировать узлы
+      const idMap = {};
+      const subEffects = [];
+      subEffects.push({ alpha: "add", target: "workflows",
+        context: { id: newWfId, title: `${wf.title} (копия)`, status: "draft", createdAt: now } });
       const wfNodes = (world.nodes || []).filter(n => n.workflowId === wf.id);
       for (const n of wfNodes) {
         const newId = `node_${now}_${Math.random().toString(36).slice(2, 6)}`;
         idMap[n.id] = newId;
-        ef({ alpha: "add", target: "nodes", scope: "account", value: null,
-          context: { id: newId, workflowId: newWfId, type: n.type, label: n.label, x: n.x + 20, y: n.y + 20, config: n.config || {} },
-          desc: `+ Узел: ${n.label}` });
+        subEffects.push({ alpha: "add", target: "nodes",
+          context: { id: newId, workflowId: newWfId, type: n.type, label: n.label, x: n.x + 20, y: n.y + 20, config: n.config || {} } });
       }
-      // Копировать рёбра с ремаппингом
       const wfEdges = (world.edges || []).filter(e => e.workflowId === wf.id);
       for (const e of wfEdges) {
-        const newSource = idMap[e.source];
-        const newTarget = idMap[e.target];
-        if (newSource && newTarget) {
-          ef({ alpha: "add", target: "edges", scope: "account", value: null,
-            context: { id: `edge_${now}_${Math.random().toString(36).slice(2, 6)}`, workflowId: newWfId, source: newSource, target: newTarget, sourceHandle: e.sourceHandle, targetHandle: e.targetHandle },
-            desc: `🔗 Связь скопирована` });
-        }
+        const s = idMap[e.source], t = idMap[e.target];
+        if (s && t) subEffects.push({ alpha: "add", target: "edges",
+          context: { id: `edge_${now}_${Math.random().toString(36).slice(2, 6)}`, workflowId: newWfId, source: s, target: t, sourceHandle: e.sourceHandle, targetHandle: e.targetHandle } });
       }
+      ef({ alpha: "batch", target: "workflows", scope: "account", value: subEffects,
+        context: { id: newWfId, title: `${wf.title} (копия)` },
+        desc: `⧉ Дубликат: ${wf.title} (${wfNodes.length} узлов, ${wfEdges.length} рёбер)` });
       break;
     }
     case "add_custom_node_type": {

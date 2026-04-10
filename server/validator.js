@@ -23,14 +23,22 @@ function foldWorld() {
 
   const collections = {};
 
-  for (const ef of effects) {
-    if (ef.target.startsWith("drafts")) continue;
-    if (ef.scope === "presentation") continue; // Π — не в World(t)
-    const ctx = ef.context ? JSON.parse(ef.context) : {};
-    const val = ef.value ? JSON.parse(ef.value) : null;
+  function applyEf(ef, ctx, val) {
+    if (ef.target.startsWith("drafts")) return;
+    if (ef.scope === "presentation") return;
+
+    if (ef.alpha === "batch") {
+      const batchItems = val || [];
+      for (const sub of batchItems) {
+        const subCtx = sub.context || {};
+        const subVal = sub.value != null ? sub.value : null;
+        applyEf(sub, subCtx, subVal);
+      }
+      return;
+    }
+
     const base = ef.target.split(".")[0];
     const collType = SINGULAR_TO_PLURAL[base] || base;
-
     if (!collections[collType]) collections[collType] = {};
 
     switch (ef.alpha) {
@@ -53,6 +61,12 @@ function foldWorld() {
         break;
       }
     }
+  }
+
+  for (const ef of effects) {
+    const ctx = ef.context ? JSON.parse(ef.context) : {};
+    const val = ef.value ? JSON.parse(ef.value) : null;
+    applyEf(ef, ctx, val);
   }
 
   const world = {};

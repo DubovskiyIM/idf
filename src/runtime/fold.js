@@ -29,9 +29,15 @@ function getCollectionType(target, typeMap) {
 export function fold(effects, typeMap = {}) {
   const collections = {};
 
-  for (const ef of effects) {
-    if (ef.target.startsWith("drafts")) continue;
-    if (ef.scope === "presentation") continue; // Π — косметические, не в World(t)
+  function applyEffect(ef) {
+    if (ef.target.startsWith("drafts")) return;
+    if (ef.scope === "presentation") return;
+
+    // Batch: разворачиваем массив под-эффектов
+    if (ef.alpha === "batch" && Array.isArray(ef.value)) {
+      for (const sub of ef.value) applyEffect(sub);
+      return;
+    }
 
     const ctx = ef.context || {};
     const val = ef.value;
@@ -63,6 +69,8 @@ export function fold(effects, typeMap = {}) {
       }
     }
   }
+
+  for (const ef of effects) applyEffect(ef);
 
   const world = {};
   for (const [type, entities] of Object.entries(collections)) {
