@@ -179,7 +179,7 @@ export function buildEffects(intentId, ctx, world, drafts) {
       if (!poll || poll.status !== "open") return null;
       if (!ctx.deadline) return null;
       ef({ alpha: "replace", target: "poll.deadline", scope: "account", value: ctx.deadline,
-        context: { id: poll.id },
+        context: { id: poll.id, deadline: ctx.deadline },
         desc: `⏰ Дедлайн: ${ctx.deadline}` });
       break;
     }

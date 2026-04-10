@@ -72,6 +72,39 @@ router.post("/", (req, res) => {
       ).run(now, ef.id);
       broadcast("effect:confirmed", { id: ef.id });
 
+      // Планировать автозакрытие опроса по дедлайну
+      if (ef.intent_id === "set_deadline" && ef.value) {
+        // ef.value может быть строкой "2026-04-10T18:31" или JSON "\"2026-04-10T18:31\""
+        const rawValue = typeof ef.value === "string" ? ef.value : String(ef.value);
+        let deadlineStr;
+        try { deadlineStr = JSON.parse(rawValue); } catch { deadlineStr = rawValue; }
+        const deadlineTime = new Date(deadlineStr).getTime();
+        const delay = deadlineTime - Date.now();
+        if (delay > 0) {
+          setTimeout(() => {
+            const ctx = typeof ef.context === "string" ? JSON.parse(ef.context) : (ef.context || {});
+            const pollId = ctx.id;
+            if (!pollId) return;
+            // Проверить что опрос ещё open
+            const { foldWorld } = require("../validator.js");
+            const world = foldWorld();
+            const poll = (world.polls || []).find(p => p.id === pollId);
+            if (!poll || poll.status !== "open") return;
+            // Создать close_poll эффект
+            const { v4: autoUuid } = require("uuid");
+            const closeId = autoUuid();
+            const closeNow = Date.now();
+            db.prepare(`
+              INSERT INTO effects (id, intent_id, alpha, target, value, scope, parent_id, status, ttl, context, created_at, resolved_at)
+              VALUES (?, 'close_poll', 'replace', 'poll.status', '"closed"', 'account', NULL, 'confirmed', NULL, ?, ?, ?)
+            `).run(closeId, JSON.stringify({ id: pollId }), closeNow, closeNow);
+            broadcast("effect:confirmed", { id: closeId });
+            console.log(`  [deadline] Опрос ${pollId} автоматически закрыт по дедлайну`);
+          }, delay);
+          console.log(`  [deadline] Автозакрытие опроса запланировано через ${Math.round(delay/1000)}с`);
+        }
+      }
+
       // Планировать TTL-истечение если есть
       if (ef.ttl) {
         setTimeout(() => {

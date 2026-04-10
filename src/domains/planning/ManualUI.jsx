@@ -222,6 +222,59 @@ export default function PlanningUI({ world, drafts, exec }) {
                 </div>
               )}
 
+              {/* Кворум: прогресс голосования */}
+              {(() => {
+                const activeParticipants = pollParticipants.filter(p => p.status !== "declined");
+                const totalSlots = activeParticipants.length * pollOptions.length;
+                const votedSlots = pollVotes.length;
+                const pct = totalSlots > 0 ? Math.round((votedSlots / totalSlots) * 100) : 0;
+                const allVoted = totalSlots > 0 && votedSlots >= totalSlots;
+                // Кто не голосовал
+                const notVoted = activeParticipants.filter(p => {
+                  const pVotes = pollVotes.filter(v => v.participantId === p.id);
+                  return pVotes.length < pollOptions.length;
+                });
+
+                return (
+                  <div style={{ marginBottom: 12, padding: 12, background: allVoted ? "#f0fdf4" : "#f9fafb", borderRadius: 8, border: `1px solid ${allVoted ? "#bbf7d0" : "#e5e7eb"}` }}>
+                    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 6 }}>
+                      <span style={{ fontSize: 12, fontWeight: 600, color: allVoted ? "#22c55e" : "#1a1a2e" }}>
+                        {allVoted ? "✓ Все проголосовали" : `Кворум: ${votedSlots}/${totalSlots} голосов (${pct}%)`}
+                      </span>
+                      <span style={{ fontSize: 11, color: "#6b7280" }}>{activeParticipants.length} участников · {pollOptions.length} вариантов</span>
+                    </div>
+                    {/* Прогресс-бар */}
+                    <div style={{ height: 6, borderRadius: 3, background: "#e5e7eb", marginBottom: notVoted.length > 0 ? 6 : 0 }}>
+                      <div style={{ height: 6, borderRadius: 3, background: allVoted ? "#22c55e" : "#6366f1", width: `${pct}%`, transition: "width 0.3s" }} />
+                    </div>
+                    {notVoted.length > 0 && !allVoted && (
+                      <div style={{ fontSize: 10, color: "#6b7280" }}>
+                        Ждём: {notVoted.map(p => p.name).join(", ")}
+                      </div>
+                    )}
+                  </div>
+                );
+              })()}
+
+              {/* Дедлайн */}
+              <div style={{ display: "flex", gap: 8, alignItems: "center", marginBottom: 12 }}>
+                {selectedPoll.deadline ? (
+                  <span style={{ fontSize: 12, color: "#f59e0b" }}>⏰ Дедлайн: {selectedPoll.deadline}</span>
+                ) : (
+                  <>
+                    <span style={{ fontSize: 11, color: "#6b7280" }}>⏰ Дедлайн:</span>
+                    <input type="datetime-local" id="deadlineInput"
+                      style={{ padding: "4px 8px", borderRadius: 4, border: "1px solid #d1d5db", fontSize: 11 }} />
+                    <button onClick={() => {
+                      const val = document.getElementById("deadlineInput").value;
+                      if (val) exec("set_deadline", { pollId: selectedPoll.id, deadline: val });
+                    }} style={{ padding: "4px 10px", borderRadius: 4, border: "none", background: "#f59e0b", color: "#fff", fontSize: 11, cursor: "pointer" }}>
+                      Установить
+                    </button>
+                  </>
+                )}
+              </div>
+
               {/* Закрыть */}
               <button onClick={() => exec("close_poll", { pollId: selectedPoll.id })}
                 style={{ padding: "10px 24px", borderRadius: 6, border: "1px solid #f59e0b", background: "#fff", color: "#f59e0b", fontSize: 14, cursor: "pointer", fontWeight: 600 }}>

@@ -30,7 +30,7 @@ export default function VotingMatrixProjection({ world, theme = "light", variant
     const t = {};
     for (const opt of pollOptions) {
       const ov = pollVotes.filter(v => v.optionId === opt.id);
-      t[opt.id] = { yes: ov.filter(v => v.value === "yes").length, no: ov.filter(v => v.value === "no").length };
+      t[opt.id] = { yes: ov.filter(v => v.value === "yes").length, no: ov.filter(v => v.value === "no").length, maybe: ov.filter(v => v.value === "maybe").length };
     }
     return t;
   }, [pollOptions, pollVotes]);
@@ -70,11 +70,11 @@ export default function VotingMatrixProjection({ world, theme = "light", variant
                   return (
                     <td key={opt.id} style={{
                       padding: s.v.padding / 2, textAlign: "center", borderBottom: `1px solid ${s.t.border}`,
-                      background: vote ? (vote.value === "yes" ? s.t.successBg : s.t.dangerBg) : "transparent",
+                      background: vote ? (vote.value === "yes" ? s.t.successBg : vote.value === "maybe" ? s.t.warningBg : s.t.dangerBg) : "transparent",
                     }}>
                       {vote ? (
-                        <span style={{ fontSize: s.v.fontSize.body, fontWeight: 700, color: vote.value === "yes" ? s.t.success : s.t.danger }}>
-                          {vote.value === "yes" ? "✓" : "✕"}
+                        <span style={{ fontSize: s.v.fontSize.body, fontWeight: 700, color: vote.value === "yes" ? s.t.success : vote.value === "maybe" ? s.t.warning : s.t.danger }}>
+                          {vote.value === "yes" ? "✓" : vote.value === "maybe" ? "?" : "✕"}
                         </span>
                       ) : (
                         <span style={{ color: s.t.textMuted, fontSize: s.v.fontSize.small }}>—</span>
@@ -94,7 +94,7 @@ export default function VotingMatrixProjection({ world, theme = "light", variant
                 return (
                   <td key={opt.id} style={{ padding: s.v.padding / 2, textAlign: "center", borderTop: `2px solid ${s.t.border}` }}>
                     <div style={{ fontSize: s.v.fontSize.body, fontWeight: 700, color: pct >= 50 ? s.t.success : s.t.danger }}>{pct}%</div>
-                    <div style={{ fontSize: s.v.fontSize.tiny, color: s.t.textMuted }}>{ct.yes}✓ {ct.no}✕</div>
+                    <div style={{ fontSize: s.v.fontSize.tiny, color: s.t.textMuted }}>{ct.yes}✓ {ct.maybe || 0}? {ct.no}✕</div>
                   </td>
                 );
               })}
