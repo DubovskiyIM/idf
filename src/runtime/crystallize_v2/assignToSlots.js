@@ -57,21 +57,35 @@ export function assignToSlots(INTENTS, projection, ONTOLOGY) {
     const isComposerEntry = wrapped.type === "composerEntry";
     const hasOverlay = wrapped.trigger && wrapped.overlay;
 
-    // composer: единственное намерение confirmation:"enter" + creates → composer
-    if (isComposerEntry && intent.creates && !slots.composer) {
-      slots.composer = buildComposer(id, intent, parameters, INTENTS);
+    // composer: первое projection-level намерение confirmation:"enter" + creates → composer.
+    // Вторичные composerEntry (reply_to_message и т.п. — per-item) идут в item.intents.
+    if (isComposerEntry) {
+      if (!isPerItem && intent.creates && !slots.composer) {
+        slots.composer = buildComposer(id, intent, parameters, INTENTS);
+        continue;
+      }
+      // Иначе — per-item или уже есть composer. Для per-item кладём в item.intents,
+      // иначе дропаем (обычно это reply/forward-like — они per-item).
+      if (isPerItem) {
+        itemIntents.add(id);
+      }
       continue;
     }
 
-    // formModal/confirmDialog — overlay + toolbar trigger
+    // formModal/confirmDialog — overlay + trigger
     if (hasOverlay) {
-      slots.toolbar.push(wrapped.trigger);
       slots.overlay.push(wrapped.overlay);
+      if (isPerItem) {
+        // Per-item overlay — триггер в item.intents (опциональный overlayKey)
+        itemIntents.add(id);
+      } else {
+        slots.toolbar.push(wrapped.trigger);
+      }
       continue;
     }
 
     // Per-item intent → body.item.intents
-    if (isPerItem && wrapped.type === "intentButton" && !wrapped.opens) {
+    if (isPerItem && wrapped.type === "intentButton") {
       itemIntents.add(id);
       continue;
     }
@@ -80,8 +94,14 @@ export function assignToSlots(INTENTS, projection, ONTOLOGY) {
     slots.toolbar.push(wrapped);
   }
 
-  // Toggles → header
-  slots.header.push(...toggles);
+  // Toggles → header (ограничиваем первыми 3, остальные — overflow)
+  const MAX_HEADER_TOGGLES = 3;
+  if (toggles.length > MAX_HEADER_TOGGLES) {
+    slots.header.push(...toggles.slice(0, MAX_HEADER_TOGGLES));
+    slots.toolbar.push({ type: "overflow", children: toggles.slice(MAX_HEADER_TOGGLES) });
+  } else {
+    slots.header.push(...toggles);
+  }
 
   // Собрать item.intents в body
   if (slots.body.item) {
@@ -114,10 +134,33 @@ function appliesToProjection(intent, projection) {
 }
 
 function isPerItemIntent(intent, projection) {
-  // Per-item: намерение применяется к единичному элементу коллекции проекции
-  const intentEntities = (intent.particles?.entities || []).map(e => e.split(":").pop().trim().replace(/\[\]$/, ""));
+  // Per-item: намерение применяется к единичному экземпляру главной сущности проекции.
+  // Признак: есть условие или точечный witness на mainEntity (нужна ссылка на конкретный
+  // экземпляр), либо единственная entity — mainEntity без дополнительных.
   const mainEntity = projection.mainEntity || "Message";
-  return intentEntities.includes(mainEntity) && !intent.creates;
+  const mainLower = mainEntity.toLowerCase();
+  const intentEntities = (intent.particles?.entities || [])
+    .map(e => e.split(":").pop().trim().replace(/\[\]$/, ""));
+  if (!intentEntities.includes(mainEntity)) return false;
+
+  // Признак per-item: точечный witness referring to an existing instance
+  const witnesses = intent.particles?.witnesses || [];
+  const hasDottedMainWitness = witnesses.some(w => {
+    const base = w.split(".")[0];
+    return base === mainLower || base === mainEntity || base === "original_message";
+  });
+  if (hasDottedMainWitness) return true;
+
+  // Признак per-item: условие на поле mainEntity (e.g. "message.senderId = me.id")
+  const conditions = intent.particles?.conditions || [];
+  const hasMainCondition = conditions.some(c => c.toLowerCase().startsWith(mainLower + "."));
+  if (hasMainCondition) return true;
+
+  // Если intent создаёт новую сущность mainEntity через композер — не per-item
+  if (intent.creates === mainEntity && !hasDottedMainWitness && !hasMainCondition) return false;
+
+  // Иначе — per-item (есть main entity в списке, но неясно зачем)
+  return true;
 }
 
 function findStateField(intent) {
@@ -133,7 +176,7 @@ function buildBody(projection) {
   return {
     type: "list",
     source: "messages",
-    filter: "item.conversationId === world.currentConversationId",
+    filter: "conversationId === world.currentConversationId",
     sort: "createdAt",
     direction: "bottom-up",
     item: {
@@ -142,12 +185,13 @@ function buildBody(projection) {
         {
           type: "row",
           children: [
-            { type: "avatar", bind: "item.sender.name", size: 32 },
+            { type: "avatar", bind: "senderName", size: 32 },
             {
               type: "column",
+              sx: { flex: 1 },
               children: [
-                { type: "text", bind: "item.sender.name", style: "heading" },
-                { type: "text", bind: "item.content" },
+                { type: "text", bind: "senderName", style: "heading" },
+                { type: "text", bind: "content" },
               ],
             },
           ],
