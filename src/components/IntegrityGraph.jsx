@@ -16,6 +16,62 @@ const NODE_COLORS = {
   warning: "#f59e0b",
 };
 
+function getResolutions(issue) {
+  const resolutions = [];
+
+  switch (issue.rule) {
+    case "algebra_composition":
+      resolutions.push(
+        { icon: "🔄", label: "Изменить α-тип", desc: `Заменить один из α-типов на совместимый. Например, оба на 'replace' (побеждает ≺-поздний) или оба на 'increment' (коммутативно).` },
+        { icon: "🎯", label: "Разделить target", desc: `Если эффекты на разные аспекты сущности — использовать разные target (slot.status vs slot.count).` },
+        { icon: "🚫", label: "Добавить исключающую связь", desc: `Если намерения не должны применяться одновременно — сделать их исключающими (⊕).` },
+        { icon: "✕", label: "Удалить намерение", desc: `Если одно из намерений ошибочно — удалить его из определений.` },
+      );
+      break;
+    case "no_dead_intents":
+      resolutions.push(
+        { icon: "➕", label: "Добавить производителя", desc: `Создать намерение, чей эффект устанавливает нужное значение для условия.` },
+        { icon: "🔧", label: "Ослабить условие", desc: `Изменить или удалить условие, если оно слишком строгое.` },
+        { icon: "📦", label: "Добавить seed-данные", desc: `Условие может быть выполнено начальными данными (seed), не обязательно другим намерением.` },
+      );
+      break;
+    case "no_orphan_effects":
+      resolutions.push(
+        { icon: "📊", label: "Добавить проекцию", desc: `Создать проекцию, которая наблюдает этот эффект.` },
+        { icon: "👁", label: "Добавить witness", desc: `Добавить поле в witnesses существующей проекции.` },
+      );
+      break;
+    case "witness_completeness":
+      resolutions.push(
+        { icon: "👁", label: "Добавить witness", desc: `Добавить свидетельство для условия, чтобы пользователь видел его перед решением.` },
+        { icon: "ℹ️", label: "Игнорировать", desc: `Условие может быть очевидным из контекста (например, status виден в UI).` },
+      );
+      break;
+    case "confirmation_proportionality":
+      resolutions.push(
+        { icon: "⚠", label: "Усилить подтверждение", desc: `Заменить 'click' на confirm-dialog, двойной клик, или ввод текста.` },
+        { icon: "↓", label: "Снизить необратимость", desc: `Если операция обратима (мягкое удаление) — снизить irreversibility.` },
+      );
+      break;
+    case "antagonist_exists":
+      resolutions.push(
+        { icon: "➕", label: "Создать антагониста", desc: `Добавить намерение-антагонист с указанным ID.` },
+        { icon: "✕", label: "Убрать ссылку", desc: `Удалить поле antagonist из определения.` },
+      );
+      break;
+    case "ontology_coverage":
+      resolutions.push(
+        { icon: "📦", label: "Добавить в онтологию", desc: `Добавить сущность в ONTOLOGY.entities.` },
+        { icon: "🔧", label: "Исправить имя", desc: `Возможно опечатка — проверить написание типа в particles.entities.` },
+      );
+      break;
+    default:
+      resolutions.push({ icon: "🔍", label: "Исследовать", desc: `Проанализировать проблему вручную.` });
+  }
+
+  return resolutions;
+}
+
 export default function IntegrityGraph({ domain }) {
   const containerRef = useRef();
   const graphRef = useRef(null);
@@ -30,10 +86,29 @@ export default function IntegrityGraph({ domain }) {
   const issuesByIntent = useMemo(() => {
     const map = {};
     for (const issue of integrity.issues) {
-      if (!map[issue.intent]) map[issue.intent] = [];
-      map[issue.intent].push(issue);
+      // Алгебра: "intent1 ⊗ intent2" → пометить оба
+      if (issue.intent.includes(" ⊗ ")) {
+        const [id1, id2] = issue.intent.split(" ⊗ ");
+        if (!map[id1]) map[id1] = [];
+        if (!map[id2]) map[id2] = [];
+        map[id1].push(issue);
+        map[id2].push(issue);
+      } else {
+        if (!map[issue.intent]) map[issue.intent] = [];
+        map[issue.intent].push(issue);
+      }
     }
     return map;
+  }, [integrity]);
+
+  // Конфликтные рёбра из алгебры
+  const algebraConflicts = useMemo(() => {
+    return integrity.issues
+      .filter(i => i.rule === "algebra_composition" && i.intent.includes(" ⊗ "))
+      .map(i => {
+        const [id1, id2] = i.intent.split(" ⊗ ");
+        return { source: id1, target: id2, detail: i.detail };
+      });
   }, [integrity]);
 
   const graphData = useMemo(() => {
@@ -139,8 +214,19 @@ export default function IntegrityGraph({ domain }) {
       }
     }
 
+    // Рёбра: конфликты алгебры ⊥ (красные, толстые)
+    for (const conflict of algebraConflicts) {
+      links.push({
+        source: `intent:${conflict.source}`,
+        target: `intent:${conflict.target}`,
+        color: "#ef4444",
+        width: 4,
+        label: "⊥",
+      });
+    }
+
     return { nodes, links };
-  }, [INTENTS, PROJECTIONS, ONTOLOGY, issuesByIntent]);
+  }, [INTENTS, PROJECTIONS, ONTOLOGY, issuesByIntent, algebraConflicts]);
 
   // 3D граф
   useEffect(() => {
@@ -162,7 +248,7 @@ export default function IntegrityGraph({ domain }) {
         .nodeColor(n => n.color)
         .nodeOpacity(0.9)
         .linkColor(l => l.color)
-        .linkWidth(2)
+        .linkWidth(l => l.width || 2)
         .linkDirectionalArrowLength(4)
         .linkDirectionalArrowRelPos(1)
         .onNodeClick(node => setSelectedNode(prev => prev?.id === node.id ? null : node))
@@ -203,11 +289,14 @@ export default function IntegrityGraph({ domain }) {
         </div>
         <div style={{ color: "#6b7280", fontSize: 11 }}>{integrity.summary}</div>
         {integrity.issues.length > 0 && (
-          <div style={{ marginTop: 8, maxHeight: 200, overflow: "auto" }}>
+          <div style={{ marginTop: 8, maxHeight: 300, overflow: "auto" }}>
             {integrity.issues.map((issue, i) => (
-              <div key={i} style={{ fontSize: 10, padding: "3px 0", borderBottom: "1px solid #f3f4f6",
-                color: issue.level === "error" ? "#ef4444" : issue.level === "warning" ? "#f59e0b" : "#6b7280" }}>
+              <div key={i} onClick={() => setSelectedNode({ id: `issue:${i}`, name: issue.message, type: "issue", color: issue.level === "error" ? "#ef4444" : "#f59e0b", issues: [issue], data: issue,
+                resolutions: getResolutions(issue) })}
+                style={{ fontSize: 10, padding: "4px 0", borderBottom: "1px solid #f3f4f6", cursor: "pointer",
+                  color: issue.level === "error" ? "#ef4444" : issue.level === "warning" ? "#f59e0b" : "#6b7280" }}>
                 <span style={{ fontWeight: 600 }}>{issue.intent}</span>: {issue.message}
+                <span style={{ marginLeft: 4, fontSize: 9, color: "#9ca3af" }}>→ клик для решения</span>
               </div>
             ))}
           </div>
@@ -231,9 +320,23 @@ export default function IntegrityGraph({ domain }) {
               ))}
             </div>
           )}
-          <pre style={{ fontSize: 9, color: "#6b7280", background: "#f9fafb", padding: 6, borderRadius: 4, overflow: "auto", maxHeight: 150 }}>
-            {JSON.stringify(selectedNode.data, null, 2)}
-          </pre>
+          {/* Инструменты разрешения */}
+          {selectedNode.resolutions?.length > 0 && (
+            <div style={{ marginBottom: 6 }}>
+              <div style={{ fontSize: 10, fontWeight: 600, color: "#1a1a2e", marginBottom: 4 }}>Варианты решения:</div>
+              {selectedNode.resolutions.map((res, i) => (
+                <div key={i} style={{ fontSize: 10, padding: "4px 6px", marginBottom: 3, background: "#f0fdf4", borderRadius: 4, border: "1px solid #bbf7d0" }}>
+                  <div style={{ fontWeight: 600, color: "#1a1a2e" }}>{res.icon} {res.label}</div>
+                  <div style={{ color: "#6b7280", marginTop: 2 }}>{res.desc}</div>
+                </div>
+              ))}
+            </div>
+          )}
+          {!selectedNode.resolutions && (
+            <pre style={{ fontSize: 9, color: "#6b7280", background: "#f9fafb", padding: 6, borderRadius: 4, overflow: "auto", maxHeight: 150 }}>
+              {JSON.stringify(selectedNode.data, null, 2)}
+            </pre>
+          )}
         </div>
       )}
 
