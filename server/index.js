@@ -21,6 +21,14 @@ setBroadcast(effectsRouter.broadcast);
 setExecBroadcast(effectsRouter.broadcast);
 startSync();
 
+// Endpoint для обновления маппинга типов из онтологии домена
+const { updateTypeMap } = require("./validator.js");
+app.post("/api/typemap", (req, res) => {
+  const map = updateTypeMap(req.body);
+  console.log(`  [typemap] Обновлён: ${Object.keys(map).length} типов`);
+  res.json({ ok: true, types: Object.keys(map).length });
+});
+
 // Endpoint для исполнения workflow
 app.post("/api/execute/:workflowId", async (req, res) => {
   try {

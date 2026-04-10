@@ -46,6 +46,15 @@ export default function App() {
   const engine = useEngine(domain);
   const { world, drafts, effects, signals, links, exec } = engine;
 
+  // Синхронизировать онтологию с сервером при смене домена
+  useEffect(() => {
+    fetch("/api/typemap", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(domain.ONTOLOGY),
+    }).catch(() => {});
+  }, [domain]);
+
   // При смене домена: загрузить seed если нужно, не удалять данные других доменов
   const switchDomain = useCallback(async (newDomainId) => {
     const newDomain = DOMAINS[newDomainId];
@@ -66,6 +75,13 @@ export default function App() {
         }
       } catch {}
     }
+    // Отправить онтологию нового домена на сервер для маппинга типов
+    await fetch("/api/typemap", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(newDomain.ONTOLOGY),
+    }).catch(() => {});
+
     setDomainId(newDomainId);
     localStorage.setItem("idf_domain", newDomainId);
     setTopView(null);

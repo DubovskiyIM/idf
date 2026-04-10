@@ -1,20 +1,27 @@
 const db = require("./db.js");
 
-// Автогенерация: этот маппинг должен совпадать с buildTypeMap из fold.js.
-// На сервере содержим union всех доменов. При добавлении нового домена — добавить сюда.
-// TODO: автоматическая деривация через API /api/ontology
-const SINGULAR_TO_PLURAL = {
-  draft: "drafts",
-  // booking domain
-  slot: "slots", booking: "bookings", service: "services",
-  specialist: "specialists", review: "reviews",
-  // planning domain
-  poll: "polls", option: "options", participant: "participants",
-  vote: "votes", meeting: "meetings",
-  // workflow domain
-  workflow: "workflows", node: "nodes", edge: "edges",
-  execution: "executions", noderesult: "noderesults"
-};
+// Динамический маппинг — обновляется через API /api/typemap
+let SINGULAR_TO_PLURAL = { draft: "drafts" };
+
+function updateTypeMap(ontology) {
+  const map = { draft: "drafts" };
+  if (ontology?.entities) {
+    for (const entityName of Object.keys(ontology.entities)) {
+      const singular = entityName.toLowerCase();
+      const plural = singular.endsWith("s") ? singular + "es" : singular + "s";
+      map[singular] = plural;
+    }
+  }
+  SINGULAR_TO_PLURAL = map;
+  return map;
+}
+
+// Инициализация: union всех известных доменов (fallback)
+updateTypeMap({ entities: {
+  Slot: {}, Booking: {}, Service: {}, Specialist: {}, Review: {},
+  Poll: {}, Option: {}, Participant: {}, Vote: {}, Meeting: {},
+  Workflow: {}, Node: {}, Edge: {}, Execution: {}, NodeResult: {}, NodeType: {},
+}});
 
 function foldWorld() {
   const effects = db.prepare(
@@ -236,4 +243,4 @@ function cascadeReject(effectId) {
   return allCascaded;
 }
 
-module.exports = { validate, cascadeReject, foldWorld };
+module.exports = { validate, cascadeReject, foldWorld, updateTypeMap };
