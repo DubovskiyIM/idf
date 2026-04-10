@@ -1,95 +1,43 @@
-import { useState, useMemo, useCallback } from "react";
+import { useState } from "react";
 import { INTENTS } from "./runtime/intents.js";
 import { PROJECTIONS } from "./runtime/projections.js";
-import { deriveLinks } from "./runtime/links.js";
+import { PARTICLE_COLORS, ALPHA_LABELS, LINK_COLORS } from "./runtime/constants.js";
+import { useEngine } from "./runtime/engine.js";
 
-let eid = 0;
-const ts = () => { const d = new Date(); return d.toLocaleTimeString("ru", { hour: "2-digit", minute: "2-digit", second: "2-digit", fractionalSecondDigits: 2 }); };
-
-const PARTICLE_COLORS = { entities: "#60a5fa", conditions: "#f59e0b", effects: "#34d399", witnesses: "#a78bfa", confirmation: "#f472b6" };
-const ALPHA_LABELS = { add: "add", replace: "replace", remove: "remove" };
-const LINK_COLORS = { "⇌": "#f472b6", "▷": "#60a5fa" };
+const crystallizedModules = import.meta.glob("./crystallized/*.jsx", { eager: true });
 
 export default function App() {
-  const [tasks, setTasks] = useState([
-    { id: "t1", title: "Прочитать манифест v0.3", status: "pending", createdAt: Date.now() - 3600000 },
-    { id: "t2", title: "Определить домен прототипа", status: "completed", createdAt: Date.now() - 7200000 }
-  ]);
-  const [log, setLog] = useState([]);
-  const [signals, setSignals] = useState([]);
+  const { tasks, log, signals, stats, links, exec, isApplicable } = useEngine();
   const [input, setInput] = useState("");
   const [editId, setEditId] = useState(null);
   const [editVal, setEditVal] = useState("");
   const [tab, setTab] = useState("intents");
 
-  const stats = useMemo(() => ({ total: tasks.length, pending: tasks.filter(t => t.status === "pending").length, completed: tasks.filter(t => t.status === "completed").length }), [tasks]);
-  const links = useMemo(deriveLinks, []);
+  const hasCrystallized = Object.keys(crystallizedModules).length > 0;
+  const [mode, setMode] = useState("manual");
 
-  const pushLog = useCallback((intentId, α, desc) => {
-    setLog(p => [{ id: ++eid, intentId, α, desc, time: ts(), status: "confirmed" }, ...p].slice(0, 40));
-  }, []);
-  const pushSignal = useCallback((κ, desc) => {
-    setSignals(p => [{ id: ++eid, κ, desc, time: ts() }, ...p].slice(0, 20));
-  }, []);
-
-  const exec = useCallback((intentId, ctx = {}) => {
-    switch (intentId) {
-      case "add_task": {
-        if (!ctx.title?.trim()) return;
-        const t = { id: `t_${Date.now()}`, title: ctx.title.trim(), status: "pending", createdAt: Date.now() };
-        setTasks(p => [t, ...p]);
-        pushLog(intentId, "add", `+ "${t.title}"`);
-        pushSignal("analytics", "task_created");
-        break;
-      }
-      case "complete_task": {
-        const t = tasks.find(x => x.id === ctx.id);
-        if (!t || t.status !== "pending") return;
-        setTasks(p => p.map(x => x.id === ctx.id ? { ...x, status: "completed" } : x));
-        pushLog(intentId, "replace", `✓ "${t.title}" → completed`);
-        break;
-      }
-      case "uncomplete_task": {
-        const t = tasks.find(x => x.id === ctx.id);
-        if (!t || t.status !== "completed") return;
-        setTasks(p => p.map(x => x.id === ctx.id ? { ...x, status: "pending" } : x));
-        pushLog(intentId, "replace", `↩ "${t.title}" → pending`);
-        break;
-      }
-      case "delete_task": {
-        const t = tasks.find(x => x.id === ctx.id);
-        if (!t) return;
-        setTasks(p => p.filter(x => x.id !== ctx.id));
-        pushLog(intentId, "remove", `✕ "${t.title}"`);
-        pushSignal("notification", `Задача "${t.title}" удалена`);
-        break;
-      }
-      case "edit_task": {
-        const t = tasks.find(x => x.id === ctx.id);
-        if (!t || !ctx.newTitle?.trim()) return;
-        setTasks(p => p.map(x => x.id === ctx.id ? { ...x, title: ctx.newTitle.trim() } : x));
-        pushLog(intentId, "replace", `✎ "${t.title}" → "${ctx.newTitle.trim()}"`);
-        setEditId(null);
-        break;
-      }
-    }
-  }, [tasks, pushLog, pushSignal]);
-
-  const isApplicable = useCallback((intentId, ctx) => {
-    const i = INTENTS[intentId];
-    if (!i) return false;
-    for (const c of i.particles.conditions) {
-      if (c === "task.status = 'pending'" && ctx.task?.status !== "pending") return false;
-      if (c === "task.status = 'completed'" && ctx.task?.status !== "completed") return false;
-    }
-    return true;
-  }, []);
+  const CrystallizedTaskList = crystallizedModules["./crystallized/task_list.jsx"]?.default;
+  const CrystallizedTaskStats = crystallizedModules["./crystallized/task_stats.jsx"]?.default;
 
   return (
     <div style={{ height: "100vh", display: "flex", flexDirection: "column", background: "#0c0e14", color: "#c9cdd4", fontFamily: "ui-monospace, 'SF Mono', 'Cascadia Code', monospace", fontSize: 13, overflow: "hidden" }}>
       <div style={{ padding: "12px 20px", borderBottom: "1px solid #1e2230", display: "flex", alignItems: "center", gap: 16, flexShrink: 0 }}>
         <span style={{ fontSize: 15, fontWeight: 700, color: "#e2e5eb", letterSpacing: "0.02em" }}>Intent-Driven Frontend</span>
         <span style={{ fontSize: 11, color: "#f59e0b", background: "#f59e0b18", padding: "2px 8px", borderRadius: 4, border: "1px solid #f59e0b30" }}>prototype 0.1</span>
+        {hasCrystallized && (
+          <div style={{ display: "flex", background: "#1e2230", borderRadius: 6, padding: 2 }}>
+            {["manual", "crystallized"].map(m => (
+              <button key={m} onClick={() => setMode(m)} style={{
+                padding: "4px 12px", borderRadius: 4, border: "none", cursor: "pointer", fontSize: 11,
+                background: mode === m ? "#f59e0b" : "transparent",
+                color: mode === m ? "#0c0e14" : "#6b7280",
+                fontWeight: mode === m ? 600 : 400
+              }}>
+                {m === "manual" ? "Ручной" : "Кристаллизованный"}
+              </button>
+            ))}
+          </div>
+        )}
         <div style={{ flex: 1 }} />
         <span style={{ fontSize: 11, color: "#6b7280" }}>{Object.keys(INTENTS).length} намерений · {Object.keys(PROJECTIONS).length} проекции · {links.length} связей</span>
       </div>
@@ -160,81 +108,92 @@ export default function App() {
         {/* CENTER: Crystallized app */}
         <div style={{ flex: 1, display: "flex", flexDirection: "column", minWidth: 0 }}>
           <div style={{ padding: "8px 16px", borderBottom: "1px solid #1e2230", display: "flex", alignItems: "center", gap: 8, background: "#10121a" }}>
-            <span style={{ fontSize: 10, color: "#f59e0b", textTransform: "uppercase", letterSpacing: "0.1em" }}>кристаллизованный UI</span>
-            <span style={{ fontSize: 10, color: "#4b5068" }}>— выведен из {Object.keys(INTENTS).length} намерений, ни один компонент не написан вручную</span>
+            <span style={{ fontSize: 10, color: "#f59e0b", textTransform: "uppercase", letterSpacing: "0.1em" }}>
+              {mode === "crystallized" && hasCrystallized ? "кристаллизованный UI" : "ручной UI"}
+            </span>
+            <span style={{ fontSize: 10, color: "#4b5068" }}>
+              {mode === "crystallized" && hasCrystallized
+                ? "— сгенерирован Claude Code из определений намерений"
+                : `— выведен из ${Object.keys(INTENTS).length} намерений, ни один компонент не написан вручную`}
+            </span>
           </div>
           <div style={{ flex: 1, overflow: "auto", background: "#fafafa", color: "#1a1a2e" }}>
-            <div style={{ maxWidth: 560, margin: "0 auto", padding: 24 }}>
-              {/* Projection: task_stats */}
-              <div style={{ display: "flex", gap: 12, marginBottom: 20 }}>
-                {[
-                  { label: "Всего", val: stats.total, color: "#6366f1" },
-                  { label: "В работе", val: stats.pending, color: "#f59e0b" },
-                  { label: "Готово", val: stats.completed, color: "#22c55e" }
-                ].map(s => (
-                  <div key={s.label} style={{ flex: 1, background: "#fff", borderRadius: 8, padding: "12px 16px", boxShadow: "0 1px 3px #0001", border: "1px solid #e5e7eb" }}>
-                    <div style={{ fontSize: 22, fontWeight: 700, color: s.color, fontFamily: "system-ui, sans-serif" }}>{s.val}</div>
-                    <div style={{ fontSize: 12, color: "#6b7280", fontFamily: "system-ui, sans-serif" }}>{s.label}</div>
-                  </div>
-                ))}
-              </div>
-
-              {/* Intent: add_task (entry point — creates entity) */}
-              <div style={{ display: "flex", gap: 8, marginBottom: 20 }}>
-                <input value={input} onChange={e => setInput(e.target.value)} onKeyDown={e => { if (e.key === "Enter") { exec("add_task", { title: input }); setInput(""); } }}
-                  placeholder="Новая задача..." style={{ flex: 1, padding: "10px 14px", borderRadius: 8, border: "1px solid #d1d5db", fontSize: 14, fontFamily: "system-ui, sans-serif", outline: "none", background: "#fff" }} />
-                <button onClick={() => { exec("add_task", { title: input }); setInput(""); }}
-                  style={{ padding: "10px 20px", borderRadius: 8, border: "none", background: "#6366f1", color: "#fff", fontSize: 14, fontFamily: "system-ui, sans-serif", cursor: "pointer", fontWeight: 600, whiteSpace: "nowrap" }}>
-                  + Добавить
-                </button>
-              </div>
-
-              {/* Projection: task_list — with applicable intents per item */}
-              {tasks.length === 0 ? (
-                <div style={{ textAlign: "center", padding: 40, color: "#9ca3af", fontFamily: "system-ui, sans-serif", fontSize: 14 }}>Нет задач. Добавьте первую.</div>
-              ) : (
-                <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-                  {tasks.sort((a, b) => b.createdAt - a.createdAt).map(task => {
-                    const done = task.status === "completed";
-                    const canComplete = isApplicable("complete_task", { task });
-                    const canUncomplete = isApplicable("uncomplete_task", { task });
-                    const isEditing = editId === task.id;
-                    return (
-                      <div key={task.id} style={{ display: "flex", alignItems: "center", gap: 10, background: "#fff", borderRadius: 8, padding: "10px 14px", boxShadow: "0 1px 2px #0001", border: "1px solid #e5e7eb", transition: "all 0.15s" }}>
-                        {/* Antagonist pair: complete ⇌ uncomplete — auto-derived */}
-                        <button onClick={() => exec(done ? "uncomplete_task" : "complete_task", { id: task.id })}
-                          title={done ? "Вернуть в работу (⇌ антагонист)" : "Завершить"}
-                          style={{ width: 22, height: 22, borderRadius: 6, border: done ? "2px solid #22c55e" : "2px solid #d1d5db", background: done ? "#22c55e" : "transparent", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, transition: "all 0.15s", fontSize: 12, color: "#fff" }}>
-                          {done ? "✓" : ""}
-                        </button>
-
-                        {isEditing ? (
-                          <input autoFocus value={editVal} onChange={e => setEditVal(e.target.value)}
-                            onKeyDown={e => { if (e.key === "Enter") exec("edit_task", { id: task.id, newTitle: editVal }); if (e.key === "Escape") setEditId(null); }}
-                            onBlur={() => { if (editVal.trim()) exec("edit_task", { id: task.id, newTitle: editVal }); else setEditId(null); }}
-                            style={{ flex: 1, padding: "4px 8px", borderRadius: 4, border: "1px solid #6366f1", fontSize: 14, fontFamily: "system-ui, sans-serif", outline: "none" }} />
-                        ) : (
-                          <span onDoubleClick={() => { setEditId(task.id); setEditVal(task.title); }}
-                            style={{ flex: 1, fontSize: 14, fontFamily: "system-ui, sans-serif", color: done ? "#9ca3af" : "#1a1a2e", textDecoration: done ? "line-through" : "none", cursor: "default", userSelect: "none" }}>
-                            {task.title}
-                          </span>
-                        )}
-
-                        {/* Intent: delete_task — always applicable */}
-                        <button onClick={() => exec("delete_task", { id: task.id })}
-                          style={{ background: "none", border: "none", cursor: "pointer", color: "#d1d5db", fontSize: 16, padding: "2px 4px", borderRadius: 4, lineHeight: 1 }}
-                          onMouseEnter={e => e.target.style.color = "#ef4444"} onMouseLeave={e => e.target.style.color = "#d1d5db"}>
-                          ×
-                        </button>
-                      </div>
-                    );
-                  })}
+            {mode === "manual" || !hasCrystallized ? (
+              <div style={{ maxWidth: 560, margin: "0 auto", padding: 24 }}>
+                {/* Projection: task_stats */}
+                <div style={{ display: "flex", gap: 12, marginBottom: 20 }}>
+                  {[
+                    { label: "Всего", val: stats.total, color: "#6366f1" },
+                    { label: "В работе", val: stats.pending, color: "#f59e0b" },
+                    { label: "Готово", val: stats.completed, color: "#22c55e" }
+                  ].map(s => (
+                    <div key={s.label} style={{ flex: 1, background: "#fff", borderRadius: 8, padding: "12px 16px", boxShadow: "0 1px 3px #0001", border: "1px solid #e5e7eb" }}>
+                      <div style={{ fontSize: 22, fontWeight: 700, color: s.color, fontFamily: "system-ui, sans-serif" }}>{s.val}</div>
+                      <div style={{ fontSize: 12, color: "#6b7280", fontFamily: "system-ui, sans-serif" }}>{s.label}</div>
+                    </div>
+                  ))}
                 </div>
-              )}
-              <div style={{ marginTop: 16, fontSize: 11, color: "#9ca3af", fontFamily: "system-ui, sans-serif", textAlign: "center" }}>
-                Двойной клик — редактировать · Чекбокс — завершить/вернуть (⇌ антагонист)
+
+                {/* Intent: add_task (entry point — creates entity) */}
+                <div style={{ display: "flex", gap: 8, marginBottom: 20 }}>
+                  <input value={input} onChange={e => setInput(e.target.value)} onKeyDown={e => { if (e.key === "Enter") { exec("add_task", { title: input }); setInput(""); } }}
+                    placeholder="Новая задача..." style={{ flex: 1, padding: "10px 14px", borderRadius: 8, border: "1px solid #d1d5db", fontSize: 14, fontFamily: "system-ui, sans-serif", outline: "none", background: "#fff" }} />
+                  <button onClick={() => { exec("add_task", { title: input }); setInput(""); }}
+                    style={{ padding: "10px 20px", borderRadius: 8, border: "none", background: "#6366f1", color: "#fff", fontSize: 14, fontFamily: "system-ui, sans-serif", cursor: "pointer", fontWeight: 600, whiteSpace: "nowrap" }}>
+                    + Добавить
+                  </button>
+                </div>
+
+                {/* Projection: task_list — with applicable intents per item */}
+                {tasks.length === 0 ? (
+                  <div style={{ textAlign: "center", padding: 40, color: "#9ca3af", fontFamily: "system-ui, sans-serif", fontSize: 14 }}>Нет задач. Добавьте первую.</div>
+                ) : (
+                  <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                    {[...tasks].sort((a, b) => b.createdAt - a.createdAt).map(task => {
+                      const done = task.status === "completed";
+                      const isEditing = editId === task.id;
+                      return (
+                        <div key={task.id} style={{ display: "flex", alignItems: "center", gap: 10, background: "#fff", borderRadius: 8, padding: "10px 14px", boxShadow: "0 1px 2px #0001", border: "1px solid #e5e7eb", transition: "all 0.15s" }}>
+                          {/* Antagonist pair: complete ⇌ uncomplete — auto-derived */}
+                          <button onClick={() => exec(done ? "uncomplete_task" : "complete_task", { id: task.id })}
+                            title={done ? "Вернуть в работу (⇌ антагонист)" : "Завершить"}
+                            style={{ width: 22, height: 22, borderRadius: 6, border: done ? "2px solid #22c55e" : "2px solid #d1d5db", background: done ? "#22c55e" : "transparent", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, transition: "all 0.15s", fontSize: 12, color: "#fff" }}>
+                            {done ? "✓" : ""}
+                          </button>
+
+                          {isEditing ? (
+                            <input autoFocus value={editVal} onChange={e => setEditVal(e.target.value)}
+                              onKeyDown={e => { if (e.key === "Enter") { exec("edit_task", { id: task.id, newTitle: editVal }); setEditId(null); } if (e.key === "Escape") setEditId(null); }}
+                              onBlur={() => { if (editVal.trim()) { exec("edit_task", { id: task.id, newTitle: editVal }); setEditId(null); } else setEditId(null); }}
+                              style={{ flex: 1, padding: "4px 8px", borderRadius: 4, border: "1px solid #6366f1", fontSize: 14, fontFamily: "system-ui, sans-serif", outline: "none" }} />
+                          ) : (
+                            <span onDoubleClick={() => { setEditId(task.id); setEditVal(task.title); }}
+                              style={{ flex: 1, fontSize: 14, fontFamily: "system-ui, sans-serif", color: done ? "#9ca3af" : "#1a1a2e", textDecoration: done ? "line-through" : "none", cursor: "default", userSelect: "none" }}>
+                              {task.title}
+                            </span>
+                          )}
+
+                          {/* Intent: delete_task — always applicable */}
+                          <button onClick={() => exec("delete_task", { id: task.id })}
+                            style={{ background: "none", border: "none", cursor: "pointer", color: "#d1d5db", fontSize: 16, padding: "2px 4px", borderRadius: 4, lineHeight: 1 }}
+                            onMouseEnter={e => e.target.style.color = "#ef4444"} onMouseLeave={e => e.target.style.color = "#d1d5db"}>
+                            ×
+                          </button>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+                <div style={{ marginTop: 16, fontSize: 11, color: "#9ca3af", fontFamily: "system-ui, sans-serif", textAlign: "center" }}>
+                  Двойной клик — редактировать · Чекбокс — завершить/вернуть (⇌ антагонист)
+                </div>
               </div>
-            </div>
+            ) : (
+              <div style={{ maxWidth: 560, margin: "0 auto", padding: 24 }}>
+                {CrystallizedTaskStats && <CrystallizedTaskStats world={tasks} exec={exec} isApplicable={isApplicable} signals={signals} />}
+                {CrystallizedTaskList && <CrystallizedTaskList world={tasks} exec={exec} isApplicable={isApplicable} signals={signals} />}
+              </div>
+            )}
           </div>
         </div>
 
