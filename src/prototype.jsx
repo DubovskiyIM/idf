@@ -3,6 +3,7 @@ import { INTENTS } from "./runtime/intents.js";
 import { PROJECTIONS } from "./runtime/projections.js";
 import { PARTICLE_COLORS, ALPHA_LABELS, LINK_COLORS, SLOT_STATUS_COLORS, BOOKING_STATUS_COLORS } from "./runtime/constants.js";
 import { useEngine } from "./runtime/engine.js";
+import CausalityGraph from "./components/CausalityGraph.jsx";
 
 const crystallizedModules = import.meta.glob("./crystallized/*.jsx", { eager: true });
 
@@ -126,6 +127,7 @@ export default function App() {
               { id: "catalog", label: "Каталог" },
               { id: "schedule", label: "Расписание" },
               { id: "bookings", label: "Мои записи" },
+              { id: "graph", label: "Граф Φ" },
             ].map(v => (
               <button key={v.id} onClick={() => setView(v.id)} style={{
                 padding: "8px 16px", border: "none", cursor: "pointer", fontSize: 12,
@@ -144,7 +146,10 @@ export default function App() {
             )}
           </div>
 
-          <div style={{ flex: 1, overflow: "auto", background: "#fafafa", color: "#1a1a2e" }}>
+          <div style={{ flex: 1, overflow: view === "graph" ? "hidden" : "auto", background: view === "graph" ? "#1a1a2e" : "#fafafa", color: "#1a1a2e", position: "relative" }}>
+            {view === "graph" ? (
+              <CausalityGraph effects={effects} />
+            ) : (
             <div style={{ maxWidth: 640, margin: "0 auto", padding: 24 }}>
 
               {/* CRYSTALLIZED MODE */}
@@ -352,6 +357,7 @@ export default function App() {
               )}
 
             </div>
+            )}
           </div>
         </div>
 

@@ -324,7 +324,21 @@ export function useEngine() {
     const built = buildEffects(intentId, ctx, world, drafts);
     if (!built) return;
 
-    setEffects(prev => [...prev, ...built]);
+    // Связать эффекты причинно:
+    // 1. Внутри одного вызова: цепочка parent_id
+    for (let i = 1; i < built.length; i++) {
+      built[i].parent_id = built[i - 1].id;
+    }
+    // 2. Между вызовами: найти последний эффект предыдущего шага
+    setEffects(prev => {
+      const lastUserEffect = [...prev].reverse().find(e =>
+        e.intent_id !== "_seed" && e.intent_id !== "_sync" && e.status !== "rejected"
+      );
+      if (lastUserEffect && built[0].parent_id === null) {
+        built[0].parent_id = lastUserEffect.id;
+      }
+      return [...prev, ...built];
+    });
 
     for (const effect of built) {
       fetch("/api/effects", {
