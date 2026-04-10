@@ -8,9 +8,13 @@ import OntologyInspector from "./components/OntologyInspector.jsx";
 import * as bookingDomain from "./domains/booking/domain.js";
 import * as planningDomain from "./domains/planning/domain.js";
 
-// Ленивый импорт ManualUI
+// Manual UI
 import BookingUI from "./domains/booking/ManualUI.jsx";
 import PlanningUI from "./domains/planning/ManualUI.jsx";
+
+// Кристаллизованные проекции planning
+import PollOverview from "./crystallized/poll_overview.jsx";
+import VotingMatrix from "./crystallized/voting_matrix.jsx";
 
 const DOMAINS = {
   booking: { ...bookingDomain, UI: BookingUI },
@@ -21,6 +25,9 @@ export default function App() {
   const [domainId, setDomainId] = useState("booking");
   const [topView, setTopView] = useState(null); // null | "graph" | "ontology"
   const [tab, setTab] = useState("intents");
+  const [mode, setMode] = useState("manual"); // "manual" | "crystallized"
+  const [theme, setTheme] = useState("light"); // "light" | "dark"
+  const [variant, setVariant] = useState("clean"); // "clean" | "dense" | "playful"
 
   const domain = DOMAINS[domainId];
   const engine = useEngine(domain);
@@ -80,6 +87,36 @@ export default function App() {
             Онтология
           </button>
         </div>
+
+        {/* Режим: ручной / кристаллизованный */}
+        {domainId === "planning" && (
+          <div style={{ display: "flex", background: "#1e2230", borderRadius: 6, padding: 2 }}>
+            {["manual", "crystallized"].map(m => (
+              <button key={m} onClick={() => setMode(m)} style={{
+                padding: "4px 10px", borderRadius: 4, border: "none", cursor: "pointer", fontSize: 10,
+                background: mode === m ? "#f59e0b" : "transparent",
+                color: mode === m ? "#0c0e14" : "#6b7280", fontWeight: mode === m ? 600 : 400
+              }}>{m === "manual" ? "Ручной" : "Кристалл."}</button>
+            ))}
+          </div>
+        )}
+
+        {/* Тема + вариант (только для кристаллизованного) */}
+        {mode === "crystallized" && (
+          <>
+            <select value={theme} onChange={e => setTheme(e.target.value)}
+              style={{ fontSize: 10, padding: "3px 6px", borderRadius: 4, border: "1px solid #1e2230", background: "#1e2230", color: "#9ca3af", cursor: "pointer" }}>
+              <option value="light">☀ Light</option>
+              <option value="dark">🌙 Dark</option>
+            </select>
+            <select value={variant} onChange={e => setVariant(e.target.value)}
+              style={{ fontSize: 10, padding: "3px 6px", borderRadius: 4, border: "1px solid #1e2230", background: "#1e2230", color: "#9ca3af", cursor: "pointer" }}>
+              <option value="clean">Clean</option>
+              <option value="dense">Dense</option>
+              <option value="playful">Playful</option>
+            </select>
+          </>
+        )}
 
         <span style={{ fontSize: 11, color: "#6b7280" }}>
           {Object.keys(domain.INTENTS).length} намерений · {effects.filter(e => e.intent_id !== "_seed").length} эффектов
@@ -165,11 +202,20 @@ export default function App() {
           {/* CENTER: Domain UI */}
           <div style={{ flex: 1, display: "flex", flexDirection: "column", minWidth: 0 }}>
             <div style={{ padding: "6px 16px", borderBottom: "1px solid #1e2230", background: "#10121a", fontSize: 10, color: "#f59e0b", textTransform: "uppercase", letterSpacing: "0.1em" }}>
-              {domain.DOMAIN_NAME}
+              {domain.DOMAIN_NAME} — {mode === "crystallized" ? `кристаллизованный (${variant}, ${theme})` : "ручной UI"}
             </div>
-            <div style={{ flex: 1, overflow: "auto", background: "#fafafa", color: "#1a1a2e" }}>
-              <div style={{ maxWidth: 640, margin: "0 auto", padding: 24 }}>
-                <domain.UI world={world} drafts={drafts} exec={exec} effects={effects} />
+            <div style={{ flex: 1, overflow: "auto", background: theme === "dark" && mode === "crystallized" ? "#0c0e14" : "#fafafa", color: theme === "dark" && mode === "crystallized" ? "#e2e5eb" : "#1a1a2e" }}>
+              <div style={{ maxWidth: 700, margin: "0 auto", padding: 24 }}>
+                {mode === "manual" || domainId !== "planning" ? (
+                  <domain.UI world={world} drafts={drafts} exec={exec} effects={effects} />
+                ) : (
+                  <>
+                    <PollOverview world={world} exec={exec} theme={theme} variant={variant} />
+                    <div style={{ marginTop: 24 }}>
+                      <VotingMatrix world={world} theme={theme} variant={variant} />
+                    </div>
+                  </>
+                )}
               </div>
             </div>
           </div>
