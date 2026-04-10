@@ -6,7 +6,10 @@ export const PROJECTIONS = {
   },
   chat_view: {
     name: "Чат",
+    kind: "feed",
     query: "сообщения одной беседы, пагинация",
+    entities: ["Message", "Conversation", "Participant"],
+    mainEntity: "Message",
     witnesses: ["content", "sender.name", "createdAt", "status", "replyTo"]
   },
   contact_list: {

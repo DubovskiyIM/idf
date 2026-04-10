@@ -8,10 +8,10 @@ const ef = (α, target, σ = "account", extra = {}) => ({ α, target, σ, ...ext
 
 export const INTENTS = {
   // ===== СООБЩЕНИЯ (25) =====
-  send_message: intent("Отправить сообщение", ["message: Message", "conversation: Conversation"], [], [ef("add", "messages")], ["conversation.title", "draft_text"], "enter", { creates: "Message" }),
+  send_message: intent("Отправить сообщение", ["message: Message", "conversation: Conversation"], [], [ef("add", "messages")], ["conversation.title", "draft_text"], "enter", { creates: "Message", parameters: [{ name: "content", type: "textarea", required: true, placeholder: "Сообщение…" }] }),
   edit_message: intent("Редактировать", ["message: Message"], ["message.senderId = me.id"], [ef("replace", "message.content")], ["message.content"], "click", { phase: "investigation" }),
   delete_message: intent("Удалить сообщение", ["message: Message"], ["message.senderId = me.id"], [ef("replace", "message.deletedFor")], ["message.content"], "click"),
-  reply_to_message: intent("Ответить", ["message: Message", "conversation: Conversation"], [], [ef("add", "messages")], ["original_message.content"], "enter", { creates: "Message" }),
+  reply_to_message: intent("Ответить", ["message: Message", "conversation: Conversation"], [], [ef("add", "messages")], ["original_message.content"], "enter", { creates: "Message", parameters: [{ name: "content", type: "textarea", required: true, placeholder: "Ответить…" }] }),
   forward_message: intent("Переслать", ["message: Message", "conversation: Conversation"], [], [ef("add", "messages")], ["message.content", "target_conversation.title"], "click", { creates: "Message" }),
   pin_message: intent("Закрепить сообщение", ["message: Message"], [], [ef("replace", "message.pinned", "account", { value: true })], ["message.content"], "click"),
   unpin_message: intent("Открепить сообщение", ["message: Message"], ["message.pinned = true"], [ef("replace", "message.pinned", "account", { value: false })], [], "click", { antagonist: "pin_message" }),
@@ -19,12 +19,12 @@ export const INTENTS = {
   remove_reaction: intent("Убрать реакцию", ["reaction: Reaction"], [], [ef("remove", "reactions")], [], "click"),
   bookmark_message: intent("Сохранить в избранное", ["message: Message"], [], [ef("add", "bookmarks")], ["message.content"], "click", { creates: "Bookmark" }),
   remove_bookmark: intent("Убрать из избранного", ["bookmark: Bookmark"], [], [ef("remove", "bookmarks")], [], "click"),
-  report_message: intent("Пожаловаться", ["message: Message"], [], [ef("add", "reports")], ["message.content", "report_reason"], "form", { creates: "Report", irreversibility: "high" }),
+  report_message: intent("Пожаловаться", ["message: Message"], [], [ef("add", "reports")], ["message.content", "report_reason"], "form", { creates: "Report", irreversibility: "high", parameters: [{ name: "report_reason", type: "textarea", required: true, placeholder: "Причина жалобы" }] }),
   translate_message: intent("Перевести", ["message: Message"], [], [], ["message.content", "translated_text"], "click"),
   send_voice_message: intent("Голосовое сообщение", ["message: Message"], [], [ef("add", "messages")], ["recording_duration"], "click", { creates: "Message" }),
   schedule_message: intent("Запланировать сообщение", ["message: Message"], [], [ef("add", "messages", "account", { ttl: null })], ["content", "scheduled_time"], "form", { creates: "Message" }),
   bulk_delete_messages: intent("Массовое удаление", ["message: Message[]"], [], [ef("replace", "message.deletedFor")], ["selected_count"], "click", { extended: true }),
-  search_messages: intent("Поиск по сообщениям", [], [], [], ["query", "results"], "form"),
+  search_messages: intent("Поиск по сообщениям", [], [], [], ["query", "results"], "form", { parameters: [{ name: "query", type: "text", required: true, placeholder: "Поиск в сообщениях…" }] }),
   message_info: intent("Информация о сообщении", ["message: Message"], [], [], ["read_by", "delivered_to", "created_at"], "click"),
   copy_message: intent("Копировать текст", ["message: Message"], [], [], ["message.content"], "click"),
   select_messages: intent("Выделить сообщения", ["message: Message[]"], [], [], ["selected_count"], "click"),
@@ -45,7 +45,7 @@ export const INTENTS = {
   unmute_conversation: intent("Включить звук", ["participant: Participant"], ["participant.muted = true"], [ef("replace", "participant.muted", "account", { value: false })], ["conversation.title"], "click", { antagonist: "mute_conversation" }),
   pin_conversation: intent("Закрепить беседу", ["participant: Participant"], [], [ef("replace", "participant.pinned", "account", { value: true })], [], "click"),
   unpin_conversation: intent("Открепить беседу", ["participant: Participant"], ["participant.pinned = true"], [ef("replace", "participant.pinned", "account", { value: false })], [], "click", { antagonist: "pin_conversation" }),
-  rename_group: intent("Переименовать группу", ["conversation: Conversation"], ["conversation.type = 'group'"], [ef("replace", "conversation.title")], ["conversation.title"], "click", { phase: "investigation" }),
+  rename_group: intent("Переименовать группу", ["conversation: Conversation"], ["conversation.type = 'group'"], [ef("replace", "conversation.title")], ["conversation.title"], "click", { phase: "investigation", parameters: [{ name: "title", type: "text", required: true, bind: "conversation.title", editable: true, placeholder: "Новое название" }] }),
   set_group_avatar: intent("Аватар группы", ["conversation: Conversation"], ["conversation.type = 'group'"], [ef("replace", "conversation.avatar")], [], "file"),
   set_group_description: intent("Описание группы", ["conversation: Conversation"], ["conversation.type = 'group'"], [ef("replace", "conversation.description")], ["conversation.description"], "form"),
   archive_conversation: intent("Архивировать", ["participant: Participant"], [], [ef("replace", "participant.archived", "account", { value: true })], ["conversation.title"], "click"),
@@ -75,7 +75,7 @@ export const INTENTS = {
 
   // ===== ПРОФИЛЬ (10) =====
   update_profile: intent("Обновить профиль", ["user: User"], [], [ef("replace", "user.name"), ef("replace", "user.avatar")], ["user.name", "user.avatar"], "form", { phase: "investigation" }),
-  set_status_message: intent("Статус-сообщение", ["user: User"], [], [ef("replace", "user.statusMessage")], ["user.statusMessage"], "form"),
+  set_status_message: intent("Статус-сообщение", ["user: User"], [], [ef("replace", "user.statusMessage")], ["user.statusMessage"], "form", { parameters: [{ name: "statusMessage", type: "text", required: false, placeholder: "Что у вас нового?" }] }),
   set_avatar: intent("Установить аватар", ["user: User"], [], [ef("replace", "user.avatar")], [], "file"),
   delete_avatar: intent("Удалить аватар", ["user: User"], [], [ef("replace", "user.avatar", "account", { value: "" })], [], "click"),
   set_privacy_settings: intent("Настройки приватности", ["user: User"], [], [ef("replace", "user.privacy")], ["current_settings"], "form"),

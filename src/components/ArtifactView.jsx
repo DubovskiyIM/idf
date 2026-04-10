@@ -7,7 +7,9 @@
 
 import { useState, useEffect, useMemo } from "react";
 import { crystallize } from "../runtime/crystallize.js";
+import { crystallizeV2 } from "../runtime/crystallize_v2/index.js";
 import ProjectionRenderer from "../runtime/renderer.jsx";
+import ProjectionRendererV2 from "../runtime/renderer/index.jsx";
 
 export default function ArtifactView({ domain, world, exec, viewer }) {
   const [artifacts, setArtifacts] = useState({});
@@ -36,12 +38,11 @@ export default function ArtifactView({ domain, world, exec, viewer }) {
       }).catch(() => {});
   }, []);
 
-  // Кристаллизовать все проекции
+  // Кристаллизовать все проекции (v1)
   const handleCrystallize = async () => {
     setStatus("Кристаллизация...");
     const generated = crystallize(INTENTS, PROJECTIONS, ONTOLOGY);
 
-    // Сохранить каждый артефакт в БД
     for (const [projId, artifact] of Object.entries(generated)) {
       await fetch("/api/artifacts", {
         method: "POST",
@@ -60,6 +61,31 @@ export default function ArtifactView({ domain, world, exec, viewer }) {
     setTimeout(() => setStatus(""), 3000);
   };
 
+  // Кристаллизовать в v2 (feed-архетип, только для проекций с kind)
+  const handleCrystallizeV2 = async () => {
+    setStatus("Кристаллизация v2...");
+    const generated = crystallizeV2(INTENTS, PROJECTIONS, ONTOLOGY, domain.DOMAIN_ID || "unknown");
+
+    for (const [projId, artifact] of Object.entries(generated)) {
+      await fetch("/api/artifacts", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          projection: projId,
+          code: JSON.stringify(artifact),
+          intents_hash: artifact.inputsHash,
+        }),
+      }).catch(() => {});
+    }
+
+    setArtifacts(prev => ({ ...prev, ...generated }));
+    if (Object.keys(generated).length > 0) {
+      setSelectedProj(Object.keys(generated)[0]);
+    }
+    setStatus(`✓ ${Object.keys(generated).length} артефактов v2`);
+    setTimeout(() => setStatus(""), 3000);
+  };
+
   const currentArtifact = selectedProj ? artifacts[selectedProj] : null;
 
   return (
@@ -69,6 +95,10 @@ export default function ArtifactView({ domain, world, exec, viewer }) {
         <button onClick={handleCrystallize}
           style={{ padding: "8px 20px", borderRadius: 6, border: "none", background: "#8b5cf6", color: "#fff", fontSize: 13, cursor: "pointer", fontWeight: 600 }}>
           🔮 Кристаллизовать
+        </button>
+        <button onClick={handleCrystallizeV2}
+          style={{ padding: "8px 20px", borderRadius: 6, border: "none", background: "#10b981", color: "#fff", fontSize: 13, cursor: "pointer", fontWeight: 600 }}>
+          🔮 v2
         </button>
         <span style={{ fontSize: 12, color: "#6b7280" }}>
           {Object.keys(INTENTS).length} намерений → {Object.keys(PROJECTIONS).length} проекций
@@ -101,9 +131,13 @@ export default function ArtifactView({ domain, world, exec, viewer }) {
             <span>🔮 Артефакт: {currentArtifact.projection}</span>
             <span>v{currentArtifact.version}</span>
             <span>layer: {currentArtifact.layer}</span>
+            {currentArtifact.archetype && <span>archetype: {currentArtifact.archetype}</span>}
             <span>{new Date(currentArtifact.generatedAt).toLocaleTimeString("ru")}</span>
           </div>
-          <ProjectionRenderer artifact={currentArtifact} world={world} exec={exec} viewer={viewer} />
+          {currentArtifact.version === 2
+            ? <ProjectionRendererV2 artifact={currentArtifact} world={world} exec={exec} viewer={viewer} />
+            : <ProjectionRenderer artifact={currentArtifact} world={world} exec={exec} viewer={viewer} />
+          }
         </div>
       )}
 
