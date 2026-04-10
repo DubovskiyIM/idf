@@ -120,11 +120,34 @@ export function useEngine(domain) {
     const i = domain.INTENTS[intentId];
     if (!i) return false;
     for (const c of i.particles.conditions) {
-      // Доменонезависимая проверка: парсим условие "entity.field = 'value'"
-      const match = c.match(/^(\w+)\.(\w+)\s*=\s*'([^']+)'$/);
-      if (match) {
-        const [, , field, value] = match;
+      // "entity.field = 'value'"
+      const matchEq = c.match(/^(\w+)\.(\w+)\s*=\s*'([^']+)'$/);
+      if (matchEq) {
+        const [, , field, value] = matchEq;
         if (ctx.entity?.[field] !== value) return false;
+        continue;
+      }
+      // "entity.field = null"
+      const matchNull = c.match(/^(\w+)\.(\w+)\s*=\s*null$/);
+      if (matchNull) {
+        const [, , field] = matchNull;
+        if (ctx.entity?.[field] != null) return false;
+        continue;
+      }
+      // "entity.field != 'value'"
+      const matchNeq = c.match(/^(\w+)\.(\w+)\s*!=\s*'([^']+)'$/);
+      if (matchNeq) {
+        const [, , field, value] = matchNeq;
+        if (ctx.entity?.[field] === value) return false;
+        continue;
+      }
+      // "entity.field IN ('a','b','c')"
+      const matchIn = c.match(/^(\w+)\.(\w+)\s+IN\s+\(([^)]+)\)$/);
+      if (matchIn) {
+        const [, , field, valuesStr] = matchIn;
+        const values = valuesStr.split(",").map(v => v.trim().replace(/'/g, ""));
+        if (!values.includes(ctx.entity?.[field])) return false;
+        continue;
       }
     }
     return true;
