@@ -7,7 +7,9 @@
     "dev": "vite",
     "build": "vite build",
     "server": "node server/index.js",
-    "calendar": "node external-calendar/index.js"
+    "calendar": "node external-calendar/index.js",
+    "test": "vitest run",
+    "test:watch": "vitest"
   },
   "dependencies": {
     "@vitejs/plugin-basic-ssl": "^2.3.0",
@@ -27,7 +29,8 @@
     "ws": "^8.20.0"
   },
   "devDependencies": {
-    "typescript": "^5.5.3"
+    "typescript": "^5.5.3",
+    "vitest": "^4.1.4"
   },
   "private": true
 }
