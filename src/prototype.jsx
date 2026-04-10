@@ -309,9 +309,9 @@ export default function App() {
               <span style={{ fontSize: 10, color: "#4b5068" }}>{effects.filter(e => e.intent_id !== "_seed").length}</span>
             </div>
             <div style={{ flex: 1, overflow: "auto", padding: 6 }}>
-              {effects.filter(e => e.intent_id !== "_seed" && e.intent_id !== "_sync").length === 0 ? (
+              {effects.filter(e => e.intent_id !== "_seed" && e.intent_id !== "_sync" && e.scope !== "presentation").length === 0 ? (
                 <div style={{ padding: 16, color: "#4b5068", fontSize: 11, textAlign: "center" }}>Пусто</div>
-              ) : [...effects].filter(e => e.intent_id !== "_seed" && e.intent_id !== "_sync").reverse().map(e => {
+              ) : [...effects].filter(e => e.intent_id !== "_seed" && e.intent_id !== "_sync" && e.scope !== "presentation").reverse().map(e => {
                 const statusColors = { proposed: "#f59e0b", confirmed: "#22c55e", rejected: "#ef4444" };
                 return (
                   <div key={e.id} style={{

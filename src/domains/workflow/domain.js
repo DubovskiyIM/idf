@@ -94,9 +94,9 @@ export function buildEffects(intentId, ctx, world, drafts) {
     case "move_node": {
       const node = (world.nodes || []).find(n => n.id === ctx.id);
       if (!node) return null;
-      ef({ alpha: "replace", target: "node.x", scope: "account", value: ctx.x,
+      ef({ alpha: "replace", target: "node.x", scope: "presentation", value: ctx.x,
         context: { id: node.id, label: node.label, x: ctx.x, y: ctx.y }, desc: describeEffect(intentId, "replace", { label: node.label, x: ctx.x, y: ctx.y }) });
-      ef({ alpha: "replace", target: "node.y", scope: "account", value: ctx.y,
+      ef({ alpha: "replace", target: "node.y", scope: "presentation", value: ctx.y,
         context: { id: node.id }, desc: `↔ y: ${ctx.y}` });
       break;
     }

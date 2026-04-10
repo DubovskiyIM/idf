@@ -31,6 +31,7 @@ export function fold(effects, typeMap = {}) {
 
   for (const ef of effects) {
     if (ef.target.startsWith("drafts")) continue;
+    if (ef.scope === "presentation") continue; // Π — косметические, не в World(t)
 
     const ctx = ef.context || {};
     const val = ef.value;
@@ -68,6 +69,36 @@ export function fold(effects, typeMap = {}) {
     world[type] = Object.values(entities);
   }
   return world;
+}
+
+/**
+ * Применить косметические эффекты (Π) поверх world.
+ * Мутирует копию world — обновляет визуальные свойства (x, y, порядок и т.д.)
+ */
+export function applyPresentation(world, effects, typeMap = {}) {
+  // Глубокая копия world
+  const result = {};
+  for (const [key, arr] of Object.entries(world)) {
+    result[key] = arr.map(e => ({ ...e }));
+  }
+
+  // Применить presentation-эффекты
+  for (const ef of effects) {
+    if (ef.scope !== "presentation") continue;
+    const ctx = ef.context || {};
+    const val = ef.value;
+    const collType = getCollectionType(ef.target, typeMap);
+
+    if (ef.alpha === "replace" && ctx.id && result[collType]) {
+      const entity = result[collType].find(e => e.id === ctx.id);
+      if (entity) {
+        const field = ef.target.split(".").pop();
+        entity[field] = val;
+      }
+    }
+  }
+
+  return result;
 }
 
 /**

@@ -25,6 +25,7 @@ function foldWorld() {
 
   for (const ef of effects) {
     if (ef.target.startsWith("drafts")) continue;
+    if (ef.scope === "presentation") continue; // Π — не в World(t)
     const ctx = ef.context ? JSON.parse(ef.context) : {};
     const val = ef.value ? JSON.parse(ef.value) : null;
     const base = ef.target.split(".")[0];
