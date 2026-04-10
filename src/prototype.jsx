@@ -1,23 +1,7 @@
 import { useState, useMemo, useCallback } from "react";
 import { INTENTS } from "./runtime/intents.js";
 import { PROJECTIONS } from "./runtime/projections.js";
-
-function deriveLinks() {
-  const links = [];
-  const ids = Object.keys(INTENTS);
-  for (const id of ids) {
-    const i = INTENTS[id];
-    if (i.antagonist) links.push({ type: "⇌", from: id, to: i.antagonist, label: "антагонист" });
-    if (i.creates) {
-      for (const id2 of ids) {
-        if (id2 !== id && INTENTS[id2].particles.conditions.length > 0)
-          links.push({ type: "▷", from: id, to: id2, label: "последоват." });
-      }
-    }
-  }
-  const seen = new Set();
-  return links.filter(l => { const k = [l.from, l.to, l.type].sort().join("|"); if (seen.has(k)) return false; seen.add(k); return true; });
-}
+import { deriveLinks } from "./runtime/links.js";
 
 let eid = 0;
 const ts = () => { const d = new Date(); return d.toLocaleTimeString("ru", { hour: "2-digit", minute: "2-digit", second: "2-digit", fractionalSecondDigits: 2 }); };
