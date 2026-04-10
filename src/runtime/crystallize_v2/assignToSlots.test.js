@@ -112,7 +112,7 @@ describe("assignToSlots (feed)", () => {
   it("delete_message (per-item click) → body.item.intents", () => {
     const slots = assignToSlots(INTENTS, chatViewProjection, ONTOLOGY);
     expect(slots.body.item).toBeDefined();
-    expect(slots.body.item.intents).toContain("delete_message");
+    expect(slots.body.item.intents.some(i => i.intentId === "delete_message")).toBe(true);
   });
 
   it("mute/unmute антагонисты → один toggle в header", () => {

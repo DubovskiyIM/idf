@@ -18,7 +18,14 @@ export function assignToSlots(INTENTS, projection, ONTOLOGY) {
     composer: null,
   };
 
-  const itemIntents = new Set();
+  // item.intents = [{intentId, opens?, overlayKey?}]
+  const itemIntents = [];
+  const itemIntentIds = new Set();
+  const addItemIntent = (spec) => {
+    if (itemIntentIds.has(spec.intentId)) return;
+    itemIntentIds.add(spec.intentId);
+    itemIntents.push(spec);
+  };
   const antagonistPairsHandled = new Set();
 
   // Группировка антагонистов
@@ -58,17 +65,19 @@ export function assignToSlots(INTENTS, projection, ONTOLOGY) {
     const hasOverlay = wrapped.trigger && wrapped.overlay;
 
     // composer: первое projection-level намерение confirmation:"enter" + creates → composer.
-    // Вторичные composerEntry (reply_to_message и т.п. — per-item) идут в item.intents.
+    // Вторичные composerEntry (reply_to_message и т.п.) пропускаем — их UX в M1 не поддержан
+    // (нужен inline-режим композера с reply-контекстом, это M2).
     if (isComposerEntry) {
       if (!isPerItem && intent.creates && !slots.composer) {
         slots.composer = buildComposer(id, intent, parameters, INTENTS);
-        continue;
       }
-      // Иначе — per-item или уже есть composer. Для per-item кладём в item.intents,
-      // иначе дропаем (обычно это reply/forward-like — они per-item).
-      if (isPerItem) {
-        itemIntents.add(id);
-      }
+      continue;
+    }
+
+    // Пропускаем per-item intents, которые создают новую сущность, но требуют
+    // доп. ввода (react_to_message, forward_message, bookmark_message...) — в M1
+    // у нас нет inline-пикеров эмодзи/беседы, без них кнопка бесполезна.
+    if (isPerItem && intent.creates && !hasOverlay) {
       continue;
     }
 
@@ -76,17 +85,16 @@ export function assignToSlots(INTENTS, projection, ONTOLOGY) {
     if (hasOverlay) {
       slots.overlay.push(wrapped.overlay);
       if (isPerItem) {
-        // Per-item overlay — триггер в item.intents (опциональный overlayKey)
-        itemIntents.add(id);
+        addItemIntent({ intentId: id, opens: "overlay", overlayKey: wrapped.overlay.key, label: intent.name });
       } else {
         slots.toolbar.push(wrapped.trigger);
       }
       continue;
     }
 
-    // Per-item intent → body.item.intents
+    // Per-item intent (plain click, no params) → body.item.intents
     if (isPerItem && wrapped.type === "intentButton") {
-      itemIntents.add(id);
+      addItemIntent({ intentId: id, label: intent.name });
       continue;
     }
 
@@ -105,7 +113,7 @@ export function assignToSlots(INTENTS, projection, ONTOLOGY) {
 
   // Собрать item.intents в body
   if (slots.body.item) {
-    slots.body.item.intents = Array.from(itemIntents);
+    slots.body.item.intents = itemIntents;
   }
 
   // Overflow: если в toolbar > 5 — свернуть хвост в меню
@@ -176,7 +184,7 @@ function buildBody(projection) {
   return {
     type: "list",
     source: "messages",
-    filter: "conversationId === world.currentConversationId",
+    filter: "conversationId === world.currentConversationId && !((deletedFor||[]).includes(viewer && viewer.id)) && !((deletedFor||[]).includes('*'))",
     sort: "createdAt",
     direction: "bottom-up",
     item: {

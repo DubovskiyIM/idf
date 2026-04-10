@@ -31,9 +31,24 @@ export function Column({ node, ctx, item }) {
 
 const MAX_VISIBLE_ITEM_INTENTS = 3;
 
+// Нормализует intent-спек: поддерживает старый формат (строка = intentId) и
+// новый (объект {intentId, opens, overlayKey, label}).
+function normalizeIntent(spec) {
+  if (typeof spec === "string") return { intentId: spec, label: spec };
+  return spec;
+}
+
+function fireItemIntent(spec, ctx, item) {
+  if (spec.opens === "overlay") {
+    ctx.openOverlay?.(spec.overlayKey, { item });
+    return;
+  }
+  ctx.exec(spec.intentId, { id: item?.id, entity: item });
+}
+
 export function Card({ node, ctx, item }) {
   const [menuOpen, setMenuOpen] = useState(false);
-  const allIntents = node.intents || [];
+  const allIntents = (node.intents || []).map(normalizeIntent);
   const visible = allIntents.slice(0, MAX_VISIBLE_ITEM_INTENTS);
   const hidden = allIntents.slice(MAX_VISIBLE_ITEM_INTENTS);
 
@@ -48,8 +63,8 @@ export function Card({ node, ctx, item }) {
       ))}
       {allIntents.length > 0 && (
         <div style={{ display: "flex", gap: 4, marginTop: 8, flexWrap: "wrap", position: "relative" }}>
-          {visible.map(intentId => (
-            <ItemIntentButton key={intentId} intentId={intentId} ctx={ctx} item={item} />
+          {visible.map(spec => (
+            <ItemIntentButton key={spec.intentId} spec={spec} ctx={ctx} item={item} />
           ))}
           {hidden.length > 0 && (
             <>
@@ -69,16 +84,16 @@ export function Card({ node, ctx, item }) {
                     boxShadow: "0 4px 12px #0001", padding: 4, zIndex: 10, minWidth: 180,
                   }}
                 >
-                  {hidden.map(intentId => (
+                  {hidden.map(spec => (
                     <button
-                      key={intentId}
-                      onClick={(e) => { e.stopPropagation(); setMenuOpen(false); ctx.exec(intentId, { id: item?.id, entity: item }); }}
+                      key={spec.intentId}
+                      onClick={(e) => { e.stopPropagation(); setMenuOpen(false); fireItemIntent(spec, ctx, item); }}
                       style={{
                         display: "block", width: "100%", textAlign: "left",
                         padding: "6px 10px", background: "transparent", border: "none",
                         cursor: "pointer", fontSize: 12,
                       }}
-                    >{intentId}</button>
+                    >{spec.label || spec.intentId}</button>
                   ))}
                 </div>
               )}
@@ -90,16 +105,19 @@ export function Card({ node, ctx, item }) {
   );
 }
 
-function ItemIntentButton({ intentId, ctx, item }) {
+function ItemIntentButton({ spec, ctx, item }) {
   return (
     <button
-      onClick={(e) => { e.stopPropagation(); ctx.exec(intentId, { id: item?.id, entity: item }); }}
+      onClick={(e) => {
+        e.stopPropagation();
+        fireItemIntent(spec, ctx, item);
+      }}
       style={{
         padding: "3px 8px", borderRadius: 4, border: "1px solid #d1d5db",
         background: "#fff", color: "#6b7280", fontSize: 10, cursor: "pointer",
       }}
     >
-      {intentId}
+      {spec.label || spec.intentId}
     </button>
   );
 }

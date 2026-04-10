@@ -5,7 +5,7 @@ import { useMediaQuery } from "../hooks.js";
 
 export default function ArchetypeFeed({ slots, ctx: parentCtx }) {
   const isDesktop = useMediaQuery("(min-width: 1024px)");
-  const { activeKey, openOverlay, closeOverlay, overlayMap } = useOverlayManager(slots.overlay);
+  const { activeKey, activeContext, openOverlay, closeOverlay, overlayMap } = useOverlayManager(slots.overlay);
 
   // Расширить ctx методом openOverlay — используется IntentButton
   const ctx = useMemo(() => ({ ...parentCtx, openOverlay }), [parentCtx, openOverlay]);
@@ -54,6 +54,7 @@ export default function ArchetypeFeed({ slots, ctx: parentCtx }) {
 
       <OverlayManager
         activeKey={activeKey}
+        activeContext={activeContext}
         overlayMap={overlayMap}
         onClose={closeOverlay}
         ctx={ctx}

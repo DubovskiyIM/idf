@@ -2,10 +2,18 @@ import { useState } from "react";
 import ParameterControl from "../parameters/index.jsx";
 import SlotRenderer from "../SlotRenderer.jsx";
 
-export default function FormModal({ spec, ctx, onClose }) {
+export default function FormModal({ spec, ctx, overlayContext, onClose }) {
+  const item = overlayContext?.item;
+
+  // Для editable параметров — предзаполнить из item (по `bind` или по имени поля)
   const initial = {};
   for (const p of spec.parameters || []) {
-    initial[p.name] = p.default ?? "";
+    if (p.editable && item) {
+      const fieldName = p.bind ? p.bind.split(".").pop() : p.name;
+      initial[p.name] = item[fieldName] ?? p.default ?? "";
+    } else {
+      initial[p.name] = p.default ?? "";
+    }
   }
   const [values, setValues] = useState(initial);
   const [errors, setErrors] = useState({});
@@ -23,7 +31,9 @@ export default function FormModal({ spec, ctx, onClose }) {
 
     setSubmitting(true);
     try {
-      await ctx.exec(spec.intentId, values);
+      // Если это per-item overlay — включить id сущности в параметры exec.
+      const params = item ? { id: item.id, entity: item, ...values } : values;
+      await ctx.exec(spec.intentId, params);
       onClose();
     } finally {
       setSubmitting(false);

@@ -2,13 +2,14 @@ import { useState } from "react";
 import { ModalShell } from "./FormModal.jsx";
 import { template, resolve } from "../eval.js";
 
-export default function ConfirmDialog({ spec, ctx, onClose }) {
+export default function ConfirmDialog({ spec, ctx, overlayContext, onClose }) {
   const [typed, setTyped] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const item = overlayContext?.item;
 
-  const message = template(spec.message || "Подтвердить?", ctx.world);
+  const message = template(spec.message || "Подтвердить?", { ...ctx.world, item });
   const expectedText = spec.confirmBy?.expected
-    ? resolve(ctx.world, spec.confirmBy.expected) || spec.confirmBy.expected
+    ? resolve({ ...ctx.world, item }, spec.confirmBy.expected) || spec.confirmBy.expected
     : null;
 
   const canConfirm =
@@ -19,7 +20,8 @@ export default function ConfirmDialog({ spec, ctx, onClose }) {
   const onConfirm = async () => {
     setSubmitting(true);
     try {
-      await ctx.exec(spec.triggerIntentId, {});
+      const params = item ? { id: item.id, entity: item } : {};
+      await ctx.exec(spec.triggerIntentId, params);
       onClose();
     } finally {
       setSubmitting(false);

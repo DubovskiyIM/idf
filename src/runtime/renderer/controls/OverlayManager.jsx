@@ -9,10 +9,11 @@ const OVERLAY_COMPONENTS = {
 
 /**
  * Хук, предоставляющий openOverlay/closeOverlay и карту overlays по key.
- * Используется архетипом-контейнером.
+ * openOverlay принимает опциональный контекст (например { item }), который
+ * пробрасывается в рендеримый overlay как prop `context`.
  */
 export function useOverlayManager(overlays) {
-  const [activeKey, setActiveKey] = useState(null);
+  const [active, setActive] = useState(null); // { key, context }
 
   const overlayMap = useMemo(() => {
     const map = {};
@@ -22,13 +23,19 @@ export function useOverlayManager(overlays) {
     return map;
   }, [overlays]);
 
-  const openOverlay = useCallback((key) => setActiveKey(key), []);
-  const closeOverlay = useCallback(() => setActiveKey(null), []);
+  const openOverlay = useCallback((key, context = {}) => setActive({ key, context }), []);
+  const closeOverlay = useCallback(() => setActive(null), []);
 
-  return { activeKey, openOverlay, closeOverlay, overlayMap };
+  return {
+    activeKey: active?.key || null,
+    activeContext: active?.context || {},
+    openOverlay,
+    closeOverlay,
+    overlayMap,
+  };
 }
 
-export default function OverlayManager({ activeKey, overlayMap, onClose, ctx }) {
+export default function OverlayManager({ activeKey, activeContext, overlayMap, onClose, ctx }) {
   if (!activeKey) return null;
   const overlay = overlayMap[activeKey];
   if (!overlay) return null;
@@ -39,5 +46,5 @@ export default function OverlayManager({ activeKey, overlayMap, onClose, ctx }) 
     return null;
   }
 
-  return <Component spec={overlay} ctx={ctx} onClose={onClose} />;
+  return <Component spec={overlay} ctx={ctx} overlayContext={activeContext} onClose={onClose} />;
 }

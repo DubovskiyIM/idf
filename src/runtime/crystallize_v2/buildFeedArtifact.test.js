@@ -106,7 +106,7 @@ describe("crystallizeV2 — chat_view feed", () => {
 
   it("delete_message → body.item.intents", () => {
     const a = crystallizeV2(INTENTS, PROJECTIONS, ONTOLOGY).chat_view;
-    expect(a.slots.body.item.intents).toContain("delete_message");
+    expect(a.slots.body.item.intents.some(i => i.intentId === "delete_message")).toBe(true);
   });
 
   it("inputsHash детерминирован", () => {
