@@ -1,5 +1,11 @@
-/**
- * Карта типов контрол-обёрток → React-компоненты.
- * Заполняется по мере добавления контролов (Задачи M1.9-M1.11).
- */
-export const CONTROLS = {};
+import IntentButton from "./IntentButton.jsx";
+import Composer from "./Composer.jsx";
+import Overflow from "./Overflow.jsx";
+import Toggle from "./Toggle.jsx";
+
+export const CONTROLS = {
+  intentButton: IntentButton,
+  composer: Composer,
+  overflow: Overflow,
+  toggle: Toggle,
+};
