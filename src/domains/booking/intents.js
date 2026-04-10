@@ -137,5 +137,68 @@ export const INTENTS = {
       witnesses: ["target_date", "bookings.count", "affected_clients"],
       confirmation: "click"
     }, antagonist: null, creates: null, extended: true
+  },
+  repeat_booking: {
+    name: "Повторить запись", particles: {
+      entities: ["booking: Booking"],
+      conditions: ["booking.status IN ('completed','cancelled','no_show')"],
+      effects: [{ α: "add", target: "drafts", σ: "session" }],
+      witnesses: ["booking.serviceName", "booking.specialistId"],
+      confirmation: "click"
+    }, antagonist: null, creates: "Booking(draft)"
+  },
+  edit_review: {
+    name: "Редактировать отзыв", particles: {
+      entities: ["review: Review"],
+      conditions: [],
+      effects: [
+        { α: "replace", target: "review.rating", σ: "account" },
+        { α: "replace", target: "review.text", σ: "account" }
+      ],
+      witnesses: ["review.rating (текущий)", "review.text (текущий)"],
+      confirmation: "click"
+    }, antagonist: null, creates: null, phase: "investigation"
+  },
+  cancel_client_booking: {
+    name: "Отменить запись клиента", particles: {
+      entities: ["booking: Booking"],
+      conditions: ["booking.status = 'confirmed'"],
+      effects: [
+        { α: "replace", target: "booking.status", value: "cancelled", σ: "account" },
+        { α: "replace", target: "slot.status", value: "free", σ: "shared" }
+      ],
+      witnesses: ["booking.client.name", "booking.serviceName", "booking.date"],
+      confirmation: "click"
+    }, antagonist: null, creates: null, irreversibility: "high"
+  },
+  respond_to_review: {
+    name: "Ответить на отзыв", particles: {
+      entities: ["review: Review"],
+      conditions: ["review.response = null"],
+      effects: [{ α: "replace", target: "review.response", σ: "account" }],
+      witnesses: ["review.text", "review.rating"],
+      confirmation: "click"
+    }, antagonist: null, creates: null
+  },
+  update_service: {
+    name: "Изменить услугу", particles: {
+      entities: ["service: Service"],
+      conditions: [],
+      effects: [
+        { α: "replace", target: "service.price", σ: "account" },
+        { α: "replace", target: "service.duration", σ: "account" }
+      ],
+      witnesses: ["service.name", "service.price (текущая)", "service.duration (текущая)"],
+      confirmation: "click"
+    }, antagonist: null, creates: null, phase: "investigation"
+  },
+  remove_service: {
+    name: "Убрать услугу", particles: {
+      entities: ["service: Service"],
+      conditions: ["service.active = true"],
+      effects: [{ α: "replace", target: "service.active", value: false, σ: "account" }],
+      witnesses: ["service.name", "active_bookings.count"],
+      confirmation: "click"
+    }, antagonist: null, creates: null
   }
 };

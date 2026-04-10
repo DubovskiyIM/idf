@@ -24,7 +24,10 @@ export function describeEffect(intentId, alpha, ctx, target) {
     case "resolve_poll": return `✓ Встреча назначена: ${ctx.date} ${ctx.startTime}`;
     case "cancel_poll": return `✕ Опрос отменён: ${ctx.title || ctx.id}`;
     case "cancel_meeting": return `✕ Встреча отменена: ${ctx.title || ctx.id}`;
+    case "accept_invitation": return `👤 ${ctx.name || "?"} принял`;
     case "decline_invitation": return `👤 ${ctx.name || "?"} отклонил`;
+    case "change_vote": return `↔ ${ctx.participantName || "?"}: ${ctx.oldValue} → ${ctx.newValue}`;
+    case "send_reminder": return `🔔 Напоминание отправлено`;
     case "vote_maybe": return `? ${ctx.participantName || "?"}: возможно ${ctx.date} ${ctx.startTime}`;
     case "suggest_alternative": return `💡 Предложение: ${ctx.date} ${ctx.startTime}–${ctx.endTime}`;
     case "set_deadline": return `⏰ Дедлайн: ${ctx.deadline || ctx.value}`;
@@ -182,6 +185,31 @@ export function buildEffects(intentId, ctx, world, drafts) {
         context: { id: poll.id, deadline: ctx.deadline },
         desc: `⏰ Дедлайн: ${ctx.deadline}` });
       break;
+    }
+    case "accept_invitation": {
+      const participant = (world.participants || []).find(p => p.id === ctx.participantId);
+      if (!participant || participant.status !== "invited") return null;
+      ef({ alpha: "replace", target: "participant.status", scope: "account", value: "active",
+        context: { id: participant.id, name: participant.name },
+        desc: `👤 ${participant.name} принял приглашение` });
+      break;
+    }
+    case "change_vote": {
+      const vote = (world.votes || []).find(v => v.id === ctx.voteId);
+      if (!vote) return null;
+      const poll = (world.polls || []).find(p => p.id === vote.pollId);
+      if (!poll || poll.status !== "open") return null;
+      if (!ctx.newValue) return null;
+      ef({ alpha: "replace", target: "vote.value", scope: "account", value: ctx.newValue,
+        context: { id: vote.id, participantName: vote.participantName, oldValue: vote.value, newValue: ctx.newValue },
+        desc: `↔ ${vote.participantName}: ${vote.value} → ${ctx.newValue}` });
+      break;
+    }
+    case "send_reminder": {
+      const poll = (world.polls || []).find(p => p.id === ctx.pollId);
+      if (!poll || poll.status !== "open") return null;
+      // Только сигнал, без эффектов
+      return null; // сигнал эмитируется отдельно
     }
     default: return null;
   }

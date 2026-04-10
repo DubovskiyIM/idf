@@ -50,6 +50,12 @@ export function describeEffect(intentId, alpha, ctx, target) {
     case "leave_review": return `★ Отзыв: ${ctx.serviceName || ""} (${ctx.rating}/5)`;
     case "delete_review": return `✕ Отзыв удалён: ${ctx.id}`;
     case "bulk_cancel_day": return `⊗ Массовая отмена: ${ctx.date} (${ctx.count || "?"} записей)`;
+    case "repeat_booking": return `🔄 Повтор: ${ctx.serviceName || ctx.id}`;
+    case "edit_review": return `✎ Отзыв изменён`;
+    case "cancel_client_booking": return `✕ Отмена специалистом: ${ctx.serviceName || ctx.id}`;
+    case "respond_to_review": return `💬 Ответ на отзыв`;
+    case "update_service": return `💰 Услуга обновлена: ${ctx.name || ctx.id}`;
+    case "remove_service": return `🚫 Услуга убрана: ${ctx.name || ctx.id}`;
     case "_seed": return `seed: ${alpha} ${ctx.id || ""}`;
     default: return `${alpha} ${intentId}`;
   }
@@ -63,6 +69,7 @@ export function signalForIntent(intentId) {
     case "mark_no_show": return { κ: "notification", desc: "Неявка зафиксирована" };
     case "leave_review": return { κ: "notification", desc: "Отзыв опубликован" };
     case "bulk_cancel_day": return { κ: "notification", desc: "Массовая отмена выполнена" };
+    case "cancel_client_booking": return { κ: "notification", desc: "Запись клиента отменена специалистом" };
     default: return null;
   }
 }
@@ -170,6 +177,57 @@ export function buildEffects(intentId, ctx, world, drafts) {
         ef({ alpha: "replace", target: "booking.status", scope: "account", value: "cancelled", context: { id: b.id, serviceName: b.serviceName }, desc: `✕ Отмена: ${b.serviceName}` });
         ef({ alpha: "replace", target: "slot.status", scope: "shared", value: "free", context: { id: b.slotId }, desc: `🔓 Слот освобождён` });
       }
+      break;
+    }
+    case "repeat_booking": {
+      const booking = (world.bookings || []).find(b => b.id === ctx.id);
+      if (!booking || booking.status === "confirmed" || booking.status === "draft") return null;
+      const service = (world.services || []).find(s => s.id === booking.serviceId);
+      if (!service) return null;
+      ef({ alpha: "add", target: "drafts", scope: "session", value: null,
+        context: { id: `draft_${now}`, serviceId: service.id, serviceName: service.name, specialistId: service.specialistId, price: service.price, duration: service.duration, slotId: null, status: "draft", createdAt: now },
+        desc: `🔄 Повтор: ${service.name}` });
+      break;
+    }
+    case "edit_review": {
+      const review = (world.reviews || []).find(r => r.id === ctx.id);
+      if (!review) return null;
+      if (ctx.rating) ef({ alpha: "replace", target: "review.rating", scope: "account", value: ctx.rating, context: { id: review.id }, desc: `★ Оценка → ${ctx.rating}` });
+      if (ctx.text !== undefined) ef({ alpha: "replace", target: "review.text", scope: "account", value: ctx.text, context: { id: review.id }, desc: `✎ Текст обновлён` });
+      break;
+    }
+    case "cancel_client_booking": {
+      const booking = (world.bookings || []).find(b => b.id === ctx.id);
+      if (!booking || booking.status !== "confirmed") return null;
+      ef({ alpha: "replace", target: "booking.status", scope: "account", value: "cancelled",
+        context: { id: booking.id, serviceName: booking.serviceName }, desc: `✕ Отмена специалистом: ${booking.serviceName}` });
+      for (const sId of (booking.slotIds || [booking.slotId])) {
+        ef({ alpha: "replace", target: "slot.status", scope: "shared", value: "free", context: { id: sId }, desc: `🔓 Слот` });
+      }
+      break;
+    }
+    case "respond_to_review": {
+      const review = (world.reviews || []).find(r => r.id === ctx.id);
+      if (!review || review.response) return null;
+      if (!ctx.response?.trim()) return null;
+      ef({ alpha: "replace", target: "review.response", scope: "account", value: ctx.response.trim(),
+        context: { id: review.id }, desc: `💬 Ответ на отзыв` });
+      break;
+    }
+    case "update_service": {
+      const service = (world.services || []).find(s => s.id === ctx.id);
+      if (!service) return null;
+      if (ctx.price !== undefined) ef({ alpha: "replace", target: "service.price", scope: "account", value: ctx.price, context: { id: service.id }, desc: `💰 ${service.name}: цена → ${ctx.price}₽` });
+      if (ctx.duration !== undefined) ef({ alpha: "replace", target: "service.duration", scope: "account", value: ctx.duration, context: { id: service.id }, desc: `⏱ ${service.name}: ${ctx.duration} мин` });
+      break;
+    }
+    case "remove_service": {
+      const service = (world.services || []).find(s => s.id === ctx.id);
+      if (!service || !service.active) return null;
+      const activeBookings = (world.bookings || []).filter(b => b.serviceId === service.id && b.status === "confirmed");
+      if (activeBookings.length > 0) return null;
+      ef({ alpha: "replace", target: "service.active", scope: "account", value: false,
+        context: { id: service.id, name: service.name }, desc: `🚫 Услуга убрана: ${service.name}` });
       break;
     }
     default: return null;

@@ -127,5 +127,32 @@ export const INTENTS = {
       witnesses: ["poll.current_deadline", "votes.count"],
       confirmation: "click"
     }, antagonist: null, creates: null
+  },
+  accept_invitation: {
+    name: "Принять приглашение", particles: {
+      entities: ["participant: Participant"],
+      conditions: ["participant.status = 'invited'"],
+      effects: [{ α: "replace", target: "participant.status", value: "active", σ: "account" }],
+      witnesses: ["poll.title", "poll.organizer"],
+      confirmation: "click"
+    }, antagonist: "decline_invitation", creates: null
+  },
+  change_vote: {
+    name: "Изменить голос", particles: {
+      entities: ["vote: Vote"],
+      conditions: ["poll.status = 'open'"],
+      effects: [{ α: "replace", target: "vote.value", σ: "account" }],
+      witnesses: ["option.date", "vote.value (текущий)"],
+      confirmation: "click"
+    }, antagonist: null, creates: null
+  },
+  send_reminder: {
+    name: "Напомнить", particles: {
+      entities: ["poll: Poll"],
+      conditions: ["poll.status = 'open'"],
+      effects: [],
+      witnesses: ["participants_without_votes"],
+      confirmation: "click"
+    }, antagonist: null, creates: null
   }
 };
