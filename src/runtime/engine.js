@@ -214,6 +214,19 @@ export function useEngine() {
   const [effects, setEffects] = useState([]);
   const [signals, setSignals] = useState([]);
 
+  const reloadEffects = useCallback(() => {
+    fetch("/api/effects")
+      .then(r => r.json())
+      .then(data => {
+        setEffects(data.map(ef => ({
+          ...ef,
+          desc: ef.desc || describeEffect(ef.intent_id, ef.alpha, ef.context || {}, ef.target),
+          time: ef.time || new Date(ef.created_at).toLocaleTimeString("ru", { hour: "2-digit", minute: "2-digit", second: "2-digit" }),
+        })));
+      })
+      .catch(() => {});
+  }, []);
+
   useEffect(() => {
     fetch("/api/effects")
       .then(r => r.json())
@@ -233,17 +246,29 @@ export function useEngine() {
     es.addEventListener("effect:confirmed", (e) => {
       const { id } = JSON.parse(e.data);
       setEffects(prev => {
-        const updated = prev.map(ef =>
-          ef.id === id ? { ...ef, status: "confirmed", resolved_at: Date.now() } : ef
-        );
-        const ef = updated.find(x => x.id === id);
-        if (ef) {
-          const sig = signalForIntent(ef.intent_id);
-          if (sig) {
-            setSignals(p => [{ id: uuid(), κ: sig.κ, desc: sig.desc, time: ts(), effectId: id }, ...p].slice(0, 20));
+        const exists = prev.find(ef => ef.id === id);
+        if (exists) {
+          const updated = prev.map(ef =>
+            ef.id === id ? { ...ef, status: "confirmed", resolved_at: Date.now() } : ef
+          );
+          const ef = updated.find(x => x.id === id);
+          if (ef) {
+            const sig = signalForIntent(ef.intent_id);
+            if (sig) {
+              setSignals(p => [{ id: uuid(), κ: sig.κ, desc: sig.desc, time: ts(), effectId: id }, ...p].slice(0, 20));
+            }
           }
+          return updated;
         }
-        return updated;
+        return prev;
+      });
+
+      // Если эффект неизвестен (foreign/sync) — перезагрузить все с сервера
+      setEffects(prev => {
+        if (prev.find(ef => ef.id === id)) return prev; // уже знаем
+        // Запланировать перезагрузку вне state updater
+        reloadEffects();
+        return prev;
       });
     });
 
@@ -265,6 +290,11 @@ export function useEngine() {
     es.addEventListener("effects:reset", () => {
       setEffects([]);
       setSignals([]);
+    });
+
+    es.addEventListener("signal:drift", (e) => {
+      const { description, time } = JSON.parse(e.data);
+      setSignals(p => [{ id: uuid(), κ: "drift", desc: description, time: new Date(time).toLocaleTimeString("ru", { hour: "2-digit", minute: "2-digit", second: "2-digit" }) }, ...p].slice(0, 20));
     });
 
     es.onerror = () => {};

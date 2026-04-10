@@ -112,4 +112,6 @@ router.delete("/", (req, res) => {
   res.json({ ok: true });
 });
 
+router.broadcast = broadcast;
+
 module.exports = router;

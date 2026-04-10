@@ -371,7 +371,7 @@ export default function App() {
                 <div key={e.id} style={{
                   padding: "6px 8px", marginBottom: 4, borderRadius: 4, fontSize: 11,
                   background: e.status === "rejected" ? "#1a0f0f" : "#13151d",
-                  border: `1px solid ${e.status === "proposed" ? "#f59e0b30" : e.status === "rejected" ? "#ef444430" : "#1e2230"}`,
+                  border: `1px solid ${e.context?.foreign ? "#60a5fa30" : e.status === "proposed" ? "#f59e0b30" : e.status === "rejected" ? "#ef444430" : "#1e2230"}`,
                   opacity: e.status === "rejected" ? 0.6 : 1,
                 }}>
                   <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 2 }}>
@@ -387,6 +387,7 @@ export default function App() {
                   </div>
                   {e.reason && <div style={{ color: "#ef4444", fontSize: 10, marginTop: 2 }}>причина: {e.reason}</div>}
                   {e.ttl && e.status === "confirmed" && <div style={{ color: "#f59e0b", fontSize: 10, marginTop: 2 }}>TTL: {e.ttl/1000}s</div>}
+                  {e.context?.foreign && <div style={{ color: "#60a5fa", fontSize: 10, marginTop: 2 }}>🌐 foreign: {e.context.foreign}</div>}
                   <div style={{ color: "#4b5068", fontSize: 10, marginTop: 2 }}>ε: {e.intent_id} · {e.time}</div>
                 </div>
               );
@@ -398,9 +399,13 @@ export default function App() {
               {signals.length === 0 ? (
                 <div style={{ padding: 8, color: "#4b5068", fontSize: 11, textAlign: "center" }}>Нет сигналов</div>
               ) : signals.map(s => (
-                <div key={s.id} style={{ padding: "4px 8px", marginBottom: 3, borderRadius: 4, background: "#1a0e20", border: "1px solid #2d1a3e", fontSize: 10 }}>
-                  <span style={{ color: "#a78bfa" }}>{s.κ}</span>
-                  <span style={{ color: "#7c6f9b", marginLeft: 6 }}>{s.desc}</span>
+                <div key={s.id} style={{
+                  padding: "4px 8px", marginBottom: 3, borderRadius: 4, fontSize: 10,
+                  background: s.κ === "drift" ? "#1a0f0f" : "#1a0e20",
+                  border: s.κ === "drift" ? "1px solid #ef444430" : "1px solid #2d1a3e",
+                }}>
+                  <span style={{ color: s.κ === "drift" ? "#ef4444" : "#a78bfa" }}>{s.κ === "drift" ? "⚠ ДРЕЙФ" : s.κ}</span>
+                  <span style={{ color: s.κ === "drift" ? "#ef4444" : "#7c6f9b", marginLeft: 6 }}>{s.desc}</span>
                   <span style={{ color: "#4b3d66", marginLeft: 6 }}>{s.time}</span>
                 </div>
               ))}

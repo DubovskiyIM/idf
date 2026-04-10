@@ -16,6 +16,10 @@ app.use(express.json());
 app.use("/api/effects", effectsRouter);
 app.use("/api", artifactsRouter);
 
+const { startSync, setBroadcast } = require("./boundary.js");
+setBroadcast(effectsRouter.broadcast);
+startSync();
+
 app.listen(PORT, () => {
   console.log(`IDF сервер запущен: http://localhost:${PORT}`);
   console.log(`  POST /api/effects        — создать эффект`);
