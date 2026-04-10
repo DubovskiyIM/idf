@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import SlotRenderer from "../SlotRenderer.jsx";
 import { resolve, evalCondition, evalIntentCondition } from "../eval.js";
 
@@ -58,12 +58,28 @@ export function Card({ node, ctx, item }) {
   const visible = allIntents.slice(0, MAX_VISIBLE_ITEM_INTENTS);
   const hidden = allIntents.slice(MAX_VISIBLE_ITEM_INTENTS);
 
+  // Chat-вариант: выравнивание «свои справа, чужие слева» по senderId === viewer.id.
+  const isChat = node.variant === "chat";
+  const isMine = isChat && item?.senderId && ctx.viewer?.id && item.senderId === ctx.viewer.id;
+
+  const cardStyle = isChat
+    ? {
+        background: isMine ? "#dbeafe" : "#fff",
+        borderRadius: 12,
+        padding: 10,
+        border: isMine ? "1px solid #bfdbfe" : "1px solid #e5e7eb",
+        maxWidth: "70%",
+        alignSelf: isMine ? "flex-end" : "flex-start",
+        ...(node.sx || {}),
+      }
+    : {
+        background: "#fff", borderRadius: 8, padding: 14,
+        border: "1px solid #e5e7eb", boxShadow: "0 1px 3px #0001",
+        ...(node.sx || {}),
+      };
+
   return (
-    <div style={{
-      background: "#fff", borderRadius: 8, padding: 14,
-      border: "1px solid #e5e7eb", boxShadow: "0 1px 3px #0001",
-      ...(node.sx || {}),
-    }}>
+    <div style={cardStyle}>
       {(node.children || []).map((child, i) => (
         <SlotRenderer key={i} item={child} ctx={ctx} contextItem={item} />
       ))}
@@ -136,7 +152,10 @@ export function List({ node, ctx }) {
     items = items.filter(it => evalCondition(node.filter, { ...it, item: it, viewer: ctx.viewer, world: ctx.world }));
   }
   if (node.sort) {
-    const desc = node.sort.startsWith("-") || node.direction === "bottom-up";
+    // Для direction:"bottom-up" сортируем ПО ВОЗРАСТАНИЮ (старое сверху,
+    // новое внизу — классический чат). Для обычного списка — по убыванию
+    // если sort начинается с "-".
+    const desc = node.sort.startsWith("-");
     const field = node.sort.replace(/^-/, "");
     items.sort((a, b) => {
       const va = resolve(a, field), vb = resolve(b, field);
@@ -148,11 +167,25 @@ export function List({ node, ctx }) {
     return <SlotRenderer item={node.empty} ctx={ctx} />;
   }
 
+  const bottomUp = node.direction === "bottom-up";
+  const scrollRef = useRef(null);
+  // Автопрокрутка к последнему элементу для bottom-up
+  useEffect(() => {
+    if (bottomUp && scrollRef.current) {
+      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+    }
+  }, [items.length, bottomUp]);
+
   return (
-    <div style={{
-      display: "flex", flexDirection: "column",
-      gap: node.gap || 6, ...(node.sx || {}),
-    }}>
+    <div
+      ref={scrollRef}
+      style={{
+        display: "flex", flexDirection: "column",
+        gap: node.gap || 6,
+        ...(bottomUp ? { minHeight: "100%", justifyContent: "flex-end" } : {}),
+        ...(node.sx || {}),
+      }}
+    >
       {items.map((item, i) => (
         <SlotRenderer key={item.id || i} item={node.item} ctx={ctx} contextItem={item} />
       ))}

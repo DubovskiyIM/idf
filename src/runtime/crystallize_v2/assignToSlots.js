@@ -222,23 +222,19 @@ function buildBody(projection) {
     filter: "conversationId === world.currentConversationId && !((deletedFor||[]).includes(viewer && viewer.id)) && !((deletedFor||[]).includes('*'))",
     sort: "createdAt",
     direction: "bottom-up",
+    gap: 8,
     item: {
       type: "card",
+      variant: "chat",
       children: [
+        // Имя отправителя (только для чужих — Card управляет видимостью через condition)
         {
-          type: "row",
-          children: [
-            { type: "avatar", bind: "senderName", size: 32 },
-            {
-              type: "column",
-              sx: { flex: 1 },
-              children: [
-                { type: "text", bind: "senderName", style: "heading" },
-                { type: "text", bind: "content" },
-              ],
-            },
-          ],
+          type: "text",
+          bind: "senderName",
+          style: { fontSize: 11, fontWeight: 600, color: "#6366f1", marginBottom: 2 },
+          condition: "senderId !== viewer.id",
         },
+        { type: "text", bind: "content", style: { fontSize: 14, whiteSpace: "pre-wrap" } },
       ],
       intents: [],
     },
