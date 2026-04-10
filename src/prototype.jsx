@@ -3,6 +3,7 @@ import { useEngine } from "./runtime/engine.js";
 import { PARTICLE_COLORS, ALPHA_LABELS, LINK_COLORS } from "./runtime/constants.js";
 import CausalityGraph from "./components/CausalityGraph.jsx";
 import OntologyInspector from "./components/OntologyInspector.jsx";
+import IntegrityGraph from "./components/IntegrityGraph.jsx";
 
 // Домены
 import * as bookingDomain from "./domains/booking/domain.js";
@@ -37,10 +38,14 @@ export default function App() {
   const [mode, setMode] = useState(() => localStorage.getItem("idf_mode") || "manual");
   const [theme, setTheme] = useState(() => localStorage.getItem("idf_theme") || "light");
   const [variant, setVariant] = useState(() => localStorage.getItem("idf_variant") || "clean");
+  const [viewer, setViewer] = useState(() => localStorage.getItem("idf_viewer") || "client");
+  const [layer, setLayer] = useState(() => localStorage.getItem("idf_layer") || "canonical");
 
   const setAndSaveMode = (v) => { setMode(v); localStorage.setItem("idf_mode", v); };
   const setAndSaveTheme = (v) => { setTheme(v); localStorage.setItem("idf_theme", v); };
   const setAndSaveVariant = (v) => { setVariant(v); localStorage.setItem("idf_variant", v); };
+  const setAndSaveViewer = (v) => { setViewer(v); localStorage.setItem("idf_viewer", v); };
+  const setAndSaveLayer = (v) => { setLayer(v); localStorage.setItem("idf_layer", v); };
 
   const domain = DOMAINS[domainId];
   const engine = useEngine(domain);
@@ -122,6 +127,12 @@ export default function App() {
               color: topView === "ontology" ? "#0c0e14" : "#6b7280", fontWeight: topView === "ontology" ? 600 : 400 }}>
             Онтология
           </button>
+          <button onClick={() => setTopView(topView === "integrity" ? null : "integrity")}
+            style={{ padding: "4px 12px", borderRadius: 4, border: "none", cursor: "pointer", fontSize: 11,
+              background: topView === "integrity" ? "#f59e0b" : "#1e2230",
+              color: topView === "integrity" ? "#0c0e14" : "#6b7280", fontWeight: topView === "integrity" ? 600 : 400 }}>
+            Целостность
+          </button>
         </div>
 
         {/* Режим: ручной / кристаллизованный */}
@@ -152,6 +163,20 @@ export default function App() {
           </>
         )}
 
+        {/* Зритель + слой */}
+        <select value={viewer} onChange={e => setAndSaveViewer(e.target.value)}
+          style={{ fontSize: 10, padding: "3px 6px", borderRadius: 4, border: "1px solid #1e2230", background: "#1e2230", color: "#9ca3af", cursor: "pointer" }}>
+          <option value="client">👤 Клиент</option>
+          <option value="specialist">👨‍⚕️ Специалист</option>
+          <option value="agent">🤖 Агент</option>
+        </select>
+        <select value={layer} onChange={e => setAndSaveLayer(e.target.value)}
+          style={{ fontSize: 10, padding: "3px 6px", borderRadius: 4, border: "1px solid #1e2230", background: "#1e2230", color: "#9ca3af", cursor: "pointer" }}>
+          <option value="canonical">📐 Канонический</option>
+          <option value="adaptive:mobile">📱 Мобильный</option>
+          <option value="adaptive:agent">🔌 API</option>
+        </select>
+
         <span style={{ fontSize: 11, color: "#6b7280" }}>
           {Object.keys(domain.INTENTS).length} намерений · {effects.filter(e => e.intent_id !== "_seed").length} эффектов
         </span>
@@ -168,6 +193,11 @@ export default function App() {
           <div style={{ maxWidth: 640, margin: "0 auto", padding: 24 }}>
             <OntologyInspector world={world} domain={domain} />
           </div>
+        </div>
+      )}
+      {topView === "integrity" && (
+        <div style={{ flex: 1, background: "#1a1a2e", position: "relative" }}>
+          <IntegrityGraph domain={domain} />
         </div>
       )}
 
@@ -241,9 +271,9 @@ export default function App() {
             <div style={{ flex: 1, overflow: "auto", background: theme === "dark" && mode === "crystallized" ? "#0c0e14" : "#fafafa", color: theme === "dark" && mode === "crystallized" ? "#e2e5eb" : "#1a1a2e" }}>
               <div style={{ maxWidth: 700, margin: "0 auto", padding: 24 }}>
                 {mode === "manual" ? (
-                  <domain.UI world={world} drafts={drafts} exec={exec} effects={effects} />
+                  <domain.UI world={world} drafts={drafts} exec={exec} effects={effects} viewer={viewer} layer={layer} />
                 ) : domainId === "workflow" ? (
-                  <WorkflowCanvas world={world} exec={exec} theme={theme} variant={variant} />
+                  <WorkflowCanvas world={world} exec={exec} theme={theme} variant={variant} viewer={viewer} layer={layer} />
                 ) : domainId === "planning" ? (
                   <>
                     <PollOverview world={world} exec={exec} theme={theme} variant={variant} />
@@ -277,13 +307,13 @@ export default function App() {
                       )}
                     </div>
                     {bookingView === "catalog" && (
-                      <ServiceCatalog world={world} exec={(...args) => { exec(...args); setBookingView("schedule"); }} drafts={drafts} theme={theme} variant={variant} />
+                      <ServiceCatalog world={world} exec={(...args) => { exec(...args); setBookingView("schedule"); }} drafts={drafts} theme={theme} variant={variant} viewer={viewer} layer={layer} />
                     )}
                     {bookingView === "schedule" && (
-                      <SpecialistSchedule world={world} exec={(...args) => { exec(...args); if (args[0] === "select_slot") setBookingView("draft"); }} drafts={drafts} theme={theme} variant={variant} />
+                      <SpecialistSchedule world={world} exec={(...args) => { exec(...args); if (args[0] === "select_slot") setBookingView("draft"); }} drafts={drafts} theme={theme} variant={variant} viewer={viewer} layer={layer} />
                     )}
                     {bookingView === "bookings" && (
-                      <MyBookings world={world} exec={exec} theme={theme} variant={variant} />
+                      <MyBookings world={world} exec={exec} theme={theme} variant={variant} viewer={viewer} layer={layer} />
                     )}
                     {bookingView === "draft" && (drafts || []).length > 0 && (() => {
                       const draft = drafts[0];

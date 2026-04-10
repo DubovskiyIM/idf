@@ -1,12 +1,23 @@
 /*
  * Кристаллизованная проекция: specialist_schedule
  * Домен: booking · Намерения: select_slot (TTL), block_slot, unblock_slot (⇌), reschedule_booking
+ *
+ * Три слоя (раздел 17):
+ *   canonical  — полная таблица расписания
+ *   adaptive:mobile — компактные карточки
+ *   adaptive:agent — JSON API
+ *
+ * Зависимость от зрителя (раздел 5):
+ *   client     — видит free/booked (без имён), может выбирать слоты
+ *   specialist — видит всё включая имена клиентов, может блокировать/разблокировать
+ *   agent      — только данные, без UI
  */
 
 import { useState, useMemo } from "react";
-import { getStyles } from "./theme.js";
+import { getStyles, getViewerAccess } from "./theme.js";
+import { ONTOLOGY } from "../domains/booking/ontology.js";
 
-export default function SpecialistScheduleProjection({ world, exec, drafts, theme = "light", variant = "clean" }) {
+export default function SpecialistScheduleProjection({ world, exec, drafts, theme = "light", variant = "clean", viewer = "client", layer = "canonical" }) {
   const s = getStyles(theme, variant);
   const [selectedDate, setSelectedDate] = useState(null);
   const [rescheduleId, setRescheduleId] = useState(null);
@@ -25,6 +36,69 @@ export default function SpecialistScheduleProjection({ world, exec, drafts, them
   const draft = (drafts || [])[0];
   const canSelect = draft && !draft.slotId;
   const confirmed = (world.bookings || []).filter(b => b.status === "confirmed");
+  const access = getViewerAccess(ONTOLOGY, viewer);
+  const isAgent = viewer === "agent" || layer === "adaptive:agent";
+  const isMobile = layer === "adaptive:mobile";
+
+  // === AGENT LAYER: JSON API проекция ===
+  if (isAgent) {
+    const data = {
+      projection: "specialist_schedule",
+      viewer, layer,
+      dates: dates.map(d => ({
+        date: d,
+        slots: (world.slots || []).filter(sl => sl.date === d).map(sl => {
+          const booking = (world.bookings || []).find(b => b.slotId === sl.id && b.status !== "cancelled");
+          return {
+            id: sl.id, startTime: sl.startTime, endTime: sl.endTime, status: sl.status,
+            ...(access.canExecute("cancel_client_booking") && booking ? { booking: { id: booking.id, serviceName: booking.serviceName } } : {}),
+          };
+        })
+      }))
+    };
+    return (
+      <div style={s.container}>
+        <div style={{ display: "flex", alignItems: "center", gap: s.v.gap, marginBottom: s.v.gap }}>
+          <h2 style={s.heading("h2")}>API: specialist_schedule</h2>
+          <span style={s.badge("open")}>agent</span>
+        </div>
+        <pre style={{ ...s.card, fontSize: s.v.fontSize.tiny, fontFamily: "ui-monospace, monospace", overflow: "auto", maxHeight: 400, whiteSpace: "pre-wrap" }}>
+          {JSON.stringify(data, null, 2)}
+        </pre>
+      </div>
+    );
+  }
+
+  // === MOBILE LAYER: компактные карточки ===
+  if (isMobile) {
+    const freeSlots = (world.slots || []).filter(sl => sl.status === "free").sort((a, b) => `${a.date}${a.startTime}`.localeCompare(`${b.date}${b.startTime}`));
+    return (
+      <div style={s.container}>
+        <h2 style={{ ...s.heading("h2"), marginBottom: s.v.gap }}>📱 Свободные слоты</h2>
+        {freeSlots.length === 0 ? (
+          <div style={{ textAlign: "center", padding: 30, ...s.text() }}>Нет свободных слотов</div>
+        ) : (
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: s.v.gap }}>
+            {freeSlots.slice(0, 12).map(slot => {
+              const dt = new Date(slot.date + "T00:00:00");
+              return (
+                <button key={slot.id} onClick={() => canSelect ? exec("select_slot", { slotId: slot.id }) : null}
+                  disabled={!canSelect}
+                  style={{
+                    ...s.card, padding: s.v.padding, textAlign: "center", cursor: canSelect ? "pointer" : "default",
+                    border: `2px solid ${s.t.success}`, background: s.t.successBg,
+                  }}>
+                  <div style={{ fontSize: s.v.fontSize.small, color: s.t.textSecondary }}>{dt.toLocaleDateString("ru", { weekday: "short", day: "numeric", month: "short" })}</div>
+                  <div style={{ fontSize: s.v.fontSize.h1, fontWeight: 700, color: s.t.success, fontFamily: s.v.font }}>{slot.startTime}</div>
+                </button>
+              );
+            })}
+          </div>
+        )}
+        {canSelect && <div style={{ ...s.text("small"), marginTop: s.v.gap, textAlign: "center" }}>Нажмите на слот для выбора</div>}
+      </div>
+    );
+  }
 
   return (
     <div style={s.container}>
@@ -78,7 +152,8 @@ export default function SpecialistScheduleProjection({ world, exec, drafts, them
             }}>
               <span style={{ ...s.heading("h2"), minWidth: 100 }}>{slot.startTime}—{slot.endTime}</span>
               <span style={s.badge(slot.status)}>{slot.status}</span>
-              {booking && <span style={s.text("small")}>{booking.serviceName}</span>}
+              {booking && access.canExecute("cancel_client_booking") && <span style={s.text("small")}>{booking.serviceName}</span>}
+              {booking && !access.canExecute("cancel_client_booking") && <span style={s.text("small")}>занято</span>}
               {slot.status === "held" && <span style={{ ...s.text("tiny"), color: s.t.warning }}>TTL 10м</span>}
               <div style={{ flex: 1 }} />
               {slot.status === "free" && canSelect && (
@@ -88,10 +163,10 @@ export default function SpecialistScheduleProjection({ world, exec, drafts, them
                 <button onClick={() => { exec("reschedule_booking", { id: rescheduleId, newSlotId: slot.id }); setRescheduleId(null); }}
                   style={s.button("accent")}>Перенести сюда</button>
               )}
-              {slot.status === "free" && !draft && !rescheduleId && (
+              {access.canExecute("block_slot") && slot.status === "free" && !draft && !rescheduleId && (
                 <button onClick={() => exec("block_slot", { slotId: slot.id })} style={s.buttonOutline("muted")}>Блок.</button>
               )}
-              {slot.status === "blocked" && (
+              {access.canExecute("unblock_slot") && slot.status === "blocked" && (
                 <button onClick={() => exec("unblock_slot", { slotId: slot.id })} style={s.buttonOutline("success")}>Разблок.</button>
               )}
             </div>

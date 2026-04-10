@@ -5,10 +5,12 @@
  */
 
 import { useState, useMemo } from "react";
-import { getStyles } from "./theme.js";
+import { getStyles, getViewerAccess } from "./theme.js";
+import { ONTOLOGY } from "../domains/booking/ontology.js";
 
-export default function ServiceCatalogProjection({ world, exec, drafts, theme = "light", variant = "clean" }) {
+export default function ServiceCatalogProjection({ world, exec, drafts, theme = "light", variant = "clean", viewer = "client", layer = "canonical" }) {
   const s = getStyles(theme, variant);
+  const access = getViewerAccess(ONTOLOGY, viewer);
   const [showAdd, setShowAdd] = useState(false);
   const [name, setName] = useState("");
   const [duration, setDuration] = useState(60);
@@ -34,7 +36,7 @@ export default function ServiceCatalogProjection({ world, exec, drafts, theme = 
           </h2>
           <div style={s.text("small")}>{specialist?.specialization} · {services.length} услуг · {reviews.length} отзывов</div>
         </div>
-        <button onClick={() => setShowAdd(!showAdd)} style={s.buttonOutline()}>{showAdd ? "Отмена" : "+ Услуга"}</button>
+        {access.canExecute("add_service") && <button onClick={() => setShowAdd(!showAdd)} style={s.buttonOutline()}>{showAdd ? "Отмена" : "+ Услуга"}</button>}
       </div>
 
       {showAdd && (

@@ -63,6 +63,22 @@ export const STATUS_PALETTE = {
 };
 
 /**
+ * Хелпер для зависимости от зрителя.
+ * Читает roles из онтологии домена.
+ */
+export function getViewerAccess(ontology, viewer) {
+  const role = ontology?.roles?.[viewer];
+  if (!role) return { canExecute: () => true, filterStatus: (s) => s, label: viewer };
+  const canSet = new Set(role.canExecute || []);
+  return {
+    canExecute: (intentId) => canSet.has(intentId),
+    filterStatus: (status) => role.statusMapping?.[status] || status,
+    visibleFields: role.visibleFields || {},
+    label: role.label || viewer,
+  };
+}
+
+/**
  * Собрать стили для конкретной комбинации тема+вариант.
  */
 export function getStyles(themeName = "light", variantName = "clean") {
