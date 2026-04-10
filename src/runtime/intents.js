@@ -76,5 +76,66 @@ export const INTENTS = {
       witnesses: ["slot.date", "slot.startTime"],
       confirmation: "click"
     }, antagonist: null, creates: null
+  },
+  unblock_slot: {
+    name: "Разблокировать слот", particles: {
+      entities: ["slot: TimeSlot"],
+      conditions: ["slot.status = 'blocked'"],
+      effects: [{ α: "replace", target: "slot.status", value: "free", σ: "shared" }],
+      witnesses: ["slot.date", "slot.startTime"],
+      confirmation: "click"
+    }, antagonist: "block_slot", creates: null
+  },
+  reschedule_booking: {
+    name: "Перенести запись", particles: {
+      entities: ["booking: Booking", "new_slot: TimeSlot"],
+      conditions: ["booking.status = 'confirmed'", "slot.status = 'free'"],
+      effects: [
+        { α: "replace", target: "booking.slotId", σ: "account" },
+        { α: "replace", target: "slot.status", value: "free", σ: "shared" },
+        { α: "replace", target: "slot.status", value: "booked", σ: "shared" }
+      ],
+      witnesses: ["booking.serviceName", "booking.date", "new_slot.date", "new_slot.startTime"],
+      confirmation: "click"
+    }, antagonist: null, creates: null, phase: "investigation"
+  },
+  mark_no_show: {
+    name: "Отметить неявку", particles: {
+      entities: ["booking: Booking"],
+      conditions: ["booking.status = 'confirmed'"],
+      effects: [{ α: "replace", target: "booking.status", value: "no_show", σ: "account" }],
+      witnesses: ["booking.serviceName", "booking.date", "booking.startTime"],
+      confirmation: "click"
+    }, antagonist: null, creates: null
+  },
+  leave_review: {
+    name: "Оставить отзыв", particles: {
+      entities: ["booking: Booking", "review: Review"],
+      conditions: ["booking.status = 'completed'"],
+      effects: [{ α: "add", target: "reviews", σ: "account" }],
+      witnesses: ["booking.serviceName", "booking.date"],
+      confirmation: "click"
+    }, antagonist: null, creates: "Review"
+  },
+  delete_review: {
+    name: "Удалить отзыв", particles: {
+      entities: ["review: Review"],
+      conditions: [],
+      effects: [{ α: "remove", target: "reviews", σ: "account" }],
+      witnesses: ["review.text"],
+      confirmation: "click"
+    }, antagonist: null, creates: null, irreversibility: "medium"
+  },
+  bulk_cancel_day: {
+    name: "Отменить все записи на день", particles: {
+      entities: ["booking: Booking[]"],
+      conditions: ["booking.status = 'confirmed'"],
+      effects: [
+        { α: "replace", target: "booking.status", value: "cancelled", σ: "account" },
+        { α: "replace", target: "slot.status", value: "free", σ: "shared" }
+      ],
+      witnesses: ["target_date", "bookings.count", "affected_clients"],
+      confirmation: "click"
+    }, antagonist: null, creates: null, extended: true
   }
 };

@@ -13,7 +13,7 @@ function describeEffect(intentId, alpha, ctx, target) {
   // Вторичные эффекты описываются по target, а не по intent_id
   if (target) {
     if (target.startsWith("drafts")) return `📋 Черновик: ${alpha} ${ctx.serviceName || ctx.slotId || ctx.id || ""}`;
-    if (target === "slot.status" && intentId !== "select_slot" && intentId !== "block_slot") {
+    if (target === "slot.status" && intentId !== "select_slot" && intentId !== "block_slot" && intentId !== "unblock_slot") {
       const val = ctx.status || "";
       return `🔄 Слот ${ctx.id}: → ${val || alpha}`;
     }
@@ -28,6 +28,12 @@ function describeEffect(intentId, alpha, ctx, target) {
     case "complete_booking": return `✓ Приём завершён: ${ctx.serviceName || ctx.id}`;
     case "add_service": return `+ Услуга: ${ctx.name} (${ctx.price}₽)`;
     case "block_slot": return `🔒 Слот заблокирован: ${ctx.date} ${ctx.startTime}`;
+    case "unblock_slot": return `🔓 Слот разблокирован: ${ctx.date} ${ctx.startTime}`;
+    case "reschedule_booking": return `↔ Перенесена: ${ctx.serviceName || ""} → ${ctx.newDate || ""} ${ctx.newStartTime || ""}`.trim();
+    case "mark_no_show": return `⊘ Неявка: ${ctx.serviceName || ctx.id}`;
+    case "leave_review": return `★ Отзыв: ${ctx.serviceName || ""} (${ctx.rating}/5)`;
+    case "delete_review": return `✕ Отзыв удалён: ${ctx.id}`;
+    case "bulk_cancel_day": return `⊗ Массовая отмена: ${ctx.date} (${ctx.count || "?"} записей)`;
     case "_seed": return `seed: ${alpha} ${ctx.id || ""}`;
     default: return `${alpha} ${intentId}`;
   }
@@ -38,8 +44,36 @@ function signalForIntent(intentId) {
     case "confirm_booking": return { κ: "notification", desc: "Запись подтверждена" };
     case "cancel_booking": return { κ: "notification", desc: "Запись отменена" };
     case "complete_booking": return { κ: "notification", desc: "Приём завершён" };
+    case "mark_no_show": return { κ: "notification", desc: "Неявка зафиксирована" };
+    case "leave_review": return { κ: "notification", desc: "Отзыв опубликован" };
+    case "bulk_cancel_day": return { κ: "notification", desc: "Массовая отмена выполнена" };
     default: return null;
   }
+}
+
+/**
+ * Найти последовательные свободные слоты, начиная с указанного.
+ * Возвращает массив слотов или null если не хватает.
+ */
+function findConsecutiveSlots(slots, startSlotId, slotsNeeded) {
+  const startSlot = slots.find(s => s.id === startSlotId);
+  if (!startSlot) return null;
+
+  // Все слоты этого дня, отсортированные по времени
+  const daySlots = slots
+    .filter(s => s.date === startSlot.date)
+    .sort((a, b) => a.startTime.localeCompare(b.startTime));
+
+  const startIdx = daySlots.findIndex(s => s.id === startSlotId);
+  if (startIdx === -1) return null;
+
+  const result = [];
+  for (let i = 0; i < slotsNeeded; i++) {
+    const slot = daySlots[startIdx + i];
+    if (!slot || slot.status !== "free") return null;
+    result.push(slot);
+  }
+  return result;
 }
 
 function buildEffects(intentId, ctx, world, drafts) {
@@ -63,25 +97,31 @@ function buildEffects(intentId, ctx, world, drafts) {
       break;
     }
     case "select_slot": {
-      const slot = (world.slots || []).find(s => s.id === ctx.slotId);
-      if (!slot || slot.status !== "free") return null;
       const draft = drafts[0];
       if (!draft) return null;
+      const slotsNeeded = Math.ceil((draft.duration || 60) / 60);
+      const consecutiveSlots = findConsecutiveSlots(world.slots || [], ctx.slotId, slotsNeeded);
+      if (!consecutiveSlots) return null;
 
-      effects.push({
-        id: uuid(), intent_id: intentId, alpha: "replace", target: "slot.status",
-        scope: "shared", value: "held",
-        context: { id: slot.id, date: slot.date, startTime: slot.startTime },
-        parent_id: null, status: "proposed", ttl: 600000, created_at: now,
-        desc: describeEffect(intentId, "replace", { date: slot.date, startTime: slot.startTime }), time: ts(),
-      });
+      // Удержать все нужные слоты с TTL
+      for (const slot of consecutiveSlots) {
+        effects.push({
+          id: uuid(), intent_id: intentId, alpha: "replace", target: "slot.status",
+          scope: "shared", value: "held",
+          context: { id: slot.id, date: slot.date, startTime: slot.startTime },
+          parent_id: null, status: "proposed", ttl: 600000, created_at: now,
+          desc: describeEffect(intentId, "replace", { date: slot.date, startTime: slot.startTime }), time: ts(),
+        });
+      }
 
+      // Обновить черновик с массивом slotIds
+      const slotIds = consecutiveSlots.map(s => s.id);
       effects.push({
         id: uuid(), intent_id: intentId, alpha: "replace", target: "drafts.slotId",
-        scope: "session", value: slot.id,
-        context: { id: draft.id, slotId: slot.id },
+        scope: "session", value: slotIds[0],
+        context: { id: draft.id, slotId: slotIds[0], slotIds },
         parent_id: null, status: "proposed", ttl: null, created_at: now,
-        desc: `📋 Черновик: слот ${slot.date} ${slot.startTime}`, time: ts(),
+        desc: `📋 Черновик: ${consecutiveSlots.length} слотов с ${consecutiveSlots[0].date} ${consecutiveSlots[0].startTime}`, time: ts(),
       });
       break;
     }
@@ -91,26 +131,31 @@ function buildEffects(intentId, ctx, world, drafts) {
       const slot = (world.slots || []).find(s => s.id === draft.slotId);
       if (!slot) return null;
 
+      // slotIds: массив всех занятых слотов (из draft context или один slotId)
+      const slotIds = draft.slotIds || [draft.slotId];
       const bookingId = `bk_${now}`;
 
       effects.push({
         id: uuid(), intent_id: intentId, alpha: "add", target: "bookings",
         scope: "account", value: null,
         context: { id: bookingId, specialistId: draft.specialistId, serviceId: draft.serviceId,
-                   serviceName: draft.serviceName, slotId: draft.slotId, price: draft.price,
-                   date: slot.date, startTime: slot.startTime,
+                   serviceName: draft.serviceName, slotId: draft.slotId, slotIds,
+                   price: draft.price, date: slot.date, startTime: slot.startTime,
                    status: "confirmed", createdAt: now },
         parent_id: null, status: "proposed", ttl: null, created_at: now,
         desc: describeEffect(intentId, "add", { serviceName: draft.serviceName, date: slot.date, startTime: slot.startTime }), time: ts(),
       });
 
-      effects.push({
-        id: uuid(), intent_id: intentId, alpha: "replace", target: "slot.status",
-        scope: "shared", value: "booked",
-        context: { id: draft.slotId },
-        parent_id: null, status: "proposed", ttl: null, created_at: now,
-        desc: `🔒 Слот забронирован`, time: ts(),
-      });
+      // Забронировать все слоты
+      for (const sId of slotIds) {
+        effects.push({
+          id: uuid(), intent_id: intentId, alpha: "replace", target: "slot.status",
+          scope: "shared", value: "booked",
+          context: { id: sId },
+          parent_id: null, status: "proposed", ttl: null, created_at: now,
+          desc: `🔒 Слот забронирован`, time: ts(),
+        });
+      }
 
       effects.push({
         id: uuid(), intent_id: intentId, alpha: "remove", target: "drafts",
@@ -133,13 +178,17 @@ function buildEffects(intentId, ctx, world, drafts) {
         desc: describeEffect(intentId, "replace", { serviceName: booking.serviceName }), time: ts(),
       });
 
-      effects.push({
-        id: uuid(), intent_id: intentId, alpha: "replace", target: "slot.status",
-        scope: "shared", value: "free",
-        context: { id: booking.slotId },
-        parent_id: null, status: "proposed", ttl: null, created_at: now,
-        desc: `🔓 Слот освобождён`, time: ts(),
-      });
+      // Освободить все занятые слоты
+      const slotIds = booking.slotIds || [booking.slotId];
+      for (const sId of slotIds) {
+        effects.push({
+          id: uuid(), intent_id: intentId, alpha: "replace", target: "slot.status",
+          scope: "shared", value: "free",
+          context: { id: sId },
+          parent_id: null, status: "proposed", ttl: null, created_at: now,
+          desc: `🔓 Слот освобождён`, time: ts(),
+        });
+      }
       break;
     }
     case "abandon_draft": {
@@ -154,11 +203,13 @@ function buildEffects(intentId, ctx, world, drafts) {
         desc: describeEffect(intentId, "remove", {}), time: ts(),
       });
 
-      if (draft.slotId) {
+      // Освободить все удержанные слоты
+      const slotIds = draft.slotIds || (draft.slotId ? [draft.slotId] : []);
+      for (const sId of slotIds) {
         effects.push({
           id: uuid(), intent_id: intentId, alpha: "replace", target: "slot.status",
           scope: "shared", value: "free",
-          context: { id: draft.slotId },
+          context: { id: sId },
           parent_id: null, status: "proposed", ttl: null, created_at: now,
           desc: `🔓 Слот освобождён`, time: ts(),
         });
@@ -201,6 +252,138 @@ function buildEffects(intentId, ctx, world, drafts) {
         parent_id: null, status: "proposed", ttl: null, created_at: now,
         desc: describeEffect(intentId, "replace", { date: slot.date, startTime: slot.startTime }), time: ts(),
       });
+      break;
+    }
+    case "unblock_slot": {
+      const slot = (world.slots || []).find(s => s.id === ctx.slotId);
+      if (!slot || slot.status !== "blocked") return null;
+      effects.push({
+        id: uuid(), intent_id: intentId, alpha: "replace", target: "slot.status",
+        scope: "shared", value: "free",
+        context: { id: slot.id, date: slot.date, startTime: slot.startTime },
+        parent_id: null, status: "proposed", ttl: null, created_at: now,
+        desc: describeEffect(intentId, "replace", { date: slot.date, startTime: slot.startTime }), time: ts(),
+      });
+      break;
+    }
+    case "reschedule_booking": {
+      const booking = (world.bookings || []).find(b => b.id === ctx.id);
+      if (!booking || booking.status !== "confirmed") return null;
+
+      // Определить сколько слотов нужно по услуге
+      const service = (world.services || []).find(s => s.id === booking.serviceId);
+      const slotsNeeded = Math.ceil((service?.duration || 60) / 60);
+      const newSlots = findConsecutiveSlots(world.slots || [], ctx.newSlotId, slotsNeeded);
+      if (!newSlots) return null;
+
+      const newSlotIds = newSlots.map(s => s.id);
+
+      // Обновить slotId и slotIds бронирования
+      effects.push({
+        id: uuid(), intent_id: intentId, alpha: "replace", target: "booking.slotId",
+        scope: "account", value: newSlots[0].id,
+        context: { id: booking.id, serviceName: booking.serviceName, slotIds: newSlotIds, newDate: newSlots[0].date, newStartTime: newSlots[0].startTime },
+        parent_id: null, status: "proposed", ttl: null, created_at: now,
+        desc: describeEffect(intentId, "replace", { serviceName: booking.serviceName, newDate: newSlots[0].date, newStartTime: newSlots[0].startTime }), time: ts(),
+      });
+      effects.push({
+        id: uuid(), intent_id: intentId, alpha: "replace", target: "booking.date",
+        scope: "account", value: newSlots[0].date,
+        context: { id: booking.id },
+        parent_id: null, status: "proposed", ttl: null, created_at: now,
+        desc: `📋 Бронь: дата → ${newSlots[0].date}`, time: ts(),
+      });
+      effects.push({
+        id: uuid(), intent_id: intentId, alpha: "replace", target: "booking.startTime",
+        scope: "account", value: newSlots[0].startTime,
+        context: { id: booking.id },
+        parent_id: null, status: "proposed", ttl: null, created_at: now,
+        desc: `📋 Бронь: время → ${newSlots[0].startTime}`, time: ts(),
+      });
+
+      // Освободить старые слоты
+      const oldSlotIds = booking.slotIds || [booking.slotId];
+      for (const sId of oldSlotIds) {
+        effects.push({
+          id: uuid(), intent_id: intentId, alpha: "replace", target: "slot.status",
+          scope: "shared", value: "free",
+          context: { id: sId },
+          parent_id: null, status: "proposed", ttl: null, created_at: now,
+          desc: `🔓 Старый слот освобождён`, time: ts(),
+        });
+      }
+
+      // Забронировать новые слоты
+      for (const slot of newSlots) {
+        effects.push({
+          id: uuid(), intent_id: intentId, alpha: "replace", target: "slot.status",
+          scope: "shared", value: "booked",
+          context: { id: slot.id },
+          parent_id: null, status: "proposed", ttl: null, created_at: now,
+          desc: `🔒 Новый слот: ${slot.date} ${slot.startTime}`, time: ts(),
+        });
+      }
+      break;
+    }
+    case "mark_no_show": {
+      const booking = (world.bookings || []).find(b => b.id === ctx.id);
+      if (!booking || booking.status !== "confirmed") return null;
+      effects.push({
+        id: uuid(), intent_id: intentId, alpha: "replace", target: "booking.status",
+        scope: "account", value: "no_show",
+        context: { id: booking.id, serviceName: booking.serviceName, date: booking.date, startTime: booking.startTime },
+        parent_id: null, status: "proposed", ttl: null, created_at: now,
+        desc: describeEffect(intentId, "replace", { serviceName: booking.serviceName }), time: ts(),
+      });
+      break;
+    }
+    case "leave_review": {
+      const booking = (world.bookings || []).find(b => b.id === ctx.bookingId);
+      if (!booking || booking.status !== "completed") return null;
+      const reviewId = `rev_${now}`;
+      effects.push({
+        id: uuid(), intent_id: intentId, alpha: "add", target: "reviews",
+        scope: "account", value: null,
+        context: { id: reviewId, bookingId: booking.id, specialistId: booking.specialistId,
+                   serviceName: booking.serviceName, rating: ctx.rating || 5, text: ctx.text || "", createdAt: now },
+        parent_id: null, status: "proposed", ttl: null, created_at: now,
+        desc: describeEffect(intentId, "add", { serviceName: booking.serviceName, rating: ctx.rating || 5 }), time: ts(),
+      });
+      break;
+    }
+    case "delete_review": {
+      const review = (world.reviews || []).find(r => r.id === ctx.id);
+      if (!review) return null;
+      effects.push({
+        id: uuid(), intent_id: intentId, alpha: "remove", target: "reviews",
+        scope: "account", value: null,
+        context: { id: review.id },
+        parent_id: null, status: "proposed", ttl: null, created_at: now,
+        desc: describeEffect(intentId, "remove", { id: review.id }), time: ts(),
+      });
+      break;
+    }
+    case "bulk_cancel_day": {
+      const dayBookings = (world.bookings || []).filter(b =>
+        b.status === "confirmed" && b.date === ctx.date
+      );
+      if (dayBookings.length === 0) return null;
+      for (const booking of dayBookings) {
+        effects.push({
+          id: uuid(), intent_id: intentId, alpha: "replace", target: "booking.status",
+          scope: "account", value: "cancelled",
+          context: { id: booking.id, serviceName: booking.serviceName },
+          parent_id: null, status: "proposed", ttl: null, created_at: now,
+          desc: `✕ Отмена: ${booking.serviceName}`, time: ts(),
+        });
+        effects.push({
+          id: uuid(), intent_id: intentId, alpha: "replace", target: "slot.status",
+          scope: "shared", value: "free",
+          context: { id: booking.slotId },
+          parent_id: null, status: "proposed", ttl: null, created_at: now,
+          desc: `🔓 Слот освобождён`, time: ts(),
+        });
+      }
       break;
     }
     default:

@@ -15,7 +15,11 @@ export const ONTOLOGY = {
     },
     Booking: {
       fields: ["id", "clientId", "specialistId", "serviceId", "slotId", "status", "price", "createdAt"],
-      statuses: ["draft", "confirmed", "completed", "cancelled"],
+      statuses: ["draft", "confirmed", "completed", "cancelled", "no_show"],
+      type: "internal"
+    },
+    Review: {
+      fields: ["id", "bookingId", "specialistId", "serviceName", "rating", "text", "createdAt"],
       type: "internal"
     }
   },

@@ -1,18 +1,14 @@
 /*
  * Кристаллизованная проекция: service_catalog
- * Источник: PROJECTIONS.service_catalog — query: "все активные услуги с ценами и длительностью"
+ * Источник: PROJECTIONS.service_catalog
  * Свидетельства: name, duration, price, specialist.name
  *
- * Намерения, материализованные в этой проекции:
- *   select_service  — кнопка «Выбрать» (creates: Booking(draft), условие: service.active)
- *   add_service     — форма добавления (creates: Service)
- *
- * Онтология:
- *   Service  — internal: id, specialistId, name, duration, price, active
- *   Specialist — internal: id, name, specialization
+ * Намерения (3): select_service, add_service, (delete_review — косвенно через reviews)
+ * Сущности: Service (internal), Specialist (internal), Review (internal)
+ * Кристаллизовано из 14 намерений · 5 сущностей
  */
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 
 export default function ServiceCatalogProjection({ world, exec, drafts, effects }) {
   const [showAddForm, setShowAddForm] = useState(false);
@@ -22,8 +18,15 @@ export default function ServiceCatalogProjection({ world, exec, drafts, effects 
 
   const specialist = (world.specialists || [])[0];
   const services = (world.services || []).filter(s => s.active);
+  const reviews = world.reviews || [];
   const hasDraft = (drafts || []).length > 0;
-  const proposedIds = new Set((effects || []).filter(e => e.status === "proposed").map(e => e.context?.serviceId));
+
+  // Средний рейтинг специалиста
+  const avgRating = useMemo(() => {
+    if (reviews.length === 0) return null;
+    const sum = reviews.reduce((a, r) => a + (r.rating || 0), 0);
+    return (sum / reviews.length).toFixed(1);
+  }, [reviews]);
 
   return (
     <div>
@@ -31,9 +34,10 @@ export default function ServiceCatalogProjection({ world, exec, drafts, effects 
         <div>
           <h2 style={{ fontSize: 18, fontWeight: 700, fontFamily: "system-ui, sans-serif", margin: 0, color: "#1a1a2e" }}>
             {specialist?.name || "Специалист"}
+            {avgRating && <span style={{ fontSize: 14, fontWeight: 400, color: "#f59e0b", marginLeft: 8 }}>★ {avgRating}</span>}
           </h2>
           <div style={{ fontSize: 13, color: "#6b7280", fontFamily: "system-ui, sans-serif", marginTop: 2 }}>
-            {specialist?.specialization || ""} · {services.length} услуг
+            {specialist?.specialization || ""} · {services.length} услуг · {reviews.length} отзывов
           </div>
         </div>
         <button onClick={() => setShowAddForm(!showAddForm)}
@@ -72,45 +76,68 @@ export default function ServiceCatalogProjection({ world, exec, drafts, effects 
         </div>
       )}
 
-      {/* Проекция: service_catalog — с намерением select_service на каждом элементе */}
-      <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-        {services.map(service => {
-          const isProposed = proposedIds.has(service.id);
-          return (
-            <div key={service.id} style={{
-              display: "flex", alignItems: "center", gap: 12, background: "#fff", borderRadius: 8,
-              padding: "14px 16px", border: "1px solid #e5e7eb", boxShadow: "0 1px 3px #0001",
-              opacity: isProposed ? 0.6 : 1, transition: "all 0.15s"
-            }}>
-              <div style={{ flex: 1, fontFamily: "system-ui, sans-serif" }}>
-                <div style={{ fontSize: 15, fontWeight: 600, color: "#1a1a2e" }}>{service.name}</div>
-                <div style={{ fontSize: 13, color: "#6b7280", marginTop: 2 }}>
-                  {service.duration} мин · {specialist?.name}
-                </div>
-              </div>
-              <div style={{ fontSize: 16, fontWeight: 700, color: "#6366f1", fontFamily: "system-ui, sans-serif", marginRight: 12 }}>
-                {service.price} ₽
-              </div>
-              {/* Намерение: select_service — начало черновика Δ */}
-              <button onClick={() => exec("select_service", { serviceId: service.id })}
-                disabled={hasDraft}
-                style={{
-                  padding: "8px 16px", borderRadius: 6, border: "none",
-                  background: hasDraft ? "#d1d5db" : "#6366f1",
-                  color: "#fff", fontSize: 13, fontFamily: "system-ui, sans-serif",
-                  cursor: hasDraft ? "default" : "pointer", fontWeight: 600
-                }}>
-                Выбрать
-              </button>
+      {/* Каталог услуг */}
+      <div style={{ display: "flex", flexDirection: "column", gap: 8, marginBottom: 24 }}>
+        {services.map(service => (
+          <div key={service.id} style={{
+            display: "flex", alignItems: "center", gap: 12, background: "#fff", borderRadius: 8,
+            padding: "14px 16px", border: "1px solid #e5e7eb", boxShadow: "0 1px 3px #0001",
+          }}>
+            <div style={{ flex: 1, fontFamily: "system-ui, sans-serif" }}>
+              <div style={{ fontSize: 15, fontWeight: 600, color: "#1a1a2e" }}>{service.name}</div>
+              <div style={{ fontSize: 13, color: "#6b7280", marginTop: 2 }}>{service.duration} мин</div>
             </div>
-          );
-        })}
+            <div style={{ fontSize: 16, fontWeight: 700, color: "#6366f1", fontFamily: "system-ui, sans-serif", marginRight: 12 }}>
+              {service.price} ₽
+            </div>
+            <button onClick={() => exec("select_service", { serviceId: service.id })}
+              disabled={hasDraft}
+              style={{
+                padding: "8px 16px", borderRadius: 6, border: "none",
+                background: hasDraft ? "#d1d5db" : "#6366f1", color: "#fff",
+                fontSize: 13, fontFamily: "system-ui, sans-serif",
+                cursor: hasDraft ? "default" : "pointer", fontWeight: 600
+              }}>
+              Выбрать
+            </button>
+          </div>
+        ))}
       </div>
 
       {hasDraft && (
         <div style={{ marginTop: 12, fontSize: 12, color: "#f59e0b", fontFamily: "system-ui, sans-serif" }}>
           У вас есть незавершённый черновик Δ. Завершите или отмените его.
         </div>
+      )}
+
+      {/* Отзывы */}
+      {reviews.length > 0 && (
+        <>
+          <div style={{ fontSize: 11, color: "#6b7280", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 8, fontFamily: "system-ui, sans-serif" }}>
+            Отзывы ({reviews.length})
+          </div>
+          <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+            {reviews.sort((a, b) => b.createdAt - a.createdAt).map(review => (
+              <div key={review.id} style={{
+                background: "#fff", borderRadius: 8, padding: "10px 14px",
+                border: "1px solid #e5e7eb", fontFamily: "system-ui, sans-serif",
+                display: "flex", alignItems: "center", gap: 10,
+              }}>
+                <span style={{ fontSize: 16, color: "#f59e0b", minWidth: 40 }}>{"★".repeat(review.rating)}</span>
+                <div style={{ flex: 1 }}>
+                  <div style={{ fontSize: 12, color: "#1a1a2e" }}>{review.serviceName}</div>
+                  {review.text && <div style={{ fontSize: 11, color: "#6b7280", marginTop: 2 }}>{review.text}</div>}
+                </div>
+                {/* Намерение: delete_review — irreversibility: medium */}
+                <button onClick={() => exec("delete_review", { id: review.id })}
+                  style={{ background: "none", border: "none", cursor: "pointer", color: "#d1d5db", fontSize: 14 }}
+                  onMouseEnter={e => e.target.style.color = "#ef4444"} onMouseLeave={e => e.target.style.color = "#d1d5db"}>
+                  ×
+                </button>
+              </div>
+            ))}
+          </div>
+        </>
       )}
     </div>
   );

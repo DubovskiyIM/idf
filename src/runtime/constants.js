@@ -12,5 +12,5 @@ export const SLOT_STATUS_COLORS = {
 };
 
 export const BOOKING_STATUS_COLORS = {
-  draft: "#f59e0b", confirmed: "#6366f1", completed: "#22c55e", cancelled: "#ef4444"
+  draft: "#f59e0b", confirmed: "#6366f1", completed: "#22c55e", cancelled: "#ef4444", no_show: "#f59e0b"
 };

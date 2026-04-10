@@ -62,7 +62,9 @@ function findEntity(world, entityId) {
 const CONDITIONS = {
   "service.active = true": (e) => e?.active === true,
   "slot.status = 'free'": (e) => e?.status === "free",
+  "slot.status = 'blocked'": (e) => e?.status === "blocked",
   "booking.status = 'confirmed'": (e) => e?.status === "confirmed",
+  "booking.status = 'completed'": (e) => e?.status === "completed",
 };
 
 // Условия с указанием какое поле контекста содержит ID целевой сущности
@@ -75,7 +77,14 @@ const INTENT_CONDITIONS = {
   complete_booking: [{ cond: "booking.status = 'confirmed'", entityIdField: "id" }],
   add_service: [],
   block_slot: [{ cond: "slot.status = 'free'", entityIdField: "id" }],
+  unblock_slot: [{ cond: "slot.status = 'blocked'", entityIdField: "id" }],
+  reschedule_booking: [{ cond: "booking.status = 'confirmed'", entityIdField: "id" }],
+  mark_no_show: [{ cond: "booking.status = 'confirmed'", entityIdField: "id" }],
+  leave_review: [{ cond: "booking.status = 'completed'", entityIdField: "bookingId" }],
+  delete_review: [],
+  bulk_cancel_day: [{ cond: "booking.status = 'confirmed'", entityIdField: "id" }],
   _seed: [],
+  _sync: [],
 };
 
 function validate(effect) {

@@ -4,6 +4,7 @@ import { PROJECTIONS } from "./runtime/projections.js";
 import { PARTICLE_COLORS, ALPHA_LABELS, LINK_COLORS, SLOT_STATUS_COLORS, BOOKING_STATUS_COLORS } from "./runtime/constants.js";
 import { useEngine } from "./runtime/engine.js";
 import CausalityGraph from "./components/CausalityGraph.jsx";
+import OntologyInspector from "./components/OntologyInspector.jsx";
 
 const crystallizedModules = import.meta.glob("./crystallized/*.jsx", { eager: true });
 
@@ -128,6 +129,7 @@ export default function App() {
               { id: "schedule", label: "Расписание" },
               { id: "bookings", label: "Мои записи" },
               { id: "graph", label: "Граф Φ" },
+              { id: "ontology", label: "Онтология" },
             ].map(v => (
               <button key={v.id} onClick={() => setView(v.id)} style={{
                 padding: "8px 16px", border: "none", cursor: "pointer", fontSize: 12,
@@ -149,6 +151,10 @@ export default function App() {
           <div style={{ flex: 1, overflow: view === "graph" ? "hidden" : "auto", background: view === "graph" ? "#1a1a2e" : "#fafafa", color: "#1a1a2e", position: "relative" }}>
             {view === "graph" ? (
               <CausalityGraph effects={effects} />
+            ) : view === "ontology" ? (
+              <div style={{ maxWidth: 640, margin: "0 auto", padding: 24 }}>
+                <OntologyInspector world={world} />
+              </div>
             ) : (
             <div style={{ maxWidth: 640, margin: "0 auto", padding: 24 }}>
 
@@ -261,6 +267,12 @@ export default function App() {
                             Блокировать
                           </button>
                         )}
+                        {slot.status === "blocked" && (
+                          <button onClick={() => exec("unblock_slot", { slotId: slot.id })}
+                            style={{ padding: "6px 14px", borderRadius: 6, border: "1px solid #22c55e", background: "#fff", color: "#22c55e", fontSize: 12, fontFamily: "system-ui, sans-serif", cursor: "pointer" }}>
+                            Разблокировать
+                          </button>
+                        )}
                         {slot.status === "held" && (
                           <span style={{ fontSize: 11, color: "#f59e0b", fontFamily: "system-ui, sans-serif" }}>удержан (TTL 10м)</span>
                         )}
@@ -300,11 +312,21 @@ export default function App() {
                                 style={{ padding: "6px 12px", borderRadius: 6, border: "none", background: "#22c55e", color: "#fff", fontSize: 12, fontFamily: "system-ui, sans-serif", cursor: "pointer" }}>
                                 Завершить
                               </button>
+                              <button onClick={() => exec("mark_no_show", { id: booking.id })}
+                                style={{ padding: "6px 12px", borderRadius: 6, border: "1px solid #f59e0b", background: "#fff", color: "#f59e0b", fontSize: 12, fontFamily: "system-ui, sans-serif", cursor: "pointer" }}>
+                                Неявка
+                              </button>
                               <button onClick={() => exec("cancel_booking", { id: booking.id })}
                                 style={{ padding: "6px 12px", borderRadius: 6, border: "1px solid #ef4444", background: "#fff", color: "#ef4444", fontSize: 12, fontFamily: "system-ui, sans-serif", cursor: "pointer" }}>
                                 Отменить
                               </button>
                             </>
+                          )}
+                          {booking.status === "completed" && !(world.reviews || []).some(r => r.bookingId === booking.id) && (
+                            <button onClick={() => { const rating = prompt("Оценка (1-5):", "5"); if (rating) exec("leave_review", { bookingId: booking.id, rating: parseInt(rating), text: "" }); }}
+                              style={{ padding: "6px 12px", borderRadius: 6, border: "1px solid #f59e0b", background: "#fff", color: "#f59e0b", fontSize: 12, fontFamily: "system-ui, sans-serif", cursor: "pointer" }}>
+                              ★ Отзыв
+                            </button>
                           )}
                         </div>
                       ))}
