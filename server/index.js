@@ -3,6 +3,7 @@ const cors = require("cors");
 const effectsRouter = require("./routes/effects.js");
 const artifactsRouter = require("./routes/artifacts.js");
 const { router: entitiesRouter, registerOntology } = require("./routes/entities.js");
+const { registerOntology: registerFullOntology } = require("./ontologyRegistry.cjs");
 
 const app = express();
 const PORT = 3001;
@@ -28,7 +29,8 @@ startSync();
 
 // Endpoint для обновления маппинга типов из онтологии домена.
 // Если в query передан ?domain=X, онтология также регистрируется в реестре
-// entities router'а (для серверного поиска через searchConfig).
+// entities router'а (для серверного поиска через searchConfig) И в
+// ontologyRegistry (для агентского слоя — /api/agent/:domain/*).
 const { updateTypeMap } = require("./validator.js");
 app.post("/api/typemap", (req, res) => {
   const map = updateTypeMap(req.body);
@@ -36,9 +38,13 @@ app.post("/api/typemap", (req, res) => {
   let registeredEntities = 0;
   if (domain && req.body?.entities) {
     registeredEntities = registerOntology(domain, req.body);
+    // Side-effect: агентский слой читает полную ontology (с roles,
+    // visibleFields, ownerField) из этого реестра.
+    registerFullOntology(domain, req.body);
   }
-  console.log(`  [typemap] Обновлён: ${Object.keys(map).length} типов${domain ? `, ontology[${domain}]: ${registeredEntities} сущностей` : ""}`);
-  res.json({ ok: true, types: Object.keys(map).length, entities: registeredEntities });
+  const roleCount = Object.keys(req.body?.roles || {}).length;
+  console.log(`  [typemap] Обновлён: ${Object.keys(map).length} типов${domain ? `, ontology[${domain}]: ${registeredEntities} сущностей, ${roleCount} ролей` : ""}`);
+  res.json({ ok: true, types: Object.keys(map).length, entities: registeredEntities, roles: roleCount });
 });
 
 // Endpoint для регистрации намерений домена — заменяет hardcoded
