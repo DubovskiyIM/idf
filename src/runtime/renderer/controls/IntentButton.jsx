@@ -1,5 +1,6 @@
 import { resolveParams } from "../eval.js";
 import { getAdaptedComponent } from "../adapters/registry.js";
+import Icon from "../adapters/Icon.jsx";
 
 export default function IntentButton({ spec, ctx, item }) {
   const handleClick = (e) => {
@@ -58,7 +59,7 @@ export default function IntentButton({ spec, ctx, item }) {
         lineHeight: 1,
       }}
     >
-      {icon && <span style={{ fontSize: 15 }}>{icon}</span>}
+      {icon && <Icon emoji={icon} size={14} />}
       {showLabel && <span>{label}</span>}
     </button>
   );

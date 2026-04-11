@@ -1,5 +1,7 @@
 import { useState } from "react";
 import ParameterControl from "../parameters/index.jsx";
+import { getAdaptedComponent } from "../adapters/registry.js";
+import Icon from "../adapters/Icon.jsx";
 
 /**
  * SubCollectionAdd — inline-композер для добавления sub-сущности в detail.
@@ -10,6 +12,11 @@ import ParameterControl from "../parameters/index.jsx";
  *
  * UX-паттерн: inline-форма без модала. Для TimeOption это будет строка
  * [date picker][start time][end time][+]. Для Participant — [имя][+].
+ *
+ * Вертикальное выравнивание: все ячейки — grid items с одинаковой высотой.
+ * Inputs Mantine имеют label сверху (~19px) + input (~36px) = ~55px.
+ * Кнопка добавления — height 36px, align-items: end → прилипает к низу
+ * строки, совпадая с нижней границей input.
  */
 export default function SubCollectionAdd({ spec, ctx, target }) {
   const [values, setValues] = useState(() => {
@@ -51,10 +58,23 @@ export default function SubCollectionAdd({ spec, ctx, target }) {
 
   const hasValues = Object.values(values).some(v => v !== "" && v != null);
 
+  // Адаптированная primary-кнопка (Mantine Button) — fallback на inline.
+  const AdaptedButton = getAdaptedComponent("button", "primary");
+
   return (
-    <div style={{ display: "flex", gap: 8, alignItems: "flex-end", flexWrap: "wrap", marginTop: 8 }}>
+    <div style={{
+      display: "flex",
+      gap: 8,
+      alignItems: "flex-end",
+      flexWrap: "wrap",
+      marginTop: 8,
+    }}>
       {(spec.parameters || []).map(param => (
-        <div key={param.name} style={{ flex: param.control === "textarea" ? 1 : "none", minWidth: 120 }} onKeyDown={onKeyDown}>
+        <div
+          key={param.name}
+          style={{ flex: param.control === "textarea" ? 1 : "none", minWidth: 140 }}
+          onKeyDown={onKeyDown}
+        >
           <ParameterControl
             spec={{ ...param, label: undefined }}
             value={values[param.name]}
@@ -63,25 +83,37 @@ export default function SubCollectionAdd({ spec, ctx, target }) {
           />
         </div>
       ))}
-      <button
-        onClick={submit}
-        disabled={!hasValues}
-        title={spec.label || "Добавить"}
-        style={{
-          padding: "10px 16px",
-          borderRadius: 8,
-          border: "none",
-          background: hasValues ? "#6366f1" : "#c7d2fe",
-          color: "#fff",
-          fontSize: 18,
-          fontWeight: 700,
-          cursor: hasValues ? "pointer" : "default",
-          lineHeight: 1,
-          marginBottom: 12, // выровнять с полями, у которых есть label-отступ
-        }}
-      >
-        +
-      </button>
+      {/* Кнопка + на одной линии с input-ами (flex-end). Без marginBottom. */}
+      {AdaptedButton ? (
+        <AdaptedButton
+          label=""
+          icon={<Icon emoji="+" size={18} />}
+          onClick={submit}
+          disabled={!hasValues}
+          title={spec.label || "Добавить"}
+          size="md"
+        />
+      ) : (
+        <button
+          onClick={submit}
+          disabled={!hasValues}
+          title={spec.label || "Добавить"}
+          style={{
+            padding: "8px 16px",
+            borderRadius: 8,
+            border: "none",
+            background: hasValues ? "#6366f1" : "#c7d2fe",
+            color: "#fff",
+            fontSize: 18,
+            fontWeight: 700,
+            cursor: hasValues ? "pointer" : "default",
+            lineHeight: 1,
+            height: 36,
+          }}
+        >
+          +
+        </button>
+      )}
     </div>
   );
 }

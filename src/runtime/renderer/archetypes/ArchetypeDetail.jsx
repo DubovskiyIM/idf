@@ -6,6 +6,7 @@ import ProgressWidget from "./ProgressWidget.jsx";
 import InlineSetter from "./InlineSetter.jsx";
 import { evalIntentCondition } from "../eval.js";
 import { getAdaptedComponent } from "../adapters/registry.js";
+import Icon from "../adapters/Icon.jsx";
 
 /**
  * Detail-архетип: показывает одну сущность по mainEntity+idParam из routeParams.
@@ -200,7 +201,7 @@ function PrimaryCTAList({ items, target, ctx }) {
             <AdaptedPrimary
               key={spec.intentId}
               label={spec.label}
-              icon={spec.icon ? <span>{spec.icon}</span> : undefined}
+              icon={spec.icon}
               onClick={onClick}
               size="md"
             />
@@ -226,7 +227,7 @@ function PrimaryCTAList({ items, target, ctx }) {
               fontFamily: "inherit",
             }}
           >
-            {spec.icon && <span style={{ fontSize: 17 }}>{spec.icon}</span>}
+            {spec.icon && <Icon emoji={spec.icon} size={18} />}
             <span>{spec.label}</span>
           </button>
         );

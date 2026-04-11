@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from "react";
 import SlotRenderer from "../SlotRenderer.jsx";
 import { resolve, evalCondition, evalIntentCondition } from "../eval.js";
 import { resolveNavigateAction } from "../navigation/navigate.js";
+import Icon from "../adapters/Icon.jsx";
 
 export function Row({ node, ctx, item }) {
   return (
@@ -154,7 +155,7 @@ export function Card({ node, ctx, item }) {
                         cursor: "pointer", fontSize: 12,
                       }}
                     >
-                      {spec.icon && <span>{spec.icon}</span>}
+                      {spec.icon && <Icon emoji={spec.icon} size={14} />}
                       <span>{spec.label || spec.intentId}</span>
                     </button>
                   ))}
@@ -186,7 +187,7 @@ function ItemIntentGroup({ group, ctx, item }) {
           lineHeight: 1,
         }}
       >
-        <span style={{ fontSize: 13 }}>{icon}</span>
+        <Icon emoji={icon} size={14} />
         <span style={{ fontSize: 9, color: "#9ca3af" }}>×{count}</span>
       </button>
       {open && (
@@ -211,7 +212,7 @@ function ItemIntentGroup({ group, ctx, item }) {
               onMouseEnter={e => e.currentTarget.style.background = "#f9fafb"}
               onMouseLeave={e => e.currentTarget.style.background = "transparent"}
             >
-              {spec.icon && <span>{spec.icon}</span>}
+              {spec.icon && <Icon emoji={spec.icon} size={14} />}
               <span>{spec.label || spec.intentId}</span>
             </button>
           ))}
@@ -250,7 +251,7 @@ function ItemIntentButton({ spec, ctx, item }) {
         lineHeight: 1,
       }}
     >
-      {icon && <span style={{ fontSize: 13 }}>{icon}</span>}
+      {icon && <Icon emoji={icon} size={13} />}
       {showLabel && <span>{label}</span>}
     </button>
   );

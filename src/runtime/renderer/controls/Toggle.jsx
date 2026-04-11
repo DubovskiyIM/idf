@@ -1,4 +1,5 @@
 import { resolve } from "../eval.js";
+import Icon from "../adapters/Icon.jsx";
 
 export default function Toggle({ spec, ctx }) {
   const currentState = spec.state ? resolve(ctx.world, spec.state) : false;
@@ -16,7 +17,7 @@ export default function Toggle({ spec, ctx }) {
       }}
       title={label}
     >
-      <span>{icon}</span>
+      <Icon emoji={icon} size={14} />
       <span style={{ fontSize: 11, color: "#6b7280" }}>{label}</span>
     </button>
   );

@@ -1,5 +1,6 @@
 import { useState } from "react";
 import ParameterControl from "../parameters/index.jsx";
+import Icon from "../adapters/Icon.jsx";
 
 /**
  * InlineSetter — inline-форма «параметр + Установить» для single-param
@@ -29,7 +30,7 @@ export default function InlineSetter({ spec, target, ctx }) {
       border: "1px solid #e5e7eb",
       borderRadius: 8,
     }}>
-      {spec.icon && <span style={{ fontSize: 16 }}>{spec.icon}</span>}
+      {spec.icon && <Icon emoji={spec.icon} size={16} />}
       <span style={{ fontSize: 13, color: "#374151", fontWeight: 500 }}>
         {spec.label}:
       </span>

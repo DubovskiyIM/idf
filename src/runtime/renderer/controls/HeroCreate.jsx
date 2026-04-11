@@ -1,4 +1,5 @@
 import { useState, useRef } from "react";
+import Icon from "../adapters/Icon.jsx";
 
 /**
  * HeroCreate — inline-создатель главной сущности в catalog.
@@ -74,7 +75,7 @@ export default function HeroCreate({ spec, ctx }) {
           transition: "background 0.1s",
         }}
       >
-        {spec.icon && <span style={{ fontSize: 15 }}>{spec.icon}</span>}
+        {spec.icon && <Icon emoji={spec.icon} size={15} />}
         <span>{spec.buttonLabel || "Создать"}</span>
       </button>
     </div>

@@ -2,6 +2,7 @@ import { useMemo } from "react";
 import SlotRenderer from "../SlotRenderer.jsx";
 import SubCollectionAdd from "../controls/SubCollectionAdd.jsx";
 import { evalIntentCondition } from "../eval.js";
+import Icon from "../adapters/Icon.jsx";
 
 /**
  * SubCollectionSection — секция связанной коллекции в detail-проекции.
@@ -142,7 +143,7 @@ function SubCollectionItem({ item, itemView, itemIntents, ctx, target }) {
                   gap: 4,
                 }}
               >
-                {spec.icon && <span>{spec.icon}</span>}
+                {spec.icon && <Icon emoji={spec.icon} size={14} />}
                 <span>{spec.label}</span>
               </button>
             );
@@ -189,7 +190,7 @@ function VoteGroup({ group, item, ctx, passConds }) {
           onMouseEnter={e => e.currentTarget.style.background = opt.style.bgHover}
           onMouseLeave={e => e.currentTarget.style.background = opt.style.bg}
         >
-          {opt.style.icon && <span>{opt.style.icon}</span>}
+          {opt.style.icon && <Icon emoji={opt.style.icon} size={14} />}
           <span>{opt.label}</span>
         </button>
       ))}

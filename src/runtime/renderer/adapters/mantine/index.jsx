@@ -16,11 +16,155 @@ import {
   NumberInput,
   Select,
   Button,
+  ActionIcon,
   Modal,
   Tabs,
 } from "@mantine/core";
 import { DateInput, TimeInput } from "@mantine/dates";
+import Icon from "../Icon.jsx";
+import {
+  Pencil,
+  Trash2,
+  Plus,
+  Check,
+  X,
+  Send,
+  Paperclip,
+  Mic,
+  Image as ImageIcon,
+  Video,
+  MapPin,
+  Vote,
+  CornerUpRight,
+  BookmarkPlus,
+  Bookmark,
+  Pin,
+  PinOff,
+  Copy,
+  Languages,
+  BellOff,
+  Bell,
+  Phone,
+  PhoneOff,
+  Star,
+  Search,
+  Filter,
+  ArrowUpDown,
+  MessageCircle,
+  Users,
+  Megaphone,
+  UserPlus,
+  LogOut,
+  ArrowUp,
+  ArrowDown,
+  Key,
+  Settings,
+  Download,
+  Upload,
+  Info,
+  CircleSlash,
+  AlertTriangle,
+  Play,
+  Pause,
+  Square,
+  Save,
+  Unplug,
+  Plug,
+  Link2,
+  Scissors,
+  Move,
+  MessageSquare,
+  Lock,
+  Lightbulb,
+  Clock,
+  RotateCcw,
+  Smile,
+  Eye,
+  EyeOff,
+  Share,
+  Zap,
+} from "lucide-react";
 import { humanLabel } from "../labels.js";
+
+// ============================================================
+// Icon map: emoji → Lucide component
+// ============================================================
+
+/**
+ * Маппинг emoji-кодов (из getIntentIcon) в компоненты lucide-react.
+ * Позволяет рендерить профессиональные SVG-иконки вместо emoji, сохраняя
+ * backward-совместимость с декларативным spec.icon = "✎" / "🗑".
+ *
+ * Не покрытые emoji рендерятся как fallback-текст в <Icon>.
+ */
+const EMOJI_TO_LUCIDE = {
+  "✎": Pencil,
+  "🗑": Trash2,
+  "➕": Plus,
+  "+": Plus,
+  "✓": Check,
+  "✕": X,
+  "×": X,
+  "📤": Send,
+  "📎": Paperclip,
+  "🎤": Mic,
+  "🎙": Mic,
+  "🖼": ImageIcon,
+  "🎬": Video,
+  "📍": MapPin,
+  "📌": Pin,
+  "🗳": Vote,
+  "↗": CornerUpRight,
+  "⭐": Star,
+  "☆": BookmarkPlus,
+  "⎘": Copy,
+  "🌐": Languages,
+  "🔇": BellOff,
+  "🔔": Bell,
+  "📞": Phone,
+  "📹": Video,
+  "📵": PhoneOff,
+  "🔍": Search,
+  "⇅": ArrowUpDown,
+  "⚙": Settings,
+  "👤": Users,
+  "👥": Users,
+  "📢": Megaphone,
+  "✉": Send,
+  "⬆": ArrowUp,
+  "⬇": ArrowDown,
+  "🔑": Key,
+  "←": LogOut,
+  "→": LogOut,
+  "ℹ": Info,
+  "⚡": Zap,
+  "●": Eye,
+  "💬": MessageCircle,
+  "🔒": Lock,
+  "💡": Lightbulb,
+  "⏰": Clock,
+  "🔄": RotateCcw,
+  "▶": Play,
+  "⏸": Pause,
+  "⏹": Square,
+  "💾": Save,
+  "🔗": Link2,
+  "✂": Scissors,
+  "✥": Move,
+  "🚫": CircleSlash,
+  "⚠": AlertTriangle,
+  "📦": BookmarkPlus,
+  "😊": Smile,
+  "📊": Vote,
+  "📅": Clock,
+  "🎵": Play,
+  "🎉": Star,
+  "🔥": Zap,
+};
+
+function resolveLucide(emoji) {
+  return EMOJI_TO_LUCIDE[emoji] || null;
+}
 
 // ============================================================
 // Parameter controls
@@ -171,13 +315,21 @@ function MantineSelect({ spec, value, onChange, error }) {
 // Buttons
 // ============================================================
 
+// Helper: icon может приехать как emoji-строка или как React-элемент.
+// Приводим к React-узлу через <Icon> если строка.
+function normalizeIcon(icon) {
+  if (!icon) return undefined;
+  if (typeof icon === "string") return <Icon emoji={icon} size={16} />;
+  return icon;
+}
+
 function MantinePrimaryButton({ label, icon, onClick, disabled, title, size }) {
   return (
     <Button
       onClick={onClick}
       disabled={disabled}
       title={title}
-      leftSection={icon}
+      leftSection={normalizeIcon(icon)}
       color="indigo"
       size={size || "sm"}
     >
@@ -192,7 +344,7 @@ function MantineSecondaryButton({ label, icon, onClick, disabled, title, size })
       onClick={onClick}
       disabled={disabled}
       title={title}
-      leftSection={icon}
+      leftSection={normalizeIcon(icon)}
       variant="default"
       size={size || "sm"}
     >
@@ -207,7 +359,7 @@ function MantineDangerButton({ label, icon, onClick, disabled, title, size }) {
       onClick={onClick}
       disabled={disabled}
       title={title}
-      leftSection={icon}
+      leftSection={normalizeIcon(icon)}
       color="red"
       size={size || "sm"}
     >
@@ -217,39 +369,60 @@ function MantineDangerButton({ label, icon, onClick, disabled, title, size }) {
 }
 
 /**
- * IntentButton-адаптер. Рендерит кнопку намерения через Mantine Button,
- * определяя variant на основании:
- *   - spec.variant (явный hint: "primary" | "secondary" | "danger")
- *   - spec.irreversibility (high/medium — склоняет к danger)
- *   - spec.antagonist (пара переключателей) — пока default variant
+ * IntentButton-адаптер. Рендерит кнопку намерения через Mantine.
  *
- * По дефолту все кнопки — `default` Mantine variant (subtle outline).
- * Длинные label (>10 символов) схлопываются в icon-only с tooltip.
+ * Две формы рендера:
+ *   - С текстовым label → Mantine Button (с leftSection-иконкой)
+ *   - Только иконка (длинные label или без label) → Mantine ActionIcon
+ *     (квадратная кнопка фиксированного размера, читабельная рядом)
+ *
+ * Variant выбирается по:
+ *   - spec.variant (явный hint: "primary" | "secondary" | "danger")
+ *   - spec.irreversibility (high → danger)
+ *   - иначе default (subtle)
  */
 function MantineIntentButton({ spec, onClick, disabled }) {
   const label = spec.label || spec.intentId;
   const icon = spec.icon;
-  const LABEL_MAX = 10;
+  const LABEL_MAX = 14;
   const showLabel = label.length <= LABEL_MAX;
 
   const isDanger = spec.variant === "danger" || spec.irreversibility === "high";
   const isPrimary = spec.variant === "primary";
 
-  const buttonProps = {
-    onClick,
-    disabled,
-    title: label,
-    size: "xs",
-    leftSection: icon ? <span style={{ fontSize: 14 }}>{icon}</span> : undefined,
-  };
+  const color = isDanger ? "red" : isPrimary ? "indigo" : "gray";
+  const variant = isDanger || isPrimary ? "light" : "default";
 
-  if (isDanger) {
-    return <Button {...buttonProps} color="red" variant="light">{showLabel ? label : null}</Button>;
+  // Только иконка → ActionIcon (квадратный, фиксированный размер)
+  if (!showLabel || !label) {
+    return (
+      <ActionIcon
+        onClick={onClick}
+        disabled={disabled}
+        title={label}
+        size="lg"
+        variant={variant}
+        color={color}
+      >
+        <Icon emoji={icon} size={18} />
+      </ActionIcon>
+    );
   }
-  if (isPrimary) {
-    return <Button {...buttonProps} color="indigo">{showLabel ? label : null}</Button>;
-  }
-  return <Button {...buttonProps} variant="default">{showLabel ? label : null}</Button>;
+
+  // С label → Button
+  return (
+    <Button
+      onClick={onClick}
+      disabled={disabled}
+      title={label}
+      size="sm"
+      variant={variant}
+      color={color}
+      leftSection={icon ? <Icon emoji={icon} size={16} /> : undefined}
+    >
+      {label}
+    </Button>
+  );
 }
 
 // ============================================================
@@ -338,5 +511,10 @@ export const mantineAdapter = {
   shell: {
     modal: MantineModalShell,
     tabs: MantineTabs,
+  },
+  icon: {
+    // resolve — функция (не компонент), используется <Icon> для lookup.
+    // Принимает emoji-строку, возвращает React-компонент или null.
+    resolve: resolveLucide,
   },
 };
