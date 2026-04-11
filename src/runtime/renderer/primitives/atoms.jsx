@@ -1,4 +1,5 @@
 import { resolve, template } from "../eval.js";
+import { getAdaptedComponent } from "../adapters/registry.js";
 
 const STYLE_PRESETS = {
   heading: { fontSize: 18, fontWeight: 700, color: "#1a1a2e" },
@@ -18,6 +19,19 @@ export function Text({ node, ctx, item }) {
   const data = item || ctx.world;
   const val = node.bind ? resolve(data, node.bind) : node.content;
   const text = node.template ? template(node.template, { ...data, item }) : val;
+
+  // Адаптер: Mantine Text с preset → красивая типографика.
+  // preset строковый ("secondary", "muted", "heading", ...) передаётся как есть.
+  const AdaptedText = getAdaptedComponent("primitive", "text");
+  if (AdaptedText && typeof node.style === "string") {
+    return (
+      <AdaptedText preset={node.style} style={node.sx || {}}>
+        {text ?? ""}
+      </AdaptedText>
+    );
+  }
+
+  // Fallback: inline-span c исходной палитрой.
   const style = { fontSize: 14, color: "#1a1a2e", ...getPresetStyle(node.style), ...(node.sx || {}) };
   return <span style={style}>{text ?? ""}</span>;
 }
@@ -26,9 +40,18 @@ export function Heading({ node, ctx, item }) {
   const data = item || ctx.world;
   const val = node.bind ? resolve(data, node.bind) : node.content;
   const text = node.template ? template(node.template, { ...data, item }) : val;
-  const Tag = node.level === 1 ? "h1" : node.level === 3 ? "h3" : "h2";
+  const level = node.level || 2;
+
+  // Адаптер: Mantine Title с правильным order.
+  const AdaptedHeading = getAdaptedComponent("primitive", "heading");
+  if (AdaptedHeading) {
+    return <AdaptedHeading level={level}>{text ?? ""}</AdaptedHeading>;
+  }
+
+  // Fallback: обычный h1/h2/h3.
+  const Tag = level === 1 ? "h1" : level === 3 ? "h3" : "h2";
   const style = {
-    fontSize: node.level === 1 ? 22 : node.level === 3 ? 14 : 18,
+    fontSize: level === 1 ? 22 : level === 3 ? 14 : 18,
     fontWeight: 700, color: "#1a1a2e", margin: "0 0 8px",
     fontFamily: "system-ui, sans-serif", ...(node.sx || {}),
   };
@@ -39,6 +62,14 @@ export function Badge({ node, ctx, item }) {
   const data = item || ctx.world;
   const val = node.bind ? resolve(data, node.bind) : node.content;
   if (!val && val !== 0) return null;
+
+  // Адаптер: Mantine Badge.
+  const AdaptedBadge = getAdaptedComponent("primitive", "badge");
+  if (AdaptedBadge) {
+    return <AdaptedBadge color={node.color}>{val}</AdaptedBadge>;
+  }
+
+  // Fallback: inline-span.
   return (
     <span style={{
       fontSize: 10, fontWeight: 600, textTransform: "uppercase",
@@ -50,15 +81,29 @@ export function Badge({ node, ctx, item }) {
 
 export function Avatar({ node, ctx, item }) {
   // Avatar — функциональная роль, не технический тип. Если bind указывает
-  // на картинку (data URL / http URL) — рендерим <img>, иначе fallback
-  // на инициал имени. Имя берётся из nameBind (если задан) или "name"
-  // по умолчанию. Это позволяет генератору писать {type:"avatar", bind:"avatar"}
-  // без необходимости знать, заполнено ли поле.
+  // на картинку (data URL / http URL) — используем её, иначе инициал имени.
+  // Имя берётся из nameBind (если задан) или "name" по умолчанию.
   const data = item || ctx.world;
   const src = node.bind ? resolve(data, node.bind) : null;
   const size = node.size || 32;
   const isImage = typeof src === "string" && (src.startsWith("data:") || src.startsWith("http") || src.startsWith("/"));
+  const nameField = node.nameBind || "name";
+  const name = resolve(data, nameField) || node.content || "?";
 
+  // Адаптер: Mantine Avatar — умеет показать и картинку, и initials через
+  // color="initials" — получает контраст, автоматический цвет.
+  const AdaptedAvatar = getAdaptedComponent("primitive", "avatar");
+  if (AdaptedAvatar) {
+    return (
+      <AdaptedAvatar
+        src={isImage ? src : null}
+        name={typeof name === "string" ? name : "?"}
+        size={size}
+      />
+    );
+  }
+
+  // Fallback: inline img/letter.
   if (isImage) {
     return (
       <img
@@ -71,9 +116,6 @@ export function Avatar({ node, ctx, item }) {
       />
     );
   }
-
-  const nameField = node.nameBind || "name";
-  const name = resolve(data, nameField) || node.content || "?";
   const letter = typeof name === "string" ? name[0]?.toUpperCase() : "?";
   return (
     <div style={{

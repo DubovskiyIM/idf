@@ -3,6 +3,7 @@ import SlotRenderer from "../SlotRenderer.jsx";
 import SubCollectionAdd from "../controls/SubCollectionAdd.jsx";
 import { evalIntentCondition } from "../eval.js";
 import Icon from "../adapters/Icon.jsx";
+import { getAdaptedComponent } from "../adapters/registry.js";
 
 /**
  * SubCollectionSection — секция связанной коллекции в detail-проекции.
@@ -35,13 +36,11 @@ export default function SubCollectionSection({ section, target, ctx }) {
     return conds.every(c => evalIntentCondition(c, target, ctx.viewer));
   }, [addControl, target, ctx.viewer]);
 
+  const AdaptedPaper = getAdaptedComponent("primitive", "paper");
+  const Wrapper = AdaptedPaper || FallbackPaper;
+
   return (
-    <div style={{
-      background: "#fff",
-      borderRadius: 12,
-      padding: 20,
-      border: "1px solid #e5e7eb",
-    }}>
+    <Wrapper padding="lg">
       {/* Заголовок */}
       <div style={{
         fontSize: 11,
@@ -80,6 +79,20 @@ export default function SubCollectionSection({ section, target, ctx }) {
           ))}
         </div>
       )}
+    </Wrapper>
+  );
+}
+
+// Fallback когда адаптер не задан
+function FallbackPaper({ children }) {
+  return (
+    <div style={{
+      background: "#fff",
+      borderRadius: 12,
+      padding: 20,
+      border: "1px solid #e5e7eb",
+    }}>
+      {children}
     </div>
   );
 }

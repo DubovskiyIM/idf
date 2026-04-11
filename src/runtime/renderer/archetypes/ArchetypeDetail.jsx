@@ -108,12 +108,9 @@ export default function ArchetypeDetail({ slots, nav, ctx: parentCtx, projection
 
       <div style={{ flex: 1, overflow: "auto", padding: 24 }}>
         <div style={{ maxWidth: 640, margin: "0 auto", display: "flex", flexDirection: "column", gap: 16 }}>
-          <div style={{
-            background: "#fff",
-            borderRadius: 12, padding: 24, border: "1px solid #e5e7eb",
-          }}>
+          <PaperSection>
             <SlotRenderer item={slots.body} ctx={ctx} contextItem={target} />
-          </div>
+          </PaperSection>
 
           {/* Sub-collection секции (M4 step B). Каждая секция — блок с заголовком,
               inline-композером добавления (если разрешён в текущей фазе) и
@@ -164,6 +161,25 @@ function pluralize(word) {
   return word + "s";
 }
 
+/**
+ * PaperSection — унифицированная карточка-обёртка для detail-секций.
+ * Использует Mantine Paper через адаптер; fallback — inline white-card.
+ */
+function PaperSection({ children, padding }) {
+  const AdaptedPaper = getAdaptedComponent("primitive", "paper");
+  if (AdaptedPaper) {
+    return <AdaptedPaper padding={padding ?? "lg"}>{children}</AdaptedPaper>;
+  }
+  return (
+    <div style={{
+      background: "#fff",
+      borderRadius: 12, padding: 24, border: "1px solid #e5e7eb",
+    }}>
+      {children}
+    </div>
+  );
+}
+
 function FooterList({ items, target, ctx }) {
   const visible = items.filter(spec => {
     const conds = spec.conditions || [];
@@ -189,11 +205,8 @@ function PrimaryCTAList({ items, target, ctx }) {
   const AdaptedPrimary = getAdaptedComponent("button", "primary");
 
   return (
-    <div style={{
-      display: "flex", flexDirection: "column", gap: 10,
-      padding: 16, background: "#fff", borderRadius: 12,
-      border: "1px solid #e5e7eb",
-    }}>
+    <PaperSection padding="md">
+      <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
       {visible.map(spec => {
         const onClick = () => ctx.exec(spec.intentId, { id: target.id });
         if (AdaptedPrimary) {
@@ -232,6 +245,7 @@ function PrimaryCTAList({ items, target, ctx }) {
           </button>
         );
       })}
-    </div>
+      </div>
+    </PaperSection>
   );
 }

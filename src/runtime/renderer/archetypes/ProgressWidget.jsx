@@ -1,4 +1,5 @@
 import { useMemo } from "react";
+import { getAdaptedComponent } from "../adapters/registry.js";
 
 /**
  * ProgressWidget — декларативный прогресс-бар для detail-проекции.
@@ -52,13 +53,20 @@ export default function ProgressWidget({ spec, target, ctx }) {
     return { total, current, percent, waiting };
   }, [spec, target, ctx.world]);
 
+  const AdaptedPaper = getAdaptedComponent("primitive", "paper");
+  const Wrapper = AdaptedPaper
+    ? ({ children }) => <AdaptedPaper padding="md">{children}</AdaptedPaper>
+    : ({ children }) => (
+      <div style={{
+        padding: 14,
+        background: "#f9fafb",
+        border: "1px solid #e5e7eb",
+        borderRadius: 12,
+      }}>{children}</div>
+    );
+
   return (
-    <div style={{
-      padding: 14,
-      background: "#f9fafb",
-      border: "1px solid #e5e7eb",
-      borderRadius: 12,
-    }}>
+    <Wrapper>
       <div style={{
         display: "flex", alignItems: "baseline", justifyContent: "space-between",
         marginBottom: 8,
@@ -83,6 +91,6 @@ export default function ProgressWidget({ spec, target, ctx }) {
           {data.waiting.length > 5 && ` и ещё ${data.waiting.length - 5}`}
         </div>
       )}
-    </div>
+    </Wrapper>
   );
 }

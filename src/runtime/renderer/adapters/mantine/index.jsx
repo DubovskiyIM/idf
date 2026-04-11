@@ -19,6 +19,11 @@ import {
   ActionIcon,
   Modal,
   Tabs,
+  Title,
+  Text,
+  Badge,
+  Avatar,
+  Paper,
 } from "@mantine/core";
 import { DateInput, TimeInput } from "@mantine/dates";
 import Icon from "../Icon.jsx";
@@ -426,6 +431,74 @@ function MantineIntentButton({ spec, onClick, disabled }) {
 }
 
 // ============================================================
+// Primitives: heading, text, badge, avatar, paper
+// ============================================================
+
+/**
+ * Primitive-компоненты получают текст/значение и стилевые подсказки
+ * напрямую (не через spec/ctx как parameter/button). Это самый низкий
+ * слой — просто обёртки над Mantine типографикой.
+ */
+
+function MantineHeading({ level = 2, children }) {
+  // Mantine Title: order 1/2/3/4/5/6 — HTML h1-h6 + стиль по размеру.
+  const order = Math.min(6, Math.max(1, level));
+  return <Title order={order}>{children}</Title>;
+}
+
+const TEXT_PRESETS = {
+  body: { size: "sm", c: "dark.7" },
+  secondary: { size: "xs", c: "dimmed" },
+  muted: { size: "xs", c: "gray.6" },
+  heading: { fw: 700, size: "md", c: "dark.9" },
+  accent: { fw: 600, c: "indigo.6" },
+  danger: { c: "red.6" },
+  success: { c: "green.6" },
+};
+
+function MantineText({ children, preset, style }) {
+  const props = (preset && TEXT_PRESETS[preset]) || {};
+  return <Text {...props} style={style}>{children}</Text>;
+}
+
+function MantineBadge({ children, color }) {
+  return (
+    <Badge color={color || "indigo"} variant="light" size="sm" radius="sm">
+      {children}
+    </Badge>
+  );
+}
+
+function MantineAvatar({ src, name, size = 40 }) {
+  // Mantine Avatar: если src пусто — показывает initials через name prop
+  // (первые буквы). Если src — картинка. Mantine сам решает fallback.
+  return (
+    <Avatar
+      src={src || undefined}
+      name={name || "?"}
+      color="initials"
+      size={size}
+      radius="xl"
+    >
+      {!src && name ? name[0]?.toUpperCase() : null}
+    </Avatar>
+  );
+}
+
+function MantinePaper({ children, padding, withBorder, style }) {
+  return (
+    <Paper
+      p={padding ?? "md"}
+      withBorder={withBorder !== false}
+      radius="md"
+      style={style}
+    >
+      {children}
+    </Paper>
+  );
+}
+
+// ============================================================
 // Shell: Modal + Tabs
 // ============================================================
 
@@ -511,6 +584,13 @@ export const mantineAdapter = {
   shell: {
     modal: MantineModalShell,
     tabs: MantineTabs,
+  },
+  primitive: {
+    heading: MantineHeading,
+    text: MantineText,
+    badge: MantineBadge,
+    avatar: MantineAvatar,
+    paper: MantinePaper,
   },
   icon: {
     // resolve — функция (не компонент), используется <Icon> для lookup.
