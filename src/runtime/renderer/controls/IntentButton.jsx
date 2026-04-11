@@ -22,11 +22,12 @@ export default function IntentButton({ spec, ctx, item }) {
     ctx.exec(spec.intentId, { ...params, id: item?.id });
   };
 
-  // Правило иконирования: при длинных именах (>20 символов) показываем
+  // Правило иконирования: при длинных именах (>8 символов) показываем
   // только иконку + tooltip. При коротких — icon + label.
+  // Семантическая иконка уже подобрана getIntentIcon при кристаллизации.
   const label = spec.label || spec.intentId;
   const icon = spec.icon;
-  const LABEL_MAX = 20;
+  const LABEL_MAX = 8;
   const showLabel = label.length <= LABEL_MAX;
 
   return (

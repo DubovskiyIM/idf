@@ -85,26 +85,29 @@ export function Card({ node, ctx, item }) {
         <SlotRenderer key={i} item={child} ctx={ctx} contextItem={item} />
       ))}
       {allIntents.length > 0 && (
-        <div style={{ display: "flex", gap: 4, marginTop: 8, flexWrap: "wrap", position: "relative" }}>
+        <div style={{ display: "flex", gap: 4, marginTop: 8, flexWrap: "wrap", alignItems: "center" }}>
           {visible.map(spec => (
             <ItemIntentButton key={spec.intentId} spec={spec} ctx={ctx} item={item} />
           ))}
           {hidden.length > 0 && (
-            <>
+            // Отдельный relative-контейнер, чтобы popover позиционировался
+            // относительно самой кнопки «⋯», а не всего flex-row карточки.
+            <div style={{ position: "relative" }}>
               <button
                 onClick={(e) => { e.stopPropagation(); setMenuOpen(v => !v); }}
                 style={{
-                  padding: "3px 8px", borderRadius: 4, border: "1px solid #d1d5db",
-                  background: "#fff", color: "#6b7280", fontSize: 10, cursor: "pointer",
+                  padding: "4px 8px", borderRadius: 6, border: "1px solid #e5e7eb",
+                  background: "#fff", color: "#6b7280", fontSize: 11, cursor: "pointer",
+                  lineHeight: 1,
                 }}
               >⋯</button>
               {menuOpen && (
                 <div
                   onClick={(e) => { e.stopPropagation(); setMenuOpen(false); }}
                   style={{
-                    position: "absolute", top: "100%", right: 0, marginTop: 4,
+                    position: "absolute", top: "calc(100% + 4px)", left: 0,
                     background: "#fff", border: "1px solid #e5e7eb", borderRadius: 8,
-                    boxShadow: "0 4px 12px #0001", padding: 4, zIndex: 10, minWidth: 180,
+                    boxShadow: "0 4px 12px #0002", padding: 4, zIndex: 10, minWidth: 180,
                   }}
                 >
                   {hidden.map(spec => (
@@ -112,15 +115,19 @@ export function Card({ node, ctx, item }) {
                       key={spec.intentId}
                       onClick={(e) => { e.stopPropagation(); setMenuOpen(false); fireItemIntent(spec, ctx, item); }}
                       style={{
-                        display: "block", width: "100%", textAlign: "left",
+                        display: "flex", alignItems: "center", gap: 8,
+                        width: "100%", textAlign: "left",
                         padding: "6px 10px", background: "transparent", border: "none",
                         cursor: "pointer", fontSize: 12,
                       }}
-                    >{spec.label || spec.intentId}</button>
+                    >
+                      {spec.icon && <span>{spec.icon}</span>}
+                      <span>{spec.label || spec.intentId}</span>
+                    </button>
                   ))}
                 </div>
               )}
-            </>
+            </div>
           )}
         </div>
       )}
@@ -131,7 +138,9 @@ export function Card({ node, ctx, item }) {
 function ItemIntentButton({ spec, ctx, item }) {
   const label = spec.label || spec.intentId;
   const icon = spec.icon;
-  const LABEL_MAX = 14;
+  // Порог: если label > 8 символов, показываем только иконку (с tooltip).
+  // Семантическая иконка уже подобрана getIntentIcon при кристаллизации.
+  const LABEL_MAX = 8;
   const showLabel = label.length <= LABEL_MAX;
 
   return (
