@@ -200,5 +200,21 @@ export const INTENTS = {
       witnesses: ["service.name", "active_bookings.count"],
       confirmation: "click"
     }, antagonist: null, creates: null
+  },
+  create_booking: {
+    name: "Создать бронирование",
+    description: "Создать подтверждённую запись на слот у специалиста одним шагом, без промежуточного draft",
+    particles: {
+      entities: ["service: Service", "slot: TimeSlot", "specialist: Specialist"],
+      conditions: ["slot.status = 'free'"],
+      effects: [
+        { α: "add",     target: "bookings",    σ: "account" },
+        { α: "replace", target: "slot.status", value: "booked", σ: "shared" }
+      ],
+      witnesses: ["service.name", "specialist.name", "slot.date", "slot.startTime"],
+      confirmation: "click"
+    },
+    antagonist: "cancel_booking",
+    creates: "Booking"
   }
 };

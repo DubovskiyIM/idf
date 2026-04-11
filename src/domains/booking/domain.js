@@ -162,7 +162,7 @@ export function buildEffects(intentId, ctx, world, drafts) {
     case "leave_review": {
       const booking = (world.bookings || []).find(b => b.id === ctx.bookingId); if (!booking || booking.status !== "completed") return null;
       ef({ alpha: "add", target: "reviews", scope: "account", value: null,
-        context: { id: `rev_${now}`, bookingId: booking.id, specialistId: booking.specialistId, serviceName: booking.serviceName, rating: ctx.rating || 5, text: ctx.text || "", createdAt: now },
+        context: { id: `rev_${now}`, bookingId: booking.id, specialistId: booking.specialistId, serviceName: booking.serviceName, authorId: ctx.clientId || "self", rating: ctx.rating || 5, text: ctx.text || "", createdAt: now },
         desc: describeEffect(intentId, "add", { serviceName: booking.serviceName, rating: ctx.rating || 5 }) });
       break;
     }
@@ -228,6 +228,36 @@ export function buildEffects(intentId, ctx, world, drafts) {
       if (activeBookings.length > 0) return null;
       ef({ alpha: "replace", target: "service.active", scope: "account", value: false,
         context: { id: service.id, name: service.name }, desc: `🚫 Услуга убрана: ${service.name}` });
+      break;
+    }
+    case "create_booking": {
+      const specialist = (world.specialists || []).find(s => s.id === ctx.specialistId);
+      const service = (world.services || []).find(s => s.id === ctx.serviceId);
+      const slot = (world.timeslots || []).find(s => s.id === ctx.slotId);
+      if (!specialist || !service || !slot) return null;
+      if (slot.status !== "free") return null;
+
+      const bookingId = `book_${now}_${Math.random().toString(36).slice(2, 6)}`;
+      ef({
+        alpha: "add", target: "bookings", scope: "account", value: null,
+        context: {
+          id: bookingId,
+          clientId: ctx.clientId || "self",
+          specialistId: specialist.id,
+          serviceId: service.id,
+          serviceName: service.name,
+          slotId: slot.id,
+          status: "confirmed",
+          price: ctx.price ?? service.price,
+          createdAt: now
+        },
+        desc: `📅 Запись создана: ${service.name} у ${specialist.name}`
+      });
+      ef({
+        alpha: "replace", target: "slot.status", scope: "shared", value: "booked",
+        context: { id: slot.id },
+        desc: `Slot ${slot.id} → booked`
+      });
       break;
     }
     default: return null;
