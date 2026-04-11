@@ -1,3 +1,5 @@
+import { causalSort } from "./causalSort.js";
+
 /**
  * Построить маппинг singular→plural из онтологии.
  * "Specialist" → specialist → specialists
@@ -25,9 +27,15 @@ function getCollectionType(target, typeMap) {
  * fold(effects, typeMap) → world (объект по типам сущностей)
  *
  * По манифесту: World(t) = fold(⊕, ∅, sort≺(Φ_confirmed ↓ t))
+ *
+ * Эффекты сортируются причинно (parent_id → child) перед применением.
+ * Это отличает fold от простого iterate-in-order: concurrent/foreign
+ * эффекты с более ранним created_at не перебивают parent'ов с более
+ * поздним created_at.
  */
 export function fold(effects, typeMap = {}) {
   const collections = {};
+  const sorted = causalSort(effects);
 
   function applyEffect(ef) {
     if (ef.target.startsWith("drafts")) return;
@@ -72,7 +80,7 @@ export function fold(effects, typeMap = {}) {
     }
   }
 
-  for (const ef of effects) applyEffect(ef);
+  for (const ef of sorted) applyEffect(ef);
 
   const world = {};
   for (const [type, entities] of Object.entries(collections)) {

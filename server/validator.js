@@ -1,5 +1,6 @@
 const db = require("./db.js");
 const { validateIntentConditions } = require("./intents.js");
+const { causalSort } = require("./causalSort.cjs");
 
 // Динамический маппинг singular→plural — обновляется через API /api/typemap
 let SINGULAR_TO_PLURAL = { draft: "drafts" };
@@ -27,9 +28,13 @@ updateTypeMap({ entities: {
 }});
 
 function foldWorld() {
-  const effects = db.prepare(
+  // SQL-уровень: получаем confirmed-эффекты в грубом chronological-порядке,
+  // потом докручиваем причинный порядок через causalSort (parent_id → child).
+  // Это реализация §10 манифеста: sort≺(Φ_confirmed ↓ t).
+  const rawEffects = db.prepare(
     "SELECT * FROM effects WHERE status = 'confirmed' ORDER BY created_at ASC"
   ).all();
+  const effects = causalSort(rawEffects);
 
   const collections = {};
 
