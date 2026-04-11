@@ -565,7 +565,7 @@ Personal-слой (индивидуальные предпочтения) пок
 
 **Навигационное состояние vs каузальное** — route params (`conversationId`, `userId`) это UI-состояние, живёт в стеке `useProjectionRoute`, не участвует в `Φ`. Но filter'ы body читают их через `world.conversationId` (V2UI склеивает params в world). Это pragmatic hack. Формально: либо ввести отдельный поток «навигационных сигналов», либо признать UI state как присутствующий параметр рендерера.
 
-**Broken Δ**:  §7 декларирует `World_for(I) = World(t) ⊕ Overlay(I) ⊕ Δ(user)`, но `engine.worldForIntent` собирает только `World(t) ⊕ Overlay(I)`. Δ не вливается. Обнаружено при ревизии ядра в v1.1. Для мессенджера не критично, для корзин заметно.
+~~**Broken Δ**~~ — **закрыто** (Session A, 2026-04-12): `engine.worldForIntent` теперь экспонирует `worldForIntent.drafts` как отдельную коллекцию, реализуя формулу §7 `W ⊕ O ⊕ Δ`. Для обратной совместимости `drafts` также по-прежнему передаются как отдельный arg в `domain.buildEffects(intentId, ctx, world, drafts)` — domain'ы могут читать draft.* через любой из двух путей.
 
 **Auth-users живут вне Φ.** `auth_users` таблица — отдельная от потока эффектов. Решение в M3.5b: server `foldWorld` seed'ит auth-users в `world.users`, `V2UI.worldWithRoute` подтягивает их через `GET /api/auth/users` и мёрджит с folded-партиалами (replace user.* побеждает). Это работает, но нарушает §5 «мир — свёртка Φ». В M4+ авторизация должна эмитить эффекты `_user_register` в Φ.
 

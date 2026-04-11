@@ -96,14 +96,30 @@ export function useEngine(domain) {
   const [overlay, setOverlay] = useState(null); // { intentId, ctx, effects: [] }
 
   // World_for(I) = World(t) ⊕ Overlay(I) ⊕ Δ(user)
+  //
+  // Реализация §7 манифеста. Собирает всё состояние, которое должно
+  // учитываться при проверке применимости намерения I:
+  //   - World(t) — свёрнутый Φ_confirmed + Φ_proposed
+  //   - Overlay(I) — эффекты многофазного investigation-intent'а, ещё
+  //     не закоммиченные, но видимые как preview
+  //   - Δ(user) — session-scope черновики, экспонируются как
+  //     worldForIntent.drafts (отдельная коллекция в view)
+  //
+  // Note: `drafts` передаются в `domain.buildEffects(intentId, ctx, world,
+  // drafts)` как отдельный аргумент для обратной совместимости с
+  // существующими доменами. worldForIntent.drafts — альтернативный
+  // доступ для условий, которые хотят резолвить draft.* через единый
+  // world-объект (§7 строго).
   const worldForIntent = useMemo(() => {
-    if (!overlay || !overlay.effects?.length) return world;
-    // Применить overlay-эффекты поверх world
-    const overlayEffects = overlay.effects.map(e => ({ ...e, status: "confirmed" }));
-    const allEffects = [...activeEffects, ...overlayEffects];
-    const merged = fold(allEffects, typeMap);
-    return applyPresentation(merged, allEffects, typeMap);
-  }, [world, overlay, activeEffects, typeMap]);
+    let base = world;
+    if (overlay && overlay.effects?.length) {
+      const overlayEffects = overlay.effects.map(e => ({ ...e, status: "confirmed" }));
+      const allEffects = [...activeEffects, ...overlayEffects];
+      const merged = fold(allEffects, typeMap);
+      base = applyPresentation(merged, allEffects, typeMap);
+    }
+    return { ...base, drafts };
+  }, [world, overlay, activeEffects, typeMap, drafts]);
 
   // IDs сущностей, затронутых overlay (для ghost-отображения)
   const overlayEntityIds = useMemo(() => {
