@@ -96,11 +96,34 @@ function makeAgentRouter(broadcast) {
   });
 
   // ============================================================
-  // GET /world — placeholder, реализуется в Task 11
+  // GET /world
   // ============================================================
 
   router.get("/world", (req, res) => {
-    res.status(501).json({ error: "not_implemented" });
+    const ontology = getOntology(DOMAIN);
+    if (!ontology) {
+      return res.status(503).json({
+        error: "ontology_unavailable",
+        message: "Ontology для booking не зарегистрирована."
+      });
+    }
+    const viewer = getViewer(req);
+    const rawWorld = foldWorld();
+    let filtered;
+    try {
+      filtered = filterWorldForRole(rawWorld, ontology, ROLE, viewer);
+    } catch (err) {
+      console.error("[agent] filterWorld error:", err);
+      return res.status(500).json({ error: "internal_error", message: err.message });
+    }
+    const totalRows = Object.values(filtered).reduce((s, arr) => s + (arr?.length || 0), 0);
+    console.log(`[agent] GET  /world               ${viewer.id} → 200 (${totalRows} rows)`);
+    res.json({
+      domain: DOMAIN,
+      role: ROLE,
+      viewer,
+      world: filtered
+    });
   });
 
   // ============================================================
