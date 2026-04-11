@@ -59,7 +59,8 @@ export default function App() {
 
   // Синхронизировать онтологию + намерения с сервером при смене домена
   useEffect(() => {
-    fetch("/api/typemap", {
+    const domainIdForServer = domain.DOMAIN_ID || "unknown";
+    fetch(`/api/typemap?domain=${domainIdForServer}`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(domain.ONTOLOGY),
@@ -67,7 +68,7 @@ export default function App() {
     fetch("/api/intents", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ domain: domain.DOMAIN_ID || "unknown", intents: domain.INTENTS }),
+      body: JSON.stringify({ domain: domainIdForServer, intents: domain.INTENTS }),
     }).catch(() => {});
   }, [domain]);
 
@@ -92,7 +93,7 @@ export default function App() {
       } catch {}
     }
     // Отправить онтологию + intents нового домена на сервер
-    await fetch("/api/typemap", {
+    await fetch(`/api/typemap?domain=${newDomainId}`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(newDomain.ONTOLOGY),

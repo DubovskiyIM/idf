@@ -2,6 +2,7 @@ const express = require("express");
 const cors = require("cors");
 const effectsRouter = require("./routes/effects.js");
 const artifactsRouter = require("./routes/artifacts.js");
+const { router: entitiesRouter, registerOntology } = require("./routes/entities.js");
 
 const app = express();
 const PORT = 3001;
@@ -17,6 +18,7 @@ const workflowsRouter = require("./routes/workflows.js");
 app.use("/api/effects", effectsRouter);
 app.use("/api", artifactsRouter);
 app.use("/api/workflows", workflowsRouter);
+app.use("/api/entities", entitiesRouter);
 
 const { startSync, setBroadcast } = require("./boundary.js");
 const { executeWorkflow, setBroadcast: setExecBroadcast } = require("./executor.js");
@@ -24,12 +26,19 @@ setBroadcast(effectsRouter.broadcast);
 setExecBroadcast(effectsRouter.broadcast);
 startSync();
 
-// Endpoint для обновления маппинга типов из онтологии домена
+// Endpoint для обновления маппинга типов из онтологии домена.
+// Если в query передан ?domain=X, онтология также регистрируется в реестре
+// entities router'а (для серверного поиска через searchConfig).
 const { updateTypeMap } = require("./validator.js");
 app.post("/api/typemap", (req, res) => {
   const map = updateTypeMap(req.body);
-  console.log(`  [typemap] Обновлён: ${Object.keys(map).length} типов`);
-  res.json({ ok: true, types: Object.keys(map).length });
+  const domain = req.query.domain;
+  let registeredEntities = 0;
+  if (domain && req.body?.entities) {
+    registeredEntities = registerOntology(domain, req.body);
+  }
+  console.log(`  [typemap] Обновлён: ${Object.keys(map).length} типов${domain ? `, ontology[${domain}]: ${registeredEntities} сущностей` : ""}`);
+  res.json({ ok: true, types: Object.keys(map).length, entities: registeredEntities });
 });
 
 // Endpoint для регистрации намерений домена — заменяет hardcoded

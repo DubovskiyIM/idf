@@ -15,7 +15,16 @@ export const ONTOLOGY = {
         lastSeen: { type: "datetime", read: ["*"], label: "Был в сети" },
       },
       statuses: ["online", "offline", "away"],
-      type: "internal"
+      type: "internal",
+      // searchConfig — конфигурация для серверного entity search API (M3.5a).
+      // Используется EntityPicker'ом (M3.5b) и любыми клиентами, которым нужен
+      // поиск по всей БД, а не по локальной world-проекции.
+      searchConfig: {
+        fields: ["name", "email"],
+        returnFields: ["id", "name", "avatar", "email"],
+        minQueryLength: 2,
+        limit: 20,
+      },
     },
     Contact: {
       fields: ["id", "userId", "contactId", "status"],
@@ -24,7 +33,13 @@ export const ONTOLOGY = {
     },
     Conversation: {
       fields: ["id", "type", "title", "createdBy", "participantIds", "lastMessageAt", "createdAt"],
-      type: "internal"
+      type: "internal",
+      searchConfig: {
+        fields: ["title"],
+        returnFields: ["id", "type", "title", "lastMessageAt"],
+        minQueryLength: 1,
+        limit: 20,
+      },
     },
     Participant: {
       fields: ["id", "conversationId", "userId", "role", "joinedAt", "lastReadAt", "muted", "pinned"],

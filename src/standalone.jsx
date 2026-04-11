@@ -37,7 +37,7 @@ export default function StandaloneApp({ domainId }) {
   // без них мессенджер и прочие новые домены проходили валидацию без
   // проверки условий типа "message.senderId = me.id".
   useEffect(() => {
-    fetch("/api/typemap", {
+    fetch(`/api/typemap?domain=${domainId}`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(domain.ONTOLOGY),
