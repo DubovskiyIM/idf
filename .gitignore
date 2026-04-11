@@ -20,3 +20,11 @@ server/idf.db-shm
 # macOS
 .DS_Store
 **/.DS_Store
+
+# Внутренние разработческие артефакты — не публикуются, но остаются
+# локально для ongoing-разработки
+CLAUDE.md
+docs/specs/
+docs/superpowers/
+docs/agent-demo.md
+docs/agent-system-prompt.md
