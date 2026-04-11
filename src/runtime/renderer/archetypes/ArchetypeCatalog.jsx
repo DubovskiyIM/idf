@@ -48,6 +48,11 @@ export default function ArchetypeCatalog({ slots, ctx: parentCtx }) {
       )}
 
       <div style={{ flex: 1, overflow: "auto", padding: 16 }}>
+        {slots.hero?.length > 0 && (
+          <div>
+            <SlotRenderer items={slots.hero} ctx={ctx} />
+          </div>
+        )}
         <SlotRenderer item={slots.body} ctx={ctx} />
       </div>
 

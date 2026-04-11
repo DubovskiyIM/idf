@@ -1,4 +1,5 @@
 import { resolveParams } from "../eval.js";
+import { getAdaptedComponent } from "../adapters/registry.js";
 
 export default function IntentButton({ spec, ctx, item }) {
   const handleClick = (e) => {
@@ -22,9 +23,16 @@ export default function IntentButton({ spec, ctx, item }) {
     ctx.exec(spec.intentId, { ...params, id: item?.id });
   };
 
-  // Правило иконирования: при длинных именах (>8 символов) показываем
-  // только иконку + tooltip. При коротких — icon + label.
-  // Семантическая иконка уже подобрана getIntentIcon при кристаллизации.
+  // Адаптер предоставляет унифицированную кнопку намерения (Mantine Button
+  // с variant'ами по spec.variant/irreversibility). Если адаптер есть —
+  // используем его, иначе built-in inline-styled fallback.
+  const Adapted = getAdaptedComponent("button", "intent");
+  if (Adapted) {
+    return <Adapted spec={spec} onClick={handleClick} />;
+  }
+
+  // Fallback: inline-стилизованная кнопка. Сохраняется для случаев без
+  // адаптера или для тестов.
   const label = spec.label || spec.intentId;
   const icon = spec.icon;
   const LABEL_MAX = 8;

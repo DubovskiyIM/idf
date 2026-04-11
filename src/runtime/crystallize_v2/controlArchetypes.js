@@ -51,6 +51,7 @@ export function _resetArchetypes() {
   ARCHETYPES.length = 0;
   registerBuiltins();
   registerBulkWizard();
+  registerHeroCreate();
   registerCustomCapture();
 }
 
@@ -248,6 +249,65 @@ function buildConfirmMessage(intent) {
 }
 
 // ============================================================
+// heroCreate — inline-создатель главной сущности (planning M4)
+// ============================================================
+
+/**
+ * heroCreate: большой input + primary button в catalog-проекции для
+ * быстрого создания mainEntity. Заменяет fab+formModal для простых
+ * creator-интентов с одним текстовым параметром.
+ *
+ * Match: intent.creates === projection.mainEntity + ровно один простой
+ * текстовый параметр (после inferParameters). Размещается в слоте hero
+ * (новый для catalog-архетипа, между toolbar и body).
+ *
+ * Это UX-паттерн «hero-input для быстрого создания» — из todo-list, trello,
+ * slack каналов. Пользователь печатает название и жмёт Enter/кнопку,
+ * не открывая модал.
+ */
+function registerHeroCreate() {
+  const TEXT_CONTROLS = new Set(["text", "email", "tel", "url", undefined, null]);
+
+  prependArchetype({
+    id: "heroCreate",
+    match: (intent, intentId, context) => {
+      const creates = normalizeCreates(intent.creates);
+      if (!creates) return false;
+      const mainEntity = context?.projection?.mainEntity;
+      if (!mainEntity || creates !== mainEntity) return false;
+      // Должна быть catalog-проекция
+      if (context?.projection?.kind !== "catalog") return false;
+      // Если автор явно попросил другое (confirmation:form с несколькими
+      // полями) — не перехватываем.
+      const c = intent.particles?.confirmation;
+      if (c === "form" && intent.parameters && intent.parameters.length > 1) return false;
+      return true;
+    },
+    build: (intent, intentId, parameters) => {
+      // Выбор параметра:
+      //   1. title/name — приоритетные «человеческие» имена
+      //   2. первый text-параметр (не foreign key — его inferParameters
+      //      уже отсек)
+      //   3. fallback "title"
+      const params = parameters || [];
+      const byName = params.find(p => p.name === "title" || p.name === "name");
+      const byType = params.find(p => TEXT_CONTROLS.has(p.control));
+      const chosen = byName || byType;
+      const paramName = chosen?.name || "title";
+      const placeholder = intent.placeholder || "Название…";
+      return {
+        type: "heroCreate",
+        intentId,
+        paramName,
+        placeholder,
+        buttonLabel: intent.name,
+        icon: getIntentIcon(intentId, intent),
+      };
+    },
+  });
+}
+
+// ============================================================
 // customCapture — кастомные виджеты захвата (M3.5b)
 // ============================================================
 
@@ -422,8 +482,11 @@ function registerBulkWizard() {
 }
 
 // Инициализация: зарегистрировать встроенные архетипы при загрузке модуля.
-// Порядок: базовые → bulkWizard (prepend) → customCapture (prepend).
-// customCapture становится первым в списке, bulkWizard — вторым.
+// Порядок: базовые → bulkWizard → heroCreate → customCapture (все prepend).
+// В итоге: customCapture первый, heroCreate второй, bulkWizard третий.
+// heroCreate должен идти раньше базовых (clickForm/formModal), чтобы
+// перехватить простые create-интенты в catalog.
 registerBuiltins();
 registerBulkWizard();
+registerHeroCreate();
 registerCustomCapture();

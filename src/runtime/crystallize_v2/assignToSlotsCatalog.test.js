@@ -65,10 +65,16 @@ const ONTOLOGY = {
 };
 
 describe("assignToSlotsCatalog", () => {
-  it("creates главной сущности с параметрами (create_group) → fab", () => {
+  it("creates главной сущности с одним текстовым параметром (create_group) → hero", () => {
+    // M4 Step A: простые creator-интенты с одним text-параметром
+    // перехватываются heroCreate control-архетипом и становятся
+    // inline-создателем над списком, а не fab+formModal.
     const slots = assignToSlotsCatalog(INTENTS, conversationList, ONTOLOGY);
-    const fabIds = slots.fab.map(s => s.trigger?.intentId || s.intentId);
-    expect(fabIds).toContain("create_group");
+    const heroIds = (slots.hero || []).map(s => s.intentId);
+    expect(heroIds).toContain("create_group");
+    const hero = slots.hero.find(s => s.intentId === "create_group");
+    expect(hero.type).toBe("heroCreate");
+    expect(hero.paramName).toBe("title");
   });
 
   it("creator без параметров с extra entity (create_direct_chat) → customCapture entityPicker в fab", () => {

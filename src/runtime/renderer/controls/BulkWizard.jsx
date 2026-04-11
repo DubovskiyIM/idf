@@ -64,11 +64,7 @@ export default function BulkWizard({ spec, ctx, onClose }) {
     item.title || item.name || item.content || item.id;
 
   return (
-    <ModalShell onClose={onClose}>
-      <h2 style={{ margin: "0 0 16px", fontSize: 18, fontWeight: 700 }}>
-        {spec.label || "Массовая операция"}
-      </h2>
-
+    <ModalShell onClose={onClose} title={spec.label || "Массовая операция"}>
       {step === "select" && (
         <>
           <div style={{

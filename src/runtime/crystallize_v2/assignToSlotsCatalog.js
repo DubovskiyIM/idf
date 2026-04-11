@@ -17,6 +17,7 @@ export function assignToSlotsCatalog(INTENTS, projection, ONTOLOGY) {
   const slots = {
     header: [],
     toolbar: [],
+    hero: [], // inline-creator над body (heroCreate архетип)
     body: buildCatalogBody(projection, ONTOLOGY),
     context: [],
     fab: [],
@@ -66,6 +67,13 @@ export function assignToSlotsCatalog(INTENTS, projection, ONTOLOGY) {
     // inlineSearch — всегда в toolbar как projection-level utility
     if (wrapped.type === "inlineSearch") {
       slots.toolbar.push(wrapped);
+      continue;
+    }
+
+    // heroCreate — inline-создатель mainEntity над списком. Перехватывается
+    // прежде обычного fab, даёт человеческий UX «ввёл название — Enter».
+    if (wrapped.type === "heroCreate") {
+      slots.hero.push(wrapped);
       continue;
     }
 

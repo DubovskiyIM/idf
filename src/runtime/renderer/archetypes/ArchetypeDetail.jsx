@@ -1,6 +1,11 @@
 import { useMemo } from "react";
 import SlotRenderer from "../SlotRenderer.jsx";
 import OverlayManager, { useOverlayManager } from "../controls/OverlayManager.jsx";
+import SubCollectionSection from "./SubCollectionSection.jsx";
+import ProgressWidget from "./ProgressWidget.jsx";
+import InlineSetter from "./InlineSetter.jsx";
+import { evalIntentCondition } from "../eval.js";
+import { getAdaptedComponent } from "../adapters/registry.js";
 
 /**
  * Detail-архетип: показывает одну сущность по mainEntity+idParam из routeParams.
@@ -101,11 +106,42 @@ export default function ArchetypeDetail({ slots, nav, ctx: parentCtx, projection
       )}
 
       <div style={{ flex: 1, overflow: "auto", padding: 24 }}>
-        <div style={{
-          maxWidth: 640, margin: "0 auto", background: "#fff",
-          borderRadius: 12, padding: 24, border: "1px solid #e5e7eb",
-        }}>
-          <SlotRenderer item={slots.body} ctx={ctx} contextItem={target} />
+        <div style={{ maxWidth: 640, margin: "0 auto", display: "flex", flexDirection: "column", gap: 16 }}>
+          <div style={{
+            background: "#fff",
+            borderRadius: 12, padding: 24, border: "1px solid #e5e7eb",
+          }}>
+            <SlotRenderer item={slots.body} ctx={ctx} contextItem={target} />
+          </div>
+
+          {/* Sub-collection секции (M4 step B). Каждая секция — блок с заголовком,
+              inline-композером добавления (если разрешён в текущей фазе) и
+              списком items с per-item кнопками. */}
+          {(slots.sections || []).map(section => (
+            <SubCollectionSection
+              key={section.id}
+              section={section}
+              target={target}
+              ctx={ctx}
+            />
+          ))}
+
+          {/* Progress widget (M4 step E): декларативный прогресс из
+              projection.progress, рантайм вычисляет значения из world. */}
+          {slots.progress && (
+            <ProgressWidget spec={slots.progress} target={target} ctx={ctx} />
+          )}
+
+          {/* Footer inline-setters (M4 step F): single-param intents как
+              set_deadline в формате «label: [input] Установить». */}
+          {(slots.footer || []).length > 0 && (
+            <FooterList items={slots.footer} target={target} ctx={ctx} />
+          )}
+
+          {/* Primary CTA (M4 step C): phase-changing intents как большие
+              primary-кнопки. Фильтруются через evalIntentCondition — в
+              неподходящей фазе кнопка не показывается. */}
+          <PrimaryCTAList items={slots.primaryCTA || []} target={target} ctx={ctx} />
         </div>
       </div>
 
@@ -125,4 +161,76 @@ function pluralize(word) {
   if (word.endsWith("y")) return word.slice(0, -1) + "ies";
   if (word.endsWith("s")) return word + "es";
   return word + "s";
+}
+
+function FooterList({ items, target, ctx }) {
+  const visible = items.filter(spec => {
+    const conds = spec.conditions || [];
+    return conds.every(c => evalIntentCondition(c, target, ctx.viewer));
+  });
+  if (visible.length === 0) return null;
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+      {visible.map(spec => (
+        <InlineSetter key={spec.intentId} spec={spec} target={target} ctx={ctx} />
+      ))}
+    </div>
+  );
+}
+
+function PrimaryCTAList({ items, target, ctx }) {
+  const visible = items.filter(spec => {
+    const conds = spec.conditions || [];
+    return conds.every(c => evalIntentCondition(c, target, ctx.viewer));
+  });
+  if (visible.length === 0) return null;
+
+  const AdaptedPrimary = getAdaptedComponent("button", "primary");
+
+  return (
+    <div style={{
+      display: "flex", flexDirection: "column", gap: 10,
+      padding: 16, background: "#fff", borderRadius: 12,
+      border: "1px solid #e5e7eb",
+    }}>
+      {visible.map(spec => {
+        const onClick = () => ctx.exec(spec.intentId, { id: target.id });
+        if (AdaptedPrimary) {
+          return (
+            <AdaptedPrimary
+              key={spec.intentId}
+              label={spec.label}
+              icon={spec.icon ? <span>{spec.icon}</span> : undefined}
+              onClick={onClick}
+              size="md"
+            />
+          );
+        }
+        return (
+          <button
+            key={spec.intentId}
+            onClick={onClick}
+            style={{
+              padding: "14px 18px",
+              borderRadius: 10,
+              border: "none",
+              background: "#6366f1",
+              color: "#fff",
+              fontSize: 15,
+              fontWeight: 700,
+              cursor: "pointer",
+              display: "inline-flex",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: 8,
+              fontFamily: "inherit",
+            }}
+          >
+            {spec.icon && <span style={{ fontSize: 17 }}>{spec.icon}</span>}
+            <span>{spec.label}</span>
+          </button>
+        );
+      })}
+    </div>
+  );
 }

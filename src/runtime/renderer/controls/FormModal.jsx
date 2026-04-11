@@ -1,6 +1,7 @@
 import { useState } from "react";
 import ParameterControl from "../parameters/index.jsx";
 import SlotRenderer from "../SlotRenderer.jsx";
+import { getAdaptedComponent } from "../adapters/registry.js";
 
 export default function FormModal({ spec, ctx, overlayContext, onClose }) {
   const item = overlayContext?.item;
@@ -41,9 +42,7 @@ export default function FormModal({ spec, ctx, overlayContext, onClose }) {
   };
 
   return (
-    <ModalShell onClose={onClose}>
-      <h2 style={{ margin: "0 0 16px", fontSize: 18 }}>{spec.title || spec.intentId}</h2>
-
+    <ModalShell onClose={onClose} title={spec.title || spec.intentId}>
       {spec.witnessPanel?.length > 0 && (
         <div style={{ padding: 12, background: "#f9fafb", borderRadius: 6, marginBottom: 16 }}>
           {spec.witnessPanel.map((w, i) => (
@@ -86,7 +85,19 @@ export default function FormModal({ spec, ctx, overlayContext, onClose }) {
   );
 }
 
-export function ModalShell({ children, onClose }) {
+export function ModalShell({ children, onClose, title }) {
+  // Сначала пробуем адаптер (Mantine Modal). Адаптер сам обеспечивает
+  // открытое состояние, анимации, поверхность и поведение close.
+  const AdaptedModal = getAdaptedComponent("shell", "modal");
+  if (AdaptedModal) {
+    return (
+      <AdaptedModal onClose={onClose} title={title}>
+        {children}
+      </AdaptedModal>
+    );
+  }
+
+  // Fallback: inline-стилизованный модал.
   return (
     <div
       onClick={onClose}
@@ -103,7 +114,10 @@ export function ModalShell({ children, onClose }) {
           minWidth: 360, maxWidth: 560, maxHeight: "80vh", overflow: "auto",
           boxShadow: "0 20px 50px #0004",
         }}
-      >{children}</div>
+      >
+        {title && <h2 style={{ margin: "0 0 16px", fontSize: 18 }}>{title}</h2>}
+        {children}
+      </div>
     </div>
   );
 }

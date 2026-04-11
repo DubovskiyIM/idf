@@ -4,6 +4,7 @@ import { crystallizeV2 } from "../../crystallize_v2/index.js";
 import { generateEditProjections } from "../../crystallize_v2/formGrouping.js";
 import { useProjectionRoute } from "../navigation/useProjectionRoute.js";
 import Breadcrumbs from "../navigation/Breadcrumbs.jsx";
+import { getAdaptedComponent } from "../adapters/registry.js";
 
 /**
  * V2Shell — доменонезависимый рендерер проекций через кристаллизатор v2.
@@ -85,45 +86,62 @@ export default function V2Shell({
 
   const isOnRoot = rootProjections.includes(current?.projectionId);
 
+  // Адаптированная реализация root-табов (Mantine Tabs через адаптер).
+  // Если адаптер не предоставляет shell.tabs — fallback на inline-версию.
+  const AdaptedTabs = getAdaptedComponent("shell", "tabs");
+  const tabItems = rootProjections.map(projId => ({
+    value: projId,
+    label: projectionNames[projId] || projId,
+  }));
+  const onSelectTab = (projId) => {
+    if (projId === current?.projectionId) return;
+    reset(projId, {});
+  };
+
   return (
     <div style={{
       display: "flex", flexDirection: "column", height: "100%", minHeight: 0,
       fontFamily: "system-ui, sans-serif",
     }}>
-      {/* Верхняя шапка: root-табы */}
       {rootProjections.length > 0 && (
-        <div style={{
-          display: "flex", alignItems: "stretch",
-          background: "#fff", borderBottom: "1px solid #e5e7eb",
-        }}>
-          <div style={{ display: "flex", flex: 1 }}>
-            {rootProjections.map(projId => {
-              const isActive = current?.projectionId === projId;
-              return (
-                <button
-                  key={projId}
-                  onClick={() => {
-                    if (isActive) return;
-                    reset(projId, {});
-                  }}
-                  style={{
-                    padding: "10px 18px",
-                    background: "transparent",
-                    border: "none",
-                    borderBottom: isActive ? "2px solid #6366f1" : "2px solid transparent",
-                    color: isActive ? "#6366f1" : "#6b7280",
-                    fontWeight: isActive ? 700 : 500,
-                    fontSize: 14,
-                    cursor: "pointer",
-                    fontFamily: "inherit",
-                  }}
-                >
-                  {projectionNames[projId] || projId}
-                </button>
-              );
-            })}
+        AdaptedTabs ? (
+          <AdaptedTabs
+            items={tabItems}
+            active={current?.projectionId}
+            onSelect={onSelectTab}
+          />
+        ) : (
+          // Fallback: inline-стилизованные табы
+          <div style={{
+            display: "flex", alignItems: "stretch",
+            background: "#fff", borderBottom: "1px solid #e5e7eb",
+          }}>
+            <div style={{ display: "flex", flex: 1 }}>
+              {rootProjections.map(projId => {
+                const isActive = current?.projectionId === projId;
+                return (
+                  <button
+                    key={projId}
+                    onClick={() => onSelectTab(projId)}
+                    style={{
+                      padding: "10px 18px",
+                      background: "transparent",
+                      border: "none",
+                      borderBottom: isActive ? "2px solid #6366f1" : "2px solid transparent",
+                      color: isActive ? "#6366f1" : "#6b7280",
+                      fontWeight: isActive ? 700 : 500,
+                      fontSize: 14,
+                      cursor: "pointer",
+                      fontFamily: "inherit",
+                    }}
+                  >
+                    {projectionNames[projId] || projId}
+                  </button>
+                );
+              })}
+            </div>
           </div>
-        </div>
+        )
       )}
 
       {/* Breadcrumbs — только на deep-навигации */}

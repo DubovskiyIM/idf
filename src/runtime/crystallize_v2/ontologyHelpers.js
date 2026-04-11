@@ -68,7 +68,10 @@ export function canRead(field, role) {
 function inferTypeFromName(name) {
   // id: "id", "userId", "user_id", "senderId", ...
   if (/^id$|_id$|Id$/.test(name)) return "id";
-  if (/_at$|_time$|_date$|At$/.test(name)) return "datetime";
+  // datetime: exact "date"/"time", *At, *Date, *Time, _at/_date/_time
+  // Без последнего условия "startTime"/"endTime" нормализуются в text,
+  // а не в datetime — и DateInput адаптера не срабатывает.
+  if (/^(date|time)$|_at$|_time$|_date$|At$|Date$|Time$/.test(name)) return "datetime";
   if (/_url$|_link$|^url$|Url$/.test(name)) return "url";
   if (/_email$|^email$|Email$/.test(name)) return "email";
   if (/_phone$|^phone$|Phone$/.test(name)) return "tel";

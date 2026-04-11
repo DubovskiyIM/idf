@@ -3,6 +3,7 @@ import Composer from "./Composer.jsx";
 import Overflow from "./Overflow.jsx";
 import Toggle from "./Toggle.jsx";
 import InlineSearch from "./InlineSearch.jsx";
+import HeroCreate from "./HeroCreate.jsx";
 
 export const CONTROLS = {
   intentButton: IntentButton,
@@ -10,4 +11,5 @@ export const CONTROLS = {
   overflow: Overflow,
   toggle: Toggle,
   inlineSearch: InlineSearch,
+  heroCreate: HeroCreate,
 };

@@ -29,13 +29,7 @@ export default function ConfirmDialog({ spec, ctx, overlayContext, onClose }) {
   };
 
   return (
-    <ModalShell onClose={onClose}>
-      <h2 style={{
-        margin: "0 0 12px", fontSize: 18,
-        color: spec.irreversibility === "high" ? "#dc2626" : "#1a1a2e",
-      }}>
-        {spec.title || "Подтверждение"}
-      </h2>
+    <ModalShell onClose={onClose} title={spec.title || "Подтверждение"}>
       <p style={{ fontSize: 14, color: "#374151", lineHeight: 1.5, margin: "0 0 16px" }}>
         {message}
       </p>

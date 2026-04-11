@@ -12,12 +12,16 @@
     "test:watch": "vitest"
   },
   "dependencies": {
+    "@mantine/core": "^9.0.1",
+    "@mantine/dates": "^9.0.1",
+    "@mantine/hooks": "^9.0.1",
     "@vitejs/plugin-basic-ssl": "^2.3.0",
     "@vitejs/plugin-react": "^6.0.1",
     "@xyflow/react": "^12.10.2",
     "bcryptjs": "^3.0.3",
     "better-sqlite3": "^12.8.0",
     "cors": "^2.8.6",
+    "dayjs": "^1.11.20",
     "express": "^5.2.1",
     "jsonwebtoken": "^9.0.3",
     "react": "^19.2.5",

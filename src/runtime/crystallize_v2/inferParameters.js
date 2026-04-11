@@ -10,6 +10,13 @@ const SYSTEM_FIELDS = new Set([
   "status", "deletedAt", "deletedFor",
 ]);
 
+// Foreign key поля: заканчиваются на "Id" (не сам "id"). Это ссылки
+// на родительские сущности (pollId, conversationId, specialistId) — их
+// проставляет рантайм из routeParams/target, пользователь их не вводит.
+function isForeignKey(fieldName) {
+  return /Id$/.test(fieldName) && fieldName !== "id";
+}
+
 // Witnesses, которые являются результатами выполнения, не входом
 const RESULT_WITNESSES = new Set([
   "results", "translated_text", "selected_count", "available_reactions",
@@ -62,6 +69,7 @@ export function inferParameters(intent, ONTOLOGY) {
     const existingNames = new Set(params.map(p => p.name));
     for (const field of fields) {
       if (SYSTEM_FIELDS.has(field)) continue;
+      if (isForeignKey(field)) continue; // pollId, conversationId — проставляет рантайм
       if (existingNames.has(field)) continue;
       params.push({ name: field, inferredFrom: "creates-entity", entity: createsNorm });
     }
