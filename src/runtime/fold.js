@@ -52,13 +52,15 @@ export function fold(effects, typeMap = {}) {
         break;
       }
       case "replace": {
+        // Upsert: если сущности ещё нет в Φ (например, auth-users не
+        // сидируются через add), создаём partial entity из {id, field}.
+        // V2UI merge'ит такие partials с base из currentUser так, что
+        // folded поля побеждают — см. V2UI.worldWithRoute.
         const entityId = ctx.id;
-        if (entityId && collections[collType][entityId]) {
+        if (entityId) {
           const field = ef.target.split(".").pop();
-          collections[collType][entityId] = {
-            ...collections[collType][entityId],
-            [field]: val
-          };
+          const existing = collections[collType][entityId] || { id: entityId };
+          collections[collType][entityId] = { ...existing, [field]: val };
         }
         break;
       }

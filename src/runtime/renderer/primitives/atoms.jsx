@@ -49,10 +49,32 @@ export function Badge({ node, ctx, item }) {
 }
 
 export function Avatar({ node, ctx, item }) {
+  // Avatar — функциональная роль, не технический тип. Если bind указывает
+  // на картинку (data URL / http URL) — рендерим <img>, иначе fallback
+  // на инициал имени. Имя берётся из nameBind (если задан) или "name"
+  // по умолчанию. Это позволяет генератору писать {type:"avatar", bind:"avatar"}
+  // без необходимости знать, заполнено ли поле.
   const data = item || ctx.world;
-  const name = node.bind ? resolve(data, node.bind) : node.content || "?";
-  const letter = typeof name === "string" ? name[0]?.toUpperCase() : "?";
+  const src = node.bind ? resolve(data, node.bind) : null;
   const size = node.size || 32;
+  const isImage = typeof src === "string" && (src.startsWith("data:") || src.startsWith("http") || src.startsWith("/"));
+
+  if (isImage) {
+    return (
+      <img
+        src={src}
+        alt=""
+        style={{
+          width: size, height: size, borderRadius: "50%",
+          objectFit: "cover", flexShrink: 0, ...(node.sx || {}),
+        }}
+      />
+    );
+  }
+
+  const nameField = node.nameBind || "name";
+  const name = resolve(data, nameField) || node.content || "?";
+  const letter = typeof name === "string" ? name[0]?.toUpperCase() : "?";
   return (
     <div style={{
       width: size, height: size, borderRadius: "50%", background: "#6366f1",

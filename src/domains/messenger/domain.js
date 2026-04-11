@@ -149,20 +149,25 @@ export function buildEffects(intentId, ctx, world, drafts) {
       }
       case "replace": {
         const entityId = ctx.id || ctx.entityId;
+        const field = target.includes(".") ? target.split(".").pop() : target;
+        // Значение: (1) preset в intent.effect.value, (2) ctx[field] из
+        // формы (ArchetypeForm передаёт значение под именем поля),
+        // (3) ctx.value — legacy. Первое непустое побеждает.
+        const resolvedValue =
+          iEf.value !== undefined ? iEf.value
+          : ctx[field] !== undefined ? ctx[field]
+          : ctx.value;
         if (!entityId) {
-          // Попробовать найти сущность по типу из world
           const collBase = target.split(".")[0];
           const plural = collBase.endsWith("s") ? collBase + "es" : collBase + "s";
           const collection = world[plural] || world[collBase + "s"] || [];
           const entity = collection.find(e => e.id === ctx.id) || collection[0];
           if (entity) {
-            const field = target.includes(".") ? target.split(".").pop() : target;
-            ef({ alpha: "replace", target, scope, value: iEf.value !== undefined ? iEf.value : ctx.value,
+            ef({ alpha: "replace", target, scope, value: resolvedValue,
               context: { id: entity.id }, desc: describeEffect(intentId, "replace", ctx, target) });
           }
         } else {
-          const field = target.includes(".") ? target.split(".").pop() : target;
-          ef({ alpha: "replace", target, scope, value: iEf.value !== undefined ? iEf.value : ctx.value,
+          ef({ alpha: "replace", target, scope, value: resolvedValue,
             context: { id: entityId }, desc: describeEffect(intentId, "replace", ctx, target) });
         }
         break;

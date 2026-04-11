@@ -190,7 +190,7 @@ function mapFieldTypeToControl(type) {
     textarea: "textarea",
     datetime: "datetime",
     date: "datetime",
-    image: "file",
+    image: "image",
     file: "file",
     email: "email",
     tel: "tel",

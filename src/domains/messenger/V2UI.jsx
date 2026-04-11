@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useMemo } from "react";
 import ProjectionRendererV2 from "../../runtime/renderer/index.jsx";
 import { crystallizeV2 } from "../../runtime/crystallize_v2/index.js";
+import { generateEditProjections } from "../../runtime/crystallize_v2/formGrouping.js";
 import { useProjectionRoute } from "../../runtime/renderer/navigation/useProjectionRoute.js";
 import Breadcrumbs from "../../runtime/renderer/navigation/Breadcrumbs.jsx";
 import * as messengerDomain from "./domain.js";
@@ -69,24 +70,64 @@ export default function MessengerV2UI({ world, exec, execBatch }) {
     "messenger"
   ), []);
 
+  // Объединённый набор проекций: исходные + автогенерированные edit-проекции.
+  // V2UI должен знать про синтетические проекции для корректного projection
+  // lookup (их нет в messengerDomain.PROJECTIONS напрямую).
+  const allProjections = useMemo(() => {
+    const edits = generateEditProjections(
+      messengerDomain.INTENTS,
+      messengerDomain.PROJECTIONS,
+      messengerDomain.ONTOLOGY
+    );
+    return { ...messengerDomain.PROJECTIONS, ...edits };
+  }, []);
+
   const projectionNames = useMemo(() => {
     const names = {};
-    for (const [id, proj] of Object.entries(messengerDomain.PROJECTIONS)) {
+    for (const [id, proj] of Object.entries(allProjections)) {
       names[id] = proj.name || id;
     }
     return names;
-  }, []);
+  }, [allProjections]);
 
   const viewerContext = useMemo(() => ({
     userId: currentUser?.id,
     userName: currentUser?.name,
   }), [currentUser]);
 
-  // Мир обогащается route params — для фильтров типа world.currentConversationId.
-  const worldWithRoute = useMemo(() => ({
-    ...world,
-    ...(current?.params || {}),
-  }), [world, current]);
+  // Мир обогащается route params + auth-user'ами. Auth-пользователи живут в
+  // отдельной таблице (не в Φ), поэтому fold их не знает напрямую. Инжектим
+  // currentUser как базовый слой, а fold-produced partials (из replace-
+  // эффектов, upsert'ящихся в коллекцию user) накладываются поверх. Так
+  // аватар, отредактированный через user_profile_edit, побеждает auth-базу.
+  // В M4+ синхронизация auth_users ↔ Φ должна быть сделана через эффекты
+  // регистрации (_user_register или аналог).
+  const worldWithRoute = useMemo(() => {
+    const users = [...(world.users || [])];
+    if (currentUser) {
+      const base = {
+        id: currentUser.id,
+        name: currentUser.name,
+        email: currentUser.email || "",
+        avatar: currentUser.avatar || "",
+        statusMessage: currentUser.statusMessage || "",
+        status: "online",
+        lastSeen: Date.now(),
+      };
+      const idx = users.findIndex(u => u.id === currentUser.id);
+      if (idx >= 0) {
+        // Folded partial поверх auth-base — folded поля побеждают
+        users[idx] = { ...base, ...users[idx] };
+      } else {
+        users.push(base);
+      }
+    }
+    return {
+      ...world,
+      users,
+      ...(current?.params || {}),
+    };
+  }, [world, current, currentUser]);
 
   if (!currentUser) {
     return (
@@ -121,17 +162,75 @@ export default function MessengerV2UI({ world, exec, execBatch }) {
   }
 
   const currentArtifact = current ? artifacts[current.projectionId] : null;
-  const currentProjectionDef = current ? messengerDomain.PROJECTIONS[current.projectionId] : null;
+  const currentProjectionDef = current ? allProjections[current.projectionId] : null;
+
+  // «Self-navigation» — клик по аватару/имени viewer'а ведёт на собственный
+  // профиль. Если viewer уже на user_profile или user_profile_edit с
+  // правильным id — no-op (предотвращает дубли в стеке при многократных
+  // кликах).
+  const goToSelfProfile = () => {
+    if (!currentUser?.id) return;
+    // Уже на своём профиле? Ничего не делаем.
+    if (current?.projectionId === "user_profile" &&
+        current.params?.userId === currentUser.id) return;
+    if (current?.projectionId === "user_profile_edit" &&
+        current.params?.userId === currentUser.id) return;
+    navigate("user_profile", { userId: currentUser.id });
+  };
+
+  // Данные для top-bar берём из worldWithRoute (там merge'нут folded аватар
+  // поверх auth-базы), а не напрямую из currentUser — иначе после редактирования
+  // аватар в шапке не обновится (currentUser приходит из /api/auth/me один раз).
+  const viewerUser = worldWithRoute.users?.find(u => u.id === currentUser?.id) || currentUser;
+  const viewerAvatar = viewerUser?.avatar;
+  const viewerHasImage = typeof viewerAvatar === "string" &&
+    (viewerAvatar.startsWith("data:") || viewerAvatar.startsWith("http") || viewerAvatar.startsWith("/"));
+  const userInitial = (viewerUser?.name || "?")[0]?.toUpperCase() || "?";
 
   return (
     <div style={{ display: "flex", flexDirection: "column", height: "100vh", fontFamily: "system-ui, sans-serif", position: "relative" }}>
-      <Breadcrumbs
-        history={history}
-        current={current}
-        canGoBack={canGoBack}
-        onBack={back}
-        projectionNames={projectionNames}
-      />
+      <div style={{ display: "flex", alignItems: "stretch" }}>
+        <div style={{ flex: 1 }}>
+          <Breadcrumbs
+            history={history}
+            current={current}
+            canGoBack={canGoBack}
+            onBack={back}
+            projectionNames={projectionNames}
+          />
+        </div>
+        <button
+          onClick={goToSelfProfile}
+          title={`Профиль: ${currentUser.name}`}
+          style={{
+            display: "flex", alignItems: "center", gap: 8,
+            padding: "4px 12px", background: "#f9fafb",
+            borderBottom: "1px solid #e5e7eb", borderLeft: "1px solid #e5e7eb",
+            borderTop: "none", borderRight: "none",
+            cursor: "pointer", fontFamily: "inherit",
+          }}
+        >
+          <span style={{ fontSize: 13, color: "#374151" }}>{viewerUser?.name || currentUser.name}</span>
+          {viewerHasImage ? (
+            <img
+              src={viewerAvatar}
+              alt=""
+              style={{
+                width: 28, height: 28, borderRadius: "50%",
+                objectFit: "cover",
+              }}
+            />
+          ) : (
+            <div style={{
+              width: 28, height: 28, borderRadius: "50%",
+              background: "#6366f1", color: "#fff",
+              display: "flex", alignItems: "center", justifyContent: "center",
+              fontSize: 13, fontWeight: 700,
+            }}>{userInitial}</div>
+          )}
+        </button>
+      </div>
+
       <div style={{ flex: 1, overflow: "hidden", position: "relative" }}>
         {currentArtifact ? (
           <ProjectionRendererV2

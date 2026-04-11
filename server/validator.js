@@ -33,6 +33,30 @@ function foldWorld() {
 
   const collections = {};
 
+  // Seed: auth_users живут в отдельной таблице, не в Φ. Для валидации
+  // replace user.X (например редактирования аватара) сущность должна
+  // уже существовать в World(t) — инжектим базовые user-записи из auth_users
+  // перед обработкой эффектов. Последующие replace наложатся поверх.
+  try {
+    const authUsers = db.prepare(
+      "SELECT id, email, name, avatar, created_at FROM auth_users"
+    ).all();
+    if (authUsers.length > 0) {
+      collections.users = {};
+      for (const u of authUsers) {
+        collections.users[u.id] = {
+          id: u.id,
+          email: u.email,
+          name: u.name,
+          avatar: u.avatar || "",
+          createdAt: u.created_at,
+        };
+      }
+    }
+  } catch {
+    // auth_users таблицы может не быть при старте — игнорируем
+  }
+
   function applyEf(ef, ctx, val) {
     if (ef.target.startsWith("drafts")) return;
     if (ef.scope === "presentation") return;

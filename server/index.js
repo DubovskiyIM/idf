@@ -7,7 +7,10 @@ const app = express();
 const PORT = 3001;
 
 app.use(cors());
-app.use(express.json());
+// Лимит body 10mb — дефолтные 100kb режут data URL'ы для картинок (аватары).
+// Большие изображения всё равно должны идти через upload-API (M4+), но для
+// M3-прототипа inline data URL покрывает все realistic-кейсы.
+app.use(express.json({ limit: "10mb" }));
 
 const workflowsRouter = require("./routes/workflows.js");
 

@@ -2,6 +2,7 @@ import TextControl from "./TextControl.jsx";
 import TextareaControl from "./TextareaControl.jsx";
 import DateTimeControl from "./DateTimeControl.jsx";
 import FileControl from "./FileControl.jsx";
+import ImageControl from "./ImageControl.jsx";
 
 const CONTROLS_BY_TYPE = {
   text: TextControl,
@@ -12,6 +13,7 @@ const CONTROLS_BY_TYPE = {
   textarea: TextareaControl,
   datetime: DateTimeControl,
   file: FileControl,
+  image: ImageControl,
 };
 
 export default function ParameterControl({ spec, value, onChange, error }) {
