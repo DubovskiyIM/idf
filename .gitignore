@@ -26,5 +26,3 @@ server/idf.db-shm
 CLAUDE.md
 docs/specs/
 docs/superpowers/
-docs/agent-demo.md
-docs/agent-system-prompt.md

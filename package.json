@@ -1,7 +1,21 @@
 {
   "name": "idf",
   "version": "1.0.0",
-  "description": "",
+  "description": "Intent-Driven Frontend — исследовательский прототип парадигмы, в которой UI выводится из формального описания пользовательских намерений",
+  "author": "Ignat Dubovsky",
+  "license": "MIT",
+  "keywords": [
+    "intent-driven",
+    "frontend",
+    "manifesto",
+    "crystallization",
+    "event-sourcing",
+    "llm-agent",
+    "declarative-ui"
+  ],
+  "engines": {
+    "node": ">=20"
+  },
   "main": "dist/index.js",
   "scripts": {
     "dev": "vite",
