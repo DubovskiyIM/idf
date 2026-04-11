@@ -40,12 +40,22 @@ export default function OntologyInspector({ world, domain, dark }) {
   // Связи: какие проекции показывают какую сущность
   const entityProjections = useMemo(() => {
     const map = {};
+    // Нормализация fields: legacy формат — массив строк, M3.3 — объект
+    // { fieldName: { type, read, write, ... } }. Возвращаем массив имён.
+    const fieldNames = (entity) => {
+      const f = entity?.fields;
+      if (Array.isArray(f)) return f;
+      if (f && typeof f === "object") return Object.keys(f);
+      return [];
+    };
     // Простая эвристика: проекция упоминает сущность если witnesses содержат её поля
     for (const [id, proj] of Object.entries(PROJECTIONS)) {
+      const witnesses = proj.witnesses || [];
       for (const [entityName, entity] of Object.entries(ONTOLOGY.entities)) {
-        const hasField = proj.witnesses.some(w => {
+        const names = fieldNames(entity);
+        const hasField = witnesses.some(w => {
           const field = w.split(".").pop();
-          return entity.fields.includes(field) || entity.fields.some(f => w.includes(f));
+          return names.includes(field) || names.some(f => w.includes(f));
         });
         if (hasField) {
           if (!map[entityName]) map[entityName] = [];
@@ -140,12 +150,17 @@ export default function OntologyInspector({ world, domain, dark }) {
               {/* Детали */}
               {isExpanded && (
                 <div style={{ padding: "0 16px 14px", fontFamily: "system-ui, sans-serif" }}>
-                  {/* Поля */}
+                  {/* Поля — поддержка обоих форматов (legacy array и typed object M3.3) */}
                   <div style={{ marginBottom: 10 }}>
                     <div style={{ fontSize: 10, color: t.textMuted, textTransform: "uppercase", marginBottom: 4 }}>Поля</div>
                     <div style={{ display: "flex", flexWrap: "wrap", gap: 4 }}>
-                      {entity.fields.map(f => (
-                        <span key={f} style={{ fontSize: 11, color: t.text, background: t.tagBg, padding: "2px 8px", borderRadius: 4 }}>{f}</span>
+                      {(Array.isArray(entity.fields)
+                        ? entity.fields.map(f => ({ name: f, type: null }))
+                        : Object.entries(entity.fields || {}).map(([name, def]) => ({ name, type: def?.type }))
+                      ).map(f => (
+                        <span key={f.name} style={{ fontSize: 11, color: t.text, background: t.tagBg, padding: "2px 8px", borderRadius: 4 }}>
+                          {f.name}{f.type ? <span style={{ color: t.textMuted, marginLeft: 4 }}>:{f.type}</span> : null}
+                        </span>
                       ))}
                     </div>
                   </div>

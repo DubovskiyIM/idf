@@ -13,6 +13,7 @@ import {
   needsCustomCapture,
   appliesToProjection,
   isUnsupportedInM2,
+  normalizeCreates,
 } from "./assignToSlotsShared.js";
 import { getIntentIcon } from "./getIntentIcon.js";
 
@@ -217,7 +218,7 @@ function isPerItemIntent(intent, projection) {
   if (hasMainCondition) return true;
 
   // Если intent создаёт новую сущность mainEntity через композер — не per-item
-  if (intent.creates === mainEntity && !hasDottedMainWitness && !hasMainCondition) return false;
+  if (normalizeCreates(intent.creates) === mainEntity && !hasDottedMainWitness && !hasMainCondition) return false;
 
   // Иначе — per-item (есть main entity в списке, но неясно зачем)
   return true;

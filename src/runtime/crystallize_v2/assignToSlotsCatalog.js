@@ -9,6 +9,7 @@ import {
   needsCustomCapture,
   appliesToProjection,
   isUnsupportedInM2,
+  normalizeCreates,
 } from "./assignToSlotsShared.js";
 import { getIntentIcon } from "./getIntentIcon.js";
 
@@ -60,7 +61,7 @@ export function assignToSlotsCatalog(INTENTS, projection, ONTOLOGY) {
     const isPerItem = isPerItemIntent(intent, projection);
     const isComposerEntry = wrapped.type === "composerEntry";
     const hasOverlay = wrapped.trigger && wrapped.overlay;
-    const isCreator = intent.creates === projection.mainEntity;
+    const isCreator = normalizeCreates(intent.creates) === projection.mainEntity;
 
     // inlineSearch — всегда в toolbar как projection-level utility
     if (wrapped.type === "inlineSearch") {
@@ -156,7 +157,7 @@ function isPerItemIntent(intent, projection) {
   const hasMainCondition = conditions.some(c => c.toLowerCase().startsWith(mainLower + "."));
   if (hasMainCondition) return true;
 
-  if (intent.creates === mainEntity) return false;
+  if (normalizeCreates(intent.creates) === mainEntity) return false;
 
   return true;
 }
@@ -197,6 +198,13 @@ function buildItemConditions(intent, projection) {
   }
 
   return conditions;
+}
+
+// Предотвращаем появление creator-intent другого main entity в catalog
+// (уже было, правим сравнение через normalizeCreates)
+function isCreatorOfOther(intent, mainEntity) {
+  const c = normalizeCreates(intent.creates);
+  return Boolean(c && mainEntity && c !== mainEntity);
 }
 
 function buildCatalogBody(projection, ONTOLOGY) {

@@ -147,8 +147,16 @@ export function checkIntegrity(INTENTS, PROJECTIONS, ONTOLOGY) {
     const entities = ONTOLOGY.entities;
     const knownEntities = new Set(Object.keys(entities).map(e => e.toLowerCase()));
     const allFields = {};
+    // Нормализация fields: legacy формат — массив строк, M3.3 — объект
+    // { fieldName: { type, read, write, ... } }. Принимаем оба формата.
+    const fieldNames = (entity) => {
+      const f = entity?.fields;
+      if (Array.isArray(f)) return f;
+      if (f && typeof f === "object") return Object.keys(f);
+      return [];
+    };
     for (const [name, entity] of Object.entries(entities)) {
-      allFields[name.toLowerCase()] = new Set(entity.fields || []);
+      allFields[name.toLowerCase()] = new Set(fieldNames(entity));
     }
     const knownPredicates = new Set(Object.keys(ONTOLOGY.predicates || {}));
 

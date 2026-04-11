@@ -9,6 +9,7 @@ import {
   needsCustomCapture,
   needsEntityPicker,
   isUnsupportedInM2,
+  normalizeCreates,
 } from "./assignToSlotsShared.js";
 import { getEntityFields, canRead } from "./ontologyHelpers.js";
 
@@ -40,7 +41,8 @@ export function assignToSlotsDetail(INTENTS, projection, ONTOLOGY) {
     if (!hasEffects) continue;
 
     // Creator-интент не применяется к detail проекции чужой сущности
-    if (intent.creates && intent.creates !== mainEntity) continue;
+    const creates = normalizeCreates(intent.creates);
+    if (creates && creates !== mainEntity) continue;
 
     const parameters = inferParameters(intent, ONTOLOGY).map(p => ({
       ...p,

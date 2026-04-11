@@ -1,7 +1,7 @@
 import { v4 as uuid } from "uuid";
 
 export { INTENTS } from "./intents.js";
-export { PROJECTIONS } from "./projections.js";
+export { PROJECTIONS, ROOT_PROJECTIONS } from "./projections.js";
 export { ONTOLOGY } from "./ontology.js";
 
 export const DOMAIN_ID = "workflow";

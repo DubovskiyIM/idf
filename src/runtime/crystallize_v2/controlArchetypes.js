@@ -10,6 +10,7 @@
  */
 
 import { getIntentIcon } from "./getIntentIcon.js";
+import { normalizeCreates } from "./assignToSlotsShared.js";
 
 // Встроенные архетипы (порядок определяет приоритет правил)
 const ARCHETYPES = [];
@@ -273,10 +274,11 @@ const CAPTURE_RULES = [
   {
     widgetId: "entityPicker",
     match: (intent, intentId, context) => {
-      if (!intent.creates) return false;
+      const creates = normalizeCreates(intent.creates);
+      if (!creates) return false;
       const entities = (intent.particles?.entities || [])
         .map(e => e.split(":").pop().trim().replace(/\[\]$/, ""));
-      const nonCreates = entities.filter(e => e !== intent.creates);
+      const nonCreates = entities.filter(e => e !== creates);
       if (nonCreates.length === 0) return false;
       // Если все non-creates уже в route scope проекции — picker не нужен
       // (send_message имеет Conversation в route chat_view → composer).
@@ -339,7 +341,8 @@ function registerCustomCapture() {
       let extras = {};
       if (widgetId === "entityPicker") {
         const entities = parseEntities(intent);
-        const target = entities.find(e => e.entity !== intent.creates);
+        const creates = normalizeCreates(intent.creates);
+        const target = entities.find(e => e.entity !== creates);
         if (target) {
           extras = {
             targetEntity: target.entity,

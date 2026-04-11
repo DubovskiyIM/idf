@@ -50,15 +50,20 @@ export function inferParameters(intent, ONTOLOGY) {
     }
   }
 
-  // 3. creates:X — поля сущности (если не уже собраны из witnesses)
-  if (creates && ONTOLOGY?.entities?.[creates]) {
-    const entity = ONTOLOGY.entities[creates];
-    const fields = entity.fields || [];
+  // 3. creates:X — поля сущности (если не уже собраны из witnesses).
+  // Normalize creates чтобы сработало для booking "Booking(draft)".
+  const createsNorm = typeof creates === "string" ? creates.replace(/\s*\(.*\)\s*$/, "").trim() : creates;
+  if (createsNorm && ONTOLOGY?.entities?.[createsNorm]) {
+    const entity = ONTOLOGY.entities[createsNorm];
+    // Поддержка обоих форматов: массив строк (legacy) или объект {name: {...}}
+    const fields = Array.isArray(entity.fields)
+      ? entity.fields
+      : Object.keys(entity.fields || {});
     const existingNames = new Set(params.map(p => p.name));
     for (const field of fields) {
       if (SYSTEM_FIELDS.has(field)) continue;
       if (existingNames.has(field)) continue;
-      params.push({ name: field, inferredFrom: "creates-entity", entity: creates });
+      params.push({ name: field, inferredFrom: "creates-entity", entity: createsNorm });
     }
   }
 

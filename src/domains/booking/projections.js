@@ -1,17 +1,58 @@
 export const PROJECTIONS = {
   service_catalog: {
     name: "Каталог услуг",
+    kind: "catalog",
     query: "все активные услуги с ценами и длительностью",
-    witnesses: ["name", "duration", "price", "specialist.name"]
+    entities: ["Service", "Specialist"],
+    mainEntity: "Service",
+    routeEntities: [],
+    filter: "active !== false",
+    sort: "name",
+    witnesses: ["name", "duration", "price", "specialist.name"],
   },
   specialist_schedule: {
     name: "Расписание",
+    kind: "catalog",
     query: "слоты специалиста на выбранную неделю со статусами",
-    witnesses: ["date", "startTime", "endTime", "status"]
+    entities: ["TimeSlot", "Specialist"],
+    mainEntity: "TimeSlot",
+    routeEntities: ["Specialist"],
+    filter: "status === 'free'",
+    sort: "date",
+    witnesses: ["date", "startTime", "endTime", "status"],
   },
   my_bookings: {
     name: "Мои записи",
+    kind: "catalog",
     query: "все записи текущего клиента, будущие и прошлые",
-    witnesses: ["specialist.name", "service.name", "slot.date", "slot.startTime", "status"]
-  }
+    entities: ["Booking", "TimeSlot", "Service", "Specialist"],
+    mainEntity: "Booking",
+    routeEntities: [],
+    sort: "-createdAt",
+    witnesses: ["specialist.name", "service.name", "slot.date", "slot.startTime", "status"],
+  },
+  booking_detail: {
+    name: "Запись",
+    kind: "detail",
+    query: "одна запись со всеми деталями",
+    entities: ["Booking"],
+    mainEntity: "Booking",
+    idParam: "bookingId",
+    routeEntities: [],
+    witnesses: ["service.name", "specialist.name", "slot.date", "slot.startTime", "price", "status"],
+  },
+  service_detail: {
+    name: "Услуга",
+    kind: "detail",
+    query: "детали одной услуги",
+    entities: ["Service", "Specialist"],
+    mainEntity: "Service",
+    idParam: "serviceId",
+    routeEntities: [],
+    witnesses: ["name", "duration", "price", "specialist.name", "active"],
+  },
 };
+
+// Корневые проекции V2-шелла — верхние табы, между которыми переключается
+// навигация. Порядок определяет отображение слева направо.
+export const ROOT_PROJECTIONS = ["service_catalog", "my_bookings"];

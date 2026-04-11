@@ -18,15 +18,8 @@ import PlanningUI from "./domains/planning/ManualUI.jsx";
 import WorkflowUI from "./domains/workflow/ManualUI.jsx";
 import MessengerUI from "./domains/messenger/ManualUI.jsx";
 
-// Кристаллизованные проекции
-import PollOverview from "./crystallized/poll_overview.jsx";
-import VotingMatrix from "./crystallized/voting_matrix.jsx";
-import { getStyles } from "./crystallized/theme.js";
-import WorkflowCanvas from "./crystallized/workflow_canvas.jsx";
-import MessengerChat from "./crystallized/messenger_chat.jsx";
-import ServiceCatalog from "./crystallized/service_catalog.jsx";
-import SpecialistSchedule from "./crystallized/specialist_schedule.jsx";
-import MyBookings from "./crystallized/my_bookings.jsx";
+// V2 рендерер — доменонезависимый shell с кристаллизатором v2
+import V2Shell from "./runtime/renderer/shell/V2Shell.jsx";
 
 const DOMAINS = {
   booking: { ...bookingDomain, UI: BookingUI },
@@ -37,14 +30,14 @@ const DOMAINS = {
 
 export default function App() {
   const [domainId, setDomainId] = useState(() => localStorage.getItem("idf_domain") || "booking");
-  const [topView, setTopView] = useState(null); // null | "graph" | "ontology"
+  const [topView, setTopView] = useState(null); // null | "graph" | "ontology" | "integrity" | "artifacts"
   const [tab, setTab] = useState("intents");
-  const [bookingView, setBookingView] = useState("catalog"); // catalog | schedule | bookings | draft
   const [mode, setMode] = useState(() => localStorage.getItem("idf_mode") || "manual");
   const [theme, setTheme] = useState(() => localStorage.getItem("idf_theme") || "light");
   const [variant, setVariant] = useState(() => localStorage.getItem("idf_variant") || "clean");
   const [viewer, setViewer] = useState(() => localStorage.getItem("idf_viewer") || "client");
   const [layer, setLayer] = useState(() => localStorage.getItem("idf_layer") || "canonical");
+  const [settingsOpen, setSettingsOpen] = useState(false);
 
   const setAndSaveMode = (v) => { setMode(v); localStorage.setItem("idf_mode", v); };
   const setAndSaveTheme = (v) => { setTheme(v); localStorage.setItem("idf_theme", v); };
@@ -56,6 +49,16 @@ export default function App() {
   const engine = useEngine(domain);
   const { world, worldForIntent, drafts, effects, signals, links, exec,
     overlay, overlayEntityIds, startInvestigation, commitInvestigation, cancelInvestigation } = engine;
+
+  // Эффекты этого домена: server отдаёт эффекты всех доменов сразу, здесь
+  // фильтруем по intent_id ∈ domain.INTENTS (+ служебные _seed/_sync/foreign).
+  // Нужно для раздела «Граф Φ», панели Φ справа и артефактов, чтобы они
+  // показывали только текущий домен.
+  const domainEffects = effects.filter(e =>
+    domain.INTENTS[e.intent_id] ||
+    e.intent_id === "_seed" || e.intent_id === "_sync" ||
+    e.context?.foreign
+  );
 
   // Синхронизировать онтологию + намерения с сервером при смене домена
   useEffect(() => {
@@ -112,104 +115,131 @@ export default function App() {
   return (
     <div style={{ height: "100vh", display: "flex", flexDirection: "column", background: "#0c0e14", color: "#c9cdd4", fontFamily: "ui-monospace, 'SF Mono', 'Cascadia Code', monospace", fontSize: 13, overflow: "hidden" }}>
       {/* HEADER */}
-      <div style={{ padding: "10px 20px", borderBottom: "1px solid #1e2230", display: "flex", alignItems: "center", gap: 12, flexShrink: 0 }}>
-        <span style={{ fontSize: 15, fontWeight: 700, color: "#e2e5eb" }}>IDF</span>
-        <span style={{ fontSize: 11, color: "#f59e0b", background: "#f59e0b18", padding: "2px 8px", borderRadius: 4, border: "1px solid #f59e0b30" }}>v1.0</span>
+      <div style={{ padding: "8px 16px", borderBottom: "1px solid #1e2230", display: "flex", alignItems: "center", gap: 10, flexShrink: 0, position: "relative" }}>
+        <span style={{ fontSize: 14, fontWeight: 700, color: "#e2e5eb" }}>IDF</span>
+        <span style={{ fontSize: 10, color: "#f59e0b", background: "#f59e0b18", padding: "1px 6px", borderRadius: 4, border: "1px solid #f59e0b30" }}>v1.2</span>
 
-        {/* Переключатель доменов */}
-        <div style={{ display: "flex", background: "#1e2230", borderRadius: 6, padding: 2 }}>
+        {/* Переключатель доменов — выпадающий список */}
+        <select
+          value={domainId}
+          onChange={e => { if (e.target.value !== domainId) switchDomain(e.target.value); }}
+          style={{
+            padding: "5px 10px", borderRadius: 6, fontSize: 12,
+            border: "1px solid #1e2230", background: "#1e2230",
+            color: "#e2e5eb", cursor: "pointer", fontFamily: "inherit",
+            fontWeight: 600,
+          }}
+        >
           {Object.entries(DOMAINS).map(([id, d]) => (
-            <button key={id} onClick={() => { if (id !== domainId) switchDomain(id); }}
-              style={{ padding: "4px 12px", borderRadius: 4, border: "none", cursor: "pointer", fontSize: 11,
-                background: domainId === id ? "#6366f1" : "transparent",
-                color: domainId === id ? "#fff" : "#6b7280", fontWeight: domainId === id ? 600 : 400 }}>
-              {d.DOMAIN_NAME}
-            </button>
+            <option key={id} value={id}>{d.DOMAIN_NAME}</option>
           ))}
+        </select>
+
+        {/* Разделы — единый сегмент-контрол с иконками вместо отдельных кнопок */}
+        <div style={{ display: "flex", background: "#1e2230", borderRadius: 6, padding: 2 }}>
+          {[
+            { id: null, icon: "▣", label: "Домен" },
+            { id: "graph", icon: "◉", label: "Граф Φ" },
+            { id: "ontology", icon: "◈", label: "Онтология" },
+            { id: "integrity", icon: "△", label: "Целостность" },
+            { id: "artifacts", icon: "🔮", label: "Артефакты" },
+          ].map(({ id, icon, label }) => {
+            const active = topView === id;
+            return (
+              <button key={label} onClick={() => setTopView(id)} title={label}
+                style={{ padding: "4px 10px", borderRadius: 4, border: "none", cursor: "pointer", fontSize: 11,
+                  background: active ? (id === "artifacts" ? "#8b5cf6" : "#f59e0b") : "transparent",
+                  color: active ? (id === "artifacts" ? "#fff" : "#0c0e14") : "#6b7280",
+                  fontWeight: active ? 600 : 400,
+                  display: "inline-flex", alignItems: "center", gap: 5 }}>
+                <span style={{ fontSize: 12 }}>{icon}</span>
+                <span>{label}</span>
+              </button>
+            );
+          })}
         </div>
 
         <div style={{ flex: 1 }} />
 
-        {/* Граф Φ и Онтология — в топбаре */}
-        <div style={{ display: "flex", gap: 4 }}>
-          <button onClick={() => setTopView(topView === "graph" ? null : "graph")}
-            style={{ padding: "4px 12px", borderRadius: 4, border: "none", cursor: "pointer", fontSize: 11,
-              background: topView === "graph" ? "#f59e0b" : "#1e2230",
-              color: topView === "graph" ? "#0c0e14" : "#6b7280", fontWeight: topView === "graph" ? 600 : 400 }}>
-            Граф Φ
-          </button>
-          <button onClick={() => setTopView(topView === "ontology" ? null : "ontology")}
-            style={{ padding: "4px 12px", borderRadius: 4, border: "none", cursor: "pointer", fontSize: 11,
-              background: topView === "ontology" ? "#f59e0b" : "#1e2230",
-              color: topView === "ontology" ? "#0c0e14" : "#6b7280", fontWeight: topView === "ontology" ? 600 : 400 }}>
-            Онтология
-          </button>
-          <button onClick={() => setTopView(topView === "integrity" ? null : "integrity")}
-            style={{ padding: "4px 12px", borderRadius: 4, border: "none", cursor: "pointer", fontSize: 11,
-              background: topView === "integrity" ? "#f59e0b" : "#1e2230",
-              color: topView === "integrity" ? "#0c0e14" : "#6b7280", fontWeight: topView === "integrity" ? 600 : 400 }}>
-            Целостность
-          </button>
-          <button onClick={() => setTopView(topView === "artifacts" ? null : "artifacts")}
-            style={{ padding: "4px 12px", borderRadius: 4, border: "none", cursor: "pointer", fontSize: 11,
-              background: topView === "artifacts" ? "#8b5cf6" : "#1e2230",
-              color: topView === "artifacts" ? "#fff" : "#6b7280", fontWeight: topView === "artifacts" ? 600 : 400 }}>
-            🔮 Артефакты
-          </button>
-        </div>
+        <span style={{ fontSize: 10, color: "#6b7280" }}>
+          {Object.keys(domain.INTENTS).length} нам. · {domainEffects.filter(e => e.intent_id !== "_seed").length} эфф.
+        </span>
 
-        {/* Режим: ручной / кристаллизованный */}
-        <div style={{ display: "flex", background: "#1e2230", borderRadius: 6, padding: 2 }}>
-          {["manual", "crystallized"].map(m => (
-            <button key={m} onClick={() => setAndSaveMode(m)} style={{
-              padding: "4px 10px", borderRadius: 4, border: "none", cursor: "pointer", fontSize: 10,
-              background: mode === m ? "#f59e0b" : "transparent",
-              color: mode === m ? "#0c0e14" : "#6b7280", fontWeight: mode === m ? 600 : 400
-            }}>{m === "manual" ? "Ручной" : "Кристалл."}</button>
-          ))}
-        </div>
+        {/* Кнопка Настройки — открывает popover */}
+        <button onClick={() => setSettingsOpen(v => !v)} title="Настройки"
+          style={{ padding: "4px 10px", borderRadius: 4, border: "1px solid #1e2230", cursor: "pointer", fontSize: 12,
+            background: settingsOpen ? "#1e2230" : "transparent", color: "#9ca3af" }}>
+          ⚙ Настройки
+        </button>
 
-        {/* Тема + вариант (только для кристаллизованного) */}
-        {mode === "crystallized" && (
+        {/* Popover с селекторами */}
+        {settingsOpen && (
           <>
-            <select value={theme} onChange={e => setAndSaveTheme(e.target.value)}
-              style={{ fontSize: 10, padding: "3px 6px", borderRadius: 4, border: "1px solid #1e2230", background: "#1e2230", color: "#9ca3af", cursor: "pointer" }}>
-              <option value="light">☀ Light</option>
-              <option value="dark">🌙 Dark</option>
-            </select>
-            <select value={variant} onChange={e => setAndSaveVariant(e.target.value)}
-              style={{ fontSize: 10, padding: "3px 6px", borderRadius: 4, border: "1px solid #1e2230", background: "#1e2230", color: "#9ca3af", cursor: "pointer" }}>
-              <option value="clean">Clean</option>
-              <option value="dense">Dense</option>
-              <option value="playful">Playful</option>
-              <option value="brutalist">Brutalist</option>
-            </select>
+            <div onClick={() => setSettingsOpen(false)} style={{
+              position: "fixed", inset: 0, zIndex: 20, background: "transparent",
+            }} />
+            <div style={{
+              position: "absolute", top: "calc(100% + 4px)", right: 12,
+              background: "#13151d", border: "1px solid #1e2230", borderRadius: 8,
+              boxShadow: "0 10px 30px rgba(0,0,0,0.5)", padding: 12, zIndex: 21,
+              display: "flex", flexDirection: "column", gap: 10, minWidth: 240,
+            }}>
+              <div style={{ fontSize: 10, color: "#6b7280", textTransform: "uppercase", letterSpacing: "0.08em" }}>Режим UI</div>
+              <div style={{ display: "flex", background: "#1e2230", borderRadius: 6, padding: 2 }}>
+                {["manual", "crystallized"].map(m => (
+                  <button key={m} onClick={() => setAndSaveMode(m)} style={{
+                    flex: 1, padding: "5px 10px", borderRadius: 4, border: "none", cursor: "pointer", fontSize: 11,
+                    background: mode === m ? "#f59e0b" : "transparent",
+                    color: mode === m ? "#0c0e14" : "#9ca3af", fontWeight: mode === m ? 600 : 400
+                  }}>{m === "manual" ? "Ручной" : "Кристаллиз."}</button>
+                ))}
+              </div>
+
+              {/* Тема и вариант — всегда в настройках. Применяется к
+                  кристаллизованным проекциям; ручной UI игнорирует. */}
+              <div style={{ fontSize: 10, color: "#6b7280", textTransform: "uppercase", letterSpacing: "0.08em" }}>Тема и вариант</div>
+              <div style={{ display: "flex", gap: 6 }}>
+                <select value={theme} onChange={e => setAndSaveTheme(e.target.value)}
+                  style={{ flex: 1, fontSize: 11, padding: "5px 8px", borderRadius: 4, border: "1px solid #1e2230", background: "#1e2230", color: "#e2e5eb", cursor: "pointer" }}>
+                  <option value="light">☀ Light</option>
+                  <option value="dark">🌙 Dark</option>
+                </select>
+                <select value={variant} onChange={e => setAndSaveVariant(e.target.value)}
+                  style={{ flex: 1, fontSize: 11, padding: "5px 8px", borderRadius: 4, border: "1px solid #1e2230", background: "#1e2230", color: "#e2e5eb", cursor: "pointer" }}>
+                  <option value="clean">Clean</option>
+                  <option value="dense">Dense</option>
+                  <option value="playful">Playful</option>
+                  <option value="brutalist">Brutalist</option>
+                </select>
+              </div>
+
+              <div style={{ fontSize: 10, color: "#6b7280", textTransform: "uppercase", letterSpacing: "0.08em" }}>Зритель</div>
+              <select value={viewer} onChange={e => setAndSaveViewer(e.target.value)}
+                style={{ fontSize: 11, padding: "5px 8px", borderRadius: 4, border: "1px solid #1e2230", background: "#1e2230", color: "#e2e5eb", cursor: "pointer" }}>
+                <option value="client">👤 Клиент</option>
+                <option value="specialist">👨‍⚕️ Специалист</option>
+                <option value="agent">🤖 Агент</option>
+              </select>
+
+              <div style={{ fontSize: 10, color: "#6b7280", textTransform: "uppercase", letterSpacing: "0.08em" }}>Слой</div>
+              <select value={layer} onChange={e => setAndSaveLayer(e.target.value)}
+                style={{ fontSize: 11, padding: "5px 8px", borderRadius: 4, border: "1px solid #1e2230", background: "#1e2230", color: "#e2e5eb", cursor: "pointer" }}>
+                <option value="canonical">📐 Канонический</option>
+                <option value="adaptive:mobile">📱 Мобильный</option>
+                <option value="adaptive:agent">🔌 API</option>
+              </select>
+            </div>
           </>
         )}
-
-        {/* Зритель + слой */}
-        <select value={viewer} onChange={e => setAndSaveViewer(e.target.value)}
-          style={{ fontSize: 10, padding: "3px 6px", borderRadius: 4, border: "1px solid #1e2230", background: "#1e2230", color: "#9ca3af", cursor: "pointer" }}>
-          <option value="client">👤 Клиент</option>
-          <option value="specialist">👨‍⚕️ Специалист</option>
-          <option value="agent">🤖 Агент</option>
-        </select>
-        <select value={layer} onChange={e => setAndSaveLayer(e.target.value)}
-          style={{ fontSize: 10, padding: "3px 6px", borderRadius: 4, border: "1px solid #1e2230", background: "#1e2230", color: "#9ca3af", cursor: "pointer" }}>
-          <option value="canonical">📐 Канонический</option>
-          <option value="adaptive:mobile">📱 Мобильный</option>
-          <option value="adaptive:agent">🔌 API</option>
-        </select>
-
-        <span style={{ fontSize: 11, color: "#6b7280" }}>
-          {Object.keys(domain.INTENTS).length} намерений · {effects.filter(e => e.intent_id !== "_seed").length} эффектов
-        </span>
       </div>
 
-      {/* Граф Φ / Онтология — полноэкранно поверх основного UI */}
+      {/* Граф Φ / Онтология — полноэкранно поверх основного UI.
+          key={domainId} пересоздаёт CausalityGraph при смене домена —
+          3d-force-graph держит WebGL-сцену, и без перемонтажа новые effects
+          не отображаются корректно. */}
       {topView === "graph" && (
         <div style={{ flex: 1, background: "#1a1a2e", position: "relative" }}>
-          <CausalityGraph effects={effects} />
+          <CausalityGraph key={domainId} effects={domainEffects} />
         </div>
       )}
       {topView === "ontology" && (
@@ -220,9 +250,9 @@ export default function App() {
         </div>
       )}
       {topView === "artifacts" && (
-        <div style={{ flex: 1, overflow: "auto", background: "#fafafa", color: "#1a1a2e" }}>
+        <div style={{ flex: 1, overflow: "auto", background: "#0c0e14", color: "#e2e5eb" }}>
           <div style={{ maxWidth: 700, margin: "0 auto", padding: 24 }}>
-            <ArtifactView domain={domain} world={world} exec={exec} viewer={viewer} />
+            <ArtifactView domain={domain} world={world} exec={exec} viewer={viewer} dark />
           </div>
         </div>
       )}
@@ -297,102 +327,46 @@ export default function App() {
           {/* CENTER: Domain UI */}
           <div style={{ flex: 1, display: "flex", flexDirection: "column", minWidth: 0 }}>
             <div style={{ padding: "6px 16px", borderBottom: "1px solid #1e2230", background: "#10121a", fontSize: 10, color: "#f59e0b", textTransform: "uppercase", letterSpacing: "0.1em" }}>
-              {domain.DOMAIN_NAME} — {mode === "crystallized" ? `кристаллизованный (${variant}, ${theme})` : "ручной UI"}
+              {domain.DOMAIN_NAME} — {mode === "crystallized" ? "кристаллизованный (v2, rules)" : "ручной UI"}
             </div>
-            <div style={{ flex: 1, overflow: "auto", background: theme === "dark" && mode === "crystallized" ? "#0c0e14" : "#fafafa", color: theme === "dark" && mode === "crystallized" ? "#e2e5eb" : "#1a1a2e" }}>
-              <div style={{ maxWidth: 700, margin: "0 auto", padding: 24 }}>
-                {mode === "manual" ? (
-                  <domain.UI world={world} worldForIntent={worldForIntent} drafts={drafts} exec={exec} effects={effects}
+            {mode === "manual" ? (
+              <div style={{ flex: 1, overflow: "auto", background: "#fafafa", color: "#1a1a2e", minHeight: 0 }}>
+                <div style={{ maxWidth: 700, margin: "0 auto", padding: 24 }}>
+                  <domain.UI world={world} worldForIntent={worldForIntent} drafts={drafts} exec={exec} execBatch={engine.execBatch} effects={effects}
                     viewer={viewer} layer={layer} overlay={overlay} overlayEntityIds={overlayEntityIds}
                     startInvestigation={startInvestigation} commitInvestigation={commitInvestigation} cancelInvestigation={cancelInvestigation} />
-                ) : domainId === "messenger" ? (
-                  <MessengerChat world={world} exec={exec} theme={theme} variant={variant} />
-                ) : domainId === "workflow" ? (
-                  <WorkflowCanvas world={world} exec={exec} theme={theme} variant={variant} viewer={viewer} layer={layer} />
-                ) : domainId === "planning" ? (
-                  <>
-                    <PollOverview world={world} exec={exec} theme={theme} variant={variant} />
-                    <div style={{ marginTop: 24 }}>
-                      <VotingMatrix world={world} theme={theme} variant={variant} />
-                    </div>
-                  </>
-                ) : (
-                  <>
-                    {/* Booking кристаллизованный — вкладки */}
-                    <div style={{ display: "flex", gap: 6, marginBottom: 16 }}>
-                      {[
-                        { id: "catalog", label: "Каталог" },
-                        { id: "schedule", label: "Расписание" },
-                        { id: "bookings", label: "Записи" },
-                      ].map(v => (
-                        <button key={v.id} onClick={() => setBookingView(v.id)}
-                          style={{ padding: "6px 14px", borderRadius: 6, border: bookingView === v.id ? `2px solid ${theme === "dark" ? "#818cf8" : "#6366f1"}` : `1px solid ${theme === "dark" ? "#1e2230" : "#d1d5db"}`,
-                            background: bookingView === v.id ? (theme === "dark" ? "#1e1b4b" : "#eef2ff") : (theme === "dark" ? "#13151d" : "#fff"),
-                            color: theme === "dark" ? "#e2e5eb" : "#1a1a2e", fontSize: 12, cursor: "pointer", fontFamily: "system-ui, sans-serif" }}>
-                          {v.label}
-                        </button>
-                      ))}
-                      {(drafts || []).length > 0 && (
-                        <button onClick={() => setBookingView("draft")}
-                          style={{ padding: "6px 14px", borderRadius: 6, border: `2px dashed ${theme === "dark" ? "#fbbf24" : "#f59e0b"}`,
-                            background: bookingView === "draft" ? (theme === "dark" ? "#422006" : "#fffbeb") : "transparent",
-                            color: theme === "dark" ? "#fbbf24" : "#f59e0b", fontSize: 12, cursor: "pointer", fontFamily: "system-ui, sans-serif" }}>
-                          Черновик Δ
-                        </button>
-                      )}
-                    </div>
-                    {bookingView === "catalog" && (
-                      <ServiceCatalog world={world} exec={(...args) => { exec(...args); setBookingView("schedule"); }} drafts={drafts} theme={theme} variant={variant} viewer={viewer} layer={layer} />
-                    )}
-                    {bookingView === "schedule" && (
-                      <SpecialistSchedule world={world} exec={(...args) => { exec(...args); if (args[0] === "select_slot") setBookingView("draft"); }} drafts={drafts} theme={theme} variant={variant} viewer={viewer} layer={layer} />
-                    )}
-                    {bookingView === "bookings" && (
-                      <MyBookings world={world} exec={exec} theme={theme} variant={variant} viewer={viewer} layer={layer} />
-                    )}
-                    {bookingView === "draft" && (drafts || []).length > 0 && (() => {
-                      const draft = drafts[0];
-                      const slot = (world.slots || []).find(s => s.id === draft.slotId);
-                      const s = getStyles(theme, variant);
-                      return (
-                        <div style={s.container}>
-                          <h2 style={{ ...s.heading("h1"), marginBottom: s.v.gap }}>Черновик Δ</h2>
-                          <div style={{ ...s.card, border: `2px dashed ${s.t.warning}` }}>
-                            <div style={{ ...s.text("body"), marginBottom: 8 }}><b>Услуга:</b> {draft.serviceName} ({draft.duration} мин) · {draft.price} ₽</div>
-                            <div style={{ ...s.text("body"), marginBottom: 16 }}>
-                              <b>Слот:</b> {slot ? `${slot.date} ${slot.startTime}` : <span style={{ color: s.t.warning }}>не выбран — <button onClick={() => setBookingView("schedule")} style={{ background: "none", border: "none", color: s.t.accent, cursor: "pointer", textDecoration: "underline", fontSize: s.v.fontSize.body, fontFamily: s.v.font }}>выбрать</button></span>}
-                            </div>
-                            <div style={{ display: "flex", gap: s.v.gap }}>
-                              <button onClick={() => { exec("confirm_booking"); setBookingView("bookings"); }}
-                                disabled={!draft.slotId} style={draft.slotId ? s.button() : { ...s.button("muted"), cursor: "default" }}>Подтвердить</button>
-                              <button onClick={() => { exec("abandon_draft"); setBookingView("catalog"); }}
-                                style={s.buttonOutline()}>Отменить</button>
-                            </div>
-                          </div>
-                        </div>
-                      );
-                    })()}
-                    {bookingView === "draft" && (drafts || []).length === 0 && (
-                      <div style={{ textAlign: "center", padding: 40, color: "#9ca3af", fontFamily: "system-ui, sans-serif" }}>
-                        Нет черновика. <button onClick={() => setBookingView("catalog")} style={{ background: "none", border: "none", color: "#6366f1", cursor: "pointer", textDecoration: "underline" }}>Выбрать услугу</button>
-                      </div>
-                    )}
-                  </>
-                )}
+                </div>
               </div>
-            </div>
+            ) : (
+              // Кристаллизованный режим: универсальный V2Shell с кристаллизатором
+              // v2. key={domainId} — перемонтаж при смене домена (иначе
+              // useProjectionRoute держит старый стек).
+              // Для workflow канвас-архетип отсутствует — V2Shell покажет
+              // «проекция не поддерживается».
+              <div style={{ flex: 1, background: "#fafafa", minHeight: 0, display: "flex", flexDirection: "column" }}>
+                <V2Shell
+                  key={domainId}
+                  domain={domain}
+                  domainId={domainId}
+                  world={world}
+                  exec={exec}
+                  execBatch={engine.execBatch}
+                  viewer={{ id: viewer, name: viewer }}
+                />
+              </div>
+            )}
           </div>
 
-          {/* RIGHT: Effect stream */}
+          {/* RIGHT: Effect stream — показывает только эффекты текущего домена */}
           <div style={{ width: 280, borderLeft: "1px solid #1e2230", display: "flex", flexDirection: "column", flexShrink: 0 }}>
             <div style={{ padding: "6px 12px", borderBottom: "1px solid #1e2230", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
               <span style={{ fontSize: 10, color: "#6b7280", textTransform: "uppercase" }}>Φ</span>
-              <span style={{ fontSize: 10, color: "#4b5068" }}>{effects.filter(e => e.intent_id !== "_seed").length}</span>
+              <span style={{ fontSize: 10, color: "#4b5068" }}>{domainEffects.filter(e => e.intent_id !== "_seed").length}</span>
             </div>
             <div style={{ flex: 1, overflow: "auto", padding: 6 }}>
-              {effects.filter(e => e.intent_id !== "_seed" && e.intent_id !== "_sync" && e.scope !== "presentation").length === 0 ? (
+              {domainEffects.filter(e => e.intent_id !== "_seed" && e.intent_id !== "_sync" && e.scope !== "presentation").length === 0 ? (
                 <div style={{ padding: 16, color: "#4b5068", fontSize: 11, textAlign: "center" }}>Пусто</div>
-              ) : [...effects].filter(e => e.intent_id !== "_seed" && e.intent_id !== "_sync" && e.scope !== "presentation").reverse().map(e => {
+              ) : [...domainEffects].filter(e => e.intent_id !== "_seed" && e.intent_id !== "_sync" && e.scope !== "presentation").reverse().map(e => {
                 const statusColors = { proposed: "#f59e0b", confirmed: "#22c55e", rejected: "#ef4444" };
                 return (
                   <div key={e.id} style={{

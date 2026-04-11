@@ -51,10 +51,11 @@ export function needsCustomCapture(intent) {
  * известна из маршрута.
  */
 export function needsEntityPicker(intent, projection) {
-  if (!intent.creates) return false;
+  const creates = normalizeCreates(intent.creates);
+  if (!creates) return false;
   const entities = (intent.particles?.entities || [])
     .map(e => e.split(":").pop().trim().replace(/\[\]$/, ""));
-  const nonCreates = entities.filter(e => e !== intent.creates);
+  const nonCreates = entities.filter(e => e !== creates);
   if (nonCreates.length === 0) return false;
 
   // Если проекция не передана — старое поведение (любая не-creates entity → picker).
@@ -134,6 +135,17 @@ export function isUnsupportedInM2(intentId) {
 }
 
 /**
+ * Нормализация `intent.creates`: booking использует суффикс состояния
+ * (`Booking(draft)`, `Booking(confirmed)`), но проекции объявляют
+ * `mainEntity: "Booking"`. Срезаем скобочный суффикс, чтобы матчинг работал
+ * единообразно для всех доменов.
+ */
+export function normalizeCreates(raw) {
+  if (!raw || typeof raw !== "string") return raw;
+  return raw.replace(/\s*\(.*\)\s*$/, "").trim();
+}
+
+/**
  * Правило применимости интента к проекции (M2 polish).
  *
  * Intent применим, если:
@@ -161,7 +173,8 @@ export function appliesToProjection(intent, projection) {
   // Creator-scoping: интент, создающий сущность X, применяется только к
   // проекциям с mainEntity === X. Предотвращает появление create_group в
   // chat_view (mainEntity Message) и аналогичные «наведённые» кнопки создания.
-  if (intent.creates && mainEntity && intent.creates !== mainEntity) {
+  const creates = normalizeCreates(intent.creates);
+  if (creates && mainEntity && creates !== mainEntity) {
     return false;
   }
 
@@ -184,7 +197,7 @@ export function appliesToProjection(intent, projection) {
   // их закроет customCapture.entityPicker (M3.5b). Без этого правила
   // create_direct_chat (creates Conversation + entity User) не попадал в
   // conversation_list, поскольку User отсутствует в routeScope.
-  if (intent.creates && intent.creates === mainEntity) {
+  if (creates && creates === mainEntity) {
     return true;
   }
 

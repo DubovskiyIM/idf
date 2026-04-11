@@ -12,7 +12,9 @@ function Root() {
         <Route path="/messenger" element={<StandaloneApp domainId="messenger" />} />
         <Route path="/messenger-v2" element={<StandaloneApp domainId="messenger-v2" />} />
         <Route path="/booking" element={<StandaloneApp domainId="booking" />} />
+        <Route path="/booking-v2" element={<StandaloneApp domainId="booking-v2" />} />
         <Route path="/planning" element={<StandaloneApp domainId="planning" />} />
+        <Route path="/planning-v2" element={<StandaloneApp domainId="planning-v2" />} />
         <Route path="/workflow" element={<StandaloneApp domainId="workflow" />} />
         <Route path="/*" element={<App />} />
       </Routes>
