@@ -23,7 +23,7 @@ export default function EmojiPicker({ spec, ctx, onClose, overlayContext }) {
   return (
     <div style={overlayStyle} onClick={onClose}>
       <div style={modalStyle} onClick={e => e.stopPropagation()}>
-        <div style={{ fontSize: 13, fontWeight: 600, color: "#6b7280", marginBottom: 12 }}>
+        <div style={{ fontSize: 13, fontWeight: 600, color: "var(--mantine-color-dimmed)", marginBottom: 12 }}>
           Реакция
         </div>
         <div style={{ display: "flex", gap: 4, flexWrap: "wrap", maxWidth: 320 }}>
@@ -36,7 +36,7 @@ export default function EmojiPicker({ spec, ctx, onClose, overlayContext }) {
                 border: "none", cursor: "pointer", borderRadius: 8,
                 lineHeight: 1,
               }}
-              onMouseEnter={e => e.currentTarget.style.background = "#f3f4f6"}
+              onMouseEnter={e => e.currentTarget.style.background = "var(--mantine-color-default-hover)"}
               onMouseLeave={e => e.currentTarget.style.background = "transparent"}
             >
               {emoji}
@@ -54,7 +54,7 @@ const overlayStyle = {
 };
 
 const modalStyle = {
-  background: "#fff", borderRadius: 12, padding: 16,
+  background: "var(--mantine-color-body)", borderRadius: 12, padding: 16,
   fontFamily: "system-ui, sans-serif",
   boxShadow: "0 10px 40px rgba(0,0,0,0.15)",
 };

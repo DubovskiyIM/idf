@@ -102,7 +102,7 @@ export default function StandaloneApp({ domainId }) {
   const isFullWidth = domainId === "messenger" || isV2;
 
   return (
-    <div style={{ height: "100vh", background: "#fafafa", overflow: isV2 ? "hidden" : "auto", display: "flex", flexDirection: "column" }}>
+    <div style={{ height: "100vh", background: "var(--mantine-color-body)", overflow: isV2 ? "hidden" : "auto", display: "flex", flexDirection: "column" }}>
       <div style={{
         flex: isV2 ? 1 : "none",
         maxWidth: isFullWidth ? "100%" : 800,

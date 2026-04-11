@@ -1,4 +1,5 @@
 import { useState, useCallback, useEffect } from "react";
+import { useMantineColorScheme } from "@mantine/core";
 import { useEngine } from "./runtime/engine.js";
 import { PARTICLE_COLORS, ALPHA_LABELS, LINK_COLORS } from "./runtime/constants.js";
 import CausalityGraph from "./components/CausalityGraph.jsx";
@@ -33,14 +34,18 @@ export default function App() {
   const [topView, setTopView] = useState(null); // null | "graph" | "ontology" | "integrity" | "artifacts"
   const [tab, setTab] = useState("intents");
   const [mode, setMode] = useState(() => localStorage.getItem("idf_mode") || "manual");
-  const [theme, setTheme] = useState(() => localStorage.getItem("idf_theme") || "light");
+  // Mantine color scheme — управляется через MantineProvider + useMantineColorScheme.
+  // Синхронизация с кристаллизованным theme: оба обновляются одной функцией.
+  const { colorScheme, setColorScheme } = useMantineColorScheme();
+  const theme = colorScheme === "dark" ? "dark" : "light";
   const [variant, setVariant] = useState(() => localStorage.getItem("idf_variant") || "clean");
   const [viewer, setViewer] = useState(() => localStorage.getItem("idf_viewer") || "client");
   const [layer, setLayer] = useState(() => localStorage.getItem("idf_layer") || "canonical");
   const [settingsOpen, setSettingsOpen] = useState(false);
 
   const setAndSaveMode = (v) => { setMode(v); localStorage.setItem("idf_mode", v); };
-  const setAndSaveTheme = (v) => { setTheme(v); localStorage.setItem("idf_theme", v); };
+  // Mantine сама persist'ит через colorSchemeManager — просто вызываем setColorScheme
+  const setAndSaveTheme = (v) => setColorScheme(v);
   const setAndSaveVariant = (v) => { setVariant(v); localStorage.setItem("idf_variant", v); };
   const setAndSaveViewer = (v) => { setViewer(v); localStorage.setItem("idf_viewer", v); };
   const setAndSaveLayer = (v) => { setLayer(v); localStorage.setItem("idf_layer", v); };

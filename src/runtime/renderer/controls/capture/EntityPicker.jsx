@@ -78,7 +78,7 @@ export default function EntityPicker({ spec, ctx, onClose }) {
   return (
     <div style={overlayStyle} onClick={onClose}>
       <div style={modalStyle} onClick={e => e.stopPropagation()}>
-        <div style={{ fontSize: 13, fontWeight: 600, color: "#374151", marginBottom: 8 }}>
+        <div style={{ fontSize: 13, fontWeight: 600, color: "var(--mantine-color-text)", marginBottom: 8 }}>
           Выбрать: {spec.entityLabel || targetEntity || "элемент"}
         </div>
         <input
@@ -88,7 +88,7 @@ export default function EntityPicker({ spec, ctx, onClose }) {
           placeholder="Поиск…"
           autoFocus
           style={{
-            padding: "10px 12px", borderRadius: 6, border: "1px solid #d1d5db",
+            padding: "10px 12px", borderRadius: 6, border: "1px solid var(--mantine-color-default-border)",
             marginBottom: 12, fontSize: 14, outline: "none", width: "100%",
             boxSizing: "border-box",
           }}
@@ -108,10 +108,10 @@ export default function EntityPicker({ spec, ctx, onClose }) {
                 display: "flex", alignItems: "center", gap: 10,
                 width: "100%", textAlign: "left",
                 padding: "8px 10px", background: "transparent",
-                border: "none", borderBottom: "1px solid #f3f4f6",
-                cursor: "pointer", fontSize: 14, color: "#111827",
+                border: "none", borderBottom: "1px solid var(--mantine-color-default-border)",
+                cursor: "pointer", fontSize: 14, color: "var(--mantine-color-text)",
               }}
-              onMouseEnter={e => e.currentTarget.style.background = "#f9fafb"}
+              onMouseEnter={e => e.currentTarget.style.background = "var(--mantine-color-default-hover)"}
               onMouseLeave={e => e.currentTarget.style.background = "transparent"}
             >
               {item.avatar && typeof item.avatar === "string" && item.avatar.startsWith("data:") ? (
@@ -127,7 +127,7 @@ export default function EntityPicker({ spec, ctx, onClose }) {
               )}
               <div style={{ flex: 1 }}>
                 <div style={{ fontWeight: 600 }}>{item.name || item.title || item.id}</div>
-                {item.email && <div style={{ fontSize: 11, color: "#6b7280" }}>{item.email}</div>}
+                {item.email && <div style={{ fontSize: 11, color: "var(--mantine-color-dimmed)" }}>{item.email}</div>}
               </div>
             </button>
           ))}
@@ -144,14 +144,14 @@ const overlayStyle = {
 };
 
 const modalStyle = {
-  background: "#fff", borderRadius: 12, padding: 20,
+  background: "var(--mantine-color-body)", borderRadius: 12, padding: 20,
   width: 360, maxWidth: "90vw", maxHeight: "80vh",
   display: "flex", flexDirection: "column",
   boxShadow: "0 10px 40px rgba(0,0,0,0.15)",
 };
 
 const placeholderStyle = {
-  padding: 12, color: "#9ca3af", fontSize: 12, textAlign: "center",
+  padding: 12, color: "var(--mantine-color-dimmed)", fontSize: 12, textAlign: "center",
 };
 
 registerCaptureWidget({

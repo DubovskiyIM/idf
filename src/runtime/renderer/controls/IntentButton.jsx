@@ -46,9 +46,9 @@ export default function IntentButton({ spec, ctx, item }) {
       style={{
         padding: showLabel ? "6px 12px" : "6px 10px",
         borderRadius: 6,
-        border: "1px solid #d1d5db",
-        background: "#fff",
-        color: "#1a1a2e",
+        border: "1px solid var(--mantine-color-default-border)",
+        background: "var(--mantine-color-default)",
+        color: "var(--mantine-color-text)",
         fontSize: 13,
         cursor: "pointer",
         fontWeight: 500,

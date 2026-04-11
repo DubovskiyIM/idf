@@ -1,4 +1,6 @@
 import { useState, useRef } from "react";
+import ParameterControl from "../parameters/index.jsx";
+import { getAdaptedComponent } from "../adapters/registry.js";
 import Icon from "../adapters/Icon.jsx";
 
 /**
@@ -8,9 +10,9 @@ import Icon from "../adapters/Icon.jsx";
  * { [paramName]: value }). Используется для create_poll, create_group и
  * подобных «быстрых создателей».
  *
- * Заменяет fab+formModal в случаях, когда главной сущности достаточно одного
- * текстового параметра (имя/заголовок). Экономит клики: пользователь
- * печатает название и нажимает Enter — проекция обновляется.
+ * Реализация через адаптер: ParameterControl для input (Mantine TextInput
+ * в dark/light), адаптер button.primary — Mantine Button. Полностью
+ * адаптивно к теме, без inline white-фонов.
  */
 export default function HeroCreate({ spec, ctx }) {
   const [value, setValue] = useState("");
@@ -20,7 +22,6 @@ export default function HeroCreate({ spec, ctx }) {
     if (!value.trim()) return;
     ctx.exec(spec.intentId, { [spec.paramName || "title"]: value.trim() });
     setValue("");
-    // Фокус обратно на input — можно сразу создавать следующий
     inputRef.current?.focus();
   };
 
@@ -32,52 +33,56 @@ export default function HeroCreate({ spec, ctx }) {
   };
 
   const disabled = !value.trim();
+  const AdaptedPrimary = getAdaptedComponent("button", "primary");
 
   return (
-    <div style={{
-      display: "flex", gap: 8, alignItems: "stretch",
-      margin: "0 0 16px 0",
-    }}>
-      <input
-        ref={inputRef}
-        type="text"
-        value={value}
-        onChange={e => setValue(e.target.value)}
-        onKeyDown={onKeyDown}
-        placeholder={spec.placeholder || "Название…"}
-        style={{
-          flex: 1,
-          padding: "12px 16px",
-          borderRadius: 8,
-          border: "1px solid #d1d5db",
-          fontSize: 15,
-          outline: "none",
-          fontFamily: "inherit",
-          background: "#fff",
-        }}
-      />
-      <button
-        onClick={submit}
-        disabled={disabled}
-        style={{
-          padding: "12px 20px",
-          borderRadius: 8,
-          border: "none",
-          background: disabled ? "#c7d2fe" : "#6366f1",
-          color: "#fff",
-          fontSize: 14,
-          fontWeight: 600,
-          cursor: disabled ? "default" : "pointer",
-          display: "inline-flex",
-          alignItems: "center",
-          gap: 6,
-          fontFamily: "inherit",
-          transition: "background 0.1s",
-        }}
-      >
-        {spec.icon && <Icon emoji={spec.icon} size={15} />}
-        <span>{spec.buttonLabel || "Создать"}</span>
-      </button>
+    <div
+      style={{
+        display: "flex",
+        gap: 8,
+        alignItems: "flex-end",
+        margin: "0 0 16px 0",
+      }}
+      onKeyDown={onKeyDown}
+    >
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <ParameterControl
+          spec={{
+            name: spec.paramName || "title",
+            control: "text",
+            placeholder: spec.placeholder || "Название…",
+            label: "",
+          }}
+          value={value}
+          onChange={setValue}
+        />
+      </div>
+      {AdaptedPrimary ? (
+        <AdaptedPrimary
+          label={spec.buttonLabel || "Создать"}
+          icon={<Icon emoji={spec.icon || "+"} size={16} />}
+          onClick={submit}
+          disabled={disabled}
+          size="md"
+        />
+      ) : (
+        <button
+          onClick={submit}
+          disabled={disabled}
+          style={{
+            padding: "10px 18px",
+            borderRadius: 8,
+            border: "none",
+            background: disabled ? "var(--mantine-color-default)" : "var(--mantine-color-indigo-6)",
+            color: "#fff",
+            fontSize: 14,
+            fontWeight: 600,
+            cursor: disabled ? "default" : "pointer",
+          }}
+        >
+          {spec.buttonLabel || "Создать"}
+        </button>
+      )}
     </div>
   );
 }

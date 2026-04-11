@@ -20,19 +20,33 @@ export function Text({ node, ctx, item }) {
   const val = node.bind ? resolve(data, node.bind) : node.content;
   const text = node.template ? template(node.template, { ...data, item }) : val;
 
-  // Адаптер: Mantine Text с preset → красивая типографика.
-  // preset строковый ("secondary", "muted", "heading", ...) передаётся как есть.
+  // Адаптер: Mantine Text. Preset может быть строковым (ссылка на
+  // TEXT_PRESETS) или объектом (inline стили — пробрасываются как есть).
+  // Mantine Text сам наследует цвет из темы (адаптируется к dark/light).
   const AdaptedText = getAdaptedComponent("primitive", "text");
-  if (AdaptedText && typeof node.style === "string") {
+  if (AdaptedText) {
+    // Объектный style — передаём через style prop, preset пропускаем
+    const isStringPreset = typeof node.style === "string";
     return (
-      <AdaptedText preset={node.style} style={node.sx || {}}>
+      <AdaptedText
+        preset={isStringPreset ? node.style : undefined}
+        style={{
+          ...(isStringPreset ? (node.sx || {}) : (node.style || {})),
+          ...(node.sx || {}),
+        }}
+      >
         {text ?? ""}
       </AdaptedText>
     );
   }
 
-  // Fallback: inline-span c исходной палитрой.
-  const style = { fontSize: 14, color: "#1a1a2e", ...getPresetStyle(node.style), ...(node.sx || {}) };
+  // Fallback: inline-span через CSS variable (адаптируется к dark).
+  const style = {
+    fontSize: 14,
+    color: "var(--mantine-color-text, #1a1a2e)",
+    ...getPresetStyle(node.style),
+    ...(node.sx || {}),
+  };
   return <span style={style}>{text ?? ""}</span>;
 }
 
@@ -48,12 +62,15 @@ export function Heading({ node, ctx, item }) {
     return <AdaptedHeading level={level}>{text ?? ""}</AdaptedHeading>;
   }
 
-  // Fallback: обычный h1/h2/h3.
+  // Fallback: обычный h1/h2/h3 с Mantine CSS variable.
   const Tag = level === 1 ? "h1" : level === 3 ? "h3" : "h2";
   const style = {
     fontSize: level === 1 ? 22 : level === 3 ? 14 : 18,
-    fontWeight: 700, color: "#1a1a2e", margin: "0 0 8px",
-    fontFamily: "system-ui, sans-serif", ...(node.sx || {}),
+    fontWeight: 700,
+    color: "var(--mantine-color-text, #1a1a2e)",
+    margin: "0 0 8px",
+    fontFamily: "system-ui, sans-serif",
+    ...(node.sx || {}),
   };
   return <Tag style={style}>{text ?? ""}</Tag>;
 }
@@ -136,11 +153,18 @@ export function Audio({ node, ctx, item }) {
   const data = item || ctx.world;
   const src = node.bind ? resolve(data, node.bind) : node.src;
   if (!src) return null;
+  // colorScheme inherit позволяет браузеру применить dark-стиль
+  // к native audio controls через CSS `color-scheme` наследование.
   return (
     <audio
       src={src}
       controls
-      style={{ maxWidth: "100%", marginTop: 4, ...(node.sx || {}) }}
+      style={{
+        maxWidth: "100%",
+        marginTop: 4,
+        colorScheme: "light dark",
+        ...(node.sx || {}),
+      }}
     />
   );
 }

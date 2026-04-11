@@ -27,12 +27,14 @@ export default function ArchetypeFeed({ slots, ctx: parentCtx }) {
   return (
     <div style={{
       display: "flex", flexDirection: "column", height: "100%",
-      background: "#f9fafb",
+      background: "var(--mantine-color-body)",
     }}>
       {slots.header?.length > 0 && (
         <div style={{
           display: "flex", alignItems: "center", gap: 12,
-          padding: "12px 16px", background: "#fff", borderBottom: "1px solid #e5e7eb",
+          padding: "12px 16px",
+          background: "var(--mantine-color-default)",
+          borderBottom: "1px solid var(--mantine-color-default-border)",
         }}>
           <SlotRenderer items={slots.header} ctx={ctx} />
         </div>
@@ -41,7 +43,9 @@ export default function ArchetypeFeed({ slots, ctx: parentCtx }) {
       {slots.toolbar?.length > 0 && (
         <div style={{
           display: "flex", alignItems: "center", gap: 8,
-          padding: "8px 16px", background: "#fff", borderBottom: "1px solid #e5e7eb",
+          padding: "8px 16px",
+          background: "var(--mantine-color-default)",
+          borderBottom: "1px solid var(--mantine-color-default-border)",
         }}>
           <SlotRenderer items={slots.toolbar} ctx={ctx} />
         </div>
@@ -54,7 +58,7 @@ export default function ArchetypeFeed({ slots, ctx: parentCtx }) {
 
         {isDesktop && slots.context?.length > 0 && (
           <aside style={{
-            width: 300, background: "#fff", borderLeft: "1px solid #e5e7eb",
+            width: 300, background: "var(--mantine-color-default)", borderLeft: "1px solid var(--mantine-color-default-border)",
             padding: 16, overflow: "auto",
           }}>
             <SlotRenderer items={slots.context} ctx={ctx} />

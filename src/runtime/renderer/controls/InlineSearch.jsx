@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import Icon from "../adapters/Icon.jsx";
 
 /**
  * Inline-инпут поиска. Живёт в toolbar проекции, пишет в ctx.viewState
@@ -38,10 +39,11 @@ export default function InlineSearch({ spec, ctx }) {
     <form onSubmit={onSubmit} style={{
       display: "flex", alignItems: "center", gap: 6,
       padding: "6px 12px", borderRadius: 20,
-      border: "1px solid #d1d5db", background: "#fff",
+      border: "1px solid var(--mantine-color-default-border)",
+      background: "var(--mantine-color-default)",
       minWidth: 220,
     }}>
-      <span style={{ fontSize: 14 }}>{spec.icon || "🔍"}</span>
+      <Icon emoji={spec.icon || "🔍"} size={14} style={{ color: "var(--mantine-color-dimmed)" }} />
       <input
         ref={inputRef}
         type="search"
@@ -51,6 +53,7 @@ export default function InlineSearch({ spec, ctx }) {
         style={{
           flex: 1, border: "none", outline: "none",
           fontSize: 13, background: "transparent",
+          color: "var(--mantine-color-text)",
           fontFamily: "system-ui, sans-serif",
           lineHeight: 1.2,
         }}
@@ -61,7 +64,7 @@ export default function InlineSearch({ spec, ctx }) {
           onClick={() => setValue("")}
           style={{
             background: "none", border: "none", cursor: "pointer",
-            fontSize: 12, color: "#9ca3af", padding: 0,
+            fontSize: 12, color: "var(--mantine-color-dimmed)", padding: 0,
             lineHeight: 1,
           }}
           title="Очистить"

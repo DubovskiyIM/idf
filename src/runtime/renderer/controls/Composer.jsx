@@ -35,7 +35,8 @@ export default function Composer({ spec, ctx }) {
   return (
     <div style={{
       display: "flex", gap: 8, padding: 12, alignItems: "center",
-      background: "#fff", borderTop: "1px solid #e5e7eb",
+      background: "var(--mantine-color-default)",
+      borderTop: "1px solid var(--mantine-color-default-border)",
     }}>
       {spec.attachments?.length > 0 && (
         <div style={{ position: "relative" }}>
@@ -43,7 +44,7 @@ export default function Composer({ spec, ctx }) {
             onClick={() => setAttachMenuOpen(!attachMenuOpen)}
             style={{
               background: "transparent", border: "none", cursor: "pointer",
-              fontSize: 20, padding: 4, color: "#6b7280",
+              fontSize: 20, padding: 4, color: "var(--mantine-color-dimmed)",
             }}
           >+</button>
           {attachMenuOpen && (
@@ -76,7 +77,10 @@ export default function Composer({ spec, ctx }) {
         placeholder={spec.placeholder || "Сообщение…"}
         style={{
           flex: 1, padding: "8px 12px", borderRadius: 20,
-          border: "1px solid #d1d5db", fontSize: 14, outline: "none",
+          border: "1px solid var(--mantine-color-default-border)",
+          background: "var(--mantine-color-body)",
+          color: "var(--mantine-color-text)",
+          fontSize: 14, outline: "none",
         }}
       />
       <button

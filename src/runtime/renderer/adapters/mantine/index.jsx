@@ -24,6 +24,7 @@ import {
   Badge,
   Avatar,
   Paper,
+  Menu,
 } from "@mantine/core";
 import { DateInput, TimeInput } from "@mantine/dates";
 import Icon from "../Icon.jsx";
@@ -88,6 +89,7 @@ import {
   EyeOff,
   Share,
   Zap,
+  MoreHorizontal,
 } from "lucide-react";
 import { humanLabel } from "../labels.js";
 
@@ -130,6 +132,8 @@ const EMOJI_TO_LUCIDE = {
   "📹": Video,
   "📵": PhoneOff,
   "🔍": Search,
+  "⋯": MoreHorizontal,
+  "…": MoreHorizontal,
   "⇅": ArrowUpDown,
   "⚙": Settings,
   "👤": Users,
@@ -374,6 +378,41 @@ function MantineDangerButton({ label, icon, onClick, disabled, title, size }) {
 }
 
 /**
+ * Overflow menu — Mantine Menu. trigger-кнопка = ActionIcon с "⋯",
+ * при клике открывается dropdown c списком items (label + иконка).
+ *
+ * items: [{ key, label, icon, onClick }]
+ */
+function MantineOverflowMenu({ items }) {
+  if (!items || items.length === 0) return null;
+  return (
+    <Menu shadow="md" width={220} position="bottom-end" withArrow>
+      <Menu.Target>
+        <ActionIcon
+          variant="default"
+          size="lg"
+          title="Ещё"
+          aria-label="Ещё"
+        >
+          <Icon emoji="⋯" size={18} />
+        </ActionIcon>
+      </Menu.Target>
+      <Menu.Dropdown>
+        {items.map((item) => (
+          <Menu.Item
+            key={item.key}
+            leftSection={item.icon ? <Icon emoji={item.icon} size={14} /> : undefined}
+            onClick={item.onClick}
+          >
+            {item.label}
+          </Menu.Item>
+        ))}
+      </Menu.Dropdown>
+    </Menu>
+  );
+}
+
+/**
  * IntentButton-адаптер. Рендерит кнопку намерения через Mantine.
  *
  * Две формы рендера:
@@ -395,7 +434,10 @@ function MantineIntentButton({ spec, onClick, disabled }) {
   const isDanger = spec.variant === "danger" || spec.irreversibility === "high";
   const isPrimary = spec.variant === "primary";
 
-  const color = isDanger ? "red" : isPrimary ? "indigo" : "gray";
+  // Default (не danger/primary): Mantine `variant="default"` без color —
+  // использует theme-adaptive border/background/foreground, корректно
+  // переключается в dark. Явный `color="gray"` — ломает это в dark mode.
+  const color = isDanger ? "red" : isPrimary ? "indigo" : undefined;
   const variant = isDanger || isPrimary ? "light" : "default";
 
   // Только иконка → ActionIcon (квадратный, фиксированный размер)
@@ -446,14 +488,17 @@ function MantineHeading({ level = 2, children }) {
   return <Title order={order}>{children}</Title>;
 }
 
+// Presets используют Mantine color tokens, которые автоматически
+// адаптируются к темной теме (через CSS variables). Жёсткие оттенки
+// типа "dark.9" — запрещены, они не переключаются.
 const TEXT_PRESETS = {
-  body: { size: "sm", c: "dark.7" },
+  body: { size: "sm" },
   secondary: { size: "xs", c: "dimmed" },
-  muted: { size: "xs", c: "gray.6" },
-  heading: { fw: 700, size: "md", c: "dark.9" },
-  accent: { fw: 600, c: "indigo.6" },
-  danger: { c: "red.6" },
-  success: { c: "green.6" },
+  muted: { size: "xs", c: "dimmed" },
+  heading: { fw: 700, size: "md" },
+  accent: { fw: 600, c: "indigo" },
+  danger: { c: "red" },
+  success: { c: "green" },
 };
 
 function MantineText({ children, preset, style }) {
@@ -536,7 +581,12 @@ function MantineModalShell({ onClose, children, title }) {
  */
 function MantineTabs({ items, active, onSelect, extra }) {
   return (
-    <div style={{ display: "flex", alignItems: "center", borderBottom: "1px solid var(--mantine-color-gray-3)", background: "#fff" }}>
+    <div style={{
+      display: "flex",
+      alignItems: "center",
+      borderBottom: "1px solid var(--mantine-color-default-border)",
+      background: "var(--mantine-color-default)",
+    }}>
       <Tabs
         value={active || null}
         onChange={(v) => v && onSelect && onSelect(v)}
@@ -580,6 +630,7 @@ export const mantineAdapter = {
     secondary: MantineSecondaryButton,
     danger: MantineDangerButton,
     intent: MantineIntentButton,
+    overflow: MantineOverflowMenu,
   },
   shell: {
     modal: MantineModalShell,

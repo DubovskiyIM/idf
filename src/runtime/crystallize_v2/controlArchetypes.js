@@ -175,6 +175,7 @@ function registerBuiltins() {
           type: "formModal",
           key,
           intentId,
+          title: intent.name,
           witnessPanel: (intent.particles.witnesses || [])
             .filter(w => w.includes("."))
             .map(w => ({ type: "text", bind: w })),
@@ -211,6 +212,7 @@ function registerBuiltins() {
           type: "formModal",
           key,
           intentId,
+          title: intent.name,
           witnessPanel: (intent.particles.witnesses || [])
             .filter(w => w.includes("."))
             .map(w => ({ type: "text", bind: w })),

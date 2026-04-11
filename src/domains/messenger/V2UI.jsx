@@ -272,7 +272,7 @@ export default function MessengerV2UI({ world, exec, execBatch }) {
       {/* Верхняя шапка: табы root-проекций + viewer */}
       <div style={{
         display: "flex", alignItems: "stretch",
-        background: "#fff", borderBottom: "1px solid #e5e7eb",
+        background: "var(--mantine-color-default)", borderBottom: "1px solid var(--mantine-color-default-border)",
       }}>
         <div style={{ display: "flex", flex: 1 }}>
           {rootProjections.map(projId => {
@@ -310,11 +310,11 @@ export default function MessengerV2UI({ world, exec, execBatch }) {
           style={{
             display: "flex", alignItems: "center", gap: 8,
             padding: "4px 14px", background: "transparent",
-            border: "none", borderLeft: "1px solid #e5e7eb",
+            border: "none", borderLeft: "1px solid var(--mantine-color-default-border)",
             cursor: "pointer", fontFamily: "inherit",
           }}
         >
-          <span style={{ fontSize: 13, color: "#374151" }}>{viewerUser?.name || currentUser.name}</span>
+          <span style={{ fontSize: 13, color: "var(--mantine-color-text)" }}>{viewerUser?.name || currentUser.name}</span>
           {viewerHasImage ? (
             <img
               src={viewerAvatar}

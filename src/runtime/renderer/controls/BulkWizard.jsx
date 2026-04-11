@@ -71,14 +71,14 @@ export default function BulkWizard({ spec, ctx, onClose }) {
             display: "flex", alignItems: "center", justifyContent: "space-between",
             marginBottom: 10,
           }}>
-            <span style={{ fontSize: 13, color: "#6b7280" }}>
+            <span style={{ fontSize: 13, color: "var(--mantine-color-dimmed)" }}>
               Доступно: {filtered.length} · выбрано: {selected.size}
             </span>
             <button
               onClick={toggleAll}
               style={{
-                padding: "4px 10px", borderRadius: 6, border: "1px solid #d1d5db",
-                background: "#fff", cursor: "pointer", fontSize: 12,
+                padding: "4px 10px", borderRadius: 6, border: "1px solid var(--mantine-color-default-border)",
+                background: "var(--mantine-color-default)", cursor: "pointer", fontSize: 12,
               }}
             >
               {selected.size === filtered.length && filtered.length > 0 ? "Снять всё" : "Выбрать всё"}
@@ -89,14 +89,14 @@ export default function BulkWizard({ spec, ctx, onClose }) {
             border: "1px solid #e5e7eb", borderRadius: 6, marginBottom: 16,
           }}>
             {filtered.length === 0 && (
-              <div style={{ padding: 20, color: "#9ca3af", fontSize: 13, textAlign: "center" }}>
+              <div style={{ padding: 20, color: "var(--mantine-color-dimmed)", fontSize: 13, textAlign: "center" }}>
                 Нет элементов
               </div>
             )}
             {filtered.map(item => (
               <label key={item.id} style={{
                 display: "flex", alignItems: "center", gap: 10,
-                padding: "8px 12px", borderBottom: "1px solid #f3f4f6",
+                padding: "8px 12px", borderBottom: "1px solid var(--mantine-color-default-border)",
                 cursor: "pointer",
               }}>
                 <input
@@ -127,15 +127,15 @@ export default function BulkWizard({ spec, ctx, onClose }) {
 
       {step === "summary" && (
         <>
-          <p style={{ fontSize: 14, color: "#374151" }}>
+          <p style={{ fontSize: 14, color: "var(--mantine-color-text)" }}>
             Применить действие «{spec.label}» к <strong>{selected.size}</strong>{" "}
             {selected.size === 1 ? "элементу" : "элементам"}?
           </p>
           <div style={{
             maxHeight: 180, overflow: "auto",
-            background: "#f9fafb", border: "1px solid #e5e7eb",
+            background: "var(--mantine-color-default-hover)", border: "1px solid #e5e7eb",
             borderRadius: 6, padding: 8, margin: "12px 0",
-            fontSize: 12, color: "#6b7280",
+            fontSize: 12, color: "var(--mantine-color-dimmed)",
           }}>
             {Array.from(selected).map(id => {
               const it = filtered.find(i => i.id === id);
@@ -153,11 +153,11 @@ export default function BulkWizard({ spec, ctx, onClose }) {
 
       {step === "progress" && (
         <div style={{ padding: "20px 0" }}>
-          <p style={{ fontSize: 14, color: "#374151", marginBottom: 12 }}>
+          <p style={{ fontSize: 14, color: "var(--mantine-color-text)", marginBottom: 12 }}>
             Выполнение… {progress} / {selected.size}
           </p>
           <div style={{
-            width: "100%", height: 8, borderRadius: 4, background: "#e5e7eb",
+            width: "100%", height: 8, borderRadius: 4, background: "var(--mantine-color-default-border)",
             overflow: "hidden",
           }}>
             <div style={{
@@ -171,7 +171,7 @@ export default function BulkWizard({ spec, ctx, onClose }) {
 
       {step === "done" && (
         <>
-          <p style={{ fontSize: 14, color: "#374151" }}>
+          <p style={{ fontSize: 14, color: "var(--mantine-color-text)" }}>
             ✓ Готово. Обработано {selected.size - errorIds.length} из {selected.size}.
           </p>
           {errorIds.length > 0 && (
@@ -191,8 +191,8 @@ export default function BulkWizard({ spec, ctx, onClose }) {
 }
 
 const btnSecondary = {
-  padding: "8px 16px", borderRadius: 6, border: "1px solid #d1d5db",
-  background: "#fff", color: "#374151", cursor: "pointer", fontSize: 13,
+  padding: "8px 16px", borderRadius: 6, border: "1px solid var(--mantine-color-default-border)",
+  background: "var(--mantine-color-default)", color: "var(--mantine-color-text)", cursor: "pointer", fontSize: 13,
 };
 
 const btnPrimary = {

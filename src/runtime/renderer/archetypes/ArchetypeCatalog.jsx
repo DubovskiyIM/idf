@@ -26,12 +26,14 @@ export default function ArchetypeCatalog({ slots, ctx: parentCtx }) {
   return (
     <div style={{
       display: "flex", flexDirection: "column", height: "100%",
-      background: "#f9fafb", position: "relative",
+      background: "var(--mantine-color-body)", position: "relative",
     }}>
       {slots.header?.length > 0 && (
         <div style={{
           display: "flex", alignItems: "center", gap: 12,
-          padding: "12px 16px", background: "#fff", borderBottom: "1px solid #e5e7eb",
+          padding: "12px 16px",
+          background: "var(--mantine-color-default)",
+          borderBottom: "1px solid var(--mantine-color-default-border)",
         }}>
           <SlotRenderer items={slots.header} ctx={ctx} />
         </div>
@@ -40,7 +42,9 @@ export default function ArchetypeCatalog({ slots, ctx: parentCtx }) {
       {slots.toolbar?.length > 0 && (
         <div style={{
           display: "flex", alignItems: "center", gap: 8,
-          padding: "8px 16px", background: "#fff", borderBottom: "1px solid #e5e7eb",
+          padding: "8px 16px",
+          background: "var(--mantine-color-default)",
+          borderBottom: "1px solid var(--mantine-color-default-border)",
           flexWrap: "wrap",
         }}>
           <SlotRenderer items={slots.toolbar} ctx={ctx} />

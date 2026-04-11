@@ -3,6 +3,7 @@ import SlotRenderer from "../SlotRenderer.jsx";
 import { resolve, evalCondition, evalIntentCondition } from "../eval.js";
 import { resolveNavigateAction } from "../navigation/navigate.js";
 import Icon from "../adapters/Icon.jsx";
+import { getAdaptedComponent } from "../adapters/registry.js";
 
 export function Row({ node, ctx, item }) {
   return (
@@ -95,24 +96,37 @@ export function Card({ node, ctx, item }) {
   const isChat = node.variant === "chat";
   const isMine = isChat && item?.senderId && ctx.viewer?.id && item.senderId === ctx.viewer.id;
 
-  const cardStyle = isChat
-    ? {
-        background: isMine ? "#dbeafe" : "#fff",
-        borderRadius: 12,
-        padding: 10,
-        border: isMine ? "1px solid #bfdbfe" : "1px solid #e5e7eb",
-        maxWidth: "70%",
-        alignSelf: isMine ? "flex-end" : "flex-start",
-        ...(node.sx || {}),
-      }
-    : {
-        background: "#fff", borderRadius: 8, padding: 14,
-        border: "1px solid #e5e7eb", boxShadow: "0 1px 3px #0001",
-        ...(node.sx || {}),
-      };
+  // Regular-вариант (не чат) — Mantine Paper с hover.
+  // Chat-вариант — оставляем inline чтобы сохранить bubble-выравнивание и
+  // специфичные цвета "мои"/"чужие" — это семантика, а не стиль.
+  const AdaptedPaper = !isChat ? getAdaptedComponent("primitive", "paper") : null;
 
-  return (
-    <div style={cardStyle}>
+  const chatStyle = {
+    background: isMine
+      ? "var(--mantine-color-indigo-light)"
+      : "var(--mantine-color-default)",
+    borderRadius: 12,
+    padding: 10,
+    border: isMine
+      ? "1px solid var(--mantine-color-indigo-light-border)"
+      : "1px solid var(--mantine-color-default-border)",
+    color: "var(--mantine-color-text)",
+    maxWidth: "70%",
+    alignSelf: isMine ? "flex-end" : "flex-start",
+    ...(node.sx || {}),
+  };
+
+  const regularFallbackStyle = {
+    background: "var(--mantine-color-default)",
+    borderRadius: 8, padding: 14,
+    border: "1px solid var(--mantine-color-default-border)",
+    color: "var(--mantine-color-text)",
+    boxShadow: "0 1px 3px #0001",
+    ...(node.sx || {}),
+  };
+
+  const content = (
+    <>
       {(node.children || []).map((child, i) => (
         <SlotRenderer key={i} item={child} ctx={ctx} contextItem={item} />
       ))}
@@ -130,9 +144,11 @@ export function Card({ node, ctx, item }) {
               <button
                 onClick={(e) => { e.stopPropagation(); setMenuOpen(v => !v); }}
                 style={{
-                  padding: "4px 8px", borderRadius: 6, border: "1px solid #e5e7eb",
-                  background: "#fff", color: "#6b7280", fontSize: 11, cursor: "pointer",
-                  lineHeight: 1,
+                  padding: "4px 8px", borderRadius: 6,
+                  border: "1px solid var(--mantine-color-default-border)",
+                  background: "var(--mantine-color-default)",
+                  color: "var(--mantine-color-dimmed)",
+                  fontSize: 11, cursor: "pointer", lineHeight: 1,
                 }}
               >⋯</button>
               {menuOpen && (
@@ -140,8 +156,11 @@ export function Card({ node, ctx, item }) {
                   onClick={(e) => { e.stopPropagation(); setMenuOpen(false); }}
                   style={{
                     position: "absolute", top: "calc(100% + 4px)", left: 0,
-                    background: "#fff", border: "1px solid #e5e7eb", borderRadius: 8,
+                    background: "var(--mantine-color-body)",
+                    border: "1px solid var(--mantine-color-default-border)",
+                    borderRadius: 8,
                     boxShadow: "0 4px 12px #0002", padding: 4, zIndex: 10, minWidth: 180,
+                    color: "var(--mantine-color-text)",
                   }}
                 >
                   {hidden.map(spec => (
@@ -165,8 +184,21 @@ export function Card({ node, ctx, item }) {
           )}
         </div>
       )}
-    </div>
+    </>
   );
+
+  // Финальная обёртка: Mantine Paper (regular) или inline div (chat).
+  if (isChat) {
+    return <div style={chatStyle}>{content}</div>;
+  }
+  if (AdaptedPaper) {
+    return (
+      <AdaptedPaper padding="md">
+        {content}
+      </AdaptedPaper>
+    );
+  }
+  return <div style={regularFallbackStyle}>{content}</div>;
 }
 
 function ItemIntentGroup({ group, ctx, item }) {
@@ -181,21 +213,25 @@ function ItemIntentGroup({ group, ctx, item }) {
         title={group.specs.map(s => s.label || s.intentId).join(", ")}
         style={{
           padding: "6px 8px", borderRadius: 6,
-          border: "1px solid #e5e7eb", background: "#fff",
-          color: "#4b5563", fontSize: 11, cursor: "pointer",
+          border: "1px solid var(--mantine-color-default-border)",
+          background: "var(--mantine-color-default)",
+          color: "var(--mantine-color-text)",
+          fontSize: 11, cursor: "pointer",
           display: "inline-flex", alignItems: "center", gap: 4,
           lineHeight: 1,
         }}
       >
         <Icon emoji={icon} size={14} />
-        <span style={{ fontSize: 9, color: "#9ca3af" }}>×{count}</span>
+        <span style={{ fontSize: 9, color: "var(--mantine-color-dimmed)" }}>×{count}</span>
       </button>
       {open && (
         <div
           onClick={(e) => { e.stopPropagation(); setOpen(false); }}
           style={{
             position: "absolute", top: "calc(100% + 4px)", left: 0,
-            background: "#fff", border: "1px solid #e5e7eb", borderRadius: 8,
+            background: "var(--mantine-color-body)",
+            border: "1px solid var(--mantine-color-default-border)",
+            borderRadius: 8,
             boxShadow: "0 4px 12px #0002", padding: 4, zIndex: 10, minWidth: 180,
           }}
         >
@@ -207,9 +243,10 @@ function ItemIntentGroup({ group, ctx, item }) {
                 display: "flex", alignItems: "center", gap: 8,
                 width: "100%", textAlign: "left",
                 padding: "6px 10px", background: "transparent", border: "none",
-                cursor: "pointer", fontSize: 12, color: "#1f2937",
+                cursor: "pointer", fontSize: 12,
+                color: "var(--mantine-color-text)",
               }}
-              onMouseEnter={e => e.currentTarget.style.background = "#f9fafb"}
+              onMouseEnter={e => e.currentTarget.style.background = "var(--mantine-color-default-hover)"}
               onMouseLeave={e => e.currentTarget.style.background = "transparent"}
             >
               {spec.icon && <Icon emoji={spec.icon} size={14} />}
@@ -223,26 +260,34 @@ function ItemIntentGroup({ group, ctx, item }) {
 }
 
 function ItemIntentButton({ spec, ctx, item }) {
+  // Делегируем адаптеру — тот же MantineIntentButton, что в toolbar.
+  // Этот путь используется для per-item кнопок в Card (list items).
+  const AdaptedIntent = getAdaptedComponent("button", "intent");
+  const onClick = (e) => {
+    e.stopPropagation();
+    fireItemIntent(spec, ctx, item);
+  };
+
+  if (AdaptedIntent) {
+    return <AdaptedIntent spec={spec} onClick={onClick} />;
+  }
+
+  // Fallback — inline button с CSS variables.
   const label = spec.label || spec.intentId;
   const icon = spec.icon;
-  // Порог: если label > 8 символов, показываем только иконку (с tooltip).
-  // Семантическая иконка уже подобрана getIntentIcon при кристаллизации.
   const LABEL_MAX = 8;
   const showLabel = label.length <= LABEL_MAX;
 
   return (
     <button
-      onClick={(e) => {
-        e.stopPropagation();
-        fireItemIntent(spec, ctx, item);
-      }}
+      onClick={onClick}
       title={label}
       style={{
         padding: showLabel ? "4px 8px" : "6px 8px",
         borderRadius: 6,
-        border: "1px solid #e5e7eb",
-        background: "#fff",
-        color: "#4b5563",
+        border: "1px solid var(--mantine-color-default-border)",
+        background: "var(--mantine-color-default)",
+        color: "var(--mantine-color-text)",
         fontSize: 11,
         cursor: "pointer",
         display: "inline-flex",

@@ -42,7 +42,7 @@ export default function FormModal({ spec, ctx, overlayContext, onClose }) {
   };
 
   return (
-    <ModalShell onClose={onClose} title={spec.title || spec.intentId}>
+    <ModalShell onClose={onClose} title={spec.title || spec.label || spec.intentId}>
       {spec.witnessPanel?.length > 0 && (
         <div style={{ padding: 12, background: "#f9fafb", borderRadius: 6, marginBottom: 16 }}>
           {spec.witnessPanel.map((w, i) => (
@@ -67,8 +67,11 @@ export default function FormModal({ spec, ctx, overlayContext, onClose }) {
         <button
           onClick={onClose}
           style={{
-            padding: "8px 16px", borderRadius: 6, border: "1px solid #d1d5db",
-            background: "#fff", cursor: "pointer", fontSize: 13,
+            padding: "8px 16px", borderRadius: 6,
+            border: "1px solid var(--mantine-color-default-border)",
+            background: "var(--mantine-color-default)",
+            color: "var(--mantine-color-text)",
+            cursor: "pointer", fontSize: 13,
           }}
         >Отмена</button>
         <button
@@ -76,7 +79,8 @@ export default function FormModal({ spec, ctx, overlayContext, onClose }) {
           disabled={submitting}
           style={{
             padding: "8px 16px", borderRadius: 6, border: "none",
-            background: "#6366f1", color: "#fff", cursor: submitting ? "default" : "pointer",
+            background: "var(--mantine-color-indigo-6)", color: "#fff",
+            cursor: submitting ? "default" : "pointer",
             fontSize: 13, fontWeight: 600, opacity: submitting ? 0.6 : 1,
           }}
         >{submitting ? "…" : "Выполнить"}</button>
@@ -110,7 +114,7 @@ export function ModalShell({ children, onClose, title }) {
       <div
         onClick={e => e.stopPropagation()}
         style={{
-          background: "#fff", borderRadius: 12, padding: 20,
+          background: "var(--mantine-color-body)", borderRadius: 12, padding: 20,
           minWidth: 360, maxWidth: 560, maxHeight: "80vh", overflow: "auto",
           boxShadow: "0 20px 50px #0004",
         }}

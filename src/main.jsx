@@ -1,11 +1,20 @@
 import { createRoot } from 'react-dom/client';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
-import { MantineProvider } from '@mantine/core';
+import {
+  MantineProvider,
+  ColorSchemeScript,
+  localStorageColorSchemeManager,
+} from '@mantine/core';
 import { DatesProvider } from '@mantine/dates';
 import App from './prototype.jsx';
 import StandaloneApp from './standalone.jsx';
 import { registerUIAdapter } from './runtime/renderer/adapters/registry.js';
 import { mantineAdapter } from './runtime/renderer/adapters/mantine/index.jsx';
+
+// localStorage key для color scheme — Mantine сам читает/пишет через
+// colorSchemeManager. Используем тот же ключ idf_theme, что prototype
+// читал раньше, чтобы ничего не ломать.
+const colorSchemeManager = localStorageColorSchemeManager({ key: "idf_theme" });
 
 // Mantine глобальные стили + стили dates-компонентов (DateInput, TimeInput).
 // Порядок важен — core до dates.
@@ -19,12 +28,19 @@ import '@mantine/dates/styles.css';
 registerUIAdapter(mantineAdapter);
 
 function Root() {
-  // MantineProvider — для всего @mantine/core (CSS variables, тема, portals).
-  // DatesProvider — локаль/неделя для DateInput/TimeInput в @mantine/dates.
+  // MantineProvider + colorSchemeManager — Mantine сама persist'ит scheme
+  // в localStorage['idf_theme'] и инициализирует из него. useMantineColorScheme
+  // в дочерних компонентах читает/меняет без дополнительной синхронизации.
   return (
-    <MantineProvider defaultColorScheme="light" theme={{ primaryColor: "indigo" }}>
-      <DatesProvider settings={{ locale: "ru", firstDayOfWeek: 1, weekendDays: [0, 6] }}>
-        <BrowserRouter>
+    <>
+      <ColorSchemeScript defaultColorScheme="light" />
+      <MantineProvider
+        defaultColorScheme="light"
+        colorSchemeManager={colorSchemeManager}
+        theme={{ primaryColor: "indigo" }}
+      >
+        <DatesProvider settings={{ locale: "ru", firstDayOfWeek: 1, weekendDays: [0, 6] }}>
+          <BrowserRouter>
           <Routes>
             <Route path="/messenger" element={<StandaloneApp domainId="messenger" />} />
             <Route path="/messenger-v2" element={<StandaloneApp domainId="messenger-v2" />} />
@@ -35,9 +51,10 @@ function Root() {
             <Route path="/workflow" element={<StandaloneApp domainId="workflow" />} />
             <Route path="/*" element={<App />} />
           </Routes>
-        </BrowserRouter>
-      </DatesProvider>
-    </MantineProvider>
+          </BrowserRouter>
+        </DatesProvider>
+      </MantineProvider>
+    </>
   );
 }
 

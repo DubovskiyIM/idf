@@ -60,7 +60,7 @@ export default function ProgressWidget({ spec, target, ctx }) {
       <div style={{
         padding: 14,
         background: "#f9fafb",
-        border: "1px solid #e5e7eb",
+        border: "1px solid var(--mantine-color-default-border)",
         borderRadius: 12,
       }}>{children}</div>
     );
@@ -71,17 +71,18 @@ export default function ProgressWidget({ spec, target, ctx }) {
         display: "flex", alignItems: "baseline", justifyContent: "space-between",
         marginBottom: 8,
       }}>
-        <div style={{ fontWeight: 600, fontSize: 14, color: "#111827" }}>
+        <div style={{ fontWeight: 600, fontSize: 14, color: "var(--mantine-color-text)" }}>
           {spec.title || "Прогресс"}: {data.current}/{data.total} ({data.percent}%)
         </div>
       </div>
       <div style={{
-        width: "100%", height: 8, borderRadius: 4, background: "#e5e7eb",
+        width: "100%", height: 8, borderRadius: 4,
+        background: "var(--mantine-color-default-border)",
         overflow: "hidden",
       }}>
         <div style={{
           width: `${data.percent}%`, height: "100%",
-          background: "#6366f1",
+          background: "var(--mantine-color-indigo-6)",
           transition: "width 0.2s ease",
         }} />
       </div>

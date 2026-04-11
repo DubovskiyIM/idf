@@ -114,7 +114,7 @@ export default function V2Shell({
           // Fallback: inline-стилизованные табы
           <div style={{
             display: "flex", alignItems: "stretch",
-            background: "#fff", borderBottom: "1px solid #e5e7eb",
+            background: "var(--mantine-color-default)", borderBottom: "1px solid var(--mantine-color-default-border)",
           }}>
             <div style={{ display: "flex", flex: 1 }}>
               {rootProjections.map(projId => {

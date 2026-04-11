@@ -125,7 +125,7 @@ export default function VoiceRecorder({ spec, ctx, onClose }) {
         <div style={{ fontSize: 48, marginBottom: 8, lineHeight: 1 }}>
           {recording ? "🔴" : audioBlob ? "🎵" : "🎙"}
         </div>
-        <div style={{ fontSize: 24, marginBottom: 16, fontFamily: "monospace", color: "#374151" }}>
+        <div style={{ fontSize: 24, marginBottom: 16, fontFamily: "monospace", color: "var(--mantine-color-text)" }}>
           {Math.floor(duration / 60)}:{String(duration % 60).padStart(2, "0")}
         </div>
         {audioUrl && !recording && (
@@ -160,7 +160,7 @@ const overlayStyle = {
 };
 
 const modalStyle = {
-  background: "#fff", borderRadius: 12, padding: 24,
+  background: "var(--mantine-color-body)", borderRadius: 12, padding: 24,
   minWidth: 360, maxWidth: 480, textAlign: "center",
   fontFamily: "system-ui, sans-serif",
 };

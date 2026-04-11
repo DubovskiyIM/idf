@@ -47,7 +47,7 @@ export default function SubCollectionSection({ section, target, ctx }) {
         fontWeight: 600,
         textTransform: "uppercase",
         letterSpacing: "0.06em",
-        color: "#6b7280",
+        color: "var(--mantine-color-dimmed)",
         marginBottom: 12,
       }}>
         {title} ({items.length})
@@ -60,7 +60,7 @@ export default function SubCollectionSection({ section, target, ctx }) {
 
       {/* Список элементов */}
       {items.length === 0 && !canAdd && (
-        <div style={{ color: "#9ca3af", fontSize: 13, textAlign: "center", padding: 12 }}>
+        <div style={{ color: "var(--mantine-color-dimmed)", fontSize: 13, textAlign: "center", padding: 12 }}>
           {emptyLabel || "Пусто"}
         </div>
       )}
@@ -87,10 +87,10 @@ export default function SubCollectionSection({ section, target, ctx }) {
 function FallbackPaper({ children }) {
   return (
     <div style={{
-      background: "#fff",
+      background: "var(--mantine-color-default)",
       borderRadius: 12,
       padding: 20,
-      border: "1px solid #e5e7eb",
+      border: "1px solid var(--mantine-color-default-border)",
     }}>
       {children}
     </div>
@@ -118,8 +118,8 @@ function SubCollectionItem({ item, itemView, itemIntents, ctx, target }) {
       alignItems: "center",
       gap: 12,
       padding: "10px 14px",
-      background: "#f9fafb",
-      border: "1px solid #e5e7eb",
+      background: "var(--mantine-color-default-hover)",
+      border: "1px solid var(--mantine-color-default-border)",
       borderRadius: 8,
     }}>
       <div style={{ flex: 1, minWidth: 0 }}>
