@@ -52,6 +52,18 @@ export const PROJECTIONS = {
     },
     // M4 Step F: intents, которые отрендерятся как inline-setter внизу detail.
     footerIntents: ["set_deadline"],
+    // Voter identity selector: view-state «Голосовать как: X». Необходим,
+    // потому что voteGroup/vote-интенты ожидают participantId, а viewer в
+    // planning-демо — не привязан к participant'у. Рантайм рендерит
+    // <select> участников данного опроса (foreignKey=pollId), результат
+    // пишется в ctx.viewState[stateKey] и читается VoteGroup'ом.
+    // Открытая граница §23 манифеста — пока hardcode под planning.
+    voterSelector: {
+      source: "participants",
+      foreignKey: "pollId",
+      labelField: "name",
+      stateKey: "voterParticipantId",
+    },
   },
   // voting_matrix — требует canvas-архетип (матрица участники × опции),
   // который пока не реализован. kind: "canvas" → кристаллизатор v2 пропустит

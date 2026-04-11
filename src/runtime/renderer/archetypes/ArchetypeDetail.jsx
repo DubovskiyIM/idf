@@ -1,9 +1,10 @@
-import { useMemo } from "react";
+import { useMemo, useState, useCallback } from "react";
 import SlotRenderer from "../SlotRenderer.jsx";
 import OverlayManager, { useOverlayManager } from "../controls/OverlayManager.jsx";
 import SubCollectionSection from "./SubCollectionSection.jsx";
 import ProgressWidget from "./ProgressWidget.jsx";
 import InlineSetter from "./InlineSetter.jsx";
+import VoterSelector from "./VoterSelector.jsx";
 import { evalIntentCondition } from "../eval.js";
 import { getAdaptedComponent } from "../adapters/registry.js";
 import Icon from "../adapters/Icon.jsx";
@@ -14,7 +15,24 @@ import Icon from "../adapters/Icon.jsx";
  */
 export default function ArchetypeDetail({ slots, nav, ctx: parentCtx, projection }) {
   const { activeKey, activeContext, openOverlay, closeOverlay, overlayMap } = useOverlayManager(slots.overlay);
-  const ctx = useMemo(() => ({ ...parentCtx, openOverlay }), [parentCtx, openOverlay]);
+
+  // viewState — параметры запроса проекции (§5 манифеста v1.1+). Здесь
+  // используется voterSelector'ом (stateKey → participantId) и потенциально
+  // любым будущим view-filter в detail-архетипе.
+  const [viewState, setViewStateRaw] = useState({});
+  const setViewState = useCallback((key, val) => {
+    setViewStateRaw(prev => {
+      if (prev[key] === val) return prev;
+      return { ...prev, [key]: val };
+    });
+  }, []);
+
+  const ctx = useMemo(() => ({
+    ...parentCtx,
+    openOverlay,
+    viewState,
+    setViewState,
+  }), [parentCtx, openOverlay, viewState, setViewState]);
 
   // Role check (M3.5b): editEdge показываем только если viewer владеет
   // сущностью. Для User mainEntity — собственный профиль (target.id === viewer.id).
@@ -115,6 +133,13 @@ export default function ArchetypeDetail({ slots, nav, ctx: parentCtx, projection
           <PaperSection>
             <SlotRenderer item={slots.body} ctx={ctx} contextItem={target} />
           </PaperSection>
+
+          {/* Voter identity selector (закрытие §23 для planning-домена).
+              View-state «Голосовать как: X» — выбор participant'а, от имени
+              которого будут отправляться vote_*-интенты из voteGroup. */}
+          {slots.voterSelector && (
+            <VoterSelector spec={slots.voterSelector} target={target} ctx={ctx} />
+          )}
 
           {/* Sub-collection секции (M4 step B). Каждая секция — блок с заголовком,
               inline-композером добавления (если разрешён в текущей фазе) и

@@ -50,6 +50,11 @@ export function assignToSlotsDetail(INTENTS, projection, ONTOLOGY) {
     // (M4 step F). single-param intents как set_deadline рендерятся ниже
     // всех секций в виде «label: [input] Установить».
     footer: [],
+    // voterSelector — view-state селектор «Голосовать как: X». Передаётся
+    // as-is из projection, рантайм рендерит <select> участников над
+    // секциями. VoteGroup потом читает ctx.viewState[stateKey]. Открытая
+    // граница §23 — пока ограничен planning-доменом.
+    voterSelector: projection.voterSelector || null,
   };
 
   const mainEntity = projection.mainEntity;

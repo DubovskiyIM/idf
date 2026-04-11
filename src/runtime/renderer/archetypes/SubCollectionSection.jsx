@@ -172,6 +172,12 @@ function SubCollectionItem({ item, itemView, itemIntents, ctx, target }) {
  * кнопок (зелёный/жёлтый/красный). Фильтрует каждую опцию по её conditions
  * (если они различались между intents группы — кристаллизатор записал их
  * per-option, иначе null).
+ *
+ * Voter identity: vote-интенты ожидают `participantId` (см. §23 манифеста).
+ * VoteGroup читает его из ctx.viewState.voterParticipantId, заполняемого
+ * VoterSelector'ом поверх detail-проекции. Если participantId не выбран —
+ * кнопки дизэйблятся с tooltip'ом. `optionId` берётся из item.id (каждая
+ * VoteGroup рендерится внутри строки TimeOption).
  */
 function VoteGroup({ group, item, ctx, passConds }) {
   const options = group.options.filter(opt =>
@@ -179,29 +185,39 @@ function VoteGroup({ group, item, ctx, passConds }) {
   );
   if (options.length === 0) return null;
 
+  const participantId = ctx.viewState?.voterParticipantId || "";
+  const disabled = !participantId;
+  const disabledTitle = "Выберите участника в селекторе «Голосовать как»";
+
   return (
     <div style={{ display: "flex", gap: 4 }}>
       {options.map(opt => (
         <button
           key={opt.intentId}
-          onClick={() => ctx.exec(opt.intentId, { id: item.id })}
-          title={opt.label}
+          disabled={disabled}
+          onClick={() => ctx.exec(opt.intentId, { optionId: item.id, participantId })}
+          title={disabled ? disabledTitle : opt.label}
           style={{
             padding: "8px 14px",
             borderRadius: 6,
             border: "none",
             background: opt.style.bg,
             color: opt.style.color,
-            cursor: "pointer",
+            cursor: disabled ? "not-allowed" : "pointer",
             fontSize: 13,
             fontWeight: 600,
             display: "inline-flex",
             alignItems: "center",
             gap: 6,
             fontFamily: "inherit",
+            opacity: disabled ? 0.4 : 1,
           }}
-          onMouseEnter={e => e.currentTarget.style.background = opt.style.bgHover}
-          onMouseLeave={e => e.currentTarget.style.background = opt.style.bg}
+          onMouseEnter={e => {
+            if (!disabled) e.currentTarget.style.background = opt.style.bgHover;
+          }}
+          onMouseLeave={e => {
+            if (!disabled) e.currentTarget.style.background = opt.style.bg;
+          }}
         >
           {opt.style.icon && <Icon emoji={opt.style.icon} size={14} />}
           <span>{opt.label}</span>
