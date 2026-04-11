@@ -1,30 +1,55 @@
 /**
  * crystallizeV2: INTENTS + PROJECTIONS + ONTOLOGY → { projId: artifact }.
- * M2: поддерживает архетипы feed, catalog, detail.
+ * Поддерживает архетипы feed, catalog, detail, form.
  * Артефакт содержит nav.outgoing/incoming из deriveNavGraph.
+ *
+ * M3.4b: автогенерация синтетических edit-проекций (kind: form) из
+ * detail-проекций через generateEditProjections. §16 манифеста:
+ * «производные проекции».
  */
 
 import { assignToSlots } from "./assignToSlots.js";
 import { hashInputs } from "./hash.js";
 import { deriveNavGraph } from "./navGraph.js";
+import { generateEditProjections, buildFormSpec } from "./formGrouping.js";
 import { validateArtifact } from "../renderer/validation/validateArtifact.js";
 
-const SUPPORTED_ARCHETYPES = new Set(["feed", "catalog", "detail"]);
+const SUPPORTED_ARCHETYPES = new Set(["feed", "catalog", "detail", "form"]);
 
 export function crystallizeV2(INTENTS, PROJECTIONS, ONTOLOGY, domainId = "unknown") {
   const artifacts = {};
-  const inputsHash = hashInputs(INTENTS, PROJECTIONS, ONTOLOGY);
-  const generatedAt = Date.now();
-  const navGraph = deriveNavGraph(PROJECTIONS);
 
-  for (const [projId, proj] of Object.entries(PROJECTIONS)) {
+  // Автогенерация edit-проекций (М3.4b)
+  const editProjections = generateEditProjections(INTENTS, PROJECTIONS, ONTOLOGY);
+  const allProjections = { ...PROJECTIONS, ...editProjections };
+
+  const inputsHash = hashInputs(INTENTS, allProjections, ONTOLOGY);
+  const generatedAt = Date.now();
+  const navGraph = deriveNavGraph(allProjections);
+
+  for (const [projId, proj] of Object.entries(allProjections)) {
     const archetype = proj.kind || inferArchetype(proj);
     if (!SUPPORTED_ARCHETYPES.has(archetype)) {
-      // dashboard и canvas — M3+
+      // dashboard, canvas — будущие M
       continue;
     }
 
-    const slots = assignToSlots(INTENTS, { ...proj, id: projId }, ONTOLOGY);
+    let slots;
+    if (archetype === "form") {
+      // Form-архетип: не проходит через обычный assignToSlots.
+      // body — formSpec (fields для ArchetypeForm), остальные слоты пустые.
+      const formSpec = buildFormSpec(proj, INTENTS, ONTOLOGY, "self");
+      slots = {
+        header: [],
+        toolbar: [],
+        body: { type: "formBody", ...formSpec },
+        context: [],
+        fab: [],
+        overlay: [],
+      };
+    } else {
+      slots = assignToSlots(INTENTS, { ...proj, id: projId }, ONTOLOGY);
+    }
 
     // Прикрепить onItemClick к body-list, если есть исходящее item-click ребро.
     const outgoing = navGraph.edgesFrom(projId).filter(e => e.kind === "item-click");
@@ -52,6 +77,10 @@ export function crystallizeV2(INTENTS, PROJECTIONS, ONTOLOGY, domainId = "unknow
         outgoing: navGraph.edgesFrom(projId),
         incoming: navGraph.edgesTo(projId),
       },
+      // Для detail: ссылка на соответствующую edit-проекцию (если есть)
+      editProjection: editProjections[projId + "_edit"] ? (projId + "_edit") : null,
+      // Для form: ссылка на исходную detail
+      sourceProjection: proj.sourceProjection || null,
     };
 
     const validation = validateArtifact(artifact);

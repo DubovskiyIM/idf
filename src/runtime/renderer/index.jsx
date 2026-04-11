@@ -1,12 +1,14 @@
 import ArchetypeFeed from "./archetypes/ArchetypeFeed.jsx";
 import ArchetypeCatalog from "./archetypes/ArchetypeCatalog.jsx";
 import ArchetypeDetail from "./archetypes/ArchetypeDetail.jsx";
+import ArchetypeForm from "./archetypes/ArchetypeForm.jsx";
 import { validateArtifact } from "./validation/validateArtifact.js";
 
 const ARCHETYPES = {
   feed: ArchetypeFeed,
   catalog: ArchetypeCatalog,
   detail: ArchetypeDetail,
+  form: ArchetypeForm,
 };
 
 export default function ProjectionRendererV2({
@@ -19,6 +21,7 @@ export default function ProjectionRendererV2({
   viewerContext,
   routeParams,
   navigate,
+  back,
   theme,
 }) {
   if (!artifact) {
@@ -69,6 +72,7 @@ export default function ProjectionRendererV2({
     viewerContext,
     routeParams,
     navigate,
+    back,
   };
 
   return <Archetype slots={artifact.slots} nav={artifact.nav} ctx={ctx} projection={projection} />;

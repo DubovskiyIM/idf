@@ -144,6 +144,7 @@ export default function MessengerV2UI({ world, exec, execBatch }) {
             viewerContext={viewerContext}
             routeParams={current.params}
             navigate={navigate}
+            back={back}
           />
         ) : (
           <div style={{ padding: 40, color: "#9ca3af" }}>

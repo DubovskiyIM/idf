@@ -3,13 +3,14 @@
  * Возвращает { ok: boolean, errors: string[] }.
  */
 
-const KNOWN_ARCHETYPES = ["feed", "catalog", "detail", "dashboard", "canvas"];
+const KNOWN_ARCHETYPES = ["feed", "catalog", "detail", "dashboard", "canvas", "form"];
 const REQUIRED_SLOTS_BY_ARCHETYPE = {
   feed:      ["body", "composer"],
   catalog:   ["body"],
   detail:    ["body"],
   dashboard: ["body"],
   canvas:    ["body"],
+  form:      ["body"],
 };
 const KNOWN_PARAMETER_TYPES = [
   "text", "textarea", "datetime", "url", "email", "tel",

@@ -6,9 +6,26 @@ import OverlayManager, { useOverlayManager } from "../controls/OverlayManager.js
  * Detail-архетип: показывает одну сущность по mainEntity+idParam из routeParams.
  * Body рендерится с contextItem = target — все bind'ы резолвятся без префикса.
  */
-export default function ArchetypeDetail({ slots, ctx: parentCtx, projection }) {
+export default function ArchetypeDetail({ slots, nav, ctx: parentCtx, projection }) {
   const { activeKey, activeContext, openOverlay, closeOverlay, overlayMap } = useOverlayManager(slots.overlay);
   const ctx = useMemo(() => ({ ...parentCtx, openOverlay }), [parentCtx, openOverlay]);
+
+  // Edit-action edge: если в nav есть исходящее ребро kind:"edit-action",
+  // показываем кнопку «Редактировать» в header, которая навигирует в form-проекцию.
+  const editEdge = (nav?.outgoing || []).find(e => e.kind === "edit-action");
+  const onEditClick = () => {
+    if (!editEdge || !parentCtx.navigate) return;
+    // params могут содержать "routeParams.userId" — разрешить
+    const resolvedParams = {};
+    for (const [k, v] of Object.entries(editEdge.params || {})) {
+      if (typeof v === "string" && v.startsWith("routeParams.")) {
+        resolvedParams[k] = parentCtx.routeParams?.[v.slice("routeParams.".length)];
+      } else {
+        resolvedParams[k] = v;
+      }
+    }
+    parentCtx.navigate(editEdge.to, resolvedParams);
+  };
 
   const target = useMemo(() => {
     const mainEntity = projection?.mainEntity;
@@ -34,12 +51,28 @@ export default function ArchetypeDetail({ slots, ctx: parentCtx, projection }) {
       display: "flex", flexDirection: "column", height: "100%",
       background: "#f9fafb",
     }}>
-      {slots.header?.length > 0 && (
+      {(slots.header?.length > 0 || editEdge) && (
         <div style={{
           display: "flex", alignItems: "center", gap: 12,
           padding: "12px 16px", background: "#fff", borderBottom: "1px solid #e5e7eb",
         }}>
           <SlotRenderer items={slots.header} ctx={ctx} contextItem={target} />
+          <div style={{ flex: 1 }} />
+          {editEdge && (
+            <button
+              onClick={onEditClick}
+              title="Редактировать"
+              style={{
+                padding: "6px 14px", borderRadius: 6, border: "1px solid #6366f1",
+                background: "#eef2ff", color: "#6366f1", fontSize: 13,
+                fontWeight: 600, cursor: "pointer",
+                display: "inline-flex", alignItems: "center", gap: 6,
+              }}
+            >
+              <span>✎</span>
+              <span>Редактировать</span>
+            </button>
+          )}
         </div>
       )}
 

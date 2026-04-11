@@ -66,6 +66,28 @@ export function deriveNavGraph(PROJECTIONS) {
     }
   }
 
+  // Detail → form (edit-action): если есть соответствующая edit-проекция для detail,
+  // создаётся ребро detail --edit-action--> form. Используется ArchetypeDetail
+  // для показа кнопки «Редактировать».
+  for (const [fromId, from] of Object.entries(PROJECTIONS)) {
+    if (from.kind !== "detail") continue;
+    const editId = fromId + "_edit";
+    const editProj = PROJECTIONS[editId];
+    if (!editProj || editProj.kind !== "form") continue;
+
+    const idParam = from.idParam;
+    if (!idParam) continue;
+
+    edges.push({
+      from: fromId,
+      to: editId,
+      kind: "edit-action",
+      itemEntity: from.mainEntity,
+      // Form-проекция получает тот же route params что и detail
+      params: { [idParam]: `routeParams.${idParam}` },
+    });
+  }
+
   return {
     edges,
     edgesFrom(projId) {
