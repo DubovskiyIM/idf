@@ -13,17 +13,19 @@ const INTENTS = {
     },
     parameters: [{ name: "name", type: "text", required: true }],
   },
-  delete_account: {
-    name: "Удалить аккаунт",
+  // delete_account в реальном мессенджере в UNSUPPORTED_INTENTS_M2 —
+  // используем синтетический intent для теста irreversibility.
+  reset_profile: {
+    name: "Сбросить профиль",
     particles: {
       entities: ["user: User"],
       witnesses: ["user.name"],
       confirmation: "form",
       conditions: [],
-      effects: [{ α: "remove", target: "users" }],
+      effects: [{ α: "replace", target: "user.name" }],
     },
     irreversibility: "high",
-    parameters: [],
+    parameters: [{ name: "confirm", type: "text", required: true }],
   },
   block_contact: {
     name: "Заблокировать",
@@ -72,7 +74,7 @@ describe("assignToSlotsDetail", () => {
 
   it("irreversibility:high → overlay confirmDialog", () => {
     const slots = assignToSlotsDetail(INTENTS, userProfile, ONTOLOGY);
-    const del = slots.overlay.find(o => o.triggerIntentId === "delete_account");
+    const del = slots.overlay.find(o => o.triggerIntentId === "reset_profile");
     expect(del).toBeDefined();
     expect(del.type).toBe("confirmDialog");
   });

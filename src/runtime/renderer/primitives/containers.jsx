@@ -129,18 +129,34 @@ export function Card({ node, ctx, item }) {
 }
 
 function ItemIntentButton({ spec, ctx, item }) {
+  const label = spec.label || spec.intentId;
+  const icon = spec.icon;
+  const LABEL_MAX = 14;
+  const showLabel = label.length <= LABEL_MAX;
+
   return (
     <button
       onClick={(e) => {
         e.stopPropagation();
         fireItemIntent(spec, ctx, item);
       }}
+      title={label}
       style={{
-        padding: "3px 8px", borderRadius: 4, border: "1px solid #d1d5db",
-        background: "#fff", color: "#6b7280", fontSize: 10, cursor: "pointer",
+        padding: showLabel ? "4px 8px" : "6px 8px",
+        borderRadius: 6,
+        border: "1px solid #e5e7eb",
+        background: "#fff",
+        color: "#4b5563",
+        fontSize: 11,
+        cursor: "pointer",
+        display: "inline-flex",
+        alignItems: "center",
+        gap: 4,
+        lineHeight: 1,
       }}
     >
-      {spec.label || spec.intentId}
+      {icon && <span style={{ fontSize: 13 }}>{icon}</span>}
+      {showLabel && <span>{label}</span>}
     </button>
   );
 }

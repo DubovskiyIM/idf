@@ -22,15 +22,35 @@ export default function IntentButton({ spec, ctx, item }) {
     ctx.exec(spec.intentId, { ...params, id: item?.id });
   };
 
+  // Правило иконирования: при длинных именах (>20 символов) показываем
+  // только иконку + tooltip. При коротких — icon + label.
+  const label = spec.label || spec.intentId;
+  const icon = spec.icon;
+  const LABEL_MAX = 20;
+  const showLabel = label.length <= LABEL_MAX;
+
   return (
-    <button onClick={handleClick} style={{
-      padding: "6px 12px", borderRadius: 6, border: "1px solid #d1d5db",
-      background: "#fff", color: "#1a1a2e", fontSize: 13, cursor: "pointer",
-      fontWeight: 500, fontFamily: "system-ui, sans-serif",
-      display: "inline-flex", alignItems: "center", gap: 4,
-    }}>
-      {spec.icon && <span>{spec.icon}</span>}
-      {spec.label || spec.intentId}
+    <button
+      onClick={handleClick}
+      title={label}
+      style={{
+        padding: showLabel ? "6px 12px" : "6px 10px",
+        borderRadius: 6,
+        border: "1px solid #d1d5db",
+        background: "#fff",
+        color: "#1a1a2e",
+        fontSize: 13,
+        cursor: "pointer",
+        fontWeight: 500,
+        fontFamily: "system-ui, sans-serif",
+        display: "inline-flex",
+        alignItems: "center",
+        gap: 6,
+        lineHeight: 1,
+      }}
+    >
+      {icon && <span style={{ fontSize: 15 }}>{icon}</span>}
+      {showLabel && <span>{label}</span>}
     </button>
   );
 }

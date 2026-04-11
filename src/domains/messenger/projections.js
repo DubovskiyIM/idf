@@ -5,7 +5,10 @@ export const PROJECTIONS = {
     query: "все беседы текущего пользователя, сортировка по lastMessageAt",
     entities: ["Conversation", "Participant"],
     mainEntity: "Conversation",
-    // Фильтр: показывать только беседы, в которых viewer является участником.
+    // Route scope: Participant доступен для per-item toggle'ов (mute, pin,
+    // archive — моё участие в беседе). Admin-интенты на Participant
+    // (promote_to_admin, ban_user…) всё равно отсекаются blacklist'ом.
+    routeEntities: ["Participant"],
     filter: "(world.participants || []).some(p => p.conversationId === id && p.userId === (viewer && viewer.id))",
     sort: "-lastMessageAt",
     witnesses: ["title", "lastMessage", "unreadCount", "status"],
@@ -16,6 +19,11 @@ export const PROJECTIONS = {
     query: "сообщения одной беседы, пагинация",
     entities: ["Message", "Conversation", "Participant"],
     mainEntity: "Message",
+    // Route scope: текущий чат предоставляет Conversation и Participant
+    // (моё участие в беседе). Это даёт clear_history и mute/unmute доступ
+    // к правильному контексту. Админские интенты на Participant отсекаются
+    // blacklist'ом в assignToSlotsShared.js.
+    routeEntities: ["Conversation", "Participant"],
     witnesses: ["content", "sender.name", "createdAt", "status", "replyTo"],
   },
   contact_list: {
@@ -24,6 +32,10 @@ export const PROJECTIONS = {
     query: "контакты + входящие запросы",
     entities: ["Contact", "User"],
     mainEntity: "Contact",
+    // Route scope: только Contact. User доступен для чтения (имя/аватар
+    // отображаются), но действия на User (update_profile, set_avatar) в
+    // contact_list не место — они живут в user_profile.
+    routeEntities: [],
     filter: "userId === (viewer && viewer.id)",
     witnesses: ["name", "avatar", "status", "contact.status"],
   },
@@ -34,6 +46,7 @@ export const PROJECTIONS = {
     entities: ["User"],
     mainEntity: "User",
     idParam: "userId",
+    routeEntities: [],
     witnesses: ["name", "email", "avatar", "status"],
   },
 };

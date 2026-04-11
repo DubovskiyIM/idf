@@ -9,33 +9,19 @@ import { inferControlType } from "./inferControlType.js";
 import { wrapByConfirmation } from "./wrapByConfirmation.js";
 import { assignToSlotsCatalog } from "./assignToSlotsCatalog.js";
 import { assignToSlotsDetail } from "./assignToSlotsDetail.js";
+import {
+  needsCustomCapture,
+  needsEntityPicker,
+  appliesToProjection,
+  isUnsupportedInM2,
+} from "./assignToSlotsShared.js";
+import { getIntentIcon } from "./getIntentIcon.js";
 
 export function assignToSlots(INTENTS, projection, ONTOLOGY) {
   const kind = projection.kind;
   if (kind === "catalog") return assignToSlotsCatalog(INTENTS, projection, ONTOLOGY);
   if (kind === "detail") return assignToSlotsDetail(INTENTS, projection, ONTOLOGY);
   return assignToSlotsFeed(INTENTS, projection, ONTOLOGY);
-}
-
-// Witnesses, которые обозначают *результат* специализированного захвата
-// (голосовая запись, стикер, GIF, геолокация, опрос). Такие интенты требуют
-// кастомных виджетов, которых в M1 нет — пропускаем целиком, не пытаясь
-// строить абстрактную форму из их частиц.
-const CAPTURE_WITNESSES = new Set([
-  "recording_duration",
-  "sticker_id", "sticker_pack", "sticker_image",
-  "gif_url",
-  "latitude", "longitude",
-  "video_duration", "video_size",
-  "question", "options",
-  "poll_results",
-  "wallpaper_preview", "album_cover",
-  "contacts_file",
-]);
-
-function needsCustomCapture(intent) {
-  const witnesses = intent.particles?.witnesses || [];
-  return witnesses.some(w => CAPTURE_WITNESSES.has(w));
 }
 
 function assignToSlotsFeed(INTENTS, projection, ONTOLOGY) {
@@ -65,11 +51,25 @@ function assignToSlotsFeed(INTENTS, projection, ONTOLOGY) {
     if (antagonistPairsHandled.has(id)) continue;
     const partnerId = intent.antagonist;
     if (partnerId && INTENTS[partnerId] && !antagonistPairsHandled.has(partnerId)) {
+      // Per-item антагонистические пары (pin_message/unpin_message, где оба
+      // интента действуют на конкретный экземпляр mainEntity) не становятся
+      // header-toggle — они должны быть per-item кнопками под каждым элементом.
+      const isPerItemPair =
+        isPerItemIntent(intent, projection) ||
+        isPerItemIntent(INTENTS[partnerId], projection);
+      if (isPerItemPair) continue;
+
       const toggle = {
         type: "toggle",
         intents: [id, partnerId],
         state: findStateField(intent),
         label: intent.name,
+        // Иконки для двух состояний: когда state=false → active intent = id,
+        // когда state=true → active intent = partnerId
+        icon: {
+          false: getIntentIcon(id, intent),
+          true: getIntentIcon(partnerId, INTENTS[partnerId]),
+        },
       };
       toggles.push(toggle);
       antagonistPairsHandled.add(id);
@@ -79,13 +79,17 @@ function assignToSlotsFeed(INTENTS, projection, ONTOLOGY) {
 
   for (const [id, intent] of Object.entries(INTENTS)) {
     if (antagonistPairsHandled.has(id)) continue;
+    if (isUnsupportedInM2(id)) continue;
 
     // Применимость к проекции
     if (!appliesToProjection(intent, projection)) continue;
 
-    // M1: пропускаем интенты, требующие кастомных виджетов захвата.
-    // Голосовые, стикеры, GIF, геолокация, опросы — всё это придёт в M2+.
+    // Пропускаем интенты, требующие кастомных виджетов захвата.
     if (needsCustomCapture(intent)) continue;
+
+    // Пропускаем creator-интенты, требующие entity-picker'а
+    // (create_direct_chat с User, forward_message с target-Conversation).
+    if (needsEntityPicker(intent, projection)) continue;
 
     const parameters = inferParameters(intent, ONTOLOGY).map(p => ({
       ...p,
@@ -125,6 +129,7 @@ function assignToSlotsFeed(INTENTS, projection, ONTOLOGY) {
           opens: "overlay",
           overlayKey: wrapped.overlay.key,
           label: intent.name,
+          icon: getIntentIcon(id, intent),
           conditions: intent.particles.conditions || [],
         });
       } else {
@@ -138,6 +143,7 @@ function assignToSlotsFeed(INTENTS, projection, ONTOLOGY) {
       addItemIntent({
         intentId: id,
         label: intent.name,
+        icon: getIntentIcon(id, intent),
         conditions: intent.particles.conditions || [],
       });
       continue;
@@ -147,13 +153,21 @@ function assignToSlotsFeed(INTENTS, projection, ONTOLOGY) {
     slots.toolbar.push(wrapped);
   }
 
-  // Toggles → header (ограничиваем первыми 3, остальные — overflow)
+  // Toggles → header. Фильтруем пары, попавшие в blacklist, и те, чья
+  // главная entity не в route scope проекции (например ban/unban — Participant
+  // не в routeEntities для chat_view).
+  const eligibleToggles = toggles.filter(t => {
+    if (t.intents.some(id => isUnsupportedInM2(id))) return false;
+    const first = INTENTS[t.intents[0]];
+    if (!first) return false;
+    return appliesToProjection(first, projection);
+  });
   const MAX_HEADER_TOGGLES = 3;
-  if (toggles.length > MAX_HEADER_TOGGLES) {
-    slots.header.push(...toggles.slice(0, MAX_HEADER_TOGGLES));
-    slots.toolbar.push({ type: "overflow", children: toggles.slice(MAX_HEADER_TOGGLES) });
+  if (eligibleToggles.length > MAX_HEADER_TOGGLES) {
+    slots.header.push(...eligibleToggles.slice(0, MAX_HEADER_TOGGLES));
+    slots.toolbar.push({ type: "overflow", children: eligibleToggles.slice(MAX_HEADER_TOGGLES) });
   } else {
-    slots.header.push(...toggles);
+    slots.header.push(...eligibleToggles);
   }
 
   // Собрать item.intents в body
@@ -170,21 +184,6 @@ function assignToSlotsFeed(INTENTS, projection, ONTOLOGY) {
   return slots;
 }
 
-function appliesToProjection(intent, projection) {
-  const projEntities = new Set(projection.entities || []);
-  const intentEntities = (intent.particles?.entities || []).map(e => e.split(":").pop().trim().replace(/\[\]$/, ""));
-  if (intentEntities.some(e => projEntities.has(e))) return true;
-  const witnesses = intent.particles?.witnesses || [];
-  for (const w of witnesses) {
-    const base = w.split(".")[0];
-    if (projEntities.has(base) || projEntities.has(capitalize(base))) return true;
-  }
-  // Projection-level utility: нет entity-привязки и нет точечных witnesses →
-  // намерение принадлежит текущей проекции как общая утилита (поиск, фильтры, настройки).
-  const hasDottedWitness = witnesses.some(w => w.includes("."));
-  if (intentEntities.length === 0 && !hasDottedWitness) return true;
-  return false;
-}
 
 function isPerItemIntent(intent, projection) {
   // Per-item: намерение применяется к единичному экземпляру главной сущности проекции.
@@ -255,12 +254,18 @@ function buildComposer(intentId, intent, parameters, INTENTS) {
   const primaryParam = parameters[0]?.name || "text";
   // attach-намерения: остальные creates:Message с confirmation:"file"
   // (голосовые/стикеры/GIF пропускаем — для них нужны кастомные виджеты захвата).
+  // UNSUPPORTED_INTENTS_M2 сюда тоже фильтрует (send_image и пр. в blacklist).
   const attachments = [];
   for (const [id, i] of Object.entries(INTENTS)) {
     if (id === intentId) continue;
+    if (isUnsupportedInM2(id)) continue;
     if (needsCustomCapture(i)) continue;
     if (i.creates === "Message" && i.particles?.confirmation === "file") {
-      attachments.push(id);
+      attachments.push({
+        intentId: id,
+        label: i.name,
+        icon: getIntentIcon(id, i),
+      });
     }
   }
   return {

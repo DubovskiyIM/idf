@@ -5,36 +5,13 @@
 import { inferParameters } from "./inferParameters.js";
 import { inferControlType } from "./inferControlType.js";
 import { wrapByConfirmation } from "./wrapByConfirmation.js";
-
-const CAPTURE_WITNESSES = new Set([
-  "recording_duration",
-  "sticker_id", "sticker_pack", "sticker_image",
-  "gif_url",
-  "latitude", "longitude",
-  "video_duration", "video_size",
-  "question", "options",
-  "poll_results",
-  "wallpaper_preview", "album_cover",
-  "contacts_file",
-]);
-
-function needsCustomCapture(intent) {
-  const witnesses = intent.particles?.witnesses || [];
-  return witnesses.some(w => CAPTURE_WITNESSES.has(w));
-}
-
-/**
- * Creator-интент нуждается в entity-picker'е, если в его entities есть
- * сущность, отличная от той, что он создаёт. Пример: create_direct_chat
- * создаёт Conversation, но требует user: User — нужно выбрать пользователя.
- * В M2 entityPicker ещё нет — такие интенты пропускаются.
- */
-function needsEntityPicker(intent) {
-  if (!intent.creates) return false;
-  const entities = (intent.particles?.entities || [])
-    .map(e => e.split(":").pop().trim().replace(/\[\]$/, ""));
-  return entities.some(e => e !== intent.creates);
-}
+import {
+  needsCustomCapture,
+  needsEntityPicker,
+  appliesToProjection,
+  isUnsupportedInM2,
+} from "./assignToSlotsShared.js";
+import { getIntentIcon } from "./getIntentIcon.js";
 
 export function assignToSlotsCatalog(INTENTS, projection, ONTOLOGY) {
   const slots = {
@@ -54,10 +31,23 @@ export function assignToSlotsCatalog(INTENTS, projection, ONTOLOGY) {
     itemIntents.push(spec);
   };
 
+  const mainEntity = projection.mainEntity;
+
   for (const [id, intent] of Object.entries(INTENTS)) {
+    if (isUnsupportedInM2(id)) continue;
     if (!appliesToProjection(intent, projection)) continue;
     if (needsCustomCapture(intent)) continue;
-    if (needsEntityPicker(intent)) continue;
+    if (needsEntityPicker(intent, projection)) continue;
+
+    // Catalog-специфика: интент должен либо касаться mainEntity напрямую,
+    // либо быть pure projection-level utility (поиск/фильтры).
+    // Иначе это sub-entity операция типа mute на Participant — бессмысленная
+    // в catalog-toolbar без per-item toggle UX (M3).
+    const intentEntities = (intent.particles?.entities || [])
+      .map(e => e.split(":").pop().trim().replace(/\[\]$/, ""));
+    const touchesMainEntity = mainEntity && intentEntities.includes(mainEntity);
+    const isPureUtility = intentEntities.length === 0;
+    if (!touchesMainEntity && !isPureUtility) continue;
 
     const parameters = inferParameters(intent, ONTOLOGY).map(p => ({
       ...p,
@@ -96,6 +86,7 @@ export function assignToSlotsCatalog(INTENTS, projection, ONTOLOGY) {
         opens: "overlay",
         overlayKey: wrapped.overlay.key,
         label: intent.name,
+        icon: getIntentIcon(id, intent),
         conditions: intent.particles.conditions || [],
       });
       continue;
@@ -106,6 +97,7 @@ export function assignToSlotsCatalog(INTENTS, projection, ONTOLOGY) {
       addItemIntent({
         intentId: id,
         label: intent.name,
+        icon: getIntentIcon(id, intent),
         conditions: intent.particles.conditions || [],
       });
       continue;
@@ -134,21 +126,6 @@ export function assignToSlotsCatalog(INTENTS, projection, ONTOLOGY) {
   }
 
   return slots;
-}
-
-function appliesToProjection(intent, projection) {
-  const projEntities = new Set(projection.entities || []);
-  const intentEntities = (intent.particles?.entities || [])
-    .map(e => e.split(":").pop().trim().replace(/\[\]$/, ""));
-  if (intentEntities.some(e => projEntities.has(e))) return true;
-  const witnesses = intent.particles?.witnesses || [];
-  for (const w of witnesses) {
-    const base = w.split(".")[0];
-    if (projEntities.has(base) || projEntities.has(capitalize(base))) return true;
-  }
-  const hasDottedWitness = witnesses.some(w => w.includes("."));
-  if (intentEntities.length === 0 && !hasDottedWitness) return true;
-  return false;
 }
 
 function isPerItemIntent(intent, projection) {

@@ -5,22 +5,15 @@
 import { inferParameters } from "./inferParameters.js";
 import { inferControlType } from "./inferControlType.js";
 import { wrapByConfirmation } from "./wrapByConfirmation.js";
-
-const CAPTURE_WITNESSES = new Set([
-  "recording_duration", "sticker_id", "sticker_pack", "sticker_image",
-  "gif_url", "latitude", "longitude",
-  "video_duration", "video_size", "question", "options",
-  "poll_results", "wallpaper_preview", "album_cover", "contacts_file",
-]);
+import {
+  needsCustomCapture,
+  needsEntityPicker,
+  isUnsupportedInM2,
+} from "./assignToSlotsShared.js";
 
 const SYSTEM_DETAIL_FIELDS = new Set([
   "id", "createdAt", "updatedAt", "deletedAt", "deletedFor",
 ]);
-
-function needsCustomCapture(intent) {
-  const witnesses = intent.particles?.witnesses || [];
-  return witnesses.some(w => CAPTURE_WITNESSES.has(w));
-}
 
 export function assignToSlotsDetail(INTENTS, projection, ONTOLOGY) {
   const slots = {
@@ -36,8 +29,17 @@ export function assignToSlotsDetail(INTENTS, projection, ONTOLOGY) {
   if (!mainEntity) return slots;
 
   for (const [id, intent] of Object.entries(INTENTS)) {
+    if (isUnsupportedInM2(id)) continue;
     if (!appliesToMainEntity(intent, mainEntity)) continue;
     if (needsCustomCapture(intent)) continue;
+    if (needsEntityPicker(intent, projection)) continue;
+
+    // Read-only intents без эффектов не применяются к detail
+    const hasEffects = (intent.particles?.effects || []).length > 0;
+    if (!hasEffects) continue;
+
+    // Creator-интент не применяется к detail проекции чужой сущности
+    if (intent.creates && intent.creates !== mainEntity) continue;
 
     const parameters = inferParameters(intent, ONTOLOGY).map(p => ({
       ...p,

@@ -7,11 +7,13 @@
  *  - composite { trigger, overlay } (для confirmation: "form" или irreversibility)
  */
 
+import { getIntentIcon } from "./getIntentIcon.js";
+
 function makeOverlayKey(intentId) {
   return `overlay_${intentId}`;
 }
 
-export function wrapByConfirmation(intent, intentId, parameters) {
+export function wrapByConfirmation(intent, intentId, parameters, iconRules = []) {
   const confirmation = intent.particles?.confirmation;
   const irreversibility = intent.irreversibility;
   const antagonist = intent.antagonist;
@@ -19,11 +21,12 @@ export function wrapByConfirmation(intent, intentId, parameters) {
   // confirmation: "auto" — нет UI
   if (confirmation === "auto") return null;
 
-  // Базовый intentButton
+  // Базовый intentButton с иконкой
   const baseButton = {
     type: "intentButton",
     intentId,
     label: intent.name,
+    icon: getIntentIcon(intentId, intent, iconRules),
   };
   if (antagonist) baseButton.antagonist = antagonist;
 
