@@ -9,7 +9,8 @@
     "server": "node server/index.js",
     "calendar": "node external-calendar/index.js",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "agent-smoke": "node scripts/agent-smoke.mjs"
   },
   "dependencies": {
     "@mantine/core": "^9.0.1",

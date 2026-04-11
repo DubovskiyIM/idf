@@ -55,6 +55,20 @@ function makeParameter(name, ontology, required = true) {
   return param;
 }
 
+/**
+ * Парсит particles.entities формата ["name: Entity", "name2: Entity2"] →
+ * [{ varName: "name", entity: "Entity" }, ...]. Нормализует creates-суффиксы.
+ */
+function parseParticleEntities(particleEntities) {
+  return (particleEntities || [])
+    .map(s => {
+      const match = String(s).match(/^(\w+)\s*:\s*(\w+)/);
+      if (!match) return null;
+      return { varName: match[1], entity: match[2] };
+    })
+    .filter(Boolean);
+}
+
 function inferParameters(intent, ontology) {
   // 1. Явный parameters — победитель
   if (Array.isArray(intent.parameters) && intent.parameters.length > 0) {
@@ -86,11 +100,30 @@ function inferParameters(intent, ontology) {
     for (const field of fields) {
       if (SYSTEM_FIELDS.has(field)) continue;
       // Foreign keys НЕ исключаем из agent-параметров — агент их передаёт.
-      // (В отличие от клиентского inferParameters, где fk skip'ятся,
-      // потому что рантайм их берёт из routeParams.)
       if (seen.has(field)) continue;
       seen.add(field);
       params.push(makeParameter(field, ontology));
+    }
+  }
+
+  // 4. particles.entities — для non-creator intent'ов генерируем id-параметры.
+  // Intent "cancel_booking" имеет entities ["booking: Booking"], агенту нужен
+  // параметр `bookingId` (entityRef Booking). Обычно applicable когда:
+  //   - intent не creator (creates == null) — create_booking не дублирует params
+  //   - entity ссылка существует в ontology
+  if (!createsNorm) {
+    const particleEntities = parseParticleEntities(intent.particles?.entities);
+    for (const { varName, entity } of particleEntities) {
+      if (!ontology?.entities?.[entity]) continue;
+      const paramName = varName + "Id";
+      if (seen.has(paramName)) continue;
+      seen.add(paramName);
+      params.push({
+        name: paramName,
+        type: "entityRef",
+        entity,
+        required: true
+      });
     }
   }
 
