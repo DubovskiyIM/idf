@@ -16,10 +16,12 @@ export const ONTOLOGY = {
     Booking: {
       fields: ["id", "clientId", "specialistId", "serviceId", "slotId", "status", "price", "createdAt"],
       statuses: ["draft", "confirmed", "completed", "cancelled", "no_show"],
+      ownerField: "clientId",
       type: "internal"
     },
     Review: {
-      fields: ["id", "bookingId", "specialistId", "serviceName", "rating", "text", "response", "createdAt"],
+      fields: ["id", "bookingId", "specialistId", "serviceName", "authorId", "rating", "text", "response", "createdAt"],
+      ownerField: "authorId",
       type: "internal"
     }
   },
@@ -63,11 +65,21 @@ export const ONTOLOGY = {
     },
     agent: {
       label: "Агент (API)",
-      canExecute: ["select_service", "select_slot", "confirm_booking", "cancel_booking"],
+      canExecute: [
+        "create_booking",
+        "cancel_booking",
+        "reschedule_booking",
+        "repeat_booking",
+        "leave_review",
+        "edit_review",
+        "delete_review"
+      ],
       visibleFields: {
-        TimeSlot: ["id", "date", "startTime", "endTime", "status"],
-        Booking: ["id", "slotId", "status", "price"],
-        Review: ["rating"],
+        Specialist: ["id", "name", "specialization"],
+        Service:    ["id", "specialistId", "name", "duration", "price", "active"],
+        TimeSlot:   ["id", "specialistId", "date", "startTime", "endTime", "status"],
+        Booking:    ["id", "specialistId", "serviceId", "slotId", "status", "price", "createdAt"],
+        Review:     ["id", "bookingId", "specialistId", "rating", "text", "response", "createdAt"]
       },
       statusMapping: { held: "booked", blocked: "unavailable" }
     }
