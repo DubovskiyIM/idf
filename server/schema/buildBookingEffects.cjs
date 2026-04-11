@@ -38,9 +38,11 @@ function buildBookingEffects(intentId, params, viewer, world) {
     case "create_booking": {
       const specialist = (world.specialists || []).find(s => s.id === params.specialistId);
       const service = (world.services || []).find(s => s.id === params.serviceId);
-      const slot = (world.timeslots || []).find(s => s.id === params.slotId);
+      const slot = (world.slots || world.timeslots || []).find(s => s.id === params.slotId);
       if (!specialist || !service || !slot) return null;
-      if (slot.status !== "free") return null;
+      // Pre-check slot.status === "free" NOT here — server validator
+      // отвергнет эффект через condition "slot.status = 'free'" и вернёт
+      // 409 с failedCondition. Это демонстрирует proposed→rejected lifecycle.
 
       const bookingId = `book_${now}_${Math.random().toString(36).slice(2, 6)}`;
       return [
@@ -64,7 +66,7 @@ function buildBookingEffects(intentId, params, viewer, world) {
         }),
         makeEffect(intentId, {
           alpha: "replace",
-          target: "slot.status",
+          target: "slots.status",
           scope: "shared",
           value: "booked",
           context: { id: slot.id },
@@ -88,7 +90,7 @@ function buildBookingEffects(intentId, params, viewer, world) {
         }),
         makeEffect(intentId, {
           alpha: "replace",
-          target: "slot.status",
+          target: "slots.status",
           scope: "shared",
           value: "free",
           context: { id: booking.slotId },
@@ -169,13 +171,14 @@ function buildBookingEffects(intentId, params, viewer, world) {
       const booking = (world.bookings || []).find(b => b.id === params.bookingId);
       if (!booking) return null;
       if (booking.status !== "confirmed") return null;
-      const oldSlot = (world.timeslots || []).find(s => s.id === booking.slotId);
-      const newSlot = (world.timeslots || []).find(s => s.id === params.newSlotId);
+      const allSlots = world.slots || world.timeslots || [];
+      const oldSlot = allSlots.find(s => s.id === booking.slotId);
+      const newSlot = allSlots.find(s => s.id === params.newSlotId);
       if (!oldSlot || !newSlot) return null;
       if (newSlot.status !== "free") return null;
       return [
         makeEffect(intentId, {
-          alpha: "replace", target: "slot.status", scope: "shared",
+          alpha: "replace", target: "slots.status", scope: "shared",
           value: "free", context: { id: oldSlot.id },
           desc: `Slot ${oldSlot.id} → free (reschedule)`
         }),
@@ -185,7 +188,7 @@ function buildBookingEffects(intentId, params, viewer, world) {
           desc: `Бронь ${booking.id} перенесена на ${newSlot.date}`
         }),
         makeEffect(intentId, {
-          alpha: "replace", target: "slot.status", scope: "shared",
+          alpha: "replace", target: "slots.status", scope: "shared",
           value: "booked", context: { id: newSlot.id },
           desc: `Slot ${newSlot.id} → booked`
         })

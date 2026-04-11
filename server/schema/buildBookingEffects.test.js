@@ -37,19 +37,22 @@ describe("buildBookingEffects :: create_booking", () => {
     expect(addBooking.context.status).toBe("confirmed");
 
     expect(replaceSlot.alpha).toBe("replace");
-    expect(replaceSlot.target).toBe("slot.status");
+    expect(replaceSlot.target).toBe("slots.status");
     expect(replaceSlot.value).toBe("booked");
     expect(replaceSlot.context.id).toBe("slot_free");
   });
 
-  it("возвращает null если slot не свободен", () => {
+  it("строит эффекты даже для занятого slot (валидатор отвергнет на уровне condition)", () => {
+    // Отдаём эффекты наверх, чтобы серверный validator отверг их через
+    // condition "slot.status = 'free'" и вернул 409 с failedCondition.
+    // Это демонстрирует proposed→rejected lifecycle для агент-демо.
     const effects = buildBookingEffects("create_booking", {
       serviceId: "svc_1",
       specialistId: "spec_a",
       slotId: "slot_booked",
       price: 2000
     }, viewer, world);
-    expect(effects).toBeNull();
+    expect(effects).toHaveLength(2);
   });
 
   it("возвращает null если slot не существует", () => {
@@ -86,7 +89,7 @@ describe("buildBookingEffects :: cancel_booking", () => {
     expect(effects[0].context.id).toBe("book_mine");
 
     expect(effects[1].alpha).toBe("replace");
-    expect(effects[1].target).toBe("slot.status");
+    expect(effects[1].target).toBe("slots.status");
     expect(effects[1].value).toBe("free");
     expect(effects[1].context.id).toBe("slot_booked");
   });
