@@ -32,14 +32,22 @@ export default function StandaloneApp({ domainId }) {
   const { world, worldForIntent, drafts, effects, signals, exec,
     overlay, overlayEntityIds, startInvestigation, commitInvestigation, cancelInvestigation } = engine;
 
-  // Отправить онтологию на сервер
+  // Отправить онтологию и намерения домена на сервер.
+  // Intents нужны для серверной валидации условий (server/intents.js) —
+  // без них мессенджер и прочие новые домены проходили валидацию без
+  // проверки условий типа "message.senderId = me.id".
   useEffect(() => {
     fetch("/api/typemap", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(domain.ONTOLOGY),
     }).catch(() => {});
-  }, [domain]);
+    fetch("/api/intents", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ domain: domainId, intents: domain.INTENTS }),
+    }).catch(() => {});
+  }, [domain, domainId]);
 
   // Seed при первом запуске
   useEffect(() => {

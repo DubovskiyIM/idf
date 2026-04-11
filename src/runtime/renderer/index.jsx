@@ -1,12 +1,25 @@
 import ArchetypeFeed from "./archetypes/ArchetypeFeed.jsx";
+import ArchetypeCatalog from "./archetypes/ArchetypeCatalog.jsx";
+import ArchetypeDetail from "./archetypes/ArchetypeDetail.jsx";
 import { validateArtifact } from "./validation/validateArtifact.js";
 
 const ARCHETYPES = {
   feed: ArchetypeFeed,
-  // catalog, detail, dashboard, canvas — добавятся в M2-M4
+  catalog: ArchetypeCatalog,
+  detail: ArchetypeDetail,
 };
 
-export default function ProjectionRendererV2({ artifact, world, exec, viewer, viewerContext, theme }) {
+export default function ProjectionRendererV2({
+  artifact,
+  projection,
+  world,
+  exec,
+  viewer,
+  viewerContext,
+  routeParams,
+  navigate,
+  theme,
+}) {
   if (!artifact) {
     return <div style={{ padding: 20, color: "#9ca3af", textAlign: "center" }}>Нет артефакта</div>;
   }
@@ -27,17 +40,24 @@ export default function ProjectionRendererV2({ artifact, world, exec, viewer, vi
   if (!Archetype) {
     return (
       <div style={{ padding: 20, color: "#9ca3af" }}>
-        Архетип "{artifact.archetype}" пока не поддержан (M1: только feed).
+        Архетип "{artifact.archetype}" пока не поддержан.
       </div>
     );
   }
 
-  // Обёртка exec: автоматически вливает viewerContext в каждый вызов.
-  // Это позволяет контролам (Composer, FormModal, IntentButton) ничего не знать про
-  // доменно-специфичные поля типа conversationId/userId — их подаёт внешняя обёртка.
   const wrappedExec = (intentId, params = {}) =>
-    exec(intentId, { ...(viewerContext || {}), ...params });
+    exec(intentId, { ...(viewerContext || {}), ...(routeParams || {}), ...params });
 
-  const ctx = { world, viewer, exec: wrappedExec, theme, artifact, viewerContext };
-  return <Archetype slots={artifact.slots} nav={artifact.nav} ctx={ctx} />;
+  const ctx = {
+    world,
+    viewer,
+    exec: wrappedExec,
+    theme,
+    artifact,
+    viewerContext,
+    routeParams,
+    navigate,
+  };
+
+  return <Archetype slots={artifact.slots} nav={artifact.nav} ctx={ctx} projection={projection} />;
 }

@@ -1,6 +1,8 @@
 const { Router } = require("express");
 const db = require("../db.js");
-const { validate, cascadeReject } = require("../validator.js");
+const { validate, cascadeReject, foldWorld } = require("../validator.js");
+const { ingestEffect } = require("../effect-pipeline.js");
+const { v4: uuid } = require("uuid");
 
 const router = Router();
 
@@ -42,57 +44,28 @@ router.post("/", (req, res) => {
   const ef = req.body;
   const delay = parseInt(req.query.delay) || 0;
 
-  // Записываем как proposed
-  db.prepare(`
-    INSERT INTO effects (id, intent_id, alpha, target, value, scope, parent_id, status, ttl, context, created_at)
-    VALUES (?, ?, ?, ?, ?, ?, ?, 'proposed', ?, ?, ?)
-  `).run(
-    ef.id, ef.intent_id, ef.alpha, ef.target,
-    ef.value != null ? JSON.stringify(ef.value) : null,
-    ef.scope || "account",
-    ef.parent_id || null,
-    ef.ttl || null,
-    ef.context ? JSON.stringify(ef.context) : null,
-    ef.created_at
-  );
-
-  // Стримим proposed
-  broadcast("effect:proposed", { id: ef.id, intent_id: ef.intent_id });
-
-  // Валидация (с опциональной задержкой)
-  const resolve = () => {
-    // Перечитываем эффект из БД для валидации (там context как строка)
-    const stored = db.prepare("SELECT * FROM effects WHERE id = ?").get(ef.id);
-    const result = validate(stored);
-    const now = Date.now();
-
-    if (result.valid) {
-      db.prepare(
-        "UPDATE effects SET status = 'confirmed', resolved_at = ? WHERE id = ?"
-      ).run(now, ef.id);
-      broadcast("effect:confirmed", { id: ef.id });
-
-      // Планировать автозакрытие опроса по дедлайну
-      if (ef.intent_id === "set_deadline" && ef.value) {
-        // ef.value может быть строкой "2026-04-10T18:31" или JSON "\"2026-04-10T18:31\""
-        const rawValue = typeof ef.value === "string" ? ef.value : String(ef.value);
+  ingestEffect(ef, {
+    broadcast,
+    delay,
+    onConfirmed: (stored) => {
+      // Планировать автозакрытие опроса по дедлайну — доменно-специфичный
+      // сайд-эффект planning-домена. Живёт здесь как callback, а не в
+      // effect-pipeline.js, чтобы пайплайн оставался доменно-независимым.
+      if (stored.intent_id === "set_deadline" && stored.value) {
+        const rawValue = typeof stored.value === "string" ? stored.value : String(stored.value);
         let deadlineStr;
         try { deadlineStr = JSON.parse(rawValue); } catch { deadlineStr = rawValue; }
         const deadlineTime = new Date(deadlineStr).getTime();
-        const delay = deadlineTime - Date.now();
-        if (delay > 0) {
+        const delayMs = deadlineTime - Date.now();
+        if (delayMs > 0) {
           setTimeout(() => {
-            const ctx = typeof ef.context === "string" ? JSON.parse(ef.context) : (ef.context || {});
+            const ctx = typeof stored.context === "string" ? JSON.parse(stored.context) : (stored.context || {});
             const pollId = ctx.id;
             if (!pollId) return;
-            // Проверить что опрос ещё open
-            const { foldWorld } = require("../validator.js");
             const world = foldWorld();
             const poll = (world.polls || []).find(p => p.id === pollId);
             if (!poll || poll.status !== "open") return;
-            // Создать close_poll эффект
-            const { v4: autoUuid } = require("uuid");
-            const closeId = autoUuid();
+            const closeId = uuid();
             const closeNow = Date.now();
             db.prepare(`
               INSERT INTO effects (id, intent_id, alpha, target, value, scope, parent_id, status, ttl, context, created_at, resolved_at)
@@ -100,40 +73,12 @@ router.post("/", (req, res) => {
             `).run(closeId, JSON.stringify({ id: pollId }), closeNow, closeNow);
             broadcast("effect:confirmed", { id: closeId });
             console.log(`  [deadline] Опрос ${pollId} автоматически закрыт по дедлайну`);
-          }, delay);
-          console.log(`  [deadline] Автозакрытие опроса запланировано через ${Math.round(delay/1000)}с`);
+          }, delayMs);
+          console.log(`  [deadline] Автозакрытие опроса запланировано через ${Math.round(delayMs/1000)}с`);
         }
       }
-
-      // Планировать TTL-истечение если есть
-      if (ef.ttl) {
-        setTimeout(() => {
-          const current = db.prepare("SELECT status FROM effects WHERE id = ?").get(ef.id);
-          if (current && current.status === "confirmed") {
-            const ttlNow = Date.now();
-            db.prepare(
-              "UPDATE effects SET status = 'rejected', resolved_at = ? WHERE id = ?"
-            ).run(ttlNow, ef.id);
-            const ttlCascaded = cascadeReject(ef.id);
-            broadcast("effect:rejected", { id: ef.id, reason: "TTL expired", cascaded: ttlCascaded });
-          }
-        }, ef.ttl);
-      }
-    } else {
-      db.prepare(
-        "UPDATE effects SET status = 'rejected', resolved_at = ? WHERE id = ?"
-      ).run(now, ef.id);
-
-      const cascaded = cascadeReject(ef.id);
-      broadcast("effect:rejected", { id: ef.id, reason: result.reason, cascaded });
-    }
-  };
-
-  if (delay > 0) {
-    setTimeout(resolve, delay);
-  } else {
-    resolve();
-  }
+    },
+  });
 
   res.status(201).json({ id: ef.id, status: "proposed" });
 });

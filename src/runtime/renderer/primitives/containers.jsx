@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import SlotRenderer from "../SlotRenderer.jsx";
 import { resolve, evalCondition, evalIntentCondition } from "../eval.js";
+import { resolveNavigateAction } from "../navigation/navigate.js";
 
 export function Row({ node, ctx, item }) {
   return (
@@ -176,6 +177,8 @@ export function List({ node, ctx }) {
     }
   }, [items.length, bottomUp]);
 
+  const onItemClick = node.onItemClick;
+
   return (
     <div
       ref={scrollRef}
@@ -186,9 +189,29 @@ export function List({ node, ctx }) {
         ...(node.sx || {}),
       }}
     >
-      {items.map((item, i) => (
-        <SlotRenderer key={item.id || i} item={node.item} ctx={ctx} contextItem={item} />
-      ))}
+      {items.map((item, i) => {
+        const content = <SlotRenderer item={node.item} ctx={ctx} contextItem={item} />;
+        if (!onItemClick) return <div key={item.id || i}>{content}</div>;
+        return (
+          <ClickableItem key={item.id || i} action={onItemClick} item={item} ctx={ctx}>
+            {content}
+          </ClickableItem>
+        );
+      })}
+    </div>
+  );
+}
+
+function ClickableItem({ action, item, ctx, children }) {
+  const handleClick = () => {
+    const resolved = resolveNavigateAction(action, item, ctx.viewer);
+    if (resolved && ctx.navigate) {
+      ctx.navigate(resolved.to, resolved.params);
+    }
+  };
+  return (
+    <div onClick={handleClick} style={{ cursor: "pointer" }}>
+      {children}
     </div>
   );
 }

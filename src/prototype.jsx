@@ -57,12 +57,17 @@ export default function App() {
   const { world, worldForIntent, drafts, effects, signals, links, exec,
     overlay, overlayEntityIds, startInvestigation, commitInvestigation, cancelInvestigation } = engine;
 
-  // Синхронизировать онтологию с сервером при смене домена
+  // Синхронизировать онтологию + намерения с сервером при смене домена
   useEffect(() => {
     fetch("/api/typemap", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(domain.ONTOLOGY),
+    }).catch(() => {});
+    fetch("/api/intents", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ domain: domain.DOMAIN_ID || "unknown", intents: domain.INTENTS }),
     }).catch(() => {});
   }, [domain]);
 
@@ -86,11 +91,16 @@ export default function App() {
         }
       } catch {}
     }
-    // Отправить онтологию нового домена на сервер для маппинга типов
+    // Отправить онтологию + intents нового домена на сервер
     await fetch("/api/typemap", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(newDomain.ONTOLOGY),
+    }).catch(() => {});
+    await fetch("/api/intents", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ domain: newDomainId, intents: newDomain.INTENTS }),
     }).catch(() => {});
 
     setDomainId(newDomainId);

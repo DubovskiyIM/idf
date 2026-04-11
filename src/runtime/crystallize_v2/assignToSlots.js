@@ -1,11 +1,21 @@
 /**
- * §3.1 дизайна: назначение намерений в слоты feed-архетипа.
- * Упрощение M1: только feed, только минимальные правила — достаточно для chat_view.
+ * Dispatcher по архетипу. Каждый архетип имеет свой набор правил назначения
+ * в слоты. Feed-логика (chat-стиль) осталась здесь; catalog и detail вынесены
+ * в отдельные модули.
  */
 
 import { inferParameters } from "./inferParameters.js";
 import { inferControlType } from "./inferControlType.js";
 import { wrapByConfirmation } from "./wrapByConfirmation.js";
+import { assignToSlotsCatalog } from "./assignToSlotsCatalog.js";
+import { assignToSlotsDetail } from "./assignToSlotsDetail.js";
+
+export function assignToSlots(INTENTS, projection, ONTOLOGY) {
+  const kind = projection.kind;
+  if (kind === "catalog") return assignToSlotsCatalog(INTENTS, projection, ONTOLOGY);
+  if (kind === "detail") return assignToSlotsDetail(INTENTS, projection, ONTOLOGY);
+  return assignToSlotsFeed(INTENTS, projection, ONTOLOGY);
+}
 
 // Witnesses, которые обозначают *результат* специализированного захвата
 // (голосовая запись, стикер, GIF, геолокация, опрос). Такие интенты требуют
@@ -28,7 +38,7 @@ function needsCustomCapture(intent) {
   return witnesses.some(w => CAPTURE_WITNESSES.has(w));
 }
 
-export function assignToSlots(INTENTS, projection, ONTOLOGY) {
+function assignToSlotsFeed(INTENTS, projection, ONTOLOGY) {
   const slots = {
     header: [],
     toolbar: [],

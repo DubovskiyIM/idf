@@ -29,6 +29,17 @@ app.post("/api/typemap", (req, res) => {
   res.json({ ok: true, types: Object.keys(map).length });
 });
 
+// Endpoint для регистрации намерений домена — заменяет hardcoded
+// INTENT_CONDITIONS в старом validator.js. Клиент POST'ит свой INTENTS-объект
+// при монтировании домена, сервер использует его для валидации условий.
+const { registerIntents } = require("./intents.js");
+app.post("/api/intents", (req, res) => {
+  const intents = req.body?.intents || req.body;
+  const count = registerIntents(intents);
+  console.log(`  [intents] Зарегистрировано: ${count} намерений`);
+  res.json({ ok: true, registered: count });
+});
+
 // Endpoint для исполнения workflow
 app.post("/api/execute/:workflowId", async (req, res) => {
   try {

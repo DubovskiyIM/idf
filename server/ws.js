@@ -2,6 +2,7 @@ const { WebSocketServer } = require("ws");
 const { verifyToken, getUser } = require("./auth.js");
 const db = require("./db.js");
 const { validate, cascadeReject } = require("./validator.js");
+const { ingestEffect } = require("./effect-pipeline.js");
 const { v4: uuid } = require("uuid");
 
 /**
@@ -76,54 +77,23 @@ function handleMessage(ws, userId, msg) {
       const ef = msg.payload;
       ef.senderId = userId; // привязать к отправителю
 
-      // Записать в БД как proposed
-      db.prepare(`
-        INSERT INTO effects (id, intent_id, alpha, target, value, scope, parent_id, status, ttl, context, created_at)
-        VALUES (?, ?, ?, ?, ?, ?, ?, 'proposed', ?, ?, ?)
-      `).run(
-        ef.id, ef.intent_id, ef.alpha, ef.target,
-        ef.value != null ? JSON.stringify(ef.value) : null,
-        ef.scope || "account", ef.parent_id || null,
-        ef.ttl || null,
-        ef.context ? JSON.stringify(ef.context) : null,
-        ef.created_at
-      );
-
-      // Валидация
-      const stored = db.prepare("SELECT * FROM effects WHERE id = ?").get(ef.id);
-      const result = validate(stored);
-      const now = Date.now();
-
-      if (result.valid) {
-        db.prepare("UPDATE effects SET status = 'confirmed', resolved_at = ? WHERE id = ?").run(now, ef.id);
-
-        // Определить кому отправить
-        const ctx = ef.context || {};
-        const conversationId = ctx.conversationId;
-
-        if (conversationId) {
-          // Отправить всем участникам беседы
-          broadcastToConversation(conversationId, { type: "effect:confirmed", id: ef.id, effect: ef });
-        } else {
-          // Отправить отправителю
-          sendToUser(userId, { type: "effect:confirmed", id: ef.id });
+      // Адаптер broadcast: WS-специфичная доставка по беседе или отправителю.
+      const wsBroadcast = (event, data) => {
+        if (event === "effect:confirmed") {
+          const ctx = ef.context || {};
+          const conversationId = ctx.conversationId;
+          if (conversationId) {
+            broadcastToConversation(conversationId, { type: "effect:confirmed", id: data.id, effect: ef });
+          } else {
+            sendToUser(userId, { type: "effect:confirmed", id: data.id });
+          }
+        } else if (event === "effect:rejected") {
+          sendToUser(userId, { type: "effect:rejected", ...data });
         }
+        // effect:proposed в WS-транспорте не стримится — клиент узнает из confirmed.
+      };
 
-        // TTL
-        if (ef.ttl) {
-          setTimeout(() => {
-            const current = db.prepare("SELECT status FROM effects WHERE id = ?").get(ef.id);
-            if (current && current.status === "confirmed") {
-              db.prepare("UPDATE effects SET status = 'rejected', resolved_at = ? WHERE id = ?").run(Date.now(), ef.id);
-              const cascaded = cascadeReject(ef.id);
-              sendToUser(userId, { type: "effect:rejected", id: ef.id, reason: "TTL expired", cascaded });
-            }
-          }, ef.ttl);
-        }
-      } else {
-        db.prepare("UPDATE effects SET status = 'rejected', resolved_at = ? WHERE id = ?").run(now, ef.id);
-        sendToUser(userId, { type: "effect:rejected", id: ef.id, reason: result.reason });
-      }
+      ingestEffect(ef, { broadcast: wsBroadcast });
       break;
     }
 

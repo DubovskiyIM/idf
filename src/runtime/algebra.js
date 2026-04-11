@@ -115,36 +115,7 @@ export function checkAlgebraIntegrity(INTENTS) {
   return conflicts;
 }
 
-/**
- * Проверить конкурентные эффекты в реальном потоке Φ.
- */
-export function checkRuntimeConflicts(effects) {
-  const conflicts = [];
-
-  // Группировать эффекты по target + entity id
-  const groups = {};
-  for (const ef of effects) {
-    if (ef.status === "rejected" || ef.alpha === "batch") continue;
-    const ctx = ef.context || {};
-    const key = `${ef.target}:${ctx.id || ""}`;
-    if (!groups[key]) groups[key] = [];
-    groups[key].push(ef);
-  }
-
-  // Проверить пары в каждой группе
-  for (const [key, group] of Object.entries(groups)) {
-    if (group.length < 2) continue;
-    for (let i = 0; i < group.length; i++) {
-      for (let j = i + 1; j < group.length; j++) {
-        const result = checkComposition(group[i], group[j]);
-        if (!result.compatible) {
-          conflicts.push({
-            effect1: group[i], effect2: group[j], ...result,
-          });
-        }
-      }
-    }
-  }
-
-  return conflicts;
-}
+// Примечание: был ранее `checkRuntimeConflicts(effects)` для runtime-проверки
+// конкурентных эффектов, но ни один модуль его не вызывал (dead code).
+// Удалён как часть ревизии границ реализации. Если понадобится runtime-проверка
+// конфликтов — нужно интегрировать в server/validator.js или effect-pipeline.js.

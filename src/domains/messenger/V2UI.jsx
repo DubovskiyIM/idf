@@ -1,12 +1,14 @@
 import { useState, useEffect, useRef, useMemo } from "react";
 import ProjectionRendererV2 from "../../runtime/renderer/index.jsx";
 import { crystallizeV2 } from "../../runtime/crystallize_v2/index.js";
+import { useProjectionRoute } from "../../runtime/renderer/navigation/useProjectionRoute.js";
+import Breadcrumbs from "../../runtime/renderer/navigation/Breadcrumbs.jsx";
 import * as messengerDomain from "./domain.js";
 
 /**
- * M1: обёртка мессенджера на новом рендерере v2.
- * Реализует минимум: auth → выбор активной беседы → рендер chat_view как feed-архетипа.
- * Дублирует auth+ws логику из ManualUI.jsx — временно, до M2 (catalog + nav graph).
+ * M2: мессенджер на multi-projection роутере.
+ * conversation_list → chat_view → user_profile через useProjectionRoute.
+ * Auth + WebSocket — минимум, временно; в M5 уйдут в общий модуль.
  */
 export default function MessengerV2UI({ world, exec }) {
   const [currentUser, setCurrentUser] = useState(null);
@@ -16,10 +18,10 @@ export default function MessengerV2UI({ world, exec }) {
   const [password, setPassword] = useState("");
   const [name, setName] = useState("");
   const [authError, setAuthError] = useState("");
-  const [activeConvId, setActiveConvId] = useState(null);
   const wsRef = useRef(null);
 
-  // === AUTH ===
+  const { current, history, navigate, back, canGoBack } = useProjectionRoute("conversation_list", {});
+
   useEffect(() => {
     if (!token) return;
     fetch("/api/auth/me", { headers: { Authorization: `Bearer ${token}` } })
@@ -47,7 +49,6 @@ export default function MessengerV2UI({ world, exec }) {
     setCurrentUser(data.user);
   };
 
-  // === WebSocket ===
   useEffect(() => {
     if (!token || !currentUser) return;
     const wsUrl = `${window.location.protocol === "https:" ? "wss" : "ws"}://${window.location.host}/ws?token=${token}`;
@@ -61,40 +62,32 @@ export default function MessengerV2UI({ world, exec }) {
     return () => ws.close();
   }, [token, currentUser]);
 
-  // === Кристаллизация артефакта при монтировании (on-the-fly, не в БД) ===
-  const artifact = useMemo(() => {
-    const artifacts = crystallizeV2(
-      messengerDomain.INTENTS,
-      messengerDomain.PROJECTIONS,
-      messengerDomain.ONTOLOGY,
-      "messenger"
-    );
-    return artifacts.chat_view || null;
+  const artifacts = useMemo(() => crystallizeV2(
+    messengerDomain.INTENTS,
+    messengerDomain.PROJECTIONS,
+    messengerDomain.ONTOLOGY,
+    "messenger"
+  ), []);
+
+  const projectionNames = useMemo(() => {
+    const names = {};
+    for (const [id, proj] of Object.entries(messengerDomain.PROJECTIONS)) {
+      names[id] = proj.name || id;
+    }
+    return names;
   }, []);
 
-  // === Список бесед пользователя ===
-  const conversations = world.conversations || [];
-  const participants = world.participants || [];
-  const myConversations = useMemo(() => {
-    if (!currentUser) return [];
-    const myConvIds = new Set(participants.filter(p => p.userId === currentUser.id).map(p => p.conversationId));
-    return conversations.filter(c => myConvIds.has(c.id));
-  }, [conversations, participants, currentUser]);
-
-  // === viewerContext — автоматически вливается во все exec-вызовы рендерером ===
   const viewerContext = useMemo(() => ({
-    conversationId: activeConvId,
     userId: currentUser?.id,
     userName: currentUser?.name,
-  }), [activeConvId, currentUser]);
+  }), [currentUser]);
 
-  // === Мир, обогащённый currentConversationId для фильтра в body.list ===
-  const worldWithCurrent = useMemo(() => ({
+  // Мир обогащается route params — для фильтров типа world.currentConversationId.
+  const worldWithRoute = useMemo(() => ({
     ...world,
-    currentConversationId: activeConvId,
-  }), [world, activeConvId]);
+    ...(current?.params || {}),
+  }), [world, current]);
 
-  // === Auth-экран ===
   if (!currentUser) {
     return (
       <div style={{ maxWidth: 360, margin: "40px auto", fontFamily: "system-ui, sans-serif", padding: 20 }}>
@@ -127,45 +120,36 @@ export default function MessengerV2UI({ world, exec }) {
     );
   }
 
-  if (!artifact) {
-    return <div style={{ padding: 40 }}>Артефакт chat_view не создан</div>;
-  }
+  const currentArtifact = current ? artifacts[current.projectionId] : null;
+  const currentProjectionDef = current ? messengerDomain.PROJECTIONS[current.projectionId] : null;
 
   return (
-    <div style={{ display: "flex", height: "100vh", fontFamily: "system-ui, sans-serif" }}>
-      <aside style={{ width: 260, borderRight: "1px solid #e5e7eb", background: "#fff", overflow: "auto" }}>
-        <div style={{ padding: 12, borderBottom: "1px solid #e5e7eb", fontWeight: 600 }}>
-          {currentUser.name}
-        </div>
-        {myConversations.length === 0 && (
-          <div style={{ padding: 16, color: "#9ca3af", fontSize: 13 }}>
-            Нет бесед. Создайте через /messenger, затем вернитесь сюда.
-          </div>
-        )}
-        {myConversations.map(c => (
-          <button key={c.id} onClick={() => setActiveConvId(c.id)} style={{
-            display: "block", width: "100%", textAlign: "left", padding: 12,
-            border: "none", background: activeConvId === c.id ? "#eef2ff" : "transparent",
-            cursor: "pointer", borderBottom: "1px solid #f3f4f6",
-          }}>{c.title || c.id}</button>
-        ))}
-      </aside>
-
-      <main style={{ flex: 1, overflow: "hidden" }}>
-        {activeConvId ? (
+    <div style={{ display: "flex", flexDirection: "column", height: "100vh", fontFamily: "system-ui, sans-serif", position: "relative" }}>
+      <Breadcrumbs
+        history={history}
+        current={current}
+        canGoBack={canGoBack}
+        onBack={back}
+        projectionNames={projectionNames}
+      />
+      <div style={{ flex: 1, overflow: "hidden", position: "relative" }}>
+        {currentArtifact ? (
           <ProjectionRendererV2
-            artifact={artifact}
-            world={worldWithCurrent}
+            artifact={currentArtifact}
+            projection={currentProjectionDef}
+            world={worldWithRoute}
             exec={exec}
             viewer={currentUser}
             viewerContext={viewerContext}
+            routeParams={current.params}
+            navigate={navigate}
           />
         ) : (
-          <div style={{ padding: 40, color: "#9ca3af", textAlign: "center" }}>
-            Выберите беседу слева
+          <div style={{ padding: 40, color: "#9ca3af" }}>
+            Проекция "{current?.projectionId}" не найдена
           </div>
         )}
-      </main>
+      </div>
     </div>
   );
 }
