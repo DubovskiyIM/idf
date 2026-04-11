@@ -47,20 +47,31 @@ export function assignToSlotsDetail(INTENTS, projection, ONTOLOGY) {
       control: inferControlType(p, ONTOLOGY),
     }));
 
-    const wrapped = wrapByConfirmation(intent, id, parameters);
+    const wrapped = wrapByConfirmation(intent, id, parameters, { projection });
     if (wrapped === null) continue;
     if (wrapped.type === "composerEntry") continue;
 
     const hasOverlay = wrapped.trigger && wrapped.overlay;
+    // Ownership-условие: для detail mainEntity (напр. User) write-intent'ы
+    // должны быть доступны только owner'у. SlotRenderer у атомов проверяет
+    // item.condition как JS-выражение с ctx = {...contextItem, viewer, world}.
+    // Хардкод для User: id === viewer.id. В M4 вынести в ontology.ownerField.
+    const ownershipCond = ownershipConditionFor(intent, mainEntity);
 
     if (hasOverlay) {
-      slots.toolbar.push(wrapped.trigger);
+      const trigger = ownershipCond
+        ? { ...wrapped.trigger, condition: ownershipCond }
+        : wrapped.trigger;
+      slots.toolbar.push(trigger);
       slots.overlay.push(wrapped.overlay);
       continue;
     }
 
     if (wrapped.type === "intentButton") {
-      slots.toolbar.push(wrapped);
+      const btn = ownershipCond
+        ? { ...wrapped, condition: ownershipCond }
+        : wrapped;
+      slots.toolbar.push(btn);
     }
   }
 
@@ -70,6 +81,27 @@ export function assignToSlotsDetail(INTENTS, projection, ONTOLOGY) {
   }
 
   return slots;
+}
+
+/**
+ * Ownership-condition для detail: если intent меняет mainEntity и сущность
+ * принадлежит viewer'у по правилу self-ownership, возвращает JS-выражение
+ * для item.condition. SlotRenderer применит его к toolbar'ной кнопке.
+ *
+ * Пока hardcoded для User: id === viewer.id. В M4 расширить через
+ * ontology.entities[X].ownerField (Message.senderId и т.п.).
+ */
+function ownershipConditionFor(intent, mainEntity) {
+  if (mainEntity !== "User") return null;
+  const lower = mainEntity.toLowerCase();
+  const effects = intent.particles?.effects || [];
+  const mutatesMain = effects.some(e =>
+    (e.α === "replace" || e.α === "remove") &&
+    typeof e.target === "string" &&
+    (e.target === lower || e.target.startsWith(lower + "."))
+  );
+  if (!mutatesMain) return null;
+  return "id === viewer.id";
 }
 
 function appliesToMainEntity(intent, mainEntity) {

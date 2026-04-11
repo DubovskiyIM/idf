@@ -49,20 +49,23 @@ export function getArchetypes() {
 export function _resetArchetypes() {
   ARCHETYPES.length = 0;
   registerBuiltins();
+  registerCustomCapture();
 }
 
 /**
  * Выбрать control-архетип для намерения.
+ * @param context — опциональный контекст, в котором может быть projection
+ *   (customCapture.entityPicker использует его для проверки route scope).
  * @returns {object|null} архетип или null, если ни одно правило не сработало
  */
-export function selectArchetype(intent, intentId) {
+export function selectArchetype(intent, intentId, context = {}) {
   // 1. Explicit override
   if (intent.control) {
     return ARCHETYPES.find(a => a.id === intent.control) || null;
   }
   // 2. Эвристика — первое совпадение
   for (const a of ARCHETYPES) {
-    if (a.match(intent, intentId)) return a;
+    if (a.match(intent, intentId, context)) return a;
   }
   return null;
 }
@@ -242,5 +245,133 @@ function buildConfirmMessage(intent) {
   return `${intent.name}${preview ? ": " + preview : ""}?`;
 }
 
+// ============================================================
+// customCapture — кастомные виджеты захвата (M3.5b)
+// ============================================================
+
+/**
+ * Match-правила для customCapture. Дублируются в реестре runtime-виджетов
+ * (src/runtime/renderer/controls/capture/*.jsx) — кристаллизатор не импортирует
+ * React-компоненты, runtime не импортирует кристаллизатор. Оба источника
+ * правды должны быть согласованы руками.
+ */
+const CAPTURE_RULES = [
+  {
+    widgetId: "voiceRecorder",
+    match: (intent) => {
+      const w = intent.particles?.witnesses || [];
+      return w.includes("recording_duration") || w.includes("duration");
+    },
+  },
+  {
+    widgetId: "emojiPicker",
+    match: (intent, intentId) =>
+      intentId.startsWith("react_") ||
+      (intent.particles?.witnesses || []).includes("available_reactions"),
+  },
+  {
+    widgetId: "entityPicker",
+    match: (intent, intentId, context) => {
+      if (!intent.creates) return false;
+      const entities = (intent.particles?.entities || [])
+        .map(e => e.split(":").pop().trim().replace(/\[\]$/, ""));
+      const nonCreates = entities.filter(e => e !== intent.creates);
+      if (nonCreates.length === 0) return false;
+      // Если все non-creates уже в route scope проекции — picker не нужен
+      // (send_message имеет Conversation в route chat_view → composer).
+      const projection = context?.projection;
+      if (projection) {
+        const routeScope = new Set(
+          projection.routeEntities
+            ? [projection.mainEntity, ...projection.routeEntities].filter(Boolean)
+            : (projection.entities || [])
+        );
+        if (projection.mainEntity) routeScope.add(projection.mainEntity);
+        return nonCreates.some(e => !routeScope.has(e));
+      }
+      return true;
+    },
+  },
+];
+
+/**
+ * Парсинг декларации entity: "alias: Entity" → { alias, entity }.
+ * Возвращает массив всех entity у intent'а.
+ */
+function parseEntities(intent) {
+  return (intent.particles?.entities || []).map(raw => {
+    const [aliasPart, entityPart] = raw.split(":").map(s => s.trim());
+    if (entityPart) {
+      return {
+        alias: aliasPart,
+        entity: entityPart.replace(/\[\]$/, ""),
+      };
+    }
+    // Без двоеточия — имя == alias
+    const clean = aliasPart.replace(/\[\]$/, "");
+    return { alias: clean.toLowerCase(), entity: clean };
+  });
+}
+
+function pluralizeLower(word) {
+  if (!word) return word;
+  const lower = word.toLowerCase();
+  if (lower.endsWith("y")) return lower.slice(0, -1) + "ies";
+  if (lower.endsWith("s")) return lower + "es";
+  return lower + "s";
+}
+
+/**
+ * Регистрация customCapture в начало списка, чтобы он ловил матчи до
+ * общих правил (composerEntry/formModal/clickForm).
+ */
+function registerCustomCapture() {
+  prependArchetype({
+    id: "customCapture",
+    match: (intent, intentId, context) =>
+      CAPTURE_RULES.some(r => r.match(intent, intentId, context)),
+    build: (intent, intentId, _parameters, context) => {
+      const rule = CAPTURE_RULES.find(r => r.match(intent, intentId, context));
+      const widgetId = rule.widgetId;
+
+      // Для entityPicker — определить targetEntity (не-creates entity)
+      let extras = {};
+      if (widgetId === "entityPicker") {
+        const entities = parseEntities(intent);
+        const target = entities.find(e => e.entity !== intent.creates);
+        if (target) {
+          extras = {
+            targetEntity: target.entity,
+            targetAlias: target.alias,
+            targetCollection: pluralizeLower(target.entity),
+            entityLabel: target.entity,
+          };
+        }
+      }
+
+      const key = `overlay_${intentId}`;
+      return {
+        trigger: {
+          type: "intentButton",
+          intentId,
+          label: intent.name,
+          icon: getIntentIcon(intentId, intent),
+          opens: "overlay",
+          overlayKey: key,
+        },
+        overlay: {
+          type: "customCapture",
+          key,
+          widgetId,
+          intentId,
+          label: intent.name,
+          ...extras,
+        },
+      };
+    },
+  });
+}
+
 // Инициализация: зарегистрировать встроенные архетипы при загрузке модуля
 registerBuiltins();
+registerCustomCapture();

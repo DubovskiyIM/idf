@@ -46,6 +46,37 @@ export default function ArchetypeForm({ slots, ctx: parentCtx, projection }) {
     );
   }
 
+  // Role check (M3.5b): редактирование чужой сущности запрещено. Для User —
+  // viewer ≠ target.id. Если зашли руками через URL, показываем отказ.
+  // Для других mainEntity применим аналогичную логику (target.id === viewer.id),
+  // пока нет формального ownership поля в ontology.
+  const isOwner =
+    target.id && parentCtx.viewer?.id && target.id === parentCtx.viewer.id;
+  if (!isOwner) {
+    return (
+      <div style={{
+        padding: 40, textAlign: "center", color: "#6b7280",
+        display: "flex", flexDirection: "column", alignItems: "center", gap: 12,
+      }}>
+        <div style={{ fontSize: 40 }}>🔒</div>
+        <div style={{ fontSize: 14, fontWeight: 600, color: "#374151" }}>
+          Нет доступа к редактированию
+        </div>
+        <div style={{ fontSize: 12 }}>
+          Вы можете редактировать только собственный профиль.
+        </div>
+        <button
+          onClick={() => parentCtx.back ? parentCtx.back() : parentCtx.navigate?.(projection.sourceProjection, parentCtx.routeParams || {})}
+          style={{
+            marginTop: 8, padding: "8px 16px", borderRadius: 6,
+            border: "1px solid #d1d5db", background: "#fff",
+            color: "#374151", cursor: "pointer", fontSize: 13,
+          }}
+        >← Назад</button>
+      </div>
+    );
+  }
+
   // Какие поля изменены (editable + value !== target[field])
   const dirtyFields = (body.fields || []).filter(
     f => f.editable && values[f.name] !== target[f.name]

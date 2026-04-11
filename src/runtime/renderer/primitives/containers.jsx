@@ -47,6 +47,32 @@ function fireItemIntent(spec, ctx, item) {
   ctx.exec(spec.intentId, { id: item?.id, entity: item });
 }
 
+/**
+ * Группировка intents по иконке: если несколько intents имеют одну иконку,
+ * они схлопываются в «группу», которая рендерится как одна кнопка-попап
+ * с текстовыми подписями (пользователь не может различить одинаковые
+ * иконки без label'ов).
+ *
+ * Возвращает массив { type: "intent" | "group", spec | specs }.
+ */
+function groupByIcon(intents) {
+  const byIcon = new Map();
+  const order = [];
+  for (const spec of intents) {
+    const key = spec.icon || `__${spec.intentId}__`;
+    if (!byIcon.has(key)) {
+      byIcon.set(key, []);
+      order.push(key);
+    }
+    byIcon.get(key).push(spec);
+  }
+  return order.map(key => {
+    const specs = byIcon.get(key);
+    if (specs.length === 1) return { type: "intent", spec: specs[0] };
+    return { type: "group", icon: specs[0].icon, specs };
+  });
+}
+
 export function Card({ node, ctx, item }) {
   const [menuOpen, setMenuOpen] = useState(false);
   const allIntents = (node.intents || [])
@@ -56,8 +82,13 @@ export function Card({ node, ctx, item }) {
       const conditions = spec.conditions || [];
       return conditions.every(c => evalIntentCondition(c, item, ctx.viewer));
     });
-  const visible = allIntents.slice(0, MAX_VISIBLE_ITEM_INTENTS);
-  const hidden = allIntents.slice(MAX_VISIBLE_ITEM_INTENTS);
+  // Группировка по иконке до применения MAX_VISIBLE — одинаковые иконки
+  // превращаются в одну кнопку-группу.
+  const grouped = groupByIcon(allIntents);
+  const visible = grouped.slice(0, MAX_VISIBLE_ITEM_INTENTS);
+  const hidden = grouped.slice(MAX_VISIBLE_ITEM_INTENTS)
+    // Overflow всегда содержит плоский список — разворачиваем группы
+    .flatMap(g => g.type === "group" ? g.specs : [g.spec]);
 
   // Chat-вариант: выравнивание «свои справа, чужие слева» по senderId === viewer.id.
   const isChat = node.variant === "chat";
@@ -86,8 +117,10 @@ export function Card({ node, ctx, item }) {
       ))}
       {allIntents.length > 0 && (
         <div style={{ display: "flex", gap: 4, marginTop: 8, flexWrap: "wrap", alignItems: "center" }}>
-          {visible.map(spec => (
-            <ItemIntentButton key={spec.intentId} spec={spec} ctx={ctx} item={item} />
+          {visible.map((g, gi) => (
+            g.type === "group"
+              ? <ItemIntentGroup key={`grp_${gi}`} group={g} ctx={ctx} item={item} />
+              : <ItemIntentButton key={g.spec.intentId} spec={g.spec} ctx={ctx} item={item} />
           ))}
           {hidden.length > 0 && (
             // Отдельный relative-контейнер, чтобы popover позиционировался
@@ -129,6 +162,59 @@ export function Card({ node, ctx, item }) {
               )}
             </div>
           )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function ItemIntentGroup({ group, ctx, item }) {
+  const [open, setOpen] = useState(false);
+  const icon = group.icon;
+  const count = group.specs.length;
+
+  return (
+    <div style={{ position: "relative" }}>
+      <button
+        onClick={(e) => { e.stopPropagation(); setOpen(v => !v); }}
+        title={group.specs.map(s => s.label || s.intentId).join(", ")}
+        style={{
+          padding: "6px 8px", borderRadius: 6,
+          border: "1px solid #e5e7eb", background: "#fff",
+          color: "#4b5563", fontSize: 11, cursor: "pointer",
+          display: "inline-flex", alignItems: "center", gap: 4,
+          lineHeight: 1,
+        }}
+      >
+        <span style={{ fontSize: 13 }}>{icon}</span>
+        <span style={{ fontSize: 9, color: "#9ca3af" }}>×{count}</span>
+      </button>
+      {open && (
+        <div
+          onClick={(e) => { e.stopPropagation(); setOpen(false); }}
+          style={{
+            position: "absolute", top: "calc(100% + 4px)", left: 0,
+            background: "#fff", border: "1px solid #e5e7eb", borderRadius: 8,
+            boxShadow: "0 4px 12px #0002", padding: 4, zIndex: 10, minWidth: 180,
+          }}
+        >
+          {group.specs.map(spec => (
+            <button
+              key={spec.intentId}
+              onClick={(e) => { e.stopPropagation(); setOpen(false); fireItemIntent(spec, ctx, item); }}
+              style={{
+                display: "flex", alignItems: "center", gap: 8,
+                width: "100%", textAlign: "left",
+                padding: "6px 10px", background: "transparent", border: "none",
+                cursor: "pointer", fontSize: 12, color: "#1f2937",
+              }}
+              onMouseEnter={e => e.currentTarget.style.background = "#f9fafb"}
+              onMouseLeave={e => e.currentTarget.style.background = "transparent"}
+            >
+              {spec.icon && <span>{spec.icon}</span>}
+              <span>{spec.label || spec.intentId}</span>
+            </button>
+          ))}
         </div>
       )}
     </div>

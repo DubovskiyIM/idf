@@ -50,4 +50,21 @@ export const PROJECTIONS = {
     routeEntities: [],
     witnesses: ["name", "email", "avatar", "status"],
   },
+  people_list: {
+    name: "Люди",
+    kind: "catalog",
+    query: "все пользователи кроме меня",
+    entities: ["User"],
+    mainEntity: "User",
+    // User в route scope — для create_direct_chat/add_contact/open_profile
+    // не нужен picker. Per-item intent'ы кладут id выбранного User в ctx.id.
+    routeEntities: ["User"],
+    filter: "id !== (viewer && viewer.id)",
+    sort: "name",
+    witnesses: ["name", "avatar", "status", "email"],
+  },
 };
+
+// Root-проекции шелла — верхние табы, между которыми переключается навигация.
+// Порядок определяет отображение слева направо.
+export const ROOT_PROJECTIONS = ["conversation_list", "contact_list", "people_list"];

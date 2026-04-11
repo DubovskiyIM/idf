@@ -13,6 +13,7 @@ import * as messengerDomain from "./domain.js";
  */
 export default function MessengerV2UI({ world, exec, execBatch }) {
   const [currentUser, setCurrentUser] = useState(null);
+  const [authUsers, setAuthUsers] = useState([]);
   const [token, setToken] = useState(() => localStorage.getItem("idf_token"));
   const [authMode, setAuthMode] = useState("login");
   const [email, setEmail] = useState("");
@@ -21,7 +22,7 @@ export default function MessengerV2UI({ world, exec, execBatch }) {
   const [authError, setAuthError] = useState("");
   const wsRef = useRef(null);
 
-  const { current, history, navigate, back, canGoBack } = useProjectionRoute("conversation_list", {});
+  const { current, history, navigate, back, reset, canGoBack } = useProjectionRoute("conversation_list", {});
 
   useEffect(() => {
     if (!token) return;
@@ -30,6 +31,23 @@ export default function MessengerV2UI({ world, exec, execBatch }) {
       .then(user => setCurrentUser(user))
       .catch(() => { setToken(null); localStorage.removeItem("idf_token"); });
   }, [token]);
+
+  // Загрузить полный список auth-пользователей. Они живут в auth_users
+  // (не в Φ) — fold их не видит. Нужны для: (1) people_list каталога,
+  // (2) enrichment conversations/contacts аватарами и именами партнёра/
+  // контакта. Перезагружается при idf:reload (после confirm любого эффекта).
+  useEffect(() => {
+    if (!token || !currentUser) return;
+    const loadUsers = () => {
+      fetch("/api/auth/users", { headers: { Authorization: `Bearer ${token}` } })
+        .then(r => r.ok ? r.json() : [])
+        .then(list => setAuthUsers(Array.isArray(list) ? list : []))
+        .catch(() => {});
+    };
+    loadUsers();
+    window.addEventListener("idf:reload", loadUsers);
+    return () => window.removeEventListener("idf:reload", loadUsers);
+  }, [token, currentUser]);
 
   const doAuth = async () => {
     setAuthError("");
@@ -95,17 +113,43 @@ export default function MessengerV2UI({ world, exec, execBatch }) {
     userName: currentUser?.name,
   }), [currentUser]);
 
-  // Мир обогащается route params + auth-user'ами. Auth-пользователи живут в
-  // отдельной таблице (не в Φ), поэтому fold их не знает напрямую. Инжектим
-  // currentUser как базовый слой, а fold-produced partials (из replace-
-  // эффектов, upsert'ящихся в коллекцию user) накладываются поверх. Так
-  // аватар, отредактированный через user_profile_edit, побеждает auth-базу.
+  // Мир обогащается тремя слоями:
+  //  1) Базовый слой — все auth_users из /api/auth/users (они не в Φ и fold
+  //     их не видит). Нужны для people_list и для lookup'ов avatar/name
+  //     при enrichment conversations/contacts.
+  //  2) Folded поля из replace-эффектов — наложение поверх auth-base, так
+  //     редактирование аватара через user_profile_edit побеждает.
+  //  3) Enrichment conversations: для direct беседы вычисляем partner →
+  //     инжектим partner.avatar и partner.name в запись беседы (для catalog
+  //     primitive Avatar — он читает item.avatar / item.title).
+  //  4) Enrichment contacts: contact.contactId → user → contact.name/avatar.
+  //
   // В M4+ синхронизация auth_users ↔ Φ должна быть сделана через эффекты
   // регистрации (_user_register или аналог).
   const worldWithRoute = useMemo(() => {
-    const users = [...(world.users || [])];
-    if (currentUser) {
-      const base = {
+    // Слой 1: auth users как база
+    const baseUsers = authUsers.map(u => ({
+      id: u.id,
+      name: u.name,
+      email: u.email || "",
+      avatar: u.avatar || "",
+      statusMessage: u.statusMessage || "",
+      status: u.status || "offline",
+      lastSeen: u.created_at || Date.now(),
+    }));
+    // Слой 2: merge с folded users (folded побеждает по полям)
+    const foldedById = new Map((world.users || []).map(u => [u.id, u]));
+    let users = baseUsers.map(base => {
+      const folded = foldedById.get(base.id);
+      return folded ? { ...base, ...folded } : base;
+    });
+    // Добавить folded users, которых не было в auth
+    for (const f of (world.users || [])) {
+      if (!users.find(u => u.id === f.id)) users.push(f);
+    }
+    // Гарантировать наличие currentUser (если auth/users ещё не успел загрузиться)
+    if (currentUser && !users.find(u => u.id === currentUser.id)) {
+      users.push({
         id: currentUser.id,
         name: currentUser.name,
         email: currentUser.email || "",
@@ -113,21 +157,51 @@ export default function MessengerV2UI({ world, exec, execBatch }) {
         statusMessage: currentUser.statusMessage || "",
         status: "online",
         lastSeen: Date.now(),
-      };
-      const idx = users.findIndex(u => u.id === currentUser.id);
-      if (idx >= 0) {
-        // Folded partial поверх auth-base — folded поля побеждают
-        users[idx] = { ...base, ...users[idx] };
-      } else {
-        users.push(base);
-      }
+      });
     }
+
+    const userById = new Map(users.map(u => [u.id, u]));
+
+    // Слой 3: enrichment conversations
+    const conversations = (world.conversations || []).map(c => {
+      if (c.type === "direct" && Array.isArray(c.participantIds)) {
+        const partnerId = c.participantIds.find(id => id !== currentUser?.id);
+        const partner = partnerId ? userById.get(partnerId) : null;
+        if (partner) {
+          return {
+            ...c,
+            avatar: partner.avatar || "",
+            title: c.title || partner.name || "",
+            _partnerId: partner.id,
+          };
+        }
+      }
+      return c;
+    });
+
+    // Слой 4: enrichment contacts
+    const contacts = (world.contacts || []).map(c => {
+      const u = userById.get(c.contactId);
+      if (u) {
+        return {
+          ...c,
+          name: c.contactName || u.name || "",
+          avatar: u.avatar || "",
+          email: u.email || "",
+          userStatus: u.status || "offline",
+        };
+      }
+      return c;
+    });
+
     return {
       ...world,
       users,
+      conversations,
+      contacts,
       ...(current?.params || {}),
     };
-  }, [world, current, currentUser]);
+  }, [world, current, currentUser, authUsers]);
 
   if (!currentUser) {
     return (
@@ -187,26 +261,56 @@ export default function MessengerV2UI({ world, exec, execBatch }) {
     (viewerAvatar.startsWith("data:") || viewerAvatar.startsWith("http") || viewerAvatar.startsWith("/"));
   const userInitial = (viewerUser?.name || "?")[0]?.toUpperCase() || "?";
 
+  // Root-проекции для верхних табов. Определяются доменом, shell их только
+  // отображает. Клик по табу навигирует в соответствующий root (navigate
+  // push'ит в history — пользователь может вернуться через back).
+  const rootProjections = messengerDomain.ROOT_PROJECTIONS || [];
+  const isOnRoot = rootProjections.includes(current?.projectionId);
+
   return (
     <div style={{ display: "flex", flexDirection: "column", height: "100vh", fontFamily: "system-ui, sans-serif", position: "relative" }}>
-      <div style={{ display: "flex", alignItems: "stretch" }}>
-        <div style={{ flex: 1 }}>
-          <Breadcrumbs
-            history={history}
-            current={current}
-            canGoBack={canGoBack}
-            onBack={back}
-            projectionNames={projectionNames}
-          />
+      {/* Верхняя шапка: табы root-проекций + viewer */}
+      <div style={{
+        display: "flex", alignItems: "stretch",
+        background: "#fff", borderBottom: "1px solid #e5e7eb",
+      }}>
+        <div style={{ display: "flex", flex: 1 }}>
+          {rootProjections.map(projId => {
+            const isActive = current?.projectionId === projId;
+            return (
+              <button
+                key={projId}
+                // reset, а не navigate: переход между корневыми табами
+                // сбрасывает стек до единственной записи — иначе history
+                // копит каждый клик и breadcrumbs превращаются в мусор.
+                onClick={() => {
+                  if (isActive) return;
+                  reset(projId, {});
+                }}
+                style={{
+                  padding: "10px 18px",
+                  background: "transparent",
+                  border: "none",
+                  borderBottom: isActive ? "2px solid #6366f1" : "2px solid transparent",
+                  color: isActive ? "#6366f1" : "#6b7280",
+                  fontWeight: isActive ? 700 : 500,
+                  fontSize: 14,
+                  cursor: "pointer",
+                  fontFamily: "inherit",
+                }}
+              >
+                {projectionNames[projId] || projId}
+              </button>
+            );
+          })}
         </div>
         <button
           onClick={goToSelfProfile}
           title={`Профиль: ${currentUser.name}`}
           style={{
             display: "flex", alignItems: "center", gap: 8,
-            padding: "4px 12px", background: "#f9fafb",
-            borderBottom: "1px solid #e5e7eb", borderLeft: "1px solid #e5e7eb",
-            borderTop: "none", borderRight: "none",
+            padding: "4px 14px", background: "transparent",
+            border: "none", borderLeft: "1px solid #e5e7eb",
             cursor: "pointer", fontFamily: "inherit",
           }}
         >
@@ -230,6 +334,18 @@ export default function MessengerV2UI({ world, exec, execBatch }) {
           )}
         </button>
       </div>
+
+      {/* Breadcrumbs — показываем только когда не на root-проекции.
+          На корневых табы уже достаточны как контекст. */}
+      {!isOnRoot && (
+        <Breadcrumbs
+          history={history}
+          current={current}
+          canGoBack={canGoBack}
+          onBack={back}
+          projectionNames={projectionNames}
+        />
+      )}
 
       <div style={{ flex: 1, overflow: "hidden", position: "relative" }}>
         {currentArtifact ? (

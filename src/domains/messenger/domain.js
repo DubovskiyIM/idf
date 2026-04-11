@@ -1,7 +1,7 @@
 import { v4 as uuid } from "uuid";
 
 export { INTENTS } from "./intents.js";
-export { PROJECTIONS } from "./projections.js";
+export { PROJECTIONS, ROOT_PROJECTIONS } from "./projections.js";
 export { ONTOLOGY } from "./ontology.js";
 import { INTENTS } from "./intents.js";
 
@@ -86,15 +86,28 @@ export function buildEffects(intentId, ctx, world, drafts) {
       return effects;
     }
     case "create_direct_chat": {
-      if (!ctx.contactUserId) return null;
+      // Источники targetUserId (в порядке приоритета):
+      //  1. ctx.user — EntityPicker кладёт id под alias-ключом "user"
+      //     (см. EntityPicker.pick, alias из декларации "user: User")
+      //  2. ctx.id — per-item клик в catalog people_list: IntentButton
+      //     передаёт id выбранного пользователя в ctx.id
+      //  3. ctx.contactUserId — legacy fallback из ManualUI
+      const targetUserId = ctx.user || ctx.id || ctx.contactUserId;
+      if (!targetUserId || targetUserId === ctx.userId) return null;
+      // Имя беседы: alias-ключ, per-item world lookup, legacy
+      let targetUserName = ctx.userName || ctx.contactName || "";
+      if (!targetUserName && targetUserId) {
+        const u = (world.users || []).find(x => x.id === targetUserId);
+        if (u) targetUserName = u.name || "";
+      }
       const convId = `conv_${now}`;
       ef({ alpha: "add", target: "conversations", scope: "account", value: null,
-        context: { id: convId, type: "direct", title: ctx.contactName || "", createdBy: ctx.userId, participantIds: [ctx.userId, ctx.contactUserId], lastMessageAt: now, createdAt: now },
-        desc: describeEffect(intentId, "add", { contactName: ctx.contactName }) });
+        context: { id: convId, type: "direct", title: targetUserName, createdBy: ctx.userId, participantIds: [ctx.userId, targetUserId], lastMessageAt: now, createdAt: now },
+        desc: describeEffect(intentId, "add", { contactName: targetUserName }) });
       ef({ alpha: "add", target: "participants", scope: "account", value: null,
         context: { id: `p_${now}_1`, conversationId: convId, userId: ctx.userId, role: "member", joinedAt: now, lastReadAt: now }, desc: "участник" });
       ef({ alpha: "add", target: "participants", scope: "account", value: null,
-        context: { id: `p_${now}_2`, conversationId: convId, userId: ctx.contactUserId, role: "member", joinedAt: now, lastReadAt: now }, desc: "участник" });
+        context: { id: `p_${now}_2`, conversationId: convId, userId: targetUserId, role: "member", joinedAt: now, lastReadAt: now }, desc: "участник" });
       return effects;
     }
     case "create_group": {

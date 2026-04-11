@@ -71,12 +71,20 @@ describe("assignToSlotsCatalog", () => {
     expect(fabIds).toContain("create_group");
   });
 
-  it("creator без параметров (create_direct_chat) пропускается", () => {
+  it("creator без параметров с extra entity (create_direct_chat) → customCapture entityPicker в fab", () => {
+    // M3.5b: create_direct_chat creates Conversation + entity User
+    // (вне route scope conversation_list). customCapture.entityPicker
+    // перехватывает такие intents и кладёт их в fab с trigger+overlay.
     const slots = assignToSlotsCatalog(INTENTS, conversationList, ONTOLOGY);
     const fabIds = slots.fab.map(s => s.trigger?.intentId || s.intentId);
-    expect(fabIds).not.toContain("create_direct_chat");
-    const toolbarIds = slots.toolbar.map(s => s.intentId);
-    expect(toolbarIds).not.toContain("create_direct_chat");
+    expect(fabIds).toContain("create_direct_chat");
+    const overlayTypes = slots.overlay.map(o => o.type);
+    expect(overlayTypes).toContain("customCapture");
+    const picker = slots.overlay.find(o => o.widgetId === "entityPicker");
+    expect(picker).toBeDefined();
+    expect(picker.targetEntity).toBe("User");
+    expect(picker.targetCollection).toBe("users");
+    expect(picker.targetAlias).toBe("user");
   });
 
   it("per-item intent с irreversibility → item.intents с overlay", () => {

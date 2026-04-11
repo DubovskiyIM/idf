@@ -6,18 +6,16 @@
  */
 
 // Witnesses, которые обозначают *результат* специализированного захвата или
-// настроек, требующих виджетов, которых в M1/M2 нет.
+// настроек, требующих виджетов, которых в M3.5b нет.
 //
-// Три группы:
-//  — capture widgets (голос, стикер, GIF, гео, опрос, видео)
-//  — settings с enum/interval (theme, language, permissions, settings)
-//  — коллекции/export (pack, album, import/export файлы)
+// В M3.5b покрыты: голос (voiceRecorder по witness recording_duration/duration),
+// реакции (emojiPicker по react_*), выбор сущности (entityPicker по
+// creates+entity). Их нет в CAPTURE_WITNESSES — они пройдут через customCapture.
 //
-// Всё это придёт в M3 через реестр кастомных контролов + SelectControl +
-// BulkWizard. В M2 — пропускаем.
+// Остаются непокрытыми: стикеры, GIF, геолокация, видео, опросы, настройки,
+// коллекции/export. Их скип через этот фильтр. Придут в M3.6+.
 export const CAPTURE_WITNESSES = new Set([
-  // capture
-  "recording_duration", "duration",
+  // capture (непокрытые M3.5b)
   "sticker_id", "sticker_pack", "sticker_image",
   "gif_url",
   "latitude", "longitude",
@@ -112,14 +110,13 @@ export const UNSUPPORTED_INTENTS_M2 = new Set([
   "search_contacts",
   // Закладки — нужна отдельная проекция bookmarks, не показываем до M3
   "bookmark_message", "remove_bookmark",
-  // Реакции — нужен emoji picker
-  "react_to_message", "remove_reaction",
+  // Реакции — покрыто emojiPicker'ом (M3.5b), но только per-item. В M3.5b
+  // остаётся решить UX «собственных реакций» (react_with_custom и т.п.)
   // Report — report_reason не переводится в text input правильно
   "report_message",
-  // Forward — нужен picker целевой беседы (не текущей)
-  "forward_message", "share_contact", "send_contact_card",
-  // Добавить участника в группу — нужен picker пользователя
-  "add_to_group",
+  // share_contact, send_contact_card — creates не User, но требуют picker
+  // особой семантики. Ждут M3.6.
+  "share_contact", "send_contact_card",
   // Управление профилем — не место в contact_list, отдельный user_profile
   // их показывает через detail-архетип
   "delete_avatar", "enable_2fa", "delete_account",
@@ -180,7 +177,16 @@ export function appliesToProjection(intent, projection) {
   const hasDottedWitness = witnesses.some(w => w.includes("."));
   if (intentEntities.length === 0 && !hasDottedWitness) return true;
 
-  // 2. Route scope: либо явно объявленный автором, либо все entities проекции
+  // 2. Creator-intent для главной сущности: если intent создаёт mainEntity
+  // проекции, пускаем даже если есть extra entities вне route scope —
+  // их закроет customCapture.entityPicker (M3.5b). Без этого правила
+  // create_direct_chat (creates Conversation + entity User) не попадал в
+  // conversation_list, поскольку User отсутствует в routeScope.
+  if (intent.creates && intent.creates === mainEntity) {
+    return true;
+  }
+
+  // 3. Route scope: либо явно объявленный автором, либо все entities проекции
   const routeScope = new Set(
     projection.routeEntities
       ? [mainEntity, ...projection.routeEntities].filter(Boolean)

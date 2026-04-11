@@ -10,6 +10,18 @@ export default function ArchetypeDetail({ slots, nav, ctx: parentCtx, projection
   const { activeKey, activeContext, openOverlay, closeOverlay, overlayMap } = useOverlayManager(slots.overlay);
   const ctx = useMemo(() => ({ ...parentCtx, openOverlay }), [parentCtx, openOverlay]);
 
+  // Role check (M3.5b): editEdge показываем только если viewer владеет
+  // сущностью. Для User mainEntity — собственный профиль (target.id === viewer.id).
+  // Чужой user_profile не должен давать кнопку редактирования.
+  const isViewerOwner = (target) => {
+    if (!target || !parentCtx.viewer?.id) return false;
+    const mainEntity = projection?.mainEntity;
+    if (mainEntity === "User") return target.id === parentCtx.viewer.id;
+    // По умолчанию считаем non-owner для незнакомых сущностей —
+    // расширим логику, когда появятся другие editable detail-проекции.
+    return target.id === parentCtx.viewer.id;
+  };
+
   // Edit-action edge: если в nav есть исходящее ребро kind:"edit-action",
   // показываем кнопку «Редактировать» в header, которая навигирует в form-проекцию.
   const editEdge = (nav?.outgoing || []).find(e => e.kind === "edit-action");
@@ -46,19 +58,21 @@ export default function ArchetypeDetail({ slots, nav, ctx: parentCtx, projection
     );
   }
 
+  const canEdit = editEdge && isViewerOwner(target);
+
   return (
     <div style={{
       display: "flex", flexDirection: "column", height: "100%",
       background: "#f9fafb",
     }}>
-      {(slots.header?.length > 0 || editEdge) && (
+      {(slots.header?.length > 0 || canEdit) && (
         <div style={{
           display: "flex", alignItems: "center", gap: 12,
           padding: "12px 16px", background: "#fff", borderBottom: "1px solid #e5e7eb",
         }}>
           <SlotRenderer items={slots.header} ctx={ctx} contextItem={target} />
           <div style={{ flex: 1 }} />
-          {editEdge && (
+          {canEdit && (
             <button
               onClick={onEditClick}
               title="Редактировать"

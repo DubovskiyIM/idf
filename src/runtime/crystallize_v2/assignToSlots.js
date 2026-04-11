@@ -11,7 +11,6 @@ import { assignToSlotsCatalog } from "./assignToSlotsCatalog.js";
 import { assignToSlotsDetail } from "./assignToSlotsDetail.js";
 import {
   needsCustomCapture,
-  needsEntityPicker,
   appliesToProjection,
   isUnsupportedInM2,
 } from "./assignToSlotsShared.js";
@@ -84,19 +83,18 @@ function assignToSlotsFeed(INTENTS, projection, ONTOLOGY) {
     // Применимость к проекции
     if (!appliesToProjection(intent, projection)) continue;
 
-    // Пропускаем интенты, требующие кастомных виджетов захвата.
+    // Пропускаем интенты, требующие кастомных виджетов захвата, которые
+    // НЕ покрыты customCapture архетипом (стикеры, GIF, геолокация...).
+    // Интенты с recording_duration / reactions / creator+entity попадут в
+    // customCapture → overlay через wrapByConfirmation.
     if (needsCustomCapture(intent)) continue;
-
-    // Пропускаем creator-интенты, требующие entity-picker'а
-    // (create_direct_chat с User, forward_message с target-Conversation).
-    if (needsEntityPicker(intent, projection)) continue;
 
     const parameters = inferParameters(intent, ONTOLOGY).map(p => ({
       ...p,
       control: inferControlType(p, ONTOLOGY),
     }));
 
-    const wrapped = wrapByConfirmation(intent, id, parameters);
+    const wrapped = wrapByConfirmation(intent, id, parameters, { projection });
     if (wrapped === null) continue; // confirmation: auto
 
     const isPerItem = isPerItemIntent(intent, projection);

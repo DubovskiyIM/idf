@@ -7,7 +7,6 @@ import { inferControlType } from "./inferControlType.js";
 import { wrapByConfirmation } from "./wrapByConfirmation.js";
 import {
   needsCustomCapture,
-  needsEntityPicker,
   appliesToProjection,
   isUnsupportedInM2,
 } from "./assignToSlotsShared.js";
@@ -17,7 +16,7 @@ export function assignToSlotsCatalog(INTENTS, projection, ONTOLOGY) {
   const slots = {
     header: [],
     toolbar: [],
-    body: buildCatalogBody(projection),
+    body: buildCatalogBody(projection, ONTOLOGY),
     context: [],
     fab: [],
     overlay: [],
@@ -36,8 +35,9 @@ export function assignToSlotsCatalog(INTENTS, projection, ONTOLOGY) {
   for (const [id, intent] of Object.entries(INTENTS)) {
     if (isUnsupportedInM2(id)) continue;
     if (!appliesToProjection(intent, projection)) continue;
+    // customCapture (voiceRecorder/emojiPicker/entityPicker) теперь пройдёт
+    // через wrapByConfirmation — скипаем только непокрытые виджеты.
     if (needsCustomCapture(intent)) continue;
-    if (needsEntityPicker(intent, projection)) continue;
 
     // Catalog-специфика: интент должен либо касаться mainEntity напрямую,
     // либо быть pure projection-level utility (поиск/фильтры).
@@ -54,7 +54,7 @@ export function assignToSlotsCatalog(INTENTS, projection, ONTOLOGY) {
       control: inferControlType(p, ONTOLOGY),
     }));
 
-    const wrapped = wrapByConfirmation(intent, id, parameters);
+    const wrapped = wrapByConfirmation(intent, id, parameters, { projection });
     if (wrapped === null) continue;
 
     const isPerItem = isPerItemIntent(intent, projection);
@@ -70,8 +70,11 @@ export function assignToSlotsCatalog(INTENTS, projection, ONTOLOGY) {
 
     if (isComposerEntry) continue;
 
-    // Пропустить creator-интенты без collectable-параметров
-    if (isCreator && parameters.length === 0) continue;
+    // Пропустить creator-интенты без collectable-параметров — за исключением
+    // случая, когда wrapped имеет overlay (customCapture.entityPicker,
+    // formModal и т.п.). Для customCapture «параметр» — это выбор сущности
+    // внутри виджета, inferParameters его не видит.
+    if (isCreator && parameters.length === 0 && !hasOverlay) continue;
 
     // fab: создание главной сущности
     if (isCreator && !isPerItem) {
@@ -93,7 +96,7 @@ export function assignToSlotsCatalog(INTENTS, projection, ONTOLOGY) {
         overlayKey: wrapped.overlay.key,
         label: intent.name,
         icon: getIntentIcon(id, intent),
-        conditions: intent.particles.conditions || [],
+        conditions: buildItemConditions(intent, projection),
       });
       continue;
     }
@@ -104,7 +107,7 @@ export function assignToSlotsCatalog(INTENTS, projection, ONTOLOGY) {
         intentId: id,
         label: intent.name,
         icon: getIntentIcon(id, intent),
-        conditions: intent.particles.conditions || [],
+        conditions: buildItemConditions(intent, projection),
       });
       continue;
     }
@@ -162,9 +165,60 @@ function capitalize(s) {
   return s ? s[0].toUpperCase() + s.slice(1) : s;
 }
 
-function buildCatalogBody(projection) {
+/**
+ * Собрать conditions для per-item intent. К декларированным в намерении
+ * условиям добавляется synthetic ownership check, если intent меняет
+ * mainEntity (его эффекты — replace/remove на mainEntity.*) и
+ * mainEntity — User-подобная сущность с ownerField="id".
+ *
+ * Без этой проверки per-item кнопки "Редактировать профиль" / "Сменить
+ * статус" появились бы под каждой карточкой User в people_list, но
+ * фактическое применение на чужом User было бы запрещено (и ломало бы
+ * ожидания UX). Пока hardcoded для User (M3.5b) — в M4 ownerField
+ * должен жить в ontology и работать для Message/Participant и др.
+ */
+function buildItemConditions(intent, projection) {
+  const conditions = [...(intent.particles?.conditions || [])];
+  const mainEntity = projection.mainEntity;
+  if (!mainEntity) return conditions;
+
+  const lower = mainEntity.toLowerCase();
+  const effects = intent.particles?.effects || [];
+  const mutatesMain = effects.some(e =>
+    (e.α === "replace" || e.α === "remove") &&
+    typeof e.target === "string" &&
+    (e.target === lower || e.target.startsWith(lower + "."))
+  );
+
+  // Пока ownership-check для User — id === viewer.id.
+  // TODO M4: ontology.entities[X].ownerField → синтетический constraint.
+  if (mutatesMain && mainEntity === "User") {
+    conditions.push(`${lower}.id = me.id`);
+  }
+
+  return conditions;
+}
+
+function buildCatalogBody(projection, ONTOLOGY) {
   const mainEntity = projection.mainEntity;
   const source = mainEntity ? mainEntity.toLowerCase() + "s" : "items";
+
+  // Определяем titleField из ontology: name | title | id. Нормализуем
+  // оба формата (legacy array и типизированный объект).
+  const entity = ONTOLOGY?.entities?.[mainEntity];
+  const fields = entity?.fields;
+  const fieldNames = Array.isArray(fields)
+    ? fields
+    : (fields ? Object.keys(fields) : []);
+  const titleField =
+    fieldNames.includes("name") ? "name"
+    : fieldNames.includes("title") ? "title"
+    : "id";
+  const subtitleField =
+    fieldNames.includes("lastMessage") ? "lastMessage"
+    : fieldNames.includes("email") ? "email"
+    : fieldNames.includes("status") ? "status"
+    : null;
 
   const body = {
     type: "list",
@@ -178,14 +232,18 @@ function buildCatalogBody(projection) {
           type: "row",
           gap: 10,
           children: [
-            { type: "avatar", bind: "title", size: 40 },
+            // Avatar: если item.avatar — data URL/URL, показывается картинка;
+            // иначе инициал берётся из nameBind (titleField).
+            { type: "avatar", bind: "avatar", nameBind: titleField, size: 40 },
             {
               type: "column",
               sx: { flex: 1 },
               children: [
-                { type: "text", bind: "title", style: "heading" },
-                { type: "text", bind: "lastMessage", style: "secondary" },
-              ],
+                { type: "text", bind: titleField, style: "heading" },
+                subtitleField
+                  ? { type: "text", bind: subtitleField, style: "secondary" }
+                  : null,
+              ].filter(Boolean),
             },
           ],
         },

@@ -1,6 +1,12 @@
 import { useState, useCallback, useMemo } from "react";
 import FormModal from "./FormModal.jsx";
 import ConfirmDialog from "./ConfirmDialog.jsx";
+// Side-effect imports: виджеты регистрируются в реестр CAPTURE_WIDGETS при
+// загрузке модуля. Порядок не важен — матчинг идёт по id из spec.
+import "./capture/VoiceRecorder.jsx";
+import "./capture/EmojiPicker.jsx";
+import "./capture/EntityPicker.jsx";
+import { findCaptureWidgetById } from "./capture/registry.js";
 
 const OVERLAY_COMPONENTS = {
   formModal: FormModal,
@@ -39,6 +45,18 @@ export default function OverlayManager({ activeKey, activeContext, overlayMap, o
   if (!activeKey) return null;
   const overlay = overlayMap[activeKey];
   if (!overlay) return null;
+
+  // customCapture: резолвим React-компонент виджета из реестра по widgetId,
+  // который кристаллизатор кладёт в overlay.widgetId.
+  if (overlay.type === "customCapture") {
+    const widget = findCaptureWidgetById(overlay.widgetId);
+    if (!widget) {
+      console.warn("[OverlayManager] unknown capture widget:", overlay.widgetId);
+      return null;
+    }
+    const Widget = widget.component;
+    return <Widget spec={overlay} ctx={ctx} overlayContext={activeContext} onClose={onClose} />;
+  }
 
   const Component = OVERLAY_COMPONENTS[overlay.type];
   if (!Component) {
