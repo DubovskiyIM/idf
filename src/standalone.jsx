@@ -29,7 +29,7 @@ export default function StandaloneApp({ domainId }) {
   if (!domain) return <div style={{ padding: 40, textAlign: "center", fontFamily: "system-ui" }}>Домен "{domainId}" не найден</div>;
 
   const engine = useEngine(domain);
-  const { world, worldForIntent, drafts, effects, signals, exec,
+  const { world, worldForIntent, drafts, effects, signals, exec, execBatch,
     overlay, overlayEntityIds, startInvestigation, commitInvestigation, cancelInvestigation } = engine;
 
   // Отправить онтологию и намерения домена на сервер.
@@ -72,7 +72,7 @@ export default function StandaloneApp({ domainId }) {
     <div style={{ height: "100vh", background: "#fafafa", overflow: "auto" }}>
       <div style={{ maxWidth: (domainId === "messenger" || domainId === "messenger-v2") ? "100%" : 800, margin: "0 auto", padding: (domainId === "messenger" || domainId === "messenger-v2") ? 0 : 24 }}>
         <domain.UI
-          world={world} worldForIntent={worldForIntent} drafts={drafts} exec={exec} effects={effects}
+          world={world} worldForIntent={worldForIntent} drafts={drafts} exec={exec} execBatch={execBatch} effects={effects}
           viewer="client" layer="canonical"
           overlay={overlay} overlayEntityIds={overlayEntityIds}
           startInvestigation={startInvestigation} commitInvestigation={commitInvestigation} cancelInvestigation={cancelInvestigation}

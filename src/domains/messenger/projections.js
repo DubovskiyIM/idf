@@ -9,7 +9,8 @@ export const PROJECTIONS = {
     // archive — моё участие в беседе). Admin-интенты на Participant
     // (promote_to_admin, ban_user…) всё равно отсекаются blacklist'ом.
     routeEntities: ["Participant"],
-    filter: "(world.participants || []).some(p => p.conversationId === id && p.userId === (viewer && viewer.id))",
+    // Filter: (1) моё участие в беседе, (2) viewState.query — inlineSearch фильтр по title
+    filter: "(world.participants || []).some(p => p.conversationId === id && p.userId === (viewer && viewer.id)) && (!(viewState && viewState.query) || (title || '').toLowerCase().includes((viewState.query || '').toLowerCase()))",
     sort: "-lastMessageAt",
     witnesses: ["title", "lastMessage", "unreadCount", "status"],
   },

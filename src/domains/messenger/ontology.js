@@ -1,7 +1,19 @@
 export const ONTOLOGY = {
   entities: {
     User: {
-      fields: ["id", "email", "name", "avatar", "status", "lastSeen"],
+      // Новый типизированный формат с read/write матрицей per role.
+      // read/write — массивы ролей. "*" — все, "self" — только владелец,
+      // "contact" — добавленный контакт. Отсутствие read — по умолчанию
+      // публично. Отсутствие write — поле неизменяемо.
+      fields: {
+        id: { type: "id" },
+        email: { type: "email", read: ["self"], write: ["self"], label: "Email" },
+        name: { type: "text", read: ["*"], write: ["self"], required: true, label: "Имя" },
+        avatar: { type: "image", read: ["*"], write: ["self"], label: "Аватар" },
+        statusMessage: { type: "textarea", read: ["*"], write: ["self"], label: "Статус-сообщение" },
+        status: { type: "enum", read: ["*"], label: "Онлайн-статус" },
+        lastSeen: { type: "datetime", read: ["*"], label: "Был в сети" },
+      },
       statuses: ["online", "offline", "away"],
       type: "internal"
     },

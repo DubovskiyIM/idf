@@ -87,11 +87,11 @@ describe("assignToSlotsCatalog", () => {
     expect(del.opens).toBe("overlay");
   });
 
-  it("projection-level utility (search) → toolbar + overlay formModal", () => {
+  it("search-утилита (query+results) → inlineSearch в toolbar", () => {
     const slots = assignToSlotsCatalog(INTENTS, conversationList, ONTOLOGY);
-    const searchTrigger = slots.toolbar.find(t => t.intentId === "search_conversations");
-    expect(searchTrigger).toBeDefined();
-    expect(slots.overlay.some(o => o.intentId === "search_conversations")).toBe(true);
+    const searchCtrl = slots.toolbar.find(t => t.intentId === "search_conversations");
+    expect(searchCtrl).toBeDefined();
+    expect(searchCtrl.type).toBe("inlineSearch");
   });
 
   it("body — list с source, соответствующим главной сущности", () => {

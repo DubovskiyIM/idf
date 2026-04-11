@@ -170,6 +170,69 @@ export function useEngine(domain) {
     }
   }, [world, drafts, domain]);
 
+  /**
+   * execBatch — отправка нескольких под-эффектов одним атомарным batch-эффектом.
+   * Используется entityForm для сохранения множественных изменений полей.
+   *
+   * Принцип all-or-nothing (§11 манифеста): серверная валидация проверяет
+   * каждый под-эффект; если любой невалиден, весь batch rejected и ни один
+   * под-эффект не применяется в fold. При confirmed — все применяются.
+   *
+   * @param {string} intentId — id объединяющего намерения
+   * @param {Array<{intentId, ctx}>} subs — массив {intentId, ctx} для каждого
+   *   под-эффекта. Отдельные buildEffects вызываются для каждого, результаты
+   *   собираются в один batch.
+   */
+  const execBatch = useCallback((intentId, subs) => {
+    const subEffects = [];
+    for (const { intentId: subIntentId, ctx: subCtx } of subs) {
+      const built = domain.buildEffects(subIntentId || intentId, subCtx, world, drafts);
+      if (!built || built.length === 0) continue;
+      subEffects.push(...built);
+    }
+    if (subEffects.length === 0) return;
+
+    // Batch-эффект: один верхнеуровневый, value = массив под-эффектов
+    const now = Date.now();
+    const batchEffect = {
+      id: uuid(),
+      intent_id: intentId,
+      alpha: "batch",
+      // target указывает на главную коллекцию (берём из первого под-эффекта)
+      target: subEffects[0].target.split(".")[0],
+      value: subEffects.map(e => ({
+        intent_id: e.intent_id,
+        alpha: e.alpha,
+        target: e.target,
+        value: e.value,
+        context: e.context,
+      })),
+      scope: "account",
+      parent_id: null,
+      context: { batchSize: subEffects.length },
+      created_at: now,
+      status: "proposed",
+      desc: `batch ${intentId} × ${subEffects.length}`,
+      time: ts(),
+    };
+
+    setEffects(prev => {
+      const lastUserEffect = [...prev].reverse().find(e => e.intent_id !== "_seed" && e.intent_id !== "_sync" && e.status !== "rejected");
+      if (lastUserEffect) batchEffect.parent_id = lastUserEffect.id;
+      return [...prev, batchEffect];
+    });
+
+    fetch("/api/effects", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(batchEffect),
+    }).catch(() => {
+      setEffects(prev => prev.map(ef =>
+        ef.id === batchEffect.id ? { ...ef, status: "confirmed", resolved_at: Date.now() } : ef
+      ));
+    });
+  }, [world, drafts, domain]);
+
   const isApplicable = useCallback((intentId, ctx) => {
     const i = domain.INTENTS[intentId];
     if (!i) return false;
@@ -209,7 +272,7 @@ export function useEngine(domain) {
 
   return {
     world, worldForIntent, drafts, effects, signals, links,
-    exec, isApplicable, domain,
+    exec, execBatch, isApplicable, domain,
     // Overlay(I) — многофазные намерения
     overlay, overlayEntityIds,
     startInvestigation, commitInvestigation, cancelInvestigation,

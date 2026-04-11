@@ -99,9 +99,11 @@ function findEntity(world, entityId) {
  * Валидация эффекта.
  *
  * 1. Если предок отвергнут — reject.
- * 2. Универсальная проверка условий namerenija из реестра (intents.js).
- *    Реестр наполняется клиентом через POST /api/intents.
- * 3. Для replace/remove — проверка что сущность существует в World(t).
+ * 2. α:"batch" — рекурсивная валидация каждого под-эффекта. Если любой
+ *    под-эффект невалиден, весь batch отвергается (принцип all-or-nothing,
+ *    соответствует §11 манифеста — таблица композиции batch).
+ * 3. Универсальная проверка условий namerenija из реестра (intents.js).
+ * 4. Для replace/remove — проверка что сущность существует в World(t).
  */
 function validate(effect) {
   const ctx = effect.context ? JSON.parse(effect.context) : {};
@@ -114,7 +116,35 @@ function validate(effect) {
     }
   }
 
-  // 2. Условия намерения — универсально через реестр.
+  // 2. α:"batch" — рекурсивная валидация
+  if (effect.alpha === "batch") {
+    const value = effect.value ? JSON.parse(effect.value) : null;
+    if (!Array.isArray(value)) {
+      return { valid: false, reason: "batch effect.value должен быть массивом под-эффектов" };
+    }
+    for (let i = 0; i < value.length; i++) {
+      const sub = value[i];
+      // Нормализуем под-эффект в формат, ожидаемый validate
+      const subEffect = {
+        id: sub.id || `${effect.id}_sub_${i}`,
+        intent_id: sub.intent_id || effect.intent_id,
+        alpha: sub.alpha,
+        target: sub.target,
+        value: sub.value != null ? JSON.stringify(sub.value) : null,
+        scope: sub.scope || effect.scope,
+        parent_id: null, // sub-эффекты batch не имеют parent_id (сам batch — их «родитель»)
+        context: sub.context ? JSON.stringify(sub.context) : null,
+        created_at: effect.created_at,
+      };
+      const r = validate(subEffect);
+      if (!r.valid) {
+        return { valid: false, reason: `batch sub-effect #${i} (${sub.target}): ${r.reason}` };
+      }
+    }
+    return { valid: true };
+  }
+
+  // 3. Условия намерения — универсально через реестр.
   // Пропускаем для черновиков и системных эффектов.
   if (!effect.target.startsWith("drafts") && !effect.intent_id.startsWith("_")) {
     const world = foldWorld();
@@ -123,7 +153,7 @@ function validate(effect) {
     if (!condResult.valid) return condResult;
   }
 
-  // 3. Для replace/remove — сущность должна существовать
+  // 4. Для replace/remove — сущность должна существовать
   if ((effect.alpha === "replace" || effect.alpha === "remove") && ctx.id && !effect.target.startsWith("drafts")) {
     const world = foldWorld();
     const target = findEntity(world, ctx.id);

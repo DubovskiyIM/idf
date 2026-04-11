@@ -10,7 +10,7 @@ import * as messengerDomain from "./domain.js";
  * conversation_list → chat_view → user_profile через useProjectionRoute.
  * Auth + WebSocket — минимум, временно; в M5 уйдут в общий модуль.
  */
-export default function MessengerV2UI({ world, exec }) {
+export default function MessengerV2UI({ world, exec, execBatch }) {
   const [currentUser, setCurrentUser] = useState(null);
   const [token, setToken] = useState(() => localStorage.getItem("idf_token"));
   const [authMode, setAuthMode] = useState("login");
@@ -139,6 +139,7 @@ export default function MessengerV2UI({ world, exec }) {
             projection={currentProjectionDef}
             world={worldWithRoute}
             exec={exec}
+            execBatch={execBatch}
             viewer={currentUser}
             viewerContext={viewerContext}
             routeParams={current.params}

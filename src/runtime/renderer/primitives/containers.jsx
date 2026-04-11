@@ -175,7 +175,10 @@ export function List({ node, ctx }) {
   let items = Array.isArray(source) ? [...source] : [];
 
   if (node.filter) {
-    items = items.filter(it => evalCondition(node.filter, { ...it, item: it, viewer: ctx.viewer, world: ctx.world }));
+    items = items.filter(it => evalCondition(node.filter, {
+      ...it, item: it, viewer: ctx.viewer, world: ctx.world,
+      viewState: ctx.viewState || {},
+    }));
   }
   if (node.sort) {
     // Для direction:"bottom-up" сортируем ПО ВОЗРАСТАНИЮ (старое сверху,

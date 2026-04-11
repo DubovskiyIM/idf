@@ -62,6 +62,12 @@ export function assignToSlotsCatalog(INTENTS, projection, ONTOLOGY) {
     const hasOverlay = wrapped.trigger && wrapped.overlay;
     const isCreator = intent.creates === projection.mainEntity;
 
+    // inlineSearch — всегда в toolbar как projection-level utility
+    if (wrapped.type === "inlineSearch") {
+      slots.toolbar.push(wrapped);
+      continue;
+    }
+
     if (isComposerEntry) continue;
 
     // Пропустить creator-интенты без collectable-параметров

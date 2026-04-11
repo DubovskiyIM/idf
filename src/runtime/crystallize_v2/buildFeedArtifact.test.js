@@ -89,11 +89,11 @@ describe("crystallizeV2 — chat_view feed", () => {
     expect(a.slots.composer?.primaryIntent).toBe("send_message");
   });
 
-  it("search_messages → toolbar + formModal в overlay", () => {
+  it("search_messages → inlineSearch в toolbar", () => {
     const a = crystallizeV2(INTENTS, PROJECTIONS, ONTOLOGY).chat_view;
-    const searchTrigger = a.slots.toolbar.find(t => t.intentId === "search_messages");
-    expect(searchTrigger).toBeDefined();
-    expect(a.slots.overlay.some(o => o.type === "formModal" && o.intentId === "search_messages")).toBe(true);
+    const searchCtrl = a.slots.toolbar.find(t => t.intentId === "search_messages");
+    expect(searchCtrl).toBeDefined();
+    expect(searchCtrl.type).toBe("inlineSearch");
   });
 
   it("clear_history → toolbar + confirmDialog с irreversibility:high", () => {

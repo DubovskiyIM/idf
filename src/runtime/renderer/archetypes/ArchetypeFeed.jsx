@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useMemo, useState, useCallback } from "react";
 import SlotRenderer from "../SlotRenderer.jsx";
 import OverlayManager, { useOverlayManager } from "../controls/OverlayManager.jsx";
 import { useMediaQuery } from "../hooks.js";
@@ -7,8 +7,22 @@ export default function ArchetypeFeed({ slots, ctx: parentCtx }) {
   const isDesktop = useMediaQuery("(min-width: 1024px)");
   const { activeKey, activeContext, openOverlay, closeOverlay, overlayMap } = useOverlayManager(slots.overlay);
 
-  // Расширить ctx методом openOverlay — используется IntentButton
-  const ctx = useMemo(() => ({ ...parentCtx, openOverlay }), [parentCtx, openOverlay]);
+  // viewState — параметры запроса проекции (§5 манифеста v1.1+)
+  const [viewState, setViewStateRaw] = useState({});
+  const setViewState = useCallback((key, val) => {
+    setViewStateRaw(prev => {
+      if (prev[key] === val) return prev;
+      return { ...prev, [key]: val };
+    });
+  }, []);
+
+  // Расширить ctx методом openOverlay + viewState — используется inlineSearch/IntentButton
+  const ctx = useMemo(() => ({
+    ...parentCtx,
+    openOverlay,
+    viewState,
+    setViewState,
+  }), [parentCtx, openOverlay, viewState, setViewState]);
 
   return (
     <div style={{

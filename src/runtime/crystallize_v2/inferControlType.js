@@ -27,6 +27,8 @@ const PATTERNS = [
   { re: /^gif_url$/i, type: "assetPicker" },
 ];
 
+import { getEntityFields, mapOntologyTypeToControl } from "./ontologyHelpers.js";
+
 export function inferControlType(param, ONTOLOGY) {
   // 1. Явный type в параметре
   if (param.type) return param.type;
@@ -34,14 +36,20 @@ export function inferControlType(param, ONTOLOGY) {
   // 2. Массив → multiSelect
   if (param.isArray) return "multiSelect";
 
-  // 3. Анкеринг к онтологии: если param.entity указан, и поле имеет statuses → select
+  // 3. Приоритетный источник: анкеринг поля к онтологии (типизированные fields)
   if (param.entity && ONTOLOGY?.entities?.[param.entity]) {
     const entity = ONTOLOGY.entities[param.entity];
+    const fields = getEntityFields(entity);
+    const field = fields.find(f => f.name === param.name);
+    if (field?.type) {
+      // Специальный случай: status — это enum, даже если тип не объявлен явно
+      if (Array.isArray(entity.statuses) && param.name === "status") return "select";
+      return mapOntologyTypeToControl(field.type);
+    }
     if (Array.isArray(entity.statuses) && param.name === "status") return "select";
-    // В M5 сюда добавится разбор entity.fields как объектов с типами
   }
 
-  // 4. Имя-эвристика
+  // 4. Имя-эвристика (fallback)
   const name = param.name || "";
   for (const { re, type } of PATTERNS) {
     if (re.test(name)) return type;

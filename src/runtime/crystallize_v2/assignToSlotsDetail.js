@@ -10,6 +10,7 @@ import {
   needsEntityPicker,
   isUnsupportedInM2,
 } from "./assignToSlotsShared.js";
+import { getEntityFields, canRead } from "./ontologyHelpers.js";
 
 const SYSTEM_DETAIL_FIELDS = new Set([
   "id", "createdAt", "updatedAt", "deletedAt", "deletedFor",
@@ -77,31 +78,36 @@ function appliesToMainEntity(intent, mainEntity) {
   return intentEntities.includes(mainEntity);
 }
 
-function buildDetailBody(projection, ONTOLOGY) {
+function buildDetailBody(projection, ONTOLOGY, viewerRole = "self") {
   const mainEntity = projection.mainEntity;
   const entity = ONTOLOGY?.entities?.[mainEntity];
-  const fields = (entity?.fields || []).filter(f => !SYSTEM_DETAIL_FIELDS.has(f));
+  // Нормализованные поля + фильтр системных + проверка read-доступа по роли
+  const allFields = getEntityFields(entity || {});
+  const fields = allFields.filter(f =>
+    !SYSTEM_DETAIL_FIELDS.has(f.name) && canRead(f, viewerRole)
+  );
+  const fieldNames = fields.map(f => f.name);
 
   const children = [];
 
-  if (fields.includes("avatar")) {
+  if (fieldNames.includes("avatar")) {
     children.push({ type: "avatar", bind: "avatar", size: 96 });
   }
 
-  if (fields.includes("name")) {
+  if (fieldNames.includes("name")) {
     children.push({ type: "heading", bind: "name", level: 1 });
-  } else if (fields.includes("title")) {
+  } else if (fieldNames.includes("title")) {
     children.push({ type: "heading", bind: "title", level: 1 });
   }
 
   for (const field of fields) {
-    if (field === "avatar" || field === "name" || field === "title") continue;
+    if (field.name === "avatar" || field.name === "name" || field.name === "title") continue;
     children.push({
       type: "row",
       gap: 8,
       children: [
-        { type: "text", content: field + ":", style: "secondary" },
-        { type: "text", bind: field },
+        { type: "text", content: (field.label || field.name) + ":", style: "secondary" },
+        { type: "text", bind: field.name },
       ],
     });
   }

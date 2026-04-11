@@ -14,6 +14,7 @@ export default function ProjectionRendererV2({
   projection,
   world,
   exec,
+  execBatch,
   viewer,
   viewerContext,
   routeParams,
@@ -45,13 +46,24 @@ export default function ProjectionRendererV2({
     );
   }
 
+  // Обёртка exec: автоматически вливает viewerContext + routeParams
   const wrappedExec = (intentId, params = {}) =>
     exec(intentId, { ...(viewerContext || {}), ...(routeParams || {}), ...params });
+
+  // Обёртка execBatch: добавляет viewerContext + routeParams в каждый sub-ctx
+  const wrappedExecBatch = execBatch
+    ? (intentId, subs) =>
+        execBatch(intentId, subs.map(sub => ({
+          intentId: sub.intentId,
+          ctx: { ...(viewerContext || {}), ...(routeParams || {}), ...(sub.ctx || {}) },
+        })))
+    : undefined;
 
   const ctx = {
     world,
     viewer,
     exec: wrappedExec,
+    execBatch: wrappedExecBatch,
     theme,
     artifact,
     viewerContext,

@@ -1,10 +1,27 @@
-import { useMemo } from "react";
+import { useMemo, useState, useCallback } from "react";
 import SlotRenderer from "../SlotRenderer.jsx";
 import OverlayManager, { useOverlayManager } from "../controls/OverlayManager.jsx";
 
 export default function ArchetypeCatalog({ slots, ctx: parentCtx }) {
   const { activeKey, activeContext, openOverlay, closeOverlay, overlayMap } = useOverlayManager(slots.overlay);
-  const ctx = useMemo(() => ({ ...parentCtx, openOverlay }), [parentCtx, openOverlay]);
+
+  // viewState — параметры запроса проекции (§5 манифеста v1.1+).
+  // Эфемерное состояние, не Φ/Δ/Σ/Π. Используется inlineSearch и
+  // аналогичными view-filter контролами.
+  const [viewState, setViewStateRaw] = useState({});
+  const setViewState = useCallback((key, val) => {
+    setViewStateRaw(prev => {
+      if (prev[key] === val) return prev;
+      return { ...prev, [key]: val };
+    });
+  }, []);
+
+  const ctx = useMemo(() => ({
+    ...parentCtx,
+    openOverlay,
+    viewState,
+    setViewState,
+  }), [parentCtx, openOverlay, viewState, setViewState]);
 
   return (
     <div style={{

@@ -91,14 +91,12 @@ describe("assignToSlots (feed)", () => {
     expect(slots.composer.primaryIntent).toBe("send_message");
   });
 
-  it("search_messages (form, projection-level) → toolbar + formModal в overlay", () => {
+  it("search_messages (witness query+results) → inlineSearch в toolbar", () => {
     const slots = assignToSlots(INTENTS, chatViewProjection, ONTOLOGY);
-    const toolbarTriggers = slots.toolbar.filter(c => c.intentId === "search_messages");
-    expect(toolbarTriggers).toHaveLength(1);
-    expect(toolbarTriggers[0].opens).toBe("overlay");
-    const overlayEntry = slots.overlay.find(o => o.triggerIntentId === "search_messages" || o.intentId === "search_messages");
-    expect(overlayEntry).toBeDefined();
-    expect(overlayEntry.type).toBe("formModal");
+    const searchCtrl = slots.toolbar.find(c => c.intentId === "search_messages");
+    expect(searchCtrl).toBeDefined();
+    expect(searchCtrl.type).toBe("inlineSearch");
+    expect(searchCtrl.paramName).toBe("query");
   });
 
   it("clear_history с irreversibility:high → toolbar trigger + confirmDialog overlay", () => {

@@ -103,6 +103,12 @@ function assignToSlotsFeed(INTENTS, projection, ONTOLOGY) {
     const isComposerEntry = wrapped.type === "composerEntry";
     const hasOverlay = wrapped.trigger && wrapped.overlay;
 
+    // inlineSearch — всегда в toolbar как projection-level utility
+    if (wrapped.type === "inlineSearch") {
+      slots.toolbar.push(wrapped);
+      continue;
+    }
+
     // composer: первое projection-level намерение confirmation:"enter" + creates → composer.
     // Вторичные composerEntry (reply_to_message и т.п.) пропускаем — их UX в M1 не поддержан
     // (нужен inline-режим композера с reply-контекстом, это M2).
@@ -228,7 +234,7 @@ function buildBody(projection) {
   return {
     type: "list",
     source: "messages",
-    filter: "conversationId === world.currentConversationId && !((deletedFor||[]).includes(viewer && viewer.id)) && !((deletedFor||[]).includes('*'))",
+    filter: "conversationId === world.currentConversationId && !((deletedFor||[]).includes(viewer && viewer.id)) && !((deletedFor||[]).includes('*')) && (!(viewState && viewState.query) || (content || '').toLowerCase().includes((viewState.query || '').toLowerCase()))",
     sort: "createdAt",
     direction: "bottom-up",
     gap: 8,
