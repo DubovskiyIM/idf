@@ -13,6 +13,7 @@ const PROJECTIONS = {
     kind: "feed",
     entities: ["Message", "Conversation"],
     mainEntity: "Message",
+    idParam: "conversationId",
   },
   user_profile: {
     name: "Профиль",
@@ -52,7 +53,9 @@ describe("deriveNavGraph", () => {
     const graph = deriveNavGraph(PROJECTIONS);
     const edge = graph.edgesFrom("conversation_list").find(e => e.to === "chat_view");
     expect(edge.params).toBeDefined();
-    expect(edge.params.currentConversationId).toBe("item.id");
+    // chat_view.idParam === "conversationId" — send_message handler
+    // читает именно ctx.conversationId, так что navGraph даёт это имя.
+    expect(edge.params.conversationId).toBe("item.id");
   });
 
   it("detail проекция без соответствующего catalog — нет входящих рёбер", () => {

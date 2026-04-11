@@ -34,17 +34,45 @@ export default function VoiceRecorder({ spec, ctx, onClose }) {
   const startRecording = async () => {
     setError(null);
     try {
+      if (!navigator.mediaDevices?.getUserMedia) {
+        throw new Error("getUserMedia не поддерживается (нужен HTTPS)");
+      }
+      if (typeof MediaRecorder === "undefined") {
+        throw new Error("MediaRecorder не поддерживается браузером");
+      }
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      const mr = new MediaRecorder(stream);
+
+      // Выбираем mimeType, поддерживаемый браузером. iOS Safari не поддерживает
+      // webm — только mp4/aac. Fallback на "" = дефолтный выбор браузера.
+      const candidates = [
+        "audio/webm;codecs=opus",
+        "audio/webm",
+        "audio/mp4;codecs=mp4a.40.2",
+        "audio/mp4",
+        "audio/ogg;codecs=opus",
+      ];
+      const mimeType = candidates.find(t => MediaRecorder.isTypeSupported?.(t)) || "";
+      const mr = mimeType ? new MediaRecorder(stream, { mimeType }) : new MediaRecorder(stream);
       const chunks = [];
-      mr.ondataavailable = (e) => chunks.push(e.data);
+      mr.ondataavailable = (e) => {
+        if (e.data && e.data.size > 0) chunks.push(e.data);
+      };
       mr.onstop = () => {
-        const blob = new Blob(chunks, { type: "audio/webm" });
+        const actualType = mr.mimeType || mimeType || "audio/webm";
+        const blob = new Blob(chunks, { type: actualType });
+        if (blob.size === 0) {
+          setError("Пустая запись — браузер не отдал аудио-данные");
+          stream.getTracks().forEach(t => t.stop());
+          return;
+        }
         setAudioBlob(blob);
         setAudioUrl(URL.createObjectURL(blob));
         stream.getTracks().forEach(t => t.stop());
       };
-      mr.start();
+      // timeslice=250ms: ondataavailable триггерится регулярно, без этого
+      // на некоторых браузерах (iOS Safari) chunks получаются только при
+      // stop'е, и если stop вызван «слишком быстро», blob остаётся пустым.
+      mr.start(250);
       mediaRecorderRef.current = mr;
       setRecording(true);
       startTimeRef.current = Date.now();
@@ -52,7 +80,7 @@ export default function VoiceRecorder({ spec, ctx, onClose }) {
         setDuration(Math.round((Date.now() - startTimeRef.current) / 1000));
       }, 200);
     } catch (e) {
-      setError("Нет доступа к микрофону: " + e.message);
+      setError("Нет доступа к микрофону: " + (e.message || e));
     }
   };
 

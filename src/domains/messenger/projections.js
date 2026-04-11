@@ -20,6 +20,11 @@ export const PROJECTIONS = {
     query: "сообщения одной беседы, пагинация",
     entities: ["Message", "Conversation", "Participant"],
     mainEntity: "Message",
+    // idParam: "conversationId" — явное имя route-параметра, под которым
+    // navGraph кладёт id целевой беседы. Без него по умолчанию использовался
+    // currentConversationId (из паттерна `current${mainEntity}Id`), а
+    // send_message handler ожидает ctx.conversationId — отправка падала.
+    idParam: "conversationId",
     // Route scope: текущий чат предоставляет Conversation и Participant
     // (моё участие в беседе). Это даёт clear_history и mute/unmute доступ
     // к правильному контексту. Админские интенты на Participant отсекаются

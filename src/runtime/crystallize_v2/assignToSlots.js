@@ -193,6 +193,10 @@ function isPerItemIntent(intent, projection) {
   // Per-item: намерение применяется к единичному экземпляру главной сущности проекции.
   // Признак: есть условие или точечный witness на mainEntity (нужна ссылка на конкретный
   // экземпляр), либо единственная entity — mainEntity без дополнительных.
+  //
+  // extended=true — массовая операция (BulkWizard), всегда projection-level,
+  // даже если entities включают mainEntity как [] (например Message[]).
+  if (intent.extended) return false;
   const mainEntity = projection.mainEntity || "Message";
   const mainLower = mainEntity.toLowerCase();
   const intentEntities = (intent.particles?.entities || [])
@@ -232,7 +236,7 @@ function buildBody(projection) {
   return {
     type: "list",
     source: "messages",
-    filter: "conversationId === world.currentConversationId && !((deletedFor||[]).includes(viewer && viewer.id)) && !((deletedFor||[]).includes('*')) && (!(viewState && viewState.query) || (content || '').toLowerCase().includes((viewState.query || '').toLowerCase()))",
+    filter: "conversationId === world.conversationId && !((deletedFor||[]).includes(viewer && viewer.id)) && !((deletedFor||[]).includes('*')) && (!(viewState && viewState.query) || (content || '').toLowerCase().includes((viewState.query || '').toLowerCase()))",
     sort: "createdAt",
     direction: "bottom-up",
     gap: 8,
@@ -246,6 +250,13 @@ function buildBody(projection) {
           bind: "senderName",
           style: { fontSize: 11, fontWeight: 600, color: "#6366f1", marginBottom: 2 },
           condition: "senderId !== viewer.id",
+        },
+        // Голосовое сообщение: <audio> если есть audioUrl. SlotRenderer
+        // сам отфильтрует по condition.
+        {
+          type: "audio",
+          bind: "audioUrl",
+          condition: "audioUrl",
         },
         { type: "text", bind: "content", style: { fontSize: 14, whiteSpace: "pre-wrap" } },
       ],

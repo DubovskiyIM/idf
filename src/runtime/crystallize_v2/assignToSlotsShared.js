@@ -92,8 +92,10 @@ export const UNSUPPORTED_INTENTS_M2 = new Set([
   // Контакт-группы — нужен picker контакт-группы
   "add_to_contact_group", "remove_from_contact_group",
   "create_contact_group",
-  // Extended / массовые операции — нужен BulkWizard
-  "bulk_delete_messages", "select_messages",
+  // select_messages — требует UI выделения (multi-select mode). В M3.6
+  // BulkWizard делает выделение своим внутренним шагом, так что отдельный
+  // intent не нужен в toolbar.
+  "select_messages",
   // Закрепление сообщения в группе — requires participant-picker + message-picker
   "pin_group_message",
   // Перевод сообщения — нужен API перевода

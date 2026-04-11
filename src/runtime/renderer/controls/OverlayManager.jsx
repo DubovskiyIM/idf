@@ -1,6 +1,7 @@
 import { useState, useCallback, useMemo } from "react";
 import FormModal from "./FormModal.jsx";
 import ConfirmDialog from "./ConfirmDialog.jsx";
+import BulkWizard from "./BulkWizard.jsx";
 // Side-effect imports: виджеты регистрируются в реестр CAPTURE_WIDGETS при
 // загрузке модуля. Порядок не важен — матчинг идёт по id из spec.
 import "./capture/VoiceRecorder.jsx";
@@ -11,6 +12,7 @@ import { findCaptureWidgetById } from "./capture/registry.js";
 const OVERLAY_COMPONENTS = {
   formModal: FormModal,
   confirmDialog: ConfirmDialog,
+  bulkWizard: BulkWizard,
 };
 
 /**

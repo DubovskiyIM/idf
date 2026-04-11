@@ -90,6 +90,19 @@ export function Image({ node, ctx, item }) {
   return <img src={src} alt="" style={{ maxWidth: "100%", borderRadius: 8, ...(node.sx || {}) }} />;
 }
 
+export function Audio({ node, ctx, item }) {
+  const data = item || ctx.world;
+  const src = node.bind ? resolve(data, node.bind) : node.src;
+  if (!src) return null;
+  return (
+    <audio
+      src={src}
+      controls
+      style={{ maxWidth: "100%", marginTop: 4, ...(node.sx || {}) }}
+    />
+  );
+}
+
 export function Spacer({ node }) {
   return <div style={{ height: node.size || 16, ...(node.sx || {}) }} />;
 }

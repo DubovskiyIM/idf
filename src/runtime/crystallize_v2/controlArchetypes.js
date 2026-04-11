@@ -49,6 +49,7 @@ export function getArchetypes() {
 export function _resetArchetypes() {
   ARCHETYPES.length = 0;
   registerBuiltins();
+  registerBulkWizard();
   registerCustomCapture();
 }
 
@@ -372,6 +373,54 @@ function registerCustomCapture() {
   });
 }
 
-// Инициализация: зарегистрировать встроенные архетипы при загрузке модуля
+// ============================================================
+// bulkWizard — массовые операции (extended: true) — M3.6
+// ============================================================
+
+/**
+ * bulkWizard перехватывает intents с `extended: true` — массовые операции
+ * вроде bulk_delete_messages, import_contacts. Работает в оверлее с
+ * многошаговым UI (select → summary → progress → done). Регистрируется
+ * prepend'ом, чтобы перехватить раньше обычных confirmation-архетипов.
+ */
+function registerBulkWizard() {
+  prependArchetype({
+    id: "bulkWizard",
+    match: (intent) => intent.extended === true,
+    build: (intent, intentId) => {
+      const key = `overlay_${intentId}`;
+      // Источник коллекции: базовая часть target первого effect'а.
+      // Для bulk_delete_messages → effects: replace message.deletedFor →
+      // source: "messages".
+      const firstEffect = intent.particles?.effects?.[0];
+      const targetBase = firstEffect?.target?.split(".")[0] || "items";
+      const source = targetBase.endsWith("s") ? targetBase + "es" : targetBase + "s";
+
+      return {
+        trigger: {
+          type: "intentButton",
+          intentId,
+          label: intent.name,
+          icon: getIntentIcon(intentId, intent),
+          opens: "overlay",
+          overlayKey: key,
+        },
+        overlay: {
+          type: "bulkWizard",
+          key,
+          triggerIntentId: intentId,
+          label: intent.name,
+          source,
+          filter: intent.bulkFilter || null,
+        },
+      };
+    },
+  });
+}
+
+// Инициализация: зарегистрировать встроенные архетипы при загрузке модуля.
+// Порядок: базовые → bulkWizard (prepend) → customCapture (prepend).
+// customCapture становится первым в списке, bulkWizard — вторым.
 registerBuiltins();
+registerBulkWizard();
 registerCustomCapture();
