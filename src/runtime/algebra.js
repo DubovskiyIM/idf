@@ -3,16 +3,22 @@
  *
  * Проверяет совместимость α-типов при конкурентных эффектах на одну ячейку.
  * ⊥ = запрещённая пара, ловится при кристаллизации.
+ *
+ * Note: α-типы `increment` и `cas` удалены из таблицы (Session A / Core
+ * стабилизация). Они декларировались в раннем манифесте как аспирационные,
+ * но за всё время прототипирования (152 намерения в 4 доменах) не нашлось
+ * ни одного use-case, и `fold.js` их не обрабатывал. Если реальный кейс
+ * появится (счётчики голосов как CRDT, оптимистичные блокировки для
+ * сообщений) — вернуть обратно с полноценной реализацией в fold + тесты.
  */
 
 // Таблица композиции: [α1][α2] → результат
 // "ok" = совместимы, "conflict" = ⊥, "order" = зависит от причинного порядка
 const COMPOSITION_TABLE = {
-  replace:   { replace: "ok",       increment: "conflict", add: "conflict", remove: "conflict", batch: "ok" },
-  increment: { replace: "conflict", increment: "ok",       add: "conflict", remove: "conflict", batch: "ok" },
-  add:       { replace: "conflict", increment: "conflict", add: "ok",       remove: "order",    batch: "ok" },
-  remove:    { replace: "conflict", increment: "conflict", add: "order",    remove: "ok",       batch: "ok" },
-  batch:     { replace: "ok",       increment: "ok",       add: "ok",       remove: "ok",       batch: "ok" },
+  replace:   { replace: "ok",       add: "conflict", remove: "conflict", batch: "ok" },
+  add:       { replace: "conflict", add: "ok",       remove: "order",    batch: "ok" },
+  remove:    { replace: "conflict", add: "order",    remove: "ok",       batch: "ok" },
+  batch:     { replace: "ok",       add: "ok",       remove: "ok",       batch: "ok" },
 };
 
 /**
@@ -54,14 +60,6 @@ export function checkComposition(effect1, effect2) {
       compatible: true,
       resolution: "last_wins",
       detail: `replace + replace на ${effect1.target}: побеждает ≺-поздний`,
-    };
-  }
-
-  if (α1 === "increment" && α2 === "increment") {
-    return {
-      compatible: true,
-      resolution: "commutative",
-      detail: `increment + increment: коммутативно (CRDT)`,
     };
   }
 
