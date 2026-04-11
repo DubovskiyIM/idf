@@ -66,7 +66,7 @@ V = ⟨E, Q, W⟩
 
 **Зависимость от зрителя.** Проекции принимают зрителя как неявный параметр. Правила доступа на сущностях определяют, какие поля видны каким зрителям. Одна и та же проекция с разными зрителями даёт разное содержимое (пример: free/busy в календаре скрывает заголовки событий от чужих).
 
-**Параметры запроса (v1.2 draft).** Проекция принимает не только зрителя, но и набор *параметров запроса* — эфемерных значений, устанавливаемых пользователем в рантайме (query поиска, диапазон дат, фильтры сортировки). Параметры живут в сессии рендерера и **не участвуют в `World(t)`** — они ортогональны `Φ`, `Δ`, `Σ`, `Π`. Формально параметры — часть спецификации `Q` проекции, не внешнее состояние. Control-архетипы вроде `inlineSearch` пишут в параметры запроса; filter проекции читает их в выражении. Параметры запроса не персистентны — при смене проекции они сбрасываются.
+**Параметры запроса.** Проекция принимает не только зрителя, но и набор *параметров запроса* — эфемерных значений, устанавливаемых пользователем в рантайме (query поиска, диапазон дат, фильтры сортировки). Параметры живут в сессии рендерера и **не участвуют в `World(t)`** — они ортогональны `Φ`, `Δ`, `Σ`, `Π`. Формально параметры — часть спецификации `Q` проекции, не внешнее состояние. Control-архетипы вроде `inlineSearch` пишут в параметры запроса; filter проекции читает их в выражении. Параметры запроса не персистентны — при смене проекции они сбрасываются. Стабилизировано в M3.2.
 
 ## 6. Сигналы
 
@@ -247,6 +247,8 @@ World(t) = fold(⊕, ∅, sort≺(Φ_confirmed ↓ t))
 
 Инкрементальность обеспечивается локальностью анкеринга и выводимых связей: малое изменение → малое обновление.
 
+**Производные проекции.** Кристаллизация может автоматически генерировать проекции, производные от декларированных, если множество намерений образует логическую группу. Типовой случай: набор `replace`-намерений на полях одной сущности кристаллизуется в синтетическую edit-проекцию с архетипом `form`, доступную из исходной detail-проекции через navigation edge `edit-action`. Сохранение формы идёт через atomic `α:"batch"` по §11. Автор может переопределить автогенерацию явной проекцией с тем же id — его определение имеет приоритет. Реализовано в `formGrouping.js` на M3.4b.
+
 ## 17. Три слоя проекции
 
 **Канонический** — общий для всех, стабильный между релизами, тестируемый.
@@ -350,6 +352,24 @@ World(t) = fold(⊕, ∅, sort≺(Φ_confirmed ↓ t))
 
 Это — реализация §16 (детерминированность, перегенерируемость, расщепляемость) в конкретном формализме. Раньше эти свойства жили в устных обещаниях, теперь они — свойства схемы артефакта, проверяемые программно.
 
+### Control-архетипы (M3)
+
+**Control-архетипы** — первоклассная сущность, ортогональная slot-архетипам. Если slot-архетип отвечает на вопрос «где элемент лежит на экране», то control-архетип отвечает «как намерение материализуется в UI-контрол». Примеры: `auto`, `composerEntry`, `formModal`, `confirmDialog`, `clickForm`, `filePicker`, `inlineSearch`, `customCapture`, `bulkWizard`.
+
+Control-архетип выбирается по правилам (эвристика на основе частиц намерения + возможность явного override через `intent.control`). **Реестр control-архетипов** — расширяемая структура (`controlArchetypes.js`): добавление нового архетипа — одна запись `{id, match, build}`, не модификация ядра.
+
+Кристаллизация делает два независимых прохода:
+1. **`selectArchetype(intent, projection)`** — какой control применить (с учётом контекста проекции, чтобы entityPicker не перехватывал intents, у которых все дополнительные сущности уже в route scope).
+2. **`assignToSlots(wrapped, projection)`** — куда положить полученный control в архетипе проекции.
+
+Это разделение позволяет один и тот же intent рендерить по-разному в разных проекциях (`send_message` в feed — composer; в detail — форма), и добавлять новые контролы без риска сломать существующие проекции.
+
+**customCapture** — подреестр кастомных виджетов захвата (`capture/registry.js`): voiceRecorder (match по witness `recording_duration`/`duration`), emojiPicker (match `react_*` / witness `available_reactions`), entityPicker (match `creates` + extra entity вне route scope). Match-правила продублированы в crystallize_v2 (JS-чистая функция) и в runtime-реестре (React-компоненты) — согласованы вручную; crystallize не импортирует React, runtime не импортирует crystallize.
+
+**bulkWizard** — overlay для `extended: true` intents (§9). Шаги `select → summary → progress → done` с последовательным `ctx.exec` по каждому выбранному id. Prepend'нут в реестр, чтобы перехватить до обычных confirmation-архетипов.
+
+**Ownership-check для write-intents на User.** Control-архетипы учитывают self-owner правило: кнопки `update_profile`, `set_status` и прочие intent'ы, меняющие `user.*`, показываются только когда `viewer.id === target.id`. В `assignToSlotsCatalog` synthetic condition добавляется к per-item кнопкам, в `assignToSlotsDetail` — к toolbar-кнопкам через `item.condition`. Пока hardcoded для User; в будущем `ontology.entities[X].ownerField` сделает это обобщённым для Message (`senderId`), Participant (`userId`) и др.
+
 ---
 
 ## 22. Домен-специфичные расширения в исследовании
@@ -376,9 +396,9 @@ World(t) = fold(⊕, ∅, sort≺(Φ_confirmed ↓ t))
 
 **Глубокие пути в target.** `replace node.config.url` — замена поля внутри вложенного объекта. Текущий fold заменяет целиком. Обнаружено на одном домене (тест 6).
 
-**Кастомные виджеты захвата** (открыто в M1). Некоторые намерения требуют специализированного UI-виджета, а не абстрактной формы из параметров: голосовые сообщения (`recording_duration`), стикеры (`sticker_id`), GIF (`gif_url`), геолокация (`latitude/longitude`), опросы внутри сообщения (`question/options`). Witness — *результат захвата*, не вход пользователя. Эскиз решения: реестр кастомных виджетов, связанных по witness-сигнатуре или intent-id. Виджет имеет собственный state (recording, preview), свою кнопку отправки, в итоге вызывает `exec(intentId, {результат захвата})`. Это не нарушает §16: виджет — часть среды авторства, связь через формальную witness-сигнатуру. Обнаружено в седьмом тесте (мессенджер): 11 из 100 намерений требуют кастомный захват.
+**Кастомные виджеты захвата.** **Закрыто в M3.5b.** Реестр в `capture/registry.js` + control-архетип `customCapture` (§16a). Реализованы три виджета первого уровня: `voiceRecorder` (MediaRecorder → data URL, match по witness `recording_duration`/`duration`), `emojiPicker` (match по `react_*` intent-id или witness `available_reactions`), `entityPicker` (match по `creates` + extra entity вне route scope). Match-правила живут в crystallize_v2 (`CAPTURE_RULES` — чистый JS) и дублируются в runtime-реестре React-компонентов — оба источника правды согласуются вручную. Стикеры, GIF, геолокация, опросы внутри сообщения остаются на M3.6+ и пока скипаются через `CAPTURE_WITNESSES`.
 
-**Entity-picker для многосущностных creator-интентов** (открыто в M1). `create_direct_chat` создаёт `Conversation` *и* требует выбрать `User`. `forward_message` создаёт `Message` в другой `Conversation` — нужно выбрать целевую беседу. Формально: namerenie с `creates: X` и дополнительными entities в `entities` (не равными X) требует entity-picker виджета для выбора второй сущности. Сейчас такие интенты пропускаются кристаллизатором как «нереализуемые без picker'а». Эскиз: `entityPicker` параметр-тип с `ref: "Entity"` и опциональным `filter`.
+**Entity-picker для многосущностных creator-интентов.** **Закрыто в M3.5a+b.** `create_direct_chat`, `forward_message`, `add_to_group` и аналогичные теперь проходят через `customCapture.entityPicker`. Серверный API `GET /api/entities/:collection/search?q=...&domain=...` ищет по `searchConfig` из онтологии (`ontology.entities[X].searchConfig: {fields, returnFields, minQueryLength, limit}`). EntityPicker кладёт id под `[alias]`-ключом из декларации `entities: ["user: User"]` (нельзя коллидировать с `userId` из viewerContext). Match-правило entityPicker учитывает route scope — intents, у которых все не-creates сущности уже в scope проекции (типа `send_message` в chat_view с Conversation в routeEntities), идут через composer, а не через picker.
 
 **Контекстные сайд-каналы композера** (открыто в M1). Несколько creator-интентов мессенджера (`reply_to_message`, `react_to_message`) создают новое сообщение, но требуют контекст существующего — на какое сообщение отвечают, какую эмоцию ставят. Стандартный композер «text → Enter → send» не знает про этот контекст. Паттерн: композер имеет режимы (`default`, `reply`, `react`, `forward`) и может быть переведён в режим per-item intent'ом с item-контекстом. Это специализация `feed`-архетипа, не общее решение. Рассмотреть на M3.
 
@@ -397,11 +417,16 @@ World(t) = fold(⊕, ∅, sort≺(Φ_confirmed ↓ t))
 - ~~Обобщённый fold по типам на сервере~~ — `updateTypeMap` принимает онтологию от клиента через `POST /api/typemap`. Union fallback остался на случай старых клиентов.
 - ~~Единый путь записи Φ~~ — `server/effect-pipeline.js` с `ingestEffect()`, REST и WS-транспорты вызывают один модуль. До v1.1 логика была продублирована вручную.
 
-**Закрытые в M3 (v1.2 draft):**
+**Закрытые в M3:**
 - ~~Полная поддержка α:"batch" в ядре~~ — `server/validator.js` рекурсивно разворачивает batch и валидирует каждый под-эффект (all-or-nothing, §11). Клиентский `execBatch()` API собирает множественные под-эффекты в один atomic batch-эффект. `fold.js` разворачивает batch при применении. Закрыто в M3.4a.
 - ~~Типизация полей онтологии + read/write матрица~~ — поля могут быть объектами с `{type, read, write, required, label}`. `getEntityFields()` + `canRead/canWrite` в `ontologyHelpers.js`. `inferControlType` приоритетно использует ontology-тип, имя-эвристика — fallback. Закрыто в M3.3.
-- ~~Control-архетипы как первоклассная сущность~~ — реестр `controlArchetypes.js` с `registerArchetype`/`selectArchetype`. Добавление нового control-архетипа (inlineSearch, entityForm, customCapture) — одна запись, не модификация ядра. `wrapByConfirmation` стал тонким диспетчером. Закрыто в M3.1.
+- ~~Control-архетипы как первоклассная сущность~~ — реестр `controlArchetypes.js` с `registerArchetype`/`prependArchetype`/`selectArchetype`. Добавление нового control-архетипа (inlineSearch, entityForm, customCapture, bulkWizard) — одна запись, не модификация ядра. `wrapByConfirmation` стал тонким диспетчером. Закрыто в M3.1.
 - ~~Параметры запроса проекции (viewState)~~ — формализованы в §5 как эфемерное состояние, не участвующее в `World(t)`. Control-архетип `inlineSearch` пишет в `ctx.viewState`, `List.filter` читает через eval-контекст. Закрыто в M3.2.
+- ~~Производные проекции (синтетические edit-формы)~~ — `formGrouping.js` автогенерирует `{detail}_edit` form-проекции для наборов replace-намерений, navGraph добавляет detail→form edge `edit-action`. ArchetypeForm сохраняет через `execBatch`. Закрыто в M3.4b.
+- ~~Кастомные виджеты захвата (реестр + первые три)~~ — `capture/registry.js` + VoiceRecorder / EmojiPicker / EntityPicker. Match-правила живут в crystallize_v2 (`CAPTURE_RULES`) и в runtime-реестре параллельно. Закрыто в M3.5b.
+- ~~Серверный entity search API~~ — `GET /api/entities/:collection/search?q=...&domain=...` читает `searchConfig` из онтологии, работает поверх `foldWorld()` с seed'ом `auth_users`. Используется EntityPicker'ом. Закрыто в M3.5a.
+- ~~BulkWizard для extended-интентов~~ — `BulkWizard.jsx` с шагами `select → summary → progress → done`, регистрируется как control-архетип `bulkWizard` по `intent.extended === true`. Закрыто в M3.6.
+- ~~Ownership-check для write-intents на User~~ — `assignToSlotsDetail`/`assignToSlotsCatalog` добавляют synthetic condition `id === viewer.id` к intent'ам, меняющим `user.*`. `ArchetypeDetail` и `ArchetypeForm` проверяют owner-role перед показом edit-UI. Пока hardcoded для User; в M4 вынести в `ontology.ownerField`. Закрыто в M3.5b.
 
 ### Открытые (инженерные):
 
@@ -421,13 +446,15 @@ World(t) = fold(⊕, ∅, sort≺(Φ_confirmed ↓ t))
 
 **Болезненность перехода** — парадигма обесценивает часть существующих навыков, подходит для зелёных полей.
 
-### Открытые (M1/M2):
+### Открытые (инфраструктурные):
 
-**Типизация полей онтологии** — сейчас `fields` это массив строк (`["id", "name", "avatar"]`). Для приоритетного вывода типа контрола из онтологии (Слой 1 §1.2 дизайна UI) нужны поля как объекты с типом: `fields: { name: { type: "text" }, avatar: { type: "image" } }`. Сейчас тип контрола выводится из имени (эвристика).
-
-**Навигационное состояние vs каузальное** — route params (`currentConversationId`) это UI-состояние, живёт в стеке `useProjectionRoute`, не участвует в `Φ`. Но filter'ы body читают его через `world.currentConversationId` (V2UI склеивает params в world). Это pragmatic hack. Формально: либо ввести отдельный поток «навигационных сигналов», либо признать UI state как присутствующий параметр рендерера.
+**Навигационное состояние vs каузальное** — route params (`conversationId`, `userId`) это UI-состояние, живёт в стеке `useProjectionRoute`, не участвует в `Φ`. Но filter'ы body читают их через `world.conversationId` (V2UI склеивает params в world). Это pragmatic hack. Формально: либо ввести отдельный поток «навигационных сигналов», либо признать UI state как присутствующий параметр рендерера.
 
 **Broken Δ**:  §7 декларирует `World_for(I) = World(t) ⊕ Overlay(I) ⊕ Δ(user)`, но `engine.worldForIntent` собирает только `World(t) ⊕ Overlay(I)`. Δ не вливается. Обнаружено при ревизии ядра в v1.1. Для мессенджера не критично, для корзин заметно.
+
+**Auth-users живут вне Φ.** `auth_users` таблица — отдельная от потока эффектов. Решение в M3.5b: server `foldWorld` seed'ит auth-users в `world.users`, `V2UI.worldWithRoute` подтягивает их через `GET /api/auth/users` и мёрджит с folded-партиалами (replace user.* побеждает). Это работает, но нарушает §5 «мир — свёртка Φ». В M4+ авторизация должна эмитить эффекты `_user_register` в Φ.
+
+**Обобщённый ownerField для write-intents.** Synthetic ownership-condition пока hardcoded для `User` (id === viewer.id). Для Message (senderId), Participant (userId), Contact (userId) эта логика не обобщена — нужен `ontology.entities[X].ownerField` как декларативный источник правды.
 
 ### Честные границы v1.1 (ревизия манифест↔код)
 
@@ -559,16 +586,16 @@ World(t) = fold(⊕, ∅, sort≺(Φ_confirmed ↓ t))
 Разделы, где декларация соответствует коду без упрощений:
 
 - §3-5 (намерения, проекции, витнессы) — реализованы в определениях доменов и `crystallize_v2/inferParameters.js`.
-- §5 **параметры запроса проекции** (v1.2 draft) — `ctx.viewState` + eval в filter, control-архетип `inlineSearch`. Закрыто в M3.2.
+- §5 **параметры запроса проекции** — `ctx.viewState` + eval в filter, control-архетип `inlineSearch`. Стабилизировано в M3.2.
 - §6 (сигналы) — `server/ws.js` обрабатывает typing-сигналы как транзиентные события.
 - §8 (черновики Δ) — `foldDrafts`, промоция при `commitInvestigation`.
-- §9 (расширенные намерения) — `extended: true` флаг + `BulkWizard` (M3.6).
+- §9 (расширенные намерения) — `extended: true` флаг + control-архетип `bulkWizard` с мастером `select → summary → progress → done`. Стабилизировано в M3.6.
 - §9a (рабочие процессы) — фазы в planning-домене, условия на статусе.
-- **§10 α:"batch"** — рекурсивная валидация на сервере (`server/validator.js`), клиентский `execBatch` API, `fold.js` разворачивает batch. Закрыто в M3.4a.
+- **§10 α:"batch"** — рекурсивная валидация на сервере (`server/validator.js`), клиентский `execBatch` API, `fold.js` разворачивает batch. Стабилизировано в M3.4a.
 - §13 (пропорциональность подтверждения) — `irreversibility: high/medium/low` → `ConfirmDialog` с typed-confirmation.
-- §14 (онтология) — основа для валидации + **типизированные поля с read/write матрицей** (`ontologyHelpers.js`). Закрыто в M3.3.
-- §16 (кристаллизация свойства) — детерминированность + перегенерируемость + расщепляемость теперь свойства схемы артефакта v2, проверяемые валидатором.
-- §16a (архетипы и слоты) — ArchetypeFeed/Catalog/Detail в M1/M2. **Control-архетипы** как первоклассная сущность (`controlArchetypes.js`) — закрыто в M3.1.
+- §14 (онтология) — основа для валидации + **типизированные поля с read/write матрицей** (`ontologyHelpers.js`). Стабилизировано в M3.3.
+- §16 (кристаллизация свойства) — детерминированность + перегенерируемость + расщепляемость теперь свойства схемы артефакта v2, проверяемые валидатором. **Производные проекции** (`formGrouping.js`) — синтетические edit-формы для групп replace-намерений. Стабилизировано в M3.4b.
+- §16a (архетипы и слоты) — ArchetypeFeed/Catalog/Detail в M1/M2. **Control-архетипы** как первоклассная сущность (`controlArchetypes.js`). **customCapture** реестр (`capture/registry.js`) с VoiceRecorder / EmojiPicker / EntityPicker. **bulkWizard** для extended-интентов. Стабилизировано M3.1 → M3.6.
 - §18 (два потока + черновик) — Φ, Δ, Σ реализованы как отдельные потоки. Параметры запроса проекции — эфемерный «проекционный» контекст, часть `Q`, не отдельный поток.
 
 ### Частично реализовано
