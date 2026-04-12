@@ -73,6 +73,26 @@ export default function V2Shell({
     return viewer;
   }, [viewer]);
 
+  // Обёртка exec/execBatch: автоматически инжектируем clientId из viewer.id
+  // в каждый вызов buildEffects, чтобы create_booking, create_poll и т.д.
+  // устанавливали ownership (clientId/organizerId) по реальному viewer, а не
+  // hardcoded "self".
+  const wrappedExec = useMemo(() => {
+    if (!exec) return exec;
+    return (intentId, ctx = {}) => exec(intentId, { ...ctx, clientId: viewerObj.id });
+  }, [exec, viewerObj]);
+
+  const wrappedExecBatch = useMemo(() => {
+    if (!execBatch) return execBatch;
+    return (intentId, subs) => {
+      const enriched = subs.map(s => ({
+        ...s,
+        ctx: { ...(s.ctx || {}), clientId: viewerObj.id }
+      }));
+      return execBatch(intentId, enriched);
+    };
+  }, [execBatch, viewerObj]);
+
   // World обогащается route params, чтобы фильтры body могли читать
   // world.conversationId / world.bookingId и т.п. (см. messenger chat_view
   // filter для образца).
@@ -161,8 +181,8 @@ export default function V2Shell({
             artifact={currentArtifact}
             projection={currentProjectionDef}
             world={worldWithRoute}
-            exec={exec}
-            execBatch={execBatch}
+            exec={wrappedExec}
+            execBatch={wrappedExecBatch}
             viewer={viewerObj}
             viewerContext={viewerContext}
             routeParams={current.params}
