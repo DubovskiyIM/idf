@@ -12,6 +12,7 @@ import {
   normalizeCreates,
 } from "./assignToSlotsShared.js";
 import { getIntentIcon } from "./getIntentIcon.js";
+import { getEntityFields, inferFieldRole } from "./ontologyHelpers.js";
 
 export function assignToSlotsCatalog(INTENTS, projection, ONTOLOGY) {
   const slots = {
@@ -303,5 +304,47 @@ function buildCatalogBody(projection, ONTOLOGY) {
   if (projection.filter) body.filter = projection.filter;
   if (projection.sort) body.sort = projection.sort;
   if (projection.layout) body.layout = projection.layout;
+
+  // cardSpec: декларативное описание карточки для grid-layout.
+  if (projection.layout === "grid" && projection.witnesses) {
+    const entityDef = ONTOLOGY?.entities?.[mainEntity];
+    const ontologyFields = entityDef?.fields || {};
+    const cardSpec = {};
+    const metrics = [];
+
+    for (const witness of projection.witnesses) {
+      const fieldName = witness.includes(".") ? witness.split(".")[0] : witness;
+      const fieldDef = typeof ontologyFields === "object" && !Array.isArray(ontologyFields)
+        ? ontologyFields[fieldName] : null;
+      const role = inferFieldRole(fieldName, fieldDef || {});
+
+      switch (role) {
+        case "heroImage":
+          if (!cardSpec.image) cardSpec.image = { bind: fieldName };
+          break;
+        case "title":
+          if (!cardSpec.title) cardSpec.title = { bind: fieldName };
+          break;
+        case "price":
+          if (!cardSpec.price) cardSpec.price = { bind: fieldName, format: "currency", suffix: " ₽" };
+          break;
+        case "badge":
+          if (!cardSpec.badge) cardSpec.badge = { bind: fieldName };
+          break;
+        case "timer":
+          if (!cardSpec.timer) cardSpec.timer = { bind: fieldName, format: "countdown" };
+          break;
+        case "location":
+          if (!cardSpec.location) cardSpec.location = { bind: fieldName };
+          break;
+        case "metric":
+          metrics.push({ bind: fieldName, label: fieldDef?.label || fieldName });
+          break;
+      }
+    }
+    if (metrics.length > 0) cardSpec.metrics = metrics;
+    if (Object.keys(cardSpec).length > 0) body.cardSpec = cardSpec;
+  }
+
   return body;
 }

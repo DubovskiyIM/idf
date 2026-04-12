@@ -429,6 +429,94 @@ export function List({ node, ctx }) {
 }
 
 function GridCard({ item, node, ctx }) {
+  const spec = node.cardSpec;
+  if (!spec) return <GridCardLegacy item={item} node={node} />;
+
+  const resolveField = (f) => f?.bind ? resolve(item, f.bind) : null;
+
+  const rawImage = resolveField(spec.image);
+  const image = Array.isArray(rawImage) ? rawImage[0] : rawImage;
+  const title = resolveField(spec.title) || item.title || item.name || item.id;
+  const priceRaw = resolveField(spec.price);
+  const price = typeof priceRaw === "number" ? priceRaw.toLocaleString("ru") + (spec.price?.suffix || "") : priceRaw;
+  const badge = resolveField(spec.badge);
+  const locationVal = resolveField(spec.location);
+
+  // Timer
+  let timerText = null;
+  const timerRaw = resolveField(spec.timer);
+  if (timerRaw) {
+    const target = typeof timerRaw === "number" ? timerRaw : new Date(timerRaw).getTime();
+    const diff = target - Date.now();
+    if (diff <= 0) timerText = "завершён";
+    else {
+      const days = Math.floor(diff / 86400000);
+      const hours = Math.floor((diff % 86400000) / 3600000);
+      timerText = days > 0 ? `${days}д ${hours}ч` : `${hours}ч`;
+    }
+  }
+
+  const metrics = (spec.metrics || [])
+    .map(m => ({ label: m.label, val: resolve(item, m.bind) }))
+    .filter(m => m.val != null && m.val !== 0);
+
+  const isValidImage = typeof image === "string" && (image.startsWith("data:") || image.startsWith("http") || image.startsWith("/"));
+
+  return (
+    <div style={{
+      borderRadius: 10,
+      border: "1px solid var(--mantine-color-default-border)",
+      background: "var(--mantine-color-default)",
+      overflow: "hidden",
+      display: "flex", flexDirection: "column",
+      cursor: node.onItemClick ? "pointer" : "default",
+    }}>
+      <div style={{
+        height: 160, background: "var(--mantine-color-default-hover)",
+        display: "flex", alignItems: "center", justifyContent: "center",
+        overflow: "hidden", position: "relative",
+      }}>
+        {isValidImage ? (
+          <img src={image} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+        ) : (
+          <span style={{ fontSize: 48, opacity: 0.15 }}>📦</span>
+        )}
+        {price && (
+          <span style={{
+            position: "absolute", bottom: 8, right: 8,
+            background: "var(--mantine-color-body)", color: "var(--mantine-color-text)",
+            padding: "3px 8px", borderRadius: 6, fontSize: 13, fontWeight: 700,
+            boxShadow: "0 1px 4px #0002",
+          }}>{price}</span>
+        )}
+      </div>
+      <div style={{ padding: "8px 10px", flex: 1, display: "flex", flexDirection: "column", gap: 3 }}>
+        <div style={{
+          fontSize: 13, fontWeight: 600, color: "var(--mantine-color-text)",
+          overflow: "hidden", textOverflow: "ellipsis",
+          display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical",
+        }}>{title}</div>
+        {(badge || locationVal) && (
+          <div style={{ display: "flex", gap: 6, fontSize: 11, color: "var(--mantine-color-dimmed)" }}>
+            {badge && <span>{badge}</span>}
+            {badge && locationVal && <span>·</span>}
+            {locationVal && <span>📍 {locationVal}</span>}
+          </div>
+        )}
+        {timerText && (
+          <div style={{ fontSize: 11, color: "var(--mantine-color-dimmed)" }}>⏰ {timerText}</div>
+        )}
+        {metrics.length > 0 && (
+          <div style={{ display: "flex", gap: 8, fontSize: 11, color: "var(--mantine-color-dimmed)" }}>
+            {metrics.map((m, i) => <span key={i}>{m.label}: {m.val}</span>)}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function GridCardLegacy({ item, node }) {
   const title = item.title || item.name || item.id;
   const rawImage = item.images || item.image || item.avatar;
   const image = Array.isArray(rawImage) ? rawImage[0] : rawImage;
