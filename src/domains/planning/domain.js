@@ -56,7 +56,7 @@ export function buildEffects(intentId, ctx, world, drafts) {
     case "create_poll": {
       if (!ctx.title?.trim()) return null;
       ef({ alpha: "add", target: "polls", scope: "account", value: null,
-        context: { id: `poll_${now}`, title: ctx.title.trim(), status: "draft", createdAt: now },
+        context: { id: `poll_${now}`, organizerId: ctx.clientId || "self", title: ctx.title.trim(), description: ctx.description || "", status: "draft", createdAt: now },
         desc: describeEffect(intentId, "add", { title: ctx.title }) });
       break;
     }
@@ -73,8 +73,13 @@ export function buildEffects(intentId, ctx, world, drafts) {
       const poll = (world.polls || []).find(p => p.id === ctx.pollId);
       if (!poll || poll.status !== "draft") return null;
       if (!ctx.name?.trim()) return null;
+      let userId = ctx.userId || null;
+      if (!userId && ctx.email) {
+        const user = (world.users || []).find(u => u.email === ctx.email);
+        userId = user?.id || null;
+      }
       ef({ alpha: "add", target: "participants", scope: "account", value: null,
-        context: { id: `part_${now}_${Math.random().toString(36).slice(2, 6)}`, pollId: ctx.pollId, name: ctx.name.trim(), email: ctx.email || "", status: "active" },
+        context: { id: `part_${now}_${Math.random().toString(36).slice(2, 6)}`, pollId: ctx.pollId, userId, name: ctx.name.trim(), email: ctx.email || "", status: "active" },
         desc: describeEffect(intentId, "add", { name: ctx.name }) });
       break;
     }
