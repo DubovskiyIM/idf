@@ -5,6 +5,7 @@ import {
   canWrite,
   canRead,
   mapOntologyTypeToControl,
+  inferFieldRole,
 } from "./ontologyHelpers.js";
 
 describe("normalizeField", () => {
@@ -125,5 +126,70 @@ describe("mapOntologyTypeToControl", () => {
   });
   it("unknown → text", () => {
     expect(mapOntologyTypeToControl("hologram")).toBe("text");
+  });
+});
+
+describe("inferFieldRole", () => {
+  it("title role for name/title fields", () => {
+    expect(inferFieldRole("title", { type: "text" })).toBe("title");
+    expect(inferFieldRole("name", { type: "text" })).toBe("title");
+  });
+
+  it("description role for textarea description/bio/content", () => {
+    expect(inferFieldRole("description", { type: "textarea" })).toBe("description");
+    expect(inferFieldRole("bio", { type: "textarea" })).toBe("description");
+  });
+
+  it("heroImage for image/multiImage types", () => {
+    expect(inferFieldRole("images", { type: "multiImage" })).toBe("heroImage");
+    expect(inferFieldRole("avatar", { type: "image" })).toBe("heroImage");
+  });
+
+  it("price for number fields with price/cost/amount in name", () => {
+    expect(inferFieldRole("currentPrice", { type: "number" })).toBe("price");
+    expect(inferFieldRole("shippingCost", { type: "number" })).toBe("price");
+    expect(inferFieldRole("totalAmount", { type: "number" })).toBe("price");
+    expect(inferFieldRole("startPrice", { type: "number" })).toBe("price");
+  });
+
+  it("timer for datetime fields with end/deadline/expir in name", () => {
+    expect(inferFieldRole("auctionEnd", { type: "datetime" })).toBe("timer");
+    expect(inferFieldRole("deadline", { type: "datetime" })).toBe("timer");
+  });
+
+  it("location for fields with location/from/city in name", () => {
+    expect(inferFieldRole("shippingFrom", { type: "text" })).toBe("location");
+    expect(inferFieldRole("location", { type: "text" })).toBe("location");
+  });
+
+  it("badge for enum type or status/condition name", () => {
+    expect(inferFieldRole("condition", { type: "enum" })).toBe("badge");
+    expect(inferFieldRole("status", { type: "text" })).toBe("badge");
+  });
+
+  it("metric for number fields that are not price", () => {
+    expect(inferFieldRole("bidCount", { type: "number" })).toBe("metric");
+    expect(inferFieldRole("viewCount", { type: "number" })).toBe("metric");
+  });
+
+  it("ref for entityRef type", () => {
+    expect(inferFieldRole("sellerId", { type: "entityRef" })).toBe("ref");
+  });
+
+  it("info as fallback for non-special types", () => {
+    expect(inferFieldRole("trackingNumber", { type: "text" })).toBe("info");
+    expect(inferFieldRole("featured", { type: "boolean" })).toBe("info");
+  });
+
+  it("weight is metric (number without price/cost/amount)", () => {
+    expect(inferFieldRole("weight", { type: "number" })).toBe("metric");
+  });
+
+  it("price takes priority over metric for number+price name", () => {
+    expect(inferFieldRole("buyNowPrice", { type: "number" })).toBe("price");
+  });
+
+  it("shippingCost is price (not location)", () => {
+    expect(inferFieldRole("shippingCost", { type: "number" })).toBe("price");
   });
 });
