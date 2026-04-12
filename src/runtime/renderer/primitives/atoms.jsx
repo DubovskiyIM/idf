@@ -1,3 +1,4 @@
+import { useState, useEffect } from "react";
 import { resolve, template } from "../eval.js";
 import { getAdaptedComponent } from "../adapters/registry.js";
 
@@ -247,6 +248,121 @@ export function StatBar({ node, ctx, item }) {
           }}>{s.label}</span>
         </div>
       ))}
+    </div>
+  );
+}
+
+/**
+ * PriceBlock — группа ценовых полей с выделением primary.
+ */
+export function PriceBlock({ node, ctx, item }) {
+  const data = item || ctx.world;
+  const rendered = (node.fields || [])
+    .map(f => {
+      const raw = resolve(data, f.bind);
+      if (raw == null || raw === "") return null;
+      const val = typeof raw === "number" ? raw.toLocaleString("ru") + " ₽" : String(raw);
+      return { ...f, val };
+    })
+    .filter(Boolean);
+  if (rendered.length === 0) return null;
+
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+      {rendered.map((f, i) => (
+        <div key={i} style={{ display: "flex", alignItems: "baseline", gap: 8 }}>
+          {f.label && (
+            <span style={{ fontSize: 12, color: "var(--mantine-color-dimmed)" }}>{f.label}:</span>
+          )}
+          <span style={{
+            fontSize: f.primary ? 24 : 14,
+            fontWeight: f.primary ? 700 : 400,
+            color: "var(--mantine-color-text)",
+          }}>{f.val}</span>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+/**
+ * InfoSection — именованная группа label:value пар. Скрывается если все пусты.
+ */
+export function InfoSection({ node, ctx, item }) {
+  const data = item || ctx.world;
+  const rows = (node.fields || [])
+    .map(f => {
+      const raw = resolve(data, f.bind);
+      if (raw == null || raw === "") return null;
+      let val = raw;
+      if (f.format === "currency" && typeof raw === "number") val = raw.toLocaleString("ru") + " ₽";
+      else if (f.format === "datetime" && typeof raw === "number" && raw > 1e12) {
+        val = new Date(raw).toLocaleString("ru", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" });
+      }
+      else if (typeof raw === "boolean") val = raw ? "Да" : "Нет";
+      else val = String(raw);
+      return { label: f.label, val };
+    })
+    .filter(Boolean);
+  if (rows.length === 0) return null;
+
+  return (
+    <div>
+      {node.title && (
+        <div style={{
+          fontSize: 11, fontWeight: 600, textTransform: "uppercase",
+          letterSpacing: "0.06em", color: "var(--mantine-color-dimmed)",
+          marginBottom: 8, paddingBottom: 6,
+          borderBottom: "1px solid var(--mantine-color-default-border)",
+        }}>{node.title}</div>
+      )}
+      <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+        {rows.map((r, i) => (
+          <div key={i} style={{ display: "flex", gap: 8 }}>
+            <span style={{ fontSize: 13, color: "var(--mantine-color-dimmed)", minWidth: 100 }}>{r.label}:</span>
+            <span style={{ fontSize: 13, color: "var(--mantine-color-text)" }}>{r.val}</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+/**
+ * Timer — обратный отсчёт по datetime-полю.
+ */
+export function Timer({ node, ctx, item }) {
+  const data = item || ctx.world;
+  const raw = node.bind ? resolve(data, node.bind) : null;
+  if (!raw) return null;
+
+  const target = typeof raw === "number" ? raw : new Date(raw).getTime();
+  if (isNaN(target)) return null;
+
+  const [, setTick] = useState(0);
+  useEffect(() => {
+    const id = setInterval(() => setTick(t => t + 1), 60000);
+    return () => clearInterval(id);
+  }, []);
+
+  const diff = target - Date.now();
+  let text;
+  if (diff <= 0) {
+    text = "завершён";
+  } else {
+    const days = Math.floor(diff / 86400000);
+    const hours = Math.floor((diff % 86400000) / 3600000);
+    const mins = Math.floor((diff % 3600000) / 60000);
+    text = days > 0 ? `${days}д ${hours}ч` : `${hours}ч ${mins}м`;
+  }
+
+  return (
+    <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+      {node.label && <span style={{ fontSize: 12, color: "var(--mantine-color-dimmed)" }}>{node.label}:</span>}
+      <span style={{
+        fontSize: 13, fontWeight: 600,
+        color: diff <= 0 ? "var(--mantine-color-red-6, #ef4444)" : diff < 86400000 ? "var(--mantine-color-yellow-6, #f59e0b)" : "var(--mantine-color-text)",
+      }}>⏰ {text}</span>
     </div>
   );
 }

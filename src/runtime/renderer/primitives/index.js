@@ -1,4 +1,4 @@
-import { Text, Heading, Badge, Avatar, Image, Audio, Spacer, Divider, StatBar } from "./atoms.jsx";
+import { Text, Heading, Badge, Avatar, Image, Audio, Spacer, Divider, StatBar, PriceBlock, InfoSection, Timer } from "./atoms.jsx";
 import { Row, Column, Card, List } from "./containers.jsx";
 
 export const PRIMITIVES = {
@@ -11,6 +11,9 @@ export const PRIMITIVES = {
   spacer: Spacer,
   divider: Divider,
   statBar: StatBar,
+  priceBlock: PriceBlock,
+  infoSection: InfoSection,
+  timer: Timer,
   row: Row,
   column: Column,
   card: Card,
