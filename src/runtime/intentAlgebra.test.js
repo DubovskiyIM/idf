@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { computeAlgebra, normalizeEntityFromTarget } from "./intentAlgebra.js";
+import { computeAlgebra, computeAlgebraWithEvidence, normalizeEntityFromTarget } from "./intentAlgebra.js";
 
 describe("normalizeEntityFromTarget", () => {
   const ontology = {
@@ -466,5 +466,158 @@ describe("deriveAntagonisticStrict (⇌)", () => {
     };
     const algebra = computeAlgebra(intents, ontology);
     expect(algebra.toggle.antagonists).not.toContain("toggle");
+  });
+});
+
+describe("mergeDeclaredAntagonists + §15 classification", () => {
+  const ontology = {
+    entities: {
+      Contact: { fields: ["id", "status"] },
+      Slot: { fields: ["id", "status"] },
+      Conversation: { fields: ["id", "muted"] },
+      Booking: { fields: ["id", "status"] }
+    }
+  };
+
+  it("declared + derived structural witness → structural classification", () => {
+    const intents = {
+      mute: {
+        name: "Mute",
+        antagonist: "unmute",
+        particles: {
+          effects: [{ α: "replace", target: "conversation.muted", value: true }],
+          conditions: []
+        }
+      },
+      unmute: {
+        name: "Unmute",
+        antagonist: "mute",
+        particles: {
+          effects: [{ α: "replace", target: "conversation.muted", value: false }],
+          conditions: []
+        }
+      }
+    };
+    const withEvidence = computeAlgebraWithEvidence(intents, ontology);
+    expect(withEvidence.mute.antagonists).toContain("unmute");
+    expect(withEvidence.mute.antagonistsEvidence.unmute.classification).toBe("structural");
+  });
+
+  it("declared для multi-effect асимметричной пары → heuristic-lifecycle", () => {
+    const intents = {
+      confirm_booking: {
+        name: "Confirm",
+        antagonist: "cancel_booking",
+        particles: {
+          effects: [
+            { α: "add", target: "bookings" },
+            { α: "replace", target: "slot.status", value: "booked" }
+          ],
+          conditions: []
+        }
+      },
+      cancel_booking: {
+        name: "Cancel",
+        antagonist: "confirm_booking",
+        particles: {
+          effects: [
+            { α: "replace", target: "booking.status", value: "cancelled" },
+            { α: "replace", target: "slot.status", value: "free" }
+          ],
+          conditions: []
+        }
+      }
+    };
+    const withEvidence = computeAlgebraWithEvidence(intents, ontology);
+    expect(withEvidence.confirm_booking.antagonists).toContain("cancel_booking");
+    expect(withEvidence.confirm_booking.antagonistsEvidence.cancel_booking.classification).toBe("heuristic-lifecycle");
+    expect(withEvidence.cancel_booking.antagonists).toContain("confirm_booking");
+    expect(withEvidence.cancel_booking.antagonistsEvidence.confirm_booking.classification).toBe("heuristic-lifecycle");
+  });
+
+  it("derived без declaration → structural classification", () => {
+    const intents = {
+      block: {
+        name: "Block",
+        particles: {
+          effects: [{ α: "replace", target: "slot.status", value: "blocked" }],
+          conditions: []
+        }
+      },
+      unblock: {
+        name: "Unblock",
+        particles: {
+          effects: [{ α: "replace", target: "slot.status", value: "free" }],
+          conditions: []
+        }
+      }
+    };
+    const withEvidence = computeAlgebraWithEvidence(intents, ontology);
+    expect(withEvidence.block.antagonists).toContain("unblock");
+    expect(withEvidence.block.antagonistsEvidence.unblock.classification).toBe("structural");
+  });
+
+  it("declared с несуществующим target → игнорируется", () => {
+    const intents = {
+      a: {
+        name: "A",
+        antagonist: "nonexistent",
+        particles: { effects: [{ α: "replace", target: "x.y", value: "1" }], conditions: [] }
+      }
+    };
+    const algebra = computeAlgebra(intents, ontology);
+    expect(algebra.a.antagonists).toEqual([]);
+  });
+
+  it("production computeAlgebra не содержит evidence поля", () => {
+    const intents = {
+      mute: {
+        name: "Mute",
+        antagonist: "unmute",
+        particles: {
+          effects: [{ α: "replace", target: "conversation.muted", value: true }],
+          conditions: []
+        }
+      },
+      unmute: {
+        name: "Unmute",
+        antagonist: "mute",
+        particles: {
+          effects: [{ α: "replace", target: "conversation.muted", value: false }],
+          conditions: []
+        }
+      }
+    };
+    const algebra = computeAlgebra(intents, ontology);
+    expect(algebra.mute.antagonistsEvidence).toBeUndefined();
+    expect(algebra.mute.antagonists).toContain("unmute");
+  });
+
+  it("асимметричный declared БЕЗ strict witness → heuristic-lifecycle classification", () => {
+    // Пара с declared, но разным числом эффектов (strict не найдёт)
+    const intents = {
+      create_x: {
+        name: "Create X",
+        antagonist: "remove_x",
+        particles: {
+          effects: [{ α: "add", target: "xs" }],
+          conditions: []
+        }
+      },
+      remove_x: {
+        name: "Remove X",
+        antagonist: "create_x",
+        particles: {
+          effects: [
+            { α: "remove", target: "xs" },
+            { α: "replace", target: "log.last", value: "removed" }
+          ],
+          conditions: []
+        }
+      }
+    };
+    const withEvidence = computeAlgebraWithEvidence(intents, ontology);
+    expect(withEvidence.create_x.antagonists).toContain("remove_x");
+    expect(withEvidence.create_x.antagonistsEvidence.remove_x.classification).toBe("heuristic-lifecycle");
   });
 });

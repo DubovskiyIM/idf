@@ -221,14 +221,58 @@ function deriveAntagonisticStrict(INTENTS, ONTOLOGY) {
 }
 
 /**
- * computeAlgebra — главный API.
+ * mergeDeclaredAntagonists — добавляет declared antagonists в evidence map
+ * с classification по §15:
+ *   - structural: strict derivation подтверждает (evidence есть)
+ *   - heuristic-lifecycle: declared, но strict derivation не подтверждает
  */
-export function computeAlgebra(INTENTS, ONTOLOGY) {
+function mergeDeclaredAntagonists(INTENTS, structuralEdges) {
+  const structuralSet = new Set();
+  for (const edge of structuralEdges) {
+    structuralSet.add([edge.a, edge.b].sort().join("|"));
+  }
+
+  const evidenceMap = {};
+
+  // 1. Strict edges → classification=structural
+  for (const edge of structuralEdges) {
+    if (!evidenceMap[edge.a]) evidenceMap[edge.a] = {};
+    if (!evidenceMap[edge.b]) evidenceMap[edge.b] = {};
+    evidenceMap[edge.a][edge.b] = { classification: "structural" };
+    evidenceMap[edge.b][edge.a] = { classification: "structural" };
+  }
+
+  // 2. Declared antagonists (если не покрыты strict)
+  for (const [id, intent] of Object.entries(INTENTS)) {
+    const declared = intent.antagonist;
+    if (!declared || !INTENTS[declared]) continue;
+
+    const key = [id, declared].sort().join("|");
+    if (structuralSet.has(key)) continue;
+
+    if (!evidenceMap[id]) evidenceMap[id] = {};
+    if (!evidenceMap[declared]) evidenceMap[declared] = {};
+    if (!evidenceMap[id][declared]) {
+      evidenceMap[id][declared] = { classification: "heuristic-lifecycle" };
+    }
+    if (!evidenceMap[declared][id]) {
+      evidenceMap[declared][id] = { classification: "heuristic-lifecycle" };
+    }
+  }
+
+  return evidenceMap;
+}
+
+/**
+ * computeAlgebraWithEvidence — debug-версия с classification метаданными.
+ * Используется integrity rule #5.
+ */
+export function computeAlgebraWithEvidence(INTENTS, ONTOLOGY) {
   const algebra = {};
   if (!INTENTS) return algebra;
 
   for (const id of Object.keys(INTENTS)) {
-    algebra[id] = emptyRelations();
+    algebra[id] = { ...emptyRelations(), antagonistsEvidence: {} };
   }
 
   // 1. ▷
@@ -238,11 +282,32 @@ export function computeAlgebra(INTENTS, ONTOLOGY) {
     if (!algebra[to].sequentialIn.includes(from)) algebra[to].sequentialIn.push(from);
   }
 
-  // 2. ⇌ strict
-  const antagonisticEdges = deriveAntagonisticStrict(INTENTS, ONTOLOGY);
-  for (const { a, b } of antagonisticEdges) {
-    if (!algebra[a].antagonists.includes(b)) algebra[a].antagonists.push(b);
-    if (!algebra[b].antagonists.includes(a)) algebra[b].antagonists.push(a);
+  // 2. ⇌ strict + declared merge
+  const structuralEdges = deriveAntagonisticStrict(INTENTS, ONTOLOGY);
+  const evidenceMap = mergeDeclaredAntagonists(INTENTS, structuralEdges);
+
+  for (const [id, otherMap] of Object.entries(evidenceMap)) {
+    for (const [otherId, evidence] of Object.entries(otherMap)) {
+      if (!algebra[id].antagonists.includes(otherId)) {
+        algebra[id].antagonists.push(otherId);
+      }
+      algebra[id].antagonistsEvidence[otherId] = evidence;
+    }
+  }
+
+  return algebra;
+}
+
+/**
+ * computeAlgebra — production API. Strip'ит evidence из output.
+ */
+export function computeAlgebra(INTENTS, ONTOLOGY) {
+  const withEvidence = computeAlgebraWithEvidence(INTENTS, ONTOLOGY);
+
+  const algebra = {};
+  for (const [id, relations] of Object.entries(withEvidence)) {
+    const { antagonistsEvidence, ...rest } = relations;
+    algebra[id] = rest;
   }
 
   return algebra;
