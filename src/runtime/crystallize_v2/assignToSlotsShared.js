@@ -173,9 +173,15 @@ export function appliesToProjection(intent, projection) {
   // Creator-scoping: интент, создающий сущность X, применяется только к
   // проекциям с mainEntity === X. Предотвращает появление create_group в
   // chat_view (mainEntity Message) и аналогичные «наведённые» кнопки создания.
+  // ИСКЛЮЧЕНИЕ: cross-entity creators разрешены если intent явно ссылается
+  // на mainEntity в entities (пример: create_direct_chat создаёт Conversation,
+  // но работает как per-item action на User в people_list).
   const creates = normalizeCreates(intent.creates);
   if (creates && mainEntity && creates !== mainEntity) {
-    return false;
+    const entityRefs = intentEntities;
+    if (!entityRefs.includes(mainEntity)) {
+      return false;
+    }
   }
 
   // Effect-less intents: интенты без effects — это read-only утилиты
@@ -208,6 +214,11 @@ export function appliesToProjection(intent, projection) {
       : (projection.entities || [])
   );
   if (mainEntity) routeScope.add(mainEntity);
+  // Cross-entity creators: creates-entity автоматически считается "в scope",
+  // потому что intent уже прошёл creator-scoping check выше (entities включает
+  // mainEntity). Без этого create_direct_chat (creates Conversation + entity
+  // User) не попадает в people_list — Conversation не в routeScope.
+  if (creates) routeScope.add(creates);
 
   if (intentEntities.length > 0 && intentEntities.every(e => routeScope.has(e))) {
     return true;

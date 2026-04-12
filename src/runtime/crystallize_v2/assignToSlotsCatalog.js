@@ -212,11 +212,18 @@ function buildItemConditions(intent, projection, ONTOLOGY) {
   return conditions;
 }
 
-// Предотвращаем появление creator-intent другого main entity в catalog
-// (уже было, правим сравнение через normalizeCreates)
+// Предотвращаем появление creator-intent другого main entity в catalog,
+// НО разрешаем cross-entity creators если intent явно ссылается на
+// mainEntity в particles.entities (пример: create_direct_chat создаёт
+// Conversation, но работает как per-item action на User в people_list).
 function isCreatorOfOther(intent, mainEntity) {
   const c = normalizeCreates(intent.creates);
-  return Boolean(c && mainEntity && c !== mainEntity);
+  if (!c || !mainEntity || c === mainEntity) return false;
+  // Cross-entity creator разрешён, если mainEntity есть в entities intent'а
+  const intentEntities = (intent.particles?.entities || [])
+    .map(e => e.split(":").pop().trim().replace(/\(.*\)/, "").replace(/\[\]/, ""));
+  if (intentEntities.includes(mainEntity)) return false;
+  return true;
 }
 
 function buildCatalogBody(projection, ONTOLOGY) {
