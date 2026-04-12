@@ -62,14 +62,36 @@ function emptyRelations() {
 }
 
 /**
+ * Парсит creates-строку с parenthesized default status.
+ *   "Poll(draft)" → { entity: "poll", impliedStatus: "draft" }
+ *   "Vote(yes)"   → { entity: "vote", impliedStatus: "yes" }
+ *   "Booking"     → { entity: "booking", impliedStatus: null }
+ *   null          → null
+ */
+function parseCreatesImpliedStatus(creates) {
+  if (!creates || typeof creates !== "string") return null;
+  const match = creates.match(/^(\w+)\s*\(([^)]+)\)\s*$/);
+  if (match) {
+    return { entity: match[1].toLowerCase(), impliedStatus: match[2].trim() };
+  }
+  return { entity: creates.toLowerCase(), impliedStatus: null };
+}
+
+/**
  * effectSatisfiesCondition — проверяет, делает ли effect condition истинным.
  *
  * Правила:
  *   - replace + `=`/`!=`/`IN` — matching value
  *   - remove + `= null` — YES
- *   - add — NO в v1 (слабое соответствие, out of scope)
+ *   - add + intent.creates с implied status → matching по status field
+ *     (wave 2: "Poll(draft)" → condition "poll.status = 'draft'" → ▷)
+ *
+ * @param {Object} effect — шаблон эффекта
+ * @param {Object} cond — parsed condition AST
+ * @param {Object} ontology
+ * @param {Object} intent — полный intent (для доступа к creates)
  */
-function effectSatisfiesCondition(effect, cond, ontology) {
+function effectSatisfiesCondition(effect, cond, ontology, intent) {
   const alpha = effect.α || effect.alpha;
   const effectEntity = normalizeEntityFromTarget(effect.target, ontology);
   if (effectEntity !== cond.entity) return false;
@@ -98,8 +120,32 @@ function effectSatisfiesCondition(effect, cond, ontology) {
       return false;
     }
 
-    case "add":
-      return false;
+    case "add": {
+      // Wave 2: derivation через intent.creates implied status.
+      // "creates: Poll(draft)" → add polls → condition "poll.status = 'draft'" → ▷
+      if (!intent?.creates) return false;
+      const parsed = parseCreatesImpliedStatus(intent.creates);
+      if (!parsed || !parsed.impliedStatus) return false;
+
+      // Condition должен быть на status-поле
+      if (cond.field !== "status") return false;
+
+      // Entity matching: parsed.entity должен match cond.entity
+      const createsEntity = parsed.entity;
+      if (createsEntity !== cond.entity && createsEntity !== effectEntity) return false;
+
+      // Value matching
+      switch (cond.op) {
+        case "=":
+          return parsed.impliedStatus === cond.value;
+        case "!=":
+          return parsed.impliedStatus !== cond.value;
+        case "IN":
+          return Array.isArray(cond.value) && cond.value.includes(parsed.impliedStatus);
+        default:
+          return false;
+      }
+    }
 
     default:
       return false;
@@ -129,7 +175,7 @@ function deriveSequential(INTENTS, ONTOLOGY) {
       if (effects.length === 0) continue;
 
       const matches = conditions.some(cond =>
-        effects.some(eff => effectSatisfiesCondition(eff, cond, ONTOLOGY))
+        effects.some(eff => effectSatisfiesCondition(eff, cond, ONTOLOGY, fromIntent))
       );
 
       if (matches) {

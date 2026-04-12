@@ -75,6 +75,20 @@ describe("planning domain algebra (Session C phase transitions)", () => {
   it("set_deadline sequentialIn содержит open_poll (deadline только в open phase)", () => {
     expect(alg.set_deadline.sequentialIn).toContain("open_poll");
   });
+
+  // Wave 2: creates implied status derivation
+  it("create_poll ▷ open_poll через creates: Poll(draft) → condition poll.status='draft'", () => {
+    expect(alg.create_poll.sequentialOut).toContain("open_poll");
+    expect(alg.open_poll.sequentialIn).toContain("create_poll");
+  });
+
+  it("create_poll ▷ add_time_option (condition poll.status='draft')", () => {
+    expect(alg.create_poll.sequentialOut).toContain("add_time_option");
+  });
+
+  it("create_poll ▷ invite_participant (condition poll.status='draft')", () => {
+    expect(alg.create_poll.sequentialOut).toContain("invite_participant");
+  });
 });
 
 describe("messenger domain algebra", () => {

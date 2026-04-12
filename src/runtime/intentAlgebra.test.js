@@ -279,6 +279,141 @@ describe("deriveSequential (▷)", () => {
     expect(algebra.open_poll.sequentialOut).not.toContain("open_poll");
     expect(algebra.open_poll.sequentialIn).not.toContain("open_poll");
   });
+
+  // Wave 2: creates implied status derivation
+  it("add + creates с implied status → ▷ (wave 2)", () => {
+    const intents = {
+      create_poll: {
+        name: "Create",
+        creates: "Poll(draft)",
+        particles: {
+          effects: [{ α: "add", target: "polls" }],
+          conditions: []
+        }
+      },
+      open_poll: {
+        name: "Open",
+        particles: {
+          effects: [{ α: "replace", target: "poll.status", value: "open" }],
+          conditions: ["poll.status = 'draft'"]
+        }
+      }
+    };
+    const algebra = computeAlgebra(intents, ontology);
+    expect(algebra.create_poll.sequentialOut).toContain("open_poll");
+    expect(algebra.open_poll.sequentialIn).toContain("create_poll");
+  });
+
+  it("add + creates БЕЗ parenthesized status → no ▷", () => {
+    const intents = {
+      create_thing: {
+        name: "Create",
+        creates: "Poll", // нет (draft)
+        particles: {
+          effects: [{ α: "add", target: "polls" }],
+          conditions: []
+        }
+      },
+      needs_draft: {
+        name: "Needs draft",
+        particles: {
+          effects: [],
+          conditions: ["poll.status = 'draft'"]
+        }
+      }
+    };
+    const algebra = computeAlgebra(intents, ontology);
+    expect(algebra.create_thing.sequentialOut).not.toContain("needs_draft");
+  });
+
+  it("add + creates с implied status + IN condition → ▷", () => {
+    const intents = {
+      create_booking: {
+        name: "Create",
+        creates: "Booking(confirmed)",
+        particles: {
+          effects: [{ α: "add", target: "bookings" }],
+          conditions: []
+        }
+      },
+      review: {
+        name: "Review",
+        particles: {
+          effects: [],
+          conditions: ["booking.status IN ('completed','confirmed')"]
+        }
+      }
+    };
+    const algebra = computeAlgebra(intents, ontology);
+    expect(algebra.create_booking.sequentialOut).toContain("review");
+  });
+
+  it("add + creates implied status + != condition → ▷ если implied !== value", () => {
+    const intents = {
+      create_poll: {
+        name: "Create",
+        creates: "Poll(draft)",
+        particles: {
+          effects: [{ α: "add", target: "polls" }],
+          conditions: []
+        }
+      },
+      not_resolved: {
+        name: "Not resolved",
+        particles: {
+          effects: [],
+          conditions: ["poll.status != 'resolved'"]
+        }
+      }
+    };
+    const algebra = computeAlgebra(intents, ontology);
+    expect(algebra.create_poll.sequentialOut).toContain("not_resolved");
+  });
+
+  it("add + creates implied status + non-status field condition → no ▷", () => {
+    const intents = {
+      create_poll: {
+        name: "Create",
+        creates: "Poll(draft)",
+        particles: {
+          effects: [{ α: "add", target: "polls" }],
+          conditions: []
+        }
+      },
+      needs_title: {
+        name: "Needs title",
+        particles: {
+          effects: [],
+          conditions: ["poll.title = 'test'"]
+        }
+      }
+    };
+    const algebra = computeAlgebra(intents, ontology);
+    // creates implied status только для field=status, title не матчится
+    expect(algebra.create_poll.sequentialOut).not.toContain("needs_title");
+  });
+
+  it("add + creates implied status + wrong entity → no ▷", () => {
+    const intents = {
+      create_poll: {
+        name: "Create",
+        creates: "Poll(draft)",
+        particles: {
+          effects: [{ α: "add", target: "polls" }],
+          conditions: []
+        }
+      },
+      booking_check: {
+        name: "Check",
+        particles: {
+          effects: [],
+          conditions: ["booking.status = 'draft'"]
+        }
+      }
+    };
+    const algebra = computeAlgebra(intents, ontology);
+    expect(algebra.create_poll.sequentialOut).not.toContain("booking_check");
+  });
 });
 
 describe("deriveAntagonisticStrict (⇌)", () => {

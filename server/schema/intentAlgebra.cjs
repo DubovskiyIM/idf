@@ -56,7 +56,14 @@ function emptyRelations() {
   };
 }
 
-function effectSatisfiesCondition(effect, cond, ontology) {
+function parseCreatesImpliedStatus(creates) {
+  if (!creates || typeof creates !== "string") return null;
+  const match = creates.match(/^(\w+)\s*\(([^)]+)\)\s*$/);
+  if (match) return { entity: match[1].toLowerCase(), impliedStatus: match[2].trim() };
+  return { entity: creates.toLowerCase(), impliedStatus: null };
+}
+
+function effectSatisfiesCondition(effect, cond, ontology, intent) {
   const alpha = effect.α || effect.alpha;
   const effectEntity = normalizeEntityFromTarget(effect.target, ontology);
   if (effectEntity !== cond.entity) return false;
@@ -78,8 +85,20 @@ function effectSatisfiesCondition(effect, cond, ontology) {
       if (cond.op === "=" && cond.value === null) return true;
       return false;
     }
-    case "add":
-      return false;
+    case "add": {
+      if (!intent?.creates) return false;
+      const parsed = parseCreatesImpliedStatus(intent.creates);
+      if (!parsed || !parsed.impliedStatus) return false;
+      if (cond.field !== "status") return false;
+      const createsEntity = parsed.entity;
+      if (createsEntity !== cond.entity && createsEntity !== effectEntity) return false;
+      switch (cond.op) {
+        case "=": return parsed.impliedStatus === cond.value;
+        case "!=": return parsed.impliedStatus !== cond.value;
+        case "IN": return Array.isArray(cond.value) && cond.value.includes(parsed.impliedStatus);
+        default: return false;
+      }
+    }
     default:
       return false;
   }
@@ -96,7 +115,7 @@ function deriveSequential(INTENTS, ONTOLOGY) {
       const effects = INTENTS[fromId].particles?.effects || [];
       if (effects.length === 0) continue;
       const matches = conditions.some(cond =>
-        effects.some(eff => effectSatisfiesCondition(eff, cond, ONTOLOGY))
+        effects.some(eff => effectSatisfiesCondition(eff, cond, ONTOLOGY, INTENTS[fromId]))
       );
       if (matches) edges.push({ from: fromId, to: toId });
     }
