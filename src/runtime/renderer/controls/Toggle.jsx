@@ -11,14 +11,16 @@ export default function Toggle({ spec, ctx }) {
     <button
       onClick={() => ctx.exec(activeIntent, {})}
       style={{
-        padding: "6px 10px", borderRadius: 6, border: "1px solid #d1d5db",
-        background: "#fff", cursor: "pointer", fontSize: 12,
+        padding: "6px 10px", borderRadius: 6,
+        border: "1px solid var(--mantine-color-default-border)",
+        background: "var(--mantine-color-default)",
+        cursor: "pointer", fontSize: 12,
         display: "inline-flex", alignItems: "center", gap: 4,
       }}
       title={label}
     >
       <Icon emoji={icon} size={14} />
-      <span style={{ fontSize: 11, color: "#6b7280" }}>{label}</span>
+      <span style={{ fontSize: 11, color: "var(--mantine-color-dimmed)" }}>{label}</span>
     </button>
   );
 }

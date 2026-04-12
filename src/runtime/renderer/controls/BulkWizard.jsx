@@ -86,7 +86,7 @@ export default function BulkWizard({ spec, ctx, onClose }) {
           </div>
           <div style={{
             maxHeight: 320, overflow: "auto",
-            border: "1px solid #e5e7eb", borderRadius: 6, marginBottom: 16,
+            border: "1px solid var(--mantine-color-default-border)", borderRadius: 6, marginBottom: 16,
           }}>
             {filtered.length === 0 && (
               <div style={{ padding: 20, color: "var(--mantine-color-dimmed)", fontSize: 13, textAlign: "center" }}>
@@ -104,7 +104,7 @@ export default function BulkWizard({ spec, ctx, onClose }) {
                   checked={selected.has(item.id)}
                   onChange={() => toggleItem(item.id)}
                 />
-                <span style={{ fontSize: 13, color: "#111827", flex: 1 }}>
+                <span style={{ fontSize: 13, color: "var(--mantine-color-text)", flex: 1 }}>
                   {itemLabel(item)}
                 </span>
               </label>
@@ -117,7 +117,7 @@ export default function BulkWizard({ spec, ctx, onClose }) {
               disabled={selected.size === 0}
               style={{
                 ...btnPrimary,
-                background: selected.size > 0 ? "#6366f1" : "#e5e7eb",
+                background: selected.size > 0 ? "var(--mantine-color-primary, #6366f1)" : "var(--mantine-color-default)",
                 cursor: selected.size > 0 ? "pointer" : "default",
               }}
             >Далее ({selected.size})</button>
@@ -133,7 +133,7 @@ export default function BulkWizard({ spec, ctx, onClose }) {
           </p>
           <div style={{
             maxHeight: 180, overflow: "auto",
-            background: "var(--mantine-color-default-hover)", border: "1px solid #e5e7eb",
+            background: "var(--mantine-color-default-hover)", border: "1px solid var(--mantine-color-default-border)",
             borderRadius: 6, padding: 8, margin: "12px 0",
             fontSize: 12, color: "var(--mantine-color-dimmed)",
           }}>

@@ -44,7 +44,7 @@ export default function FormModal({ spec, ctx, overlayContext, onClose }) {
   return (
     <ModalShell onClose={onClose} title={spec.title || spec.label || spec.intentId}>
       {spec.witnessPanel?.length > 0 && (
-        <div style={{ padding: 12, background: "#f9fafb", borderRadius: 6, marginBottom: 16 }}>
+        <div style={{ padding: 12, background: "var(--mantine-color-default-hover)", borderRadius: 6, marginBottom: 16 }}>
           {spec.witnessPanel.map((w, i) => (
             <SlotRenderer key={i} item={w} ctx={ctx} />
           ))}

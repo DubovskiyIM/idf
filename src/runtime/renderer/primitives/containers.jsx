@@ -107,12 +107,12 @@ export function Card({ node, ctx, item }) {
 
   const chatStyle = {
     background: isMine
-      ? "var(--mantine-color-indigo-light)"
+      ? "var(--mantine-color-default-hover)"
       : "var(--mantine-color-default)",
     borderRadius: 12,
     padding: 10,
     border: isMine
-      ? "1px solid var(--mantine-color-indigo-light-border)"
+      ? "2px solid var(--mantine-color-primary-light-border, var(--mantine-color-indigo-4))"
       : "1px solid var(--mantine-color-default-border)",
     color: "var(--mantine-color-text)",
     maxWidth: "70%",

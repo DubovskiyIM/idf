@@ -147,8 +147,8 @@ function SubCollectionItem({ item, itemView, itemIntents, ctx, target }) {
                 style={{
                   padding: "6px 10px",
                   borderRadius: 6,
-                  border: "1px solid #d1d5db",
-                  background: "#fff",
+                  border: "1px solid var(--mantine-color-default-border)",
+                  background: "var(--mantine-color-default)",
                   cursor: "pointer",
                   fontSize: 12,
                   display: "inline-flex",
