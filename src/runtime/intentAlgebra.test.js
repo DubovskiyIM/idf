@@ -594,7 +594,6 @@ describe("mergeDeclaredAntagonists + §15 classification", () => {
   });
 
   it("асимметричный declared БЕЗ strict witness → heuristic-lifecycle classification", () => {
-    // Пара с declared, но разным числом эффектов (strict не найдёт)
     const intents = {
       create_x: {
         name: "Create X",
@@ -619,5 +618,119 @@ describe("mergeDeclaredAntagonists + §15 classification", () => {
     const withEvidence = computeAlgebraWithEvidence(intents, ontology);
     expect(withEvidence.create_x.antagonists).toContain("remove_x");
     expect(withEvidence.create_x.antagonistsEvidence.remove_x.classification).toBe("heuristic-lifecycle");
+  });
+});
+
+describe("deriveExcluding (⊕)", () => {
+  const ontology = {
+    entities: {
+      Booking: { fields: ["id", "status"] }
+    }
+  };
+
+  it("replace + add на одной коллекции → ⊕", () => {
+    const intents = {
+      a: {
+        name: "A",
+        particles: {
+          effects: [{ α: "replace", target: "bookings" }],
+          conditions: []
+        }
+      },
+      b: {
+        name: "B",
+        particles: {
+          effects: [{ α: "add", target: "bookings" }],
+          conditions: []
+        }
+      }
+    };
+    const algebra = computeAlgebra(intents, ontology);
+    expect(algebra.a.excluding).toContain("b");
+    expect(algebra.b.excluding).toContain("a");
+  });
+
+  it("replace + replace на одном target → no ⊕ (last_wins)", () => {
+    const intents = {
+      a: {
+        name: "A",
+        particles: {
+          effects: [{ α: "replace", target: "booking.status", value: "done" }],
+          conditions: []
+        }
+      },
+      b: {
+        name: "B",
+        particles: {
+          effects: [{ α: "replace", target: "booking.status", value: "open" }],
+          conditions: []
+        }
+      }
+    };
+    const algebra = computeAlgebra(intents, ontology);
+    expect(algebra.a.excluding).not.toContain("b");
+  });
+
+  it("разные targets → no ⊕", () => {
+    const intents = {
+      a: {
+        name: "A",
+        particles: {
+          effects: [{ α: "replace", target: "booking.status", value: "done" }],
+          conditions: []
+        }
+      },
+      b: {
+        name: "B",
+        particles: {
+          effects: [{ α: "replace", target: "slot.status", value: "free" }],
+          conditions: []
+        }
+      }
+    };
+    const algebra = computeAlgebra(intents, ontology);
+    expect(algebra.a.excluding).not.toContain("b");
+  });
+
+  it("multi-effect: одна ⊥-пара достаточна для ⊕", () => {
+    const intents = {
+      a: {
+        name: "A",
+        particles: {
+          effects: [
+            { α: "replace", target: "booking.status", value: "done" },
+            { α: "add", target: "bookings" }
+          ],
+          conditions: []
+        }
+      },
+      b: {
+        name: "B",
+        particles: {
+          effects: [
+            { α: "replace", target: "bookings" },
+            { α: "add", target: "reviews" }
+          ],
+          conditions: []
+        }
+      }
+    };
+    const algebra = computeAlgebra(intents, ontology);
+    expect(algebra.a.excluding).toContain("b");
+    expect(algebra.b.excluding).toContain("a");
+  });
+
+  it("не генерирует self-loop", () => {
+    const intents = {
+      a: {
+        name: "A",
+        particles: {
+          effects: [{ α: "add", target: "bookings" }],
+          conditions: []
+        }
+      }
+    };
+    const algebra = computeAlgebra(intents, ontology);
+    expect(algebra.a.excluding).not.toContain("a");
   });
 });

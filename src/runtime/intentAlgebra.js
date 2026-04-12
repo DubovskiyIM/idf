@@ -15,6 +15,7 @@
  */
 
 import { parseCondition, parseConditions } from "./conditionParser.js";
+import { checkComposition } from "./algebra.js";
 
 /**
  * Нормализация target эффекта в singular entity name.
@@ -264,6 +265,47 @@ function mergeDeclaredAntagonists(INTENTS, structuralEdges) {
 }
 
 /**
+ * deriveExcluding — выводит ⊕ через composition table из algebra.js.
+ *
+ * Для пары (I₁, I₂) ⊕ существует если хотя бы одна пара (e₁, e₂) даёт ⊥
+ * в checkComposition. Симметричный тип связи.
+ */
+function deriveExcluding(INTENTS, ONTOLOGY) {
+  const edges = [];
+  const intentIds = Object.keys(INTENTS);
+
+  for (let i = 0; i < intentIds.length; i++) {
+    for (let j = i + 1; j < intentIds.length; j++) {
+      const id1 = intentIds[i];
+      const id2 = intentIds[j];
+      const eff1 = INTENTS[id1].particles?.effects || [];
+      const eff2 = INTENTS[id2].particles?.effects || [];
+
+      let hasConflict = false;
+      for (const e1 of eff1) {
+        for (const e2 of eff2) {
+          const result = checkComposition(
+            { alpha: e1.α || e1.alpha, target: e1.target, context: {} },
+            { alpha: e2.α || e2.alpha, target: e2.target, context: {} }
+          );
+          if (result.compatible === false) {
+            hasConflict = true;
+            break;
+          }
+        }
+        if (hasConflict) break;
+      }
+
+      if (hasConflict) {
+        edges.push({ a: id1, b: id2 });
+      }
+    }
+  }
+
+  return edges;
+}
+
+/**
  * computeAlgebraWithEvidence — debug-версия с classification метаданными.
  * Используется integrity rule #5.
  */
@@ -293,6 +335,13 @@ export function computeAlgebraWithEvidence(INTENTS, ONTOLOGY) {
       }
       algebra[id].antagonistsEvidence[otherId] = evidence;
     }
+  }
+
+  // 3. ⊕
+  const excludingEdges = deriveExcluding(INTENTS, ONTOLOGY);
+  for (const { a, b } of excludingEdges) {
+    if (!algebra[a].excluding.includes(b)) algebra[a].excluding.push(b);
+    if (!algebra[b].excluding.includes(a)) algebra[b].excluding.push(a);
   }
 
   return algebra;
