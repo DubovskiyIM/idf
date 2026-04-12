@@ -155,6 +155,8 @@ export default function V2Shell({
             routeParams={current.params}
             navigate={navigate}
             back={back}
+            artifacts={artifacts}
+            allProjections={allProjections}
           />
         ) : (
           <div style={{ padding: 40, color: "var(--mantine-color-dimmed)", textAlign: "center" }}>

@@ -184,9 +184,23 @@ export const PROJECTIONS = {
     sort: "-createdAt",
     witnesses: ["query", "minPrice", "maxPrice", "notifyOnNew"],
   },
+  meshok_home: {
+    name: "Главная",
+    kind: "dashboard",
+    query: "сводка активности",
+    entities: [],
+    widgets: [
+      { projection: "listing_feed", title: "Новые лоты", size: "full" },
+      { projection: "my_bids", title: "Мои ставки", size: "half" },
+      { projection: "order_list", title: "Заказы", size: "half" },
+    ],
+  },
 };
 
 export const ROOT_PROJECTIONS = [
+  { section: "Главная", icon: "🏠", items: [
+    "meshok_home",
+  ]},
   { section: "Покупаю", icon: "🛒", items: [
     "listing_feed", "my_bids", "watchlist", "saved_searches",
   ]},

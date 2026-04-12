@@ -3,6 +3,7 @@ import ArchetypeCatalog from "./archetypes/ArchetypeCatalog.jsx";
 import ArchetypeDetail from "./archetypes/ArchetypeDetail.jsx";
 import ArchetypeForm from "./archetypes/ArchetypeForm.jsx";
 import ArchetypeCanvas from "./archetypes/ArchetypeCanvas.jsx";
+import ArchetypeDashboard from "./archetypes/ArchetypeDashboard.jsx";
 import { validateArtifact } from "./validation/validateArtifact.js";
 
 const ARCHETYPES = {
@@ -11,6 +12,7 @@ const ARCHETYPES = {
   detail: ArchetypeDetail,
   form: ArchetypeForm,
   canvas: ArchetypeCanvas,
+  dashboard: ArchetypeDashboard,
 };
 
 export default function ProjectionRendererV2({
@@ -25,6 +27,8 @@ export default function ProjectionRendererV2({
   navigate,
   back,
   theme,
+  artifacts,
+  allProjections,
 }) {
   if (!artifact) {
     return <div style={{ padding: 20, color: "#9ca3af", textAlign: "center" }}>Нет артефакта</div>;
@@ -75,6 +79,8 @@ export default function ProjectionRendererV2({
     routeParams,
     navigate,
     back,
+    artifacts,
+    allProjections,
   };
 
   return <Archetype slots={artifact.slots} nav={artifact.nav} ctx={ctx} projection={projection} />;

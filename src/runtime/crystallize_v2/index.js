@@ -14,7 +14,7 @@ import { deriveNavGraph } from "./navGraph.js";
 import { generateEditProjections, buildFormSpec } from "./formGrouping.js";
 import { validateArtifact } from "../renderer/validation/validateArtifact.js";
 
-const SUPPORTED_ARCHETYPES = new Set(["feed", "catalog", "detail", "form", "canvas"]);
+const SUPPORTED_ARCHETYPES = new Set(["feed", "catalog", "detail", "form", "canvas", "dashboard"]);
 
 export function crystallizeV2(INTENTS, PROJECTIONS, ONTOLOGY, domainId = "unknown") {
   const artifacts = {};
@@ -53,6 +53,16 @@ export function crystallizeV2(INTENTS, PROJECTIONS, ONTOLOGY, domainId = "unknow
         header: [],
         toolbar: [],
         body: { type: "canvas", mainEntity: proj.mainEntity },
+        context: [],
+        fab: [],
+        overlay: [],
+      };
+    } else if (archetype === "dashboard") {
+      // Dashboard-архетип: widgets — массив ссылок на другие проекции.
+      slots = {
+        header: [],
+        toolbar: [],
+        body: { type: "dashboard", widgets: proj.widgets || [] },
         context: [],
         fab: [],
         overlay: [],
