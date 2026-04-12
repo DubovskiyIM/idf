@@ -18,6 +18,8 @@ const { authMiddleware, getUser } = require("../auth.js");
 const { getOntology } = require("../ontologyRegistry.cjs");
 const { getIntent } = require("../intents.js");
 const { buildIntentSchema } = require("../schema/buildIntentSchema.cjs");
+const { computeAlgebra } = require("../schema/intentAlgebra.cjs");
+const { _registry: ALL_INTENTS } = require("../intents.js");
 const { filterWorldForRole } = require("../schema/filterWorld.cjs");
 const { buildBookingEffects } = require("../schema/buildBookingEffects.cjs");
 const { parseCondition } = require("../schema/conditionParser.cjs");
@@ -162,15 +164,21 @@ function makeAgentRouter(broadcast) {
         message: "Ontology для booking не зарегистрирована. Клиент должен POST /api/typemap?domain=booking."
       });
     }
+
+    // Вычисляем алгебру ОДИН раз над всеми зарегистрированными intents
+    // (не только canExecute) — relations могут ссылаться на intent'ы вне
+    // canExecute, это правильное поведение для агентского планирования.
+    const algebra = computeAlgebra(ALL_INTENTS, ontology);
+
     const allowedIds = ontology.roles?.[ROLE]?.canExecute || [];
     const intents = [];
     for (const id of allowedIds) {
       const intent = getIntent(id);
       if (!intent) continue;
-      intents.push(buildIntentSchema(id, intent, ontology, ROLE));
+      intents.push(buildIntentSchema(id, intent, ontology, ROLE, algebra[id]));
     }
     const viewer = getViewer(req);
-    console.log(`[agent] GET  /schema              ${viewer.id} → 200 (${intents.length} intents)`);
+    console.log(`[agent] GET  /schema              ${viewer.id} → 200 (${intents.length} intents, algebra)`);
     res.json({
       domain: DOMAIN,
       role: ROLE,
