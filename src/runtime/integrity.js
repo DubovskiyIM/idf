@@ -1,46 +1,36 @@
 /**
  * Правила целостности (раздел 13 манифеста) + алгебра композиции (раздел 11).
  * Проверяются перед кристаллизацией.
+ *
+ * Session B (2026-04-12): правила #1, #5, #7 переписаны как graph queries
+ * поверх computeAlgebra. Substring-heuristics удалены.
  */
 
-import { checkAlgebraIntegrity } from "./algebra.js";
+import { computeAlgebra, computeAlgebraWithEvidence } from "./intentAlgebra.js";
 
 export function checkIntegrity(INTENTS, PROJECTIONS, ONTOLOGY) {
   const issues = [];
   const intents = Object.entries(INTENTS);
   const projections = Object.entries(PROJECTIONS);
 
-  // === 1. Нет мёртвых намерений ===
-  // Для каждого намерения с conditions — существует ли путь (другое намерение),
-  // чьи эффекты делают условие истинным?
+  // Вычисляем алгебру один раз для всех rules, которые над ней работают.
+  const algebra = computeAlgebra(INTENTS, ONTOLOGY);
+  const algebraWithEvidence = computeAlgebraWithEvidence(INTENTS, ONTOLOGY);
+
+  // === 1. Нет мёртвых намерений (через algebra graph) ===
+  // Интент с conditions должен иметь хотя бы одно входящее ▷ ребро,
+  // иначе его условия никогда не станут истинными.
   for (const [id, intent] of intents) {
-    const conditions = intent.particles.conditions || [];
+    const conditions = intent.particles?.conditions || [];
     if (conditions.length === 0) continue;
-
-    for (const cond of conditions) {
-      // Извлечь target.field = 'value' из условия
-      const match = cond.match(/^(\w+)\.(\w+)\s*=\s*'([^']+)'$/);
-      if (!match) continue;
-      const [, entityType, field, value] = match;
-
-      // Найти намерение, чей эффект устанавливает это значение
-      const hasProducer = intents.some(([otherId, other]) => {
-        if (otherId === id) return false;
-        return (other.particles.effects || []).some(ef => {
-          const efTarget = ef.target || "";
-          return efTarget.includes(field) && (ef.value === value || other.creates);
-        });
+    if (algebra[id].sequentialIn.length === 0) {
+      issues.push({
+        rule: "no_dead_intents",
+        level: "warning",
+        intent: id,
+        message: `Условия намерения могут быть невыполнимы`,
+        detail: `Нет входящих ▷-рёбер — ни один другой intent не делает условия истинными`
       });
-
-      if (!hasProducer) {
-        issues.push({
-          rule: "no_dead_intents",
-          level: "warning",
-          intent: id,
-          message: `Условие "${cond}" может быть невыполнимо — не найден производитель`,
-          detail: `Нет намерения, чей эффект устанавливает ${entityType}.${field} = '${value}'`
-        });
-      }
     }
   }
 
