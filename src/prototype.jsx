@@ -52,7 +52,7 @@ export default function App() {
 
   const domain = DOMAINS[domainId];
   const engine = useEngine(domain);
-  const { world, worldForIntent, drafts, effects, signals, links, exec,
+  const { world, worldForIntent, drafts, effects, signals, algebra, exec,
     overlay, overlayEntityIds, startInvestigation, commitInvestigation, cancelInvestigation } = engine;
 
   // Эффекты этого домена: server отдаёт эффекты всех доменов сразу, здесь
@@ -316,14 +316,31 @@ export default function App() {
               ) : (
                 <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
                   <div style={{ fontSize: 10, color: "#6b7280", textTransform: "uppercase", marginBottom: 4 }}>Связи</div>
-                  {links.map((l, i) => (
-                    <div key={i} style={{ background: "#13151d", borderRadius: 6, padding: 8, border: "1px solid #1e2230", display: "flex", alignItems: "center", gap: 6 }}>
-                      <span style={{ fontSize: 10, color: "#e2e5eb" }}>{domain.INTENTS[l.from]?.name}</span>
-                      <span style={{ color: LINK_COLORS[l.type], fontWeight: 700, fontSize: 12 }}>{l.type}</span>
-                      <span style={{ fontSize: 10, color: "#e2e5eb" }}>{domain.INTENTS[l.to]?.name}</span>
-                      <span style={{ fontSize: 9, color: "#6b7280", marginLeft: "auto" }}>{l.label}</span>
-                    </div>
-                  ))}
+                  {Object.entries(algebra || {}).map(([id, relations]) => {
+                    const intentName = domain.INTENTS[id]?.name || id;
+                    const edges = [
+                      ...relations.sequentialOut.map(to => ({ type: "▷", to, color: "#60a5fa" })),
+                      ...relations.antagonists.map(to => ({ type: "⇌", to, color: "#f472b6" })),
+                      ...relations.excluding.map(to => ({ type: "⊕", to, color: "#ef4444" })),
+                      ...relations.parallel.map(to => ({ type: "∥", to, color: "#9ca3af" })),
+                    ];
+                    if (edges.length === 0) return null;
+                    return (
+                      <div key={id} style={{ background: "#13151d", borderRadius: 6, padding: 8, border: "1px solid #1e2230" }}>
+                        <div style={{ fontWeight: 600, color: "#e2e5eb", fontSize: 11, marginBottom: 4 }}>
+                          {intentName}
+                        </div>
+                        <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
+                          {edges.map((e, i) => (
+                            <div key={i} style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 10 }}>
+                              <span style={{ color: e.color, fontWeight: 700, minWidth: 10 }}>{e.type}</span>
+                              <span style={{ color: "#9ca3af" }}>{domain.INTENTS[e.to]?.name || e.to}</span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    );
+                  })}
                 </div>
               )}
             </div>
