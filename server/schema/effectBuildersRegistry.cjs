@@ -7,10 +7,12 @@
 
 const { buildBookingEffects } = require("./buildBookingEffects.cjs");
 const { buildPlanningEffects } = require("./buildPlanningEffects.cjs");
+const { buildMeshokEffects } = require("./buildMeshokEffects.cjs");
 
 const REGISTRY = {
   booking: buildBookingEffects,
   planning: buildPlanningEffects,
+  meshok: buildMeshokEffects,
 };
 
 function getEffectBuilder(domain) {
