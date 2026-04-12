@@ -734,3 +734,158 @@ describe("deriveExcluding (⊕)", () => {
     expect(algebra.a.excluding).not.toContain("a");
   });
 });
+
+describe("deriveParallel (∥)", () => {
+  const ontology = {
+    entities: {
+      Booking: { fields: ["id", "status"] },
+      Review: { fields: ["id", "rating"] },
+      Vote: { fields: ["id", "value"] }
+    }
+  };
+
+  it("effects на общих entities без conflict → ∥", () => {
+    const intents = {
+      leave: {
+        name: "Leave",
+        particles: {
+          effects: [{ α: "add", target: "reviews" }],
+          conditions: []
+        }
+      },
+      edit: {
+        name: "Edit",
+        particles: {
+          effects: [{ α: "replace", target: "review.rating", value: 5 }],
+          conditions: []
+        }
+      }
+    };
+    const algebra = computeAlgebra(intents, ontology);
+    expect(algebra.leave.parallel).toContain("edit");
+    expect(algebra.edit.parallel).toContain("leave");
+  });
+
+  it("разные entities → no ∥", () => {
+    const intents = {
+      a: {
+        name: "A",
+        particles: {
+          effects: [{ α: "add", target: "bookings" }],
+          conditions: []
+        }
+      },
+      b: {
+        name: "B",
+        particles: {
+          effects: [{ α: "add", target: "reviews" }],
+          conditions: []
+        }
+      }
+    };
+    const algebra = computeAlgebra(intents, ontology);
+    expect(algebra.a.parallel).not.toContain("b");
+  });
+
+  it("если есть ▷ — no ∥", () => {
+    const intents = {
+      open: {
+        name: "Open",
+        particles: {
+          effects: [{ α: "replace", target: "poll.status", value: "open" }],
+          conditions: []
+        }
+      },
+      vote: {
+        name: "Vote",
+        particles: {
+          effects: [{ α: "add", target: "votes" }],
+          conditions: ["poll.status = 'open'"]
+        }
+      }
+    };
+    const alg = computeAlgebra(intents, { entities: { Poll: { fields: ["id", "status"] }, Vote: { fields: ["id"] }}});
+    expect(alg.open.sequentialOut).toContain("vote");
+    expect(alg.open.parallel).not.toContain("vote");
+  });
+
+  it("если есть ⇌ — no ∥", () => {
+    const intents = {
+      mute: {
+        name: "Mute",
+        particles: {
+          effects: [{ α: "replace", target: "conversation.muted", value: true }],
+          conditions: []
+        }
+      },
+      unmute: {
+        name: "Unmute",
+        particles: {
+          effects: [{ α: "replace", target: "conversation.muted", value: false }],
+          conditions: []
+        }
+      }
+    };
+    const alg = computeAlgebra(intents, { entities: { Conversation: { fields: ["id", "muted"] }}});
+    expect(alg.mute.antagonists).toContain("unmute");
+    expect(alg.mute.parallel).not.toContain("unmute");
+  });
+
+  it("если есть ⊕ — no ∥", () => {
+    const intents = {
+      a: {
+        name: "A",
+        particles: {
+          effects: [{ α: "replace", target: "bookings" }],
+          conditions: []
+        }
+      },
+      b: {
+        name: "B",
+        particles: {
+          effects: [{ α: "add", target: "bookings" }],
+          conditions: []
+        }
+      }
+    };
+    const algebra = computeAlgebra(intents, ontology);
+    expect(algebra.a.excluding).toContain("b");
+    expect(algebra.a.parallel).not.toContain("b");
+  });
+
+  it("voteGroup кейс: vote_yes ∥ vote_no (оба add на votes, не ⊕)", () => {
+    const intents = {
+      vote_yes: {
+        name: "Yes",
+        particles: {
+          effects: [{ α: "add", target: "votes" }],
+          conditions: []
+        }
+      },
+      vote_no: {
+        name: "No",
+        particles: {
+          effects: [{ α: "add", target: "votes" }],
+          conditions: []
+        }
+      }
+    };
+    const algebra = computeAlgebra(intents, ontology);
+    expect(algebra.vote_yes.parallel).toContain("vote_no");
+    expect(algebra.vote_no.parallel).toContain("vote_yes");
+  });
+
+  it("не генерирует self-loop", () => {
+    const intents = {
+      a: {
+        name: "A",
+        particles: {
+          effects: [{ α: "add", target: "bookings" }],
+          conditions: []
+        }
+      }
+    };
+    const algebra = computeAlgebra(intents, ontology);
+    expect(algebra.a.parallel).not.toContain("a");
+  });
+});

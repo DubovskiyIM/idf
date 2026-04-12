@@ -306,6 +306,50 @@ function deriveExcluding(INTENTS, ONTOLOGY) {
 }
 
 /**
+ * deriveParallel — complement derivation: ∥ существует если пара имеет
+ * общие entities в effects, НЕ ⊕, НЕ ▷ ни в одну сторону, НЕ ⇌.
+ *
+ * Вычисляется ПОСЛЕ всех остальных derivation, потому что зависит от них.
+ */
+function deriveParallel(INTENTS, ONTOLOGY, algebra) {
+  const edges = [];
+  const intentIds = Object.keys(INTENTS);
+
+  for (let i = 0; i < intentIds.length; i++) {
+    for (let j = i + 1; j < intentIds.length; j++) {
+      const id1 = intentIds[i];
+      const id2 = intentIds[j];
+
+      const e1 = INTENTS[id1].particles?.effects || [];
+      const e2 = INTENTS[id2].particles?.effects || [];
+      if (e1.length === 0 || e2.length === 0) continue;
+
+      const entities1 = new Set(
+        e1.map(e => normalizeEntityFromTarget(e.target, ONTOLOGY)).filter(Boolean)
+      );
+      const entities2 = new Set(
+        e2.map(e => normalizeEntityFromTarget(e.target, ONTOLOGY)).filter(Boolean)
+      );
+
+      let hasCommon = false;
+      for (const ent of entities1) {
+        if (entities2.has(ent)) { hasCommon = true; break; }
+      }
+      if (!hasCommon) continue;
+
+      if (algebra[id1].excluding.includes(id2)) continue;
+      if (algebra[id1].sequentialOut.includes(id2)) continue;
+      if (algebra[id1].sequentialIn.includes(id2)) continue;
+      if (algebra[id1].antagonists.includes(id2)) continue;
+
+      edges.push({ a: id1, b: id2 });
+    }
+  }
+
+  return edges;
+}
+
+/**
  * computeAlgebraWithEvidence — debug-версия с classification метаданными.
  * Используется integrity rule #5.
  */
@@ -342,6 +386,13 @@ export function computeAlgebraWithEvidence(INTENTS, ONTOLOGY) {
   for (const { a, b } of excludingEdges) {
     if (!algebra[a].excluding.includes(b)) algebra[a].excluding.push(b);
     if (!algebra[b].excluding.includes(a)) algebra[b].excluding.push(a);
+  }
+
+  // 4. ∥ complement (после всех предыдущих)
+  const parallelEdges = deriveParallel(INTENTS, ONTOLOGY, algebra);
+  for (const { a, b } of parallelEdges) {
+    if (!algebra[a].parallel.includes(b)) algebra[a].parallel.push(b);
+    if (!algebra[b].parallel.includes(a)) algebra[b].parallel.push(a);
   }
 
   return algebra;
