@@ -57,7 +57,7 @@ export const INTENTS = {
   set_slow_mode: intent("Медленный режим", ["conversation: Conversation"], ["conversation.type = 'group'"], [ef("replace", "conversation.slowMode")], ["current_interval"], "form"),
 
   // ===== КОНТАКТЫ (15) =====
-  add_contact: intent("Добавить контакт", ["contact: Contact"], [], [ef("add", "contacts")], ["user.name"], "click", { creates: "Contact(pending)" }),
+  add_contact: intent("Добавить контакт", ["contact: Contact", "user: User"], [], [ef("add", "contacts")], ["user.name"], "click", { creates: "Contact(pending)", parameters: [] }),
   accept_contact: intent("Принять запрос", ["contact: Contact"], ["contact.status = 'pending'"], [ef("replace", "contact.status", "account", { value: "accepted" })], ["user.name"], "click", { antagonist: "reject_contact" }),
   reject_contact: intent("Отклонить", ["contact: Contact"], ["contact.status = 'pending'"], [ef("replace", "contact.status", "account", { value: "rejected" })], ["user.name"], "click", { antagonist: "accept_contact" }),
   block_contact: intent("Заблокировать", ["contact: Contact"], ["contact.status = 'accepted'"], [ef("replace", "contact.status", "account", { value: "blocked" })], ["user.name"], "click", { irreversibility: "medium" }),

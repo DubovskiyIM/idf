@@ -132,9 +132,11 @@ export function buildEffects(intentId, ctx, world, drafts) {
       return effects;
     }
     case "add_contact": {
-      if (!ctx.contactId) return null;
+      const contactId = ctx.contactId || ctx.id;
+      if (!contactId) return null;
+      const contactName = ctx.contactName || ((world.users || []).find(u => u.id === contactId))?.name || "";
       ef({ alpha: "add", target: "contacts", scope: "account", value: null,
-        context: { id: `c_${now}`, userId: ctx.userId, contactId: ctx.contactId, contactName: ctx.contactName, status: "pending", createdAt: now },
+        context: { id: `c_${now}`, userId: ctx.userId, contactId, contactName, status: "pending", createdAt: now },
         desc: describeEffect(intentId, "add", { contactName: ctx.contactName }) });
       return effects;
     }

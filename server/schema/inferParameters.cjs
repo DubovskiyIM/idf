@@ -71,8 +71,9 @@ function parseParticleEntities(particleEntities) {
 }
 
 function inferParameters(intent, ontology) {
-  // 1. Явный parameters — победитель
-  if (Array.isArray(intent.parameters) && intent.parameters.length > 0) {
+  // 1. Явный parameters — победитель (даже пустой массив — автор
+  // сознательно подавляет inference для click-action intents)
+  if (Array.isArray(intent.parameters)) {
     return intent.parameters;
   }
 

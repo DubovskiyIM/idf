@@ -24,8 +24,10 @@ const RESULT_WITNESSES = new Set([
 ]);
 
 export function inferParameters(intent, ONTOLOGY) {
-  // 1. Явный parameters → победитель
-  if (Array.isArray(intent.parameters) && intent.parameters.length > 0) {
+  // 1. Явный parameters → победитель (даже пустой массив — автор
+  // сознательно подавляет inference для click-action intents вроде
+  // create_direct_chat, где params auto-filled buildEffects'ом)
+  if (Array.isArray(intent.parameters)) {
     return intent.parameters;
   }
 
