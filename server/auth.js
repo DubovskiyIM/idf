@@ -6,7 +6,7 @@ const db = require("./db.js");
 const JWT_SECRET = process.env.JWT_SECRET || "idf-messenger-secret-dev";
 const JWT_EXPIRES = "7d";
 
-// Таблица пользователей (отдельная от effects — auth не в Φ)
+// Таблица пользователей (пароли/JWT — не в Φ; публичные поля дублируются в Φ через _user_register)
 db.exec(`
   CREATE TABLE IF NOT EXISTS auth_users (
     id TEXT PRIMARY KEY,
@@ -17,6 +17,31 @@ db.exec(`
     created_at INTEGER NOT NULL
   );
 `);
+
+// Хелпер: эмитить _user_register эффект в Φ (dual-write)
+function emitUserRegisterEffect(id, name, email, avatar, createdAt) {
+  const effectId = `_user_register_${id}`;
+  db.prepare(`
+    INSERT OR IGNORE INTO effects (id, intent_id, alpha, target, value, scope, parent_id, status, ttl, context, created_at, resolved_at)
+    VALUES (?, '_user_register', 'add', 'users', NULL, 'account', NULL, 'confirmed', NULL, ?, ?, ?)
+  `).run(effectId, JSON.stringify({ id, name, email, avatar: avatar || "", createdAt }), createdAt, createdAt);
+}
+
+// Автомиграция: для существующих auth_users без _user_register эффекта — эмитим его.
+// Идемпотентно: при повторном запуске — noop.
+try {
+  const existingUsers = db.prepare("SELECT id, email, name, avatar, created_at FROM auth_users").all();
+  for (const u of existingUsers) {
+    const effectId = `_user_register_${u.id}`;
+    const exists = db.prepare("SELECT id FROM effects WHERE id = ?").get(effectId);
+    if (!exists) {
+      emitUserRegisterEffect(u.id, u.name, u.email, u.avatar, u.created_at);
+      console.log(`  [auth] Миграция: _user_register для ${u.name} (${u.email})`);
+    }
+  }
+} catch {
+  // effects таблицы может не быть при первом старте — игнорируем
+}
 
 function register(email, password, name) {
   if (!email?.trim() || !password || password.length < 4 || !name?.trim()) {
@@ -31,6 +56,9 @@ function register(email, password, name) {
 
   db.prepare("INSERT INTO auth_users (id, email, name, password_hash, avatar, created_at) VALUES (?, ?, ?, ?, '', ?)")
     .run(id, email.trim().toLowerCase(), name.trim(), hash, now);
+
+  // Dual-write: эмитим _user_register эффект в Φ
+  emitUserRegisterEffect(id, name.trim(), email.trim().toLowerCase(), "", now);
 
   const token = jwt.sign({ userId: id, email: email.trim().toLowerCase() }, JWT_SECRET, { expiresIn: JWT_EXPIRES });
   return { user: { id, email: email.trim().toLowerCase(), name: name.trim(), avatar: "" }, token };
