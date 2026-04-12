@@ -4,70 +4,23 @@ import { crystallizeV2 } from "../../runtime/crystallize_v2/index.js";
 import { generateEditProjections } from "../../runtime/crystallize_v2/formGrouping.js";
 import { useProjectionRoute } from "../../runtime/renderer/navigation/useProjectionRoute.js";
 import Breadcrumbs from "../../runtime/renderer/navigation/Breadcrumbs.jsx";
+import { useAuth } from "../../runtime/renderer/auth/useAuth.js";
+import AuthGate from "../../runtime/renderer/auth/AuthGate.jsx";
 import * as messengerDomain from "./domain.js";
 
 /**
  * M2: мессенджер на multi-projection роутере.
  * conversation_list → chat_view → user_profile через useProjectionRoute.
- * Auth + WebSocket — минимум, временно; в M5 уйдут в общий модуль.
+ * Auth через shared useAuth + AuthGate (унифицирован с booking/planning).
+ * WebSocket для real-time — messenger-specific.
  */
 export default function MessengerV2UI({ world, exec, execBatch }) {
-  const [currentUser, setCurrentUser] = useState(null);
-  const [authUsers, setAuthUsers] = useState([]);
-  const [token, setToken] = useState(() => localStorage.getItem("idf_token"));
-  const [authMode, setAuthMode] = useState("login");
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [name, setName] = useState("");
-  const [authError, setAuthError] = useState("");
+  const { currentUser, token, doAuth, logout, authUsers, authError, isLoading } = useAuth();
   const wsRef = useRef(null);
 
   const { current, history, navigate, back, reset, canGoBack } = useProjectionRoute("conversation_list", {});
 
-  useEffect(() => {
-    if (!token) return;
-    fetch("/api/auth/me", { headers: { Authorization: `Bearer ${token}` } })
-      .then(r => r.ok ? r.json() : Promise.reject())
-      .then(user => setCurrentUser(user))
-      .catch(() => { setToken(null); localStorage.removeItem("idf_token"); });
-  }, [token]);
-
-  // Загрузить полный список auth-пользователей. Они живут в auth_users
-  // (не в Φ) — fold их не видит. Нужны для: (1) people_list каталога,
-  // (2) enrichment conversations/contacts аватарами и именами партнёра/
-  // контакта. Перезагружается при idf:reload (после confirm любого эффекта).
-  useEffect(() => {
-    if (!token || !currentUser) return;
-    const loadUsers = () => {
-      fetch("/api/auth/users", { headers: { Authorization: `Bearer ${token}` } })
-        .then(r => r.ok ? r.json() : [])
-        .then(list => setAuthUsers(Array.isArray(list) ? list : []))
-        .catch(() => {});
-    };
-    loadUsers();
-    window.addEventListener("idf:reload", loadUsers);
-    return () => window.removeEventListener("idf:reload", loadUsers);
-  }, [token, currentUser]);
-
-  const doAuth = async () => {
-    setAuthError("");
-    const endpoint = authMode === "login" ? "/api/auth/login" : "/api/auth/register";
-    const body = authMode === "login" ? { email, password } : { email, password, name };
-    const r = await fetch(endpoint, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(body),
-    });
-    if (!r.ok) {
-      setAuthError((await r.json()).error || "Ошибка авторизации");
-      return;
-    }
-    const data = await r.json();
-    localStorage.setItem("idf_token", data.token);
-    setToken(data.token);
-    setCurrentUser(data.user);
-  };
-
+  // WebSocket — messenger-specific (real-time эффекты)
   useEffect(() => {
     if (!token || !currentUser) return;
     const wsUrl = `${window.location.protocol === "https:" ? "wss" : "ws"}://${window.location.host}/ws?token=${token}`;
@@ -205,33 +158,13 @@ export default function MessengerV2UI({ world, exec, execBatch }) {
 
   if (!currentUser) {
     return (
-      <div style={{ maxWidth: 360, margin: "40px auto", fontFamily: "system-ui, sans-serif", padding: 20 }}>
-        <h2 style={{ fontSize: 22, fontWeight: 700, marginBottom: 20, textAlign: "center" }}>
-          💬 Мессенджер v2
-        </h2>
-        <div style={{ display: "flex", marginBottom: 16 }}>
-          {["login", "register"].map(m => (
-            <button key={m} onClick={() => setAuthMode(m)} style={{
-              flex: 1, padding: "8px 0", border: "none", cursor: "pointer", fontSize: 14,
-              background: authMode === m ? "#6366f1" : "#e5e7eb",
-              color: authMode === m ? "#fff" : "#6b7280",
-            }}>{m === "login" ? "Вход" : "Регистрация"}</button>
-          ))}
-        </div>
-        <input placeholder="email" value={email} onChange={e => setEmail(e.target.value)}
-          style={{ width: "100%", padding: 10, marginBottom: 8, border: "1px solid #d1d5db", borderRadius: 6, boxSizing: "border-box" }} />
-        {authMode === "register" && (
-          <input placeholder="Имя" value={name} onChange={e => setName(e.target.value)}
-            style={{ width: "100%", padding: 10, marginBottom: 8, border: "1px solid #d1d5db", borderRadius: 6, boxSizing: "border-box" }} />
-        )}
-        <input type="password" placeholder="пароль" value={password} onChange={e => setPassword(e.target.value)}
-          style={{ width: "100%", padding: 10, marginBottom: 8, border: "1px solid #d1d5db", borderRadius: 6, boxSizing: "border-box" }} />
-        <button onClick={doAuth} style={{
-          width: "100%", padding: 10, background: "#6366f1", color: "#fff",
-          border: "none", borderRadius: 6, cursor: "pointer", fontWeight: 600,
-        }}>{authMode === "login" ? "Войти" : "Зарегистрироваться"}</button>
-        {authError && <div style={{ color: "#ef4444", marginTop: 8, fontSize: 12 }}>{authError}</div>}
-      </div>
+      <AuthGate
+        currentUser={currentUser}
+        doAuth={doAuth}
+        authError={authError}
+        isLoading={isLoading}
+        title="💬 Мессенджер"
+      />
     );
   }
 
