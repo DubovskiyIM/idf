@@ -14,7 +14,7 @@ const REQUIRED_SLOTS_BY_ARCHETYPE = {
 };
 const KNOWN_PARAMETER_TYPES = [
   "text", "textarea", "datetime", "url", "email", "tel",
-  "number", "file", "select", "entityPicker", "assetPicker", "multiSelect",
+  "number", "file", "image", "multiImage", "select", "entityPicker", "assetPicker", "multiSelect",
 ];
 
 export function validateArtifact(artifact) {

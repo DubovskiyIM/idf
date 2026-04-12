@@ -95,6 +95,7 @@ export function mapOntologyTypeToControl(ontologyType) {
     datetime: "datetime",
     date: "datetime",
     image: "file",
+    multiImage: "multiImage",
     file: "file",
     enum: "select",
     id: "text", // id обычно не редактируется через форму

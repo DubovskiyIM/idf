@@ -394,18 +394,28 @@ export function List({ node, ctx }) {
 
   const onItemClick = node.onItemClick;
 
-  return (
-    <div
-      ref={scrollRef}
-      style={{
+  const isGrid = node.layout === "grid";
+
+  const containerStyle = isGrid
+    ? {
+        display: "grid",
+        gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))",
+        gap: node.gap || 12,
+        ...(node.sx || {}),
+      }
+    : {
         display: "flex", flexDirection: "column",
         gap: node.gap || 6,
         ...(bottomUp ? { minHeight: "100%", justifyContent: "flex-end" } : {}),
         ...(node.sx || {}),
-      }}
-    >
+      };
+
+  return (
+    <div ref={scrollRef} style={containerStyle}>
       {items.map((item, i) => {
-        const content = <SlotRenderer item={node.item} ctx={ctx} contextItem={item} />;
+        const content = isGrid
+          ? <GridCard item={item} node={node} ctx={ctx} />
+          : <SlotRenderer item={node.item} ctx={ctx} contextItem={item} />;
         if (!onItemClick) return <div key={item.id || i}>{content}</div>;
         return (
           <ClickableItem key={item.id || i} action={onItemClick} item={item} ctx={ctx}>
@@ -413,6 +423,60 @@ export function List({ node, ctx }) {
           </ClickableItem>
         );
       })}
+    </div>
+  );
+}
+
+function GridCard({ item, node, ctx }) {
+  const title = item.title || item.name || item.id;
+  const rawImage = item.images || item.image || item.avatar;
+  const image = Array.isArray(rawImage) ? rawImage[0] : rawImage;
+  const price = item.currentPrice ?? item.price ?? item.startPrice;
+  const subtitle = item.condition || item.status || "";
+  const location = item.shippingFrom || item.location || "";
+
+  return (
+    <div style={{
+      borderRadius: 10,
+      border: "1px solid var(--mantine-color-default-border)",
+      background: "var(--mantine-color-default)",
+      overflow: "hidden",
+      display: "flex", flexDirection: "column",
+      cursor: node.onItemClick ? "pointer" : "default",
+    }}>
+      <div style={{
+        height: 160, background: "var(--mantine-color-default-hover)",
+        display: "flex", alignItems: "center", justifyContent: "center",
+        overflow: "hidden", position: "relative",
+      }}>
+        {image && typeof image === "string" && image.startsWith("data:") ? (
+          <img src={image} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+        ) : (
+          <span style={{ fontSize: 48, opacity: 0.15 }}>📦</span>
+        )}
+        {price != null && (
+          <span style={{
+            position: "absolute", bottom: 8, right: 8,
+            background: "var(--mantine-color-body)", color: "var(--mantine-color-text)",
+            padding: "3px 8px", borderRadius: 6, fontSize: 13, fontWeight: 700,
+            boxShadow: "0 1px 4px #0002",
+          }}>
+            {typeof price === "number" ? price.toLocaleString("ru") + " ₽" : price}
+          </span>
+        )}
+      </div>
+      <div style={{ padding: "8px 10px", flex: 1, display: "flex", flexDirection: "column", gap: 2 }}>
+        <div style={{
+          fontSize: 13, fontWeight: 600, color: "var(--mantine-color-text)",
+          overflow: "hidden", textOverflow: "ellipsis",
+          display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical",
+        }}>{title}</div>
+        {(subtitle || location) && (
+          <div style={{ fontSize: 11, color: "var(--mantine-color-dimmed)" }}>
+            {subtitle}{subtitle && location ? " · " : ""}{location}
+          </div>
+        )}
+      </div>
     </div>
   );
 }

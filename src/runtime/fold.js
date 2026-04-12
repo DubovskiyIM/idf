@@ -10,8 +10,9 @@ export function buildTypeMap(ontology) {
   if (ontology?.entities) {
     for (const entityName of Object.keys(ontology.entities)) {
       const singular = entityName.toLowerCase();
-      // Простая плюрализация: добавить "s", кроме исключений
-      const plural = singular.endsWith("s") ? singular + "es" : singular + "s";
+      const plural = singular.endsWith("s") ? singular + "es"
+        : singular.endsWith("y") ? singular.slice(0, -1) + "ies"
+        : singular + "s";
       map[singular] = plural;
     }
   }

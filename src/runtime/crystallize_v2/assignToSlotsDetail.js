@@ -440,6 +440,53 @@ function buildSubItemView(subEntity, ONTOLOGY) {
   return { type: "text", bind: "id" };
 }
 
+function fieldToAtom(field) {
+  const label = field.label || field.name;
+  const t = field.type || "";
+
+  if (t === "image" || t === "multiImage") {
+    return { type: "image", bind: field.name, label };
+  }
+  if (t === "datetime" || t === "date") {
+    return {
+      type: "row", gap: 8, children: [
+        { type: "text", content: label + ":", style: "secondary" },
+        { type: "text", bind: field.name, format: "datetime" },
+      ],
+    };
+  }
+  if (t === "number") {
+    return {
+      type: "row", gap: 8, children: [
+        { type: "text", content: label + ":", style: "secondary" },
+        { type: "text", bind: field.name, format: "number" },
+      ],
+    };
+  }
+  if (t === "textarea") {
+    return {
+      type: "column", gap: 4, children: [
+        { type: "text", content: label + ":", style: "secondary" },
+        { type: "text", bind: field.name },
+      ],
+    };
+  }
+  if (t === "entityRef") {
+    return {
+      type: "row", gap: 8, children: [
+        { type: "text", content: label + ":", style: "secondary" },
+        { type: "text", bind: field.name, style: "dimmed" },
+      ],
+    };
+  }
+  return {
+    type: "row", gap: 8, children: [
+      { type: "text", content: label + ":", style: "secondary" },
+      { type: "text", bind: field.name },
+    ],
+  };
+}
+
 function buildDetailBody(projection, ONTOLOGY, viewerRole = "self") {
   const mainEntity = projection.mainEntity;
   const entity = ONTOLOGY?.entities?.[mainEntity];
@@ -463,14 +510,8 @@ function buildDetailBody(projection, ONTOLOGY, viewerRole = "self") {
 
   for (const field of fields) {
     if (field.name === "avatar" || field.name === "name" || field.name === "title") continue;
-    children.push({
-      type: "row",
-      gap: 8,
-      children: [
-        { type: "text", content: (field.label || field.name) + ":", style: "secondary" },
-        { type: "text", bind: field.name },
-      ],
-    });
+    const atom = fieldToAtom(field);
+    children.push(atom);
   }
 
   return {

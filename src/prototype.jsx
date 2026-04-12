@@ -12,6 +12,7 @@ import * as bookingDomain from "./domains/booking/domain.js";
 import * as planningDomain from "./domains/planning/domain.js";
 import * as workflowDomain from "./domains/workflow/domain.js";
 import * as messengerDomain from "./domains/messenger/domain.js";
+import * as meshokDomain from "./domains/meshok/domain.js";
 
 // Manual UI
 import BookingUI from "./domains/booking/ManualUI.jsx";
@@ -27,6 +28,7 @@ const DOMAINS = {
   planning: { ...planningDomain, UI: PlanningUI },
   workflow: { ...workflowDomain, UI: WorkflowUI },
   messenger: { ...messengerDomain, UI: MessengerUI },
+  meshok: meshokDomain,
 };
 
 export default function App() {
@@ -351,7 +353,7 @@ export default function App() {
             <div style={{ padding: "6px 16px", borderBottom: "1px solid #1e2230", background: "#10121a", fontSize: 10, color: "#f59e0b", textTransform: "uppercase", letterSpacing: "0.1em" }}>
               {domain.DOMAIN_NAME} — {mode === "crystallized" ? "кристаллизованный (v2, rules)" : "ручной UI"}
             </div>
-            {mode === "manual" ? (
+            {mode === "manual" && domain.UI ? (
               <div style={{ flex: 1, overflow: "auto", background: "#fafafa", color: "#1a1a2e", minHeight: 0 }}>
                 <div style={{ maxWidth: 700, margin: "0 auto", padding: 24 }}>
                   <domain.UI world={world} worldForIntent={worldForIntent} drafts={drafts} exec={exec} execBatch={engine.execBatch} effects={effects}

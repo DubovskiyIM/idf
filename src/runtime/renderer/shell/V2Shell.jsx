@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import ProjectionRendererV2 from "../index.jsx";
 import { crystallizeV2 } from "../../crystallize_v2/index.js";
 import { generateEditProjections } from "../../crystallize_v2/formGrouping.js";
@@ -33,7 +33,12 @@ export default function V2Shell({
   viewer,
   initialProjection,
 }) {
-  const rootProjections = domain.ROOT_PROJECTIONS || [];
+  const rawRootProjections = domain.ROOT_PROJECTIONS || [];
+  const isSectioned = rawRootProjections.length > 0 && typeof rawRootProjections[0] === "object" && rawRootProjections[0].section;
+  const rootProjections = isSectioned
+    ? rawRootProjections.flatMap(s => s.items)
+    : rawRootProjections;
+  const sections = isSectioned ? rawRootProjections : null;
   const initial = initialProjection || rootProjections[0] || Object.keys(domain.PROJECTIONS)[0];
 
   const {
@@ -118,6 +123,56 @@ export default function V2Shell({
     reset(projId, {});
   };
 
+  const mainContent = (
+    <>
+      {!isOnRoot && (
+        <Breadcrumbs
+          history={history}
+          current={current}
+          canGoBack={canGoBack}
+          onBack={back}
+          projectionNames={projectionNames}
+        />
+      )}
+      <div style={{ flex: 1, overflow: "hidden", position: "relative", minHeight: 0 }}>
+        {currentArtifact ? (
+          <ProjectionRendererV2
+            artifact={currentArtifact}
+            projection={currentProjectionDef}
+            world={worldWithRoute}
+            exec={wrappedExec}
+            execBatch={wrappedExecBatch}
+            viewer={viewerObj}
+            viewerContext={viewerContext}
+            routeParams={current.params}
+            navigate={navigate}
+            back={back}
+          />
+        ) : (
+          <div style={{ padding: 40, color: "var(--mantine-color-dimmed)", textAlign: "center" }}>
+            Проекция "{current?.projectionId}" не найдена или не поддерживается архетипом v2
+          </div>
+        )}
+      </div>
+    </>
+  );
+
+  if (sections) {
+    return (
+      <div style={{ display: "flex", height: "100%", minHeight: 0, fontFamily: "system-ui, sans-serif" }}>
+        <SectionedSidebar
+          sections={sections}
+          active={current?.projectionId}
+          onSelect={onSelectTab}
+          projectionNames={projectionNames}
+        />
+        <div style={{ flex: 1, display: "flex", flexDirection: "column", minHeight: 0, overflow: "hidden" }}>
+          {mainContent}
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div style={{
       display: "flex", flexDirection: "column", height: "100%", minHeight: 0,
@@ -131,7 +186,6 @@ export default function V2Shell({
             onSelect={onSelectTab}
           />
         ) : (
-          // Fallback: inline-стилизованные табы
           <div style={{
             display: "flex", alignItems: "stretch",
             background: "var(--mantine-color-default)", borderBottom: "1px solid var(--mantine-color-default-border)",
@@ -163,38 +217,71 @@ export default function V2Shell({
           </div>
         )
       )}
+      {mainContent}
+    </div>
+  );
+}
 
-      {/* Breadcrumbs — только на deep-навигации */}
-      {!isOnRoot && (
-        <Breadcrumbs
-          history={history}
-          current={current}
-          canGoBack={canGoBack}
-          onBack={back}
-          projectionNames={projectionNames}
-        />
-      )}
+function SectionedSidebar({ sections, active, onSelect, projectionNames }) {
+  const [collapsed, setCollapsed] = useState({});
+  const toggle = (section) => setCollapsed(p => ({ ...p, [section]: !p[section] }));
 
-      <div style={{ flex: 1, overflow: "hidden", position: "relative", minHeight: 0 }}>
-        {currentArtifact ? (
-          <ProjectionRendererV2
-            artifact={currentArtifact}
-            projection={currentProjectionDef}
-            world={worldWithRoute}
-            exec={wrappedExec}
-            execBatch={wrappedExecBatch}
-            viewer={viewerObj}
-            viewerContext={viewerContext}
-            routeParams={current.params}
-            navigate={navigate}
-            back={back}
-          />
-        ) : (
-          <div style={{ padding: 40, color: "var(--mantine-color-dimmed)", textAlign: "center" }}>
-            Проекция "{current?.projectionId}" не найдена или не поддерживается архетипом v2
-          </div>
-        )}
-      </div>
+  return (
+    <div style={{
+      width: 240, flexShrink: 0,
+      background: "var(--mantine-color-default)",
+      borderRight: "1px solid var(--mantine-color-default-border)",
+      overflow: "auto",
+      display: "flex", flexDirection: "column",
+    }}>
+      {sections.map(sec => (
+        <div key={sec.section}>
+          <button
+            onClick={() => toggle(sec.section)}
+            style={{
+              display: "flex", alignItems: "center", gap: 8,
+              width: "100%", padding: "10px 14px",
+              background: "var(--mantine-color-default-hover)",
+              border: "none", borderBottom: "1px solid var(--mantine-color-default-border)",
+              cursor: "pointer", fontSize: 13, fontWeight: 700,
+              color: "var(--mantine-color-text)",
+              fontFamily: "inherit",
+            }}
+          >
+            {sec.icon && <span>{sec.icon}</span>}
+            <span style={{ flex: 1, textAlign: "left" }}>{sec.section}</span>
+            <span style={{ fontSize: 10, color: "var(--mantine-color-dimmed)" }}>
+              {collapsed[sec.section] ? "▸" : "▾"}
+            </span>
+          </button>
+          {!collapsed[sec.section] && (
+            <div>
+              {sec.items.map(projId => {
+                const isActive = active === projId;
+                return (
+                  <button
+                    key={projId}
+                    onClick={() => onSelect(projId)}
+                    style={{
+                      display: "flex", alignItems: "center", gap: 8,
+                      width: "100%", padding: "8px 14px 8px 28px",
+                      background: isActive ? "var(--mantine-color-primary-light, rgba(99,102,241,0.08))" : "transparent",
+                      border: "none",
+                      borderLeft: isActive ? "3px solid var(--mantine-color-primary, #6366f1)" : "3px solid transparent",
+                      cursor: "pointer", fontSize: 13,
+                      color: isActive ? "var(--mantine-color-primary, #6366f1)" : "var(--mantine-color-text)",
+                      fontWeight: isActive ? 600 : 400,
+                      fontFamily: "inherit",
+                    }}
+                  >
+                    {projectionNames[projId] || projId}
+                  </button>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      ))}
     </div>
   );
 }

@@ -3,6 +3,7 @@ import TextareaControl from "./TextareaControl.jsx";
 import DateTimeControl from "./DateTimeControl.jsx";
 import FileControl from "./FileControl.jsx";
 import ImageControl from "./ImageControl.jsx";
+import MultiImageControl from "./MultiImageControl.jsx";
 import { getAdaptedComponent } from "../adapters/registry.js";
 
 // Built-in fallback: используется если адаптер не зарегистрирован или
@@ -18,6 +19,7 @@ const CONTROLS_BY_TYPE = {
   datetime: DateTimeControl,
   file: FileControl,
   image: ImageControl,
+  multiImage: MultiImageControl,
 };
 
 export default function ParameterControl({ spec, value, onChange, error }) {

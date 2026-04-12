@@ -15,6 +15,7 @@ import * as bookingDomain from "./domains/booking/domain.js";
 import * as planningDomain from "./domains/planning/domain.js";
 import * as workflowDomain from "./domains/workflow/domain.js";
 import * as messengerDomain from "./domains/messenger/domain.js";
+import * as meshokDomain from "./domains/meshok/domain.js";
 
 import BookingUI from "./domains/booking/ManualUI.jsx";
 import PlanningUI from "./domains/planning/ManualUI.jsx";
@@ -44,6 +45,7 @@ const DOMAINS_RAW = {
   planning: planningDomain,
   workflow: workflowDomain,
   messenger: messengerDomain,
+  meshok: meshokDomain,
 };
 
 const DOMAIN_TITLES = {
@@ -54,6 +56,7 @@ const DOMAIN_TITLES = {
   workflow: "⚡ Workflow",
   messenger: "💬 Мессенджер",
   "messenger-v2": "💬 Мессенджер",
+  meshok: "🎒 Мешок",
 };
 
 const DOMAINS = {
@@ -64,6 +67,7 @@ const DOMAINS = {
   workflow: { ...workflowDomain, UI: WorkflowUI },
   messenger: { ...messengerDomain, UI: MessengerUI },
   "messenger-v2": { ...messengerDomain, UI: MessengerV2UI },
+  meshok: { ...meshokDomain, UI: makeV2UI("meshok") },
 };
 
 export default function StandaloneApp({ domainId }) {

@@ -49,6 +49,15 @@ export function inferControlType(param, ONTOLOGY) {
     if (Array.isArray(entity.statuses) && param.name === "status") return "select";
   }
 
+  // 3b. Без entity-привязки — поиск поля по имени во всех entities онтологии
+  if (!param.entity && ONTOLOGY?.entities) {
+    for (const entity of Object.values(ONTOLOGY.entities)) {
+      const fields = getEntityFields(entity);
+      const field = fields.find(f => f.name === (param.name || ""));
+      if (field?.type) return mapOntologyTypeToControl(field.type);
+    }
+  }
+
   // 4. Имя-эвристика (fallback)
   const name = param.name || "";
   for (const { re, type } of PATTERNS) {

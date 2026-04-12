@@ -49,6 +49,7 @@ function Root() {
             <Route path="/planning" element={<StandaloneApp domainId="planning" />} />
             <Route path="/planning-v2" element={<StandaloneApp domainId="planning-v2" />} />
             <Route path="/workflow" element={<StandaloneApp domainId="workflow" />} />
+            <Route path="/meshok" element={<StandaloneApp domainId="meshok" />} />
             <Route path="/*" element={<App />} />
           </Routes>
           </BrowserRouter>

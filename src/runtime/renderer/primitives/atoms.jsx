@@ -15,9 +15,27 @@ function getPresetStyle(name) {
   return (typeof name === "object" ? name : STYLE_PRESETS[name]) || {};
 }
 
+function formatValue(raw, format) {
+  if (raw == null || raw === "") return raw;
+  if (format === "datetime") {
+    const n = typeof raw === "number" ? raw : Number(raw);
+    if (!isNaN(n) && n > 1e12) {
+      return new Date(n).toLocaleString("ru", { day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" });
+    }
+    return raw;
+  }
+  if (format === "number") {
+    const n = typeof raw === "number" ? raw : Number(raw);
+    if (!isNaN(n)) return n.toLocaleString("ru");
+    return raw;
+  }
+  return raw;
+}
+
 export function Text({ node, ctx, item }) {
   const data = item || ctx.world;
-  const val = node.bind ? resolve(data, node.bind) : node.content;
+  const rawVal = node.bind ? resolve(data, node.bind) : node.content;
+  const val = node.format ? formatValue(rawVal, node.format) : rawVal;
   const text = node.template ? template(node.template, { ...data, item }) : val;
 
   // Адаптер: Mantine Text. Preset может быть строковым (ссылка на
@@ -144,8 +162,21 @@ export function Avatar({ node, ctx, item }) {
 
 export function Image({ node, ctx, item }) {
   const data = item || ctx.world;
-  const src = node.bind ? resolve(data, node.bind) : node.src;
-  return <img src={src} alt="" style={{ maxWidth: "100%", borderRadius: 8, ...(node.sx || {}) }} />;
+  const raw = node.bind ? resolve(data, node.bind) : node.src;
+  if (!raw) return null;
+  const srcs = Array.isArray(raw) ? raw : [raw];
+  const validSrcs = srcs.filter(s => typeof s === "string" && (s.startsWith("data:") || s.startsWith("http") || s.startsWith("/")));
+  if (validSrcs.length === 0) return null;
+  if (validSrcs.length === 1) {
+    return <img src={validSrcs[0]} alt="" style={{ maxWidth: "100%", borderRadius: 8, ...(node.sx || {}) }} />;
+  }
+  return (
+    <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+      {validSrcs.map((src, i) => (
+        <img key={i} src={src} alt="" style={{ width: 120, height: 120, objectFit: "cover", borderRadius: 8, ...(node.sx || {}) }} />
+      ))}
+    </div>
+  );
 }
 
 export function Audio({ node, ctx, item }) {

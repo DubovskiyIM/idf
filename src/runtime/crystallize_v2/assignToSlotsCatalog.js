@@ -170,6 +170,13 @@ function isPerItemIntent(intent, projection) {
   return true;
 }
 
+function pluralizeLower(entity) {
+  const lower = entity.toLowerCase();
+  if (lower.endsWith("y")) return lower.slice(0, -1) + "ies";
+  if (lower.endsWith("s")) return lower + "es";
+  return lower + "s";
+}
+
 function capitalize(s) {
   return s ? s[0].toUpperCase() + s.slice(1) : s;
 }
@@ -228,7 +235,7 @@ function isCreatorOfOther(intent, mainEntity) {
 
 function buildCatalogBody(projection, ONTOLOGY) {
   const mainEntity = projection.mainEntity;
-  const source = mainEntity ? mainEntity.toLowerCase() + "s" : "items";
+  const source = mainEntity ? pluralizeLower(mainEntity) : "items";
 
   // Определяем titleField из ontology: name | title | id. Нормализуем
   // оба формата (legacy array и типизированный объект).
@@ -280,5 +287,6 @@ function buildCatalogBody(projection, ONTOLOGY) {
   };
   if (projection.filter) body.filter = projection.filter;
   if (projection.sort) body.sort = projection.sort;
+  if (projection.layout) body.layout = projection.layout;
   return body;
 }
