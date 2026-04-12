@@ -889,3 +889,133 @@ describe("deriveParallel (∥)", () => {
     expect(algebra.a.parallel).not.toContain("a");
   });
 });
+
+describe("computeAlgebra end-to-end composition", () => {
+  const ontology = {
+    entities: {
+      Poll: { fields: ["id", "status"] },
+      Vote: { fields: ["id", "value"] },
+      Slot: { fields: ["id", "status"] }
+    }
+  };
+
+  it("детерминистична: same input → byte-identical output", () => {
+    const intents = {
+      open_poll: {
+        name: "Open",
+        particles: {
+          effects: [{ α: "replace", target: "poll.status", value: "open" }],
+          conditions: []
+        }
+      },
+      vote: {
+        name: "Vote",
+        particles: {
+          effects: [{ α: "add", target: "votes" }],
+          conditions: ["poll.status = 'open'"]
+        }
+      }
+    };
+    const r1 = computeAlgebra(intents, ontology);
+    const r2 = computeAlgebra(intents, ontology);
+    expect(JSON.stringify(r1)).toBe(JSON.stringify(r2));
+  });
+
+  it("идемпотентна", () => {
+    const intents = {
+      block: {
+        name: "Block",
+        particles: {
+          effects: [{ α: "replace", target: "slot.status", value: "blocked" }],
+          conditions: []
+        }
+      },
+      unblock: {
+        name: "Unblock",
+        particles: {
+          effects: [{ α: "replace", target: "slot.status", value: "free" }],
+          conditions: []
+        }
+      }
+    };
+    const r1 = computeAlgebra(intents, ontology);
+    const r2 = computeAlgebra(intents, ontology);
+    expect(r1).toEqual(r2);
+  });
+
+  it("несколько типов связей одновременно", () => {
+    const intents = {
+      open_poll: {
+        name: "Open",
+        particles: {
+          effects: [{ α: "replace", target: "poll.status", value: "open" }],
+          conditions: []
+        }
+      },
+      close_poll: {
+        name: "Close",
+        particles: {
+          effects: [{ α: "replace", target: "poll.status", value: "closed" }],
+          conditions: ["poll.status = 'open'"]
+        }
+      },
+      vote_yes: {
+        name: "Yes",
+        particles: {
+          effects: [{ α: "add", target: "votes" }],
+          conditions: ["poll.status = 'open'"]
+        }
+      },
+      vote_no: {
+        name: "No",
+        particles: {
+          effects: [{ α: "add", target: "votes" }],
+          conditions: ["poll.status = 'open'"]
+        }
+      }
+    };
+    const alg = computeAlgebra(intents, ontology);
+
+    expect(alg.open_poll.sequentialOut).toContain("close_poll");
+    expect(alg.open_poll.sequentialOut).toContain("vote_yes");
+    expect(alg.open_poll.sequentialOut).toContain("vote_no");
+    expect(alg.open_poll.antagonists).toContain("close_poll");
+    expect(alg.vote_yes.parallel).toContain("vote_no");
+  });
+
+  it("пустые effects в intent → остаётся в algebra но без рёбер", () => {
+    const intents = {
+      noop: {
+        name: "Noop",
+        particles: { effects: [], conditions: [] }
+      },
+      other: {
+        name: "Other",
+        particles: { effects: [{ α: "add", target: "things" }], conditions: [] }
+      }
+    };
+    const alg = computeAlgebra(intents, ontology);
+    expect(alg.noop).toBeDefined();
+    expect(alg.noop.sequentialOut).toEqual([]);
+    expect(alg.noop.parallel).toEqual([]);
+  });
+
+  it("intent с conditions но без effects может иметь sequentialIn", () => {
+    const intents = {
+      send_reminder: {
+        name: "Reminder",
+        particles: { effects: [], conditions: ["poll.status = 'open'"] }
+      },
+      open_poll: {
+        name: "Open",
+        particles: {
+          effects: [{ α: "replace", target: "poll.status", value: "open" }],
+          conditions: []
+        }
+      }
+    };
+    const alg = computeAlgebra(intents, ontology);
+    expect(alg.send_reminder.sequentialIn).toContain("open_poll");
+    expect(alg.open_poll.sequentialOut).toContain("send_reminder");
+  });
+});
