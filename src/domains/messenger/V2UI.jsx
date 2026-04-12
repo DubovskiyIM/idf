@@ -15,7 +15,7 @@ import * as messengerDomain from "./domain.js";
  * WebSocket для real-time — messenger-specific.
  */
 export default function MessengerV2UI({ world, exec, execBatch }) {
-  const { currentUser, token, doAuth, logout, authUsers, authError, isLoading } = useAuth();
+  const { currentUser, token, doAuth, logout, authError, isLoading } = useAuth();
   const wsRef = useRef(null);
 
   const { current, history, navigate, back, reset, canGoBack } = useProjectionRoute("conversation_list", {});
@@ -89,48 +89,19 @@ export default function MessengerV2UI({ world, exec, execBatch }) {
     };
   }, [execBatch, currentUser]);
 
-  // Мир обогащается тремя слоями:
-  //  1) Базовый слой — все auth_users из /api/auth/users (они не в Φ и fold
-  //     их не видит). Нужны для people_list и для lookup'ов avatar/name
-  //     при enrichment conversations/contacts.
-  //  2) Folded поля из replace-эффектов — наложение поверх auth-base, так
-  //     редактирование аватара через user_profile_edit побеждает.
-  //  3) Enrichment conversations: для direct беседы вычисляем partner →
-  //     инжектим partner.avatar и partner.name в запись беседы (для catalog
-  //     primitive Avatar — он читает item.avatar / item.title).
-  //  4) Enrichment contacts: contact.contactId → user → contact.name/avatar.
-  //
-  // В M4+ синхронизация auth_users ↔ Φ должна быть сделана через эффекты
-  // регистрации (_user_register или аналог).
+  // Users приходят из Φ через _user_register эффекты.
+  // Enrichment: conversations (partner avatar/name), contacts (user lookup).
   const worldWithRoute = useMemo(() => {
-    // Слой 1: auth users как база
-    const baseUsers = authUsers.map(u => ({
-      id: u.id,
-      name: u.name,
-      email: u.email || "",
-      avatar: u.avatar || "",
-      statusMessage: u.statusMessage || "",
-      status: u.status || "offline",
-      lastSeen: u.created_at || Date.now(),
-    }));
-    // Слой 2: merge с folded users (folded побеждает по полям)
-    const foldedById = new Map((world.users || []).map(u => [u.id, u]));
-    let users = baseUsers.map(base => {
-      const folded = foldedById.get(base.id);
-      return folded ? { ...base, ...folded } : base;
-    });
-    // Добавить folded users, которых не было в auth
-    for (const f of (world.users || [])) {
-      if (!users.find(u => u.id === f.id)) users.push(f);
-    }
-    // Гарантировать наличие currentUser (если auth/users ещё не успел загрузиться)
+    // Users уже в world из Φ
+    const users = [...(world.users || [])];
+    // Гарантировать наличие currentUser (race condition: auth ответил, effects ещё нет)
     if (currentUser && !users.find(u => u.id === currentUser.id)) {
       users.push({
         id: currentUser.id,
         name: currentUser.name,
         email: currentUser.email || "",
         avatar: currentUser.avatar || "",
-        statusMessage: currentUser.statusMessage || "",
+        statusMessage: "",
         status: "online",
         lastSeen: Date.now(),
       });
@@ -138,7 +109,7 @@ export default function MessengerV2UI({ world, exec, execBatch }) {
 
     const userById = new Map(users.map(u => [u.id, u]));
 
-    // Слой 3: enrichment conversations
+    // Enrichment conversations: partner avatar/name для direct бесед
     const conversations = (world.conversations || []).map(c => {
       if (c.type === "direct" && Array.isArray(c.participantIds)) {
         const partnerId = c.participantIds.find(id => id !== currentUser?.id);
@@ -155,7 +126,7 @@ export default function MessengerV2UI({ world, exec, execBatch }) {
       return c;
     });
 
-    // Слой 4: enrichment contacts
+    // Enrichment contacts: contactId → user name/avatar
     const contacts = (world.contacts || []).map(c => {
       const u = userById.get(c.contactId);
       if (u) {
@@ -177,7 +148,7 @@ export default function MessengerV2UI({ world, exec, execBatch }) {
       contacts,
       ...(current?.params || {}),
     };
-  }, [world, current, currentUser, authUsers]);
+  }, [world, current, currentUser]);
 
   if (!currentUser) {
     return (

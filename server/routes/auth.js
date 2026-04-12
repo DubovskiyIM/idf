@@ -33,6 +33,8 @@ router.get("/me", authMiddleware, (req, res) => {
   res.json({ ...user, status: online.includes(user.id) ? "online" : "offline" });
 });
 
+// DEPRECATED: клиенты больше не используют для world.users — users из Φ через _user_register.
+// Оставлен для online-статуса и legacy-клиентов.
 router.get("/users", authMiddleware, (req, res) => {
   const users = getAllUsers();
   const online = getOnlineUsers();

@@ -1,10 +1,10 @@
 /**
  * useAuth — shared hook для JWT-аутентификации.
  *
- * Извлечён из messenger/V2UI.jsx для переиспользования в booking/planning/workflow.
  * Хранит токен в localStorage("idf_token"), проверяет через GET /api/auth/me.
+ * Users берутся из world (через Φ), не из /api/auth/users.
  *
- * Returns: { currentUser, token, doAuth, logout, authUsers, authError, isLoading }
+ * Returns: { currentUser, token, doAuth, logout, authError, isLoading }
  */
 
 import { useState, useEffect, useCallback } from "react";
@@ -14,7 +14,6 @@ const TOKEN_KEY = "idf_token";
 export function useAuth() {
   const [token, setToken] = useState(() => localStorage.getItem(TOKEN_KEY));
   const [currentUser, setCurrentUser] = useState(null);
-  const [authUsers, setAuthUsers] = useState([]);
   const [authError, setAuthError] = useState("");
   const [isLoading, setIsLoading] = useState(!!localStorage.getItem(TOKEN_KEY));
 
@@ -32,20 +31,6 @@ export function useAuth() {
         setIsLoading(false);
       });
   }, [token]);
-
-  // Load all auth users (needed for world.users enrichment)
-  useEffect(() => {
-    if (!token || !currentUser) return;
-    const loadUsers = () => {
-      fetch("/api/auth/users", { headers: { Authorization: `Bearer ${token}` } })
-        .then(r => r.ok ? r.json() : [])
-        .then(list => setAuthUsers(Array.isArray(list) ? list : []))
-        .catch(() => {});
-    };
-    loadUsers();
-    window.addEventListener("idf:reload", loadUsers);
-    return () => window.removeEventListener("idf:reload", loadUsers);
-  }, [token, currentUser]);
 
   const doAuth = useCallback(async (mode, email, password, name) => {
     setAuthError("");
@@ -75,8 +60,7 @@ export function useAuth() {
     localStorage.removeItem(TOKEN_KEY);
     setToken(null);
     setCurrentUser(null);
-    setAuthUsers([]);
   }, []);
 
-  return { currentUser, token, doAuth, logout, authUsers, authError, isLoading };
+  return { currentUser, token, doAuth, logout, authError, isLoading };
 }

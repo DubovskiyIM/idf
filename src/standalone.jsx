@@ -78,7 +78,7 @@ export default function StandaloneApp({ domainId }) {
   const isMessengerV2 = domainId === "messenger-v2";
 
   const auth = useAuth();
-  const { currentUser, doAuth, authError, isLoading, logout, authUsers } = auth;
+  const { currentUser, doAuth, authError, isLoading, logout } = auth;
 
   const viewer = useMemo(() => {
     if (isMessengerV2) return null; // messenger управляет viewer сам
@@ -90,26 +90,16 @@ export default function StandaloneApp({ domainId }) {
   const { world: rawWorld, worldForIntent, drafts, effects, signals, exec, execBatch,
     overlay, overlayEntityIds, startInvestigation, commitInvestigation, cancelInvestigation } = engine;
 
-  // Подмешиваем auth_users в world.users — они не в Φ и fold их не видит.
-  // Аналогично messenger/V2UI.jsx, но доменонезависимо.
+  // Users приходят из Φ через _user_register эффекты.
+  // Гарантия currentUser — на случай race condition (auth ответил, effects ещё нет).
   const world = useMemo(() => {
-    if (isMessengerV2) return rawWorld; // messenger управляет world сам
-    const foldedUsers = rawWorld.users || [];
-    const merged = {};
-    // auth_users как база
-    for (const u of authUsers) {
-      merged[u.id] = { id: u.id, name: u.name, email: u.email || "" };
+    if (isMessengerV2) return rawWorld;
+    const users = rawWorld.users || [];
+    if (currentUser && !users.find(u => u.id === currentUser.id)) {
+      return { ...rawWorld, users: [...users, { id: currentUser.id, name: currentUser.name, email: currentUser.email || "" }] };
     }
-    // folded replace-эффекты поверх базы
-    for (const u of foldedUsers) {
-      merged[u.id] = { ...(merged[u.id] || {}), ...u };
-    }
-    // Гарантировать currentUser
-    if (currentUser && !merged[currentUser.id]) {
-      merged[currentUser.id] = { id: currentUser.id, name: currentUser.name, email: currentUser.email || "" };
-    }
-    return { ...rawWorld, users: Object.values(merged) };
-  }, [rawWorld, authUsers, currentUser, isMessengerV2]);
+    return rawWorld;
+  }, [rawWorld, currentUser, isMessengerV2]);
 
   useEffect(() => {
     fetch(`/api/typemap?domain=${domainId.replace("-v2", "")}`, {
