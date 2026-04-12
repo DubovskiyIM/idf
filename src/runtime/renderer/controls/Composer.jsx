@@ -50,8 +50,8 @@ export default function Composer({ spec, ctx }) {
           {attachMenuOpen && (
             <div style={{
               position: "absolute", bottom: "100%", left: 0, marginBottom: 4,
-              background: "#fff", border: "1px solid #e5e7eb", borderRadius: 8,
-              boxShadow: "0 4px 12px #0001", padding: 4, zIndex: 10, minWidth: 180,
+              background: "var(--mantine-color-default)", border: "1px solid var(--mantine-color-default-border)", borderRadius: 8,
+              boxShadow: "0 4px 12px rgba(0,0,0,0.08)", padding: 4, zIndex: 10, minWidth: 180,
             }}>
               {spec.attachments.map(id => (
                 <button
@@ -88,8 +88,8 @@ export default function Composer({ spec, ctx }) {
         disabled={!text.trim()}
         style={{
           padding: "8px 16px", borderRadius: 20, border: "none",
-          background: text.trim() ? "#6366f1" : "#e5e7eb",
-          color: "#fff", cursor: text.trim() ? "pointer" : "default",
+          background: text.trim() ? "var(--mantine-color-primary, #6366f1)" : "var(--mantine-color-default-hover)",
+          color: text.trim() ? "#fff" : "var(--mantine-color-dimmed)", cursor: text.trim() ? "pointer" : "default",
           fontWeight: 600,
         }}
       >↑</button>

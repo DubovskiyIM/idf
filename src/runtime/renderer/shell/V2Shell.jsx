@@ -127,8 +127,8 @@ export default function V2Shell({
                       padding: "10px 18px",
                       background: "transparent",
                       border: "none",
-                      borderBottom: isActive ? "2px solid #6366f1" : "2px solid transparent",
-                      color: isActive ? "#6366f1" : "#6b7280",
+                      borderBottom: isActive ? "2px solid var(--mantine-color-primary, #6366f1)" : "2px solid transparent",
+                      color: isActive ? "var(--mantine-color-primary, #6366f1)" : "var(--mantine-color-dimmed)",
                       fontWeight: isActive ? 700 : 500,
                       fontSize: 14,
                       cursor: "pointer",
@@ -170,7 +170,7 @@ export default function V2Shell({
             back={back}
           />
         ) : (
-          <div style={{ padding: 40, color: "#9ca3af", textAlign: "center" }}>
+          <div style={{ padding: 40, color: "var(--mantine-color-dimmed)", textAlign: "center" }}>
             Проекция "{current?.projectionId}" не найдена или не поддерживается архетипом v2
           </div>
         )}
