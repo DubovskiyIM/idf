@@ -141,6 +141,86 @@ function deriveSequential(INTENTS, ONTOLOGY) {
 }
 
 /**
+ * effectsReverse — проверяет, реверсирует ли e2 эффект e1.
+ *
+ * Правила:
+ *   - replace + replace на одном target с разными values → bistable candidate
+ *   - add + remove на одной коллекции → reversal
+ *   - remove + add на одной коллекции → reversal
+ */
+function effectsReverse(e1, e2) {
+  const a1 = e1.α || e1.alpha;
+  const a2 = e2.α || e2.alpha;
+
+  if (a1 === "replace" && a2 === "replace") {
+    if (e1.target !== e2.target) return false;
+    if (e1.value === e2.value) return false;
+    return true;
+  }
+
+  if (a1 === "add" && a2 === "remove") {
+    return e1.target === e2.target;
+  }
+
+  if (a1 === "remove" && a2 === "add") {
+    return e1.target === e2.target;
+  }
+
+  return false;
+}
+
+/**
+ * deriveAntagonisticStrict — выводит ⇌ через effect pair-reversal.
+ *
+ * Для пары (I₁, I₂) ⇌ признаётся только если:
+ *   - Для каждого effect'а в I₁ существует reversing effect в I₂
+ *   - Симметрично для I₂
+ *   - Покрытие полное (все эффекты замэтчены)
+ */
+function deriveAntagonisticStrict(INTENTS, ONTOLOGY) {
+  const edges = [];
+  const intentIds = Object.keys(INTENTS);
+
+  for (let i = 0; i < intentIds.length; i++) {
+    for (let j = i + 1; j < intentIds.length; j++) {
+      const id1 = intentIds[i];
+      const id2 = intentIds[j];
+      const eff1 = INTENTS[id1].particles?.effects || [];
+      const eff2 = INTENTS[id2].particles?.effects || [];
+      if (eff1.length === 0 || eff2.length === 0) continue;
+      if (eff1.length !== eff2.length) continue; // асимметричное покрытие
+
+      const matchedE2 = new Set();
+      const pairs = [];
+      let allMatched = true;
+
+      for (const e1 of eff1) {
+        let matched = false;
+        for (let k = 0; k < eff2.length; k++) {
+          if (matchedE2.has(k)) continue;
+          if (effectsReverse(e1, eff2[k])) {
+            matchedE2.add(k);
+            pairs.push([e1, eff2[k]]);
+            matched = true;
+            break;
+          }
+        }
+        if (!matched) {
+          allMatched = false;
+          break;
+        }
+      }
+
+      if (allMatched && matchedE2.size === eff2.length) {
+        edges.push({ a: id1, b: id2, witness: { pairs } });
+      }
+    }
+  }
+
+  return edges;
+}
+
+/**
  * computeAlgebra — главный API.
  */
 export function computeAlgebra(INTENTS, ONTOLOGY) {
@@ -154,12 +234,15 @@ export function computeAlgebra(INTENTS, ONTOLOGY) {
   // 1. ▷
   const sequentialEdges = deriveSequential(INTENTS, ONTOLOGY);
   for (const { from, to } of sequentialEdges) {
-    if (!algebra[from].sequentialOut.includes(to)) {
-      algebra[from].sequentialOut.push(to);
-    }
-    if (!algebra[to].sequentialIn.includes(from)) {
-      algebra[to].sequentialIn.push(from);
-    }
+    if (!algebra[from].sequentialOut.includes(to)) algebra[from].sequentialOut.push(to);
+    if (!algebra[to].sequentialIn.includes(from)) algebra[to].sequentialIn.push(from);
+  }
+
+  // 2. ⇌ strict
+  const antagonisticEdges = deriveAntagonisticStrict(INTENTS, ONTOLOGY);
+  for (const { a, b } of antagonisticEdges) {
+    if (!algebra[a].antagonists.includes(b)) algebra[a].antagonists.push(b);
+    if (!algebra[b].antagonists.includes(a)) algebra[b].antagonists.push(a);
   }
 
   return algebra;

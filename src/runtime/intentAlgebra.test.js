@@ -280,3 +280,191 @@ describe("deriveSequential (▷)", () => {
     expect(algebra.open_poll.sequentialIn).not.toContain("open_poll");
   });
 });
+
+describe("deriveAntagonisticStrict (⇌)", () => {
+  const ontology = {
+    entities: {
+      Slot: { fields: ["id", "status"] },
+      Conversation: { fields: ["id", "muted"] },
+      Edge: { fields: ["id", "from", "to"] }
+    }
+  };
+
+  it("bistable replace-пара на одном target → ⇌ симметрично", () => {
+    const intents = {
+      block_slot: {
+        name: "Block",
+        particles: {
+          effects: [{ α: "replace", target: "slot.status", value: "blocked" }],
+          conditions: []
+        }
+      },
+      unblock_slot: {
+        name: "Unblock",
+        particles: {
+          effects: [{ α: "replace", target: "slot.status", value: "free" }],
+          conditions: []
+        }
+      }
+    };
+    const algebra = computeAlgebra(intents, ontology);
+    expect(algebra.block_slot.antagonists).toContain("unblock_slot");
+    expect(algebra.unblock_slot.antagonists).toContain("block_slot");
+  });
+
+  it("add + remove на одной коллекции → ⇌", () => {
+    const intents = {
+      connect: {
+        name: "Connect",
+        particles: {
+          effects: [{ α: "add", target: "edges" }],
+          conditions: []
+        }
+      },
+      disconnect: {
+        name: "Disconnect",
+        particles: {
+          effects: [{ α: "remove", target: "edges" }],
+          conditions: []
+        }
+      }
+    };
+    const algebra = computeAlgebra(intents, ontology);
+    expect(algebra.connect.antagonists).toContain("disconnect");
+    expect(algebra.disconnect.antagonists).toContain("connect");
+  });
+
+  it("разные targets → no ⇌", () => {
+    const intents = {
+      a: {
+        name: "A",
+        particles: {
+          effects: [{ α: "replace", target: "slot.status", value: "blocked" }],
+          conditions: []
+        }
+      },
+      b: {
+        name: "B",
+        particles: {
+          effects: [{ α: "replace", target: "conversation.muted", value: false }],
+          conditions: []
+        }
+      }
+    };
+    const algebra = computeAlgebra(intents, ontology);
+    expect(algebra.a.antagonists).not.toContain("b");
+  });
+
+  it("одинаковые values на replace-паре → no ⇌ (не bistable)", () => {
+    const intents = {
+      a: {
+        name: "A",
+        particles: {
+          effects: [{ α: "replace", target: "slot.status", value: "free" }],
+          conditions: []
+        }
+      },
+      b: {
+        name: "B",
+        particles: {
+          effects: [{ α: "replace", target: "slot.status", value: "free" }],
+          conditions: []
+        }
+      }
+    };
+    const algebra = computeAlgebra(intents, ontology);
+    expect(algebra.a.antagonists).not.toContain("b");
+  });
+
+  it("асимметричный lifecycle (multi-effect, разное покрытие) → no ⇌", () => {
+    const intents = {
+      confirm: {
+        name: "Confirm",
+        particles: {
+          effects: [
+            { α: "add", target: "bookings" },
+            { α: "replace", target: "slot.status", value: "booked" }
+          ],
+          conditions: []
+        }
+      },
+      cancel: {
+        name: "Cancel",
+        particles: {
+          effects: [
+            { α: "replace", target: "booking.status", value: "cancelled" },
+            { α: "replace", target: "slot.status", value: "free" }
+          ],
+          conditions: []
+        }
+      }
+    };
+    const algebra = computeAlgebra(intents, ontology);
+    expect(algebra.confirm.antagonists).not.toContain("cancel");
+    expect(algebra.cancel.antagonists).not.toContain("confirm");
+  });
+
+  it("симметричное покрытие bistable → ⇌", () => {
+    const intents = {
+      mute: {
+        name: "Mute",
+        particles: {
+          effects: [{ α: "replace", target: "conversation.muted", value: true }],
+          conditions: []
+        }
+      },
+      unmute: {
+        name: "Unmute",
+        particles: {
+          effects: [{ α: "replace", target: "conversation.muted", value: false }],
+          conditions: []
+        }
+      }
+    };
+    const algebra = computeAlgebra(intents, ontology);
+    expect(algebra.mute.antagonists).toContain("unmute");
+    expect(algebra.unmute.antagonists).toContain("mute");
+  });
+
+  it("multi-effect полное покрытие: все эффекты парны → ⇌", () => {
+    const intents = {
+      lock: {
+        name: "Lock",
+        particles: {
+          effects: [
+            { α: "replace", target: "slot.status", value: "blocked" },
+            { α: "replace", target: "conversation.muted", value: true }
+          ],
+          conditions: []
+        }
+      },
+      unlock: {
+        name: "Unlock",
+        particles: {
+          effects: [
+            { α: "replace", target: "slot.status", value: "free" },
+            { α: "replace", target: "conversation.muted", value: false }
+          ],
+          conditions: []
+        }
+      }
+    };
+    const algebra = computeAlgebra(intents, ontology);
+    expect(algebra.lock.antagonists).toContain("unlock");
+    expect(algebra.unlock.antagonists).toContain("lock");
+  });
+
+  it("не генерирует self-loop", () => {
+    const intents = {
+      toggle: {
+        name: "Toggle",
+        particles: {
+          effects: [{ α: "replace", target: "conversation.muted", value: true }],
+          conditions: []
+        }
+      }
+    };
+    const algebra = computeAlgebra(intents, ontology);
+    expect(algebra.toggle.antagonists).not.toContain("toggle");
+  });
+});
