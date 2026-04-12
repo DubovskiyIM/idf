@@ -55,6 +55,28 @@ describe("planning domain algebra", () => {
   });
 });
 
+describe("planning domain algebra (Session C phase transitions)", () => {
+  const alg = computeAlgebra(PLANNING_INTENTS, PLANNING_ONT);
+  const algE = computeAlgebraWithEvidence(PLANNING_INTENTS, PLANNING_ONT);
+
+  it("open_poll ▷ close_poll (replace poll.status triggers condition)", () => {
+    expect(alg.open_poll.sequentialOut).toContain("close_poll");
+  });
+
+  it("close_poll ▷ resolve_poll", () => {
+    expect(alg.close_poll.sequentialOut).toContain("resolve_poll");
+  });
+
+  it("open_poll ⇌ close_poll structural (bistable poll.status)", () => {
+    expect(alg.open_poll.antagonists).toContain("close_poll");
+    expect(algE.open_poll.antagonistsEvidence.close_poll.classification).toBe("structural");
+  });
+
+  it("set_deadline sequentialIn содержит open_poll (deadline только в open phase)", () => {
+    expect(alg.set_deadline.sequentialIn).toContain("open_poll");
+  });
+});
+
 describe("messenger domain algebra", () => {
   const alg = computeAlgebra(MESSENGER_INTENTS, MESSENGER_ONT);
   const algE = computeAlgebraWithEvidence(MESSENGER_INTENTS, MESSENGER_ONT);
