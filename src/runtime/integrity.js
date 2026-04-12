@@ -236,16 +236,20 @@ export function checkIntegrity(INTENTS, PROJECTIONS, ONTOLOGY) {
     }
   }
 
-  // === 7. Алгебра композиции (раздел 11) ===
-  const algebraConflicts = checkAlgebraIntegrity(INTENTS);
-  for (const conflict of algebraConflicts) {
-    issues.push({
-      rule: "algebra_composition",
-      level: "error",
-      intent: `${conflict.intent1} ⊗ ${conflict.intent2}`,
-      message: `⊥ Конфликт: ${conflict.intent1Name} × ${conflict.intent2Name}`,
-      detail: conflict.detail,
-    });
+  // === 7. Алгебра композиции (через algebra graph) ===
+  // ⊥-пары из excluding рёбер становятся error'ами. Итерируем только с
+  // одной стороны (id < otherId), чтобы избежать дубликации симметричных пар.
+  for (const [id, relations] of Object.entries(algebra)) {
+    for (const otherId of relations.excluding) {
+      if (id >= otherId) continue;
+      issues.push({
+        rule: "algebra_composition",
+        level: "error",
+        intent: `${id} ⊗ ${otherId}`,
+        message: `⊥ Конфликт: ${INTENTS[id].name} × ${INTENTS[otherId].name}`,
+        detail: `Effects конфликтуют по таблице композиции (§11)`
+      });
+    }
   }
 
   const errors = issues.filter(i => i.level === "error").length;
