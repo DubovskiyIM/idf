@@ -38,12 +38,14 @@ export const PROJECTIONS = {
     query: "контакты + входящие запросы",
     entities: ["Contact", "User"],
     mainEntity: "Contact",
-    // Route scope: только Contact. User доступен для чтения (имя/аватар
-    // отображаются), но действия на User (update_profile, set_avatar) в
-    // contact_list не место — они живут в user_profile.
     routeEntities: [],
     filter: "userId === (viewer && viewer.id)",
     witnesses: ["name", "avatar", "status", "contact.status"],
+    onItemClick: {
+      action: "navigate",
+      to: "user_profile",
+      params: { userId: "item.contactId" },
+    },
   },
   user_profile: {
     name: "Профиль",
@@ -61,9 +63,7 @@ export const PROJECTIONS = {
     query: "все пользователи кроме меня",
     entities: ["User"],
     mainEntity: "User",
-    // User в route scope — для create_direct_chat/add_contact/open_profile
-    // не нужен picker. Per-item intent'ы кладут id выбранного User в ctx.id.
-    routeEntities: ["User"],
+    routeEntities: ["User", "Conversation", "Contact"],
     filter: "id !== (viewer && viewer.id)",
     sort: "name",
     witnesses: ["name", "avatar", "status", "email"],

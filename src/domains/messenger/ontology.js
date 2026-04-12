@@ -27,7 +27,7 @@ export const ONTOLOGY = {
       },
     },
     Contact: {
-      fields: ["id", "userId", "contactId", "status"],
+      fields: ["id", "userId", "contactId", "name", "direction", "status"],
       statuses: ["pending", "accepted", "rejected", "blocked"],
       type: "internal"
     },
@@ -48,6 +48,10 @@ export const ONTOLOGY = {
     Message: {
       fields: ["id", "conversationId", "senderId", "type", "content", "replyToId", "attachmentUrl", "status", "createdAt", "editedAt", "deletedFor"],
       statuses: ["sent", "delivered", "read"],
+      type: "internal"
+    },
+    Reaction: {
+      fields: ["id", "messageId", "userId", "emoji", "createdAt"],
       type: "internal"
     }
   },

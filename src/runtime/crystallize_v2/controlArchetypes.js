@@ -335,6 +335,10 @@ const CAPTURE_RULES = [
   },
   {
     widgetId: "entityPicker",
+    match: (_intent, intentId) => intentId === "forward_message",
+  },
+  {
+    widgetId: "entityPicker",
     match: (intent, intentId, context) => {
       const creates = normalizeCreates(intent.creates);
       if (!creates) return false;

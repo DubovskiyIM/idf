@@ -214,15 +214,15 @@ export function appliesToProjection(intent, projection) {
       : (projection.entities || [])
   );
   if (mainEntity) routeScope.add(mainEntity);
-  // Cross-entity creators: creates-entity автоматически считается "в scope",
-  // потому что intent уже прошёл creator-scoping check выше (entities включает
-  // mainEntity). Без этого create_direct_chat (creates Conversation + entity
-  // User) не попадает в people_list — Conversation не в routeScope.
-  if (creates) routeScope.add(creates);
-
   if (intentEntities.length > 0 && intentEntities.every(e => routeScope.has(e))) {
     return true;
   }
+
+  // Cross-entity creators: route scope — декларативный, определяется
+  // projection.routeEntities. Автор домена должен явно добавить entity
+  // в routeEntities, если хочет видеть cross-entity actions (пример:
+  // people_list routeEntities: ["User", "Conversation", "Contact"] →
+  // create_direct_chat и add_contact проходят route-scope check).
 
   return false;
 }

@@ -34,6 +34,14 @@ export function Column({ node, ctx, item }) {
 
 const MAX_VISIBLE_ITEM_INTENTS = 3;
 
+function groupReactions(reactions) {
+  const map = new Map();
+  for (const r of reactions) {
+    map.set(r.emoji, (map.get(r.emoji) || 0) + 1);
+  }
+  return [...map.entries()].map(([emoji, count]) => ({ emoji, count }));
+}
+
 // Нормализует intent-спек: поддерживает старый формат (строка = intentId) и
 // новый (объект {intentId, opens, overlayKey, label}).
 function normalizeIntent(spec) {
@@ -146,11 +154,37 @@ export function Card({ node, ctx, item }) {
     ...(node.sx || {}),
   };
 
+  const reactions = item?.id ? (ctx.world?.reactions || []).filter(r => r.messageId === item.id) : [];
+  const reactionGroups = reactions.length > 0 ? groupReactions(reactions) : [];
+
   const content = (
     <>
+      {item?.forwarded && (
+        <div style={{
+          fontSize: 11, color: "var(--mantine-color-dimmed)",
+          borderLeft: "2px solid var(--mantine-color-primary-light-border, #6366f1)",
+          paddingLeft: 6, marginBottom: 4,
+        }}>
+          ↗ Переслано от {item.originalSenderName || "неизвестного"}
+        </div>
+      )}
       {(node.children || []).map((child, i) => (
         <SlotRenderer key={i} item={child} ctx={ctx} contextItem={item} />
       ))}
+      {reactionGroups.length > 0 && (
+        <div style={{ display: "flex", gap: 4, marginTop: 4, flexWrap: "wrap" }}>
+          {reactionGroups.map(g => (
+            <span key={g.emoji} style={{
+              fontSize: 12, padding: "2px 6px", borderRadius: 10,
+              background: "var(--mantine-color-default-hover)",
+              border: "1px solid var(--mantine-color-default-border)",
+              cursor: "default",
+            }}>
+              {g.emoji} {g.count > 1 ? g.count : ""}
+            </span>
+          ))}
+        </div>
+      )}
       {allIntents.length > 0 && (
         <div style={{ display: "flex", gap: 4, marginTop: 8, flexWrap: "wrap", alignItems: "center" }}>
           {visible.map((g, gi) => (

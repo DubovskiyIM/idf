@@ -51,15 +51,21 @@ export function crystallizeV2(INTENTS, PROJECTIONS, ONTOLOGY, domainId = "unknow
       slots = assignToSlots(INTENTS, { ...proj, id: projId }, ONTOLOGY);
     }
 
-    // Прикрепить onItemClick к body-list, если есть исходящее item-click ребро.
-    const outgoing = navGraph.edgesFrom(projId).filter(e => e.kind === "item-click");
-    if (outgoing.length > 0 && slots.body?.type === "list") {
-      const edge = outgoing[0];
-      slots.body.onItemClick = {
-        action: "navigate",
-        to: edge.to,
-        params: edge.params,
-      };
+    // onItemClick: (1) явно объявленный автором в проекции, (2) выведенный из navGraph.
+    if (slots.body?.type === "list") {
+      if (proj.onItemClick) {
+        slots.body.onItemClick = proj.onItemClick;
+      } else {
+        const outgoing = navGraph.edgesFrom(projId).filter(e => e.kind === "item-click");
+        if (outgoing.length > 0) {
+          const edge = outgoing[0];
+          slots.body.onItemClick = {
+            action: "navigate",
+            to: edge.to,
+            params: edge.params,
+          };
+        }
+      }
     }
 
     const artifact = {

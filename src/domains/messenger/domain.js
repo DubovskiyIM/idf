@@ -135,9 +135,67 @@ export function buildEffects(intentId, ctx, world, drafts) {
       const contactId = ctx.contactId || ctx.id;
       if (!contactId) return null;
       const contactName = ctx.contactName || ((world.users || []).find(u => u.id === contactId))?.name || "";
+      const senderName = ctx.userName || ((world.users || []).find(u => u.id === ctx.userId))?.name || "";
+      // Исходящий запрос (видит отправитель)
       ef({ alpha: "add", target: "contacts", scope: "account", value: null,
-        context: { id: `c_${now}`, userId: ctx.userId, contactId, contactName, status: "pending", createdAt: now },
-        desc: describeEffect(intentId, "add", { contactName: ctx.contactName }) });
+        context: { id: `c_${now}_out`, userId: ctx.userId, contactId, name: contactName, direction: "outgoing", status: "pending", createdAt: now },
+        desc: describeEffect(intentId, "add", { contactName }) });
+      // Входящий запрос (видит получатель)
+      ef({ alpha: "add", target: "contacts", scope: "account", value: null,
+        context: { id: `c_${now}_in`, userId: contactId, contactId: ctx.userId, name: senderName, direction: "incoming", status: "pending", createdAt: now },
+        desc: `Входящий запрос от ${senderName}` });
+      return effects;
+    }
+    case "accept_contact": case "reject_contact": {
+      const contact = (world.contacts || []).find(c => c.id === ctx.id);
+      if (!contact) return null;
+      const newStatus = intentId === "accept_contact" ? "accepted" : "rejected";
+      // Обновить эту запись
+      ef({ alpha: "replace", target: "contact.status", scope: "account", value: newStatus,
+        context: { id: contact.id }, desc: `Контакт ${newStatus}` });
+      // Найти и обновить зеркальную запись
+      const mirror = (world.contacts || []).find(c =>
+        c.id !== contact.id && c.userId === contact.contactId && c.contactId === contact.userId
+      );
+      if (mirror) {
+        ef({ alpha: "replace", target: "contact.status", scope: "account", value: newStatus,
+          context: { id: mirror.id }, desc: `Зеркальный контакт ${newStatus}` });
+      }
+      return effects;
+    }
+    case "react_to_message": {
+      if (!ctx.emoji || !ctx.id) return null;
+      const reactionId = `react_${now}_${Math.random().toString(36).slice(2, 6)}`;
+      ef({ alpha: "add", target: "reactions", scope: "account", value: null,
+        context: { id: reactionId, messageId: ctx.id, userId: ctx.userId, emoji: ctx.emoji, createdAt: now },
+        desc: `${ctx.emoji} на сообщение` });
+      return effects;
+    }
+    case "remove_reaction": {
+      const reactionId = ctx.reactionId || ctx.id;
+      if (!reactionId) return null;
+      ef({ alpha: "remove", target: "reactions", scope: "account", value: null,
+        context: { id: reactionId }, desc: "Реакция убрана" });
+      return effects;
+    }
+    case "forward_message": {
+      const originalMsg = (world.messages || []).find(m => m.id === ctx.id);
+      if (!originalMsg) return null;
+      const targetConvId = ctx.conversation || ctx.conversationId;
+      if (!targetConvId) return null;
+      const senderName = originalMsg.senderName || ((world.users || []).find(u => u.id === originalMsg.senderId))?.name || "?";
+      const msgId = `msg_${now}_${Math.random().toString(36).slice(2, 6)}`;
+      ef({ alpha: "add", target: "messages", scope: "account", value: null,
+        context: {
+          id: msgId, conversationId: targetConvId,
+          senderId: ctx.userId, senderName: ctx.userName,
+          type: "forwarded", content: originalMsg.content,
+          originalSenderId: originalMsg.senderId, originalSenderName: senderName,
+          forwarded: true, status: "sent", createdAt: now,
+        },
+        desc: `↗ Пересланное от ${senderName}` });
+      ef({ alpha: "replace", target: "conversation.lastMessageAt", scope: "account", value: now,
+        context: { id: targetConvId }, desc: "lastMessageAt" });
       return effects;
     }
   }

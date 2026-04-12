@@ -2,6 +2,7 @@ import { useMemo, useState, useCallback } from "react";
 import SlotRenderer from "../SlotRenderer.jsx";
 import OverlayManager, { useOverlayManager } from "../controls/OverlayManager.jsx";
 import { useMediaQuery } from "../hooks.js";
+import Icon from "../adapters/Icon.jsx";
 
 export default function ArchetypeFeed({ slots, ctx: parentCtx }) {
   const isDesktop = useMediaQuery("(min-width: 1024px)");
@@ -51,6 +52,8 @@ export default function ArchetypeFeed({ slots, ctx: parentCtx }) {
         </div>
       )}
 
+      <PinnedMessageBanner ctx={ctx} />
+
       <div style={{ flex: 1, display: "flex", overflow: "hidden" }}>
         <div style={{ flex: 1, overflow: "auto", padding: 16 }}>
           <SlotRenderer item={slots.body} ctx={ctx} />
@@ -77,6 +80,44 @@ export default function ArchetypeFeed({ slots, ctx: parentCtx }) {
         onClose={closeOverlay}
         ctx={ctx}
       />
+    </div>
+  );
+}
+
+function PinnedMessageBanner({ ctx }) {
+  const messages = ctx.world?.messages || [];
+  const pinned = messages.filter(m => m.pinned && m.conversationId === ctx.routeParams?.conversationId);
+  if (pinned.length === 0) return null;
+  const msg = pinned[pinned.length - 1];
+  const senderName = msg.senderName || ((ctx.world?.users || []).find(u => u.id === msg.senderId))?.name || "";
+
+  const handleUnpin = () => {
+    ctx.exec("unpin_message", { id: msg.id });
+  };
+
+  return (
+    <div style={{
+      display: "flex", alignItems: "center", gap: 8,
+      padding: "6px 16px",
+      background: "var(--mantine-color-primary-light, rgba(99,102,241,0.08))",
+      borderBottom: "1px solid var(--mantine-color-default-border)",
+      fontSize: 12, color: "var(--mantine-color-text)",
+    }}>
+      <Icon emoji="📌" size={14} />
+      <div style={{ flex: 1, overflow: "hidden" }}>
+        {senderName && <span style={{ fontWeight: 600, marginRight: 6 }}>{senderName}</span>}
+        <span style={{ color: "var(--mantine-color-dimmed)" }}>
+          {(msg.content || "").slice(0, 80)}{(msg.content || "").length > 80 ? "…" : ""}
+        </span>
+      </div>
+      <button
+        onClick={handleUnpin}
+        title="Открепить"
+        style={{
+          background: "transparent", border: "none", cursor: "pointer",
+          color: "var(--mantine-color-dimmed)", fontSize: 14, padding: 4,
+        }}
+      >✕</button>
     </div>
   );
 }

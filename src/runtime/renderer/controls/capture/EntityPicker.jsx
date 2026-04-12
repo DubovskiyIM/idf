@@ -19,7 +19,7 @@ import { registerCaptureWidget } from "./registry.js";
  * В exec передаёт несколько ключей (alias, alias+"Id") чтобы покрыть
  * разные handler'ы доменов (legacy contactUserId + новый userId).
  */
-export default function EntityPicker({ spec, ctx, onClose }) {
+export default function EntityPicker({ spec, ctx, onClose, overlayContext }) {
   const [query, setQuery] = useState("");
   const [results, setResults] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -63,14 +63,10 @@ export default function EntityPicker({ spec, ctx, onClose }) {
   }, [query, targetCollection, ctx]);
 
   const pick = (picked) => {
-    // Кладём id ТОЛЬКО под alias-ключом из декларации entities. Нельзя
-    // использовать alias+"Id" (например "userId"), потому что это имя
-    // зарезервировано viewerContext (идентификатор текущего пользователя) —
-    // params перетрут его в wrappedExec и сломают intent. Имя/title под
-    // alias+"Name"/alias+"Title" безопасны, т.к. viewerContext их не содержит.
     const payload = { [targetAlias]: picked.id };
     if (picked.name) payload[targetAlias + "Name"] = picked.name;
     if (picked.title) payload[targetAlias + "Title"] = picked.title;
+    if (overlayContext?.item?.id) payload.id = overlayContext.item.id;
     ctx.exec(intentId, payload);
     onClose();
   };

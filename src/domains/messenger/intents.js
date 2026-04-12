@@ -9,7 +9,7 @@ const ef = (α, target, σ = "account", extra = {}) => ({ α, target, σ, ...ext
 export const INTENTS = {
   // ===== СООБЩЕНИЯ (25) =====
   send_message: intent("Отправить сообщение", ["message: Message", "conversation: Conversation"], [], [ef("add", "messages"), ef("replace", "conversation.lastMessageAt")], ["conversation.title", "draft_text"], "enter", { creates: "Message", parameters: [{ name: "content", type: "textarea", required: true, placeholder: "Сообщение…" }] }),
-  edit_message: intent("Редактировать", ["message: Message"], ["message.senderId = me.id"], [ef("replace", "message.content")], ["message.content"], "click", { phase: "investigation" }),
+  edit_message: intent("Редактировать", ["message: Message"], ["message.senderId = me.id", "message.forwarded != true"], [ef("replace", "message.content")], ["message.content"], "click", { phase: "investigation" }),
   delete_message: intent("Удалить сообщение", ["message: Message"], ["message.senderId = me.id"], [ef("replace", "message.deletedFor")], ["message.content"], "click"),
   reply_to_message: intent("Ответить", ["message: Message", "conversation: Conversation"], [], [ef("add", "messages"), ef("replace", "conversation.lastMessageAt")], ["original_message.content"], "enter", { creates: "Message", parameters: [{ name: "content", type: "textarea", required: true, placeholder: "Ответить…" }] }),
   forward_message: intent("Переслать", ["message: Message", "conversation: Conversation"], [], [ef("add", "messages")], ["message.content", "target_conversation.title"], "click", { creates: "Message" }),
@@ -58,8 +58,8 @@ export const INTENTS = {
 
   // ===== КОНТАКТЫ (15) =====
   add_contact: intent("Добавить контакт", ["contact: Contact", "user: User"], [], [ef("add", "contacts")], ["user.name"], "click", { creates: "Contact(pending)", parameters: [] }),
-  accept_contact: intent("Принять запрос", ["contact: Contact"], ["contact.status = 'pending'"], [ef("replace", "contact.status", "account", { value: "accepted" })], ["user.name"], "click", { antagonist: "reject_contact" }),
-  reject_contact: intent("Отклонить", ["contact: Contact"], ["contact.status = 'pending'"], [ef("replace", "contact.status", "account", { value: "rejected" })], ["user.name"], "click", { antagonist: "accept_contact" }),
+  accept_contact: intent("Принять запрос", ["contact: Contact"], ["contact.status = 'pending'", "contact.direction = 'incoming'"], [ef("replace", "contact.status", "account", { value: "accepted" })], ["user.name"], "click", { antagonist: "reject_contact" }),
+  reject_contact: intent("Отклонить", ["contact: Contact"], ["contact.status = 'pending'", "contact.direction = 'incoming'"], [ef("replace", "contact.status", "account", { value: "rejected" })], ["user.name"], "click", { antagonist: "accept_contact" }),
   block_contact: intent("Заблокировать", ["contact: Contact"], ["contact.status = 'accepted'"], [ef("replace", "contact.status", "account", { value: "blocked" })], ["user.name"], "click", { irreversibility: "medium" }),
   unblock_contact: intent("Разблокировать", ["contact: Contact"], ["contact.status = 'blocked'"], [ef("replace", "contact.status", "account", { value: "accepted" })], ["user.name"], "click", { antagonist: "block_contact" }),
   delete_contact: intent("Удалить контакт", ["contact: Contact"], [], [ef("remove", "contacts")], ["contact.name"], "click", { irreversibility: "medium" }),
