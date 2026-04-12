@@ -40,9 +40,7 @@ export default function ArchetypeDetail({ slots, nav, ctx: parentCtx, projection
   // дублирующая защита для edit-button'а.
   const isViewerOwner = (target) => {
     if (!target || !parentCtx.viewer?.id) return false;
-    // Если в target есть поле, совпадающее с viewer.id — owner
-    // Порядок проверки: clientId, organizerId, userId, authorId, id
-    const ownerFields = ["clientId", "organizerId", "userId", "authorId", "id"];
+    const ownerFields = ["clientId", "organizerId", "userId", "authorId", "sellerId", "openedBy", "id"];
     for (const field of ownerFields) {
       if (target[field] === parentCtx.viewer.id) return true;
     }

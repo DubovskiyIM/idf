@@ -49,7 +49,7 @@ export default function ArchetypeForm({ slots, ctx: parentCtx, projection }) {
   // Ownership check: если target не принадлежит viewer'у — показываем отказ.
   // Проверяем несколько стандартных ownership-полей.
   const viewerId = parentCtx.viewer?.id;
-  const ownerFields = ["clientId", "organizerId", "userId", "authorId", "id"];
+  const ownerFields = ["clientId", "organizerId", "userId", "authorId", "sellerId", "openedBy", "id"];
   const isOwner = viewerId && ownerFields.some(f => target[f] === viewerId);
   if (!isOwner) {
     return (
@@ -188,13 +188,13 @@ export default function ArchetypeForm({ slots, ctx: parentCtx, projection }) {
                   borderBottom: "1px solid var(--mantine-color-default-border)",
                 }}>{section.title}</div>
                 {section.fields.filter(f => f.editable).map(field => (
-                  <FormField key={field.name} field={field} values={values} setValues={setValues} errors={errors} />
+                  <FormField key={field.name} field={field} values={values} setValues={setValues} errors={errors} world={parentCtx.world} />
                 ))}
               </div>
             ))
           ) : (
             (body.fields || []).filter(f => f.editable).map(field => (
-              <FormField key={field.name} field={field} values={values} setValues={setValues} errors={errors} />
+              <FormField key={field.name} field={field} values={values} setValues={setValues} errors={errors} world={parentCtx.world} />
             ))
           )}
         </div>
@@ -203,23 +203,32 @@ export default function ArchetypeForm({ slots, ctx: parentCtx, projection }) {
   );
 }
 
-function FormField({ field, values, setValues, errors }) {
+function FormField({ field, values, setValues, errors, world }) {
+  let control = mapFieldTypeToControl(field.type);
+  let options = field.options;
+
+  // entityRef → select с options из world. Поле fooId → коллекция foos.
+  if (field.type === "entityRef" && !options && world) {
+    control = "select";
+    const refName = field.name.replace(/Id$/, "").toLowerCase();
+    const collName = refName.endsWith("y") ? refName.slice(0, -1) + "ies"
+      : refName.endsWith("s") ? refName + "es" : refName + "s";
+    const items = world[collName] || [];
+    options = items.map(it => ({
+      value: it.id,
+      label: it.name || it.title || it.id,
+    }));
+  }
+
   return (
     <div style={{ marginBottom: 18 }}>
-      <label style={{
-        display: "block", fontSize: 12, fontWeight: 600,
-        color: "var(--mantine-color-text)", marginBottom: 4,
-      }}>
-        {field.label || field.name}
-        {field.required && <span style={{ color: "var(--mantine-color-red-6, #ef4444)" }}> *</span>}
-      </label>
       <ParameterControl
         spec={{
           name: field.name,
-          label: "",
-          control: mapFieldTypeToControl(field.type),
+          label: field.label || field.name,
+          control,
           required: field.required,
-          options: field.options,
+          options,
         }}
         value={values[field.name]}
         onChange={v => setValues(p => ({ ...p, [field.name]: v }))}
@@ -236,12 +245,13 @@ function mapFieldTypeToControl(type) {
     datetime: "datetime",
     date: "datetime",
     image: "image",
+    multiImage: "multiImage",
     file: "file",
     email: "email",
     tel: "tel",
     url: "url",
     number: "number",
-    enum: "text", // → select позже, пока text
+    enum: "select",
     id: "text",
   };
   return map[type] || "text";
