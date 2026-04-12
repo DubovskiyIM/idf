@@ -5,7 +5,6 @@ import { PARTICLE_COLORS, ALPHA_LABELS, LINK_COLORS } from "./runtime/constants.
 import CausalityGraph from "./components/CausalityGraph.jsx";
 import OntologyInspector from "./components/OntologyInspector.jsx";
 import IntegrityGraph from "./components/IntegrityGraph.jsx";
-import ArtifactView from "./components/ArtifactView.jsx";
 
 // Домены
 import * as bookingDomain from "./domains/booking/domain.js";
@@ -33,7 +32,7 @@ const DOMAINS = {
 
 export default function App() {
   const [domainId, setDomainId] = useState(() => localStorage.getItem("idf_domain") || "booking");
-  const [topView, setTopView] = useState(null); // null | "graph" | "ontology" | "integrity" | "artifacts"
+  const [topView, setTopView] = useState(null); // null | "graph" | "ontology" | "integrity"
   const [tab, setTab] = useState("intents");
   const [mode, setMode] = useState(() => localStorage.getItem("idf_mode") || "manual");
   // Mantine color scheme — управляется через MantineProvider + useMantineColorScheme.
@@ -149,14 +148,13 @@ export default function App() {
             { id: "graph", icon: "◉", label: "Граф Φ" },
             { id: "ontology", icon: "◈", label: "Онтология" },
             { id: "integrity", icon: "△", label: "Целостность" },
-            { id: "artifacts", icon: "🔮", label: "Артефакты" },
           ].map(({ id, icon, label }) => {
             const active = topView === id;
             return (
               <button key={label} onClick={() => setTopView(id)} title={label}
                 style={{ padding: "4px 10px", borderRadius: 4, border: "none", cursor: "pointer", fontSize: 11,
-                  background: active ? (id === "artifacts" ? "#8b5cf6" : "#f59e0b") : "transparent",
-                  color: active ? (id === "artifacts" ? "#fff" : "#0c0e14") : "#6b7280",
+                  background: active ? "#f59e0b" : "transparent",
+                  color: active ? "#0c0e14" : "#6b7280",
                   fontWeight: active ? 600 : 400,
                   display: "inline-flex", alignItems: "center", gap: 5 }}>
                 <span style={{ fontSize: 12 }}>{icon}</span>
@@ -253,13 +251,6 @@ export default function App() {
         <div style={{ flex: 1, overflow: "auto", background: "#0c0e14", color: "#e2e5eb" }}>
           <div style={{ maxWidth: 640, margin: "0 auto", padding: 24 }}>
             <OntologyInspector world={world} domain={domain} dark />
-          </div>
-        </div>
-      )}
-      {topView === "artifacts" && (
-        <div style={{ flex: 1, overflow: "auto", background: "#0c0e14", color: "#e2e5eb" }}>
-          <div style={{ maxWidth: 700, margin: "0 auto", padding: 24 }}>
-            <ArtifactView domain={domain} world={world} exec={exec} viewer={viewer} dark />
           </div>
         </div>
       )}
