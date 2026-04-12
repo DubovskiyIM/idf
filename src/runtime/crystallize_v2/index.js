@@ -14,7 +14,7 @@ import { deriveNavGraph } from "./navGraph.js";
 import { generateEditProjections, buildFormSpec } from "./formGrouping.js";
 import { validateArtifact } from "../renderer/validation/validateArtifact.js";
 
-const SUPPORTED_ARCHETYPES = new Set(["feed", "catalog", "detail", "form"]);
+const SUPPORTED_ARCHETYPES = new Set(["feed", "catalog", "detail", "form", "canvas"]);
 
 export function crystallizeV2(INTENTS, PROJECTIONS, ONTOLOGY, domainId = "unknown") {
   const artifacts = {};
@@ -43,6 +43,16 @@ export function crystallizeV2(INTENTS, PROJECTIONS, ONTOLOGY, domainId = "unknow
         header: [],
         toolbar: [],
         body: { type: "formBody", ...formSpec },
+        context: [],
+        fab: [],
+        overlay: [],
+      };
+    } else if (archetype === "canvas") {
+      // Canvas-архетип: минимальный артефакт, рендер делегируется domain-specific компоненту.
+      slots = {
+        header: [],
+        toolbar: [],
+        body: { type: "canvas", mainEntity: proj.mainEntity },
         context: [],
         fab: [],
         overlay: [],

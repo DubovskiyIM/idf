@@ -2,6 +2,7 @@ import ArchetypeFeed from "./archetypes/ArchetypeFeed.jsx";
 import ArchetypeCatalog from "./archetypes/ArchetypeCatalog.jsx";
 import ArchetypeDetail from "./archetypes/ArchetypeDetail.jsx";
 import ArchetypeForm from "./archetypes/ArchetypeForm.jsx";
+import ArchetypeCanvas from "./archetypes/ArchetypeCanvas.jsx";
 import { validateArtifact } from "./validation/validateArtifact.js";
 
 const ARCHETYPES = {
@@ -9,6 +10,7 @@ const ARCHETYPES = {
   catalog: ArchetypeCatalog,
   detail: ArchetypeDetail,
   form: ArchetypeForm,
+  canvas: ArchetypeCanvas,
 };
 
 export default function ProjectionRendererV2({

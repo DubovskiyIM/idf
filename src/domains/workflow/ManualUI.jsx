@@ -100,25 +100,18 @@ const NODE_TYPES_META = {
 
 const WORKFLOW_STATUS_COLORS = { draft: "#6b7280", saved: "#6366f1", running: "#22c55e", completed: "#22c55e", failed: "#ef4444" };
 
-export default function WorkflowUI({ world, exec }) {
-  const [selectedWfId, setSelectedWfId] = useState(null);
-  const [newTitle, setNewTitle] = useState("");
+/**
+ * WorkflowCanvas — canvas-часть для одного workflow.
+ * Используется ArchetypeCanvas и ManualUI.
+ */
+export function WorkflowCanvas({ workflow, nodes, edges, executions, exec }) {
   const [selectedNodeId, setSelectedNodeId] = useState(null);
+  const selectedNode = nodes.find(n => n.id === selectedNodeId);
+  const canEdit = workflow.status === "draft" || workflow.status === "saved";
 
-  const workflows = world.workflows || [];
-  const allNodes = world.nodes || [];
-  const allEdges = world.edges || [];
-  const executions = world.executions || [];
+  const graphKey = useMemo(() => nodes.map(n => n.id).sort().join(",") + "|" + edges.map(e => e.id).sort().join(","), [nodes, edges]);
 
-  const selectedWf = workflows.find(w => w.id === selectedWfId);
-  const wfNodes = allNodes.filter(n => n.workflowId === selectedWfId);
-  const wfEdges = allEdges.filter(e => e.workflowId === selectedWfId);
-  const selectedNode = wfNodes.find(n => n.id === selectedNodeId);
-
-  // Ключ для пересоздания React Flow при изменении графа (добавление/удаление узлов)
-  const graphKey = useMemo(() => wfNodes.map(n => n.id).sort().join(",") + "|" + wfEdges.map(e => e.id).sort().join(","), [wfNodes, wfEdges]);
-
-  const initialNodes = useMemo(() => wfNodes.map(n => ({
+  const initialNodes = useMemo(() => nodes.map(n => ({
     id: n.id,
     position: { x: n.x || 0, y: n.y || 0 },
     data: { label: `${NODE_TYPES_META[n.type]?.emoji || ""} ${n.label}`, node: n },
@@ -130,40 +123,103 @@ export default function WorkflowUI({ world, exec }) {
     },
   })), [graphKey]);
 
-  const initialEdges = useMemo(() => wfEdges.map(e => ({
+  const initialEdges = useMemo(() => edges.map(e => ({
     id: e.id,
     source: e.source,
     target: e.target,
     sourceHandle: e.sourceHandle,
     targetHandle: e.targetHandle,
-    animated: selectedWf?.status === "running",
+    animated: workflow.status === "running",
     style: { stroke: "#6366f1" },
-  })), [graphKey, selectedWf?.status]);
+  })), [graphKey, workflow.status]);
 
   const onNodeDragStop = useCallback((_, node) => {
     exec("move_node", { id: node.id, x: Math.round(node.position.x), y: Math.round(node.position.y) });
   }, [exec]);
 
   const onConnect = useCallback((params) => {
-    exec("connect_nodes", {
-      source: params.source,
-      target: params.target,
-      sourceHandle: params.sourceHandle,
-      targetHandle: params.targetHandle,
-    });
+    exec("connect_nodes", { source: params.source, target: params.target, sourceHandle: params.sourceHandle, targetHandle: params.targetHandle });
   }, [exec]);
 
-  const onEdgesDelete = useCallback((edges) => {
-    for (const edge of edges) {
-      exec("disconnect_nodes", { id: edge.id });
-    }
+  const onEdgesDelete = useCallback((edgeList) => {
+    for (const edge of edgeList) exec("disconnect_nodes", { id: edge.id });
   }, [exec]);
 
-  const onNodesDelete = useCallback((nodes) => {
-    for (const node of nodes) {
-      exec("remove_node", { id: node.id });
-    }
+  const onNodesDelete = useCallback((nodeList) => {
+    for (const node of nodeList) exec("remove_node", { id: node.id });
   }, [exec]);
+
+  return (
+    <div style={{ fontFamily: "system-ui, sans-serif" }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
+        <h2 style={{ fontSize: 16, fontWeight: 700, margin: 0, color: "#1a1a2e" }}>{workflow.title}</h2>
+        <span style={{ fontSize: 10, fontWeight: 600, color: WORKFLOW_STATUS_COLORS[workflow.status], textTransform: "uppercase", background: WORKFLOW_STATUS_COLORS[workflow.status] + "18", padding: "2px 8px", borderRadius: 4 }}>{workflow.status}</span>
+        <div style={{ flex: 1 }} />
+        {workflow.status === "draft" && (
+          <button onClick={() => exec("save_workflow", { workflowId: workflow.id })}
+            style={{ padding: "5px 14px", borderRadius: 6, border: "none", background: "#6366f1", color: "#fff", fontSize: 12, cursor: "pointer" }}>💾 Сохранить</button>
+        )}
+        {workflow.status === "saved" && (
+          <button onClick={() => exec("execute_workflow", { workflowId: workflow.id })}
+            style={{ padding: "5px 14px", borderRadius: 6, border: "none", background: "#22c55e", color: "#fff", fontSize: 12, cursor: "pointer" }}>▶ Запустить</button>
+        )}
+        {workflow.status === "running" && (() => {
+          const runningExec = executions.find(e => e.workflowId === workflow.id && e.status === "running");
+          return runningExec && (
+            <button onClick={() => exec("stop_execution", { id: runningExec.id })}
+              style={{ padding: "5px 14px", borderRadius: 6, border: "none", background: "#ef4444", color: "#fff", fontSize: 12, cursor: "pointer" }}>⏹ Стоп</button>
+          );
+        })()}
+      </div>
+
+      {canEdit && (
+        <div style={{ display: "flex", gap: 6, marginBottom: 8 }}>
+          {Object.entries(NODE_TYPES_META).map(([type, meta]) => (
+            <button key={type} onClick={() => exec("add_node", { workflowId: workflow.id, type, x: 100 + Math.random() * 300, y: 50 + Math.random() * 200 })}
+              style={{ padding: "4px 12px", borderRadius: 6, border: `1px solid ${meta.color}`, background: meta.color + "10", color: meta.color, fontSize: 11, cursor: "pointer", fontFamily: "system-ui, sans-serif" }}>
+              {meta.emoji} {meta.label}
+            </button>
+          ))}
+        </div>
+      )}
+
+      <div style={{ height: 400, borderRadius: 8, border: "1px solid #e5e7eb", overflow: "hidden" }}>
+        <ReactFlow
+          key={graphKey}
+          defaultNodes={initialNodes}
+          defaultEdges={initialEdges}
+          onNodeDragStop={canEdit ? onNodeDragStop : undefined}
+          onConnect={canEdit ? onConnect : undefined}
+          onEdgesDelete={canEdit ? onEdgesDelete : undefined}
+          onNodesDelete={canEdit ? onNodesDelete : undefined}
+          onNodeClick={(_, node) => setSelectedNodeId(node.id)}
+          fitView
+          deleteKeyCode="Delete"
+          style={{ background: "#fafafa" }}
+        >
+          <Background />
+          <Controls />
+          <MiniMap style={{ height: 80 }} />
+        </ReactFlow>
+      </div>
+
+      {selectedNode && (
+        <NodeConfigurator node={selectedNode} exec={exec} canEdit={canEdit} onClose={() => setSelectedNodeId(null)} />
+      )}
+    </div>
+  );
+}
+
+export default function WorkflowUI({ world, exec }) {
+  const [selectedWfId, setSelectedWfId] = useState(null);
+  const [newTitle, setNewTitle] = useState("");
+
+  const workflows = world.workflows || [];
+  const allNodes = world.nodes || [];
+  const allEdges = world.edges || [];
+  const executions = world.executions || [];
+
+  const selectedWf = workflows.find(w => w.id === selectedWfId);
 
   // Список workflow
   if (!selectedWf) return (
@@ -204,71 +260,15 @@ export default function WorkflowUI({ world, exec }) {
     </div>
   );
 
-  // Canvas
-  const canEdit = selectedWf.status === "draft" || selectedWf.status === "saved";
+  // Canvas — делегируем WorkflowCanvas
+  const wfNodes = allNodes.filter(n => n.workflowId === selectedWfId);
+  const wfEdges = allEdges.filter(e => e.workflowId === selectedWfId);
 
   return (
     <div style={{ fontFamily: "system-ui, sans-serif" }}>
-      <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
-        <button onClick={() => { setSelectedWfId(null); setSelectedNodeId(null); }}
-          style={{ background: "none", border: "none", color: "#6366f1", cursor: "pointer", fontSize: 12 }}>← Назад</button>
-        <h2 style={{ fontSize: 16, fontWeight: 700, margin: 0, color: "#1a1a2e" }}>{selectedWf.title}</h2>
-        <span style={{ fontSize: 10, fontWeight: 600, color: WORKFLOW_STATUS_COLORS[selectedWf.status], textTransform: "uppercase", background: WORKFLOW_STATUS_COLORS[selectedWf.status] + "18", padding: "2px 8px", borderRadius: 4 }}>{selectedWf.status}</span>
-        <div style={{ flex: 1 }} />
-        {selectedWf.status === "draft" && (
-          <button onClick={() => exec("save_workflow", { workflowId: selectedWf.id })}
-            style={{ padding: "5px 14px", borderRadius: 6, border: "none", background: "#6366f1", color: "#fff", fontSize: 12, cursor: "pointer" }}>💾 Сохранить</button>
-        )}
-        {selectedWf.status === "saved" && (
-          <button onClick={() => exec("execute_workflow", { workflowId: selectedWf.id })}
-            style={{ padding: "5px 14px", borderRadius: 6, border: "none", background: "#22c55e", color: "#fff", fontSize: 12, cursor: "pointer" }}>▶ Запустить</button>
-        )}
-        {selectedWf.status === "running" && (() => {
-          const runningExec = executions.find(e => e.workflowId === selectedWf.id && e.status === "running");
-          return runningExec && (
-            <button onClick={() => exec("stop_execution", { id: runningExec.id })}
-              style={{ padding: "5px 14px", borderRadius: 6, border: "none", background: "#ef4444", color: "#fff", fontSize: 12, cursor: "pointer" }}>⏹ Стоп</button>
-          );
-        })()}
-      </div>
-
-      {/* Палитра узлов */}
-      {canEdit && (
-        <div style={{ display: "flex", gap: 6, marginBottom: 8 }}>
-          {Object.entries(NODE_TYPES_META).map(([type, meta]) => (
-            <button key={type} onClick={() => exec("add_node", { workflowId: selectedWf.id, type, x: 100 + Math.random() * 300, y: 50 + Math.random() * 200 })}
-              style={{ padding: "4px 12px", borderRadius: 6, border: `1px solid ${meta.color}`, background: meta.color + "10", color: meta.color, fontSize: 11, cursor: "pointer", fontFamily: "system-ui, sans-serif" }}>
-              {meta.emoji} {meta.label}
-            </button>
-          ))}
-        </div>
-      )}
-
-      {/* React Flow canvas */}
-      <div style={{ height: 400, borderRadius: 8, border: "1px solid #e5e7eb", overflow: "hidden" }}>
-        <ReactFlow
-          key={graphKey}
-          defaultNodes={initialNodes}
-          defaultEdges={initialEdges}
-          onNodeDragStop={canEdit ? onNodeDragStop : undefined}
-          onConnect={canEdit ? onConnect : undefined}
-          onEdgesDelete={canEdit ? onEdgesDelete : undefined}
-          onNodesDelete={canEdit ? onNodesDelete : undefined}
-          onNodeClick={(_, node) => setSelectedNodeId(node.id)}
-          fitView
-          deleteKeyCode="Delete"
-          style={{ background: "#fafafa" }}
-        >
-          <Background />
-          <Controls />
-          <MiniMap style={{ height: 80 }} />
-        </ReactFlow>
-      </div>
-
-      {/* Инспектор + конфигурация узла */}
-      {selectedNode && (
-        <NodeConfigurator node={selectedNode} exec={exec} canEdit={canEdit} onClose={() => setSelectedNodeId(null)} />
-      )}
+      <button onClick={() => setSelectedWfId(null)}
+        style={{ background: "none", border: "none", color: "#6366f1", cursor: "pointer", fontSize: 12, marginBottom: 8 }}>← Назад</button>
+      <WorkflowCanvas workflow={selectedWf} nodes={wfNodes} edges={wfEdges} executions={executions} exec={exec} />
     </div>
   );
 }

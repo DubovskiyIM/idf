@@ -11,13 +11,11 @@ export const PROJECTIONS = {
   },
   workflow_canvas: {
     name: "Canvas",
-    // kind: "canvas" — требует canvas-архетип (React Flow holder), которого
-    // пока нет в crystallize_v2. SUPPORTED_ARCHETYPES пропустит проекцию.
-    // Переедет в отдельный canvas milestone (см. roadmap).
     kind: "canvas",
     query: "все узлы и рёбра workflow с позициями",
     entities: ["Workflow", "Node", "Edge"],
     mainEntity: "Workflow",
+    idParam: "workflowId",
     witnesses: ["node.x", "node.y", "node.type", "node.label", "edge.source", "edge.target"],
   },
   node_inspector: {
@@ -40,6 +38,5 @@ export const PROJECTIONS = {
   },
 };
 
-// workflow_list доступен как root в V2-шелле. workflow_canvas — canvas, до
-// отдельного milestone. Остальные — deep-проекции, достижимые через nav-graph.
+// workflow_list — root tab, workflow_canvas — deep navigation по item-click.
 export const ROOT_PROJECTIONS = ["workflow_list"];
