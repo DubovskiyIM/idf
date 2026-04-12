@@ -119,15 +119,33 @@ export function checkIntegrity(INTENTS, PROJECTIONS, ONTOLOGY) {
     }
   }
 
-  // === 5. Антагонисты существуют ===
+  // === 5. Антагонисты существуют + §15 classification ===
+  // Сохраняем existing error check: declared antagonist должен существовать.
+  // Плюс new check: declared без structural witness → info с classification.
   for (const [id, intent] of intents) {
-    if (intent.antagonist && !INTENTS[intent.antagonist]) {
+    if (!intent.antagonist) continue;
+
+    // Rule #5a: target существует
+    if (!INTENTS[intent.antagonist]) {
       issues.push({
         rule: "antagonist_exists",
         level: "error",
         intent: id,
         message: `Антагонист "${intent.antagonist}" не найден`,
-        detail: `Определён antagonist, но намерения с таким ID нет`
+        detail: `Declared antagonist target не существует в INTENTS`
+      });
+      continue;
+    }
+
+    // Rule #5b: classification через algebraWithEvidence
+    const evidence = algebraWithEvidence[id]?.antagonistsEvidence?.[intent.antagonist];
+    if (evidence?.classification === "heuristic-lifecycle") {
+      issues.push({
+        rule: "antagonist_declared_heuristic",
+        level: "info",
+        intent: id,
+        message: `Declared antagonist "${intent.antagonist}" — эвристический (§15)`,
+        detail: `Derivation не нашла structural witness (effect pair-reversal). Классифицировано как heuristic-lifecycle — нормально для асимметричных lifecycle-пар (accept/reject, confirm/cancel).`
       });
     }
   }
