@@ -19,6 +19,7 @@ const { getOntology } = require("../ontologyRegistry.cjs");
 const { getIntent } = require("../intents.js");
 const { buildIntentSchema } = require("../schema/buildIntentSchema.cjs");
 const { computeAlgebra } = require("../schema/intentAlgebra.cjs");
+const { checkOwnership } = require("../schema/checkOwnership.cjs");
 const { _registry: ALL_INTENTS } = require("../intents.js");
 const { filterWorldForRole } = require("../schema/filterWorld.cjs");
 const { buildBookingEffects } = require("../schema/buildBookingEffects.cjs");
@@ -259,6 +260,22 @@ function makeAgentRouter(broadcast) {
     // Сборка эффектов
     const viewer = getViewer(req);
     const world = foldWorld();
+
+    // Synthetic write-ownership check через ontology.ownerField (§23 closed).
+    // Для write-intent'ов (replace/remove на owned сущности) проверяет, что
+    // target принадлежит viewer'у. Declarative из ontology, не per-intent.
+    const ownershipResult = checkOwnership(intent, params, viewer, ontology, world);
+    if (!ownershipResult.ok) {
+      console.log(`[agent] POST /exec/${intentId} ${viewer.id} → 403 ownership_denied (${ownershipResult.entityName} ${ownershipResult.entityId})`);
+      return res.status(403).json({
+        error: "ownership_denied",
+        intentId,
+        entityName: ownershipResult.entityName,
+        entityId: ownershipResult.entityId,
+        message: ownershipResult.reason
+      });
+    }
+
     const effects = buildBookingEffects(intentId, params, viewer, world);
     if (!effects || effects.length === 0) {
       return res.status(400).json({
