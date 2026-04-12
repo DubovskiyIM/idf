@@ -51,6 +51,23 @@ function fireItemIntent(spec, ctx, item) {
     return;
   }
   ctx.exec(spec.intentId, { id: item?.id, entity: item });
+
+  // Post-exec navigation: create_direct_chat → navigate to chat_view.
+  // Exec создаёт conversation синхронно в local effects (proposed → confirmed),
+  // через ~50ms conversation появится в world. Ждём следующий tick и ищем
+  // новую conversation по targetUserId.
+  if (spec.intentId === "create_direct_chat" && ctx.navigate) {
+    setTimeout(() => {
+      const convs = ctx.world?.conversations || [];
+      const existing = convs.find(c =>
+        c.type === "direct" && Array.isArray(c.participantIds) &&
+        c.participantIds.includes(item?.id)
+      );
+      if (existing) {
+        ctx.navigate("chat_view", { conversationId: existing.id });
+      }
+    }, 100);
+  }
 }
 
 /**
