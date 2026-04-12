@@ -8,7 +8,7 @@
  */
 
 import { inferParameters } from "./inferParameters.js";
-import { inferControlType } from "./inferControlType.js";
+import { inferControlType, enrichWithOptions } from "./inferControlType.js";
 import { wrapByConfirmation } from "./wrapByConfirmation.js";
 import {
   needsCustomCapture,
@@ -82,6 +82,10 @@ export function assignToSlotsDetail(INTENTS, projection, ONTOLOGY) {
     if (needsCustomCapture(intent)) continue;
     if (needsEntityPicker(intent, projection)) continue;
 
+    // Bulk/extended intent'ы — это collection-level операции (BulkWizard),
+    // не per-item. Они бессмысленны в detail-виде одной сущности.
+    if (intent.extended) continue;
+
     // Read-only intents без эффектов не применяются к detail
     const hasEffects = (intent.particles?.effects || []).length > 0;
     if (!hasEffects) continue;
@@ -90,10 +94,14 @@ export function assignToSlotsDetail(INTENTS, projection, ONTOLOGY) {
     const creates = normalizeCreates(intent.creates);
     if (creates && creates !== mainEntity) continue;
 
+    // Intent, создающий mainEntity, не нужен на detail-виде существующей
+    // сущности (создание — это catalog/fab/hero).
+    if (creates === mainEntity) continue;
+
     const parameters = inferParameters(intent, ONTOLOGY).map(p => ({
       ...p,
       control: inferControlType(p, ONTOLOGY),
-    }));
+    })).map(p => enrichWithOptions(p, ONTOLOGY));
 
     // Footer: автор проекции пометил intent явно → рендер как inline-setter
     if (footerIntentIds.has(id)) {
@@ -148,12 +156,82 @@ export function assignToSlotsDetail(INTENTS, projection, ONTOLOGY) {
     }
   }
 
-  if (slots.toolbar.length > 5) {
-    const overflow = slots.toolbar.splice(5);
-    slots.toolbar.push({ type: "overflow", children: overflow });
-  }
+  slots.toolbar = collapseToolbar(slots.toolbar);
 
   return slots;
+}
+
+/**
+ * Свернуть toolbar: антагонистические пары объединяются, затем
+ * организуется overflow с логическими секциями.
+ *
+ * UX-паттерн:
+ *  - Видимые кнопки: только уникальные действия (не имеющие антагониста
+ *    и с уникальной иконкой). Максимум 3.
+ *  - Overflow: организован секциями. Антагонистические пары — рядом,
+ *    одиночные — группируются по иконке.
+ */
+function collapseToolbar(toolbar) {
+  if (toolbar.length <= 3) return toolbar;
+
+  // 1. Собрать антагонистические пары
+  const paired = new Set();
+  const sections = []; // [{items: [...]}] для overflow
+  const standalone = []; // кнопки без антагониста
+
+  for (const btn of toolbar) {
+    if (paired.has(btn.intentId)) continue;
+    if (btn.antagonist) {
+      const partner = toolbar.find(b => b.intentId === btn.antagonist && !paired.has(b.intentId));
+      if (partner) {
+        paired.add(btn.intentId);
+        paired.add(partner.intentId);
+        sections.push({ items: [btn, partner] });
+        continue;
+      }
+    }
+    if (!paired.has(btn.intentId)) {
+      standalone.push(btn);
+    }
+  }
+
+  // 2. Из standalone — видимые кнопки (уникальные иконки, макс. 3)
+  const visible = [];
+  const toOverflow = [];
+  const seenIcons = new Set();
+  for (const btn of standalone) {
+    const icon = btn.icon || btn.intentId;
+    if (visible.length < 3 && !seenIcons.has(icon)) {
+      seenIcons.add(icon);
+      visible.push(btn);
+    } else {
+      toOverflow.push(btn);
+    }
+  }
+
+  // 3. Overflow: одиночные + антагонист-секции, без дубликатов с visible
+  const visibleIds = new Set(visible.map(b => b.intentId));
+  const dedupSection = (items) => items.filter(b => !visibleIds.has(b.intentId));
+
+  if (toOverflow.length > 0) {
+    sections.unshift({ items: toOverflow });
+  }
+
+  // Отфильтровать пустые секции и дубликаты
+  const nonEmptySections = sections
+    .map(s => ({ items: dedupSection(s.items) }))
+    .filter(s => s.items.length > 0);
+
+  if (nonEmptySections.length > 0) {
+    const overflowChildren = [];
+    for (let i = 0; i < nonEmptySections.length; i++) {
+      if (i > 0) overflowChildren.push({ type: "divider" });
+      overflowChildren.push(...nonEmptySections[i].items);
+    }
+    visible.push({ type: "overflow", children: overflowChildren });
+  }
+
+  return visible;
 }
 
 /**
@@ -224,7 +302,8 @@ function buildSection(subDef, INTENTS, ONTOLOGY, parentProjection) {
     collection,
     entity: subEntity,
     foreignKey,
-    title,
+    title: rawTitle,
+    label,
     addable = true,
     itemIntentIds,
   } = subDef;
@@ -300,6 +379,8 @@ function buildSection(subDef, INTENTS, ONTOLOGY, parentProjection) {
   // на общей sub-entity с discriminator в creates схлопываются в одну
   // группу-выбор (зелёный/жёлтый/красный).
   const groupedIntents = collapseVoteGroups(itemIntents);
+
+  const title = rawTitle || label || subEntity;
 
   return {
     id: collection,
@@ -496,27 +577,74 @@ function buildDetailBody(projection, ONTOLOGY, viewerRole = "self") {
   );
   const fieldNames = fields.map(f => f.name);
 
+  // Определяем hero-поля
+  const hasAvatar = fieldNames.includes("avatar");
+  const titleField = fieldNames.includes("name") ? "name"
+    : fieldNames.includes("title") ? "title" : null;
+  const hasBio = fieldNames.includes("bio") || fieldNames.includes("description");
+  const bioField = fieldNames.includes("bio") ? "bio" : fieldNames.includes("description") ? "description" : null;
+  const heroFields = new Set(["avatar", "name", "title", "bio", "description"]);
+
+  // Группируем остальные поля: stats (number/boolean) vs info
+  const STAT_TYPES = new Set(["number", "boolean"]);
+  const statFields = [];
+  const infoFields = [];
+  for (const field of fields) {
+    if (heroFields.has(field.name)) continue;
+    if (STAT_TYPES.has(field.type)) {
+      statFields.push(field);
+    } else {
+      infoFields.push(field);
+    }
+  }
+
   const children = [];
 
-  if (fieldNames.includes("avatar")) {
-    children.push({ type: "avatar", bind: "avatar", size: 96 });
+  // Hero: avatar + name + bio рядом
+  if (hasAvatar || titleField) {
+    const heroChildren = [];
+    if (hasAvatar) {
+      heroChildren.push({ type: "avatar", bind: "avatar", size: 80 });
+    }
+    const textParts = [];
+    if (titleField) {
+      textParts.push({ type: "heading", bind: titleField, level: 2 });
+    }
+    if (bioField) {
+      textParts.push({ type: "text", bind: bioField, style: "secondary", hideEmpty: true });
+    }
+    if (textParts.length > 0) {
+      heroChildren.push({
+        type: "column", gap: 4, sx: { flex: 1 },
+        children: textParts,
+      });
+    }
+    children.push({
+      type: "row", gap: 16, align: "flex-start",
+      children: heroChildren,
+    });
   }
 
-  if (fieldNames.includes("name")) {
-    children.push({ type: "heading", bind: "name", level: 1 });
-  } else if (fieldNames.includes("title")) {
-    children.push({ type: "heading", bind: "title", level: 1 });
+  // Stats bar: компактные бейджи в горизонтальной строке
+  if (statFields.length > 0) {
+    children.push({
+      type: "statBar",
+      fields: statFields.map(f => ({
+        name: f.name,
+        label: f.label || f.name,
+        type: f.type,
+      })),
+    });
   }
 
-  for (const field of fields) {
-    if (field.name === "avatar" || field.name === "name" || field.name === "title") continue;
-    const atom = fieldToAtom(field);
-    children.push(atom);
+  // Info: label:value пары
+  for (const field of infoFields) {
+    children.push({ ...fieldToAtom(field), hideEmpty: true });
   }
 
   return {
     type: "column",
-    gap: 12,
+    gap: 16,
     children,
   };
 }

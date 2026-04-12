@@ -120,7 +120,15 @@ export default function V2Shell({
   }));
   const onSelectTab = (projId) => {
     if (projId === current?.projectionId) return;
-    reset(projId, {});
+    // Если root-проекция — detail-вид с idParam, автоматически подставляем
+    // viewer.id. Это позволяет "Профиль продавца" в sidebar работать как
+    // "Мой профиль" без ручного задания params.
+    const projDef = allProjections[projId];
+    let params = {};
+    if (projDef?.kind === "detail" && projDef.idParam && viewerObj?.id) {
+      params = { [projDef.idParam]: viewerObj.id };
+    }
+    reset(projId, params);
   };
 
   const mainContent = (

@@ -3,7 +3,7 @@
  */
 
 import { inferParameters } from "./inferParameters.js";
-import { inferControlType } from "./inferControlType.js";
+import { inferControlType, enrichWithOptions } from "./inferControlType.js";
 import { wrapByConfirmation } from "./wrapByConfirmation.js";
 import {
   needsCustomCapture,
@@ -41,27 +41,28 @@ export function assignToSlotsCatalog(INTENTS, projection, ONTOLOGY) {
     // через wrapByConfirmation — скипаем только непокрытые виджеты.
     if (needsCustomCapture(intent)) continue;
 
-    // Catalog-специфика: интент должен либо касаться mainEntity напрямую,
-    // либо быть pure projection-level utility (поиск/фильтры).
-    // Иначе это sub-entity операция типа mute на Participant — бессмысленная
-    // в catalog-toolbar без per-item toggle UX (M3).
+    // Catalog-специфика: интент должен касаться mainEntity напрямую.
+    // Intent'ы без entities (настройки, аналитика) — НЕ утилиты каталога.
+    // Исключение: поисковые утилиты (witnesses "query"+"results") —
+    // inlineSearch как projection-level control.
     const intentEntities = (intent.particles?.entities || [])
       .map(e => e.split(":").pop().trim().replace(/\[\]$/, ""));
     const touchesMainEntity = mainEntity && intentEntities.includes(mainEntity);
-    const isPureUtility = intentEntities.length === 0;
-    if (!touchesMainEntity && !isPureUtility) continue;
+    const witnesses = intent.particles?.witnesses || [];
+    const isSearchUtility = witnesses.includes("query") && witnesses.includes("results");
+    if (!touchesMainEntity && !isSearchUtility) continue;
 
     const parameters = inferParameters(intent, ONTOLOGY).map(p => ({
       ...p,
       control: inferControlType(p, ONTOLOGY),
-    }));
+    })).map(p => enrichWithOptions(p, ONTOLOGY));
 
-    const wrapped = wrapByConfirmation(intent, id, parameters, { projection });
+    let wrapped = wrapByConfirmation(intent, id, parameters, { projection });
     if (wrapped === null) continue;
 
     const isPerItem = isPerItemIntent(intent, projection);
     const isComposerEntry = wrapped.type === "composerEntry";
-    const hasOverlay = wrapped.trigger && wrapped.overlay;
+    let hasOverlay = wrapped.trigger && wrapped.overlay;
     const isCreator = normalizeCreates(intent.creates) === projection.mainEntity;
 
     // inlineSearch — всегда в toolbar как projection-level utility
@@ -72,9 +73,23 @@ export function assignToSlotsCatalog(INTENTS, projection, ONTOLOGY) {
 
     // heroCreate — inline-создатель mainEntity над списком. Перехватывается
     // прежде обычного fab, даёт человеческий UX «ввёл название — Enter».
+    // UX-паттерн: только ОДИН hero на каталог. Первый побеждает (обычно
+    // основной create-интент), остальные re-wrap'ятся как обычные кнопки
+    // и проходят через стандартную логику (per-item → fab → toolbar).
     if (wrapped.type === "heroCreate") {
-      slots.hero.push(wrapped);
-      continue;
+      if (slots.hero.length === 0) {
+        slots.hero.push(wrapped);
+        continue;
+      }
+      // Дополнительные creator'ы → re-wrap как intentButton, пусть пройдут
+      // стандартную логику (isPerItem / fab / toolbar).
+      wrapped = {
+        type: "intentButton",
+        intentId: id,
+        label: intent.name,
+        icon: getIntentIcon(id, intent),
+      };
+      hasOverlay = false;
     }
 
     if (isComposerEntry) continue;

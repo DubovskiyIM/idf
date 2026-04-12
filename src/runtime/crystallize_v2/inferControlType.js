@@ -29,6 +29,37 @@ const PATTERNS = [
 
 import { getEntityFields, mapOntologyTypeToControl } from "./ontologyHelpers.js";
 
+/**
+ * Обогатить параметр опциями из онтологии для enum/select-полей.
+ * Вызывается после inferControlType. Мутирует param, добавляя options.
+ */
+export function enrichWithOptions(param, ONTOLOGY) {
+  if (param.control !== "select" || param.options) return param;
+  // Ищем enum-поле в онтологии
+  const findField = (entityName) => {
+    const entity = ONTOLOGY?.entities?.[entityName];
+    if (!entity?.fields) return null;
+    const fields = getEntityFields(entity);
+    return fields.find(f => f.name === param.name);
+  };
+
+  const field = param.entity
+    ? findField(param.entity)
+    : Object.keys(ONTOLOGY?.entities || {}).reduce((found, e) => found || findField(e), null);
+
+  if (field?.values) {
+    const labels = field.valueLabels || {};
+    param.options = field.values.map(v => ({ value: v, label: labels[v] || v }));
+  } else if (field?.type === "enum" && param.entity) {
+    // Fallback: statuses как options
+    const entity = ONTOLOGY?.entities?.[param.entity];
+    if (entity?.statuses) {
+      param.options = entity.statuses.map(s => ({ value: s, label: s }));
+    }
+  }
+  return param;
+}
+
 export function inferControlType(param, ONTOLOGY) {
   // 1. Явный type в параметре
   if (param.type) return param.type;

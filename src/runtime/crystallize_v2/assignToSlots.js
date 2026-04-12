@@ -5,7 +5,7 @@
  */
 
 import { inferParameters } from "./inferParameters.js";
-import { inferControlType } from "./inferControlType.js";
+import { inferControlType, enrichWithOptions } from "./inferControlType.js";
 import { wrapByConfirmation } from "./wrapByConfirmation.js";
 import { assignToSlotsCatalog } from "./assignToSlotsCatalog.js";
 import { assignToSlotsDetail } from "./assignToSlotsDetail.js";
@@ -93,7 +93,7 @@ function assignToSlotsFeed(INTENTS, projection, ONTOLOGY) {
     const parameters = inferParameters(intent, ONTOLOGY).map(p => ({
       ...p,
       control: inferControlType(p, ONTOLOGY),
-    }));
+    })).map(p => enrichWithOptions(p, ONTOLOGY));
 
     const wrapped = wrapByConfirmation(intent, id, parameters, { projection });
     if (wrapped === null) continue; // confirmation: auto

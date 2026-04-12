@@ -194,9 +194,11 @@ export function appliesToProjection(intent, projection) {
     return false;
   }
 
-  // 1. Pure projection-level utility (search, filters без entity binding)
+  // 1. Pure projection-level utility: только поисковые/фильтровые intent'ы
+  // (witness "query" или "results"). Настройки, аналитика и прочие intent'ы
+  // без entities — не утилиты проекции, отсеиваются.
   const hasDottedWitness = witnesses.some(w => w.includes("."));
-  if (intentEntities.length === 0 && !hasDottedWitness) return true;
+  if (intentEntities.length === 0 && !hasDottedWitness && isSearchUtility) return true;
 
   // 2. Creator-intent для главной сущности: если intent создаёт mainEntity
   // проекции, пускаем даже если есть extra entities вне route scope —

@@ -78,7 +78,7 @@ export default function StandaloneApp({ domainId }) {
   const isMessengerV2 = domainId === "messenger-v2";
 
   const auth = useAuth();
-  const { currentUser, doAuth, authError, isLoading, logout } = auth;
+  const { currentUser, doAuth, authError, isLoading, logout, authUsers } = auth;
 
   const viewer = useMemo(() => {
     if (isMessengerV2) return null; // messenger управляет viewer сам
@@ -87,8 +87,29 @@ export default function StandaloneApp({ domainId }) {
   }, [currentUser, isMessengerV2]);
 
   const engine = useEngine(domain);
-  const { world, worldForIntent, drafts, effects, signals, exec, execBatch,
+  const { world: rawWorld, worldForIntent, drafts, effects, signals, exec, execBatch,
     overlay, overlayEntityIds, startInvestigation, commitInvestigation, cancelInvestigation } = engine;
+
+  // Подмешиваем auth_users в world.users — они не в Φ и fold их не видит.
+  // Аналогично messenger/V2UI.jsx, но доменонезависимо.
+  const world = useMemo(() => {
+    if (isMessengerV2) return rawWorld; // messenger управляет world сам
+    const foldedUsers = rawWorld.users || [];
+    const merged = {};
+    // auth_users как база
+    for (const u of authUsers) {
+      merged[u.id] = { id: u.id, name: u.name, email: u.email || "" };
+    }
+    // folded replace-эффекты поверх базы
+    for (const u of foldedUsers) {
+      merged[u.id] = { ...(merged[u.id] || {}), ...u };
+    }
+    // Гарантировать currentUser
+    if (currentUser && !merged[currentUser.id]) {
+      merged[currentUser.id] = { id: currentUser.id, name: currentUser.name, email: currentUser.email || "" };
+    }
+    return { ...rawWorld, users: Object.values(merged) };
+  }, [rawWorld, authUsers, currentUser, isMessengerV2]);
 
   useEffect(() => {
     fetch(`/api/typemap?domain=${domainId.replace("-v2", "")}`, {

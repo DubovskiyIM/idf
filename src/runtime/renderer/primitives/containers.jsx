@@ -215,6 +215,7 @@ export function Card({ node, ctx, item }) {
                     border: "1px solid var(--mantine-color-default-border)",
                     borderRadius: 8,
                     boxShadow: "0 4px 12px #0002", padding: 4, zIndex: 10, minWidth: 180,
+                    maxHeight: "50vh", overflowY: "auto",
                     color: "var(--mantine-color-text)",
                   }}
                 >

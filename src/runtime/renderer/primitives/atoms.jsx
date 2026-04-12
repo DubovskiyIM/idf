@@ -206,3 +206,47 @@ export function Spacer({ node }) {
 export function Divider({ node }) {
   return <div style={{ height: 1, background: "#e5e7eb", margin: "8px 0", ...(node.sx || {}) }} />;
 }
+
+/**
+ * StatBar — горизонтальная полоса компактных stat-бейджей.
+ * Показывает числовые и boolean поля как «label: value» в сетке.
+ * Пустые значения (null/undefined/"") скрываются.
+ */
+export function StatBar({ node, ctx, item }) {
+  const data = item || ctx.world;
+  const stats = (node.fields || [])
+    .map(f => {
+      const raw = resolve(data, f.name);
+      if (raw == null || raw === "") return null;
+      const formatted = f.type === "boolean"
+        ? (raw ? "✓ Да" : "✕ Нет")
+        : (typeof raw === "number" ? raw.toLocaleString("ru") : String(raw));
+      return { label: f.label, value: formatted };
+    })
+    .filter(Boolean);
+  if (stats.length === 0) return null;
+  return (
+    <div style={{
+      display: "flex", flexWrap: "wrap", gap: 8,
+    }}>
+      {stats.map((s, i) => (
+        <div key={i} style={{
+          padding: "8px 14px", borderRadius: 8,
+          background: "var(--mantine-color-default-hover)",
+          border: "1px solid var(--mantine-color-default-border)",
+          display: "flex", flexDirection: "column", alignItems: "center",
+          minWidth: 80, flex: "1 1 0",
+        }}>
+          <span style={{
+            fontSize: 18, fontWeight: 700,
+            color: "var(--mantine-color-text)",
+          }}>{s.value}</span>
+          <span style={{
+            fontSize: 11, color: "var(--mantine-color-dimmed)",
+            marginTop: 2,
+          }}>{s.label}</span>
+        </div>
+      ))}
+    </div>
+  );
+}

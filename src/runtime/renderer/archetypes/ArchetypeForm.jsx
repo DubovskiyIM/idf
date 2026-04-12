@@ -115,24 +115,24 @@ export default function ArchetypeForm({ slots, ctx: parentCtx, projection }) {
 
     setSubmitting(true);
     try {
-      // Batch-сохранение: собираем массив под-эффектов, по одному на изменённое поле.
-      // Каждый под-эффект — вызов соответствующего intent с полем в ctx.
+      // Группируем dirty-поля по intentId: один intent (update_profile)
+      // может покрывать несколько полей (name, bio, location) — отправляем
+      // их одним вызовом, чтобы generic handler получил все значения в ctx.
+      const byIntent = {};
+      for (const f of dirtyFields) {
+        if (!byIntent[f.intentId]) byIntent[f.intentId] = {};
+        byIntent[f.intentId][f.name] = values[f.name];
+      }
+      const subs = Object.entries(byIntent).map(([intentId, fields]) => ({
+        intentId,
+        ctx: { id: target.id, ...fields },
+      }));
+
       if (parentCtx.execBatch) {
-        const subs = dirtyFields.map(f => ({
-          intentId: f.intentId,
-          ctx: {
-            id: target.id,
-            [f.name]: values[f.name],
-          },
-        }));
         parentCtx.execBatch(projection.sourceProjection || "edit_form", subs);
       } else {
-        // Fallback: последовательные exec (если execBatch не прокинут)
-        for (const f of dirtyFields) {
-          await parentCtx.exec(f.intentId, {
-            id: target.id,
-            [f.name]: values[f.name],
-          });
+        for (const sub of subs) {
+          await parentCtx.exec(sub.intentId, sub.ctx);
         }
       }
       goBack();
@@ -177,55 +177,32 @@ export default function ArchetypeForm({ slots, ctx: parentCtx, projection }) {
           maxWidth: 640, margin: "0 auto", background: "var(--mantine-color-default)",
           borderRadius: 12, padding: 24, border: "1px solid var(--mantine-color-default-border)",
         }}>
-          {(body.fields || []).map(field => (
+          {(body.fields || []).filter(f => f.editable).map(field => (
             <div key={field.name} style={{ marginBottom: 18 }}>
               <label style={{
                 display: "block", fontSize: 12, fontWeight: 600,
                 color: "var(--mantine-color-text)", marginBottom: 4,
               }}>
                 {field.label || field.name}
-                {!field.editable && <span style={{ color: "var(--mantine-color-dimmed)", marginLeft: 6 }}>(read-only)</span>}
                 {field.required && <span style={{ color: "var(--mantine-color-red-6, #ef4444)" }}> *</span>}
               </label>
-              {field.editable ? (
-                <ParameterControl
-                  spec={{
-                    name: field.name,
-                    label: "",
-                    control: mapFieldTypeToControl(field.type),
-                    required: field.required,
-                  }}
-                  value={values[field.name]}
-                  onChange={v => setValues(p => ({ ...p, [field.name]: v }))}
-                  error={errors[field.name]}
-                />
-              ) : (
-                <div style={{
-                  padding: "8px 12px", borderRadius: 6,
-                  background: "var(--mantine-color-default-hover)", color: "var(--mantine-color-dimmed)", fontSize: 14,
-                }}>
-                  {formatReadOnlyValue(field.name, target[field.name])}
-                </div>
-              )}
+              <ParameterControl
+                spec={{
+                  name: field.name,
+                  label: "",
+                  control: mapFieldTypeToControl(field.type),
+                  required: field.required,
+                }}
+                value={values[field.name]}
+                onChange={v => setValues(p => ({ ...p, [field.name]: v }))}
+                error={errors[field.name]}
+              />
             </div>
           ))}
         </div>
       </div>
     </div>
   );
-}
-
-function formatReadOnlyValue(fieldName, val) {
-  if (val == null || val === "") return "—";
-  // Timestamps: createdAt, lastSeen, updatedAt — числа больше 1e12
-  if (typeof val === "number" && val > 1e12) {
-    return new Date(val).toLocaleString("ru");
-  }
-  // Booleans
-  if (typeof val === "boolean") return val ? "Да" : "Нет";
-  // Arrays
-  if (Array.isArray(val)) return val.join(", ") || "—";
-  return String(val);
 }
 
 function mapFieldTypeToControl(type) {

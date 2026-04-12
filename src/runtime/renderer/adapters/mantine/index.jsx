@@ -383,33 +383,79 @@ function MantineDangerButton({ label, icon, onClick, disabled, title, size }) {
  *
  * items: [{ key, label, icon, onClick }]
  */
-function MantineOverflowMenu({ items }) {
+function MantineOverflowMenu({ items, triggerIcon, triggerLabel }) {
   if (!items || items.length === 0) return null;
+
+  // Группировка по иконке: элементы с одинаковой иконкой попадают в секцию.
+  // Если секций > 1, разделяем Menu.Divider'ами для лучшей читаемости.
+  const grouped = groupOverflowItems(items);
+  const hasSections = grouped.length > 1;
+
   return (
-    <Menu shadow="md" width={220} position="bottom-end" withArrow>
+    <Menu shadow="md" width={240} position="bottom-end" withArrow>
       <Menu.Target>
         <ActionIcon
           variant="default"
           size="lg"
-          title="Ещё"
-          aria-label="Ещё"
+          title={triggerLabel || "Ещё"}
+          aria-label={triggerLabel || "Ещё"}
         >
-          <Icon emoji="⋯" size={18} />
+          <Icon emoji={triggerIcon || "⋯"} size={18} />
         </ActionIcon>
       </Menu.Target>
-      <Menu.Dropdown>
-        {items.map((item) => (
-          <Menu.Item
-            key={item.key}
-            leftSection={item.icon ? <Icon emoji={item.icon} size={14} /> : undefined}
-            onClick={item.onClick}
-          >
-            {item.label}
-          </Menu.Item>
+      <Menu.Dropdown style={{ maxHeight: "60vh", overflowY: "auto" }}>
+        {grouped.map((section, si) => (
+          <span key={si}>
+            {hasSections && si > 0 && <Menu.Divider />}
+            {hasSections && section.label && (
+              <Menu.Label>{section.label}</Menu.Label>
+            )}
+            {section.items.map((item) => (
+              item.divider
+                ? <Menu.Divider key={item.key} />
+                : <Menu.Item
+                    key={item.key}
+                    leftSection={item.icon ? <Icon emoji={item.icon} size={14} /> : undefined}
+                    onClick={item.onClick}
+                  >
+                    {item.label}
+                  </Menu.Item>
+            ))}
+          </span>
         ))}
       </Menu.Dropdown>
     </Menu>
   );
+}
+
+/**
+ * Группировка overflow-элементов по иконке. Элементы с одинаковой иконкой
+ * объединяются в секцию. Одиночные элементы (уникальная иконка) идут в
+ * секцию «Другое» в конце.
+ */
+function groupOverflowItems(items) {
+  if (items.length <= 8) return [{ label: null, items }];
+  const byIcon = new Map();
+  const order = [];
+  for (const item of items) {
+    const key = item.icon || "__none__";
+    if (!byIcon.has(key)) { byIcon.set(key, []); order.push(key); }
+    byIcon.get(key).push(item);
+  }
+  const sections = [];
+  const singles = [];
+  for (const key of order) {
+    const group = byIcon.get(key);
+    if (group.length >= 2) {
+      sections.push({ label: group[0].label?.split(" ")[0] || null, items: group });
+    } else {
+      singles.push(...group);
+    }
+  }
+  if (singles.length > 0) {
+    sections.push({ label: sections.length > 0 ? "Другое" : null, items: singles });
+  }
+  return sections.length > 0 ? sections : [{ label: null, items }];
 }
 
 /**

@@ -151,7 +151,11 @@ export function buildEffects(intentId, ctx, world, drafts) {
           iEf.value !== undefined ? iEf.value
           : ctx[field] !== undefined ? ctx[field]
           : ctx.value;
-        if (entityId) {
+        // Пропускаем replace с undefined — при batch/form-сохранении
+        // intent может покрывать несколько полей, но ctx содержит
+        // только изменённые. Без этого фильтра незатронутые поля
+        // затираются undefined'ом.
+        if (entityId && resolvedValue !== undefined) {
           ef({ alpha: "replace", target, scope, value: resolvedValue,
             context: { id: entityId, userId: ctx.userId || ctx.clientId },
             desc: describeEffect(intentId, "replace", ctx, target) });

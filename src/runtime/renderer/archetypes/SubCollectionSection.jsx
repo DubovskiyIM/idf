@@ -36,6 +36,9 @@ export default function SubCollectionSection({ section, target, ctx }) {
     return conds.every(c => evalIntentCondition(c, target, ctx.viewer));
   }, [addControl, target, ctx.viewer]);
 
+  // Пустая секция без возможности добавления — не показываем
+  if (items.length === 0 && !canAdd) return null;
+
   const AdaptedPaper = getAdaptedComponent("primitive", "paper");
   const Wrapper = AdaptedPaper || FallbackPaper;
 
