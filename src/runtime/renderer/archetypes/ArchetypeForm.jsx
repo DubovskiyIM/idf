@@ -177,30 +177,54 @@ export default function ArchetypeForm({ slots, ctx: parentCtx, projection }) {
           maxWidth: 640, margin: "0 auto", background: "var(--mantine-color-default)",
           borderRadius: 12, padding: 24, border: "1px solid var(--mantine-color-default-border)",
         }}>
-          {(body.fields || []).filter(f => f.editable).map(field => (
-            <div key={field.name} style={{ marginBottom: 18 }}>
-              <label style={{
-                display: "block", fontSize: 12, fontWeight: 600,
-                color: "var(--mantine-color-text)", marginBottom: 4,
-              }}>
-                {field.label || field.name}
-                {field.required && <span style={{ color: "var(--mantine-color-red-6, #ef4444)" }}> *</span>}
-              </label>
-              <ParameterControl
-                spec={{
-                  name: field.name,
-                  label: "",
-                  control: mapFieldTypeToControl(field.type),
-                  required: field.required,
-                }}
-                value={values[field.name]}
-                onChange={v => setValues(p => ({ ...p, [field.name]: v }))}
-                error={errors[field.name]}
-              />
-            </div>
-          ))}
+          {body.sections ? (
+            body.sections.map(section => (
+              <div key={section.id} style={{ marginBottom: 28 }}>
+                <div style={{
+                  fontSize: 13, fontWeight: 700, textTransform: "uppercase",
+                  letterSpacing: "0.04em",
+                  color: "var(--mantine-color-dimmed)",
+                  marginBottom: 12, paddingBottom: 8,
+                  borderBottom: "1px solid var(--mantine-color-default-border)",
+                }}>{section.title}</div>
+                {section.fields.filter(f => f.editable).map(field => (
+                  <FormField key={field.name} field={field} values={values} setValues={setValues} errors={errors} />
+                ))}
+              </div>
+            ))
+          ) : (
+            (body.fields || []).filter(f => f.editable).map(field => (
+              <FormField key={field.name} field={field} values={values} setValues={setValues} errors={errors} />
+            ))
+          )}
         </div>
       </div>
+    </div>
+  );
+}
+
+function FormField({ field, values, setValues, errors }) {
+  return (
+    <div style={{ marginBottom: 18 }}>
+      <label style={{
+        display: "block", fontSize: 12, fontWeight: 600,
+        color: "var(--mantine-color-text)", marginBottom: 4,
+      }}>
+        {field.label || field.name}
+        {field.required && <span style={{ color: "var(--mantine-color-red-6, #ef4444)" }}> *</span>}
+      </label>
+      <ParameterControl
+        spec={{
+          name: field.name,
+          label: "",
+          control: mapFieldTypeToControl(field.type),
+          required: field.required,
+          options: field.options,
+        }}
+        value={values[field.name]}
+        onChange={v => setValues(p => ({ ...p, [field.name]: v }))}
+        error={errors[field.name]}
+      />
     </div>
   );
 }
