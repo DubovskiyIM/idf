@@ -35,7 +35,7 @@ export const INTENTS = {
   send_poll: intent("Создать опрос", ["message: Message"], [], [ef("add", "messages"), ef("add", "polls")], ["question", "options"], "form", { creates: "Message" }),
 
   // ===== БЕСЕДЫ (20) =====
-  create_direct_chat: intent("Личный чат", ["conversation: Conversation", "user: User"], [], [ef("add", "conversations"), ef("add", "participants")], ["user.name"], "click", { creates: "Conversation" }),
+  create_direct_chat: intent("Личный чат", ["conversation: Conversation", "user: User"], [], [ef("add", "conversations"), ef("add", "participants")], ["user.name"], "click", { creates: "Conversation", parameters: [] }),
   create_group: intent("Групповой чат", ["conversation: Conversation"], [], [ef("add", "conversations"), ef("add", "participants")], [], "form", { creates: "Conversation", parameters: [{ name: "title", type: "text", required: true, placeholder: "Название группы" }] }),
   add_to_group: intent("Добавить в группу", ["conversation: Conversation", "user: User"], ["conversation.type = 'group'"], [ef("add", "participants")], ["user.name", "conversation.title"], "click", { creates: "Participant" }),
   leave_group: intent("Покинуть группу", ["participant: Participant"], ["conversation.type = 'group'"], [ef("remove", "participants")], ["conversation.title"], "click"),
