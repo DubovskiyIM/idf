@@ -34,16 +34,19 @@ export default function ArchetypeDetail({ slots, nav, ctx: parentCtx, projection
     setViewState,
   }), [parentCtx, openOverlay, viewState, setViewState]);
 
-  // Role check (M3.5b): editEdge показываем только если viewer владеет
-  // сущностью. Для User mainEntity — собственный профиль (target.id === viewer.id).
-  // Чужой user_profile не должен давать кнопку редактирования.
+  // Ownership check: editEdge показываем только если viewer владеет
+  // сущностью. Кристаллизатор уже генерирует toolbar-conditions через
+  // ownershipConditionFor (из ontology.ownerField). Эта проверка —
+  // дублирующая защита для edit-button'а.
   const isViewerOwner = (target) => {
     if (!target || !parentCtx.viewer?.id) return false;
-    const mainEntity = projection?.mainEntity;
-    if (mainEntity === "User") return target.id === parentCtx.viewer.id;
-    // По умолчанию считаем non-owner для незнакомых сущностей —
-    // расширим логику, когда появятся другие editable detail-проекции.
-    return target.id === parentCtx.viewer.id;
+    // Если в target есть поле, совпадающее с viewer.id — owner
+    // Порядок проверки: clientId, organizerId, userId, authorId, id
+    const ownerFields = ["clientId", "organizerId", "userId", "authorId", "id"];
+    for (const field of ownerFields) {
+      if (target[field] === parentCtx.viewer.id) return true;
+    }
+    return false;
   };
 
   // Edit-action edge: если в nav есть исходящее ребро kind:"edit-action",

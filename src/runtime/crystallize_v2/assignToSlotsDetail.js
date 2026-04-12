@@ -112,7 +112,7 @@ export function assignToSlotsDetail(INTENTS, projection, ONTOLOGY) {
     if (wrapped.type === "composerEntry") continue;
 
     const hasOverlay = wrapped.trigger && wrapped.overlay;
-    const ownershipCond = ownershipConditionFor(intent, mainEntity);
+    const ownershipCond = ownershipConditionFor(intent, mainEntity, ONTOLOGY);
 
     // Phase-aware primary CTA: intent меняет {mainEntity}.status, не
     // destructive → большая primary-кнопка внизу body.
@@ -158,14 +158,21 @@ export function assignToSlotsDetail(INTENTS, projection, ONTOLOGY) {
 
 /**
  * Ownership-condition для detail: если intent меняет mainEntity и сущность
- * принадлежит viewer'у по правилу self-ownership, возвращает JS-выражение
- * для item.condition. SlotRenderer применит его к toolbar'ной кнопке.
+ * имеет ownerField в онтологии, возвращает JS-выражение для item.condition.
+ * SlotRenderer применит его к toolbar'ной кнопке.
  *
- * Пока hardcoded для User: id === viewer.id. В M4 расширить через
- * ontology.entities[X].ownerField (Message.senderId и т.п.).
+ * Читает ontology.entities[mainEntity].ownerField — declarative, не hardcode.
+ * Для User: ownerField отсутствует (id === viewer.id покрывается по default).
+ * Для Booking: ownerField = "clientId" → "clientId === viewer.id".
+ * Для Participant: ownerField = "userId" → "userId === viewer.id".
  */
-function ownershipConditionFor(intent, mainEntity) {
-  if (mainEntity !== "User") return null;
+function ownershipConditionFor(intent, mainEntity, ONTOLOGY) {
+  const entityDef = ONTOLOGY?.entities?.[mainEntity];
+  const ownerField = entityDef?.ownerField;
+
+  // Для User backward-compat: id === viewer.id (нет ownerField в ontology)
+  if (!ownerField && mainEntity !== "User") return null;
+
   const lower = mainEntity.toLowerCase();
   const effects = intent.particles?.effects || [];
   const mutatesMain = effects.some(e =>
@@ -174,7 +181,8 @@ function ownershipConditionFor(intent, mainEntity) {
     (e.target === lower || e.target.startsWith(lower + "."))
   );
   if (!mutatesMain) return null;
-  return "id === viewer.id";
+
+  return ownerField ? `${ownerField} === viewer.id` : "id === viewer.id";
 }
 
 function appliesToMainEntity(intent, mainEntity) {

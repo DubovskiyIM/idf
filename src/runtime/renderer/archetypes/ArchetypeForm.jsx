@@ -46,20 +46,19 @@ export default function ArchetypeForm({ slots, ctx: parentCtx, projection }) {
     );
   }
 
-  // Role check (M3.5b): редактирование чужой сущности запрещено. Для User —
-  // viewer ≠ target.id. Если зашли руками через URL, показываем отказ.
-  // Для других mainEntity применим аналогичную логику (target.id === viewer.id),
-  // пока нет формального ownership поля в ontology.
-  const isOwner =
-    target.id && parentCtx.viewer?.id && target.id === parentCtx.viewer.id;
+  // Ownership check: если target не принадлежит viewer'у — показываем отказ.
+  // Проверяем несколько стандартных ownership-полей.
+  const viewerId = parentCtx.viewer?.id;
+  const ownerFields = ["clientId", "organizerId", "userId", "authorId", "id"];
+  const isOwner = viewerId && ownerFields.some(f => target[f] === viewerId);
   if (!isOwner) {
     return (
       <div style={{
-        padding: 40, textAlign: "center", color: "#6b7280",
+        padding: 40, textAlign: "center", color: "var(--mantine-color-dimmed)",
         display: "flex", flexDirection: "column", alignItems: "center", gap: 12,
       }}>
         <div style={{ fontSize: 40 }}>🔒</div>
-        <div style={{ fontSize: 14, fontWeight: 600, color: "#374151" }}>
+        <div style={{ fontSize: 14, fontWeight: 600, color: "var(--mantine-color-text)" }}>
           Нет доступа к редактированию
         </div>
         <div style={{ fontSize: 12 }}>

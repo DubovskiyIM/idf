@@ -105,7 +105,7 @@ export function assignToSlotsCatalog(INTENTS, projection, ONTOLOGY) {
         overlayKey: wrapped.overlay.key,
         label: intent.name,
         icon: getIntentIcon(id, intent),
-        conditions: buildItemConditions(intent, projection),
+        conditions: buildItemConditions(intent, projection, ONTOLOGY),
       });
       continue;
     }
@@ -116,7 +116,7 @@ export function assignToSlotsCatalog(INTENTS, projection, ONTOLOGY) {
         intentId: id,
         label: intent.name,
         icon: getIntentIcon(id, intent),
-        conditions: buildItemConditions(intent, projection),
+        conditions: buildItemConditions(intent, projection, ONTOLOGY),
       });
       continue;
     }
@@ -186,7 +186,7 @@ function capitalize(s) {
  * ожидания UX). Пока hardcoded для User (M3.5b) — в M4 ownerField
  * должен жить в ontology и работать для Message/Participant и др.
  */
-function buildItemConditions(intent, projection) {
+function buildItemConditions(intent, projection, ONTOLOGY) {
   const conditions = [...(intent.particles?.conditions || [])];
   const mainEntity = projection.mainEntity;
   if (!mainEntity) return conditions;
@@ -199,10 +199,14 @@ function buildItemConditions(intent, projection) {
     (e.target === lower || e.target.startsWith(lower + "."))
   );
 
-  // Пока ownership-check для User — id === viewer.id.
-  // TODO M4: ontology.entities[X].ownerField → синтетический constraint.
-  if (mutatesMain && mainEntity === "User") {
-    conditions.push(`${lower}.id = me.id`);
+  if (mutatesMain) {
+    const ownerField = ONTOLOGY?.entities?.[mainEntity]?.ownerField;
+    if (ownerField) {
+      conditions.push(`${lower}.${ownerField} = me.id`);
+    } else if (mainEntity === "User") {
+      // backward-compat: User не имеет ownerField, но self-owned по id
+      conditions.push(`${lower}.id = me.id`);
+    }
   }
 
   return conditions;
