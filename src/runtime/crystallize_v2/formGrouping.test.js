@@ -205,3 +205,95 @@ describe("buildFormSpec", () => {
     expect(nameField.required).toBe(true);
   });
 });
+
+describe("buildFormSpec sections", () => {
+  const LISTING_ONTOLOGY = {
+    entities: {
+      Listing: {
+        fields: {
+          id: { type: "id" },
+          title: { type: "text", read: ["*"], write: ["self"], required: true, label: "Название" },
+          description: { type: "textarea", read: ["*"], write: ["self"], label: "Описание" },
+          images: { type: "multiImage", read: ["*"], write: ["self"], label: "Фото" },
+          startPrice: { type: "number", read: ["*"], write: ["self"], label: "Начальная цена" },
+          buyNowPrice: { type: "number", read: ["*"], write: ["self"], label: "Купить сейчас" },
+          condition: { type: "enum", read: ["*"], write: ["self"], label: "Состояние" },
+          shippingFrom: { type: "text", read: ["*"], write: ["self"], label: "Откуда" },
+          shippingCost: { type: "number", read: ["*"], write: ["self"], label: "Доставка" },
+          auctionEnd: { type: "datetime", read: ["*"], write: ["self"], label: "Завершение" },
+          bidCount: { type: "number", read: ["*"], label: "Ставок" },
+        },
+      },
+    },
+  };
+
+  const LISTING_INTENTS = {
+    edit_listing: {
+      name: "Редактировать",
+      particles: {
+        entities: ["listing: Listing"],
+        effects: [
+          { α: "replace", target: "listing.title" },
+          { α: "replace", target: "listing.description" },
+        ],
+        witnesses: [],
+      },
+    },
+    set_buy_now: {
+      name: "Купить сейчас",
+      particles: {
+        entities: ["listing: Listing"],
+        effects: [{ α: "replace", target: "listing.buyNowPrice" }],
+        witnesses: [],
+      },
+    },
+    set_shipping: {
+      name: "Доставка",
+      particles: {
+        entities: ["listing: Listing"],
+        effects: [{ α: "replace", target: "listing.shippingCost" }],
+        witnesses: [],
+      },
+    },
+  };
+
+  const editProj = {
+    mainEntity: "Listing",
+    editIntents: ["edit_listing", "set_buy_now", "set_shipping"],
+  };
+
+  it("генерирует sections", () => {
+    const spec = buildFormSpec(editProj, LISTING_INTENTS, LISTING_ONTOLOGY, "self");
+    expect(spec.sections).toBeDefined();
+    expect(spec.sections.length).toBeGreaterThan(0);
+    expect(spec.fields.length).toBeGreaterThan(0);
+  });
+
+  it("секция Основное содержит title и description", () => {
+    const spec = buildFormSpec(editProj, LISTING_INTENTS, LISTING_ONTOLOGY, "self");
+    const main = spec.sections.find(s => s.id === "main");
+    expect(main).toBeDefined();
+    expect(main.fields.map(f => f.name)).toContain("title");
+    expect(main.fields.map(f => f.name)).toContain("description");
+  });
+
+  it("секция Цена содержит price-поля", () => {
+    const spec = buildFormSpec(editProj, LISTING_INTENTS, LISTING_ONTOLOGY, "self");
+    const price = spec.sections.find(s => s.id === "price");
+    expect(price).toBeDefined();
+    expect(price.fields.some(f => f.name === "buyNowPrice")).toBe(true);
+  });
+
+  it("read-only поля не в секциях", () => {
+    const spec = buildFormSpec(editProj, LISTING_INTENTS, LISTING_ONTOLOGY, "self");
+    const allFields = spec.sections.flatMap(s => s.fields);
+    expect(allFields.find(f => f.name === "bidCount")).toBeUndefined();
+  });
+
+  it("секции без editable не создаются", () => {
+    const spec = buildFormSpec(editProj, LISTING_INTENTS, LISTING_ONTOLOGY, "self");
+    for (const s of spec.sections) {
+      expect(s.fields.some(f => f.editable)).toBe(true);
+    }
+  });
+});

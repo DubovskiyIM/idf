@@ -15,11 +15,32 @@
  * через execBatch как atomic batch-эффект (α:"batch", §10, §11).
  */
 
-import { getEntityFields, canRead, canWrite } from "./ontologyHelpers.js";
+import { getEntityFields, canRead, canWrite, inferFieldRole } from "./ontologyHelpers.js";
 
 const SYSTEM_FIELDS = new Set([
   "id", "createdAt", "updatedAt", "deletedAt", "deletedFor",
 ]);
+
+// Роль → секция формы (id + title + порядок сортировки)
+const ROLE_TO_SECTION = {
+  title:       { id: "main",     title: "Основное",       order: 0 },
+  description: { id: "main",     title: "Основное",       order: 0 },
+  heroImage:   { id: "media",    title: "Медиа",          order: 1 },
+  price:       { id: "price",    title: "Цена",           order: 2 },
+  badge:       { id: "attrs",    title: "Характеристики", order: 3 },
+  metric:      { id: "attrs",    title: "Характеристики", order: 3 },
+  info:        { id: "attrs",    title: "Характеристики", order: 3 },
+  location:    { id: "shipping", title: "Доставка",       order: 4 },
+  timer:       { id: "time",     title: "Время",          order: 5 },
+  ref:         { id: "refs",     title: "Связи",          order: 6 },
+};
+
+function getSectionForField(fieldName, role) {
+  if (/shipping/i.test(fieldName) && role !== "heroImage" && role !== "price") {
+    return { id: "shipping", title: "Доставка", order: 4 };
+  }
+  return ROLE_TO_SECTION[role] || { id: "other", title: "Другое", order: 99 };
+}
 
 /**
  * Найти intents, чьи эффекты — replace X.field (без hardcoded значения).
@@ -141,9 +162,27 @@ export function buildFormSpec(editProjection, INTENTS, ONTOLOGY, viewerRole = "s
     });
   }
 
+  // Генерация секций по семантическим ролям
+  const sectionMap = new Map();
+  for (const f of fields) {
+    if (!f.editable) continue;
+    const role = inferFieldRole(f.name, { type: f.type });
+    const sec = getSectionForField(f.name, role);
+    if (!sectionMap.has(sec.id)) {
+      sectionMap.set(sec.id, { id: sec.id, title: sec.title, order: sec.order, fields: [] });
+    }
+    sectionMap.get(sec.id).fields.push(f);
+  }
+
+  const sections = [...sectionMap.values()]
+    .filter(s => s.fields.length > 0)
+    .sort((a, b) => a.order - b.order)
+    .map(({ id, title, fields: sFields }) => ({ id, title, fields: sFields }));
+
   return {
     mainEntity,
     fields,
+    sections,
     editIntents: editIntentIds,
   };
 }
