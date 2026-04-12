@@ -66,6 +66,29 @@ export default function MessengerV2UI({ world, exec, execBatch }) {
     userName: currentUser?.name,
   }), [currentUser]);
 
+  // Обёртка exec: автоматически инжектируем userId/clientId из viewer
+  // в каждый вызов buildEffects. Без этого edit_message, delete_message
+  // и другие intent'ы, проверяющие ctx.userId, не работают.
+  const wrappedExec = useMemo(() => {
+    if (!exec) return exec;
+    return (intentId, ctx = {}) => exec(intentId, {
+      ...ctx,
+      userId: currentUser?.id,
+      clientId: currentUser?.id,
+    });
+  }, [exec, currentUser]);
+
+  const wrappedExecBatch = useMemo(() => {
+    if (!execBatch) return execBatch;
+    return (intentId, subs) => {
+      const enriched = subs.map(s => ({
+        ...s,
+        ctx: { ...(s.ctx || {}), userId: currentUser?.id, clientId: currentUser?.id }
+      }));
+      return execBatch(intentId, enriched);
+    };
+  }, [execBatch, currentUser]);
+
   // Мир обогащается тремя слоями:
   //  1) Базовый слой — все auth_users из /api/auth/users (они не в Φ и fold
   //     их не видит). Нужны для people_list и для lookup'ов avatar/name
@@ -300,8 +323,8 @@ export default function MessengerV2UI({ world, exec, execBatch }) {
             artifact={currentArtifact}
             projection={currentProjectionDef}
             world={worldWithRoute}
-            exec={exec}
-            execBatch={execBatch}
+            exec={wrappedExec}
+            execBatch={wrappedExecBatch}
             viewer={currentUser}
             viewerContext={viewerContext}
             routeParams={current.params}
