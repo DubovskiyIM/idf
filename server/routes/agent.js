@@ -16,20 +16,18 @@
 const { Router } = require("express");
 const { authMiddleware, getUser } = require("../auth.js");
 const { getOntology } = require("../ontologyRegistry.cjs");
-const { getIntent } = require("../intents.js");
+const { getIntent, getDomainIntents } = require("../intents.js");
 const { buildIntentSchema } = require("../schema/buildIntentSchema.cjs");
 const { computeAlgebra } = require("../schema/intentAlgebra.cjs");
 const { checkOwnership } = require("../schema/checkOwnership.cjs");
-const { _registry: ALL_INTENTS } = require("../intents.js");
 const { filterWorldForRole } = require("../schema/filterWorld.cjs");
-const { buildBookingEffects } = require("../schema/buildBookingEffects.cjs");
+const { getEffectBuilder } = require("../schema/effectBuildersRegistry.cjs");
 const { parseCondition } = require("../schema/conditionParser.cjs");
 const { foldWorld, validate } = require("../validator.js");
 const { ingestEffect } = require("../effect-pipeline.js");
 const db = require("../db.js");
 const { v4: uuid } = require("uuid");
 
-const DOMAIN = "booking";
 const ROLE = "agent";
 
 /**
@@ -118,7 +116,7 @@ function wrapInBatch(effects, intentId, viewerId) {
 }
 
 function makeAgentRouter(broadcast) {
-  const router = Router();
+  const router = Router({ mergeParams: true });
   router.use(authMiddleware);
 
   // ============================================================
@@ -158,30 +156,31 @@ function makeAgentRouter(broadcast) {
   // ============================================================
 
   router.get("/schema", (req, res) => {
-    const ontology = getOntology(DOMAIN);
+    const domain = req.params.domain;
+    const ontology = getOntology(domain);
     if (!ontology) {
       return res.status(503).json({
         error: "ontology_unavailable",
-        message: "Ontology для booking не зарегистрирована. Клиент должен POST /api/typemap?domain=booking."
+        domain,
+        message: `Ontology для ${domain} не зарегистрирована. Клиент должен POST /api/typemap?domain=${domain}.`
       });
     }
 
-    // Вычисляем алгебру ОДИН раз над всеми зарегистрированными intents
-    // (не только canExecute) — relations могут ссылаться на intent'ы вне
-    // canExecute, это правильное поведение для агентского планирования.
-    const algebra = computeAlgebra(ALL_INTENTS, ontology);
+    // Domain-scoped intents (structural REGISTRY[domain][id])
+    const domainIntents = getDomainIntents(domain);
+    const algebra = computeAlgebra(domainIntents, ontology);
 
     const allowedIds = ontology.roles?.[ROLE]?.canExecute || [];
     const intents = [];
     for (const id of allowedIds) {
-      const intent = getIntent(id);
+      const intent = getIntent(id, domain);
       if (!intent) continue;
       intents.push(buildIntentSchema(id, intent, ontology, ROLE, algebra[id]));
     }
     const viewer = getViewer(req);
-    console.log(`[agent] GET  /schema              ${viewer.id} → 200 (${intents.length} intents, algebra)`);
+    console.log(`[agent] GET /schema ${domain} ${viewer.id} → 200 (${intents.length} intents)`);
     res.json({
-      domain: DOMAIN,
+      domain,
       role: ROLE,
       viewer,
       ontology: filterOntologyForRole(ontology, ROLE),
@@ -194,7 +193,7 @@ function makeAgentRouter(broadcast) {
   // ============================================================
 
   router.get("/world", (req, res) => {
-    const ontology = getOntology(DOMAIN);
+    const ontology = getOntology(req.params.domain);
     if (!ontology) {
       return res.status(503).json({
         error: "ontology_unavailable",
@@ -211,9 +210,10 @@ function makeAgentRouter(broadcast) {
       return res.status(500).json({ error: "internal_error", message: err.message });
     }
     const totalRows = Object.values(filtered).reduce((s, arr) => s + (arr?.length || 0), 0);
-    console.log(`[agent] GET  /world               ${viewer.id} → 200 (${totalRows} rows)`);
+    const domain = req.params.domain;
+    console.log(`[agent] GET /world ${domain} ${viewer.id} → 200 (${totalRows} rows)`);
     res.json({
-      domain: DOMAIN,
+      domain: req.params.domain,
       role: ROLE,
       viewer,
       world: filtered
@@ -225,29 +225,40 @@ function makeAgentRouter(broadcast) {
   // ============================================================
 
   router.post("/exec/:intentId", (req, res) => {
+    const domain = req.params.domain;
     const intentId = req.params.intentId;
     const params = req.body || {};
 
-    const ontology = getOntology(DOMAIN);
+    const ontology = getOntology(domain);
     if (!ontology) {
-      return res.status(503).json({ error: "ontology_unavailable" });
+      return res.status(503).json({ error: "ontology_unavailable", domain });
+    }
+
+    const buildEffects = getEffectBuilder(domain);
+    if (!buildEffects) {
+      return res.status(404).json({
+        error: "domain_not_supported",
+        domain,
+        message: `Нет effect builder для ${domain}`
+      });
     }
 
     const allowedIds = ontology.roles?.[ROLE]?.canExecute || [];
     if (!allowedIds.includes(intentId)) {
       const viewer = getViewer(req);
-      console.log(`[agent] POST /exec/${intentId} ${viewer.id} → 403 not_allowed`);
+      console.log(`[agent] POST /exec/${intentId} ${domain} ${viewer.id} → 403 not_allowed`);
       return res.status(403).json({
         error: "intent_not_allowed",
         intentId,
+        domain,
         role: ROLE,
-        message: `Интент ${intentId} не доступен для роли ${ROLE}`
+        message: `Интент ${intentId} не доступен для роли ${ROLE} в домене ${domain}`
       });
     }
 
-    const intent = getIntent(intentId);
+    const intent = getIntent(intentId, domain);
     if (!intent) {
-      return res.status(404).json({ error: "intent_not_found", intentId });
+      return res.status(404).json({ error: "intent_not_found", intentId, domain });
     }
 
     // Валидация параметров
@@ -261,12 +272,10 @@ function makeAgentRouter(broadcast) {
     const viewer = getViewer(req);
     const world = foldWorld();
 
-    // Synthetic write-ownership check через ontology.ownerField (§23 closed).
-    // Для write-intent'ов (replace/remove на owned сущности) проверяет, что
-    // target принадлежит viewer'у. Declarative из ontology, не per-intent.
+    // Synthetic write-ownership check через ontology.ownerField
     const ownershipResult = checkOwnership(intent, params, viewer, ontology, world);
     if (!ownershipResult.ok) {
-      console.log(`[agent] POST /exec/${intentId} ${viewer.id} → 403 ownership_denied (${ownershipResult.entityName} ${ownershipResult.entityId})`);
+      console.log(`[agent] POST /exec/${intentId} ${domain} ${viewer.id} → 403 ownership_denied`);
       return res.status(403).json({
         error: "ownership_denied",
         intentId,
@@ -276,12 +285,12 @@ function makeAgentRouter(broadcast) {
       });
     }
 
-    const effects = buildBookingEffects(intentId, params, viewer, world);
+    const effects = buildEffects(intentId, params, viewer, world);
     if (!effects || effects.length === 0) {
       return res.status(400).json({
         error: "build_failed",
         intentId,
-        reason: "Не удалось собрать эффекты — проверь, что все referenced сущности существуют и в правильном состоянии"
+        reason: "Не удалось собрать эффекты"
       });
     }
 
@@ -303,7 +312,7 @@ function makeAgentRouter(broadcast) {
 
     if (stored.status === "confirmed") {
       const createdEntity = findCreatedEntity(effects);
-      console.log(`[agent] POST /exec/${intentId} ${viewer.id} → 200 confirmed ${effectToPost.id}`);
+      console.log(`[agent] POST /exec/${intentId} ${domain} ${viewer.id} → 200 confirmed ${effectToPost.id}`);
       return res.status(200).json({
         id: effectToPost.id,
         intentId,
@@ -322,7 +331,7 @@ function makeAgentRouter(broadcast) {
     const reason = result.reason || "unknown";
     const failedCondition = enrichFailedCondition(reason);
 
-    console.log(`[agent] POST /exec/${intentId} ${viewer.id} → 409 rejected (${reason})`);
+    console.log(`[agent] POST /exec/${intentId} ${domain} ${viewer.id} → 409 rejected (${reason})`);
     return res.status(409).json({
       id: effectToPost.id,
       intentId,

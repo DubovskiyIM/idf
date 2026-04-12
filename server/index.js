@@ -23,7 +23,7 @@ app.use("/api/entities", entitiesRouter);
 
 // Agent layer — §17 манифеста
 const { makeAgentRouter } = require("./routes/agent.js");
-app.use("/api/agent/booking", makeAgentRouter(effectsRouter.broadcast));
+app.use("/api/agent/:domain", makeAgentRouter(effectsRouter.broadcast));
 
 const { startSync, setBroadcast } = require("./boundary.js");
 const { executeWorkflow, setBroadcast: setExecBroadcast } = require("./executor.js");
