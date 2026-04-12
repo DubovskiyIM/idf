@@ -144,15 +144,15 @@ export default function ArchetypeForm({ slots, ctx: parentCtx, projection }) {
   return (
     <div style={{
       display: "flex", flexDirection: "column", height: "100%",
-      background: "#f9fafb",
+      background: "var(--mantine-color-body)",
     }}>
       <div style={{
         display: "flex", alignItems: "center", gap: 12,
-        padding: "12px 16px", background: "#fff", borderBottom: "1px solid #e5e7eb",
+        padding: "12px 16px", background: "var(--mantine-color-default)", borderBottom: "1px solid var(--mantine-color-default-border)",
       }}>
         <button onClick={goBack} style={{
-          padding: "6px 12px", borderRadius: 6, border: "1px solid #d1d5db",
-          background: "#fff", cursor: "pointer", fontSize: 13,
+          padding: "6px 12px", borderRadius: 6, border: "1px solid var(--mantine-color-default-border)",
+          background: "var(--mantine-color-default)", color: "var(--mantine-color-text)", cursor: "pointer", fontSize: 13,
         }}>← Отмена</button>
         <h1 style={{ margin: 0, fontSize: 18, fontWeight: 700, flex: 1 }}>
           {projection.name}
@@ -162,8 +162,8 @@ export default function ArchetypeForm({ slots, ctx: parentCtx, projection }) {
           disabled={submitting || dirtyFields.length === 0}
           style={{
             padding: "8px 18px", borderRadius: 6, border: "none",
-            background: dirtyFields.length > 0 && !submitting ? "#6366f1" : "#e5e7eb",
-            color: "#fff", fontWeight: 600,
+            background: dirtyFields.length > 0 && !submitting ? "var(--mantine-color-primary, #6366f1)" : "var(--mantine-color-default)",
+            color: dirtyFields.length > 0 ? "#fff" : "var(--mantine-color-dimmed)", fontWeight: 600,
             cursor: dirtyFields.length > 0 && !submitting ? "pointer" : "default",
             opacity: submitting ? 0.6 : 1,
           }}
@@ -174,23 +174,24 @@ export default function ArchetypeForm({ slots, ctx: parentCtx, projection }) {
 
       <div style={{ flex: 1, overflow: "auto", padding: 24 }}>
         <div style={{
-          maxWidth: 640, margin: "0 auto", background: "#fff",
-          borderRadius: 12, padding: 24, border: "1px solid #e5e7eb",
+          maxWidth: 640, margin: "0 auto", background: "var(--mantine-color-default)",
+          borderRadius: 12, padding: 24, border: "1px solid var(--mantine-color-default-border)",
         }}>
           {(body.fields || []).map(field => (
             <div key={field.name} style={{ marginBottom: 18 }}>
               <label style={{
                 display: "block", fontSize: 12, fontWeight: 600,
-                color: "#374151", marginBottom: 4,
+                color: "var(--mantine-color-text)", marginBottom: 4,
               }}>
                 {field.label || field.name}
-                {!field.editable && <span style={{ color: "#9ca3af", marginLeft: 6 }}>(read-only)</span>}
-                {field.required && <span style={{ color: "#ef4444" }}> *</span>}
+                {!field.editable && <span style={{ color: "var(--mantine-color-dimmed)", marginLeft: 6 }}>(read-only)</span>}
+                {field.required && <span style={{ color: "var(--mantine-color-red-6, #ef4444)" }}> *</span>}
               </label>
               {field.editable ? (
                 <ParameterControl
                   spec={{
                     name: field.name,
+                    label: "",
                     control: mapFieldTypeToControl(field.type),
                     required: field.required,
                   }}
@@ -201,9 +202,9 @@ export default function ArchetypeForm({ slots, ctx: parentCtx, projection }) {
               ) : (
                 <div style={{
                   padding: "8px 12px", borderRadius: 6,
-                  background: "#f3f4f6", color: "#6b7280", fontSize: 14,
+                  background: "var(--mantine-color-default-hover)", color: "var(--mantine-color-dimmed)", fontSize: 14,
                 }}>
-                  {target[field.name] != null && target[field.name] !== "" ? String(target[field.name]) : "—"}
+                  {formatReadOnlyValue(field.name, target[field.name])}
                 </div>
               )}
             </div>
@@ -212,6 +213,19 @@ export default function ArchetypeForm({ slots, ctx: parentCtx, projection }) {
       </div>
     </div>
   );
+}
+
+function formatReadOnlyValue(fieldName, val) {
+  if (val == null || val === "") return "—";
+  // Timestamps: createdAt, lastSeen, updatedAt — числа больше 1e12
+  if (typeof val === "number" && val > 1e12) {
+    return new Date(val).toLocaleString("ru");
+  }
+  // Booleans
+  if (typeof val === "boolean") return val ? "Да" : "Нет";
+  // Arrays
+  if (Array.isArray(val)) return val.join(", ") || "—";
+  return String(val);
 }
 
 function mapFieldTypeToControl(type) {
