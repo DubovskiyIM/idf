@@ -297,6 +297,16 @@ function registerHeroCreate() {
       const chosen = byName || byType;
       const paramName = chosen?.name || "title";
       const placeholder = intent.placeholder || "Название…";
+      // Post-create навигация: после создания перейти в edit-форму.
+      const createsRaw = intent.creates || "";
+      const mainEntity = normalizeCreates(createsRaw);
+      const statusMatch = createsRaw.match(/\((\w+)\)/);
+      const postCreate = mainEntity ? {
+        collection: pluralizeEntity(mainEntity),
+        matchField: statusMatch ? "status" : null,
+        matchValue: statusMatch ? statusMatch[1] : null,
+      } : null;
+
       return {
         type: "heroCreate",
         intentId,
@@ -304,9 +314,17 @@ function registerHeroCreate() {
         placeholder,
         buttonLabel: intent.name,
         icon: getIntentIcon(intentId, intent),
+        postCreate,
       };
     },
   });
+}
+
+function pluralizeEntity(name) {
+  const lower = name.toLowerCase();
+  if (lower.endsWith("y")) return lower.slice(0, -1) + "ies";
+  if (lower.endsWith("s")) return lower + "es";
+  return lower + "s";
 }
 
 // ============================================================

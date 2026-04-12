@@ -20,9 +20,31 @@ export default function HeroCreate({ spec, ctx }) {
 
   const submit = () => {
     if (!value.trim()) return;
+    const pc = spec.postCreate;
+
+    // Запомнить текущие ids до exec
+    const prevIds = pc
+      ? new Set((ctx.world?.[pc.collection] || []).map(e => e.id))
+      : null;
+
     ctx.exec(spec.intentId, { [spec.paramName || "title"]: value.trim() });
     setValue("");
-    inputRef.current?.focus();
+
+    // Post-create: найти новую сущность и navigate в edit-форму
+    if (pc && pc.navigateTo && ctx.navigate) {
+      setTimeout(() => {
+        const items = ctx.world?.[pc.collection] || [];
+        const newItem = items.find(e =>
+          !prevIds.has(e.id) &&
+          (!pc.matchField || e[pc.matchField] === pc.matchValue)
+        );
+        if (newItem) {
+          ctx.navigate(pc.navigateTo, { [pc.idParam]: newItem.id });
+        }
+      }, 150);
+    } else {
+      inputRef.current?.focus();
+    }
   };
 
   const onKeyDown = (e) => {

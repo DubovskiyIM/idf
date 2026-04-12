@@ -68,6 +68,21 @@ export function crystallizeV2(INTENTS, PROJECTIONS, ONTOLOGY, domainId = "unknow
       }
     }
 
+    // postCreate: дополнить heroCreate nav-данными из nav-графа
+    if (slots.hero) {
+      for (const hero of slots.hero) {
+        if (hero.postCreate && !hero.postCreate.navigateTo) {
+          const detailEdge = navGraph.edges.find(e =>
+            e.kind === "edit-action" && allProjections[e.from]?.mainEntity === proj.mainEntity
+          );
+          if (detailEdge) {
+            hero.postCreate.navigateTo = detailEdge.to;
+            hero.postCreate.idParam = Object.keys(detailEdge.params)[0];
+          }
+        }
+      }
+    }
+
     const artifact = {
       projection: projId,
       name: proj.name || projId,
