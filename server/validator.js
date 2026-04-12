@@ -39,30 +39,8 @@ function foldWorld() {
   const effects = causalSort(rawEffects);
 
   const collections = {};
-
-  // Seed: auth_users живут в отдельной таблице, не в Φ. Для валидации
-  // replace user.X (например редактирования аватара) сущность должна
-  // уже существовать в World(t) — инжектим базовые user-записи из auth_users
-  // перед обработкой эффектов. Последующие replace наложатся поверх.
-  try {
-    const authUsers = db.prepare(
-      "SELECT id, email, name, avatar, created_at FROM auth_users"
-    ).all();
-    if (authUsers.length > 0) {
-      collections.users = {};
-      for (const u of authUsers) {
-        collections.users[u.id] = {
-          id: u.id,
-          email: u.email,
-          name: u.name,
-          avatar: u.avatar || "",
-          createdAt: u.created_at,
-        };
-      }
-    }
-  } catch {
-    // auth_users таблицы может не быть при старте — игнорируем
-  }
+  // Users теперь приходят из Φ через _user_register эффекты (auth.js dual-write).
+  // Seed auth_users удалён — §5 «мир = свёртка Φ».
 
   function applyEf(ef, ctx, val) {
     if (ef.target.startsWith("drafts")) return;
