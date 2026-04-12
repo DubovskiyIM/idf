@@ -23,6 +23,12 @@ const COMPOSITION_TABLE = {
 
 /**
  * Проверить совместимость двух эффектов.
+ *
+ * Примитив, используемый intentAlgebra.deriveExcluding для построения
+ * ⊕-графа. Раньше был также использован в checkAlgebraIntegrity, который
+ * удалён в Session B (2026-04-12) как дубликат — intent-алгебра теперь
+ * унифицирована в src/runtime/intentAlgebra.js.
+ *
  * @returns { compatible: boolean, resolution: string, detail: string }
  */
 export function checkComposition(effect1, effect2) {
@@ -66,54 +72,12 @@ export function checkComposition(effect1, effect2) {
   return { compatible: true, resolution: "ok" };
 }
 
-/**
- * Проверить все пары эффектов в наборе намерений.
- * Находит потенциальные конфликты ⊥ между намерениями.
- */
-export function checkAlgebraIntegrity(INTENTS) {
-  const conflicts = [];
-  const intentEntries = Object.entries(INTENTS);
-
-  for (let i = 0; i < intentEntries.length; i++) {
-    const [id1, intent1] = intentEntries[i];
-    const effects1 = intent1.particles.effects || [];
-
-    for (let j = i + 1; j < intentEntries.length; j++) {
-      const [id2, intent2] = intentEntries[j];
-      const effects2 = intent2.particles.effects || [];
-
-      // Проверить каждую пару эффектов
-      for (const ef1 of effects1) {
-        for (const ef2 of effects2) {
-          // Одинаковый target?
-          const t1base = ef1.target.split(".")[0];
-          const t2base = ef2.target.split(".")[0];
-          if (t1base !== t2base) continue;
-
-          // Проверить если это один и тот же field (для replace)
-          if (ef1.target === ef2.target || ef1.target.includes(t2base) || ef2.target.includes(t1base)) {
-            const result = checkComposition(
-              { alpha: ef1.α, target: ef1.target, context: {} },
-              { alpha: ef2.α, target: ef2.target, context: {} }
-            );
-
-            if (!result.compatible) {
-              conflicts.push({
-                intent1: id1, intent1Name: intent1.name,
-                intent2: id2, intent2Name: intent2.name,
-                ...result,
-              });
-            }
-          }
-        }
-      }
-    }
-  }
-
-  return conflicts;
-}
-
-// Примечание: был ранее `checkRuntimeConflicts(effects)` для runtime-проверки
+// Примечание (Session B, 2026-04-12): функция checkAlgebraIntegrity
+// удалена. Её функциональность — вычисление ⊕-графа между intent'ами —
+// теперь живёт в src/runtime/intentAlgebra.js::deriveExcluding как часть
+// унифицированного модуля intent-алгебры. Integrity.js rule #7 читает
+// граф из computeAlgebra(...).excluding.
+//
+// Также был ранее `checkRuntimeConflicts(effects)` для runtime-проверки
 // конкурентных эффектов, но ни один модуль его не вызывал (dead code).
-// Удалён как часть ревизии границ реализации. Если понадобится runtime-проверка
-// конфликтов — нужно интегрировать в server/validator.js или effect-pipeline.js.
+// Удалён как часть ревизии границ реализации.
