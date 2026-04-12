@@ -57,9 +57,16 @@ app.post("/api/typemap", (req, res) => {
 const { registerIntents } = require("./intents.js");
 app.post("/api/intents", (req, res) => {
   const intents = req.body?.intents || req.body;
-  const count = registerIntents(intents);
-  console.log(`  [intents] Зарегистрировано: ${count} намерений`);
-  res.json({ ok: true, registered: count });
+  const domain = req.query.domain;
+  if (!domain) {
+    return res.status(400).json({
+      error: "domain_required",
+      message: "POST /api/intents requires ?domain=X query param"
+    });
+  }
+  const count = registerIntents(intents, domain);
+  console.log(`  [intents] Зарегистрирован domain=${domain}: ${count} намерений`);
+  res.json({ ok: true, domain, registered: count });
 });
 
 // Endpoint для исполнения workflow

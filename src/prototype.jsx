@@ -73,10 +73,10 @@ export default function App() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(domain.ONTOLOGY),
     }).catch(() => {});
-    fetch("/api/intents", {
+    fetch(`/api/intents?domain=${domainIdForServer}`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ domain: domainIdForServer, intents: domain.INTENTS }),
+      body: JSON.stringify(domain.INTENTS),
     }).catch(() => {});
   }, [domain]);
 

@@ -71,10 +71,10 @@ export default function StandaloneApp({ domainId }) {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(domain.ONTOLOGY),
     }).catch(() => {});
-    fetch("/api/intents", {
+    fetch(`/api/intents?domain=${domainId}`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ domain: domainId, intents: domain.INTENTS }),
+      body: JSON.stringify(domain.INTENTS),
     }).catch(() => {});
   }, [domain, domainId]);
 
