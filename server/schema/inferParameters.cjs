@@ -16,7 +16,8 @@ const { inferControlType, isForeignKey } = require("./inferControlType.cjs");
 const SYSTEM_FIELDS = new Set([
   "id", "createdAt", "created_at", "updatedAt", "updated_at",
   "createdBy", "senderId", "authorId", "ownerId", "userId", "clientId",
-  "status", "deletedAt", "deletedFor"
+  "organizerId", "status", "deletedAt", "deletedFor",
+  "deadline",
 ]);
 
 const RESULT_WITNESSES = new Set([

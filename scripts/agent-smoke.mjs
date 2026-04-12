@@ -293,7 +293,141 @@ async function main() {
   assert(ownershipResp.body.error === "ownership_denied", "13", "error === ownership_denied");
   assert(ownershipResp.body.entityName === "Booking", "13", "entityName === Booking");
 
-  process.stdout.write("\n[smoke ✓] Все 13 шагов прошли успешно\n");
+  // ============================================================
+  // PHASE 2 — PLANNING (Session C)
+  // ============================================================
+
+  log("14", "PHASE 2: Planning setup (typemap + intents)");
+  const planningOnt = await import("../src/domains/planning/ontology.js");
+  const planningInt = await import("../src/domains/planning/intents.js");
+  await fetch(`${HOST}/api/typemap?domain=planning`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(planningOnt.ONTOLOGY)
+  });
+  await fetch(`${HOST}/api/intents?domain=planning`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(planningInt.INTENTS)
+  });
+  ok("14", "planning setup complete");
+
+  log("15", "GET /api/agent/planning/schema");
+  const planSchema = await get("/api/agent/planning/schema", jwt);
+  assert(planSchema.status === 200, "15", "status 200", planSchema);
+  assert(planSchema.body.domain === "planning", "15", "domain === planning");
+  assert(planSchema.body.intents.length === 15, "15", `15 intents (got ${planSchema.body.intents.length})`, planSchema.body.intents.map(i => i.intentId));
+  const cps = planSchema.body.intents.find(i => i.intentId === "create_poll");
+  assert(!!cps, "15", "create_poll в schema");
+  assert(!!cps.relations, "15", "create_poll имеет relations блок");
+
+  log("16", "GET /api/agent/planning/world (пустой начальный)");
+  const planW0 = await get("/api/agent/planning/world", jwt);
+  assert(planW0.status === 200, "16", "status 200");
+  ok("16", `planning world keys: ${Object.keys(planW0.body.world).join(", ")}`);
+
+  log("17", "POST /exec/create_poll");
+  const cpResp = await post("/api/agent/planning/exec/create_poll", {
+    title: "Smoke Test Poll",
+    description: "Session C smoke"
+  }, jwt);
+  assert(cpResp.status === 200, "17", "create_poll 200", cpResp);
+  assert(cpResp.body.status === "confirmed", "17", "confirmed");
+  const newPollId = cpResp.body.createdEntity?.id;
+  assert(!!newPollId, "17", "createdEntity.id получен");
+
+  log("18", "GET /world — poll виден с organizerId");
+  const planW1 = await get("/api/agent/planning/world", jwt);
+  const createdPoll = (planW1.body.world.polls || []).find(p => p.id === newPollId);
+  assert(!!createdPoll, "18", "poll виден в world");
+  assert(createdPoll.organizerId === planSchema.body.viewer.id, "18", "organizerId === viewer.id");
+
+  log("19", "POST /exec/add_time_option × 2");
+  const ao1 = await post("/api/agent/planning/exec/add_time_option", {
+    pollId: newPollId, date: "2026-04-20", startTime: "13:00", endTime: "14:00"
+  }, jwt);
+  assert(ao1.status === 200, "19", "add_option 1 ok", ao1);
+  const opt1Id = ao1.body.createdEntity?.id;
+
+  const ao2 = await post("/api/agent/planning/exec/add_time_option", {
+    pollId: newPollId, date: "2026-04-20", startTime: "15:00", endTime: "16:00"
+  }, jwt);
+  assert(ao2.status === 200, "19", "add_option 2 ok");
+
+  log("20", "POST /exec/invite_participant (own email)");
+  const invResp = await post("/api/agent/planning/exec/invite_participant", {
+    pollId: newPollId,
+    name: planSchema.body.viewer.name,
+    email: planSchema.body.viewer.email
+  }, jwt);
+  assert(invResp.status === 200, "20", "invite_participant ok", invResp);
+
+  log("21", "GET /world — own participant via userId match");
+  const planW2 = await get("/api/agent/planning/world", jwt);
+  const ownPart = (planW2.body.world.participants || []).find(
+    p => p.userId === planSchema.body.viewer.id && p.pollId === newPollId
+  );
+  assert(!!ownPart, "21", "own participant найден через userId");
+
+  log("22", "POST /exec/open_poll");
+  const openResp = await post("/api/agent/planning/exec/open_poll", {
+    pollId: newPollId
+  }, jwt);
+  assert(openResp.status === 200, "22", "open_poll ok", openResp);
+
+  log("23", "POST /exec/vote_yes (own participant on option_1)");
+  const voteResp = await post("/api/agent/planning/exec/vote_yes", {
+    optionId: opt1Id,
+    participantId: ownPart.id
+  }, jwt);
+  assert(voteResp.status === 200, "23", "vote_yes ok", voteResp);
+
+  log("24", "POST /exec/close_poll");
+  const closeResp = await post("/api/agent/planning/exec/close_poll", {
+    pollId: newPollId
+  }, jwt);
+  assert(closeResp.status === 200, "24", "close_poll ok", closeResp);
+
+  log("25", "POST /exec/resolve_poll → Meeting создан");
+  const resolveResp = await post("/api/agent/planning/exec/resolve_poll", {
+    pollId: newPollId,
+    optionId: opt1Id
+  }, jwt);
+  assert(resolveResp.status === 200, "25", "resolve_poll ok", resolveResp);
+
+  log("26", "Ownership denial: cancel чужого poll → 403");
+  const foreignPollId = `poll_foreign_${Date.now()}`;
+  await fetch(`${HOST}/api/effects/seed`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify([{
+      id: `eff_fp_${Date.now()}`,
+      intent_id: "_seed",
+      alpha: "add",
+      target: "polls",
+      value: null,
+      scope: "account",
+      parent_id: null,
+      status: "confirmed",
+      ttl: null,
+      context: {
+        id: foreignPollId,
+        organizerId: "user_other",
+        title: "Foreign poll",
+        status: "draft",
+        createdAt: Date.now()
+      },
+      created_at: Date.now(),
+      resolved_at: Date.now()
+    }])
+  });
+  const cancelForeignResp = await post("/api/agent/planning/exec/cancel_poll", {
+    pollId: foreignPollId
+  }, jwt);
+  assert(cancelForeignResp.status === 403, "26", "cancel foreign 403", cancelForeignResp);
+  assert(cancelForeignResp.body.error === "ownership_denied", "26", "error ownership_denied");
+
+  process.stdout.write("\n[smoke ✓] Все 26 шагов прошли успешно\n");
 }
 
 main().catch(err => {

@@ -36,7 +36,12 @@ export const INTENTS = {
     }, antagonist: null, creates: null
   },
   vote_yes: {
-    name: "Доступен", particles: {
+    name: "Доступен",
+    parameters: [
+      { name: "optionId", type: "entityRef", entity: "TimeOption", required: true },
+      { name: "participantId", type: "entityRef", entity: "Participant", required: true }
+    ],
+    particles: {
       entities: ["option: TimeOption", "participant: Participant"],
       conditions: ["poll.status = 'open'"],
       effects: [{ α: "add", target: "votes", σ: "account" }],
@@ -45,7 +50,12 @@ export const INTENTS = {
     }, antagonist: null, creates: "Vote(yes)"
   },
   vote_no: {
-    name: "Недоступен", particles: {
+    name: "Недоступен",
+    parameters: [
+      { name: "optionId", type: "entityRef", entity: "TimeOption", required: true },
+      { name: "participantId", type: "entityRef", entity: "Participant", required: true }
+    ],
+    particles: {
       entities: ["option: TimeOption", "participant: Participant"],
       conditions: ["poll.status = 'open'"],
       effects: [{ α: "add", target: "votes", σ: "account" }],
@@ -54,7 +64,11 @@ export const INTENTS = {
     }, antagonist: null, creates: "Vote(no)"
   },
   close_poll: {
-    name: "Закрыть голосование", particles: {
+    name: "Закрыть голосование",
+    parameters: [
+      { name: "pollId", type: "entityRef", entity: "Poll", required: true }
+    ],
+    particles: {
       entities: ["poll: Poll"],
       conditions: ["poll.status = 'open'"],
       effects: [{ α: "replace", target: "poll.status", value: "closed", σ: "account" }],
@@ -63,7 +77,12 @@ export const INTENTS = {
     }, antagonist: null, creates: null
   },
   resolve_poll: {
-    name: "Выбрать время", particles: {
+    name: "Выбрать время",
+    parameters: [
+      { name: "pollId", type: "entityRef", entity: "Poll", required: true },
+      { name: "optionId", type: "entityRef", entity: "TimeOption", required: true }
+    ],
+    particles: {
       entities: ["poll: Poll", "option: TimeOption"],
       conditions: ["poll.status = 'closed'"],
       effects: [
@@ -102,7 +121,12 @@ export const INTENTS = {
     }, antagonist: null, creates: null
   },
   vote_maybe: {
-    name: "Возможно", particles: {
+    name: "Возможно",
+    parameters: [
+      { name: "optionId", type: "entityRef", entity: "TimeOption", required: true },
+      { name: "participantId", type: "entityRef", entity: "Participant", required: true }
+    ],
+    particles: {
       entities: ["option: TimeOption", "participant: Participant"],
       conditions: ["poll.status = 'open'"],
       effects: [{ α: "add", target: "votes", σ: "account" }],
@@ -111,7 +135,14 @@ export const INTENTS = {
     }, antagonist: null, creates: "Vote(maybe)"
   },
   suggest_alternative: {
-    name: "Предложить время", particles: {
+    name: "Предложить время",
+    parameters: [
+      { name: "pollId", type: "entityRef", entity: "Poll", required: true },
+      { name: "date", type: "datetime", required: true },
+      { name: "startTime", type: "datetime", required: true },
+      { name: "endTime", type: "datetime", required: true }
+    ],
+    particles: {
       entities: ["poll: Poll", "option: TimeOption"],
       conditions: ["poll.status = 'open'"],
       effects: [{ α: "add", target: "options", σ: "account" }],
@@ -120,7 +151,12 @@ export const INTENTS = {
     }, antagonist: null, creates: "TimeOption"
   },
   set_deadline: {
-    name: "Установить дедлайн", particles: {
+    name: "Установить дедлайн",
+    parameters: [
+      { name: "pollId", type: "entityRef", entity: "Poll", required: true },
+      { name: "deadline", type: "datetime", required: true }
+    ],
+    particles: {
       entities: ["poll: Poll"],
       conditions: ["poll.status = 'open'"],
       effects: [{ α: "replace", target: "poll.deadline", σ: "account" }],
@@ -138,7 +174,12 @@ export const INTENTS = {
     }, antagonist: "decline_invitation", creates: null
   },
   change_vote: {
-    name: "Изменить голос", particles: {
+    name: "Изменить голос",
+    parameters: [
+      { name: "voteId", type: "entityRef", entity: "Vote", required: true },
+      { name: "newValue", type: "text", required: true }
+    ],
+    particles: {
       entities: ["vote: Vote"],
       conditions: ["poll.status = 'open'"],
       effects: [{ α: "replace", target: "vote.value", σ: "account" }],
