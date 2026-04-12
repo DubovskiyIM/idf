@@ -252,7 +252,48 @@ async function main() {
       "create_booking.antagonists содержит cancel_booking (declared hint)");
   }
 
-  process.stdout.write("\n[smoke ✓] Все 12 шагов прошли успешно\n");
+  // Step 13: synthetic write-ownership check — попытка отменить чужую бронь
+  log("13", "POST /exec/cancel_booking с чужим bookingId (ownership_denied)");
+  // Seed чужой бронь через /api/effects/seed (bypass валидации)
+  const foreignBookingId = `book_foreign_${Date.now()}`;
+  const foreignEffect = {
+    id: `eff_foreign_${Date.now()}`,
+    intent_id: "_seed",
+    alpha: "add",
+    target: "bookings",
+    value: null,
+    scope: "account",
+    parent_id: null,
+    status: "confirmed",
+    ttl: null,
+    context: {
+      id: foreignBookingId,
+      clientId: "user_other",
+      specialistId: "spec_anya",
+      serviceId: "svc_haircut",
+      serviceName: "Стрижка",
+      slotId: "slot_foreign",
+      status: "confirmed",
+      price: 2000,
+      createdAt: Date.now()
+    },
+    created_at: Date.now(),
+    resolved_at: Date.now()
+  };
+  await fetch(`${HOST}/api/effects/seed`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify([foreignEffect])
+  });
+
+  const ownershipResp = await post("/api/agent/booking/exec/cancel_booking", {
+    bookingId: foreignBookingId
+  }, jwt);
+  assert(ownershipResp.status === 403, "13", "status 403 ownership_denied", ownershipResp);
+  assert(ownershipResp.body.error === "ownership_denied", "13", "error === ownership_denied");
+  assert(ownershipResp.body.entityName === "Booking", "13", "entityName === Booking");
+
+  process.stdout.write("\n[smoke ✓] Все 13 шагов прошли успешно\n");
 }
 
 main().catch(err => {
