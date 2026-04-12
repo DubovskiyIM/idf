@@ -25,13 +25,12 @@ export function Text({ node, ctx, item }) {
   // Mantine Text сам наследует цвет из темы (адаптируется к dark/light).
   const AdaptedText = getAdaptedComponent("primitive", "text");
   if (AdaptedText) {
-    // Объектный style — передаём через style prop, preset пропускаем
     const isStringPreset = typeof node.style === "string";
     return (
       <AdaptedText
         preset={isStringPreset ? node.style : undefined}
         style={{
-          ...(isStringPreset ? (node.sx || {}) : (node.style || {})),
+          ...(isStringPreset ? {} : (node.style || {})),
           ...(node.sx || {}),
         }}
       >

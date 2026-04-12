@@ -20,7 +20,8 @@ export function evalCondition(condition, ctx) {
   try {
     const fn = new Function(...Object.keys(ctx), `return !!(${condition})`);
     return fn(...Object.values(ctx));
-  } catch {
+  } catch (err) {
+    console.warn(`[eval] condition parse error: "${condition}"`, err.message);
     return true;
   }
 }

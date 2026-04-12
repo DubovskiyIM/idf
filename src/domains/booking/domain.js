@@ -148,8 +148,6 @@ export function buildEffects(intentId, ctx, world, drafts) {
       const newSlots = findConsecutiveSlots(world.slots || [], ctx.newSlotId, Math.ceil((service?.duration || 60) / 60)); if (!newSlots) return null;
       const newSlotIds = newSlots.map(s => s.id);
       ef({ alpha: "replace", target: "booking.slotId", scope: "account", value: newSlots[0].id, context: { id: booking.id, serviceName: booking.serviceName, slotIds: newSlotIds, newDate: newSlots[0].date, newStartTime: newSlots[0].startTime }, desc: describeEffect(intentId, "replace", { serviceName: booking.serviceName, newDate: newSlots[0].date, newStartTime: newSlots[0].startTime }) });
-      ef({ alpha: "replace", target: "booking.date", scope: "account", value: newSlots[0].date, context: { id: booking.id }, desc: `📋 Бронь: дата → ${newSlots[0].date}` });
-      ef({ alpha: "replace", target: "booking.startTime", scope: "account", value: newSlots[0].startTime, context: { id: booking.id }, desc: `📋 Бронь: время → ${newSlots[0].startTime}` });
       for (const sId of (booking.slotIds || [booking.slotId])) ef({ alpha: "replace", target: "slot.status", scope: "shared", value: "free", context: { id: sId }, desc: `🔓 Старый слот` });
       for (const s of newSlots) ef({ alpha: "replace", target: "slot.status", scope: "shared", value: "booked", context: { id: s.id }, desc: `🔒 Новый: ${s.date} ${s.startTime}` });
       break;
@@ -233,7 +231,7 @@ export function buildEffects(intentId, ctx, world, drafts) {
     case "create_booking": {
       const specialist = (world.specialists || []).find(s => s.id === ctx.specialistId);
       const service = (world.services || []).find(s => s.id === ctx.serviceId);
-      const slot = (world.timeslots || []).find(s => s.id === ctx.slotId);
+      const slot = (world.slots || world.timeslots || []).find(s => s.id === ctx.slotId);
       if (!specialist || !service || !slot) return null;
       if (slot.status !== "free") return null;
 

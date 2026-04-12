@@ -205,9 +205,11 @@ export function buildEffects(intentId, ctx, world, drafts) {
       const poll = (world.polls || []).find(p => p.id === vote.pollId);
       if (!poll || poll.status !== "open") return null;
       if (!ctx.newValue) return null;
+      const voter = (world.participants || []).find(p => p.id === vote.participantId);
+      const voterName = voter?.name || vote.participantName || "?";
       ef({ alpha: "replace", target: "vote.value", scope: "account", value: ctx.newValue,
-        context: { id: vote.id, participantName: vote.participantName, oldValue: vote.value, newValue: ctx.newValue },
-        desc: `↔ ${vote.participantName}: ${vote.value} → ${ctx.newValue}` });
+        context: { id: vote.id, participantName: voterName, oldValue: vote.value, newValue: ctx.newValue },
+        desc: `↔ ${voterName}: ${vote.value} → ${ctx.newValue}` });
       break;
     }
     case "send_reminder": {

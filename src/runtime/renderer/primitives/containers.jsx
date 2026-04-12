@@ -43,7 +43,11 @@ function normalizeIntent(spec) {
 
 function fireItemIntent(spec, ctx, item) {
   if (spec.opens === "overlay") {
-    ctx.openOverlay?.(spec.overlayKey, { item });
+    if (ctx.openOverlay) {
+      ctx.openOverlay(spec.overlayKey, { item });
+    } else {
+      console.warn(`[renderer] openOverlay не доступен для overlay key "${spec.overlayKey}"`);
+    }
     return;
   }
   ctx.exec(spec.intentId, { id: item?.id, entity: item });

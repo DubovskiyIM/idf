@@ -137,10 +137,12 @@ export function buildEffects(intentId, ctx, world, drafts) {
     case "execute_workflow": {
       const wf = (world.workflows || []).find(w => w.id === ctx.workflowId);
       if (!wf || wf.status !== "saved") return null;
-      // Не создаём эффекты на клиенте — сервер сделает всё
-      // Вызываем серверный executor напрямую
+      // Серверный executor создаёт execution + node results через SSE.
+      // Клиент: optimistic replace status=running для немедленного UI feedback.
       fetch(`/api/execute/${wf.id}`, { method: "POST" }).catch(() => {});
-      return null; // эффекты придут через SSE от сервера
+      ef({ alpha: "replace", target: "workflow.status", scope: "account", value: "running",
+        context: { id: wf.id }, desc: `▶ Запуск: ${wf.title || wf.id}` });
+      break;
     }
     case "stop_execution": {
       const exec = (world.executions || []).find(e => e.id === ctx.id);
