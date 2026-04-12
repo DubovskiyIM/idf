@@ -1,6 +1,6 @@
 import { useState, useMemo, useCallback, useEffect } from "react";
 import { v4 as uuid } from "uuid";
-import { deriveLinks } from "./links.js";
+import { computeAlgebra } from "./intentAlgebra.js";
 import { fold, foldDrafts, filterByStatus, buildTypeMap, applyPresentation } from "./fold.js";
 
 const ts = () => new Date().toLocaleTimeString("ru", { hour: "2-digit", minute: "2-digit", second: "2-digit", fractionalSecondDigits: 2 });
@@ -90,7 +90,7 @@ export function useEngine(domain) {
   const worldSemantic = useMemo(() => fold(activeEffects, typeMap), [activeEffects, typeMap]);
   const world = useMemo(() => applyPresentation(worldSemantic, activeEffects, typeMap), [worldSemantic, activeEffects, typeMap]);
   const drafts = useMemo(() => foldDrafts(activeEffects), [activeEffects]);
-  const links = useMemo(() => deriveLinks(domain.INTENTS), [domain]);
+  const algebra = useMemo(() => computeAlgebra(domain.INTENTS, domain.ONTOLOGY), [domain]);
 
   // === Overlay(I) — провизорное наложение для многофазных намерений ===
   const [overlay, setOverlay] = useState(null); // { intentId, ctx, effects: [] }
@@ -287,7 +287,7 @@ export function useEngine(domain) {
   }, [domain]);
 
   return {
-    world, worldForIntent, drafts, effects, signals, links,
+    world, worldForIntent, drafts, effects, signals, algebra,
     exec, execBatch, isApplicable, domain,
     // Overlay(I) — многофазные намерения
     overlay, overlayEntityIds,
