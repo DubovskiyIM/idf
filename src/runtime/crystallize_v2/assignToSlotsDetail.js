@@ -16,7 +16,7 @@ import {
   isUnsupportedInM2,
   normalizeCreates,
 } from "./assignToSlotsShared.js";
-import { getEntityFields, canRead } from "./ontologyHelpers.js";
+import { getEntityFields, canRead, inferFieldRole } from "./ontologyHelpers.js";
 import { getIntentIcon } from "./getIntentIcon.js";
 
 const SYSTEM_DETAIL_FIELDS = new Set([
@@ -575,76 +575,113 @@ function buildDetailBody(projection, ONTOLOGY, viewerRole = "self") {
   const fields = allFields.filter(f =>
     !SYSTEM_DETAIL_FIELDS.has(f.name) && canRead(f, viewerRole)
   );
-  const fieldNames = fields.map(f => f.name);
 
-  // Определяем hero-поля
-  const hasAvatar = fieldNames.includes("avatar");
-  const titleField = fieldNames.includes("name") ? "name"
-    : fieldNames.includes("title") ? "title" : null;
-  const hasBio = fieldNames.includes("bio") || fieldNames.includes("description");
-  const bioField = fieldNames.includes("bio") ? "bio" : fieldNames.includes("description") ? "description" : null;
-  const heroFields = new Set(["avatar", "name", "title", "bio", "description"]);
-
-  // Группируем остальные поля: stats (number/boolean) vs info
-  const STAT_TYPES = new Set(["number", "boolean"]);
-  const statFields = [];
-  const infoFields = [];
+  // Группируем поля по семантическим ролям
+  const byRole = {};
   for (const field of fields) {
-    if (heroFields.has(field.name)) continue;
-    if (STAT_TYPES.has(field.type)) {
-      statFields.push(field);
-    } else {
-      infoFields.push(field);
-    }
+    const role = inferFieldRole(field.name, field);
+    if (!byRole[role]) byRole[role] = [];
+    byRole[role].push(field);
   }
 
   const children = [];
 
-  // Hero: avatar + name + bio рядом
-  if (hasAvatar || titleField) {
-    const heroChildren = [];
-    if (hasAvatar) {
-      heroChildren.push({ type: "avatar", bind: "avatar", size: 80 });
-    }
-    const textParts = [];
-    if (titleField) {
-      textParts.push({ type: "heading", bind: titleField, level: 2 });
-    }
-    if (bioField) {
-      textParts.push({ type: "text", bind: bioField, style: "secondary", hideEmpty: true });
-    }
-    if (textParts.length > 0) {
-      heroChildren.push({
-        type: "column", gap: 4, sx: { flex: 1 },
-        children: textParts,
-      });
-    }
-    children.push({
-      type: "row", gap: 16, align: "flex-start",
-      children: heroChildren,
-    });
+  // 1. Hero image
+  const heroImageField = (byRole.heroImage || [])[0];
+  if (heroImageField) {
+    children.push({ type: "image", bind: heroImageField.name });
   }
 
-  // Stats bar: компактные бейджи в горизонтальной строке
-  if (statFields.length > 0) {
+  // 2. Title + description (или avatar + name + bio для User-like)
+  const titleField = (byRole.title || [])[0];
+  const descField = (byRole.description || [])[0];
+  const avatarField = (byRole.heroImage || []).find(f => f.name === "avatar");
+
+  if (avatarField && titleField) {
+    // User-like: avatar рядом с именем
+    const textParts = [{ type: "heading", bind: titleField.name, level: 2 }];
+    if (descField) textParts.push({ type: "text", bind: descField.name, style: "secondary", hideEmpty: true });
     children.push({
-      type: "statBar",
-      fields: statFields.map(f => ({
-        name: f.name,
-        label: f.label || f.name,
-        type: f.type,
+      type: "row", gap: 16, align: "flex-start",
+      children: [
+        { type: "avatar", bind: "avatar", size: 80 },
+        { type: "column", gap: 4, sx: { flex: 1 }, children: textParts },
+      ],
+    });
+  } else {
+    if (titleField) children.push({ type: "heading", bind: titleField.name, level: 1 });
+    if (descField) children.push({ type: "text", bind: descField.name, style: "secondary", hideEmpty: true });
+  }
+
+  // 3. PriceBlock
+  const priceFields = byRole.price || [];
+  if (priceFields.length > 0) {
+    const primaryOrder = ["currentPrice", "startPrice"];
+    const sorted = [...priceFields].sort((a, b) => {
+      const ai = primaryOrder.indexOf(a.name);
+      const bi = primaryOrder.indexOf(b.name);
+      return (ai === -1 ? 99 : ai) - (bi === -1 ? 99 : bi);
+    });
+    children.push({
+      type: "priceBlock",
+      fields: sorted.map((f, i) => ({
+        bind: f.name, label: f.label || f.name, primary: i === 0,
       })),
     });
   }
 
-  // Info: label:value пары
-  for (const field of infoFields) {
-    children.push({ ...fieldToAtom(field), hideEmpty: true });
+  // 4. Timer
+  for (const f of byRole.timer || []) {
+    children.push({ type: "timer", bind: f.name, label: f.label || f.name });
   }
 
-  return {
-    type: "column",
-    gap: 16,
-    children,
-  };
+  // 5. StatBar (metrics)
+  const metricFields = byRole.metric || [];
+  if (metricFields.length > 0) {
+    children.push({
+      type: "statBar",
+      fields: metricFields.map(f => ({
+        name: f.name, label: f.label || f.name, type: f.type,
+      })),
+    });
+  }
+
+  // 6. InfoSection: Доставка (location + shipping-info)
+  const locationFields = byRole.location || [];
+  const shippingInfoFields = (byRole.info || []).filter(f => /shipping/i.test(f.name));
+  const deliveryFields = [...locationFields, ...shippingInfoFields];
+  if (deliveryFields.length > 0) {
+    children.push({
+      type: "infoSection", title: "Доставка",
+      fields: deliveryFields.map(f => ({
+        bind: f.name, label: f.label || f.name,
+        format: f.type === "number" ? "currency" : undefined,
+      })),
+    });
+  }
+
+  // 7. InfoSection: Характеристики (badge + остальные info)
+  const badgeFields = byRole.badge || [];
+  const otherInfoFields = (byRole.info || []).filter(f => !/shipping/i.test(f.name));
+  const charFields = [...badgeFields, ...otherInfoFields];
+  if (charFields.length > 0) {
+    children.push({
+      type: "infoSection", title: "Характеристики",
+      fields: charFields.map(f => ({
+        bind: f.name, label: f.label || f.name,
+        format: f.type === "datetime" ? "datetime" : undefined,
+      })),
+    });
+  }
+
+  // 8. Refs
+  const refFields = byRole.ref || [];
+  if (refFields.length > 0) {
+    children.push({
+      type: "infoSection", title: "Связи",
+      fields: refFields.map(f => ({ bind: f.name, label: f.label || f.name })),
+    });
+  }
+
+  return { type: "column", gap: 16, children };
 }

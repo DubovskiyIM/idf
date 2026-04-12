@@ -98,6 +98,10 @@ function extractBinds(node) {
     if (n.bind) binds.push(n.bind);
     if (n.children) n.children.forEach(walk);
     if (n.item) walk(n.item);
+    // InfoSection/PriceBlock/StatBar: fields[].bind или fields[].name
+    if (Array.isArray(n.fields)) {
+      n.fields.forEach(f => { if (f.bind) binds.push(f.bind); if (f.name) binds.push(f.name); });
+    }
   };
   walk(node);
   return binds;
