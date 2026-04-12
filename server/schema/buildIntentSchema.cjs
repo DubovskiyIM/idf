@@ -26,11 +26,19 @@ function normalizeEffectTemplate(eff, creates) {
   return template;
 }
 
-function buildIntentSchema(intentId, intent, ontology, roleName) {
+function buildIntentSchema(intentId, intent, ontology, roleName, relations) {
   const particles = intent.particles || {};
   const parameters = inferParameters(intent, ontology);
   const conditions = parseConditions(particles.conditions || []);
   const effects = (particles.effects || []).map(e => normalizeEffectTemplate(e, intent.creates));
+
+  const defaultRelations = {
+    sequentialIn: [],
+    sequentialOut: [],
+    antagonists: [],
+    excluding: [],
+    parallel: []
+  };
 
   return {
     intentId,
@@ -42,7 +50,8 @@ function buildIntentSchema(intentId, intent, ontology, roleName) {
     creates: typeof intent.creates === "string" ? intent.creates : null,
     antagonist: intent.antagonist || null,
     irreversibility: intent.irreversibility || null,
-    phase: intent.phase || null
+    phase: intent.phase || null,
+    relations: relations || defaultRelations
   };
 }
 
