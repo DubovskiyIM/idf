@@ -233,7 +233,26 @@ async function main() {
   assert(blockResp.status === 403, "11", "block_slot 403", blockResp);
   assert(blockResp.body.error === "intent_not_allowed", "11", "error === intent_not_allowed");
 
-  process.stdout.write("\n[smoke ✓] Все 11 шагов прошли успешно\n");
+  // Step 12: GET /schema — проверка relations блока (Session B)
+  log("12", "GET /schema — проверка relations блока");
+  const schema2 = await get("/api/agent/booking/schema", jwt);
+  assert(schema2.status === 200, "12", "status 200");
+  for (const intent of schema2.body.intents) {
+    assert(!!intent.relations, "12", `${intent.intentId}.relations присутствует`);
+    assert(Array.isArray(intent.relations.sequentialIn), "12", `${intent.intentId}.sequentialIn — массив`);
+    assert(Array.isArray(intent.relations.sequentialOut), "12", `${intent.intentId}.sequentialOut — массив`);
+    assert(Array.isArray(intent.relations.antagonists), "12", `${intent.intentId}.antagonists — массив`);
+    assert(Array.isArray(intent.relations.excluding), "12", `${intent.intentId}.excluding — массив`);
+    assert(Array.isArray(intent.relations.parallel), "12", `${intent.intentId}.parallel — массив`);
+  }
+  // Property-check: cancel_booking должен быть в antagonists/sequentialIn create_booking
+  const cb = schema2.body.intents.find(i => i.intentId === "create_booking");
+  if (cb) {
+    assert(cb.relations.antagonists.includes("cancel_booking"), "12",
+      "create_booking.antagonists содержит cancel_booking (declared hint)");
+  }
+
+  process.stdout.write("\n[smoke ✓] Все 12 шагов прошли успешно\n");
 }
 
 main().catch(err => {
