@@ -14,7 +14,7 @@ export const ONTOLOGY = {
       type: "mirror"
     },
     Booking: {
-      fields: ["id", "clientId", "specialistId", "serviceId", "slotId", "status", "price", "createdAt"],
+      fields: ["id", "clientId", "specialistId", "serviceId", "serviceName", "slotId", "slotIds", "status", "price", "createdAt"],
       statuses: ["draft", "confirmed", "completed", "cancelled", "no_show"],
       ownerField: "clientId",
       type: "internal"

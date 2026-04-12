@@ -17,7 +17,7 @@ export const ONTOLOGY = {
       type: "internal"
     },
     Vote: {
-      fields: ["id", "participantId", "optionId", "pollId", "value"],
+      fields: ["id", "participantId", "participantName", "optionId", "pollId", "value", "date", "startTime", "createdAt"],
       type: "internal"
     },
     Meeting: {

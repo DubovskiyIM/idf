@@ -8,10 +8,10 @@ const ef = (α, target, σ = "account", extra = {}) => ({ α, target, σ, ...ext
 
 export const INTENTS = {
   // ===== СООБЩЕНИЯ (25) =====
-  send_message: intent("Отправить сообщение", ["message: Message", "conversation: Conversation"], [], [ef("add", "messages")], ["conversation.title", "draft_text"], "enter", { creates: "Message", parameters: [{ name: "content", type: "textarea", required: true, placeholder: "Сообщение…" }] }),
+  send_message: intent("Отправить сообщение", ["message: Message", "conversation: Conversation"], [], [ef("add", "messages"), ef("replace", "conversation.lastMessageAt")], ["conversation.title", "draft_text"], "enter", { creates: "Message", parameters: [{ name: "content", type: "textarea", required: true, placeholder: "Сообщение…" }] }),
   edit_message: intent("Редактировать", ["message: Message"], ["message.senderId = me.id"], [ef("replace", "message.content")], ["message.content"], "click", { phase: "investigation" }),
   delete_message: intent("Удалить сообщение", ["message: Message"], ["message.senderId = me.id"], [ef("replace", "message.deletedFor")], ["message.content"], "click"),
-  reply_to_message: intent("Ответить", ["message: Message", "conversation: Conversation"], [], [ef("add", "messages")], ["original_message.content"], "enter", { creates: "Message", parameters: [{ name: "content", type: "textarea", required: true, placeholder: "Ответить…" }] }),
+  reply_to_message: intent("Ответить", ["message: Message", "conversation: Conversation"], [], [ef("add", "messages"), ef("replace", "conversation.lastMessageAt")], ["original_message.content"], "enter", { creates: "Message", parameters: [{ name: "content", type: "textarea", required: true, placeholder: "Ответить…" }] }),
   forward_message: intent("Переслать", ["message: Message", "conversation: Conversation"], [], [ef("add", "messages")], ["message.content", "target_conversation.title"], "click", { creates: "Message" }),
   pin_message: intent("Закрепить сообщение", ["message: Message"], [], [ef("replace", "message.pinned", "account", { value: true })], ["message.content"], "click"),
   unpin_message: intent("Открепить сообщение", ["message: Message"], ["message.pinned = true"], [ef("replace", "message.pinned", "account", { value: false })], [], "click", { antagonist: "pin_message" }),
