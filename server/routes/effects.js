@@ -2,6 +2,7 @@ const { Router } = require("express");
 const db = require("../db.js");
 const { validate, cascadeReject, foldWorld } = require("../validator.js");
 const { ingestEffect } = require("../effect-pipeline.js");
+const { checkQuorum } = require("../schema/checkQuorum.cjs");
 const { v4: uuid } = require("uuid");
 
 const router = Router();
@@ -48,6 +49,33 @@ router.post("/", (req, res) => {
     broadcast,
     delay,
     onConfirmed: (stored) => {
+      // === Автозакрытие по кворуму ===
+      // При подтверждённом голосе проверяем: все участники проголосовали?
+      // Если да — автоматически закрываем опрос (как deadline, но по кворуму).
+      if (stored.intent_id === "vote_yes" || stored.intent_id === "vote_no" || stored.intent_id === "vote_maybe") {
+        try {
+          const ctx = typeof stored.context === "string" ? JSON.parse(stored.context) : (stored.context || {});
+          const pollId = ctx.pollId;
+          if (pollId) {
+            const world = foldWorld();
+            const quorum = checkQuorum(pollId, world);
+            if (quorum.reached) {
+              const closeId = uuid();
+              const closeNow = Date.now();
+              db.prepare(`
+                INSERT INTO effects (id, intent_id, alpha, target, value, scope, parent_id, status, ttl, context, created_at, resolved_at)
+                VALUES (?, 'close_poll', 'replace', 'poll.status', '"closed"', 'account', NULL, 'confirmed', NULL, ?, ?, ?)
+              `).run(closeId, JSON.stringify({ id: pollId }), closeNow, closeNow);
+              broadcast("effect:confirmed", { id: closeId });
+              console.log(`  [quorum] Опрос ${pollId} автоматически закрыт — все ${quorum.total} участников проголосовали`);
+            }
+          }
+        } catch (e) {
+          console.error("[quorum] Ошибка проверки кворума:", e);
+        }
+      }
+
+      // === Автозакрытие по дедлайну ===
       // Планировать автозакрытие опроса по дедлайну — доменно-специфичный
       // сайд-эффект planning-домена. Живёт здесь как callback, а не в
       // effect-pipeline.js, чтобы пайплайн оставался доменно-независимым.
