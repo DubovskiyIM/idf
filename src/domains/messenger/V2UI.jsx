@@ -224,8 +224,8 @@ export default function MessengerV2UI({ world, exec, execBatch }) {
                   padding: "10px 18px",
                   background: "transparent",
                   border: "none",
-                  borderBottom: isActive ? "2px solid #6366f1" : "2px solid transparent",
-                  color: isActive ? "#6366f1" : "#6b7280",
+                  borderBottom: isActive ? "2px solid var(--mantine-color-primary, #6366f1)" : "2px solid transparent",
+                  color: isActive ? "var(--mantine-color-primary, #6366f1)" : "var(--mantine-color-dimmed)",
                   fontWeight: isActive ? 700 : 500,
                   fontSize: 14,
                   cursor: "pointer",
@@ -260,12 +260,26 @@ export default function MessengerV2UI({ world, exec, execBatch }) {
           ) : (
             <div style={{
               width: 28, height: 28, borderRadius: "50%",
-              background: "#6366f1", color: "#fff",
+              background: "var(--mantine-color-primary, #6366f1)", color: "#fff",
               display: "flex", alignItems: "center", justifyContent: "center",
               fontSize: 13, fontWeight: 700,
             }}>{userInitial}</div>
           )}
         </button>
+        <button
+          onClick={logout}
+          title="Выйти"
+          style={{
+            padding: "4px 10px",
+            background: "transparent",
+            border: "none",
+            borderLeft: "1px solid var(--mantine-color-default-border)",
+            cursor: "pointer",
+            fontSize: 11,
+            color: "var(--mantine-color-dimmed)",
+            fontFamily: "inherit",
+          }}
+        >Выйти</button>
       </div>
 
       {/* Breadcrumbs — показываем только когда не на root-проекции.
