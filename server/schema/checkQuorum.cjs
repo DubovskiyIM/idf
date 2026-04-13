@@ -1,4 +1,8 @@
 /**
+ * @deprecated Используй агрегатные условия в intents.conditions:
+ *   "ratio(votes.participantId, participants, pollId=target.id) >= 1.0"
+ * Модуль будет удалён в следующем релизе.
+ *
  * checkQuorum — проверяет, достигнут ли кворум для poll'а.
  *
  * Поддерживает декларативные политики из ontology.entities.Poll.quorum:
