@@ -6,11 +6,12 @@ import { getAdaptedComponent } from "../adapters/registry.js";
 export default function FormModal({ spec, ctx, overlayContext, onClose }) {
   const item = overlayContext?.item;
 
-  // Для editable параметров — предзаполнить из item (по `bind` или по имени поля)
+  // Предзаполнение из item: (1) editable параметры, (2) любой per-item параметр
+  // если item содержит поле с тем же именем (edit_message.content ← item.content)
   const initial = {};
   for (const p of spec.parameters || []) {
-    if (p.editable && item) {
-      const fieldName = p.bind ? p.bind.split(".").pop() : p.name;
+    const fieldName = p.bind ? p.bind.split(".").pop() : p.name;
+    if (item && (p.editable || item[fieldName] !== undefined)) {
       initial[p.name] = item[fieldName] ?? p.default ?? "";
     } else {
       initial[p.name] = p.default ?? "";
@@ -83,7 +84,7 @@ export default function FormModal({ spec, ctx, overlayContext, onClose }) {
             cursor: submitting ? "default" : "pointer",
             fontSize: 13, fontWeight: 600, opacity: submitting ? 0.6 : 1,
           }}
-        >{submitting ? "…" : "Выполнить"}</button>
+        >{submitting ? "…" : (item ? "Сохранить" : "Выполнить")}</button>
       </div>
     </ModalShell>
   );
