@@ -2,8 +2,7 @@ const { Router } = require("express");
 const db = require("../db.js");
 const { validate, cascadeReject, foldWorld } = require("../validator.js");
 const { ingestEffect } = require("../effect-pipeline.js");
-const { checkQuorum } = require("../schema/checkQuorum.cjs");
-const { getOntology } = require("../ontologyRegistry.cjs");
+const { validateIntentConditions } = require("../intents.js");
 const { v4: uuid } = require("uuid");
 
 const router = Router();
@@ -51,17 +50,21 @@ router.post("/", (req, res) => {
     delay,
     onConfirmed: (stored) => {
       // === Автозакрытие по кворуму ===
-      // При подтверждённом голосе проверяем: все участники проголосовали?
-      // Если да — автоматически закрываем опрос (как deadline, но по кворуму).
-      if (stored.intent_id === "vote_yes" || stored.intent_id === "vote_no" || stored.intent_id === "vote_maybe") {
+      // При подтверждённом голосе проверяем conditions close_poll.
+      // Если агрегатное условие ratio() выполнено — автоматически закрываем.
+      if (stored.intent_id?.startsWith("vote_")) {
         try {
           const ctx = typeof stored.context === "string" ? JSON.parse(stored.context) : (stored.context || {});
           const pollId = ctx.pollId;
           if (pollId) {
             const world = foldWorld();
-            const ontology = getOntology("planning");
-            const quorum = checkQuorum(pollId, world, ontology);
-            if (quorum.reached) {
+            const mockEffect = {
+              intent_id: "close_poll",
+              target: "poll.status",
+              context: { id: pollId },
+            };
+            const result = validateIntentConditions(mockEffect, world);
+            if (result.valid) {
               const closeId = uuid();
               const closeNow = Date.now();
               db.prepare(`
@@ -69,11 +72,11 @@ router.post("/", (req, res) => {
                 VALUES (?, 'close_poll', 'replace', 'poll.status', '"closed"', 'account', NULL, 'confirmed', NULL, ?, ?, ?)
               `).run(closeId, JSON.stringify({ id: pollId }), closeNow, closeNow);
               broadcast("effect:confirmed", { id: closeId });
-              console.log(`  [quorum] Опрос ${pollId} автоматически закрыт — все ${quorum.total} участников проголосовали`);
+              console.log(`  [auto-close] Опрос ${pollId} автоматически закрыт — conditions close_poll выполнены`);
             }
           }
         } catch (e) {
-          console.error("[quorum] Ошибка проверки кворума:", e);
+          console.error("[auto-close] Ошибка проверки условий:", e);
         }
       }
 
