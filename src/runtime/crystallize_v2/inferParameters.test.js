@@ -96,4 +96,36 @@ describe("inferParameters", () => {
     expect(names).toContain("query");
     expect(names).not.toContain("results");
   });
+
+  it("пропускает объектные computed witnesses", () => {
+    const intent = {
+      particles: {
+        witnesses: [
+          "title",
+          { field: "bidCount", compute: "count(bids, listingId=target.id)" },
+          "description",
+        ],
+        effects: [{ α: "add", target: "listings" }],
+      },
+      creates: "Listing",
+    };
+    const params = inferParameters(intent, { entities: { Listing: { fields: [] } } });
+    const names = params.map(p => p.name);
+    expect(names).toContain("title");
+    expect(names).toContain("description");
+    expect(names).not.toContain("bidCount");
+  });
+
+  it("массив только из computed witnesses → пустые параметры от witnesses", () => {
+    const intent = {
+      particles: {
+        witnesses: [
+          { field: "bidCount", compute: "count(bids, listingId=target.id)" },
+        ],
+        effects: [{ α: "replace", target: "listing.status" }],
+      },
+    };
+    const params = inferParameters(intent, {});
+    expect(params).toHaveLength(0);
+  });
 });

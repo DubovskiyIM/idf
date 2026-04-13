@@ -51,6 +51,9 @@ export function inferParameters(intent, ONTOLOGY) {
   for (const w of witnesses) {
     if (RESULT_WITNESSES.has(w)) continue;
 
+    // Computed witness — объект {field, compute}, не параметр ввода
+    if (typeof w === "object" && w !== null && w.compute) continue;
+
     if (w.includes(".")) {
       // Точечный: read-only preview, если не investigation
       if (phase === "investigation") {
