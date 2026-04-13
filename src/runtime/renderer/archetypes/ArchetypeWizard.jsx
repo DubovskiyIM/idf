@@ -277,7 +277,7 @@ export default function ArchetypeWizard({ slots, projection, ctx }) {
   ));
 
   return (
-    <div style={{ padding: 16, maxWidth: 600, margin: "0 auto", fontFamily: "system-ui, sans-serif" }}>
+    <div style={{ padding: 16, maxWidth: 600, margin: "0 auto", fontFamily: "system-ui, sans-serif", overflowY: "auto", height: "100%" }}>
       {/* Step indicators */}
       <div style={{ display: "flex", gap: 8, marginBottom: 24, justifyContent: "center", flexWrap: "wrap" }}>
         {steps.map((s, i) => (
