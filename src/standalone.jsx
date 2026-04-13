@@ -30,57 +30,17 @@ import { shadcnAdapter } from "./runtime/renderer/adapters/shadcn/index.jsx";
 import { registerCanvas } from "./runtime/renderer/archetypes/ArchetypeCanvas.jsx";
 import CalendarCanvas from "./domains/lifequest/canvas/CalendarCanvas.jsx";
 import VisionBoardCanvas from "./domains/lifequest/canvas/VisionBoardCanvas.jsx";
-import RadarChart from "./domains/lifequest/canvas/RadarChart.jsx";
+import PointACanvas from "./domains/lifequest/canvas/PointACanvas.jsx";
 
 // Регистрация domain-specific canvas-компонентов
 registerCanvas("calendar", ({ world, exec, viewer, ctx }) => (
   <CalendarCanvas world={world} viewer={viewer} exec={exec}
-    onDayClick={(date) => ctx.navigate?.("today", { date })} />
+    onDayClick={(date) => ctx.navigate?.("today", { userId: viewer?.id, date })} />
 ));
 registerCanvas("vision_board", ({ world, exec, viewer }) => (
   <VisionBoardCanvas world={world} viewer={viewer} exec={exec} />
 ));
-registerCanvas("point_a", ({ world, viewer, exec }) => {
-  const spheres = (world.spheres || []).sort((a, b) => (a.sortOrder || 0) - (b.sortOrder || 0));
-  const assessments = (world.sphereAssessments || []).filter(a => a.userId === viewer?.id);
-  return (
-    <div style={{ padding: "var(--spacing-doodle, 16px)", fontFamily: "var(--font-doodle, system-ui)" }}>
-      <h2 style={{ fontSize: 20, fontWeight: 700, color: "var(--color-doodle-ink, #5c4033)", textDecoration: "underline", textDecorationStyle: "wavy", textDecorationColor: "var(--color-doodle-border, #c4a77d)", marginBottom: 16 }}>
-        🧭 Точка А — колесо жизни
-      </h2>
-      <RadarChart spheres={spheres} assessments={assessments} />
-      <div style={{ marginTop: 16 }}>
-        {spheres.map(s => {
-          const a = assessments.find(x => x.sphereId === s.id);
-          return (
-            <div key={s.id} style={{ display: "flex", alignItems: "center", gap: 8, padding: "6px 0", borderBottom: "1px dotted var(--color-doodle-border, #c4a77d)" }}>
-              <span style={{ fontSize: 18 }}>{s.icon}</span>
-              <span style={{ flex: 1, color: "var(--color-doodle-ink, #5c4033)" }}>{s.name}</span>
-              <span style={{ fontWeight: 700, color: a ? "var(--color-doodle-accent, #4a7c59)" : "var(--color-doodle-ink-light, #8b7355)" }}>
-                {a ? `${a.score}/10` : "—"}
-              </span>
-              {a?.targetScore && (
-                <span style={{ fontSize: 12, color: "var(--color-doodle-gold, #d4a76a)" }}>→ {a.targetScore}</span>
-              )}
-            </div>
-          );
-        })}
-      </div>
-      <button
-        onClick={() => exec("assess_sphere", {})}
-        style={{
-          marginTop: 16, padding: "8px 16px", borderRadius: "var(--radius-doodle, 12px)",
-          border: "2px dashed var(--color-doodle-border, #c4a77d)",
-          background: "var(--color-doodle-highlight, #fff3cd)",
-          fontFamily: "var(--font-doodle, system-ui)", cursor: "pointer",
-          color: "var(--color-doodle-ink, #5c4033)",
-        }}
-      >
-        ✏️ Оценить сферу
-      </button>
-    </div>
-  );
-});
+registerCanvas("point_a", PointACanvas);
 
 // Домены с переключением адаптера
 const DOMAIN_ADAPTERS = {
