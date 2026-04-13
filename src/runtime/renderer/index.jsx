@@ -4,6 +4,7 @@ import ArchetypeDetail from "./archetypes/ArchetypeDetail.jsx";
 import ArchetypeForm from "./archetypes/ArchetypeForm.jsx";
 import ArchetypeCanvas from "./archetypes/ArchetypeCanvas.jsx";
 import ArchetypeDashboard from "./archetypes/ArchetypeDashboard.jsx";
+import ArchetypeWizard from "./archetypes/ArchetypeWizard.jsx";
 import ArchetypeErrorBoundary from "./ErrorBoundary.jsx";
 import { validateArtifact } from "./validation/validateArtifact.js";
 
@@ -14,6 +15,7 @@ const ARCHETYPES = {
   form: ArchetypeForm,
   canvas: ArchetypeCanvas,
   dashboard: ArchetypeDashboard,
+  wizard: ArchetypeWizard,
 };
 
 export default function ProjectionRendererV2({
