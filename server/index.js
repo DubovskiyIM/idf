@@ -25,6 +25,10 @@ app.use("/api/entities", entitiesRouter);
 const { makeAgentRouter } = require("./routes/agent.js");
 app.use("/api/agent/:domain", makeAgentRouter(effectsRouter.broadcast));
 
+// LLM enrichment — кристаллизация через Claude API
+const crystallizeRouter = require("./routes/crystallize.js");
+app.use("/api/crystallize", crystallizeRouter);
+
 const { startSync, setBroadcast } = require("./boundary.js");
 const { executeWorkflow, setBroadcast: setExecBroadcast } = require("./executor.js");
 setBroadcast(effectsRouter.broadcast);

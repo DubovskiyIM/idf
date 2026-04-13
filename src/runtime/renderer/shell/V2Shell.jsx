@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo, useState, useCallback, useEffect } from "react";
 import ProjectionRendererV2 from "../index.jsx";
 import { crystallizeV2 } from "../../crystallize_v2/index.js";
 import { generateEditProjections } from "../../crystallize_v2/formGrouping.js";
@@ -106,7 +106,37 @@ export default function V2Shell({
     ...(current?.params || {}),
   }), [world, current]);
 
-  const currentArtifact = current ? artifacts[current.projectionId] : null;
+  // LLM enrichment state
+  const [enrichedArtifacts, setEnrichedArtifacts] = useState({});
+  const [enriching, setEnriching] = useState(false);
+  const [llmAvailable, setLlmAvailable] = useState(false);
+
+  useEffect(() => {
+    fetch("/api/crystallize/status").then(r => r.json()).then(d => setLlmAvailable(d.available)).catch(() => {});
+  }, []);
+
+  const enrichCurrent = useCallback(async () => {
+    if (!current || enriching) return;
+    const art = artifacts[current.projectionId];
+    if (!art) return;
+    setEnriching(true);
+    try {
+      const r = await fetch("/api/crystallize/enrich", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ artifact: art, ontology: domain.ONTOLOGY, domain: domainId }),
+      });
+      if (r.ok) {
+        const data = await r.json();
+        setEnrichedArtifacts(prev => ({ ...prev, [current.projectionId]: data.enrichedArtifact }));
+      }
+    } catch { /* ignore */ }
+    setEnriching(false);
+  }, [current, artifacts, domain, domainId, enriching]);
+
+  const rawArtifact = current ? artifacts[current.projectionId] : null;
+  const currentArtifact = (current && enrichedArtifacts[current.projectionId]) || rawArtifact;
+  const isEnriched = current && !!enrichedArtifacts[current.projectionId];
   const currentProjectionDef = current ? allProjections[current.projectionId] : null;
 
   const isOnRoot = rootProjections.includes(current?.projectionId);
@@ -133,15 +163,35 @@ export default function V2Shell({
 
   const mainContent = (
     <>
-      {!isOnRoot && (
-        <Breadcrumbs
-          history={history}
-          current={current}
-          canGoBack={canGoBack}
-          onBack={back}
-          projectionNames={projectionNames}
-        />
-      )}
+      <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+        {!isOnRoot && (
+          <div style={{ flex: 1 }}>
+            <Breadcrumbs
+              history={history}
+              current={current}
+              canGoBack={canGoBack}
+              onBack={back}
+              projectionNames={projectionNames}
+            />
+          </div>
+        )}
+        {isOnRoot && <div style={{ flex: 1 }} />}
+        {llmAvailable && currentArtifact && (
+          <button
+            onClick={enrichCurrent}
+            disabled={enriching}
+            title={isEnriched ? "Уже обогащён через LLM" : "Обогатить labels/icons через Claude"}
+            style={{
+              padding: "4px 10px", borderRadius: 6, border: "1px solid var(--mantine-color-default-border, #d1d5db)",
+              background: isEnriched ? "var(--mantine-color-violet-light, #ede9fe)" : "transparent",
+              color: "var(--mantine-color-text, #374151)", fontSize: 11, cursor: enriching ? "wait" : "pointer",
+              opacity: enriching ? 0.6 : 1, whiteSpace: "nowrap",
+            }}
+          >
+            {enriching ? "⏳ Обогащение..." : isEnriched ? "✨ Обогащён" : "✨ LLM"}
+          </button>
+        )}
+      </div>
       <div style={{ flex: 1, overflow: "hidden", position: "relative", minHeight: 0 }}>
         {currentArtifact ? (
           <ProjectionRendererV2
