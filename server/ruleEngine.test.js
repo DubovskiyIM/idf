@@ -54,3 +54,52 @@ describe("resolveContext", () => {
     expect(resolveContext(mapping, storedContext)).toEqual({ id: undefined });
   });
 });
+
+const { buildActionEffect } = require("./ruleEngine.js");
+
+describe("buildActionEffect", () => {
+  it("строит эффект из single-effect intent", () => {
+    const intent = {
+      particles: {
+        effects: [{ α: "replace", target: "poll.status", value: "closed" }]
+      }
+    };
+    const context = { id: "P1" };
+    const effect = buildActionEffect("close_poll", intent, context);
+
+    expect(effect.intent_id).toBe("close_poll");
+    expect(effect.alpha).toBe("replace");
+    expect(effect.target).toBe("poll.status");
+    expect(effect.value).toBe("closed");
+    expect(effect.context).toEqual({ id: "P1" });
+    expect(effect.scope).toBe("account");
+    expect(effect.id).toBeTruthy();
+    expect(effect.created_at).toBeTruthy();
+  });
+
+  it("оборачивает multi-effect intent в batch", () => {
+    const intent = {
+      particles: {
+        effects: [
+          { α: "replace", target: "order.status", value: "completed" },
+          { α: "replace", target: "order.completedAt" },
+        ]
+      }
+    };
+    const context = { id: "O1" };
+    const effect = buildActionEffect("complete_order", intent, context);
+
+    expect(effect.alpha).toBe("batch");
+    expect(effect.target).toBe("order");
+    expect(effect.intent_id).toBe("complete_order");
+    expect(effect.value).toHaveLength(2);
+    expect(effect.value[0]).toEqual({
+      alpha: "replace", target: "order.status", value: "completed",
+      context: { id: "O1" }, scope: "account"
+    });
+    expect(effect.value[1]).toEqual({
+      alpha: "replace", target: "order.completedAt", value: undefined,
+      context: { id: "O1" }, scope: "account"
+    });
+  });
+});

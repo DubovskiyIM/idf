@@ -30,4 +30,43 @@ function resolveContext(mapping, storedContext) {
   return result;
 }
 
-module.exports = { matchTrigger, resolveContext };
+function buildActionEffect(actionIntentId, intent, resolvedContext) {
+  const effects = intent.particles?.effects || [];
+  const id = `rule_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+  const now = Date.now();
+
+  if (effects.length === 1) {
+    const ef = effects[0];
+    return {
+      id,
+      intent_id: actionIntentId,
+      alpha: ef.α,
+      target: ef.target,
+      value: ef.value,
+      scope: ef.σ || "account",
+      context: resolvedContext,
+      created_at: now,
+    };
+  }
+
+  // Multi-effect → batch
+  const base = effects[0]?.target?.split(".")[0] || actionIntentId;
+  return {
+    id,
+    intent_id: actionIntentId,
+    alpha: "batch",
+    target: base,
+    value: effects.map(ef => ({
+      alpha: ef.α,
+      target: ef.target,
+      value: ef.value,
+      context: resolvedContext,
+      scope: ef.σ || "account",
+    })),
+    scope: "account",
+    context: resolvedContext,
+    created_at: now,
+  };
+}
+
+module.exports = { matchTrigger, resolveContext, buildActionEffect };
