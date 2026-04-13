@@ -105,22 +105,22 @@ export const INTENTS = {
     "click"),
 
   feature_listing: intent("В рекомендуемые", ["listing: Listing"],
-    ["listing.status = 'active'"],
+    ["listing.status = 'active'", "listing.moderatorOnly = true"],
     [ef("replace", "listing.featured", "account", { value: true })],
     [], "click", { antagonist: "unfeature_listing" }),
 
   unfeature_listing: intent("Убрать из рекомендуемых", ["listing: Listing"],
-    ["listing.featured = true"],
+    ["listing.featured = true", "listing.moderatorOnly = true"],
     [ef("replace", "listing.featured", "account", { value: false })],
     [], "click", { antagonist: "feature_listing" }),
 
   suspend_listing: intent("Заблокировать лот", ["listing: Listing"],
-    ["listing.status = 'active'"],
+    ["listing.status = 'active'", "listing.moderatorOnly = true"],
     [ef("replace", "listing.status", "account", { value: "suspended" })],
     [], "click", { irreversibility: "medium" }),
 
   restore_listing: intent("Восстановить лот", ["listing: Listing"],
-    ["listing.status = 'suspended'"],
+    ["listing.status = 'suspended'", "listing.moderatorOnly = true"],
     [ef("replace", "listing.status", "account", { value: "active" })],
     [], "click"),
 
@@ -389,7 +389,7 @@ export const INTENTS = {
     ["listing.status = 'active'"],
     [ef("add", "watchlists")],
     ["listing.title"], "click",
-    { creates: "Watchlist", antagonist: "remove_from_watchlist", parameters: [] }),
+    { antagonist: "remove_from_watchlist", parameters: [] }),
 
   remove_from_watchlist: intent("Убрать из избранного", ["watchlist: Watchlist"],
     ["watchlist.userId = me.id"],
@@ -948,18 +948,18 @@ export const INTENTS = {
     [], "click", { antagonist: "approve_verification" }),
 
   request_authenticity_check: intent("Проверка подлинности", ["listing: Listing"],
-    [],
+    ["listing.moderatorOnly = true"],
     [ef("add", "authenticityChecks")],
     ["listing.title"],
     "click"),
 
   certify_listing: intent("Сертифицировать лот", ["listing: Listing"],
-    [],
+    ["listing.moderatorOnly = true"],
     [ef("replace", "listing.certified", "account", { value: true })],
     [], "click"),
 
   report_counterfeit: intent("Подделка", ["listing: Listing"],
-    [],
+    ["listing.moderatorOnly = true"],
     [ef("add", "reports")],
     ["description"],
     "click"),

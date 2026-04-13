@@ -16,11 +16,11 @@ export const PROJECTIONS = {
     name: "Лот",
     kind: "detail",
     query: "детали одного лота с историей ставок",
-    entities: ["Listing", "Bid", "User"],
+    entities: ["Listing", "Bid"],
     mainEntity: "Listing",
     idParam: "listingId",
     routeEntities: ["Bid"],
-    witnesses: ["title", "description", "currentPrice", "startPrice", "buyNowPrice", { field: "bidCount", compute: "count(bids, listingId=target.id)" }, "auctionEnd", "condition", "images", "shippingCost", "shippingFrom", "status", "seller.name", "seller.rating"],
+    witnesses: ["title", "description", "currentPrice", "startPrice", "buyNowPrice", { field: "bidCount", compute: "count(bids, listingId=target.id)" }, "auctionEnd", "condition", "images", "shippingCost", "shippingFrom", "status"],
     subCollections: [
       { entity: "Bid", foreignKey: "listingId", sort: "-amount", label: "Ставки" },
     ],
@@ -102,7 +102,7 @@ export const PROJECTIONS = {
     mainEntity: "Order",
     idParam: "orderId",
     routeEntities: ["Listing", "Dispute"],
-    witnesses: ["totalAmount", "finalPrice", "shippingCost", "status", "trackingNumber", "shippingAddress", "paidAt", "shippedAt", "deliveredAt", "listing.title", "seller.name", "buyer.name"],
+    witnesses: ["totalAmount", "finalPrice", "shippingCost", "status", "trackingNumber", "shippingAddress", "paidAt", "shippedAt", "deliveredAt", "listing.title"],
   },
 
   watchlist: {
