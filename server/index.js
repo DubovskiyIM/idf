@@ -90,6 +90,20 @@ app.post("/api/execute/:workflowId", async (req, res) => {
 const authRouter = require("./routes/auth.js");
 app.use("/api/auth", authRouter);
 
+// Production: раздаём Vite build из dist/
+const path = require("path");
+const fs = require("fs");
+const distPath = path.join(__dirname, "..", "dist");
+if (fs.existsSync(distPath)) {
+  app.use(express.static(distPath));
+  // SPA fallback: все не-API маршруты → index.html
+  app.get("*", (req, res, next) => {
+    if (req.path.startsWith("/api/") || req.path.startsWith("/ws")) return next();
+    res.sendFile(path.join(distPath, "index.html"));
+  });
+  console.log("  [static] Раздаём dist/ (production mode)");
+}
+
 // WebSocket
 const http = require("http");
 const server = http.createServer(app);
