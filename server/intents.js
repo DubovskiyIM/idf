@@ -49,11 +49,25 @@ function getDomainIntents(domain) {
   return REGISTRY[domain] ? { ...REGISTRY[domain] } : {};
 }
 
+function compareOp(actual, op, expected) {
+  switch (op) {
+    case "=": return actual === expected;
+    case "!=": return actual !== expected;
+    case ">=": return actual >= expected;
+    case ">": return actual > expected;
+    case "<=": return actual <= expected;
+    case "<": return actual < expected;
+    default: return false;
+  }
+}
+
 /**
- * Проверка одного условия формата "entity.field <op> <value>".
+ * Проверка одного условия формата "entity.field <op> <value>"
+ * или агрегатного предиката count()/ratio().
  * Поддерживает: =, !=, IN, null, true/false, строковые литералы, me.id.
+ * Агрегаты: count(collection, fk=target.id) <cmp> N, ratio(...) <cmp> N.
  */
-function evalIntentCondition(condStr, entity, ctx) {
+function evalIntentCondition(condStr, entity, ctx, world) {
   if (!entity) return false;
   const c = condStr.trim();
 
@@ -79,6 +93,31 @@ function evalIntentCondition(condStr, entity, ctx) {
   if (mIn) {
     const values = mIn[2].split(",").map(v => v.trim().replace(/'/g, ""));
     return values.includes(entity[mIn[1]]);
+  }
+
+  // count(collection, foreignKey=target.id) <cmp> N
+  const mCount = c.match(/^count\((\w+),\s*(\w+)=target\.id\)\s*(=|!=|>=|>|<=|<)\s*(\d+(?:\.\d+)?)$/);
+  if (mCount) {
+    if (!world) return true;
+    const targetId = entity?.id;
+    if (!targetId) return true;
+    const [, collection, fkField, op, threshold] = mCount;
+    const items = (world[collection] || []).filter(item => item[fkField] === targetId);
+    return compareOp(items.length, op, parseFloat(threshold));
+  }
+
+  // ratio(collection.distinctField, totalCollection, foreignKey=target.id) <cmp> N
+  const mRatio = c.match(/^ratio\((\w+)\.(\w+),\s*(\w+),\s*(\w+)=target\.id\)\s*(=|!=|>=|>|<=|<)\s*(\d+(?:\.\d+)?)$/);
+  if (mRatio) {
+    if (!world) return true;
+    const targetId = entity?.id;
+    if (!targetId) return true;
+    const [, collection, distinctField, totalCollection, fkField, op, threshold] = mRatio;
+    const filtered = (world[collection] || []).filter(item => item[fkField] === targetId);
+    const distinct = new Set(filtered.map(item => item[distinctField])).size;
+    const total = (world[totalCollection] || []).filter(item => item[fkField] === targetId).length;
+    const ratio = total > 0 ? distinct / total : 0;
+    return compareOp(ratio, op, parseFloat(threshold));
   }
 
   return true;
