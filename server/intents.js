@@ -194,10 +194,18 @@ function validateIntentConditions(effect, world) {
   return { valid: true };
 }
 
+function getDomainByIntentId(intentId) {
+  for (const [domain, intents] of Object.entries(REGISTRY)) {
+    if (intents[intentId]) return domain;
+  }
+  return null;
+}
+
 module.exports = {
   registerIntents,
   getIntent,
   getDomainIntents,
+  getDomainByIntentId,
   validateIntentConditions,
   evalIntentCondition,
   _registry: REGISTRY,

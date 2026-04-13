@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach } from "vitest";
 
-const { evalIntentCondition, registerIntents, validateIntentConditions, _registry } = require("../intents.js");
+const { evalIntentCondition, registerIntents, validateIntentConditions, getDomainByIntentId, _registry } = require("../intents.js");
 
 const world = {
   bids: [
@@ -187,5 +187,22 @@ describe("validateIntentConditions — aggregate conditions", () => {
     const result = validateIntentConditions(effect, w);
     expect(result.valid).toBe(false);
     expect(result.reason).toContain("count(");
+  });
+});
+
+describe("getDomainByIntentId", () => {
+  beforeEach(() => {
+    for (const key of Object.keys(_registry)) delete _registry[key];
+    registerIntents({ vote_yes: { name: "Vote Yes", particles: { conditions: [] } } }, "planning");
+    registerIntents({ place_bid: { name: "Place Bid", particles: { conditions: [] } } }, "meshok");
+  });
+
+  it("находит домен по intent_id", () => {
+    expect(getDomainByIntentId("vote_yes")).toBe("planning");
+    expect(getDomainByIntentId("place_bid")).toBe("meshok");
+  });
+
+  it("возвращает null для неизвестного intent_id", () => {
+    expect(getDomainByIntentId("unknown_intent")).toBeNull();
   });
 });
