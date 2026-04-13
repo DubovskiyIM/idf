@@ -213,6 +213,15 @@ export const ONTOLOGY = {
     "user_is_verified": "user.verified = true",
   },
 
+  rules: [
+    {
+      id: "delivery_autocomplete",
+      trigger: "confirm_delivery",
+      action: "complete_order",
+      context: { id: "effect.id" }
+    }
+  ],
+
   roles: {
     buyer: {
       label: "Покупатель",

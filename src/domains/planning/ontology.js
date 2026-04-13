@@ -35,6 +35,14 @@ export const ONTOLOGY = {
     "poll_is_open": "poll.status = 'open'",
     "poll_is_closed": "poll.status = 'closed'",
   },
+  rules: [
+    {
+      id: "quorum_autoclose",
+      trigger: "vote_*",
+      action: "close_poll",
+      context: { id: "effect.pollId" }
+    }
+  ],
   roles: {
     agent: {
       label: "Агент (API)",
