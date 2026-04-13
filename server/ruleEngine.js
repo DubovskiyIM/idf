@@ -69,4 +69,45 @@ function buildActionEffect(actionIntentId, intent, resolvedContext) {
   };
 }
 
-module.exports = { matchTrigger, resolveContext, buildActionEffect };
+function evaluateRules(stored, worldThunk, deps) {
+  const { getDomainByIntentId, getOntology, validateIntentConditions, getIntent } = deps;
+
+  const storedCtx = typeof stored.context === "string"
+    ? JSON.parse(stored.context)
+    : (stored.context || {});
+
+  const domain = getDomainByIntentId(stored.intent_id);
+  if (!domain) return [];
+
+  const ontology = getOntology(domain);
+  const rules = ontology?.rules || [];
+  if (rules.length === 0) return [];
+
+  const matched = rules.filter(rule => matchTrigger(rule.trigger, stored.intent_id));
+  if (matched.length === 0) return [];
+
+  const world = worldThunk();
+  const results = [];
+
+  for (const rule of matched) {
+    const intent = getIntent(rule.action);
+    if (!intent) continue;
+
+    const resolvedCtx = resolveContext(rule.context || {}, storedCtx);
+    const mockEffect = {
+      intent_id: rule.action,
+      target: intent.particles?.effects?.[0]?.target || rule.action,
+      context: resolvedCtx,
+    };
+
+    const validation = validateIntentConditions(mockEffect, world);
+    if (validation.valid) {
+      const effect = buildActionEffect(rule.action, intent, resolvedCtx);
+      results.push({ rule, effect });
+    }
+  }
+
+  return results;
+}
+
+module.exports = { matchTrigger, resolveContext, buildActionEffect, evaluateRules };

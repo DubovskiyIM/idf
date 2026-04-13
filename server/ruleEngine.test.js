@@ -103,3 +103,100 @@ describe("buildActionEffect", () => {
     });
   });
 });
+
+const { evaluateRules } = require("./ruleEngine.js");
+
+describe("evaluateRules", () => {
+  const planningOntology = {
+    rules: [
+      { id: "quorum_autoclose", trigger: "vote_*", action: "close_poll", context: { id: "effect.pollId" } }
+    ]
+  };
+
+  const closePollIntent = {
+    name: "Закрыть голосование",
+    particles: {
+      entities: ["poll: Poll"],
+      conditions: ["poll.status = 'open'", "ratio(votes.participantId, participants, pollId=target.id) >= 1.0"],
+      effects: [{ α: "replace", target: "poll.status", value: "closed" }],
+      witnesses: [], confirmation: "click"
+    }
+  };
+
+  const deps = {
+    getDomainByIntentId: (id) => id.startsWith("vote_") ? "planning" : null,
+    getOntology: (domain) => domain === "planning" ? planningOntology : null,
+    validateIntentConditions: (effect, world) => {
+      const poll = (world.polls || []).find(p => p.id === effect.context?.id);
+      if (!poll || poll.status !== "open") return { valid: false, reason: "not open" };
+      return { valid: true };
+    },
+    getIntent: (id) => id === "close_poll" ? closePollIntent : null,
+  };
+
+  it("fires при matched trigger и valid conditions", () => {
+    const stored = { intent_id: "vote_yes", context: { pollId: "P1" } };
+    const world = { polls: [{ id: "P1", status: "open" }] };
+    const result = evaluateRules(stored, () => world, deps);
+
+    expect(result).toHaveLength(1);
+    expect(result[0].rule.id).toBe("quorum_autoclose");
+    expect(result[0].effect.intent_id).toBe("close_poll");
+    expect(result[0].effect.context).toEqual({ id: "P1" });
+    expect(result[0].effect.alpha).toBe("replace");
+  });
+
+  it("не fires при trigger mismatch", () => {
+    const stored = { intent_id: "place_bid", context: { pollId: "P1" } };
+    const world = { polls: [{ id: "P1", status: "open" }] };
+    const result = evaluateRules(stored, () => world, deps);
+
+    expect(result).toHaveLength(0);
+  });
+
+  it("не fires при invalid conditions", () => {
+    const stored = { intent_id: "vote_yes", context: { pollId: "P1" } };
+    const world = { polls: [{ id: "P1", status: "closed" }] };
+    const result = evaluateRules(stored, () => world, deps);
+
+    expect(result).toHaveLength(0);
+  });
+
+  it("не fires когда нет rules в онтологии", () => {
+    const depsNoRules = {
+      ...deps,
+      getOntology: () => ({ entities: {} }),
+    };
+    const stored = { intent_id: "vote_yes", context: { pollId: "P1" } };
+    const result = evaluateRules(stored, () => ({}), depsNoRules);
+
+    expect(result).toHaveLength(0);
+  });
+
+  it("возвращает пустой массив для неизвестного домена", () => {
+    const depsNoDomain = { ...deps, getDomainByIntentId: () => null };
+    const stored = { intent_id: "vote_yes", context: { pollId: "P1" } };
+    const result = evaluateRules(stored, () => ({}), depsNoDomain);
+
+    expect(result).toHaveLength(0);
+  });
+
+  it("world-thunk не вызывается при trigger mismatch", () => {
+    let thunkCalled = false;
+    const worldThunk = () => { thunkCalled = true; return {}; };
+
+    const depsNoMatch = { ...deps, getDomainByIntentId: () => null };
+    evaluateRules({ intent_id: "unknown", context: {} }, worldThunk, depsNoMatch);
+
+    expect(thunkCalled).toBe(false);
+  });
+
+  it("world-thunk вызывается при matched trigger", () => {
+    let thunkCalled = false;
+    const worldThunk = () => { thunkCalled = true; return { polls: [{ id: "P1", status: "open" }] }; };
+
+    evaluateRules({ intent_id: "vote_yes", context: { pollId: "P1" } }, worldThunk, deps);
+
+    expect(thunkCalled).toBe(true);
+  });
+});
