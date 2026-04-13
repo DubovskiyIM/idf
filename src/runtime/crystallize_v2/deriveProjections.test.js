@@ -392,4 +392,95 @@ describe("deriveProjections", () => {
       ]);
     });
   });
+
+  describe("R6: witnesses", () => {
+    it("collects witnesses from intents referencing the entity", () => {
+      const ONT = {
+        entities: {
+          Listing: { fields: { id: { type: "id" } } },
+        },
+      };
+      const INTENTS = {
+        create_listing: {
+          name: "Создать",
+          creates: "Listing",
+          particles: {
+            entities: ["listing: Listing"],
+            conditions: [],
+            effects: [{ α: "add", target: "listings" }],
+            witnesses: ["title", "startPrice"],
+            confirmation: "click",
+          },
+        },
+        publish: {
+          name: "Опубликовать",
+          particles: {
+            entities: ["listing: Listing"],
+            conditions: [],
+            effects: [{ α: "replace", target: "listing.status" }],
+            witnesses: ["title", "images", "auctionEnd"],
+            confirmation: "click",
+          },
+        },
+      };
+      const result = deriveProjections(INTENTS, ONT);
+      const witnesses = result.listing_detail.witnesses.sort();
+      expect(witnesses).toEqual(["auctionEnd", "images", "startPrice", "title"]);
+    });
+  });
+
+  describe("R7: owner-filtered catalog", () => {
+    it("generates my_* catalog when ownerField is set", () => {
+      const ONT = {
+        entities: {
+          Listing: {
+            fields: { id: { type: "id" }, sellerId: { type: "entityRef" } },
+            ownerField: "sellerId",
+          },
+        },
+      };
+      const INTENTS = {
+        create_listing: {
+          name: "Создать",
+          creates: "Listing",
+          particles: {
+            entities: ["listing: Listing"],
+            conditions: [],
+            effects: [{ α: "add", target: "listings" }],
+            witnesses: ["title"],
+            confirmation: "click",
+          },
+        },
+      };
+      const result = deriveProjections(INTENTS, ONT);
+      expect(result.my_listing_list).toBeDefined();
+      expect(result.my_listing_list.kind).toBe("catalog");
+      expect(result.my_listing_list.filter).toEqual({
+        field: "sellerId", op: "=", value: "me.id",
+      });
+    });
+
+    it("no my_* if no ownerField", () => {
+      const ONT = {
+        entities: {
+          User: { fields: { id: { type: "id" } } },
+        },
+      };
+      const INTENTS = {
+        create_user: {
+          name: "Создать",
+          creates: "User",
+          particles: {
+            entities: ["user: User"],
+            conditions: [],
+            effects: [{ α: "add", target: "users" }],
+            witnesses: [],
+            confirmation: "click",
+          },
+        },
+      };
+      const result = deriveProjections(INTENTS, ONT);
+      expect(result.my_user_list).toBeUndefined();
+    });
+  });
 });

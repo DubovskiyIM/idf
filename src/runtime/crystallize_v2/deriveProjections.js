@@ -156,6 +156,31 @@ export function detectForeignKeys(ontology) {
  * @param {object} ontology
  * @returns {Record<string, object>} проекции в формате projections.js
  */
+/**
+ * R6: собрать union witnesses из всех интентов, ссылающихся на данную сущность.
+ */
+function collectWitnesses(entityName, intents) {
+  const fields = new Set();
+
+  for (const intent of Object.values(intents)) {
+    const refs = intent.particles?.entities || [];
+    const refsEntity = refs.some(e => {
+      const parts = e.split(":");
+      const typeName = (parts[1] || parts[0]).trim();
+      return typeName === entityName;
+    });
+    const createsEntity = normalizeCreates(intent.creates) === entityName;
+
+    if (refsEntity || createsEntity) {
+      for (const w of intent.particles?.witnesses || []) {
+        fields.add(w);
+      }
+    }
+  }
+
+  return [...fields].sort();
+}
+
 export function deriveProjections(intents, ontology) {
   const entityNames = Object.keys(ontology.entities || {});
   const analysis = analyzeIntents(intents, entityNames);
@@ -168,13 +193,15 @@ export function deriveProjections(intents, ontology) {
     const mutatorCount = (analysis.mutators[entityName] || []).length;
     const hasFeedSignals = (analysis.feedSignals[entityName] || []).length > 0;
 
+    const witnesses = collectWitnesses(entityName, intents);
+
     // R1: Catalog
     if (hasCreators) {
       const proj = {
         kind: "catalog",
         mainEntity: entityName,
         entities: [entityName],
-        witnesses: [],
+        witnesses,
       };
 
       // R2: Feed override — confirmation:"enter" + foreignKey к parent
@@ -196,7 +223,7 @@ export function deriveProjections(intents, ontology) {
         kind: "detail",
         mainEntity: entityName,
         entities: [entityName],
-        witnesses: [],
+        witnesses,
       };
     }
   }
@@ -216,6 +243,24 @@ export function deriveProjections(intents, ontology) {
         foreignKey: fk.field,
         addable: hasCreatorsForSub,
       });
+    }
+  }
+
+  // R7: Owner-filtered catalog
+  for (const entityName of entityNames) {
+    const lower = entityName.toLowerCase();
+    const entityDef = ontology.entities[entityName];
+    const ownerField = entityDef?.ownerField;
+    const catalogId = `${lower}_list`;
+
+    if (ownerField && projections[catalogId]) {
+      projections[`my_${lower}_list`] = {
+        kind: "catalog",
+        mainEntity: entityName,
+        entities: [entityName],
+        witnesses: projections[catalogId].witnesses,
+        filter: { field: ownerField, op: "=", value: "me.id" },
+      };
     }
   }
 
