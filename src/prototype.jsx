@@ -87,17 +87,22 @@ export default function App() {
     // Проверить: есть ли seed-данные этого домена в БД
     const seedEffects = newDomain.getSeedEffects();
     if (seedEffects.length > 0) {
-      // Проверить через API есть ли уже seed этого домена
+      // Проверить через API — seed полный? Сравниваем количество seed-эффектов в БД с ожидаемым.
       try {
         const res = await fetch("/api/effects");
         const existing = await res.json();
-        const hasSeed = existing.some(e => e.intent_id === "_seed" && seedEffects.some(s => s.context?.id && JSON.stringify(e.context)?.includes(s.context.id)));
-        if (!hasSeed) {
-          await fetch("/api/effects/seed", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(seedEffects),
-          });
+        const existingSeedCount = existing.filter(e => e.intent_id === "_seed").length;
+        if (existingSeedCount < seedEffects.length) {
+          // Досидим недостающие эффекты (идемпотентно по id)
+          const existingIds = new Set(existing.map(e => e.id));
+          const missing = seedEffects.filter(e => !existingIds.has(e.id));
+          if (missing.length > 0) {
+            await fetch("/api/effects/seed", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify(missing),
+            });
+          }
         }
       } catch {}
     }

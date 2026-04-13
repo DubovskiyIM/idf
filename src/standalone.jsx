@@ -120,13 +120,17 @@ export default function StandaloneApp({ domainId }) {
       fetch("/api/effects")
         .then(r => r.json())
         .then(existing => {
-          const hasSeed = existing.some(e => e.intent_id === "_seed");
-          if (!hasSeed) {
-            fetch("/api/effects/seed", {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify(seedEffects),
-            });
+          const existingSeedCount = existing.filter(e => e.intent_id === "_seed").length;
+          if (existingSeedCount < seedEffects.length) {
+            const existingIds = new Set(existing.map(e => e.id));
+            const missing = seedEffects.filter(e => !existingIds.has(e.id));
+            if (missing.length > 0) {
+              fetch("/api/effects/seed", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(missing),
+              });
+            }
           }
         }).catch(() => {});
     }
