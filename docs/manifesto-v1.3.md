@@ -3,7 +3,7 @@
 ## Технический манифест парадигмы выводимых интерфейсов
 
 **Версия:** 1.3
-**Статус:** пятидоменный прототип: **378 намерений** (booking 20 + planning 17 + workflow 15 + messenger 100 + meshok 226). **372 unit-теста, 30 файлов тестов, CI (GitHub Actions).** Агентский слой реализован для всех пяти доменов. Все шесть архетипов реализованы. auth_users ↔ Φ закрыт. Legacy v1 удалён. Декларативные политики кворума. LLM enrichment pass (Claude API). TypeScript типы ядра. ErrorBoundary для архетипов.
+**Статус:** пятидоменный прототип: **378 намерений** (booking 20 + planning 17 + workflow 15 + messenger 100 + meshok 226). **372 unit-теста, 30 файлов тестов, CI (GitHub Actions), 42-шаговый agent-smoke для всех 5 доменов.** Все четыре слоя проекции §17 реализованы (canonical + adaptive + agent + personal). Все шесть архетипов. LLM enrichment pass. Composer reply mode. SubCollection inline-edit. Deployment config (Docker + Fly.io).
 
 **Изменения в v1.3 (2026-04-13, Session D):**
 
@@ -15,7 +15,13 @@
 - **CI** — GitHub Actions: vitest + vite build на каждый push/PR.
 - **README** обновлён — 378 намерений, 5 доменов, 6 архетипов, 372 теста.
 - **Meshok walkthrough** — `npm run meshok-demo`, 12-шаговый демо-сценарий аукциона.
-- 372 unit-теста (было 312 → 341 → 372).
+- **Composer reply mode** — per-item кнопка ↩ устанавливает reply-контекст, Composer показывает preview-banner, submit передаёт replyToId.
+- **SubCollection inline-edit** — кнопка ✎ переключает item в edit-mode с input-полями, editableFields выводятся из ontology write-полей.
+- **Personal layer §17** — usePersonalPrefs (density/fontSize/iconMode), PrefsPanel, CSS variables `--idf-padding/--idf-gap/--idf-font-size`. Четвёртый слой проекции закрыт.
+- **Agent-smoke 42 шага** — расширен на meshok (6) + workflow (5) + messenger (5).
+- **JSDoc аннотации** — engine.js, crystallize_v2/index.js с типами из idf.d.ts.
+- **Deploy config** — Dockerfile, fly.toml, Express static serving, IDF_DB_PATH env.
+- 372 unit-теста (было 312 → 341 → 372). 45 коммитов за сессию.
 
 **Изменения в v1.2 (2026-04-13):**
 
@@ -780,7 +786,7 @@ Personal-слой (индивидуальные предпочтения) пок
 - ~~**α-типы `increment` и `cas`**~~ (§10, §11) — **удалены** (Session A, 2026-04-12) как cut bait: за время прототипирования 152 интентов в 4 доменах ни один не использовал их, а fold.js их не обрабатывал. Таблица композиции §11 приведена в соответствие с реализацией. Если появится конкретный use-case (CRDT-счётчики голосов, оптимистичные блокировки сообщений) — возвращаются вместе с полноценной реализацией в fold + тесты.
 - ~~**Причинный порядок ≺ в fold**~~ (§10, §13) — **закрыто** (Session A, 2026-04-12): реализована топологическая сортировка Φ по `parent_id` перед fold (`src/runtime/causalSort.js` + `server/causalSort.cjs`). Теперь parent всегда применяется до child'а даже при concurrent/foreign записях с более ранним created_at. 12 unit-тестов покрывают edge cases: линейные цепочки, ветвистые деревья, множественные roots, orphaned refs, циклы.
 - ~~**Расширенная алгебра связей намерений §12**~~ — **закрыто в Session B (2026-04-12)**. Полная formalization всех пяти типов связей в `src/runtime/intentAlgebra.js` + `server/schema/intentAlgebra.cjs`: `▷` (field-level matching через conditionParser), `⇌` (strict derivation effect pair-reversal + declared-as-hint с §15 classification: structural/heuristic-lifecycle), `⊕` (через composition table), `∥` (complement всех предыдущих на общих entities). Consumer'ы: integrity rules #1 и #7 теперь graph queries, agent `GET /schema` экспонирует блок `relations`, prototype sidebar показывает 5 типов связей с цветами. 37 unit-тестов + 12 real-domain property-тестов. Частично антагонистическая и вложенность `⊂` — документированы как open для wave 2.
-- ~~**Три слоя проекции §17**~~ — **Agent-слой реализован для всех 5 доменов**: booking, planning, meshok, workflow, messenger через `/api/agent/:domain/*`. Canonical + Adaptive (UI-адаптер) + Agent = 3/4 слоя. **Personal** остаётся аспирационным.
+- ~~**Четыре слоя проекции §17**~~ — **Все 4 слоя реализованы**: Canonical (артефакт v2), Adaptive (UI-адаптер Mantine), Agent (REST API для всех 5 доменов), Personal (usePersonalPrefs: density/fontSize/iconMode + PrefsPanel).
 - **Анкеринг §15** — проверки в `integrity.js` дают warnings/info, не блокируют кристаллизацию. «Свидетельство проверки» (основание, пример-свидетель, контрпример, оценка надёжности) не реализовано — только имя проверки. Решение: сделать errors эскалируемыми до блокировки, добавить структуру witness-of-proof.
 - **3D-визуализатор причинных цепочек** — показывает `parent_id`-граф эффектов, а не граф связей *намерений*. CLAUDE.md смешивает эти два графа. Решение: либо два визуализатора, либо явно переименовать «Causality Graph».
 
@@ -931,7 +937,7 @@ Personal-слой (индивидуальные предпочтения) пок
 - **§7 Overlay(I)**: формула трёхслойная, реализация двухслойная (Δ не вливается). Небольшой фикс.
 - **§11 Алгебра композиции**: таблица есть, integrity rules работают через graph queries на `intentAlgebra`. Batch composition — рекурсивная валидация под-эффектов.
 - **§15 Анкеринг**: warnings/info, не блокирует. Witness-of-proof структура отсутствует.
-- **§17 Personal-слой**: не реализован. Концептуально — override-слой поверх канонического артефакта или пользовательские правила в адаптере.
+- ~~**§17 Personal-слой**~~: **реализован** (v1.3). `usePersonalPrefs` (density/fontSize/iconMode) + PrefsPanel + CSS variables. Хранение в localStorage.
 - **§19 Граница**: однонаправленная (pull), без распределённых транзакций.
 - ~~**Auth_users ↔ Φ**~~: **закрыто** (Session D). Dual-write `_user_register` при регистрации. Seed удалён. §5 закрыт.
 - **§22 Многоакторная координация**: auto-close по кворуму реализован (checkQuorum). Декларативные политики `close_when` / `absent_vote` — открыты.
@@ -939,7 +945,7 @@ Personal-слой (индивидуальные предпочтения) пок
 ### Аспирационно / нереализовано
 
 - ~~**§10 α-типы `increment`, `cas`**~~: удалены в Session A. Таблица §11 теперь синхронна с fold: `{replace, add, remove, batch}`.
-- **§17 Personal-слой**: не реализован. Концептуально — override-слой поверх канонического артефакта или пользовательские правила в адаптере.
+- ~~**§17 Personal-слой**~~: **реализован** (v1.3). `usePersonalPrefs` (density/fontSize/iconMode) + PrefsPanel + CSS variables. Хранение в localStorage.
 
 ### Что это даёт
 
