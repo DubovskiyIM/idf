@@ -563,7 +563,74 @@ async function main() {
   }, jwt);
   assert(markRead.status === 200, "42", `mark_as_read ${markRead.status}`, markRead.body);
 
-  process.stdout.write("\n[smoke ✓] Все 42 шага прошли успешно (booking 13 + planning 13 + meshok 6 + workflow 5 + messenger 5)\n");
+  // LIFEQUEST (steps 43-50)
+  log("43", "lifequest schema");
+  const lqSchema = await get("/api/agent/lifequest/schema", jwt);
+  assert(lqSchema.status === 200, "43", `lifequest schema ${lqSchema.status}`);
+  assert(lqSchema.body.intents.length >= 8, "43", `>=8 intents (got ${lqSchema.body.intents.length})`);
+
+  log("44", "create_goal");
+  const createGoal = await post("/api/agent/lifequest/exec", {
+    intentId: "create_goal",
+    params: { title: "Smoke Goal", sphereId: "health", deadline: "2026-12-31", description: "Test" }
+  }, jwt);
+  assert(createGoal.status === 200, "44", `create_goal ${createGoal.status}`, createGoal.body);
+
+  const lqWorld1 = await get("/api/agent/lifequest/world", jwt);
+  const smokeGoal = (lqWorld1.body.world.goals || []).find(g => g.title === "Smoke Goal");
+  assert(smokeGoal, "44", "goal created in world");
+  assert(smokeGoal.status === "active", "44", "goal status active");
+
+  log("45", "create_habit");
+  const createHabit = await post("/api/agent/lifequest/exec", {
+    intentId: "create_habit",
+    params: { title: "Smoke Habit", sphereId: "health", type: "binary" }
+  }, jwt);
+  assert(createHabit.status === 200, "45", `create_habit ${createHabit.status}`, createHabit.body);
+
+  const lqWorld2 = await get("/api/agent/lifequest/world", jwt);
+  const smokeHabit = (lqWorld2.body.world.habits || []).find(h => h.title === "Smoke Habit");
+  assert(smokeHabit, "45", "habit created in world");
+
+  log("46", "check_habit");
+  const checkHabit = await post("/api/agent/lifequest/exec", {
+    intentId: "check_habit",
+    params: { habitId: smokeHabit.id }
+  }, jwt);
+  assert(checkHabit.status === 200, "46", `check_habit ${checkHabit.status}`, checkHabit.body);
+
+  log("47", "create_task");
+  const createTask = await post("/api/agent/lifequest/exec", {
+    intentId: "create_task",
+    params: { title: "Smoke Task" }
+  }, jwt);
+  assert(createTask.status === 200, "47", `create_task ${createTask.status}`, createTask.body);
+
+  log("48", "complete_task");
+  const lqWorld3 = await get("/api/agent/lifequest/world", jwt);
+  const smokeTask = (lqWorld3.body.world.tasks || []).find(t => t.title === "Smoke Task");
+  assert(smokeTask, "48", "task in world");
+  const completeTask = await post("/api/agent/lifequest/exec", {
+    intentId: "complete_task",
+    params: { id: smokeTask.id }
+  }, jwt);
+  assert(completeTask.status === 200, "48", `complete_task ${completeTask.status}`, completeTask.body);
+
+  log("49", "assess_sphere");
+  const assessSphere = await post("/api/agent/lifequest/exec", {
+    intentId: "assess_sphere",
+    params: { sphereId: "health", score: 7, description: "Smoke assessment" }
+  }, jwt);
+  assert(assessSphere.status === 200, "49", `assess_sphere ${assessSphere.status}`, assessSphere.body);
+
+  log("50", "set_quote");
+  const setQuote = await post("/api/agent/lifequest/exec", {
+    intentId: "set_quote",
+    params: { text: "Smoke quote", author: "Test" }
+  }, jwt);
+  assert(setQuote.status === 200, "50", `set_quote ${setQuote.status}`, setQuote.body);
+
+  process.stdout.write("\n[smoke ✓] Все 50 шагов прошли успешно (booking 13 + planning 13 + meshok 6 + workflow 5 + messenger 5 + lifequest 8)\n");
 }
 
 main().catch(err => {
