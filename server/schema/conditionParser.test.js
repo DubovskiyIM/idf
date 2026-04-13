@@ -55,6 +55,97 @@ describe("parseCondition", () => {
   });
 });
 
+describe("parseCondition — aggregates", () => {
+  it("парсит count() с оператором =", () => {
+    expect(parseCondition("count(bids, listingId=target.id) = 0")).toEqual({
+      type: "aggregate",
+      fn: "count",
+      collection: "bids",
+      filter: { field: "listingId", ref: "target.id" },
+      op: "=",
+      value: 0
+    });
+  });
+
+  it("парсит count() с оператором >=", () => {
+    expect(parseCondition("count(bookings, slotId=target.id) >= 5")).toEqual({
+      type: "aggregate",
+      fn: "count",
+      collection: "bookings",
+      filter: { field: "slotId", ref: "target.id" },
+      op: ">=",
+      value: 5
+    });
+  });
+
+  it("парсит count() с оператором <", () => {
+    expect(parseCondition("count(orders, buyerId=target.id) < 10")).toEqual({
+      type: "aggregate",
+      fn: "count",
+      collection: "orders",
+      filter: { field: "buyerId", ref: "target.id" },
+      op: "<",
+      value: 10
+    });
+  });
+
+  it("парсит count() с дробным порогом", () => {
+    expect(parseCondition("count(bids, listingId=target.id) >= 1.5")).toEqual({
+      type: "aggregate",
+      fn: "count",
+      collection: "bids",
+      filter: { field: "listingId", ref: "target.id" },
+      op: ">=",
+      value: 1.5
+    });
+  });
+
+  it("парсит ratio() с оператором >=", () => {
+    expect(parseCondition("ratio(votes.participantId, participants, pollId=target.id) >= 1.0")).toEqual({
+      type: "aggregate",
+      fn: "ratio",
+      collection: "votes",
+      distinctField: "participantId",
+      totalCollection: "participants",
+      filter: { field: "pollId", ref: "target.id" },
+      op: ">=",
+      value: 1.0
+    });
+  });
+
+  it("парсит ratio() с порогом 0.8", () => {
+    expect(parseCondition("ratio(votes.participantId, participants, pollId=target.id) >= 0.8")).toEqual({
+      type: "aggregate",
+      fn: "ratio",
+      collection: "votes",
+      distinctField: "participantId",
+      totalCollection: "participants",
+      filter: { field: "pollId", ref: "target.id" },
+      op: ">=",
+      value: 0.8
+    });
+  });
+
+  it("парсит ratio() с оператором =", () => {
+    expect(parseCondition("ratio(votes.participantId, participants, pollId=target.id) = 0")).toEqual({
+      type: "aggregate",
+      fn: "ratio",
+      collection: "votes",
+      distinctField: "participantId",
+      totalCollection: "participants",
+      filter: { field: "pollId", ref: "target.id" },
+      op: "=",
+      value: 0
+    });
+  });
+
+  it("возвращает null для невалидного агрегата", () => {
+    expect(parseCondition("count(bids)")).toBeNull();
+    expect(parseCondition("ratio(votes)")).toBeNull();
+    expect(parseCondition("sum(bids, x=target.id) > 5")).toBeNull();
+  });
+});
+
 describe("parseConditions", () => {
   it("парсит массив условий", () => {
     const result = parseConditions([

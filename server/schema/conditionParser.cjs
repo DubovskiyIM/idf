@@ -46,6 +46,34 @@ function parseCondition(condStr) {
     return { entity: m[1], field: m[2], op: "IN", value: values };
   }
 
+  // count(collection, foreignKey=target.id) <cmp> N
+  m = c.match(/^count\((\w+),\s*(\w+)=target\.id\)\s*(=|!=|>=|>|<=|<)\s*(\d+(?:\.\d+)?)$/);
+  if (m) {
+    return {
+      type: "aggregate",
+      fn: "count",
+      collection: m[1],
+      filter: { field: m[2], ref: "target.id" },
+      op: m[3],
+      value: parseFloat(m[4])
+    };
+  }
+
+  // ratio(collection.distinctField, totalCollection, foreignKey=target.id) <cmp> N
+  m = c.match(/^ratio\((\w+)\.(\w+),\s*(\w+),\s*(\w+)=target\.id\)\s*(=|!=|>=|>|<=|<)\s*(\d+(?:\.\d+)?)$/);
+  if (m) {
+    return {
+      type: "aggregate",
+      fn: "ratio",
+      collection: m[1],
+      distinctField: m[2],
+      totalCollection: m[3],
+      filter: { field: m[4], ref: "target.id" },
+      op: m[5],
+      value: parseFloat(m[6])
+    };
+  }
+
   return null;
 }
 
