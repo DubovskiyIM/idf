@@ -1,0 +1,53 @@
+@import "tailwindcss";
+
+@theme {
+  --color-doodle-bg: #fdf6e3;
+  --color-doodle-line: #e8d5b7;
+  --color-doodle-ink: #5c4033;
+  --color-doodle-ink-light: #8b7355;
+  --color-doodle-accent: #4a7c59;
+  --color-doodle-warn: #d4764e;
+  --color-doodle-gold: #d4a76a;
+  --color-doodle-border: #c4a77d;
+  --color-doodle-highlight: #fff3cd;
+  --font-doodle: 'Comic Sans MS', 'Segoe Print', cursive;
+  --radius-doodle: 12px;
+  --spacing-doodle: 16px;
+  --spacing-doodle-lg: 20px;
+}
+
+/* Линованная бумага */
+.doodle-paper {
+  background-color: var(--color-doodle-bg);
+  background-image: repeating-linear-gradient(
+    transparent, transparent 27px, var(--color-doodle-line) 28px
+  );
+  font-family: var(--font-doodle);
+  color: var(--color-doodle-ink);
+}
+
+/* Прогресс-бар со штриховкой */
+.doodle-progress-fill {
+  background: repeating-linear-gradient(
+    45deg,
+    var(--color-doodle-accent),
+    var(--color-doodle-accent) 4px,
+    #5a8c69 4px,
+    #5a8c69 8px
+  );
+  border-radius: calc(var(--radius-doodle) / 2);
+}
+
+/* Разделитель */
+.doodle-divider {
+  border: none;
+  border-top: 2px dashed var(--color-doodle-border);
+}
+
+/* Wavy заголовок */
+.doodle-heading {
+  text-decoration: underline;
+  text-decoration-style: wavy;
+  text-decoration-color: var(--color-doodle-border);
+  text-underline-offset: 4px;
+}
