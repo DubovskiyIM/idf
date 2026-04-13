@@ -32,5 +32,21 @@ export const ONTOLOGY = {
     "workflow_is_draft": "workflow.status = 'draft'",
     "workflow_is_saved": "workflow.status = 'saved'",
     "workflow_is_running": "workflow.status = 'running'",
-  }
+  },
+  roles: {
+    agent: {
+      label: "Агент (API)",
+      canExecute: [
+        "create_workflow", "add_node", "connect_nodes",
+        "configure_node", "save_workflow", "execute_workflow",
+      ],
+      visibleFields: {
+        Workflow: ["id", "title", "status", "createdAt"],
+        Node: ["id", "workflowId", "type", "label", "config"],
+        Edge: ["id", "workflowId", "source", "target"],
+        Execution: ["id", "workflowId", "status", "startedAt", "completedAt"],
+        NodeResult: ["id", "executionId", "nodeId", "status", "output", "error"],
+      },
+    },
+  },
 };
