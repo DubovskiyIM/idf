@@ -77,12 +77,9 @@ export const PROJECTIONS = {
 
   point_a: {
     name: "Точка А — колесо жизни",
-    kind: "detail",
+    kind: "canvas",
     query: "текущая оценка сфер жизни и целевые значения",
     entities: ["SphereAssessment", "Sphere"],
-    mainEntity: "User",
-    idParam: "userId",
-    witnesses: ["sphereId", "score", "description", "targetScore", "name", "icon", "color"],
   },
 
   vision_board: {

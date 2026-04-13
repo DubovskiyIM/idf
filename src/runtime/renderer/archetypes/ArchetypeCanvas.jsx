@@ -13,8 +13,8 @@ export function registerCanvas(key, component) {
   CANVAS_REGISTRY[key] = component;
 }
 
-export default function ArchetypeCanvas({ artifact, ctx }) {
-  const { world, exec, viewer } = ctx;
+export default function ArchetypeCanvas({ slots, ctx }) {
+  const { world, exec, viewer, artifact } = ctx;
   const projectionId = artifact?.projection;
   const domainId = artifact?.domain;
 
