@@ -51,8 +51,43 @@ export const PROJECTIONS = {
     routeEntities: [],
     witnesses: ["name", "duration", "price", "specialist.name", "active"],
   },
+  booking_wizard: {
+    name: "Записаться",
+    kind: "wizard",
+    entities: ["Service", "Specialist", "TimeSlot", "Booking"],
+    mainEntity: "Booking",
+    steps: [
+      {
+        id: "service",
+        label: "Услуга",
+        intent: "select_service",
+        pick: ["serviceId"],
+        source: { collection: "services", filter: "active !== false" },
+        display: ["name", "duration", "price"],
+      },
+      {
+        id: "slot",
+        label: "Время",
+        intent: "select_slot",
+        pick: ["slotId"],
+        sideEffect: true,
+        source: {
+          collection: "slots",
+          filter: "status === 'free'",
+          filterBy: { specialistId: "step.service.specialistId" },
+        },
+        display: ["date", "startTime", "endTime"],
+      },
+      {
+        id: "confirm",
+        label: "Подтверждение",
+        intent: "confirm_booking",
+        summary: true,
+      },
+    ],
+  },
 };
 
 // Корневые проекции V2-шелла — верхние табы, между которыми переключается
 // навигация. Порядок определяет отображение слева направо.
-export const ROOT_PROJECTIONS = ["service_catalog", "my_bookings"];
+export const ROOT_PROJECTIONS = ["service_catalog", "booking_wizard", "my_bookings"];

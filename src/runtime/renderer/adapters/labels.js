@@ -74,6 +74,11 @@ const DICTIONARY = {
   images: "Фото",
   featured: "Рекомендуемый",
   read: "Прочитано",
+
+  // Бронирование
+  duration: "Длительность",
+  price: "Цена",
+  active: "Активна",
 };
 
 /**
