@@ -53,6 +53,11 @@ export const PROJECTIONS = {
     filter: "sellerId === (viewer && viewer.id)",
     sort: "-createdAt",
     witnesses: ["title", "currentPrice", "bidCount", "status", "auctionEnd"],
+    onItemClick: {
+      action: "navigate",
+      to: "listing_detail",
+      params: { listingId: "item.id" },
+    },
   },
 
   my_bids: {
@@ -78,10 +83,15 @@ export const PROJECTIONS = {
     query: "заказы пользователя (покупки и продажи)",
     entities: ["Order", "Listing", "User"],
     mainEntity: "Order",
-    routeEntities: [],
+    routeEntities: ["Listing", "User"],
     filter: "buyerId === (viewer && viewer.id) || sellerId === (viewer && viewer.id)",
     sort: "-createdAt",
     witnesses: ["totalAmount", "status", "listing.title", "trackingNumber", "createdAt"],
+    onItemClick: {
+      action: "navigate",
+      to: "order_detail",
+      params: { orderId: "item.id" },
+    },
   },
 
   order_detail: {
@@ -116,12 +126,12 @@ export const PROJECTIONS = {
     name: "Сообщения",
     kind: "feed",
     query: "входящие и исходящие сообщения",
-    entities: ["Message", "User", "Listing"],
+    entities: ["Message"],
     mainEntity: "Message",
-    routeEntities: ["User", "Listing"],
+    routeEntities: [],
     filter: "senderId === (viewer && viewer.id) || recipientId === (viewer && viewer.id)",
     sort: "-createdAt",
-    witnesses: ["content", "sender.name", "listing.title", "read", "createdAt"],
+    witnesses: ["content", "read", "createdAt"],
   },
 
   seller_profile: {
