@@ -2,18 +2,31 @@
 
 ## Технический манифест парадигмы выводимых интерфейсов
 
-**Версия:** 1.2
-**Статус:** пятидоменный прототип: **378 намерений** (booking 20 + planning 17 + workflow 15 + messenger 100 + meshok 226). **341 unit-тест.** Агентский слой реализован для трёх доменов (booking, planning, meshok). Все шесть архетипов реализованы (feed, catalog, detail, form, canvas, dashboard). auth_users ↔ Φ закрыт через `_user_register` dual-write. Legacy v1 (crystallize.js, renderer.jsx, crystallized/) удалён. Auto-close по кворуму реализован.
+**Версия:** 1.3
+**Статус:** пятидоменный прототип: **378 намерений** (booking 20 + planning 17 + workflow 15 + messenger 100 + meshok 226). **372 unit-теста, 30 файлов тестов, CI (GitHub Actions).** Агентский слой реализован для всех пяти доменов. Все шесть архетипов реализованы. auth_users ↔ Φ закрыт. Legacy v1 удалён. Декларативные политики кворума. LLM enrichment pass (Claude API). TypeScript типы ядра. ErrorBoundary для архетипов.
+
+**Изменения в v1.3 (2026-04-13, Session D):**
+
+- **Agent layer для всех 5 доменов** — workflow (6 intents, 12 тестов) и messenger (5 intents, 10 тестов) добавлены к booking/planning/meshok. 100% покрытие доменов.
+- **Декларативные политики кворума** — `ontology.entities.Poll.quorum: {closeWhen, absentVote}`. `checkQuorum` читает policy: `all_voted | quorum(N) | manual`. 9 тестов.
+- **LLM enrichment pass** — POST `/api/crystallize/enrich`, Claude API обогащает артефакты (labels, icons, placeholders). Кеш в SQLite. CLI: `npm run crystallize-llm`. Кнопка «✨ LLM» в V2Shell.
+- **TypeScript типы ядра** — `src/types/idf.d.ts`: Intent, Effect, Projection, Ontology, Artifact, World, Domain. JSDoc в fold.js.
+- **ErrorBoundary** — graceful degradation при ошибках рендера архетипов.
+- **CI** — GitHub Actions: vitest + vite build на каждый push/PR.
+- **README** обновлён — 378 намерений, 5 доменов, 6 архетипов, 372 теста.
+- **Meshok walkthrough** — `npm run meshok-demo`, 12-шаговый демо-сценарий аукциона.
+- 372 unit-теста (было 312 → 341 → 372).
 
 **Изменения в v1.2 (2026-04-13):**
 
-- **Новый домен meshok** — аукционная барахолка (eBay-style), 226 намерений, 10 сущностей, 4 роли (buyer/seller/moderator/agent). Восьмой полевой тест. Общий корпус: 378 намерений в пяти доменах.
-- §16a: **Семантические роли полей** (`inferFieldRole`) — третий уровень вывода: ontology → controlType → fieldRole → layout. Выводимая карточка (`cardSpec` + `GridCard`), секционированная форма (`buildFormSpec` с секциями), новые примитивы (PriceBlock, InfoSection, Timer).
-- §16a: **Post-create навигация** — HeroCreate → автоматический navigate в `{detail}_edit`.
-- §23: исправлены устаревшие статусы (causalSort закрыт, agent layer для 2 доменов, ownerField обобщён).
-- §24: обновлены цифры (378 намерений, 5 доменов, 312 тестов).
-- §25: переписано с учётом закрытых M3/M4/agent milestones.
-- §26: синхронизирована с реальным состоянием кода.
+- **Новый домен meshok** — 226 намерений, 10 сущностей, 4 роли. Восьмой полевой тест.
+- §16a: **Семантические роли полей**, выводимая карточка, секционированная форма.
+- §16a: **Post-create навигация** — HeroCreate → `{detail}_edit`.
+- **auth_users → Φ** — dual-write `_user_register`, seed удалён, §5 закрыт.
+- **M5: удаление legacy** — crystallize.js, renderer.jsx, crystallized/ (-2111 LOC).
+- **Canvas-архетип** + **Dashboard-архетип** — все 6 архетипов закрыты.
+- **Auto-close по кворуму** — `checkQuorum` + серверный watcher.
+- **Agent layer для meshok** — 8 intents, 18 тестов.
 
 **Изменения в v1.1 (2026-04-11):**
 
@@ -767,7 +780,7 @@ Personal-слой (индивидуальные предпочтения) пок
 - ~~**α-типы `increment` и `cas`**~~ (§10, §11) — **удалены** (Session A, 2026-04-12) как cut bait: за время прототипирования 152 интентов в 4 доменах ни один не использовал их, а fold.js их не обрабатывал. Таблица композиции §11 приведена в соответствие с реализацией. Если появится конкретный use-case (CRDT-счётчики голосов, оптимистичные блокировки сообщений) — возвращаются вместе с полноценной реализацией в fold + тесты.
 - ~~**Причинный порядок ≺ в fold**~~ (§10, §13) — **закрыто** (Session A, 2026-04-12): реализована топологическая сортировка Φ по `parent_id` перед fold (`src/runtime/causalSort.js` + `server/causalSort.cjs`). Теперь parent всегда применяется до child'а даже при concurrent/foreign записях с более ранним created_at. 12 unit-тестов покрывают edge cases: линейные цепочки, ветвистые деревья, множественные roots, orphaned refs, циклы.
 - ~~**Расширенная алгебра связей намерений §12**~~ — **закрыто в Session B (2026-04-12)**. Полная formalization всех пяти типов связей в `src/runtime/intentAlgebra.js` + `server/schema/intentAlgebra.cjs`: `▷` (field-level matching через conditionParser), `⇌` (strict derivation effect pair-reversal + declared-as-hint с §15 classification: structural/heuristic-lifecycle), `⊕` (через composition table), `∥` (complement всех предыдущих на общих entities). Consumer'ы: integrity rules #1 и #7 теперь graph queries, agent `GET /schema` экспонирует блок `relations`, prototype sidebar показывает 5 типов связей с цветами. 37 unit-тестов + 12 real-domain property-тестов. Частично антагонистическая и вложенность `⊂` — документированы как open для wave 2.
-- ~~**Три слоя проекции §17**~~ — **Agent-слой реализован** для трёх доменов: booking, planning, meshok через обобщённый `/api/agent/:domain/*`. `buildMeshokEffects.cjs` (8 intents, 18 тестов). Canonical и Adaptive (UI-адаптер) живы с M4. **Personal** остаётся аспирационным.
+- ~~**Три слоя проекции §17**~~ — **Agent-слой реализован для всех 5 доменов**: booking, planning, meshok, workflow, messenger через `/api/agent/:domain/*`. Canonical + Adaptive (UI-адаптер) + Agent = 3/4 слоя. **Personal** остаётся аспирационным.
 - **Анкеринг §15** — проверки в `integrity.js` дают warnings/info, не блокируют кристаллизацию. «Свидетельство проверки» (основание, пример-свидетель, контрпример, оценка надёжности) не реализовано — только имя проверки. Решение: сделать errors эскалируемыми до блокировки, добавить структуру witness-of-proof.
 - **3D-визуализатор причинных цепочек** — показывает `parent_id`-граф эффектов, а не граф связей *намерений*. CLAUDE.md смешивает эти два графа. Решение: либо два визуализатора, либо явно переименовать «Causality Graph».
 
@@ -863,19 +876,19 @@ Personal-слой (индивидуальные предпочтения) пок
 
 ## 25. Что делать дальше
 
-**Приоритеты пересмотрены в v1.2 Session D.** M2-M5, agent layer (3 домена), causalSort, ownerField, auth_users→Φ, все 6 архетипов, auto-close по кворуму — **закрыты**. Фокус: публикация, production, декларативные политики координации.
+**Приоритеты пересмотрены в v1.3.** Все основные закрытия выполнены: M2-M5, agent layer для всех 5 доменов, все 6 архетипов, auth→Φ, кворум с политиками, LLM enrichment, TypeScript типы, CI, ErrorBoundary. Фокус: deploy, публикация, SDK.
 
 ### Ближайший горизонт (1-2 месяца)
 
-1. **Публикация.** Draft статьи есть (`docs/habr-article-draft.md`). 5 доменов, 378 намерений, 341 тест, 3 agent layers, 6 архетипов — солидная база. Meshok (аукцион) — понятный домен для читателя.
-2. **LLM-кристаллизатор.** Claude Code генерирует артефакты из intents+ontology, правила — fallback. Измеримый KPI: визуальное качество без потери семантики.
-3. **Декларативные политики координации.** `ontology.workflows.Poll.quorum: {close_when, absent_vote}` вместо hardcoded `all_voted`.
+1. **Deploy meshok.** VPS/Fly.io, публичный URL для демо.
+2. **Публикация.** Draft статьи есть (`docs/habr-article-draft.md`). 5 доменов, 378 намерений, 372 теста — солидная база.
+3. **Personal layer §17.** Пользовательские override'ы UI (density, icons, layout preferences).
 
 ### Средний горизонт (2-4 месяца)
 
-4. **Один домен в production.** Meshok или booking — довести до боевого качества, пустить 10 реальных пользователей.
-5. **Agent layer для workflow и messenger.** Два оставшихся домена без agent layer.
-6. **Продуктивизация.** TypeScript, CI, SDK для создания доменов. Выделение ядра в отдельный npm-пакет.
+4. **SDK `@idf/core`.** Выделение ядра (fold, engine, crystallize, renderer) в отдельный npm-пакет.
+5. **Domain authoring CLI.** `idf init <domain>` — scaffolding нового домена из диалога с LLM.
+6. **Один домен в production.** Meshok — довести до боевого качества, 10 реальных пользователей.
 
 ### Постоянные задачи
 
@@ -909,7 +922,7 @@ Personal-слой (индивидуальные предпочтения) пок
 - §18 (два потока + черновик) — Φ, Δ, Σ реализованы как отдельные потоки. Параметры запроса проекции — эфемерный «проекционный» контекст, часть `Q`, не отдельный поток.
 - **§10 Причинный порядок ≺ в fold** — ~~ранее аспирационно~~ → **закрыто** (Session A, 2026-04-12). `causalSort` (`src/runtime/causalSort.js` + `server/causalSort.cjs`) вызывается в `fold.js` и `validator.js::foldWorld` перед применением эффектов. Топологическая сортировка по `parent_id`, DFS-защита от циклов. 12 unit-тестов.
 - ~~**§12 Расширенная алгебра связей намерений**~~ — **закрыто в Session B (2026-04-12)**. Полная formalization всех пяти типов связей в `intentAlgebra.js`. voteGroup переклассифицирован как `∥` (параллельный) + доменное правило уникальности `(participantId, optionId)`.
-- **§17 Agent-слой** — ~~ранее аспирационно~~ → **реализован для booking, planning и meshok** через `/api/agent/:domain/*`. Обобщённые серверные чистые функции в `server/schema/*`. 37+ unit-тестов (booking/planning) + 18 unit-тестов (meshok) + 26-шаговый integration smoke. Архитектура параметризована по domain.
+- **§17 Agent-слой** — ~~ранее аспирационно~~ → **реализован для всех 5 доменов** через `/api/agent/:domain/*`. booking (37 тестов), planning (29 тестов), meshok (18 тестов), workflow (12 тестов), messenger (10 тестов) + 26-шаговый integration smoke.
 - **Ownership-check** — ~~ранее hardcoded для User~~ → **обобщён через `ontology.ownerField`**. Декларативный ownerField на 3 доменах: booking (Booking.clientId, Review.authorId), planning (Poll.organizerId, Participant.userId), meshok (Listing.sellerId, Bid.bidderId, Order.buyerId, + ещё 5 сущностей). `checkOwnership.cjs` автоматически проверяет для agent-write-intents. Crystallize_v2 читает ownerField для synthetic conditions в UI. User-сущность — backward-compat `id === me.id`.
 - **Семантические роли полей** (§16a v1.2) — `inferFieldRole` + `cardSpec` + `buildFormSpec` с секциями + PriceBlock/InfoSection/Timer примитивы. Подтверждено на meshok (grid-карточки лотов, секционированная форма создания).
 
