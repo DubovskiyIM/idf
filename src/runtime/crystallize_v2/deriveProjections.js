@@ -166,15 +166,28 @@ export function deriveProjections(intents, ontology) {
     const lower = entityName.toLowerCase();
     const hasCreators = (analysis.creators[entityName] || []).length > 0;
     const mutatorCount = (analysis.mutators[entityName] || []).length;
+    const hasFeedSignals = (analysis.feedSignals[entityName] || []).length > 0;
 
     // R1: Catalog
     if (hasCreators) {
-      projections[`${lower}_list`] = {
+      const proj = {
         kind: "catalog",
         mainEntity: entityName,
         entities: [entityName],
         witnesses: [],
       };
+
+      // R2: Feed override — confirmation:"enter" + foreignKey к parent
+      if (hasFeedSignals) {
+        const entityFks = foreignKeys[entityName] || [];
+        const parentFk = entityFks.find(fk => fk.references !== entityName);
+        if (parentFk) {
+          proj.kind = "feed";
+          proj.idParam = parentFk.field;
+        }
+      }
+
+      projections[`${lower}_list`] = proj;
     }
 
     // R3: Detail
@@ -185,6 +198,24 @@ export function deriveProjections(intents, ontology) {
         entities: [entityName],
         witnesses: [],
       };
+    }
+  }
+
+  // R4: SubCollections — для каждого detail, добавить sub-entities по foreignKey
+  for (const [entityName, fks] of Object.entries(foreignKeys)) {
+    for (const fk of fks) {
+      const parentLower = fk.references.toLowerCase();
+      const parentDetail = projections[`${parentLower}_detail`];
+      if (!parentDetail) continue;
+
+      if (!parentDetail.subCollections) parentDetail.subCollections = [];
+      const hasCreatorsForSub = (analysis.creators[entityName] || []).length > 0;
+      parentDetail.subCollections.push({
+        collection: pluralize(entityName),
+        entity: entityName,
+        foreignKey: fk.field,
+        addable: hasCreatorsForSub,
+      });
     }
   }
 

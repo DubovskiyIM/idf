@@ -232,4 +232,164 @@ describe("deriveProjections", () => {
       expect(result.listing_detail).toBeUndefined();
     });
   });
+
+  describe("R2: feed override", () => {
+    it("overrides catalog → feed when confirmation:enter + foreignKey", () => {
+      const ONT = {
+        entities: {
+          Conversation: { fields: { id: { type: "id" } } },
+          Message: {
+            fields: {
+              id: { type: "id" },
+              conversationId: { type: "entityRef", read: ["*"] },
+              text: { type: "text" },
+            },
+          },
+        },
+      };
+      const INTENTS = {
+        send_message: {
+          name: "Отправить",
+          creates: "Message",
+          particles: {
+            entities: ["message: Message", "conversation: Conversation"],
+            conditions: [],
+            effects: [{ α: "add", target: "messages" }],
+            witnesses: [],
+            confirmation: "enter",
+          },
+        },
+        edit_message: {
+          name: "Редактировать",
+          particles: {
+            entities: ["message: Message"],
+            conditions: [],
+            effects: [{ α: "replace", target: "message.text" }],
+            witnesses: [],
+            confirmation: "click",
+          },
+        },
+      };
+      const result = deriveProjections(INTENTS, ONT);
+      expect(result.message_list.kind).toBe("feed");
+      expect(result.message_list.idParam).toBe("conversationId");
+    });
+
+    it("stays catalog when confirmation:enter but no foreignKey", () => {
+      const ONT = {
+        entities: {
+          Note: { fields: { id: { type: "id" }, text: { type: "text" } } },
+        },
+      };
+      const INTENTS = {
+        create_note: {
+          name: "Создать",
+          creates: "Note",
+          particles: {
+            entities: ["note: Note"],
+            conditions: [],
+            effects: [{ α: "add", target: "notes" }],
+            witnesses: [],
+            confirmation: "enter",
+          },
+        },
+      };
+      const result = deriveProjections(INTENTS, ONT);
+      expect(result.note_list.kind).toBe("catalog");
+    });
+  });
+
+  describe("R4: subCollections", () => {
+    it("adds subCollections from foreignKey relationships", () => {
+      const ONT = {
+        entities: {
+          Listing: { fields: { id: { type: "id" }, title: { type: "text" } } },
+          Bid: {
+            fields: {
+              id: { type: "id" },
+              listingId: { type: "entityRef", read: ["*"] },
+              amount: { type: "number" },
+            },
+          },
+        },
+      };
+      const INTENTS = {
+        create_listing: {
+          name: "Создать",
+          creates: "Listing",
+          particles: {
+            entities: ["listing: Listing"],
+            conditions: [],
+            effects: [{ α: "add", target: "listings" }],
+            witnesses: [],
+            confirmation: "click",
+          },
+        },
+        place_bid: {
+          name: "Ставка",
+          creates: "Bid",
+          particles: {
+            entities: ["bid: Bid", "listing: Listing"],
+            conditions: [],
+            effects: [{ α: "add", target: "bids" }],
+            witnesses: [],
+            confirmation: "click",
+          },
+        },
+        edit_listing: {
+          name: "Изменить",
+          particles: {
+            entities: ["listing: Listing"],
+            conditions: [],
+            effects: [{ α: "replace", target: "listing.title" }],
+            witnesses: [],
+            confirmation: "click",
+          },
+        },
+      };
+      const result = deriveProjections(INTENTS, ONT);
+      expect(result.listing_detail).toBeDefined();
+      expect(result.listing_detail.subCollections).toEqual([
+        { collection: "bids", entity: "Bid", foreignKey: "listingId", addable: true },
+      ]);
+    });
+
+    it("addable:false when no creators for sub-entity", () => {
+      const ONT = {
+        entities: {
+          Order: { fields: { id: { type: "id" } } },
+          Review: {
+            fields: { id: { type: "id" }, orderId: { type: "entityRef" } },
+          },
+        },
+      };
+      const INTENTS = {
+        create_order: {
+          name: "Создать",
+          creates: "Order",
+          particles: {
+            entities: ["order: Order"],
+            conditions: [],
+            effects: [{ α: "add", target: "orders" }],
+            witnesses: [],
+            confirmation: "click",
+          },
+        },
+        fulfill_order: {
+          name: "Выполнить",
+          particles: {
+            entities: ["order: Order"],
+            conditions: [],
+            effects: [{ α: "replace", target: "order.status" }],
+            witnesses: [],
+            confirmation: "click",
+          },
+        },
+      };
+      const result = deriveProjections(INTENTS, ONT);
+      expect(result.order_detail.subCollections).toEqual([
+        { collection: "reviews", entity: "Review", foreignKey: "orderId", addable: false },
+      ]);
+    });
+  });
 });
