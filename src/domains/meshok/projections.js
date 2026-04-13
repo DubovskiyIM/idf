@@ -9,7 +9,7 @@ export const PROJECTIONS = {
     routeEntities: ["Category"],
     filter: "status === 'active'",
     sort: "auctionEnd",
-    witnesses: ["title", "currentPrice", "bidCount", "auctionEnd", "images", "shippingFrom", "condition"],
+    witnesses: ["title", "currentPrice", { field: "bidCount", compute: "count(bids, listingId=target.id)" }, "auctionEnd", "images", "shippingFrom", "condition"],
   },
 
   listing_detail: {
@@ -20,7 +20,7 @@ export const PROJECTIONS = {
     mainEntity: "Listing",
     idParam: "listingId",
     routeEntities: ["Bid"],
-    witnesses: ["title", "description", "currentPrice", "startPrice", "buyNowPrice", "bidCount", "auctionEnd", "condition", "images", "shippingCost", "shippingFrom", "status", "seller.name", "seller.rating"],
+    witnesses: ["title", "description", "currentPrice", "startPrice", "buyNowPrice", { field: "bidCount", compute: "count(bids, listingId=target.id)" }, "auctionEnd", "condition", "images", "shippingCost", "shippingFrom", "status", "seller.name", "seller.rating"],
     subCollections: [
       { entity: "Bid", foreignKey: "listingId", sort: "-amount", label: "Ставки" },
     ],

@@ -42,12 +42,10 @@ export const PROJECTIONS = {
     // distinct participantId среди votes для target poll и показывает
     // прогресс-бар + список неголосовавших.
     progress: {
-      type: "quorum",
+      field: "voteRatio",
+      compute: "ratio(votes.participantId, participants, pollId=target.id)",
+      display: "progress",
       title: "Кворум",
-      totalSource: "participants",
-      currentSource: "votes",
-      currentDistinct: "participantId",
-      foreignKey: "pollId",
       waitingField: "name",
     },
     // M4 Step F: intents, которые отрендерятся как inline-setter внизу detail.
