@@ -1,5 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { analyzeIntents, detectForeignKeys, deriveProjections } from "./deriveProjections.js";
+import { mergeProjections } from "./mergeProjections.js";
 
 describe("analyzeIntents", () => {
   const INTENTS = {
@@ -482,5 +483,72 @@ describe("deriveProjections", () => {
       const result = deriveProjections(INTENTS, ONT);
       expect(result.my_user_list).toBeUndefined();
     });
+  });
+});
+
+describe("mergeProjections", () => {
+  it("authored field overrides derived field", () => {
+    const derived = {
+      listing_list: { kind: "catalog", mainEntity: "Listing", witnesses: ["title"] },
+    };
+    const authored = { listing_list: { layout: "grid" } };
+    const result = mergeProjections(derived, authored);
+    expect(result.listing_list.kind).toBe("catalog");
+    expect(result.listing_list.layout).toBe("grid");
+  });
+
+  it("authored subCollections replaces derived entirely", () => {
+    const derived = {
+      listing_detail: {
+        kind: "detail",
+        subCollections: [
+          { entity: "Bid", foreignKey: "listingId", addable: true },
+          { entity: "Review", foreignKey: "listingId", addable: false },
+        ],
+      },
+    };
+    const authored = {
+      listing_detail: {
+        subCollections: [{ entity: "Bid", foreignKey: "listingId", addable: true, sort: "-amount" }],
+      },
+    };
+    const result = mergeProjections(derived, authored);
+    expect(result.listing_detail.subCollections).toHaveLength(1);
+    expect(result.listing_detail.subCollections[0].sort).toBe("-amount");
+  });
+
+  it("authored false deletes derived projection", () => {
+    const derived = {
+      listing_list: { kind: "catalog" },
+      bid_list: { kind: "catalog" },
+    };
+    const authored = { bid_list: false };
+    const result = mergeProjections(derived, authored);
+    expect(result.listing_list).toBeDefined();
+    expect(result.bid_list).toBeUndefined();
+  });
+
+  it("authored adds new projection not in derived", () => {
+    const derived = { listing_list: { kind: "catalog" } };
+    const authored = {
+      meshok_home: { kind: "dashboard", widgets: [{ projection: "listing_list" }] },
+    };
+    const result = mergeProjections(derived, authored);
+    expect(result.meshok_home.kind).toBe("dashboard");
+    expect(result.listing_list).toBeDefined();
+  });
+
+  it("empty authored → derived unchanged", () => {
+    const derived = { a: { kind: "catalog" }, b: { kind: "detail" } };
+    const result = mergeProjections(derived, {});
+    expect(result).toEqual(derived);
+  });
+
+  it("full authored override → backward compat", () => {
+    const derived = { a: { kind: "catalog", witnesses: ["x"] } };
+    const authored = { a: { kind: "catalog", mainEntity: "A", witnesses: ["y"], layout: "grid" } };
+    const result = mergeProjections(derived, authored);
+    expect(result.a.witnesses).toEqual(["y"]);
+    expect(result.a.layout).toBe("grid");
   });
 });
