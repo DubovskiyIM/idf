@@ -1,4 +1,6 @@
 import { useMemo, useState, useCallback, useEffect } from "react";
+import { usePersonalPrefs, prefsToStyle } from "../personal/usePersonalPrefs.js";
+import PrefsPanel from "../personal/PrefsPanel.jsx";
 import ProjectionRendererV2 from "../index.jsx";
 import { crystallizeV2 } from "../../crystallize_v2/index.js";
 import { generateEditProjections } from "../../crystallize_v2/formGrouping.js";
@@ -106,6 +108,10 @@ export default function V2Shell({
     ...(current?.params || {}),
   }), [world, current]);
 
+  // Personal layer (§17)
+  const { prefs, setPref, resetPrefs } = usePersonalPrefs();
+  const [prefsOpen, setPrefsOpen] = useState(false);
+
   // LLM enrichment state
   const [enrichedArtifacts, setEnrichedArtifacts] = useState({});
   const [enriching, setEnriching] = useState(false);
@@ -191,6 +197,15 @@ export default function V2Shell({
             {enriching ? "⏳ Обогащение..." : isEnriched ? "✨ Обогащён" : "✨ LLM"}
           </button>
         )}
+        <button
+          onClick={() => setPrefsOpen(true)}
+          title="Настройки UI"
+          style={{
+            padding: "4px 10px", borderRadius: 6, border: "1px solid var(--mantine-color-default-border, #d1d5db)",
+            background: "transparent", color: "var(--mantine-color-text, #374151)",
+            fontSize: 11, cursor: "pointer", whiteSpace: "nowrap",
+          }}
+        >⚙</button>
       </div>
       <div style={{ flex: 1, overflow: "hidden", position: "relative", minHeight: 0 }}>
         {currentArtifact ? (
@@ -217,9 +232,11 @@ export default function V2Shell({
     </>
   );
 
+  const personalStyle = prefsToStyle(prefs);
+
   if (sections) {
     return (
-      <div style={{ display: "flex", height: "100%", minHeight: 0, fontFamily: "system-ui, sans-serif" }}>
+      <div style={{ display: "flex", height: "100%", minHeight: 0, fontFamily: "system-ui, sans-serif", fontSize: "var(--idf-font-size, 14px)", ...personalStyle }}>
         <SectionedSidebar
           sections={sections}
           active={current?.projectionId}
@@ -229,6 +246,7 @@ export default function V2Shell({
         <div style={{ flex: 1, display: "flex", flexDirection: "column", minHeight: 0, overflow: "hidden" }}>
           {mainContent}
         </div>
+        {prefsOpen && <PrefsPanel prefs={prefs} setPref={setPref} resetPrefs={resetPrefs} onClose={() => setPrefsOpen(false)} />}
       </div>
     );
   }
@@ -278,6 +296,7 @@ export default function V2Shell({
         )
       )}
       {mainContent}
+      {prefsOpen && <PrefsPanel prefs={prefs} setPref={setPref} resetPrefs={resetPrefs} onClose={() => setPrefsOpen(false)} />}
     </div>
   );
 }
