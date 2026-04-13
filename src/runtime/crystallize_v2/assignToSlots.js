@@ -213,6 +213,7 @@ function isPerItemIntent(intent, projection) {
   // Признак per-item: точечный witness referring to an existing instance
   const witnesses = intent.particles?.witnesses || [];
   const hasDottedMainWitness = witnesses.some(w => {
+    if (typeof w !== "string") return false;
     const base = w.split(".")[0];
     return base === mainLower || base === mainEntity || base === "original_message";
   });

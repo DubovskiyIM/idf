@@ -36,7 +36,7 @@ export const CAPTURE_WITNESSES = new Set([
 
 export function needsCustomCapture(intent) {
   const witnesses = intent.particles?.witnesses || [];
-  return witnesses.some(w => CAPTURE_WITNESSES.has(w));
+  return witnesses.some(w => typeof w === "string" && CAPTURE_WITNESSES.has(w));
 }
 
 /**
@@ -197,7 +197,7 @@ export function appliesToProjection(intent, projection) {
   // 1. Pure projection-level utility: только поисковые/фильтровые intent'ы
   // (witness "query" или "results"). Настройки, аналитика и прочие intent'ы
   // без entities — не утилиты проекции, отсеиваются.
-  const hasDottedWitness = witnesses.some(w => w.includes("."));
+  const hasDottedWitness = witnesses.some(w => typeof w === "string" && w.includes("."));
   if (intentEntities.length === 0 && !hasDottedWitness && isSearchUtility) return true;
 
   // 2. Creator-intent для главной сущности: если intent создаёт mainEntity

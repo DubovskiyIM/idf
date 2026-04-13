@@ -177,7 +177,7 @@ function registerBuiltins() {
           intentId,
           title: intent.name,
           witnessPanel: (intent.particles.witnesses || [])
-            .filter(w => w.includes("."))
+            .filter(w => typeof w === "string" && w.includes("."))
             .map(w => ({ type: "text", bind: w })),
           parameters,
         },
@@ -214,7 +214,7 @@ function registerBuiltins() {
           intentId,
           title: intent.name,
           witnessPanel: (intent.particles.witnesses || [])
-            .filter(w => w.includes("."))
+            .filter(w => typeof w === "string" && w.includes("."))
             .map(w => ({ type: "text", bind: w })),
           parameters,
         },
@@ -240,13 +240,13 @@ function registerBuiltins() {
 
 function firstEntityField(intent) {
   const witnesses = intent.particles?.witnesses || [];
-  const dotted = witnesses.find(w => w.includes("."));
+  const dotted = witnesses.find(w => typeof w === "string" && w.includes("."));
   return dotted || null;
 }
 
 function buildConfirmMessage(intent) {
   const witnesses = intent.particles?.witnesses || [];
-  const preview = witnesses.filter(w => w.includes(".")).map(w => `{${w}}`).join(", ");
+  const preview = witnesses.filter(w => typeof w === "string" && w.includes(".")).map(w => `{${w}}`).join(", ");
   return `${intent.name}${preview ? ": " + preview : ""}?`;
 }
 
