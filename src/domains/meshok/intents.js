@@ -142,7 +142,7 @@ export const INTENTS = {
     ["listing.status = 'active'"],
     [ef("add", "bids"), ef("replace", "listing.currentPrice"), ef("replace", "listing.bidCount")],
     ["amount", "listing.currentPrice", "listing.title"],
-    "enter", { creates: "Bid(active)" }),
+    "click"),
 
   set_auto_bid: intent("Автоставка", ["bid: Bid", "listing: Listing"],
     ["listing.status = 'active'"],
@@ -600,7 +600,7 @@ export const INTENTS = {
     "click", { parameters: [] }),
 
   unsubscribe_from_listing: intent("Отписаться от лота", ["listing: Listing"],
-    [],
+    ["listing.subscribed = true"],
     [ef("remove", "subscriptions")],
     [], "click", { antagonist: "subscribe_to_listing", parameters: [] }),
 
@@ -608,7 +608,7 @@ export const INTENTS = {
   // ===== ЖАЛОБЫ / МОДЕРАЦИЯ (7) =====
 
   report_listing: intent("Пожаловаться на лот", ["listing: Listing"],
-    [],
+    ["listing.status = 'active'"],
     [ef("add", "reports")],
     ["listing.title"],
     "click"),
@@ -892,7 +892,7 @@ export const INTENTS = {
     "enter", { creates: "Collection" }),
 
   add_to_collection: intent("В подборку", ["listing: Listing"],
-    [],
+    ["listing.sellerId = me.id"],
     [ef("add", "collectionItems")],
     ["collectionId"],
     "click"),
@@ -1100,7 +1100,7 @@ export const INTENTS = {
     [], "click", { extended: true, creates: "Listing(draft)" }),
 
   bulk_delete_listings: intent("Массовое удаление", ["listing: Listing"],
-    [],
+    ["listing.sellerId = me.id"],
     [ef("remove", "listings")],
     [], "click", { extended: true, irreversibility: "high" }),
 
