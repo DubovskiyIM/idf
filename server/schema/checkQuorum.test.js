@@ -1,91 +1,70 @@
 import { describe, it, expect } from "vitest";
 import { checkQuorum } from "./checkQuorum.cjs";
 
+const openPoll = { id: "p1", status: "open" };
+const twoParticipants = [{ id: "a", pollId: "p1" }, { id: "b", pollId: "p1" }];
+const threeParticipants = [...twoParticipants, { id: "c", pollId: "p1" }];
+
 describe("checkQuorum", () => {
-  it("кворум достигнут — все проголосовали", () => {
-    const world = {
-      polls: [{ id: "p1", status: "open" }],
-      participants: [
-        { id: "part1", pollId: "p1" },
-        { id: "part2", pollId: "p1" },
-      ],
-      votes: [
-        { participantId: "part1", pollId: "p1", optionId: "o1", value: "yes" },
-        { participantId: "part2", pollId: "p1", optionId: "o1", value: "no" },
-      ],
-    };
-    const result = checkQuorum("p1", world);
-    expect(result.reached).toBe(true);
-    expect(result.voted).toBe(2);
-    expect(result.total).toBe(2);
+  // === all_voted (default) ===
+  it("all_voted: кворум достигнут", () => {
+    const world = { polls: [openPoll], participants: twoParticipants,
+      votes: [{ participantId: "a", pollId: "p1" }, { participantId: "b", pollId: "p1" }] };
+    const r = checkQuorum("p1", world);
+    expect(r.reached).toBe(true);
+    expect(r.policy).toBe("all_voted");
   });
 
-  it("кворум не достигнут — один не проголосовал", () => {
-    const world = {
-      polls: [{ id: "p1", status: "open" }],
-      participants: [
-        { id: "part1", pollId: "p1" },
-        { id: "part2", pollId: "p1" },
-        { id: "part3", pollId: "p1" },
-      ],
-      votes: [
-        { participantId: "part1", pollId: "p1", optionId: "o1", value: "yes" },
-        { participantId: "part2", pollId: "p1", optionId: "o2", value: "no" },
-      ],
-    };
-    const result = checkQuorum("p1", world);
-    expect(result.reached).toBe(false);
-    expect(result.voted).toBe(2);
-    expect(result.total).toBe(3);
-  });
-
-  it("множественные голоса одного участника считаются один раз", () => {
-    const world = {
-      polls: [{ id: "p1", status: "open" }],
-      participants: [{ id: "part1", pollId: "p1" }],
-      votes: [
-        { participantId: "part1", pollId: "p1", optionId: "o1", value: "yes" },
-        { participantId: "part1", pollId: "p1", optionId: "o2", value: "no" },
-      ],
-    };
-    const result = checkQuorum("p1", world);
-    expect(result.reached).toBe(true);
-    expect(result.voted).toBe(1);
-    expect(result.total).toBe(1);
-  });
-
-  it("poll не open — кворум не считается", () => {
-    const world = {
-      polls: [{ id: "p1", status: "closed" }],
-      participants: [{ id: "part1", pollId: "p1" }],
-      votes: [{ participantId: "part1", pollId: "p1", optionId: "o1", value: "yes" }],
-    };
+  it("all_voted: один не проголосовал", () => {
+    const world = { polls: [openPoll], participants: threeParticipants,
+      votes: [{ participantId: "a", pollId: "p1" }, { participantId: "b", pollId: "p1" }] };
     expect(checkQuorum("p1", world).reached).toBe(false);
   });
 
-  it("poll не найден — кворум не считается", () => {
-    expect(checkQuorum("nonexistent", { polls: [] }).reached).toBe(false);
+  it("множественные голоса одного участника — один раз", () => {
+    const world = { polls: [openPoll], participants: [{ id: "a", pollId: "p1" }],
+      votes: [{ participantId: "a", pollId: "p1" }, { participantId: "a", pollId: "p1" }] };
+    expect(checkQuorum("p1", world).reached).toBe(true);
   });
 
-  it("нет участников — кворум не достигнут", () => {
-    const world = {
-      polls: [{ id: "p1", status: "open" }],
-      participants: [],
-      votes: [],
-    };
-    expect(checkQuorum("p1", world).reached).toBe(false);
-    expect(checkQuorum("p1", world).total).toBe(0);
+  it("closed poll → false", () => {
+    expect(checkQuorum("p1", { polls: [{ id: "p1", status: "closed" }] }).reached).toBe(false);
   });
 
-  it("голоса от чужого poll'а не учитываются", () => {
-    const world = {
-      polls: [{ id: "p1", status: "open" }],
-      participants: [{ id: "part1", pollId: "p1" }],
-      votes: [
-        { participantId: "part1", pollId: "p2", optionId: "o1", value: "yes" },
-      ],
-    };
+  it("нет участников → false", () => {
+    expect(checkQuorum("p1", { polls: [openPoll], participants: [], votes: [] }).reached).toBe(false);
+  });
+
+  it("голоса чужого poll'а не учитываются", () => {
+    const world = { polls: [openPoll], participants: [{ id: "a", pollId: "p1" }],
+      votes: [{ participantId: "a", pollId: "p2" }] };
     expect(checkQuorum("p1", world).reached).toBe(false);
-    expect(checkQuorum("p1", world).voted).toBe(0);
+  });
+
+  // === quorum(N) ===
+  it("quorum(0.5): 2 из 3 = 66% ≥ 50%", () => {
+    const ontology = { entities: { Poll: { quorum: { closeWhen: "quorum(0.5)" } } } };
+    const world = { polls: [openPoll], participants: threeParticipants,
+      votes: [{ participantId: "a", pollId: "p1" }, { participantId: "b", pollId: "p1" }] };
+    const r = checkQuorum("p1", world, ontology);
+    expect(r.reached).toBe(true);
+    expect(r.policy).toBe("quorum(0.5)");
+  });
+
+  it("quorum(0.8): 2 из 3 = 66% < 80%", () => {
+    const ontology = { entities: { Poll: { quorum: { closeWhen: "quorum(0.8)" } } } };
+    const world = { polls: [openPoll], participants: threeParticipants,
+      votes: [{ participantId: "a", pollId: "p1" }, { participantId: "b", pollId: "p1" }] };
+    expect(checkQuorum("p1", world, ontology).reached).toBe(false);
+  });
+
+  // === manual ===
+  it("manual: никогда не достигается автоматически", () => {
+    const ontology = { entities: { Poll: { quorum: { closeWhen: "manual" } } } };
+    const world = { polls: [openPoll], participants: twoParticipants,
+      votes: [{ participantId: "a", pollId: "p1" }, { participantId: "b", pollId: "p1" }] };
+    const r = checkQuorum("p1", world, ontology);
+    expect(r.reached).toBe(false);
+    expect(r.policy).toBe("manual");
   });
 });

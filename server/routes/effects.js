@@ -3,6 +3,7 @@ const db = require("../db.js");
 const { validate, cascadeReject, foldWorld } = require("../validator.js");
 const { ingestEffect } = require("../effect-pipeline.js");
 const { checkQuorum } = require("../schema/checkQuorum.cjs");
+const { getOntology } = require("../ontologyRegistry.cjs");
 const { v4: uuid } = require("uuid");
 
 const router = Router();
@@ -58,7 +59,8 @@ router.post("/", (req, res) => {
           const pollId = ctx.pollId;
           if (pollId) {
             const world = foldWorld();
-            const quorum = checkQuorum(pollId, world);
+            const ontology = getOntology("planning");
+            const quorum = checkQuorum(pollId, world, ontology);
             if (quorum.reached) {
               const closeId = uuid();
               const closeNow = Date.now();

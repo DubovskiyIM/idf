@@ -4,7 +4,11 @@ export const ONTOLOGY = {
       fields: ["id", "organizerId", "title", "description", "status", "createdAt", "deadline"],
       statuses: ["draft", "open", "closed", "resolved", "cancelled"],
       ownerField: "organizerId",
-      type: "internal"
+      type: "internal",
+      quorum: {
+        closeWhen: "all_voted",  // all_voted | quorum(0.8) | manual
+        absentVote: "exclude",   // abstain | no | exclude
+      },
     },
     TimeOption: {
       fields: ["id", "pollId", "date", "startTime", "endTime"],
