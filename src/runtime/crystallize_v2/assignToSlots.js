@@ -21,6 +21,7 @@ export function assignToSlots(INTENTS, projection, ONTOLOGY) {
   const kind = projection.kind;
   if (kind === "catalog") return assignToSlotsCatalog(INTENTS, projection, ONTOLOGY);
   if (kind === "detail") return assignToSlotsDetail(INTENTS, projection, ONTOLOGY);
+  if (kind === "wizard") return { kind: "wizard", steps: projection.steps || [], projection };
   return assignToSlotsFeed(INTENTS, projection, ONTOLOGY);
 }
 
