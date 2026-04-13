@@ -24,7 +24,8 @@
     "calendar": "node external-calendar/index.js",
     "test": "vitest run",
     "test:watch": "vitest",
-    "agent-smoke": "node scripts/agent-smoke.mjs"
+    "agent-smoke": "node scripts/agent-smoke.mjs",
+    "crystallize-llm": "node scripts/crystallize-llm.mjs"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.88.0",
