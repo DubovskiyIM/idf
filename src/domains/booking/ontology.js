@@ -14,7 +14,20 @@ export const ONTOLOGY = {
       type: "mirror"
     },
     Booking: {
-      fields: ["id", "clientId", "specialistId", "serviceId", "serviceName", "slotId", "slotIds", "status", "price", "createdAt"],
+      fields: {
+        id: { type: "id" },
+        clientId: { type: "entityRef" },
+        specialistId: { type: "entityRef" },
+        serviceId: { type: "entityRef" },
+        serviceName: { type: "text", read: ["*"], label: "Услуга" },
+        slotId: { type: "entityRef" },
+        slotIds: { type: "text" },
+        status: { type: "enum", read: ["*"], label: "Статус" },
+        price: { type: "number", read: ["*"], label: "Цена" },
+        date: { type: "text", read: ["*"], label: "Дата" },
+        startTime: { type: "text", read: ["*"], label: "Начало" },
+        createdAt: { type: "datetime", read: ["*"], label: "Создано" },
+      },
       statuses: ["draft", "confirmed", "completed", "cancelled", "no_show"],
       ownerField: "clientId",
       type: "internal"

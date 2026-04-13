@@ -259,11 +259,19 @@ export function Card({ node, ctx, item }) {
 
 function ItemIntentGroup({ group, ctx, item }) {
   const [open, setOpen] = useState(false);
+  const ref = useRef(null);
   const icon = group.icon;
   const count = group.specs.length;
 
+  useEffect(() => {
+    if (!open) return;
+    const handler = (e) => { if (ref.current && !ref.current.contains(e.target)) setOpen(false); };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, [open]);
+
   return (
-    <div style={{ position: "relative" }}>
+    <div ref={ref} style={{ position: "relative" }}>
       <button
         onClick={(e) => { e.stopPropagation(); setOpen(v => !v); }}
         title={group.specs.map(s => s.label || s.intentId).join(", ")}

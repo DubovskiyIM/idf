@@ -53,7 +53,7 @@ export const INTENTS = {
   complete_booking: {
     name: "Завершить приём", particles: {
       entities: ["booking: Booking"],
-      conditions: ["booking.status = 'confirmed'", "booking.slot.endTime <= now"],
+      conditions: ["booking.status = 'confirmed'", "booking.specialistId = me.id"],
       effects: [{ α: "replace", target: "booking.status", value: "completed", σ: "account" }],
       witnesses: ["booking.serviceName", "booking.date"],
       confirmation: "click"
@@ -102,7 +102,7 @@ export const INTENTS = {
   mark_no_show: {
     name: "Отметить неявку", particles: {
       entities: ["booking: Booking"],
-      conditions: ["booking.status = 'confirmed'"],
+      conditions: ["booking.status = 'confirmed'", "booking.specialistId = me.id"],
       effects: [{ α: "replace", target: "booking.status", value: "no_show", σ: "account" }],
       witnesses: ["booking.serviceName", "booking.date", "booking.startTime"],
       confirmation: "click"
@@ -162,7 +162,7 @@ export const INTENTS = {
   cancel_client_booking: {
     name: "Отменить запись клиента", particles: {
       entities: ["booking: Booking"],
-      conditions: ["booking.status = 'confirmed'"],
+      conditions: ["booking.status = 'confirmed'", "booking.specialistId = me.id"],
       effects: [
         { α: "replace", target: "booking.status", value: "cancelled", σ: "account" },
         { α: "replace", target: "slot.status", value: "free", σ: "shared" }

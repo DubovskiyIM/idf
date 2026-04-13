@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import SlotRenderer from "../SlotRenderer.jsx";
 import Icon from "../adapters/Icon.jsx";
 import { getAdaptedComponent } from "../adapters/registry.js";
@@ -48,11 +48,18 @@ export default function Overflow({ spec, ctx, item }) {
     return <AdaptedOverflow items={items} triggerIcon={spec.icon} triggerLabel={spec.label} />;
   }
 
-  // Fallback — inline popover. Если spec.icon задана — показываем иконку группы
-  // вместо «⋯» (иконка-группа для сгруппированных по иконке кнопок).
+  // Fallback — inline popover с click-outside close.
+  const ref = useRef(null);
+  useEffect(() => {
+    if (!open) return;
+    const handler = (e) => { if (ref.current && !ref.current.contains(e.target)) setOpen(false); };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, [open]);
+
   const triggerEmoji = spec.icon || "⋯";
   return (
-    <div style={{ position: "relative" }}>
+    <div ref={ref} style={{ position: "relative" }}>
       <button
         onClick={() => setOpen(!open)}
         title={spec.label || "Ещё"}
