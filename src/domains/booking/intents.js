@@ -62,7 +62,7 @@ export const INTENTS = {
   add_service: {
     name: "Добавить услугу", particles: {
       entities: ["service: Service"],
-      conditions: [],
+      conditions: ["service.specialistOnly = true"],
       effects: [{ α: "add", target: "services", σ: "account" }],
       witnesses: ["specialist.services.count"],
       confirmation: "click"
@@ -71,7 +71,7 @@ export const INTENTS = {
   block_slot: {
     name: "Заблокировать слот", particles: {
       entities: ["slot: TimeSlot"],
-      conditions: ["slot.status = 'free'"],
+      conditions: ["slot.status = 'free'", "slot.specialistId = me.id"],
       effects: [{ α: "replace", target: "slot.status", value: "blocked", σ: "shared" }],
       witnesses: ["slot.date", "slot.startTime"],
       confirmation: "click"
@@ -80,7 +80,7 @@ export const INTENTS = {
   unblock_slot: {
     name: "Разблокировать слот", particles: {
       entities: ["slot: TimeSlot"],
-      conditions: ["slot.status = 'blocked'"],
+      conditions: ["slot.status = 'blocked'", "slot.specialistId = me.id"],
       effects: [{ α: "replace", target: "slot.status", value: "free", σ: "shared" }],
       witnesses: ["slot.date", "slot.startTime"],
       confirmation: "click"
@@ -183,7 +183,7 @@ export const INTENTS = {
   update_service: {
     name: "Изменить услугу", particles: {
       entities: ["service: Service"],
-      conditions: [],
+      conditions: ["service.specialistId = me.id"],
       effects: [
         { α: "replace", target: "service.price", σ: "account" },
         { α: "replace", target: "service.duration", σ: "account" }
@@ -195,7 +195,7 @@ export const INTENTS = {
   remove_service: {
     name: "Убрать услугу", particles: {
       entities: ["service: Service"],
-      conditions: ["service.active = true"],
+      conditions: ["service.active = true", "service.specialistId = me.id"],
       effects: [{ α: "replace", target: "service.active", value: false, σ: "account" }],
       witnesses: ["service.name", "active_bookings.count"],
       confirmation: "click"

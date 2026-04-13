@@ -79,6 +79,8 @@ const DICTIONARY = {
   duration: "Длительность",
   price: "Цена",
   active: "Активна",
+  serviceName: "Услуга",
+  specialistId: "Специалист",
 };
 
 /**

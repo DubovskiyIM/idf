@@ -19,7 +19,7 @@ import { deriveNavGraph } from "./navGraph.js";
 import { generateEditProjections, buildFormSpec } from "./formGrouping.js";
 import { validateArtifact } from "../renderer/validation/validateArtifact.js";
 
-const SUPPORTED_ARCHETYPES = new Set(["feed", "catalog", "detail", "form", "canvas", "dashboard"]);
+const SUPPORTED_ARCHETYPES = new Set(["feed", "catalog", "detail", "form", "canvas", "dashboard", "wizard"]);
 
 /**
  * Кристаллизация: INTENTS + PROJECTIONS + ONTOLOGY → артефакты v2.
@@ -81,6 +81,9 @@ export function crystallizeV2(INTENTS, PROJECTIONS, ONTOLOGY, domainId = "unknow
         fab: [],
         overlay: [],
       };
+    } else if (archetype === "wizard") {
+      // Wizard-архетип: steps пробрасываются as-is, рендер управляется ArchetypeWizard.
+      slots = { kind: "wizard", steps: proj.steps || [], projection: proj };
     } else {
       slots = assignToSlots(INTENTS, { ...proj, id: projId }, ONTOLOGY);
     }
