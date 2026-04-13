@@ -9,7 +9,7 @@ const ef = (α, target, σ = "account", extra = {}) => ({ α, target, σ, ...ext
 export const INTENTS = {
   // ===== СООБЩЕНИЯ (25) =====
   send_message: intent("Отправить сообщение", ["message: Message", "conversation: Conversation"], [], [ef("add", "messages"), ef("replace", "conversation.lastMessageAt")], ["conversation.title", "draft_text"], "enter", { creates: "Message", parameters: [{ name: "content", type: "textarea", required: true, placeholder: "Сообщение…" }] }),
-  edit_message: intent("Редактировать", ["message: Message"], ["message.senderId = me.id", "message.forwarded != true"], [ef("replace", "message.content")], ["message.content"], "click", { phase: "investigation" }),
+  edit_message: intent("Редактировать", ["message: Message"], ["message.senderId = me.id", "message.forwarded != true"], [ef("replace", "message.content")], ["message.content"], "form", { parameters: [{ name: "content", type: "textarea", required: true, label: "Текст" }] }),
   delete_message: intent("Удалить сообщение", ["message: Message"], ["message.senderId = me.id"], [ef("replace", "message.deletedFor")], ["message.content"], "click"),
   reply_to_message: intent("Ответить", ["message: Message", "conversation: Conversation"], [], [ef("add", "messages"), ef("replace", "conversation.lastMessageAt")], ["original_message.content"], "enter", { creates: "Message", parameters: [{ name: "content", type: "textarea", required: true, placeholder: "Ответить…" }] }),
   forward_message: intent("Переслать", ["message: Message", "conversation: Conversation"], [], [ef("add", "messages")], ["message.content", "target_conversation.title"], "click", { creates: "Message" }),
