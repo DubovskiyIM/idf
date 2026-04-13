@@ -2,7 +2,9 @@ const { Router } = require("express");
 const db = require("../db.js");
 const { validate, cascadeReject, foldWorld } = require("../validator.js");
 const { ingestEffect } = require("../effect-pipeline.js");
-const { validateIntentConditions } = require("../intents.js");
+const { validateIntentConditions, getIntent, getDomainByIntentId } = require("../intents.js");
+const { getOntology } = require("../ontologyRegistry.cjs");
+const { evaluateRules } = require("../ruleEngine.js");
 const { v4: uuid } = require("uuid");
 
 const router = Router();
@@ -49,35 +51,24 @@ router.post("/", (req, res) => {
     broadcast,
     delay,
     onConfirmed: (stored) => {
-      // === Автозакрытие по кворуму ===
-      // При подтверждённом голосе проверяем conditions close_poll.
-      // Если агрегатное условие ratio() выполнено — автоматически закрываем.
-      if (stored.intent_id?.startsWith("vote_")) {
-        try {
-          const ctx = typeof stored.context === "string" ? JSON.parse(stored.context) : (stored.context || {});
-          const pollId = ctx.pollId;
-          if (pollId) {
-            const world = foldWorld();
-            const mockEffect = {
-              intent_id: "close_poll",
-              target: "poll.status",
-              context: { id: pollId },
-            };
-            const result = validateIntentConditions(mockEffect, world);
-            if (result.valid) {
-              const closeId = uuid();
-              const closeNow = Date.now();
-              db.prepare(`
-                INSERT INTO effects (id, intent_id, alpha, target, value, scope, parent_id, status, ttl, context, created_at, resolved_at)
-                VALUES (?, 'close_poll', 'replace', 'poll.status', '"closed"', 'account', NULL, 'confirmed', NULL, ?, ?, ?)
-              `).run(closeId, JSON.stringify({ id: pollId }), closeNow, closeNow);
-              broadcast("effect:confirmed", { id: closeId });
-              console.log(`  [auto-close] Опрос ${pollId} автоматически закрыт — conditions close_poll выполнены`);
-            }
-          }
-        } catch (e) {
-          console.error("[auto-close] Ошибка проверки условий:", e);
+      // === Реактивные правила (sync) ===
+      // Декларативные правила из ontology.rules: trigger match → validate action conditions → emit.
+      const ruleDeps = { getDomainByIntentId, getOntology, validateIntentConditions, getIntent };
+      try {
+        const fired = evaluateRules(stored, () => foldWorld(), ruleDeps);
+        for (const { rule, effect } of fired) {
+          const now = Date.now();
+          db.prepare(`
+            INSERT INTO effects (id, intent_id, alpha, target, value, scope, parent_id, status, ttl, context, created_at, resolved_at)
+            VALUES (?, ?, ?, ?, ?, 'account', NULL, 'confirmed', NULL, ?, ?, ?)
+          `).run(effect.id, effect.intent_id, effect.alpha, effect.target,
+            effect.value != null ? JSON.stringify(effect.value) : null,
+            JSON.stringify(effect.context), now, now);
+          broadcast("effect:confirmed", { id: effect.id });
+          console.log(`  [rule:${rule.id}] ${rule.action} выполнен`);
         }
+      } catch (e) {
+        console.error("[rules] Ошибка выполнения реактивных правил:", e);
       }
 
       // === Автозакрытие по дедлайну ===
