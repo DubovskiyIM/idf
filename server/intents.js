@@ -128,6 +128,10 @@ function conditionEntityType(condStr) {
   return m ? m[1] : null;
 }
 
+function isAggregateCondition(condStr) {
+  return /^(count|ratio)\(/.test(condStr.trim());
+}
+
 function findEntityInWorld(world, entityId) {
   if (!entityId) return null;
   for (const collection of Object.values(world)) {
@@ -157,8 +161,20 @@ function validateIntentConditions(effect, world) {
 
   for (const cond of conditions) {
     const condEntityType = conditionEntityType(cond);
-    if (!condEntityType) continue;
 
+    // Агрегатные условия (нет entity-префикса) — вычисляем против world
+    if (!condEntityType) {
+      if (isAggregateCondition(cond)) {
+        const entityId = ctx.id;
+        const entity = entityId ? findEntityInWorld(world, entityId) : { id: entityId };
+        if (!evalIntentCondition(cond, entity, ctx, world)) {
+          return { valid: false, reason: `Условие не выполнено: ${cond}` };
+        }
+      }
+      continue;
+    }
+
+    // Скалярные условия — существующая логика
     const matches =
       condEntityType === effectEntityType ||
       condEntityType === effectEntitySingular;
@@ -170,7 +186,7 @@ function validateIntentConditions(effect, world) {
     const entity = findEntityInWorld(world, entityId);
     if (!entity) continue;
 
-    if (!evalIntentCondition(cond, entity, ctx)) {
+    if (!evalIntentCondition(cond, entity, ctx, world)) {
       return { valid: false, reason: `Условие не выполнено: ${cond}` };
     }
   }

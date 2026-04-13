@@ -1,6 +1,6 @@
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, beforeEach } from "vitest";
 
-const { evalIntentCondition } = require("../intents.js");
+const { evalIntentCondition, registerIntents, validateIntentConditions, _registry } = require("../intents.js");
 
 const world = {
   bids: [
@@ -98,5 +98,94 @@ describe("evalIntentCondition — ratio()", () => {
       "ratio(votes.participantId, participants, pollId=target.id) >= 1.0",
       entity, {}
     )).toBe(true);
+  });
+});
+
+describe("validateIntentConditions — aggregate conditions", () => {
+  beforeEach(() => {
+    for (const key of Object.keys(_registry)) delete _registry[key];
+
+    registerIntents({
+      close_poll: {
+        name: "Закрыть голосование",
+        particles: {
+          entities: ["poll: Poll"],
+          conditions: [
+            "poll.status = 'open'",
+            "ratio(votes.participantId, participants, pollId=target.id) >= 1.0"
+          ],
+          effects: [{ α: "replace", target: "poll.status" }],
+          witnesses: [],
+          confirmation: "click"
+        }
+      },
+      cancel_listing: {
+        name: "Снять с продажи",
+        particles: {
+          entities: ["listing: Listing"],
+          conditions: [
+            "listing.status = 'active'",
+            "count(bids, listingId=target.id) = 0"
+          ],
+          effects: [{ α: "replace", target: "listing.status" }],
+          witnesses: [],
+          confirmation: "click"
+        }
+      }
+    }, "test_domain");
+  });
+
+  it("close_poll valid когда кворум достигнут", () => {
+    const w = {
+      polls: [{ id: "P1", status: "open" }],
+      participants: [
+        { id: "pt1", pollId: "P1" },
+        { id: "pt2", pollId: "P1" },
+      ],
+      votes: [
+        { id: "v1", pollId: "P1", participantId: "pt1" },
+        { id: "v2", pollId: "P1", participantId: "pt2" },
+      ],
+    };
+    const effect = { intent_id: "close_poll", target: "poll.status", context: { id: "P1" } };
+    expect(validateIntentConditions(effect, w)).toEqual({ valid: true });
+  });
+
+  it("close_poll invalid когда кворум не достигнут", () => {
+    const w = {
+      polls: [{ id: "P1", status: "open" }],
+      participants: [
+        { id: "pt1", pollId: "P1" },
+        { id: "pt2", pollId: "P1" },
+        { id: "pt3", pollId: "P1" },
+      ],
+      votes: [
+        { id: "v1", pollId: "P1", participantId: "pt1" },
+      ],
+    };
+    const effect = { intent_id: "close_poll", target: "poll.status", context: { id: "P1" } };
+    const result = validateIntentConditions(effect, w);
+    expect(result.valid).toBe(false);
+    expect(result.reason).toContain("ratio(");
+  });
+
+  it("cancel_listing valid когда нет ставок", () => {
+    const w = {
+      listings: [{ id: "L1", status: "active" }],
+      bids: [],
+    };
+    const effect = { intent_id: "cancel_listing", target: "listing.status", context: { id: "L1" } };
+    expect(validateIntentConditions(effect, w)).toEqual({ valid: true });
+  });
+
+  it("cancel_listing invalid когда есть ставки", () => {
+    const w = {
+      listings: [{ id: "L1", status: "active" }],
+      bids: [{ id: "b1", listingId: "L1", amount: 100 }],
+    };
+    const effect = { intent_id: "cancel_listing", target: "listing.status", context: { id: "L1" } };
+    const result = validateIntentConditions(effect, w);
+    expect(result.valid).toBe(false);
+    expect(result.reason).toContain("count(");
   });
 });
