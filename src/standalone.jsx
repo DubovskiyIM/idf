@@ -27,6 +27,18 @@ import V2Shell from "./runtime/renderer/shell/V2Shell.jsx";
 import { registerUIAdapter } from "./runtime/renderer/adapters/registry.js";
 import { mantineAdapter } from "./runtime/renderer/adapters/mantine/index.jsx";
 import { shadcnAdapter } from "./runtime/renderer/adapters/shadcn/index.jsx";
+import { registerCanvas } from "./runtime/renderer/archetypes/ArchetypeCanvas.jsx";
+import CalendarCanvas from "./domains/lifequest/canvas/CalendarCanvas.jsx";
+import VisionBoardCanvas from "./domains/lifequest/canvas/VisionBoardCanvas.jsx";
+
+// Регистрация domain-specific canvas-компонентов
+registerCanvas("calendar", ({ world, exec, viewer, ctx }) => (
+  <CalendarCanvas world={world} viewer={viewer} exec={exec}
+    onDayClick={(date) => ctx.navigate?.("today", { date })} />
+));
+registerCanvas("vision_board", ({ world, exec, viewer }) => (
+  <VisionBoardCanvas world={world} viewer={viewer} exec={exec} />
+));
 
 // Домены с переключением адаптера
 const DOMAIN_ADAPTERS = {

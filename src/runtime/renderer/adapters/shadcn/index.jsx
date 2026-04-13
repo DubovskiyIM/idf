@@ -288,9 +288,8 @@ function ShadcnIntentButton({ spec, onClick, disabled }) {
   );
 }
 
-function ShadcnOverflowMenu({ spec }) {
-  const children = spec.children || [];
-  if (children.length === 0) return null;
+function ShadcnOverflowMenu({ items, triggerIcon, triggerLabel }) {
+  if (!items || items.length === 0) return null;
 
   return (
     <DropdownMenu.Root>
@@ -315,20 +314,21 @@ function ShadcnOverflowMenu({ spec }) {
           }}
           sideOffset={4}
         >
-          {children.map((child, i) => {
-            const Icon = child.icon ? resolveLucide(child.icon) : null;
+          {items.map((item, i) => {
+            if (item.divider) return <DropdownMenu.Separator key={item.key} style={{ height: 1, background: "var(--color-doodle-border)", margin: "4px 0" }} />;
+            const IconCmp = item.icon ? resolveLucide(item.icon) : null;
             return (
               <DropdownMenu.Item
-                key={child.intentId || i}
+                key={item.key || i}
                 style={{
                   display: "flex", alignItems: "center", gap: 8,
                   padding: "8px 12px", borderRadius: 8, fontSize: 13,
                   color: "var(--color-doodle-ink)", outline: "none", cursor: "pointer",
                 }}
-                onSelect={() => child.onClick?.()}
+                onSelect={() => item.onClick?.()}
               >
-                {Icon && <Icon size={14} />}
-                <span>{child.label || child.intentId}</span>
+                {IconCmp && <IconCmp size={14} />}
+                <span>{item.label}</span>
               </DropdownMenu.Item>
             );
           })}

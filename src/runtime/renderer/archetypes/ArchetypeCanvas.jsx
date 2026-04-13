@@ -1,27 +1,55 @@
 /**
- * ArchetypeCanvas — обёртка для canvas-проекций (workflow editor).
- * Делегирует рендер domain-specific WorkflowCanvas.
- * Кристаллизатор генерирует минимальный артефакт (body.type="canvas"),
- * фактический рендер — в WorkflowCanvas из domain.
+ * ArchetypeCanvas — обёртка для canvas-проекций.
+ * Делегирует рендер domain-specific компонентам через реестр.
+ * Workflow — WorkflowCanvas, lifequest — CalendarCanvas/VisionBoardCanvas/RadarChart.
  */
 import { useMemo } from "react";
-import { WorkflowCanvas } from "../../../domains/workflow/ManualUI.jsx";
+
+// Реестр domain-specific canvas-компонентов.
+// Ключ = projectionId или domainId, значение = React-компонент.
+const CANVAS_REGISTRY = {};
+
+export function registerCanvas(key, component) {
+  CANVAS_REGISTRY[key] = component;
+}
 
 export default function ArchetypeCanvas({ artifact, ctx }) {
-  const { world, exec } = ctx;
-  const mainEntity = artifact.slots?.body?.mainEntity || "Workflow";
-  const idParam = ctx.routeParams?.workflowId;
+  const { world, exec, viewer } = ctx;
+  const projectionId = artifact?.projection;
+  const domainId = artifact?.domain;
 
-  const workflows = world.workflows || [];
-  const workflow = workflows.find(w => w.id === idParam);
+  // 1. Попробовать по projectionId
+  const CanvasComponent = CANVAS_REGISTRY[projectionId] || CANVAS_REGISTRY[domainId];
 
-  const nodes = useMemo(() => (world.nodes || []).filter(n => n.workflowId === idParam), [world.nodes, idParam]);
-  const edges = useMemo(() => (world.edges || []).filter(e => e.workflowId === idParam), [world.edges, idParam]);
-  const executions = world.executions || [];
-
-  if (!workflow) {
-    return <div style={{ padding: 24, color: "#6b7280" }}>Workflow не найден (id: {idParam || "не задан"})</div>;
+  if (CanvasComponent) {
+    return <CanvasComponent artifact={artifact} ctx={ctx} world={world} exec={exec} viewer={viewer} />;
   }
 
-  return <WorkflowCanvas workflow={workflow} nodes={nodes} edges={edges} executions={executions} exec={exec} />;
+  // 2. Fallback — workflow (обратная совместимость)
+  try {
+    const { WorkflowCanvas } = require("../../../domains/workflow/ManualUI.jsx");
+    const idParam = ctx.routeParams?.workflowId;
+    const workflows = world.workflows || [];
+    const workflow = workflows.find(w => w.id === idParam);
+    const nodes = (world.nodes || []).filter(n => n.workflowId === idParam);
+    const edges = (world.edges || []).filter(e => e.workflowId === idParam);
+    const executions = world.executions || [];
+
+    if (!workflow) {
+      return <div style={{ padding: 24, color: "#6b7280" }}>Workflow не найден (id: {idParam || "не задан"})</div>;
+    }
+    return <WorkflowCanvas workflow={workflow} nodes={nodes} edges={edges} executions={executions} exec={exec} />;
+  } catch (e) {
+    // Workflow не доступен — показать placeholder
+  }
+
+  return (
+    <div style={{
+      padding: 24, color: "var(--color-doodle-ink-light, #6b7280)",
+      fontFamily: "var(--font-doodle, system-ui)",
+      textAlign: "center",
+    }}>
+      Canvas-компонент не зарегистрирован для проекции «{projectionId}»
+    </div>
+  );
 }

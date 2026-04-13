@@ -17,6 +17,7 @@ export const PROJECTIONS = {
     query: "задачи и привычки на текущий день",
     entities: ["Task", "HabitLog", "Habit"],
     mainEntity: "User",
+    idParam: "userId",
     witnesses: ["title", "date", "done", "priority", "habitId", "value"],
     subCollections: [
       { collection: "tasks", entity: "Task", foreignKey: "userId", title: "Задачи дня", addable: true },
@@ -30,6 +31,7 @@ export const PROJECTIONS = {
     query: "прогресс привычек за неделю",
     entities: ["HabitLog", "Habit"],
     mainEntity: "User",
+    idParam: "userId",
     witnesses: ["habitId", "date", "done", "value", "title", "streakCurrent"],
   },
 
@@ -79,6 +81,7 @@ export const PROJECTIONS = {
     query: "текущая оценка сфер жизни и целевые значения",
     entities: ["SphereAssessment", "Sphere"],
     mainEntity: "User",
+    idParam: "userId",
     witnesses: ["sphereId", "score", "description", "targetScore", "name", "icon", "color"],
   },
 
@@ -95,6 +98,7 @@ export const PROJECTIONS = {
     query: "общая статистика: уровень, опыт, бейджи, прогресс",
     entities: ["Badge", "Goal", "Habit", "HabitLog"],
     mainEntity: "User",
+    idParam: "userId",
     witnesses: ["xp", "level", "streak", "title", "earnedAt", "type", "icon", "done", "status", "progress"],
   },
 
