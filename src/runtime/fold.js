@@ -1,9 +1,13 @@
+/** @typedef {import('../types/idf.d.ts').Effect} Effect */
+/** @typedef {import('../types/idf.d.ts').Ontology} Ontology */
+/** @typedef {import('../types/idf.d.ts').World} World */
+
 import { causalSort } from "./causalSort.js";
 
 /**
  * Построить маппинг singular→plural из онтологии.
- * "Specialist" → specialist → specialists
- * Плюс hardcoded "draft" → "drafts" (всегда нужен для Δ).
+ * @param {Ontology} [ontology]
+ * @returns {Record<string, string>}
  */
 export function buildTypeMap(ontology) {
   const map = { draft: "drafts" };
@@ -30,9 +34,9 @@ function getCollectionType(target, typeMap) {
  * По манифесту: World(t) = fold(⊕, ∅, sort≺(Φ_confirmed ↓ t))
  *
  * Эффекты сортируются причинно (parent_id → child) перед применением.
- * Это отличает fold от простого iterate-in-order: concurrent/foreign
- * эффекты с более ранним created_at не перебивают parent'ов с более
- * поздним created_at.
+ * @param {Effect[]} effects
+ * @param {Record<string, string>} [typeMap]
+ * @returns {World}
  */
 export function fold(effects, typeMap = {}) {
   const collections = {};
@@ -157,6 +161,11 @@ export function foldDrafts(effects) {
 
 /**
  * Отфильтровать эффекты по статусам.
+ */
+/**
+ * @param {Effect[]} effects
+ * @param {...string} statuses
+ * @returns {Effect[]}
  */
 export function filterByStatus(effects, ...statuses) {
   return effects.filter(e => statuses.includes(e.status));
