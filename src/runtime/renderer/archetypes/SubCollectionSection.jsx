@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import SlotRenderer from "../SlotRenderer.jsx";
 import SubCollectionAdd from "../controls/SubCollectionAdd.jsx";
 import { evalIntentCondition } from "../eval.js";
@@ -20,7 +20,7 @@ import { getAdaptedComponent } from "../adapters/registry.js";
  * автоматически отключают UI в чужой фазе.
  */
 export default function SubCollectionSection({ section, target, ctx }) {
-  const { title, source, foreignKey, itemView, itemIntents, addControl, emptyLabel } = section;
+  const { title, source, foreignKey, itemView, itemIntents, addControl, emptyLabel, editableFields } = section;
 
   // Фильтруем коллекцию по foreignKey === target.id
   const items = useMemo(() => {
@@ -78,6 +78,7 @@ export default function SubCollectionSection({ section, target, ctx }) {
               itemIntents={itemIntents || []}
               ctx={ctx}
               target={target}
+              editableFields={editableFields}
             />
           ))}
         </div>
@@ -100,9 +101,11 @@ function FallbackPaper({ children }) {
   );
 }
 
-function SubCollectionItem({ item, itemView, itemIntents, ctx, target }) {
-  // Фильтруем per-item кнопки по conditions: поддержку двух доменов условий —
-  // относительно item И относительно target (для phase-aware проверок).
+function SubCollectionItem({ item, itemView, itemIntents, ctx, target, editableFields }) {
+  const [editing, setEditing] = useState(false);
+  const [editValues, setEditValues] = useState({});
+
+  // Фильтруем per-item кнопки по conditions
   const passConds = (conds) =>
     (conds || []).every(c =>
       evalIntentCondition(c, item, ctx.viewer) ||
@@ -115,6 +118,28 @@ function SubCollectionItem({ item, itemView, itemIntents, ctx, target }) {
     ctx.exec(spec.intentId, { id: item.id });
   };
 
+  const startEdit = () => {
+    const vals = {};
+    for (const f of (editableFields || [])) vals[f] = item[f] || "";
+    setEditValues(vals);
+    setEditing(true);
+  };
+
+  const saveEdit = () => {
+    for (const [field, value] of Object.entries(editValues)) {
+      if (value !== item[field]) {
+        // Ищем replace-intent для этого поля среди itemIntents
+        const replaceSpec = itemIntents.find(s => s.intentId?.includes("edit") || s.intentId?.includes("rename") || s.intentId?.includes("update"));
+        if (replaceSpec) {
+          ctx.exec(replaceSpec.intentId, { id: item.id, [field]: value });
+        }
+      }
+    }
+    setEditing(false);
+  };
+
+  const canEdit = editableFields && editableFields.length > 0 && visibleIntents.length > 0;
+
   return (
     <div style={{
       display: "flex",
@@ -122,14 +147,49 @@ function SubCollectionItem({ item, itemView, itemIntents, ctx, target }) {
       gap: 12,
       padding: "10px 14px",
       background: "var(--mantine-color-default-hover)",
-      border: "1px solid var(--mantine-color-default-border)",
+      border: `1px solid ${editing ? "var(--mantine-color-primary, #6366f1)" : "var(--mantine-color-default-border)"}`,
       borderRadius: 8,
     }}>
       <div style={{ flex: 1, minWidth: 0 }}>
-        <SlotRenderer item={itemView} ctx={ctx} contextItem={item} />
+        {editing ? (
+          <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+            {editableFields.map(field => (
+              <input
+                key={field}
+                value={editValues[field] || ""}
+                onChange={e => setEditValues(prev => ({ ...prev, [field]: e.target.value }))}
+                placeholder={field}
+                style={{
+                  padding: "4px 8px", borderRadius: 4, fontSize: 13,
+                  border: "1px solid var(--mantine-color-default-border)",
+                  background: "var(--mantine-color-body)",
+                  color: "var(--mantine-color-text)",
+                  outline: "none",
+                }}
+                onKeyDown={e => { if (e.key === "Enter") saveEdit(); if (e.key === "Escape") setEditing(false); }}
+                autoFocus
+              />
+            ))}
+            <div style={{ display: "flex", gap: 4 }}>
+              <button onClick={saveEdit} style={miniBtn}>Сохранить</button>
+              <button onClick={() => setEditing(false)} style={{ ...miniBtn, color: "var(--mantine-color-dimmed)" }}>Отмена</button>
+            </div>
+          </div>
+        ) : (
+          <SlotRenderer item={itemView} ctx={ctx} contextItem={item} />
+        )}
       </div>
-      {visibleIntents.length > 0 && (
+      {!editing && (
         <div style={{ display: "flex", gap: 6, flexShrink: 0 }}>
+          {canEdit && (
+            <button
+              onClick={startEdit}
+              title="Редактировать"
+              style={actionBtn}
+            >
+              <Icon emoji="✎" size={14} />
+            </button>
+          )}
           {visibleIntents.map((spec, i) => {
             if (spec.type === "voteGroup") {
               return (
@@ -147,17 +207,7 @@ function SubCollectionItem({ item, itemView, itemIntents, ctx, target }) {
                 key={spec.intentId}
                 onClick={() => fireIntent(spec)}
                 title={spec.label}
-                style={{
-                  padding: "6px 10px",
-                  borderRadius: 6,
-                  border: "1px solid var(--mantine-color-default-border)",
-                  background: "var(--mantine-color-default)",
-                  cursor: "pointer",
-                  fontSize: 12,
-                  display: "inline-flex",
-                  alignItems: "center",
-                  gap: 4,
-                }}
+                style={actionBtn}
               >
                 {spec.icon && <Icon emoji={spec.icon} size={14} />}
                 <span>{spec.label}</span>
@@ -169,6 +219,20 @@ function SubCollectionItem({ item, itemView, itemIntents, ctx, target }) {
     </div>
   );
 }
+
+const actionBtn = {
+  padding: "6px 10px", borderRadius: 6,
+  border: "1px solid var(--mantine-color-default-border)",
+  background: "var(--mantine-color-default)",
+  cursor: "pointer", fontSize: 12,
+  display: "inline-flex", alignItems: "center", gap: 4,
+};
+
+const miniBtn = {
+  padding: "3px 10px", borderRadius: 4, border: "none",
+  background: "var(--mantine-color-primary, #6366f1)", color: "#fff",
+  cursor: "pointer", fontSize: 11,
+};
 
 /**
  * VoteGroup — рендер взаимоисключающих creator-intents как группы цветных

@@ -382,6 +382,15 @@ function buildSection(subDef, INTENTS, ONTOLOGY, parentProjection) {
 
   const title = rawTitle || label || subEntity;
 
+  // 5. Editable fields — поля sub-entity с write-правами (для inline-edit)
+  const entityDef = ONTOLOGY?.entities?.[subEntity];
+  let editableFields = [];
+  if (entityDef?.fields && typeof entityDef.fields === "object" && !Array.isArray(entityDef.fields)) {
+    editableFields = Object.entries(entityDef.fields)
+      .filter(([name, f]) => f.write && name !== "id" && name !== foreignKey)
+      .map(([name]) => name);
+  }
+
   return {
     id: collection,
     title,
@@ -392,6 +401,7 @@ function buildSection(subDef, INTENTS, ONTOLOGY, parentProjection) {
     itemIntents: groupedIntents,
     addControl,
     emptyLabel: `Пока пусто`,
+    editableFields: editableFields.length > 0 ? editableFields : undefined,
   };
 }
 
