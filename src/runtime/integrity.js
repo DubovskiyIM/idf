@@ -44,6 +44,7 @@ export function checkIntegrity(INTENTS, PROJECTIONS, ONTOLOGY) {
       // Проверить: есть ли проекция, чьи witnesses упоминают поля из этого target
       const isObservable = projections.some(([, proj]) => {
         return (proj.witnesses || []).some(w => {
+          if (typeof w !== "string") return false;
           return w.includes(collectionBase) || target.includes(w.split(".")[0]);
         });
       });

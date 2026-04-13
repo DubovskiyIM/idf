@@ -54,6 +54,7 @@ export default function OntologyInspector({ world, domain, dark }) {
       for (const [entityName, entity] of Object.entries(ONTOLOGY.entities)) {
         const names = fieldNames(entity);
         const hasField = witnesses.some(w => {
+          if (typeof w !== "string") return false;
           const field = w.split(".").pop();
           return names.includes(field) || names.some(f => w.includes(f));
         });

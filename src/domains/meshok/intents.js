@@ -142,7 +142,11 @@ export const INTENTS = {
     ["listing.status = 'active'"],
     [ef("add", "bids"), ef("replace", "listing.currentPrice"), ef("replace", "listing.bidCount")],
     ["amount", "listing.currentPrice", "listing.title"],
-    "click"),
+    "form", {
+      parameters: [
+        { name: "amount", type: "number", required: true, label: "Сумма ставки, ₽", placeholder: "Выше текущей цены" },
+      ],
+    }),
 
   set_auto_bid: intent("Автоставка", ["bid: Bid", "listing: Listing"],
     ["listing.status = 'active'"],

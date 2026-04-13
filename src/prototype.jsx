@@ -45,9 +45,6 @@ export default function App() {
   const [viewer, setViewer] = useState(() => localStorage.getItem("idf_viewer") || "client");
   const [layer, setLayer] = useState(() => localStorage.getItem("idf_layer") || "canonical");
   const auth = useAuth();
-  // Для V2-доменов (meshok) — реальный пользователь из auth, для legacy — hardcoded viewer
-  const isV2Domain = !domain?.UI;
-  const realViewer = auth.currentUser ? { id: auth.currentUser.id, name: auth.currentUser.name, email: auth.currentUser.email } : null;
   const [settingsOpen, setSettingsOpen] = useState(false);
 
   const setAndSaveMode = (v) => { setMode(v); localStorage.setItem("idf_mode", v); };
@@ -58,6 +55,7 @@ export default function App() {
   const setAndSaveLayer = (v) => { setLayer(v); localStorage.setItem("idf_layer", v); };
 
   const domain = DOMAINS[domainId];
+  const realViewer = auth.currentUser ? { id: auth.currentUser.id, name: auth.currentUser.name, email: auth.currentUser.email } : null;
   const engine = useEngine(domain);
   const { world, worldForIntent, drafts, effects, signals, algebra, exec,
     overlay, overlayEntityIds, startInvestigation, commitInvestigation, cancelInvestigation } = engine;
@@ -369,7 +367,7 @@ export default function App() {
               // useProjectionRoute держит старый стек).
               // Для workflow канвас-архетип отсутствует — V2Shell покажет
               // «проекция не поддерживается».
-              <div style={{ flex: 1, background: "#fafafa", minHeight: 0, display: "flex", flexDirection: "column" }}>
+              <div style={{ flex: 1, background: "var(--mantine-color-body)", minHeight: 0, display: "flex", flexDirection: "column" }}>
                 <AuthGate
                   currentUser={auth.currentUser}
                   doAuth={auth.doAuth}
@@ -377,25 +375,6 @@ export default function App() {
                   isLoading={auth.isLoading}
                   title={domain.DOMAIN_NAME || domainId}
                 >
-                  {auth.currentUser && (
-                    <div style={{
-                      display: "flex", alignItems: "center", gap: 8,
-                      padding: "6px 12px",
-                      background: "var(--mantine-color-default)",
-                      borderBottom: "1px solid var(--mantine-color-default-border)",
-                      fontSize: 12, color: "var(--mantine-color-text)",
-                    }}>
-                      <span style={{ fontWeight: 600 }}>{auth.currentUser.name}</span>
-                      <span style={{ color: "var(--mantine-color-dimmed)" }}>{auth.currentUser.email}</span>
-                      <div style={{ flex: 1 }} />
-                      <button onClick={auth.logout} style={{
-                        padding: "3px 10px", borderRadius: 4, fontSize: 11,
-                        border: "1px solid var(--mantine-color-default-border)",
-                        background: "transparent", cursor: "pointer",
-                        color: "var(--mantine-color-dimmed)",
-                      }}>Выйти</button>
-                    </div>
-                  )}
                   <V2Shell
                     key={domainId}
                     domain={domain}
@@ -404,6 +383,7 @@ export default function App() {
                     exec={exec}
                     execBatch={engine.execBatch}
                     viewer={realViewer || { id: viewer, name: viewer }}
+                    onLogout={auth.logout}
                   />
                 </AuthGate>
               </div>

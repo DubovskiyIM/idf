@@ -70,23 +70,28 @@ export function buildEffects(intentId, ctx, world, drafts) {
     }
 
     case "place_bid": {
-      if (!ctx.amount || !ctx.listingId) return null;
-      const listing = (world.listings || []).find(l => l.id === ctx.listingId);
+      const amount = Number(ctx.amount);
+      const listingId = ctx.listingId || ctx.id;
+      if (!amount || !listingId) return null;
+      const listing = (world.listings || []).find(l => l.id === listingId);
       if (!listing || listing.status !== "active") return null;
-      if (ctx.amount <= (listing.currentPrice || 0)) return null;
+      if (amount <= (listing.currentPrice || 0)) {
+        alert(`Ставка должна быть выше текущей цены ${listing.currentPrice?.toLocaleString("ru")} ₽`);
+        return null;
+      }
       const bidId = `bid_${now}_${Math.random().toString(36).slice(2, 6)}`;
       ef({ alpha: "add", target: "bids", scope: "account", value: null,
         context: {
-          id: bidId, listingId: ctx.listingId,
+          id: bidId, listingId,
           bidderId: ctx.userId || ctx.clientId,
-          amount: ctx.amount, status: "active", createdAt: now,
+          amount, status: "active", createdAt: now,
         },
         desc: describeEffect(intentId, "add", ctx) });
       ef({ alpha: "replace", target: "listing.currentPrice", scope: "account",
-        value: ctx.amount, context: { id: ctx.listingId },
-        desc: `Цена → ${ctx.amount}₽` });
+        value: amount, context: { id: listingId },
+        desc: `Цена → ${amount}₽` });
       ef({ alpha: "replace", target: "listing.bidCount", scope: "account",
-        value: (listing.bidCount || 0) + 1, context: { id: ctx.listingId },
+        value: (listing.bidCount || 0) + 1, context: { id: listingId },
         desc: "bidCount++" });
       return effects;
     }

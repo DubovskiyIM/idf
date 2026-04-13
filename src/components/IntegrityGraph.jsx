@@ -219,6 +219,7 @@ export default function IntegrityGraph({ domain }) {
     // Рёбра: проекция → сущность
     for (const [id, proj] of Object.entries(PROJECTIONS)) {
       for (const w of (proj.witnesses || [])) {
+        if (typeof w !== "string") continue;
         const base = w.split(".")[0];
         const entityName = Object.keys(ONTOLOGY.entities || {}).find(e =>
           e.toLowerCase() === base || e.toLowerCase().startsWith(base)
