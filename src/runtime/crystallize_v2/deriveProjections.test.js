@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { analyzeIntents, detectForeignKeys } from "./deriveProjections.js";
+import { analyzeIntents, detectForeignKeys, deriveProjections } from "./deriveProjections.js";
 
 describe("analyzeIntents", () => {
   const INTENTS = {
@@ -123,5 +123,113 @@ describe("detectForeignKeys", () => {
     };
     const fks = detectForeignKeys(ontology);
     expect(fks.User || []).toEqual([]);
+  });
+});
+
+describe("deriveProjections", () => {
+  const ONTOLOGY = {
+    entities: {
+      Listing: {
+        fields: {
+          id: { type: "id" },
+          title: { type: "text", read: ["*"], write: ["self"] },
+          sellerId: { type: "entityRef", read: ["*"] },
+        },
+        ownerField: "sellerId",
+      },
+      User: {
+        fields: { id: { type: "id" }, name: { type: "text" } },
+      },
+    },
+  };
+
+  describe("R1: catalog", () => {
+    it("generates catalog for entity with creators", () => {
+      const INTENTS = {
+        create_listing: {
+          name: "Создать",
+          creates: "Listing(draft)",
+          particles: {
+            entities: ["listing: Listing"],
+            conditions: [],
+            effects: [{ α: "add", target: "listings" }],
+            witnesses: ["title"],
+            confirmation: "click",
+          },
+        },
+      };
+      const result = deriveProjections(INTENTS, ONTOLOGY);
+      expect(result.listing_list).toBeDefined();
+      expect(result.listing_list.kind).toBe("catalog");
+      expect(result.listing_list.mainEntity).toBe("Listing");
+      expect(result.listing_list.entities).toEqual(["Listing"]);
+    });
+
+    it("no catalog if no creators", () => {
+      const INTENTS = {
+        edit_title: {
+          name: "Изменить",
+          particles: {
+            entities: ["listing: Listing"],
+            conditions: [],
+            effects: [{ α: "replace", target: "listing.title" }],
+            witnesses: [],
+            confirmation: "click",
+          },
+        },
+      };
+      const result = deriveProjections(INTENTS, ONTOLOGY);
+      expect(result.listing_list).toBeUndefined();
+    });
+  });
+
+  describe("R3: detail", () => {
+    it("generates detail for entity with >1 mutators", () => {
+      const INTENTS = {
+        create_listing: {
+          name: "Создать",
+          creates: "Listing(draft)",
+          particles: {
+            entities: ["listing: Listing"],
+            conditions: [],
+            effects: [{ α: "add", target: "listings" }],
+            witnesses: [],
+            confirmation: "click",
+          },
+        },
+        edit_title: {
+          name: "Изменить",
+          particles: {
+            entities: ["listing: Listing"],
+            conditions: [],
+            effects: [{ α: "replace", target: "listing.title" }],
+            witnesses: [],
+            confirmation: "click",
+          },
+        },
+      };
+      const result = deriveProjections(INTENTS, ONTOLOGY);
+      expect(result.listing_detail).toBeDefined();
+      expect(result.listing_detail.kind).toBe("detail");
+      expect(result.listing_detail.mainEntity).toBe("Listing");
+    });
+
+    it("no detail if only 1 mutator", () => {
+      const INTENTS = {
+        create_listing: {
+          name: "Создать",
+          creates: "Listing",
+          particles: {
+            entities: ["listing: Listing"],
+            conditions: [],
+            effects: [{ α: "add", target: "listings" }],
+            witnesses: [],
+            confirmation: "click",
+          },
+        },
+      };
+      const result = deriveProjections(INTENTS, ONTOLOGY);
+      expect(result.listing_detail).toBeUndefined();
+    });
   });
 });

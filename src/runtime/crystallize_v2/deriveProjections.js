@@ -148,3 +148,45 @@ export function detectForeignKeys(ontology) {
 
   return result;
 }
+
+/**
+ * deriveProjections — главная функция.
+ * Выводит проекции из намерений и онтологии по правилам R1-R7.
+ * @param {Record<string, object>} intents
+ * @param {object} ontology
+ * @returns {Record<string, object>} проекции в формате projections.js
+ */
+export function deriveProjections(intents, ontology) {
+  const entityNames = Object.keys(ontology.entities || {});
+  const analysis = analyzeIntents(intents, entityNames);
+  const foreignKeys = detectForeignKeys(ontology);
+  const projections = {};
+
+  for (const entityName of entityNames) {
+    const lower = entityName.toLowerCase();
+    const hasCreators = (analysis.creators[entityName] || []).length > 0;
+    const mutatorCount = (analysis.mutators[entityName] || []).length;
+
+    // R1: Catalog
+    if (hasCreators) {
+      projections[`${lower}_list`] = {
+        kind: "catalog",
+        mainEntity: entityName,
+        entities: [entityName],
+        witnesses: [],
+      };
+    }
+
+    // R3: Detail
+    if (mutatorCount > 1) {
+      projections[`${lower}_detail`] = {
+        kind: "detail",
+        mainEntity: entityName,
+        entities: [entityName],
+        witnesses: [],
+      };
+    }
+  }
+
+  return projections;
+}
