@@ -1,0 +1,52 @@
+{
+  "id": "level-3/anchor-001",
+  "level": 3,
+  "name": "intent references entity not in ontology",
+  "description": "Intent references entity 'Foo' in its entities list, but 'Foo' is not declared in ontology. Should produce anchoring error.",
+  "input": {
+    "intents": {
+      "do_something": {
+        "id": "do_something",
+        "name": "Сделать что-то с Foo",
+        "particles": {
+          "entities": ["Foo"],
+          "conditions": [],
+          "effects": [{ "type": "add", "target": "foos", "payload": { "name": "test" } }],
+          "witnesses": ["foo.name"]
+        }
+      }
+    },
+    "ontology": {
+      "entities": {
+        "Item": {
+          "fields": {
+            "id": { "type": "string" },
+            "title": { "type": "string" },
+            "status": { "type": "string" },
+            "ownerId": { "type": "entityRef", "ref": "User" }
+          },
+          "ownerField": "ownerId"
+        },
+        "User": {
+          "fields": {
+            "id": { "type": "string" },
+            "name": { "type": "string" }
+          }
+        }
+      }
+    },
+    "projections": {
+      "item_list": { "kind": "catalog", "entities": ["Item"], "mainEntity": "Item" }
+    }
+  },
+  "expected": {
+    "findings": [
+      {
+        "rule": "anchoring_entity",
+        "intentId": "do_something",
+        "severity": "warning",
+        "message": "Entity 'Foo' is not anchored in ontology"
+      }
+    ]
+  }
+}

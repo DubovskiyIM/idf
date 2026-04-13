@@ -1,0 +1,40 @@
+{
+  "id": "level-1/causal-002",
+  "level": 1,
+  "name": "child with earlier created_at still applied after parent",
+  "description": "Even if the child effect has an earlier created_at than its parent, causal sort ensures parent is applied first based on parent_id dependency.",
+  "input": {
+    "effects": [
+      {
+        "id": "e1",
+        "type": "add",
+        "target": "Listing",
+        "payload": { "id": "l1", "title": "Created", "price": 100 },
+        "status": "confirmed",
+        "created_at": 3000,
+        "parent_id": null
+      },
+      {
+        "id": "e2",
+        "type": "replace",
+        "target": "Listing",
+        "payload": { "id": "l1", "price": 999 },
+        "status": "confirmed",
+        "created_at": 1000,
+        "parent_id": "e1"
+      }
+    ],
+    "ontology": {
+      "entities": {
+        "Listing": { "fields": { "title": { "type": "string" }, "price": { "type": "number" } } }
+      }
+    }
+  },
+  "expected": {
+    "world": {
+      "listings": [
+        { "id": "l1", "title": "Created", "price": 999 }
+      ]
+    }
+  }
+}

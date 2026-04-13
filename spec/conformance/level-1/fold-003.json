@@ -1,0 +1,36 @@
+{
+  "id": "level-1/fold-003",
+  "level": 1,
+  "name": "add then remove produces empty collection",
+  "description": "An add effect followed by a remove effect on the same entity should result in an empty collection.",
+  "input": {
+    "effects": [
+      {
+        "id": "e1",
+        "type": "add",
+        "target": "User",
+        "payload": { "id": "u1", "name": "Alice" },
+        "status": "confirmed",
+        "created_at": 1000
+      },
+      {
+        "id": "e2",
+        "type": "remove",
+        "target": "User",
+        "payload": { "id": "u1" },
+        "status": "confirmed",
+        "created_at": 2000
+      }
+    ],
+    "ontology": {
+      "entities": {
+        "User": { "fields": { "name": { "type": "string" } } }
+      }
+    }
+  },
+  "expected": {
+    "world": {
+      "users": []
+    }
+  }
+}

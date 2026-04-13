@@ -1,0 +1,63 @@
+{
+  "id": "level-3/dead-001",
+  "level": 3,
+  "name": "dead intent with unsatisfiable condition",
+  "description": "Intent with condition 'item.status = archived' but no other intent produces status='archived' via effects. No incoming sequential (▷) edges → dead intent warning.",
+  "input": {
+    "intents": {
+      "create_item": {
+        "id": "create_item",
+        "name": "Создать товар",
+        "creates": "Item",
+        "particles": {
+          "entities": ["Item"],
+          "conditions": [],
+          "effects": [{ "type": "add", "target": "items", "payload": { "status": "active" } }],
+          "witnesses": ["item.title"]
+        }
+      },
+      "view_archived": {
+        "id": "view_archived",
+        "name": "Просмотр архивных",
+        "particles": {
+          "entities": ["Item"],
+          "conditions": ["item.status = 'archived'"],
+          "effects": [{ "type": "replace", "target": "items.viewed", "payload": true }],
+          "witnesses": ["item.title", "item.status"]
+        }
+      }
+    },
+    "ontology": {
+      "entities": {
+        "Item": {
+          "fields": {
+            "id": { "type": "string" },
+            "title": { "type": "string" },
+            "status": { "type": "string" },
+            "ownerId": { "type": "entityRef", "ref": "User" }
+          },
+          "ownerField": "ownerId"
+        },
+        "User": {
+          "fields": {
+            "id": { "type": "string" },
+            "name": { "type": "string" }
+          }
+        }
+      }
+    },
+    "projections": {
+      "item_list": { "kind": "catalog", "entities": ["Item"], "mainEntity": "Item" }
+    }
+  },
+  "expected": {
+    "findings": [
+      {
+        "rule": "no_dead_intents",
+        "intentId": "view_archived",
+        "severity": "warning",
+        "message": "Intent has conditions but no incoming sequential edges — conditions may be unsatisfiable"
+      }
+    ]
+  }
+}

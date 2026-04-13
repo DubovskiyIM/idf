@@ -1,0 +1,55 @@
+{
+  "id": "level-2/seq-002",
+  "level": 2,
+  "name": "creates with implied status → sequential to matching condition",
+  "description": "Intent create_task has creates 'Task(draft)' with add effect on tasks. Intent publish_task has condition task.status='draft'. The implied status from creates establishes a sequential ▷ link from create_task to publish_task.",
+  "input": {
+    "intents": {
+      "create_task": {
+        "name": "Create task",
+        "particles": {
+          "entities": ["t: Task"],
+          "conditions": [],
+          "effects": [{"α": "add", "target": "tasks"}],
+          "witnesses": ["title"],
+          "confirmation": "click"
+        },
+        "creates": "Task(draft)",
+        "antagonist": null
+      },
+      "publish_task": {
+        "name": "Publish task",
+        "particles": {
+          "entities": ["t: Task"],
+          "conditions": ["task.status = 'draft'"],
+          "effects": [{"α": "replace", "target": "task.status", "value": "active"}],
+          "witnesses": ["title"],
+          "confirmation": "click"
+        },
+        "creates": null,
+        "antagonist": null
+      }
+    },
+    "ontology": {
+      "entities": {
+        "Task": {
+          "fields": {
+            "id": {"type": "string"},
+            "title": {"type": "string"},
+            "status": {"type": "string", "enum": ["draft", "active", "done"]}
+          }
+        }
+      }
+    }
+  },
+  "expected": {
+    "relations": {
+      "create_task": {
+        "sequentialOut": ["publish_task"]
+      },
+      "publish_task": {
+        "sequentialIn": ["create_task"]
+      }
+    }
+  }
+}

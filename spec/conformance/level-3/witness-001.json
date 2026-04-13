@@ -1,0 +1,63 @@
+{
+  "id": "level-3/witness-001",
+  "level": 3,
+  "name": "condition references field not in witnesses",
+  "description": "Intent condition references 'item.ownerId' but witnesses do not include 'ownerId'. Should produce info finding about incomplete witnesses.",
+  "input": {
+    "intents": {
+      "create_item": {
+        "id": "create_item",
+        "name": "Создать товар",
+        "creates": "Item",
+        "particles": {
+          "entities": ["Item"],
+          "conditions": [],
+          "effects": [{ "type": "add", "target": "items", "payload": { "status": "active" } }],
+          "witnesses": ["item.title"]
+        }
+      },
+      "transfer_item": {
+        "id": "transfer_item",
+        "name": "Передать товар",
+        "particles": {
+          "entities": ["Item"],
+          "conditions": ["item.ownerId = me.id"],
+          "effects": [{ "type": "replace", "target": "items.ownerId" }],
+          "witnesses": ["item.title"]
+        }
+      }
+    },
+    "ontology": {
+      "entities": {
+        "Item": {
+          "fields": {
+            "id": { "type": "string" },
+            "title": { "type": "string" },
+            "status": { "type": "string" },
+            "ownerId": { "type": "entityRef", "ref": "User" }
+          },
+          "ownerField": "ownerId"
+        },
+        "User": {
+          "fields": {
+            "id": { "type": "string" },
+            "name": { "type": "string" }
+          }
+        }
+      }
+    },
+    "projections": {
+      "item_list": { "kind": "catalog", "entities": ["Item"], "mainEntity": "Item" }
+    }
+  },
+  "expected": {
+    "findings": [
+      {
+        "rule": "witness_completeness",
+        "intentId": "transfer_item",
+        "severity": "info",
+        "message": "Condition references 'item.ownerId' but witnesses do not include 'ownerId'"
+      }
+    ]
+  }
+}

@@ -1,0 +1,55 @@
+{
+  "id": "level-1/lifecycle-003",
+  "level": 1,
+  "name": "mix of confirmed, proposed, rejected statuses",
+  "description": "Only confirmed effects should appear in the world. Proposed and rejected effects are excluded.",
+  "input": {
+    "effects": [
+      {
+        "id": "e1",
+        "type": "add",
+        "target": "User",
+        "payload": { "id": "u1", "name": "Alice" },
+        "status": "confirmed",
+        "created_at": 1000
+      },
+      {
+        "id": "e2",
+        "type": "add",
+        "target": "User",
+        "payload": { "id": "u2", "name": "Bob" },
+        "status": "proposed",
+        "created_at": 2000
+      },
+      {
+        "id": "e3",
+        "type": "add",
+        "target": "User",
+        "payload": { "id": "u3", "name": "Charlie" },
+        "status": "rejected",
+        "created_at": 3000
+      },
+      {
+        "id": "e4",
+        "type": "add",
+        "target": "User",
+        "payload": { "id": "u4", "name": "Diana" },
+        "status": "confirmed",
+        "created_at": 4000
+      }
+    ],
+    "ontology": {
+      "entities": {
+        "User": { "fields": { "name": { "type": "string" } } }
+      }
+    }
+  },
+  "expected": {
+    "world": {
+      "users": [
+        { "id": "u1", "name": "Alice" },
+        { "id": "u4", "name": "Diana" }
+      ]
+    }
+  }
+}

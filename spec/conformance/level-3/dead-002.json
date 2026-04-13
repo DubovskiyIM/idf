@@ -1,0 +1,56 @@
+{
+  "id": "level-3/dead-002",
+  "level": 3,
+  "name": "all intents reachable — no dead intents",
+  "description": "Intent with condition 'item.status = active' is reachable because create_item produces status='active'. No dead intent findings expected.",
+  "input": {
+    "intents": {
+      "create_item": {
+        "id": "create_item",
+        "name": "Создать товар",
+        "creates": "Item",
+        "particles": {
+          "entities": ["Item"],
+          "conditions": [],
+          "effects": [{ "type": "add", "target": "items", "payload": { "status": "active" } }],
+          "witnesses": ["item.title"]
+        }
+      },
+      "edit_item": {
+        "id": "edit_item",
+        "name": "Редактировать товар",
+        "particles": {
+          "entities": ["Item"],
+          "conditions": ["item.status = 'active'"],
+          "effects": [{ "type": "replace", "target": "items.title" }],
+          "witnesses": ["item.title", "item.status"]
+        }
+      }
+    },
+    "ontology": {
+      "entities": {
+        "Item": {
+          "fields": {
+            "id": { "type": "string" },
+            "title": { "type": "string" },
+            "status": { "type": "string" },
+            "ownerId": { "type": "entityRef", "ref": "User" }
+          },
+          "ownerField": "ownerId"
+        },
+        "User": {
+          "fields": {
+            "id": { "type": "string" },
+            "name": { "type": "string" }
+          }
+        }
+      }
+    },
+    "projections": {
+      "item_list": { "kind": "catalog", "entities": ["Item"], "mainEntity": "Item" }
+    }
+  },
+  "expected": {
+    "findings": []
+  }
+}

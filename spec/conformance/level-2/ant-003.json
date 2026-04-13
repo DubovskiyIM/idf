@@ -1,0 +1,63 @@
+{
+  "id": "level-2/ant-003",
+  "level": 2,
+  "name": "declared antagonist with structural backing → classified as structural",
+  "description": "Intent close_task and reopen_task are declared antagonists AND their effects structurally reverse each other (replace status done↔active). When declared antagonism has structural backing, it should be classified as 'structural'.",
+  "input": {
+    "intents": {
+      "close_task": {
+        "name": "Close task",
+        "particles": {
+          "entities": ["t: Task"],
+          "conditions": ["task.status = 'active'"],
+          "effects": [{"α": "replace", "target": "task.status", "value": "done"}],
+          "witnesses": ["title"],
+          "confirmation": "click"
+        },
+        "creates": null,
+        "antagonist": "reopen_task"
+      },
+      "reopen_task": {
+        "name": "Reopen task",
+        "particles": {
+          "entities": ["t: Task"],
+          "conditions": ["task.status = 'done'"],
+          "effects": [{"α": "replace", "target": "task.status", "value": "active"}],
+          "witnesses": ["title"],
+          "confirmation": "click"
+        },
+        "creates": null,
+        "antagonist": "close_task"
+      }
+    },
+    "ontology": {
+      "entities": {
+        "Task": {
+          "fields": {
+            "id": {"type": "string"},
+            "title": {"type": "string"},
+            "status": {"type": "string", "enum": ["draft", "active", "done"]}
+          }
+        }
+      }
+    }
+  },
+  "expected": {
+    "relations": {
+      "close_task": {
+        "antagonists": ["reopen_task"]
+      },
+      "reopen_task": {
+        "antagonists": ["close_task"]
+      }
+    },
+    "antagonistClassification": {
+      "close_task": {
+        "reopen_task": "structural"
+      },
+      "reopen_task": {
+        "close_task": "structural"
+      }
+    }
+  }
+}

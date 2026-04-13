@@ -1,0 +1,38 @@
+{
+  "id": "level-1/lifecycle-001",
+  "level": 1,
+  "name": "only confirmed effects participate in fold",
+  "description": "A proposed effect should not appear in the folded world. Only confirmed effects contribute to the world state.",
+  "input": {
+    "effects": [
+      {
+        "id": "e1",
+        "type": "add",
+        "target": "User",
+        "payload": { "id": "u1", "name": "Alice" },
+        "status": "confirmed",
+        "created_at": 1000
+      },
+      {
+        "id": "e2",
+        "type": "add",
+        "target": "User",
+        "payload": { "id": "u2", "name": "Bob" },
+        "status": "proposed",
+        "created_at": 2000
+      }
+    ],
+    "ontology": {
+      "entities": {
+        "User": { "fields": { "name": { "type": "string" } } }
+      }
+    }
+  },
+  "expected": {
+    "world": {
+      "users": [
+        { "id": "u1", "name": "Alice" }
+      ]
+    }
+  }
+}

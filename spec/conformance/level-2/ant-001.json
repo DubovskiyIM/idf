@@ -1,0 +1,63 @@
+{
+  "id": "level-2/ant-001",
+  "level": 2,
+  "name": "replace effects on same field with swapped values → structural antagonist",
+  "description": "Intent close_task replaces task.status active→done. Intent reopen_task replaces task.status done→active. The effects reverse each other (same target, different values), making them structural antagonists ⇌.",
+  "input": {
+    "intents": {
+      "close_task": {
+        "name": "Close task",
+        "particles": {
+          "entities": ["t: Task"],
+          "conditions": ["task.status = 'active'"],
+          "effects": [{"α": "replace", "target": "task.status", "value": "done"}],
+          "witnesses": ["title"],
+          "confirmation": "click"
+        },
+        "creates": null,
+        "antagonist": null
+      },
+      "reopen_task": {
+        "name": "Reopen task",
+        "particles": {
+          "entities": ["t: Task"],
+          "conditions": ["task.status = 'done'"],
+          "effects": [{"α": "replace", "target": "task.status", "value": "active"}],
+          "witnesses": ["title"],
+          "confirmation": "click"
+        },
+        "creates": null,
+        "antagonist": "close_task"
+      }
+    },
+    "ontology": {
+      "entities": {
+        "Task": {
+          "fields": {
+            "id": {"type": "string"},
+            "title": {"type": "string"},
+            "status": {"type": "string", "enum": ["draft", "active", "done"]}
+          }
+        }
+      }
+    }
+  },
+  "expected": {
+    "relations": {
+      "close_task": {
+        "antagonists": ["reopen_task"]
+      },
+      "reopen_task": {
+        "antagonists": ["close_task"]
+      }
+    },
+    "antagonistClassification": {
+      "close_task": {
+        "reopen_task": "structural"
+      },
+      "reopen_task": {
+        "close_task": "structural"
+      }
+    }
+  }
+}

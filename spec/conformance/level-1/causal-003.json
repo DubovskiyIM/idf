@@ -1,0 +1,49 @@
+{
+  "id": "level-1/causal-003",
+  "level": 1,
+  "name": "chain of three effects in causal order",
+  "description": "A grandparent -> parent -> child chain should be applied in causal order regardless of created_at timestamps.",
+  "input": {
+    "effects": [
+      {
+        "id": "e3",
+        "type": "replace",
+        "target": "Listing",
+        "payload": { "id": "l1", "status": "sold" },
+        "status": "confirmed",
+        "created_at": 1000,
+        "parent_id": "e2"
+      },
+      {
+        "id": "e1",
+        "type": "add",
+        "target": "Listing",
+        "payload": { "id": "l1", "title": "Item", "status": "draft" },
+        "status": "confirmed",
+        "created_at": 2000,
+        "parent_id": null
+      },
+      {
+        "id": "e2",
+        "type": "replace",
+        "target": "Listing",
+        "payload": { "id": "l1", "status": "active" },
+        "status": "confirmed",
+        "created_at": 3000,
+        "parent_id": "e1"
+      }
+    ],
+    "ontology": {
+      "entities": {
+        "Listing": { "fields": { "title": { "type": "string" }, "status": { "type": "string" } } }
+      }
+    }
+  },
+  "expected": {
+    "world": {
+      "listings": [
+        { "id": "l1", "title": "Item", "status": "sold" }
+      ]
+    }
+  }
+}

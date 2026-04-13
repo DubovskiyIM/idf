@@ -1,0 +1,41 @@
+{
+  "id": "level-1/scope-003",
+  "level": 1,
+  "name": "presentation effect applied via applyPresentation",
+  "description": "When presentation effects are applied separately (via applyPresentation), they should update visual fields on entities already in the semantic world.",
+  "input": {
+    "effects": [
+      {
+        "id": "e1",
+        "type": "add",
+        "target": "User",
+        "payload": { "id": "u1", "name": "Alice" },
+        "status": "confirmed",
+        "created_at": 1000
+      }
+    ],
+    "presentation_effects": [
+      {
+        "id": "p1",
+        "type": "replace",
+        "target": "User",
+        "payload": { "id": "u1", "highlighted": true },
+        "status": "confirmed",
+        "created_at": 2000,
+        "scope": "presentation"
+      }
+    ],
+    "ontology": {
+      "entities": {
+        "User": { "fields": { "name": { "type": "string" }, "highlighted": { "type": "boolean" } } }
+      }
+    }
+  },
+  "expected": {
+    "world_after_presentation": {
+      "users": [
+        { "id": "u1", "name": "Alice", "highlighted": true }
+      ]
+    }
+  }
+}

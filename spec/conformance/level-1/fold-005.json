@@ -1,0 +1,30 @@
+{
+  "id": "level-1/fold-005",
+  "level": 1,
+  "name": "replace on non-existent entity creates partial entity (upsert)",
+  "description": "A replace effect targeting an entity that was never added should create a partial entity with only the fields from the replace payload.",
+  "input": {
+    "effects": [
+      {
+        "id": "e1",
+        "type": "replace",
+        "target": "User",
+        "payload": { "id": "u1", "name": "Alice" },
+        "status": "confirmed",
+        "created_at": 1000
+      }
+    ],
+    "ontology": {
+      "entities": {
+        "User": { "fields": { "name": { "type": "string" } } }
+      }
+    }
+  },
+  "expected": {
+    "world": {
+      "users": [
+        { "id": "u1", "name": "Alice" }
+      ]
+    }
+  }
+}

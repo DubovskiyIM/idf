@@ -1,0 +1,30 @@
+{
+  "id": "level-1/ttl-002",
+  "level": 1,
+  "name": "effect with expired TTL excluded from world",
+  "description": "An effect whose created_at + ttl is in the past (relative to fold_time) should be treated as rejected and excluded from the folded world.",
+  "input": {
+    "effects": [
+      {
+        "id": "e1",
+        "type": "add",
+        "target": "Listing",
+        "payload": { "id": "l1", "title": "Flash Sale", "price": 50 },
+        "status": "confirmed",
+        "created_at": 1000,
+        "ttl": 1000
+      }
+    ],
+    "ontology": {
+      "entities": {
+        "Listing": { "fields": { "title": { "type": "string" }, "price": { "type": "number" } } }
+      }
+    },
+    "fold_time": 90000
+  },
+  "expected": {
+    "world": {
+      "listings": []
+    }
+  }
+}

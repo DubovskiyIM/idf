@@ -1,0 +1,73 @@
+{
+  "id": "level-1/batch-002",
+  "level": 1,
+  "name": "nested batch applies all sub-effects",
+  "description": "A batch containing another batch should recursively unwrap and apply all leaf sub-effects.",
+  "input": {
+    "effects": [
+      {
+        "id": "e1",
+        "type": "batch",
+        "target": "User",
+        "payload": {
+          "effects": [
+            {
+              "id": "e1a",
+              "type": "add",
+              "target": "User",
+              "payload": { "id": "u1", "name": "Alice" },
+              "status": "confirmed",
+              "created_at": 1000
+            },
+            {
+              "id": "e1b",
+              "type": "batch",
+              "target": "Listing",
+              "payload": {
+                "effects": [
+                  {
+                    "id": "e1b1",
+                    "type": "add",
+                    "target": "Listing",
+                    "payload": { "id": "l1", "title": "Lamp" },
+                    "status": "confirmed",
+                    "created_at": 1001
+                  },
+                  {
+                    "id": "e1b2",
+                    "type": "add",
+                    "target": "Listing",
+                    "payload": { "id": "l2", "title": "Chair" },
+                    "status": "confirmed",
+                    "created_at": 1002
+                  }
+                ]
+              },
+              "status": "confirmed",
+              "created_at": 1001
+            }
+          ]
+        },
+        "status": "confirmed",
+        "created_at": 1000
+      }
+    ],
+    "ontology": {
+      "entities": {
+        "User": { "fields": { "name": { "type": "string" } } },
+        "Listing": { "fields": { "title": { "type": "string" } } }
+      }
+    }
+  },
+  "expected": {
+    "world": {
+      "users": [
+        { "id": "u1", "name": "Alice" }
+      ],
+      "listings": [
+        { "id": "l1", "title": "Lamp" },
+        { "id": "l2", "title": "Chair" }
+      ]
+    }
+  }
+}

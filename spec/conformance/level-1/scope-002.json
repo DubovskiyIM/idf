@@ -1,0 +1,38 @@
+{
+  "id": "level-1/scope-002",
+  "level": 1,
+  "name": "drafts target excluded from semantic fold",
+  "description": "An effect targeting the drafts scope (target prefixed with 'drafts:') should not appear in the semantic world fold.",
+  "input": {
+    "effects": [
+      {
+        "id": "e1",
+        "type": "add",
+        "target": "User",
+        "payload": { "id": "u1", "name": "Alice" },
+        "status": "confirmed",
+        "created_at": 1000
+      },
+      {
+        "id": "e2",
+        "type": "add",
+        "target": "drafts:User",
+        "payload": { "id": "u2", "name": "Draft Bob" },
+        "status": "confirmed",
+        "created_at": 2000
+      }
+    ],
+    "ontology": {
+      "entities": {
+        "User": { "fields": { "name": { "type": "string" } } }
+      }
+    }
+  },
+  "expected": {
+    "world": {
+      "users": [
+        { "id": "u1", "name": "Alice" }
+      ]
+    }
+  }
+}

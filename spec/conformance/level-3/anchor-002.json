@@ -1,0 +1,63 @@
+{
+  "id": "level-3/anchor-002",
+  "level": 3,
+  "name": "effect target field not in ontology",
+  "description": "Intent effect targets 'items.unknownField' where 'unknownField' is not declared in Item's fields in ontology. Should produce anchoring error.",
+  "input": {
+    "intents": {
+      "create_item": {
+        "id": "create_item",
+        "name": "Создать товар",
+        "creates": "Item",
+        "particles": {
+          "entities": ["Item"],
+          "conditions": [],
+          "effects": [{ "type": "add", "target": "items", "payload": { "status": "active" } }],
+          "witnesses": ["item.title"]
+        }
+      },
+      "update_unknown": {
+        "id": "update_unknown",
+        "name": "Обновить неизвестное поле",
+        "particles": {
+          "entities": ["Item"],
+          "conditions": [],
+          "effects": [{ "type": "replace", "target": "items.unknownField", "payload": "value" }],
+          "witnesses": ["item.title"]
+        }
+      }
+    },
+    "ontology": {
+      "entities": {
+        "Item": {
+          "fields": {
+            "id": { "type": "string" },
+            "title": { "type": "string" },
+            "status": { "type": "string" },
+            "ownerId": { "type": "entityRef", "ref": "User" }
+          },
+          "ownerField": "ownerId"
+        },
+        "User": {
+          "fields": {
+            "id": { "type": "string" },
+            "name": { "type": "string" }
+          }
+        }
+      }
+    },
+    "projections": {
+      "item_list": { "kind": "catalog", "entities": ["Item"], "mainEntity": "Item" }
+    }
+  },
+  "expected": {
+    "findings": [
+      {
+        "rule": "anchoring_field",
+        "intentId": "update_unknown",
+        "severity": "info",
+        "message": "Field 'unknownField' not declared in Item ontology"
+      }
+    ]
+  }
+}

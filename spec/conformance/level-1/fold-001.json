@@ -1,0 +1,30 @@
+{
+  "id": "level-1/fold-001",
+  "level": 1,
+  "name": "single add effect creates one entity",
+  "description": "A single confirmed add effect targeting User collection should produce a world with one user entity containing the specified fields.",
+  "input": {
+    "effects": [
+      {
+        "id": "e1",
+        "type": "add",
+        "target": "User",
+        "payload": { "id": "u1", "name": "Alice" },
+        "status": "confirmed",
+        "created_at": 1000
+      }
+    ],
+    "ontology": {
+      "entities": {
+        "User": { "fields": { "name": { "type": "string" } } }
+      }
+    }
+  },
+  "expected": {
+    "world": {
+      "users": [
+        { "id": "u1", "name": "Alice" }
+      ]
+    }
+  }
+}

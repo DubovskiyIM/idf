@@ -1,0 +1,38 @@
+{
+  "id": "level-1/fold-002",
+  "level": 1,
+  "name": "add then replace updates field",
+  "description": "An add effect followed by a replace effect on the same entity should produce a world where the entity has the updated field value.",
+  "input": {
+    "effects": [
+      {
+        "id": "e1",
+        "type": "add",
+        "target": "User",
+        "payload": { "id": "u1", "name": "Alice" },
+        "status": "confirmed",
+        "created_at": 1000
+      },
+      {
+        "id": "e2",
+        "type": "replace",
+        "target": "User",
+        "payload": { "id": "u1", "name": "Bob" },
+        "status": "confirmed",
+        "created_at": 2000
+      }
+    ],
+    "ontology": {
+      "entities": {
+        "User": { "fields": { "name": { "type": "string" } } }
+      }
+    }
+  },
+  "expected": {
+    "world": {
+      "users": [
+        { "id": "u1", "name": "Bob" }
+      ]
+    }
+  }
+}

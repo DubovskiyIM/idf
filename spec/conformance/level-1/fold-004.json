@@ -1,0 +1,39 @@
+{
+  "id": "level-1/fold-004",
+  "level": 1,
+  "name": "two adds to same collection produce two entities",
+  "description": "Two add effects targeting the same collection should result in two distinct entities in that collection.",
+  "input": {
+    "effects": [
+      {
+        "id": "e1",
+        "type": "add",
+        "target": "User",
+        "payload": { "id": "u1", "name": "Alice" },
+        "status": "confirmed",
+        "created_at": 1000
+      },
+      {
+        "id": "e2",
+        "type": "add",
+        "target": "User",
+        "payload": { "id": "u2", "name": "Bob" },
+        "status": "confirmed",
+        "created_at": 2000
+      }
+    ],
+    "ontology": {
+      "entities": {
+        "User": { "fields": { "name": { "type": "string" } } }
+      }
+    }
+  },
+  "expected": {
+    "world": {
+      "users": [
+        { "id": "u1", "name": "Alice" },
+        { "id": "u2", "name": "Bob" }
+      ]
+    }
+  }
+}
