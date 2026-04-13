@@ -9,12 +9,14 @@ const { buildBookingEffects } = require("./buildBookingEffects.cjs");
 const { buildPlanningEffects } = require("./buildPlanningEffects.cjs");
 const { buildMeshokEffects } = require("./buildMeshokEffects.cjs");
 const { buildWorkflowEffects } = require("./buildWorkflowEffects.cjs");
+const { buildMessengerEffects } = require("./buildMessengerEffects.cjs");
 
 const REGISTRY = {
   booking: buildBookingEffects,
   planning: buildPlanningEffects,
   meshok: buildMeshokEffects,
   workflow: buildWorkflowEffects,
+  messenger: buildMessengerEffects,
 };
 
 function getEffectBuilder(domain) {

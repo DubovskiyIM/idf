@@ -72,6 +72,19 @@ export const ONTOLOGY = {
     contact: {
       label: "Контакт",
       visibleFields: { User: ["id", "name", "avatar", "status"] }
-    }
+    },
+    agent: {
+      label: "Агент (API)",
+      canExecute: [
+        "send_message", "create_direct_chat", "create_group",
+        "add_contact", "mark_as_read",
+      ],
+      visibleFields: {
+        User: ["id", "name", "avatar", "status"],
+        Conversation: ["id", "type", "title", "participantIds", "lastMessageAt"],
+        Message: ["id", "conversationId", "senderId", "content", "status", "createdAt"],
+        Contact: ["id", "userId", "contactId", "name", "status"],
+      },
+    },
   }
 };
