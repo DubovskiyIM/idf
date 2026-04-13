@@ -85,6 +85,35 @@ function parseLiteral(raw, viewer) {
   return raw;
 }
 
+/**
+ * Вычисляет computed witness — агрегатное выражение count()/ratio().
+ * Reuse синтаксиса из conditionParser, но возвращает число (не boolean).
+ */
+export function computeWitness(expr, targetId, world) {
+  if (!expr || !world) return null;
+  const c = expr.trim();
+
+  // count(collection, foreignKey=target.id)
+  const mCount = c.match(/^count\((\w+),\s*(\w+)=target\.id\)$/);
+  if (mCount) {
+    const [, collection, fkField] = mCount;
+    return (world[collection] || []).filter(item => item[fkField] === targetId).length;
+  }
+
+  // ratio(collection.distinctField, totalCollection, foreignKey=target.id)
+  const mRatio = c.match(/^ratio\((\w+)\.(\w+),\s*(\w+),\s*(\w+)=target\.id\)$/);
+  if (mRatio) {
+    const [, collection, distinctField, totalCollection, fkField] = mRatio;
+    const filtered = (world[collection] || []).filter(item => item[fkField] === targetId);
+    const total = (world[totalCollection] || []).filter(item => item[fkField] === targetId).length;
+    if (total === 0) return null;
+    const distinct = new Set(filtered.map(item => item[distinctField])).size;
+    return distinct / total;
+  }
+
+  return null;
+}
+
 export function resolveParams(params, data) {
   if (!params) return {};
   const resolved = {};
