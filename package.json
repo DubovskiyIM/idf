@@ -22,8 +22,9 @@
     "build": "vite build",
     "server": "node server/index.js",
     "calendar": "node external-calendar/index.js",
-    "test": "vitest run",
-    "test:watch": "vitest",
+    "test": "vitest run --config vitest.config.js",
+    "test:watch": "vitest --config vitest.config.js",
+    "test:core": "cd packages/core && npx vitest run",
     "agent-smoke": "node scripts/agent-smoke.mjs",
     "crystallize-llm": "node scripts/crystallize-llm.mjs",
     "meshok-demo": "node scripts/meshok-walkthrough.mjs"

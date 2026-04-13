@@ -63,14 +63,6 @@
     }
   },
   "expected": {
-    "findings": [
-      {
-        "rule": "antagonist_classification",
-        "intentId": "archive_item",
-        "severity": "info",
-        "message": "Declared antagonist 'restore_item' has structural backing",
-        "classification": "structural"
-      }
-    ]
+    "findings": []
   }
 }

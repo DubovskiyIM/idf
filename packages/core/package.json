@@ -1,0 +1,16 @@
+{
+  "name": "@idf/core",
+  "version": "0.1.0-alpha.1",
+  "description": "IDF Core — reference implementation of the Intent-Driven Framework specification",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.js"
+  },
+  "types": "./types.d.ts",
+  "files": ["src/", "types.d.ts", "LICENSE"],
+  "scripts": {
+    "test": "npx vitest run --config vitest.config.js"
+  },
+  "license": "MIT",
+  "engines": { "node": ">=18" }
+}
