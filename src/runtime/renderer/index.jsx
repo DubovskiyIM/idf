@@ -4,6 +4,7 @@ import ArchetypeDetail from "./archetypes/ArchetypeDetail.jsx";
 import ArchetypeForm from "./archetypes/ArchetypeForm.jsx";
 import ArchetypeCanvas from "./archetypes/ArchetypeCanvas.jsx";
 import ArchetypeDashboard from "./archetypes/ArchetypeDashboard.jsx";
+import ArchetypeErrorBoundary from "./ErrorBoundary.jsx";
 import { validateArtifact } from "./validation/validateArtifact.js";
 
 const ARCHETYPES = {
@@ -83,5 +84,9 @@ export default function ProjectionRendererV2({
     allProjections,
   };
 
-  return <Archetype slots={artifact.slots} nav={artifact.nav} ctx={ctx} projection={projection} />;
+  return (
+    <ArchetypeErrorBoundary archetype={artifact.archetype} key={artifact.projection}>
+      <Archetype slots={artifact.slots} nav={artifact.nav} ctx={ctx} projection={projection} />
+    </ArchetypeErrorBoundary>
+  );
 }
