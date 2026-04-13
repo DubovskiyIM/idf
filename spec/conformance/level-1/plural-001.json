@@ -1,0 +1,66 @@
+{
+  "id": "level-1/plural-001",
+  "level": 1,
+  "name": "entity name pluralization rules",
+  "description": "Entity names should be pluralized correctly when used as collection keys in the world: User -> users, Category -> categories, Listing -> listings, Address -> addresses.",
+  "input": {
+    "effects": [
+      {
+        "id": "e1",
+        "type": "add",
+        "target": "User",
+        "payload": { "id": "u1", "name": "Alice" },
+        "status": "confirmed",
+        "created_at": 1000
+      },
+      {
+        "id": "e2",
+        "type": "add",
+        "target": "Category",
+        "payload": { "id": "c1", "name": "Electronics" },
+        "status": "confirmed",
+        "created_at": 2000
+      },
+      {
+        "id": "e3",
+        "type": "add",
+        "target": "Listing",
+        "payload": { "id": "l1", "title": "Phone" },
+        "status": "confirmed",
+        "created_at": 3000
+      },
+      {
+        "id": "e4",
+        "type": "add",
+        "target": "Address",
+        "payload": { "id": "a1", "city": "Moscow" },
+        "status": "confirmed",
+        "created_at": 4000
+      }
+    ],
+    "ontology": {
+      "entities": {
+        "User": { "fields": { "name": { "type": "string" } } },
+        "Category": { "fields": { "name": { "type": "string" } } },
+        "Listing": { "fields": { "title": { "type": "string" } } },
+        "Address": { "fields": { "city": { "type": "string" } } }
+      }
+    }
+  },
+  "expected": {
+    "world": {
+      "users": [
+        { "id": "u1", "name": "Alice" }
+      ],
+      "categories": [
+        { "id": "c1", "name": "Electronics" }
+      ],
+      "listings": [
+        { "id": "l1", "title": "Phone" }
+      ],
+      "addresses": [
+        { "id": "a1", "city": "Moscow" }
+      ]
+    }
+  }
+}

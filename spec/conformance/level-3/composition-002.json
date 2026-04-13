@@ -1,0 +1,66 @@
+{
+  "id": "level-3/composition-002",
+  "level": 3,
+  "name": "two intents with potential conflict but mutually exclusive conditions",
+  "description": "Two intents target the same entity but have mutually exclusive conditions (status='active' vs status='archived'). Even though effects might conflict, they can never both apply. No composition findings expected.",
+  "input": {
+    "intents": {
+      "archive_item": {
+        "id": "archive_item",
+        "name": "Архивировать товар",
+        "particles": {
+          "entities": ["Item"],
+          "conditions": ["item.status = 'active'"],
+          "effects": [{ "type": "replace", "target": "items.status", "payload": "archived" }],
+          "witnesses": ["item.title", "item.status"]
+        }
+      },
+      "restore_item": {
+        "id": "restore_item",
+        "name": "Восстановить товар",
+        "particles": {
+          "entities": ["Item"],
+          "conditions": ["item.status = 'archived'"],
+          "effects": [{ "type": "replace", "target": "items.status", "payload": "active" }],
+          "witnesses": ["item.title", "item.status"]
+        }
+      },
+      "create_item": {
+        "id": "create_item",
+        "name": "Создать товар",
+        "creates": "Item",
+        "particles": {
+          "entities": ["Item"],
+          "conditions": [],
+          "effects": [{ "type": "add", "target": "items", "payload": { "status": "active" } }],
+          "witnesses": []
+        }
+      }
+    },
+    "ontology": {
+      "entities": {
+        "Item": {
+          "fields": {
+            "id": { "type": "string" },
+            "title": { "type": "string" },
+            "status": { "type": "string" },
+            "ownerId": { "type": "entityRef", "ref": "User" }
+          },
+          "ownerField": "ownerId"
+        },
+        "User": {
+          "fields": {
+            "id": { "type": "string" },
+            "name": { "type": "string" }
+          }
+        }
+      }
+    },
+    "projections": {
+      "item_list": { "kind": "catalog", "entities": ["Item"], "mainEntity": "Item" }
+    }
+  },
+  "expected": {
+    "findings": []
+  }
+}

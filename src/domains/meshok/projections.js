@@ -16,11 +16,11 @@ export const PROJECTIONS = {
     name: "Лот",
     kind: "detail",
     query: "детали одного лота с историей ставок",
-    entities: ["Listing", "Bid", "User"],
+    entities: ["Listing", "Bid"],
     mainEntity: "Listing",
     idParam: "listingId",
     routeEntities: ["Bid"],
-    witnesses: ["title", "description", "currentPrice", "startPrice", "buyNowPrice", { field: "bidCount", compute: "count(bids, listingId=target.id)" }, "auctionEnd", "condition", "images", "shippingCost", "shippingFrom", "status", "seller.name", "seller.rating"],
+    witnesses: ["title", "description", "currentPrice", "startPrice", "buyNowPrice", { field: "bidCount", compute: "count(bids, listingId=target.id)" }, "auctionEnd", "condition", "images", "shippingCost", "shippingFrom", "status"],
     subCollections: [
       { entity: "Bid", foreignKey: "listingId", sort: "-amount", label: "Ставки" },
     ],
@@ -53,6 +53,11 @@ export const PROJECTIONS = {
     filter: "sellerId === (viewer && viewer.id)",
     sort: "-createdAt",
     witnesses: ["title", "currentPrice", "bidCount", "status", "auctionEnd"],
+    onItemClick: {
+      action: "navigate",
+      to: "listing_detail",
+      params: { listingId: "item.id" },
+    },
   },
 
   my_bids: {
@@ -78,10 +83,15 @@ export const PROJECTIONS = {
     query: "заказы пользователя (покупки и продажи)",
     entities: ["Order", "Listing", "User"],
     mainEntity: "Order",
-    routeEntities: [],
+    routeEntities: ["Listing", "User"],
     filter: "buyerId === (viewer && viewer.id) || sellerId === (viewer && viewer.id)",
     sort: "-createdAt",
     witnesses: ["totalAmount", "status", "listing.title", "trackingNumber", "createdAt"],
+    onItemClick: {
+      action: "navigate",
+      to: "order_detail",
+      params: { orderId: "item.id" },
+    },
   },
 
   order_detail: {
@@ -92,7 +102,7 @@ export const PROJECTIONS = {
     mainEntity: "Order",
     idParam: "orderId",
     routeEntities: ["Listing", "Dispute"],
-    witnesses: ["totalAmount", "finalPrice", "shippingCost", "status", "trackingNumber", "shippingAddress", "paidAt", "shippedAt", "deliveredAt", "listing.title", "seller.name", "buyer.name"],
+    witnesses: ["totalAmount", "finalPrice", "shippingCost", "status", "trackingNumber", "shippingAddress", "paidAt", "shippedAt", "deliveredAt", "listing.title"],
   },
 
   watchlist: {
@@ -116,12 +126,12 @@ export const PROJECTIONS = {
     name: "Сообщения",
     kind: "feed",
     query: "входящие и исходящие сообщения",
-    entities: ["Message", "User", "Listing"],
+    entities: ["Message"],
     mainEntity: "Message",
-    routeEntities: ["User", "Listing"],
+    routeEntities: [],
     filter: "senderId === (viewer && viewer.id) || recipientId === (viewer && viewer.id)",
     sort: "-createdAt",
-    witnesses: ["content", "sender.name", "listing.title", "read", "createdAt"],
+    witnesses: ["content", "read", "createdAt"],
   },
 
   seller_profile: {

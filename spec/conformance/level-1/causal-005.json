@@ -1,0 +1,31 @@
+{
+  "id": "level-1/causal-005",
+  "level": 1,
+  "name": "orphaned parent_id treated as root",
+  "description": "An effect whose parent_id references a non-existent effect should be treated as a root and still applied.",
+  "input": {
+    "effects": [
+      {
+        "id": "e1",
+        "type": "add",
+        "target": "User",
+        "payload": { "id": "u1", "name": "Alice" },
+        "status": "confirmed",
+        "created_at": 1000,
+        "parent_id": "e_nonexistent"
+      }
+    ],
+    "ontology": {
+      "entities": {
+        "User": { "fields": { "name": { "type": "string" } } }
+      }
+    }
+  },
+  "expected": {
+    "world": {
+      "users": [
+        { "id": "u1", "name": "Alice" }
+      ]
+    }
+  }
+}

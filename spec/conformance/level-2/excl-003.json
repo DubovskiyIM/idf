@@ -1,0 +1,55 @@
+{
+  "id": "level-2/excl-003",
+  "level": 2,
+  "name": "add + remove on same collection → causal_order, not ⊕",
+  "description": "Intent create_task has add effect on tasks. Intent delete_task has remove effect on tasks. Per the composition table, add + remove = 'order' (resolved by causal order), which is compatible — NOT excluding ⊕. Note: this pair IS antagonistic ⇌ (reversal), but not excluding.",
+  "input": {
+    "intents": {
+      "create_task": {
+        "name": "Create task",
+        "particles": {
+          "entities": ["t: Task"],
+          "conditions": [],
+          "effects": [{"α": "add", "target": "tasks"}],
+          "witnesses": ["title"],
+          "confirmation": "click"
+        },
+        "creates": "Task(draft)",
+        "antagonist": null
+      },
+      "delete_task": {
+        "name": "Delete task",
+        "particles": {
+          "entities": ["t: Task"],
+          "conditions": [],
+          "effects": [{"α": "remove", "target": "tasks"}],
+          "witnesses": ["title"],
+          "confirmation": "click"
+        },
+        "creates": null,
+        "antagonist": null
+      }
+    },
+    "ontology": {
+      "entities": {
+        "Task": {
+          "fields": {
+            "id": {"type": "string"},
+            "title": {"type": "string"},
+            "status": {"type": "string", "enum": ["draft", "active", "done"]}
+          }
+        }
+      }
+    }
+  },
+  "expected": {
+    "relations": {
+      "create_task": {
+        "excluding": []
+      },
+      "delete_task": {
+        "excluding": []
+      }
+    }
+  }
+}

@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { resolve, template } from "../eval.js";
 import { getAdaptedComponent } from "../adapters/registry.js";
+import { humanValue } from "../adapters/labels.js";
 
 const STYLE_PRESETS = {
   heading: { fontSize: 18, fontWeight: 700, color: "#1a1a2e" },
@@ -95,8 +96,9 @@ export function Heading({ node, ctx, item }) {
 
 export function Badge({ node, ctx, item }) {
   const data = item || ctx.world;
-  const val = node.bind ? resolve(data, node.bind) : node.content;
-  if (!val && val !== 0) return null;
+  const rawVal = node.bind ? resolve(data, node.bind) : node.content;
+  if (!rawVal && rawVal !== 0) return null;
+  const val = node.bind ? humanValue(node.bind, rawVal) : rawVal;
 
   // Адаптер: Mantine Badge.
   const AdaptedBadge = getAdaptedComponent("primitive", "badge");
@@ -300,7 +302,7 @@ export function InfoSection({ node, ctx, item }) {
         val = new Date(raw).toLocaleString("ru", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" });
       }
       else if (typeof raw === "boolean") val = raw ? "Да" : "Нет";
-      else val = String(raw);
+      else val = humanValue(f.bind, raw);
       return { label: f.label, val };
     })
     .filter(Boolean);

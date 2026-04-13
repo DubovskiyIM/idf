@@ -1,0 +1,40 @@
+{
+  "id": "level-1/causal-001",
+  "level": 1,
+  "name": "parent before child in natural order folds correctly",
+  "description": "When parent effect has earlier created_at than child, causal sort preserves natural order and fold produces correct result.",
+  "input": {
+    "effects": [
+      {
+        "id": "e1",
+        "type": "add",
+        "target": "Listing",
+        "payload": { "id": "l1", "title": "Original", "price": 100 },
+        "status": "confirmed",
+        "created_at": 1000,
+        "parent_id": null
+      },
+      {
+        "id": "e2",
+        "type": "replace",
+        "target": "Listing",
+        "payload": { "id": "l1", "price": 200 },
+        "status": "confirmed",
+        "created_at": 2000,
+        "parent_id": "e1"
+      }
+    ],
+    "ontology": {
+      "entities": {
+        "Listing": { "fields": { "title": { "type": "string" }, "price": { "type": "number" } } }
+      }
+    }
+  },
+  "expected": {
+    "world": {
+      "listings": [
+        { "id": "l1", "title": "Original", "price": 200 }
+      ]
+    }
+  }
+}

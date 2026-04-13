@@ -1,0 +1,68 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "effect.schema.json",
+  "title": "IDF Effect",
+  "description": "Persisted effect (element of the causal chain Phi). Source of truth for world state.",
+  "type": "object",
+  "required": ["id", "intent_id", "alpha", "target", "scope", "status", "context", "created_at"],
+  "properties": {
+    "id": {
+      "type": "string",
+      "description": "Unique effect identifier."
+    },
+    "intent_id": {
+      "type": "string",
+      "description": "Intent that produced this effect."
+    },
+    "alpha": {
+      "type": "string",
+      "enum": ["add", "replace", "remove", "batch"],
+      "description": "Effect type (alpha-type)."
+    },
+    "target": {
+      "type": "string",
+      "description": "Target collection or field path (e.g. 'bookings' or 'bookings.status')."
+    },
+    "value": {
+      "description": "Payload of the effect. Shape depends on alpha type."
+    },
+    "scope": {
+      "type": "string",
+      "enum": ["session", "device", "account", "shared", "global", "presentation"],
+      "description": "Visibility scope of the effect."
+    },
+    "parent_id": {
+      "oneOf": [
+        { "type": "string" },
+        { "type": "null" }
+      ],
+      "description": "Causal parent effect id, or null for root effects."
+    },
+    "status": {
+      "type": "string",
+      "enum": ["proposed", "confirmed", "rejected"],
+      "description": "Lifecycle status of the effect."
+    },
+    "ttl": {
+      "oneOf": [
+        { "type": "integer", "minimum": 0 },
+        { "type": "null" }
+      ],
+      "description": "Time-to-live in milliseconds, or null for permanent effects."
+    },
+    "context": {
+      "type": "object",
+      "description": "Execution context (user, timestamp, domain-specific metadata).",
+      "additionalProperties": true
+    },
+    "created_at": {
+      "type": "integer",
+      "description": "Unix timestamp (ms) when the effect was created."
+    },
+    "resolved_at": {
+      "type": "integer",
+      "description": "Unix timestamp (ms) when the effect was confirmed or rejected."
+    }
+  },
+  "additionalProperties": false
+}

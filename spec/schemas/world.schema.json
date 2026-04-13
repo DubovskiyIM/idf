@@ -1,0 +1,21 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "world.schema.json",
+  "title": "IDF World",
+  "description": "World state computed by fold(Phi_confirmed). A map of entity collections, each being an array of objects with required id.",
+  "type": "object",
+  "additionalProperties": {
+    "type": "array",
+    "items": {
+      "type": "object",
+      "required": ["id"],
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique entity identifier within the collection."
+        }
+      },
+      "additionalProperties": true
+    }
+  }
+}

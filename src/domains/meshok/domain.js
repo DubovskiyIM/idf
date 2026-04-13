@@ -244,5 +244,111 @@ export function getSeedEffects() {
     viewCount: 21, createdAt: now - 86400000,
   });
 
+  // Тестовые пользователи (seed в Φ, чтобы sellerId резолвился)
+  add("users", {
+    id: "user_demo", name: "Иван Продавцов", email: "demo@meshok.ru",
+    avatar: null, bio: "Продаю качественные вещи с 2020 года.",
+    rating: 4.8, salesCount: 47, location: "Москва",
+    verified: true, registeredAt: now - 365 * 86400000,
+  });
+  add("users", {
+    id: "user_other", name: "Мария Торгова", email: "maria@meshok.ru",
+    avatar: null, bio: "Домашний уют и стиль.",
+    rating: 4.5, salesCount: 23, location: "Санкт-Петербург",
+    verified: true, registeredAt: now - 200 * 86400000,
+  });
+  add("users", {
+    id: "user_buyer", name: "Алексей Покупайкин", email: "buyer@meshok.ru",
+    avatar: null, bio: "Коллекционер и охотник за скидками.",
+    rating: 4.9, salesCount: 0, location: "Екатеринбург",
+    verified: false, registeredAt: now - 30 * 86400000,
+  });
+
+  // Тестовые ставки
+  add("bids", {
+    id: "bid_1", listingId: "lot_1", bidderId: "user_buyer",
+    amount: 51000, status: "active", createdAt: now - 86400000,
+  });
+  add("bids", {
+    id: "bid_2", listingId: "lot_1", bidderId: "user_other",
+    amount: 52000, status: "active", createdAt: now - 43200000,
+  });
+  add("bids", {
+    id: "bid_3", listingId: "lot_1", bidderId: "user_buyer",
+    amount: 52500, status: "active", createdAt: now - 3600000,
+  });
+  add("bids", {
+    id: "bid_4", listingId: "lot_2", bidderId: "user_buyer",
+    amount: 16000, status: "active", createdAt: now - 2 * 86400000,
+  });
+  add("bids", {
+    id: "bid_5", listingId: "lot_4", bidderId: "user_buyer",
+    amount: 26000, status: "active", createdAt: now - 86400000,
+  });
+  add("bids", {
+    id: "bid_6", listingId: "lot_4", bidderId: "user_demo",
+    amount: 27000, status: "active", createdAt: now - 43200000,
+  });
+
+  // Тестовый заказ (lot_5 куплен через buy_now)
+  add("orders", {
+    id: "ord_1", listingId: "lot_5", sellerId: "user_other", buyerId: "user_buyer",
+    finalPrice: 15000, shippingCost: 800, totalAmount: 15800,
+    status: "shipped", shippingAddress: "Екатеринбург, ул. Ленина 42",
+    trackingNumber: "RU123456789",
+    paidAt: now - 3 * 86400000, shippedAt: now - 86400000,
+    createdAt: now - 4 * 86400000,
+  });
+
+  // Тестовые отзывы
+  add("reviews", {
+    id: "rev_1", listingId: "lot_5", reviewerId: "user_buyer", sellerId: "user_other",
+    rating: 5, text: "Быстрая доставка, товар как в описании!",
+    createdAt: now - 86400000,
+  });
+
+  // Тестовые сообщения
+  add("messages", {
+    id: "msg_1", senderId: "user_buyer", recipientId: "user_demo",
+    listingId: "lot_1", content: "Здравствуйте! Есть ли царапины на экране?",
+    read: true, createdAt: now - 2 * 86400000,
+  });
+  add("messages", {
+    id: "msg_2", senderId: "user_demo", recipientId: "user_buyer",
+    listingId: "lot_1", content: "Добрый день! Нет, экран идеальный, защитное стекло с момента покупки.",
+    read: true, createdAt: now - 2 * 86400000 + 3600000,
+  });
+  add("messages", {
+    id: "msg_3", senderId: "user_buyer", recipientId: "user_other",
+    listingId: "lot_4", content: "Подскажите, куртка в размер или маломерит?",
+    read: false, createdAt: now - 86400000,
+  });
+
+  // Тестовое избранное
+  add("watchlists", {
+    id: "wl_1", userId: "user_buyer", listingId: "lot_1", createdAt: now - 5 * 86400000,
+  });
+  add("watchlists", {
+    id: "wl_2", userId: "user_buyer", listingId: "lot_3", createdAt: now - 3 * 86400000,
+  });
+
+  // Тестовые сохранённые поиски
+  add("savedSearches", {
+    id: "ss_1", userId: "user_buyer", query: "iPhone Pro Max",
+    createdAt: now - 7 * 86400000,
+  });
+
+  // Тестовые уведомления
+  add("notifications", {
+    id: "notif_1", userId: "user_buyer", type: "bid_outbid",
+    title: "Вашу ставку перебили", body: "Лот «iPhone 14 Pro Max» — новая цена 52 000 ₽",
+    refId: "lot_1", read: false, createdAt: now - 43200000,
+  });
+  add("notifications", {
+    id: "notif_2", userId: "user_demo", type: "new_bid",
+    title: "Новая ставка", body: "На лот «iPhone 14 Pro Max» — 52 500 ₽",
+    refId: "lot_1", read: false, createdAt: now - 3600000,
+  });
+
   return effects;
 }

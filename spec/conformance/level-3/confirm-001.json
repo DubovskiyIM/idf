@@ -1,0 +1,65 @@
+{
+  "id": "level-3/confirm-001",
+  "level": 3,
+  "name": "high irreversibility with click confirmation — disproportionate",
+  "description": "Intent with irreversibility 'high' but confirmation 'click' is disproportionate. Should produce warning about confirmation proportionality.",
+  "input": {
+    "intents": {
+      "delete_item": {
+        "id": "delete_item",
+        "name": "Удалить товар",
+        "irreversibility": "high",
+        "particles": {
+          "entities": ["Item"],
+          "conditions": ["item.status = 'active'"],
+          "effects": [{ "type": "remove", "target": "items" }],
+          "witnesses": ["item.title", "item.status"],
+          "confirmation": "click"
+        }
+      },
+      "create_item": {
+        "id": "create_item",
+        "name": "Создать товар",
+        "creates": "Item",
+        "particles": {
+          "entities": ["Item"],
+          "conditions": [],
+          "effects": [{ "type": "add", "target": "items", "payload": { "status": "active" } }],
+          "witnesses": ["item.title"]
+        }
+      }
+    },
+    "ontology": {
+      "entities": {
+        "Item": {
+          "fields": {
+            "id": { "type": "string" },
+            "title": { "type": "string" },
+            "status": { "type": "string" },
+            "ownerId": { "type": "entityRef", "ref": "User" }
+          },
+          "ownerField": "ownerId"
+        },
+        "User": {
+          "fields": {
+            "id": { "type": "string" },
+            "name": { "type": "string" }
+          }
+        }
+      }
+    },
+    "projections": {
+      "item_list": { "kind": "catalog", "entities": ["Item"], "mainEntity": "Item" }
+    }
+  },
+  "expected": {
+    "findings": [
+      {
+        "rule": "confirmation_proportionality",
+        "intentId": "delete_item",
+        "severity": "warning",
+        "message": "High irreversibility with 'click' confirmation — requires at least confirm dialog"
+      }
+    ]
+  }
+}

@@ -1,0 +1,143 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "ontology.schema.json",
+  "title": "IDF Ontology",
+  "description": "Ontology object defining entities, their fields, predicates, and roles for an IDF domain.",
+  "type": "object",
+  "required": ["entities"],
+  "properties": {
+    "entities": {
+      "type": "object",
+      "description": "Map of entity names (PascalCase) to their definitions.",
+      "additionalProperties": {
+        "$ref": "#/$defs/OntologyEntity"
+      },
+      "propertyNames": {
+        "pattern": "^[A-Z][a-zA-Z0-9]*$"
+      }
+    },
+    "predicates": {
+      "type": "object",
+      "description": "Named predicates mapping to condition expressions.",
+      "additionalProperties": {
+        "type": "string"
+      }
+    },
+    "roles": {
+      "type": "object",
+      "description": "Role definitions (e.g. agent layer access control).",
+      "additionalProperties": true
+    }
+  },
+  "additionalProperties": false,
+  "$defs": {
+    "OntologyEntity": {
+      "type": "object",
+      "required": ["fields"],
+      "properties": {
+        "fields": {
+          "oneOf": [
+            {
+              "type": "object",
+              "description": "Typed field definitions.",
+              "additionalProperties": {
+                "$ref": "#/$defs/TypedField"
+              }
+            },
+            {
+              "type": "array",
+              "description": "Simple field name list (untyped shorthand).",
+              "items": {
+                "type": "string"
+              }
+            }
+          ]
+        },
+        "ownerField": {
+          "type": "string",
+          "description": "Field name that holds the owner user id for ownership checks."
+        },
+        "statuses": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Valid status values for this entity."
+        },
+        "type": {
+          "type": "string",
+          "enum": ["internal", "mirror", "hybrid"],
+          "description": "Entity boundary type."
+        },
+        "searchConfig": {
+          "type": "object",
+          "description": "Server-side search configuration for this entity.",
+          "additionalProperties": true
+        },
+        "quorum": {
+          "type": "object",
+          "description": "Quorum policy for this entity (e.g. closeWhen, absentVote).",
+          "properties": {
+            "closeWhen": {
+              "type": "string"
+            },
+            "absentVote": {
+              "type": "string"
+            }
+          },
+          "additionalProperties": true
+        }
+      },
+      "additionalProperties": false
+    },
+    "TypedField": {
+      "type": "object",
+      "required": ["type"],
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": [
+            "id",
+            "text",
+            "number",
+            "boolean",
+            "datetime",
+            "enum",
+            "image",
+            "file",
+            "audio",
+            "entityRef"
+          ]
+        },
+        "read": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Roles that can read this field."
+        },
+        "write": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Roles that can write this field."
+        },
+        "required": {
+          "type": "boolean"
+        },
+        "label": {
+          "type": "string",
+          "description": "Human-readable label for this field."
+        },
+        "values": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Allowed values (for enum type)."
+        },
+        "valueLabels": {
+          "type": "object",
+          "description": "Human-readable labels for enum values.",
+          "additionalProperties": { "type": "string" }
+        }
+      },
+      "additionalProperties": false
+    }
+  }
+}

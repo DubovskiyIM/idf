@@ -1,0 +1,63 @@
+{
+  "id": "level-2/ant-004",
+  "level": 2,
+  "name": "declared antagonist without structural backing → classified as heuristic",
+  "description": "Intent publish_task sets status→active, cancel_task removes the task. They are declared antagonists but their effects do NOT structurally reverse each other (replace vs remove on different targets). Classification should be 'heuristic-lifecycle'.",
+  "input": {
+    "intents": {
+      "publish_task": {
+        "name": "Publish task",
+        "particles": {
+          "entities": ["t: Task"],
+          "conditions": ["task.status = 'draft'"],
+          "effects": [{"α": "replace", "target": "task.status", "value": "active"}],
+          "witnesses": ["title"],
+          "confirmation": "click"
+        },
+        "creates": null,
+        "antagonist": "cancel_task"
+      },
+      "cancel_task": {
+        "name": "Cancel task",
+        "particles": {
+          "entities": ["t: Task"],
+          "conditions": ["task.status = 'draft'"],
+          "effects": [{"α": "remove", "target": "tasks"}],
+          "witnesses": ["title"],
+          "confirmation": "click"
+        },
+        "creates": null,
+        "antagonist": "publish_task"
+      }
+    },
+    "ontology": {
+      "entities": {
+        "Task": {
+          "fields": {
+            "id": {"type": "string"},
+            "title": {"type": "string"},
+            "status": {"type": "string", "enum": ["draft", "active", "done"]}
+          }
+        }
+      }
+    }
+  },
+  "expected": {
+    "relations": {
+      "publish_task": {
+        "antagonists": ["cancel_task"]
+      },
+      "cancel_task": {
+        "antagonists": ["publish_task"]
+      }
+    },
+    "antagonistClassification": {
+      "publish_task": {
+        "cancel_task": "heuristic-lifecycle"
+      },
+      "cancel_task": {
+        "publish_task": "heuristic-lifecycle"
+      }
+    }
+  }
+}

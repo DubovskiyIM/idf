@@ -1,0 +1,56 @@
+{
+  "id": "level-2/par-001",
+  "level": 2,
+  "name": "two intents on same entity, no conflict → ∥ parallel",
+  "description": "Intent rename_task replaces task.title, intent set_priority replaces task.priority. Both operate on the same entity (Task) via different fields. They have no sequential, antagonistic, or excluding relation — they are parallel ∥.",
+  "input": {
+    "intents": {
+      "rename_task": {
+        "name": "Rename task",
+        "particles": {
+          "entities": ["t: Task"],
+          "conditions": [],
+          "effects": [{"α": "replace", "target": "task.title", "value": "{{newTitle}}"}],
+          "witnesses": ["title"],
+          "confirmation": "click"
+        },
+        "creates": null,
+        "antagonist": null
+      },
+      "set_priority": {
+        "name": "Set priority",
+        "particles": {
+          "entities": ["t: Task"],
+          "conditions": [],
+          "effects": [{"α": "replace", "target": "task.priority", "value": "{{priority}}"}],
+          "witnesses": ["title"],
+          "confirmation": "click"
+        },
+        "creates": null,
+        "antagonist": null
+      }
+    },
+    "ontology": {
+      "entities": {
+        "Task": {
+          "fields": {
+            "id": {"type": "string"},
+            "title": {"type": "string"},
+            "status": {"type": "string", "enum": ["draft", "active", "done"]},
+            "priority": {"type": "string", "enum": ["low", "medium", "high"]}
+          }
+        }
+      }
+    }
+  },
+  "expected": {
+    "relations": {
+      "rename_task": {
+        "parallel": ["set_priority"]
+      },
+      "set_priority": {
+        "parallel": ["rename_task"]
+      }
+    }
+  }
+}

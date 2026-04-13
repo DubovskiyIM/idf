@@ -1,0 +1,56 @@
+{
+  "id": "level-2/seq-005",
+  "level": 2,
+  "name": "remove effect → sequential to intent with '= null' condition",
+  "description": "Intent cancel_task has remove effect on tasks. Intent cleanup_task has condition task.status = null. Remove effect satisfies '= null' condition, creating a sequential ▷ link.",
+  "input": {
+    "intents": {
+      "cancel_task": {
+        "name": "Cancel task",
+        "particles": {
+          "entities": ["t: Task"],
+          "conditions": ["task.status = 'draft'"],
+          "effects": [{"α": "remove", "target": "tasks"}],
+          "witnesses": ["title"],
+          "confirmation": "click"
+        },
+        "creates": null,
+        "antagonist": null
+      },
+      "cleanup_task": {
+        "name": "Cleanup after deletion",
+        "particles": {
+          "entities": ["t: Task"],
+          "conditions": ["task.status = null"],
+          "effects": [{"α": "remove", "target": "task.references"}],
+          "witnesses": [],
+          "confirmation": "click"
+        },
+        "creates": null,
+        "antagonist": null
+      }
+    },
+    "ontology": {
+      "entities": {
+        "Task": {
+          "fields": {
+            "id": {"type": "string"},
+            "title": {"type": "string"},
+            "status": {"type": "string", "enum": ["draft", "active", "done"]},
+            "references": {"type": "array"}
+          }
+        }
+      }
+    }
+  },
+  "expected": {
+    "relations": {
+      "cancel_task": {
+        "sequentialOut": ["cleanup_task"]
+      },
+      "cleanup_task": {
+        "sequentialIn": ["cancel_task"]
+      }
+    }
+  }
+}

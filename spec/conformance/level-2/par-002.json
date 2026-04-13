@@ -1,0 +1,69 @@
+{
+  "id": "level-2/par-002",
+  "level": 2,
+  "name": "two intents on different entities → no relation at all",
+  "description": "Intent rename_task operates on Task entity. Intent create_label operates on Label entity. They share no entities in their effects, so no relation exists between them — not even parallel ∥ (which requires shared entities).",
+  "input": {
+    "intents": {
+      "rename_task": {
+        "name": "Rename task",
+        "particles": {
+          "entities": ["t: Task"],
+          "conditions": [],
+          "effects": [{"α": "replace", "target": "task.title", "value": "{{newTitle}}"}],
+          "witnesses": ["title"],
+          "confirmation": "click"
+        },
+        "creates": null,
+        "antagonist": null
+      },
+      "create_label": {
+        "name": "Create label",
+        "particles": {
+          "entities": ["l: Label"],
+          "conditions": [],
+          "effects": [{"α": "add", "target": "labels"}],
+          "witnesses": ["name"],
+          "confirmation": "click"
+        },
+        "creates": "Label",
+        "antagonist": null
+      }
+    },
+    "ontology": {
+      "entities": {
+        "Task": {
+          "fields": {
+            "id": {"type": "string"},
+            "title": {"type": "string"},
+            "status": {"type": "string", "enum": ["draft", "active", "done"]}
+          }
+        },
+        "Label": {
+          "fields": {
+            "id": {"type": "string"},
+            "name": {"type": "string"}
+          }
+        }
+      }
+    }
+  },
+  "expected": {
+    "relations": {
+      "rename_task": {
+        "parallel": [],
+        "sequentialOut": [],
+        "sequentialIn": [],
+        "antagonists": [],
+        "excluding": []
+      },
+      "create_label": {
+        "parallel": [],
+        "sequentialOut": [],
+        "sequentialIn": [],
+        "antagonists": [],
+        "excluding": []
+      }
+    }
+  }
+}

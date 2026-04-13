@@ -1,0 +1,38 @@
+{
+  "id": "level-1/lifecycle-002",
+  "level": 1,
+  "name": "rejected effects excluded from fold",
+  "description": "Effects with status 'rejected' should not contribute to the folded world.",
+  "input": {
+    "effects": [
+      {
+        "id": "e1",
+        "type": "add",
+        "target": "User",
+        "payload": { "id": "u1", "name": "Alice" },
+        "status": "confirmed",
+        "created_at": 1000
+      },
+      {
+        "id": "e2",
+        "type": "replace",
+        "target": "User",
+        "payload": { "id": "u1", "name": "Mallory" },
+        "status": "rejected",
+        "created_at": 2000
+      }
+    ],
+    "ontology": {
+      "entities": {
+        "User": { "fields": { "name": { "type": "string" } } }
+      }
+    }
+  },
+  "expected": {
+    "world": {
+      "users": [
+        { "id": "u1", "name": "Alice" }
+      ]
+    }
+  }
+}

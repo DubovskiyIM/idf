@@ -1,0 +1,58 @@
+{
+  "id": "level-3/confirm-002",
+  "level": 3,
+  "name": "high irreversibility with form confirmation — proportionate",
+  "description": "Intent with irreversibility 'high' and confirmation 'form' is proportionate. No confirmation_proportionality findings expected.",
+  "input": {
+    "intents": {
+      "delete_item": {
+        "id": "delete_item",
+        "name": "Удалить товар",
+        "irreversibility": "high",
+        "particles": {
+          "entities": ["Item"],
+          "conditions": ["item.status = 'active'"],
+          "effects": [{ "type": "remove", "target": "items" }],
+          "witnesses": ["item.title", "item.status"],
+          "confirmation": "form"
+        }
+      },
+      "create_item": {
+        "id": "create_item",
+        "name": "Создать товар",
+        "creates": "Item",
+        "particles": {
+          "entities": ["Item"],
+          "conditions": [],
+          "effects": [{ "type": "add", "target": "items", "payload": { "status": "active" } }],
+          "witnesses": ["item.title"]
+        }
+      }
+    },
+    "ontology": {
+      "entities": {
+        "Item": {
+          "fields": {
+            "id": { "type": "string" },
+            "title": { "type": "string" },
+            "status": { "type": "string" },
+            "ownerId": { "type": "entityRef", "ref": "User" }
+          },
+          "ownerField": "ownerId"
+        },
+        "User": {
+          "fields": {
+            "id": { "type": "string" },
+            "name": { "type": "string" }
+          }
+        }
+      }
+    },
+    "projections": {
+      "item_list": { "kind": "catalog", "entities": ["Item"], "mainEntity": "Item" }
+    }
+  },
+  "expected": {
+    "findings": []
+  }
+}

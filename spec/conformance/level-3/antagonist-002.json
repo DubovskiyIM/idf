@@ -1,0 +1,76 @@
+{
+  "id": "level-3/antagonist-002",
+  "level": 3,
+  "name": "declared antagonist without structural backing",
+  "description": "Intent declares antagonist but algebra cannot derive structural evidence (no effect pair-reversal). Classified as heuristic — asymmetric lifecycle pair. Should produce info finding with classification 'heuristic'.",
+  "input": {
+    "intents": {
+      "create_item": {
+        "id": "create_item",
+        "name": "Создать товар",
+        "creates": "Item",
+        "particles": {
+          "entities": ["Item"],
+          "conditions": [],
+          "effects": [{ "type": "add", "target": "items", "payload": { "status": "active" } }],
+          "witnesses": []
+        }
+      },
+      "publish_item": {
+        "id": "publish_item",
+        "name": "Опубликовать товар",
+        "antagonist": "unpublish_item",
+        "particles": {
+          "entities": ["Item"],
+          "conditions": ["item.status = 'active'"],
+          "effects": [{ "type": "replace", "target": "items.status", "payload": "published" }],
+          "witnesses": ["item.title", "item.status"]
+        }
+      },
+      "unpublish_item": {
+        "id": "unpublish_item",
+        "name": "Снять с публикации",
+        "antagonist": "publish_item",
+        "particles": {
+          "entities": ["Item"],
+          "conditions": ["item.status = 'published'"],
+          "effects": [{ "type": "replace", "target": "items.status", "payload": "draft" }],
+          "witnesses": ["item.title", "item.status"]
+        }
+      }
+    },
+    "ontology": {
+      "entities": {
+        "Item": {
+          "fields": {
+            "id": { "type": "string" },
+            "title": { "type": "string" },
+            "status": { "type": "string" },
+            "ownerId": { "type": "entityRef", "ref": "User" }
+          },
+          "ownerField": "ownerId"
+        },
+        "User": {
+          "fields": {
+            "id": { "type": "string" },
+            "name": { "type": "string" }
+          }
+        }
+      }
+    },
+    "projections": {
+      "item_list": { "kind": "catalog", "entities": ["Item"], "mainEntity": "Item" }
+    }
+  },
+  "expected": {
+    "findings": [
+      {
+        "rule": "antagonist_declared_heuristic",
+        "intentId": "publish_item",
+        "severity": "info",
+        "message": "Declared antagonist 'unpublish_item' has no structural backing — classified as heuristic",
+        "classification": "heuristic"
+      }
+    ]
+  }
+}

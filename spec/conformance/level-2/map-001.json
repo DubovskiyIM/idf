@@ -1,0 +1,120 @@
+{
+  "id": "level-2/map-001",
+  "level": 2,
+  "name": "complete adjacency map for 5-intent task workflow",
+  "description": "Full adjacency map for create→publish→close workflow with cancel and reopen. Sequential chains: create▷publish▷close, create▷cancel, close⇌reopen (bidirectional ▷ + structural ⇌). Antagonists: close⇌reopen (structural, effect reversal on status), publish⇌close (structural, effect reversal on status), create⇌cancel (structural, add↔remove). Parallel: intents sharing Task entity but no other relation.",
+  "input": {
+    "intents": {
+      "create_task": {
+        "name": "Create task",
+        "particles": {
+          "entities": ["t: Task"],
+          "conditions": [],
+          "effects": [{"α": "add", "target": "tasks"}],
+          "witnesses": ["title"],
+          "confirmation": "click"
+        },
+        "creates": "Task(draft)",
+        "antagonist": null
+      },
+      "publish_task": {
+        "name": "Publish task",
+        "particles": {
+          "entities": ["t: Task"],
+          "conditions": ["task.status = 'draft'"],
+          "effects": [{"α": "replace", "target": "task.status", "value": "active"}],
+          "witnesses": ["title"],
+          "confirmation": "click"
+        },
+        "creates": null,
+        "antagonist": null
+      },
+      "close_task": {
+        "name": "Close task",
+        "particles": {
+          "entities": ["t: Task"],
+          "conditions": ["task.status = 'active'"],
+          "effects": [{"α": "replace", "target": "task.status", "value": "done"}],
+          "witnesses": ["title"],
+          "confirmation": "click"
+        },
+        "creates": null,
+        "antagonist": null
+      },
+      "cancel_task": {
+        "name": "Cancel task",
+        "particles": {
+          "entities": ["t: Task"],
+          "conditions": ["task.status = 'draft'"],
+          "effects": [{"α": "remove", "target": "tasks"}],
+          "witnesses": ["title"],
+          "confirmation": "click"
+        },
+        "creates": null,
+        "antagonist": null
+      },
+      "reopen_task": {
+        "name": "Reopen task",
+        "particles": {
+          "entities": ["t: Task"],
+          "conditions": ["task.status = 'done'"],
+          "effects": [{"α": "replace", "target": "task.status", "value": "active"}],
+          "witnesses": ["title"],
+          "confirmation": "click"
+        },
+        "creates": null,
+        "antagonist": "close_task"
+      }
+    },
+    "ontology": {
+      "entities": {
+        "Task": {
+          "fields": {
+            "id": {"type": "string"},
+            "title": {"type": "string"},
+            "status": {"type": "string", "enum": ["draft", "active", "done"]}
+          }
+        }
+      }
+    }
+  },
+  "expected": {
+    "relations": {
+      "create_task": {
+        "sequentialOut": ["publish_task", "cancel_task"],
+        "sequentialIn": [],
+        "antagonists": ["cancel_task"],
+        "excluding": [],
+        "parallel": ["close_task", "reopen_task"]
+      },
+      "publish_task": {
+        "sequentialIn": ["create_task"],
+        "sequentialOut": ["close_task"],
+        "antagonists": ["close_task"],
+        "excluding": [],
+        "parallel": ["cancel_task", "reopen_task"]
+      },
+      "close_task": {
+        "sequentialIn": ["publish_task", "reopen_task"],
+        "sequentialOut": ["reopen_task"],
+        "antagonists": ["publish_task", "reopen_task"],
+        "excluding": [],
+        "parallel": ["create_task", "cancel_task"]
+      },
+      "cancel_task": {
+        "sequentialIn": ["create_task"],
+        "sequentialOut": [],
+        "antagonists": ["create_task"],
+        "excluding": [],
+        "parallel": ["publish_task", "close_task", "reopen_task"]
+      },
+      "reopen_task": {
+        "sequentialIn": ["close_task"],
+        "sequentialOut": ["close_task"],
+        "antagonists": ["close_task"],
+        "excluding": [],
+        "parallel": ["create_task", "publish_task", "cancel_task"]
+      }
+    }
+  }
+}

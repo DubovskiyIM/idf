@@ -1,0 +1,17 @@
+{
+  "id": "level-1/fold-006",
+  "level": 1,
+  "name": "empty effects array produces empty world",
+  "description": "Folding an empty effects array should produce a world with no collections or empty collections.",
+  "input": {
+    "effects": [],
+    "ontology": {
+      "entities": {
+        "User": { "fields": { "name": { "type": "string" } } }
+      }
+    }
+  },
+  "expected": {
+    "world": {}
+  }
+}

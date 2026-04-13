@@ -1,0 +1,55 @@
+{
+  "id": "level-2/excl-002",
+  "level": 2,
+  "name": "replace + replace on same field → NOT ⊕ (last-write-wins)",
+  "description": "Intent publish_task and close_task both have replace effects on task.status with the same target. Per the composition table, replace + replace = 'ok' (last-write-wins), so they are NOT excluding ⊕.",
+  "input": {
+    "intents": {
+      "publish_task": {
+        "name": "Publish task",
+        "particles": {
+          "entities": ["t: Task"],
+          "conditions": ["task.status = 'draft'"],
+          "effects": [{"α": "replace", "target": "task.status", "value": "active"}],
+          "witnesses": ["title"],
+          "confirmation": "click"
+        },
+        "creates": null,
+        "antagonist": null
+      },
+      "close_task": {
+        "name": "Close task",
+        "particles": {
+          "entities": ["t: Task"],
+          "conditions": ["task.status = 'active'"],
+          "effects": [{"α": "replace", "target": "task.status", "value": "done"}],
+          "witnesses": ["title"],
+          "confirmation": "click"
+        },
+        "creates": null,
+        "antagonist": null
+      }
+    },
+    "ontology": {
+      "entities": {
+        "Task": {
+          "fields": {
+            "id": {"type": "string"},
+            "title": {"type": "string"},
+            "status": {"type": "string", "enum": ["draft", "active", "done"]}
+          }
+        }
+      }
+    }
+  },
+  "expected": {
+    "relations": {
+      "publish_task": {
+        "excluding": []
+      },
+      "close_task": {
+        "excluding": []
+      }
+    }
+  }
+}

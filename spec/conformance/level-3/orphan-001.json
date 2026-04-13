@@ -1,0 +1,63 @@
+{
+  "id": "level-3/orphan-001",
+  "level": 3,
+  "name": "orphan effect on entity not in any projection",
+  "description": "Intent produces effect on entity 'Tag' which is not in ontology and not observed by any projection. Should produce orphan warning.",
+  "input": {
+    "intents": {
+      "create_item": {
+        "id": "create_item",
+        "name": "Создать товар",
+        "creates": "Item",
+        "particles": {
+          "entities": ["Item"],
+          "conditions": [],
+          "effects": [{ "type": "add", "target": "items", "payload": { "status": "active" } }],
+          "witnesses": ["item.title"]
+        }
+      },
+      "tag_item": {
+        "id": "tag_item",
+        "name": "Пометить тегом",
+        "particles": {
+          "entities": ["Item", "Tag"],
+          "conditions": [],
+          "effects": [{ "type": "add", "target": "tags", "payload": { "itemId": "{{item.id}}" } }],
+          "witnesses": ["item.title"]
+        }
+      }
+    },
+    "ontology": {
+      "entities": {
+        "Item": {
+          "fields": {
+            "id": { "type": "string" },
+            "title": { "type": "string" },
+            "status": { "type": "string" },
+            "ownerId": { "type": "entityRef", "ref": "User" }
+          },
+          "ownerField": "ownerId"
+        },
+        "User": {
+          "fields": {
+            "id": { "type": "string" },
+            "name": { "type": "string" }
+          }
+        }
+      }
+    },
+    "projections": {
+      "item_list": { "kind": "catalog", "entities": ["Item"], "mainEntity": "Item" }
+    }
+  },
+  "expected": {
+    "findings": [
+      {
+        "rule": "no_orphan_effects",
+        "intentId": "tag_item",
+        "severity": "warning",
+        "message": "Effect on 'tags' is not observable by any projection"
+      }
+    ]
+  }
+}

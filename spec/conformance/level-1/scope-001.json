@@ -1,0 +1,39 @@
+{
+  "id": "level-1/scope-001",
+  "level": 1,
+  "name": "presentation scope excluded from semantic fold",
+  "description": "An effect with scope 'presentation' should not be included in the semantic world fold. Only effects without scope (or with scope 'semantic') participate.",
+  "input": {
+    "effects": [
+      {
+        "id": "e1",
+        "type": "add",
+        "target": "User",
+        "payload": { "id": "u1", "name": "Alice" },
+        "status": "confirmed",
+        "created_at": 1000
+      },
+      {
+        "id": "e2",
+        "type": "replace",
+        "target": "User",
+        "payload": { "id": "u1", "highlighted": true },
+        "status": "confirmed",
+        "created_at": 2000,
+        "scope": "presentation"
+      }
+    ],
+    "ontology": {
+      "entities": {
+        "User": { "fields": { "name": { "type": "string" }, "highlighted": { "type": "boolean" } } }
+      }
+    }
+  },
+  "expected": {
+    "world": {
+      "users": [
+        { "id": "u1", "name": "Alice" }
+      ]
+    }
+  }
+}

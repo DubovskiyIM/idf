@@ -1,0 +1,63 @@
+{
+  "id": "level-2/ant-002",
+  "level": 2,
+  "name": "add + remove pair → structural antagonist",
+  "description": "Intent create_task adds to tasks collection. Intent delete_task removes from tasks collection. Add and remove on the same target reverse each other, creating a structural antagonist ⇌ pair.",
+  "input": {
+    "intents": {
+      "create_task": {
+        "name": "Create task",
+        "particles": {
+          "entities": ["t: Task"],
+          "conditions": [],
+          "effects": [{"α": "add", "target": "tasks"}],
+          "witnesses": ["title"],
+          "confirmation": "click"
+        },
+        "creates": "Task(draft)",
+        "antagonist": null
+      },
+      "delete_task": {
+        "name": "Delete task",
+        "particles": {
+          "entities": ["t: Task"],
+          "conditions": [],
+          "effects": [{"α": "remove", "target": "tasks"}],
+          "witnesses": ["title"],
+          "confirmation": "click"
+        },
+        "creates": null,
+        "antagonist": null
+      }
+    },
+    "ontology": {
+      "entities": {
+        "Task": {
+          "fields": {
+            "id": {"type": "string"},
+            "title": {"type": "string"},
+            "status": {"type": "string", "enum": ["draft", "active", "done"]}
+          }
+        }
+      }
+    }
+  },
+  "expected": {
+    "relations": {
+      "create_task": {
+        "antagonists": ["delete_task"]
+      },
+      "delete_task": {
+        "antagonists": ["create_task"]
+      }
+    },
+    "antagonistClassification": {
+      "create_task": {
+        "delete_task": "structural"
+      },
+      "delete_task": {
+        "create_task": "structural"
+      }
+    }
+  }
+}
