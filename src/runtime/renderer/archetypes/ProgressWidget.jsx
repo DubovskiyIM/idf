@@ -1,54 +1,59 @@
 import { useMemo } from "react";
 import { getAdaptedComponent } from "../adapters/registry.js";
+import { computeWitness } from "../eval.js";
 
 /**
  * ProgressWidget — декларативный прогресс-бар для detail-проекции.
  *
- * Spec:
- *   {
- *     type: "quorum",
- *     title: "Кворум",
- *     totalSource: "participants",       // collection фильтруется по foreignKey
- *     currentSource: "votes",            // collection фильтруется по foreignKey
- *     currentDistinct: "participantId",  // distinct count field
- *     foreignKey: "pollId",              // фильтр по target.id для обеих коллекций
- *     waitingField: "name",              // поле для display «ждём кого»
- *   }
+ * Поддерживает два формата spec:
  *
- * Runtime:
- *   1. total = count(world[totalSource].filter(x => x[foreignKey] === target.id))
- *   2. votedIds = distinct(world[currentSource].filter(...).map(currentDistinct))
- *   3. current = votedIds.size
- *   4. waiting = total - current, список непроголосовавших из totalSource
+ * 1. Computed witness (новый):
+ *    { compute: "ratio(...)", field: "voteRatio", display: "progress", waitingField: "name" }
+ *
+ * 2. Legacy quorum (обратная совместимость):
+ *    { type: "quorum", totalSource, currentSource, currentDistinct, foreignKey, waitingField }
  */
 export default function ProgressWidget({ spec, target, ctx }) {
   const data = useMemo(() => {
     if (!target?.id) return { total: 0, current: 0, percent: 0, waiting: [] };
-    const {
-      totalSource, currentSource, currentDistinct,
-      foreignKey, waitingField,
-    } = spec;
     const world = ctx.world || {};
-    const totalItems = (world[totalSource] || []).filter(
-      it => !foreignKey || it[foreignKey] === target.id
-    );
-    const currentItems = (world[currentSource] || []).filter(
-      it => !foreignKey || it[foreignKey] === target.id
-    );
+
+    if (spec.compute) {
+      // Новый формат: computed witness
+      const ratio = computeWitness(spec.compute, target.id, world);
+      if (ratio == null) return { total: 0, current: 0, percent: 0, waiting: [] };
+
+      // Waiting list: извлекаем коллекции из ratio() выражения
+      const m = spec.compute.match(/^ratio\((\w+)\.(\w+),\s*(\w+),\s*(\w+)=target\.id\)$/);
+      if (!m) return { total: 0, current: 0, percent: Math.round(ratio * 100), waiting: [] };
+
+      const [, collection, distinctField, totalCollection, fkField] = m;
+      const totalItems = (world[totalCollection] || []).filter(it => it[fkField] === target.id);
+      const currentItems = (world[collection] || []).filter(it => it[fkField] === target.id);
+      const votedIds = new Set(currentItems.map(it => it[distinctField]).filter(Boolean));
+      const total = totalItems.length;
+      const current = votedIds.size;
+      const percent = total > 0 ? Math.round((current / total) * 100) : 0;
+      const waiting = spec.waitingField
+        ? totalItems.filter(it => !votedIds.has(it.id)).map(it => it[spec.waitingField] || it.id)
+        : [];
+      return { total, current, percent, waiting };
+    }
+
+    // Legacy формат: type: "quorum"
+    const { totalSource, currentSource, currentDistinct, foreignKey, waitingField } = spec;
+    const totalItems = (world[totalSource] || []).filter(it => !foreignKey || it[foreignKey] === target.id);
+    const currentItems = (world[currentSource] || []).filter(it => !foreignKey || it[foreignKey] === target.id);
     const votedIds = new Set(
       currentDistinct
         ? currentItems.map(it => it[currentDistinct]).filter(Boolean)
         : currentItems.map(it => it.id)
     );
     const total = totalItems.length;
-    const current = currentDistinct
-      ? votedIds.size
-      : currentItems.length;
+    const current = currentDistinct ? votedIds.size : currentItems.length;
     const percent = total > 0 ? Math.round((current / total) * 100) : 0;
     const waiting = currentDistinct
-      ? totalItems
-          .filter(it => !votedIds.has(it.id))
-          .map(it => it[waitingField || "name"] || it.id)
+      ? totalItems.filter(it => !votedIds.has(it.id)).map(it => it[waitingField || "name"] || it.id)
       : [];
     return { total, current, percent, waiting };
   }, [spec, target, ctx.world]);
