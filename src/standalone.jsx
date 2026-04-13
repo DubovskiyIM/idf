@@ -16,6 +16,7 @@ import * as planningDomain from "./domains/planning/domain.js";
 import * as workflowDomain from "./domains/workflow/domain.js";
 import * as messengerDomain from "./domains/messenger/domain.js";
 import * as meshokDomain from "./domains/meshok/domain.js";
+import * as lifequestDomain from "./domains/lifequest/domain.js";
 
 import BookingUI from "./domains/booking/ManualUI.jsx";
 import PlanningUI from "./domains/planning/ManualUI.jsx";
@@ -23,8 +24,17 @@ import WorkflowUI from "./domains/workflow/ManualUI.jsx";
 import MessengerUI from "./domains/messenger/ManualUI.jsx";
 import MessengerV2UI from "./domains/messenger/V2UI.jsx";
 import V2Shell from "./runtime/renderer/shell/V2Shell.jsx";
+import { registerUIAdapter } from "./runtime/renderer/adapters/registry.js";
+import { mantineAdapter } from "./runtime/renderer/adapters/mantine/index.jsx";
+import { shadcnAdapter } from "./runtime/renderer/adapters/shadcn/index.jsx";
+
+// Домены с переключением адаптера
+const DOMAIN_ADAPTERS = {
+  lifequest: shadcnAdapter,
+};
 
 function makeV2UI(domainId) {
+  const useBottomTabs = domainId === "lifequest";
   return function V2Standalone({ world, exec, execBatch, viewer }) {
     const domain = DOMAINS_RAW[domainId];
     return (
@@ -35,6 +45,7 @@ function makeV2UI(domainId) {
         exec={exec}
         execBatch={execBatch}
         viewer={viewer}
+        useBottomTabs={useBottomTabs}
       />
     );
   };
@@ -46,6 +57,7 @@ const DOMAINS_RAW = {
   workflow: workflowDomain,
   messenger: messengerDomain,
   meshok: meshokDomain,
+  lifequest: lifequestDomain,
 };
 
 const DOMAIN_TITLES = {
@@ -57,6 +69,7 @@ const DOMAIN_TITLES = {
   messenger: "💬 Мессенджер",
   "messenger-v2": "💬 Мессенджер",
   meshok: "🎒 Мешок",
+  lifequest: "📓 LifeQuest",
 };
 
 const DOMAINS = {
@@ -68,11 +81,16 @@ const DOMAINS = {
   messenger: { ...messengerDomain, UI: MessengerUI },
   "messenger-v2": { ...messengerDomain, UI: MessengerV2UI },
   meshok: { ...meshokDomain, UI: makeV2UI("meshok") },
+  lifequest: { ...lifequestDomain, UI: makeV2UI("lifequest") },
 };
 
 export default function StandaloneApp({ domainId }) {
   const domain = DOMAINS[domainId];
   if (!domain) return <div style={{ padding: 40, textAlign: "center", fontFamily: "system-ui" }}>Домен "{domainId}" не найден</div>;
+
+  // Переключение UI-адаптера по домену (§17 адаптивный слой)
+  const adapter = DOMAIN_ADAPTERS[domainId] || mantineAdapter;
+  registerUIAdapter(adapter);
 
   // Messenger v2 имеет собственный auth flow внутри V2UI — пропускаем shared
   const isMessengerV2 = domainId === "messenger-v2";
