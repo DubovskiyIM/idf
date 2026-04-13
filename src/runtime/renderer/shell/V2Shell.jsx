@@ -246,15 +246,46 @@ export default function V2Shell({
 
   const personalStyle = prefsToStyle(prefs);
 
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const isMobile = typeof window !== "undefined" && window.innerWidth < 768;
+
   if (sections) {
     return (
       <div style={{ display: "flex", height: "100%", minHeight: 0, fontFamily: "system-ui, sans-serif", fontSize: "var(--idf-font-size, 14px)", ...personalStyle }}>
-        <SectionedSidebar
-          sections={sections}
-          active={current?.projectionId}
-          onSelect={onSelectTab}
-          projectionNames={projectionNames}
-        />
+        {/* Mobile hamburger */}
+        {isMobile && !sidebarOpen && (
+          <button
+            onClick={() => setSidebarOpen(true)}
+            style={{
+              position: "fixed", top: 8, left: 8, zIndex: 50,
+              width: 36, height: 36, borderRadius: 8,
+              border: "1px solid var(--mantine-color-default-border)",
+              background: "var(--mantine-color-body)",
+              color: "var(--mantine-color-text)",
+              fontSize: 18, cursor: "pointer",
+              display: "flex", alignItems: "center", justifyContent: "center",
+            }}
+          >☰</button>
+        )}
+        {/* Sidebar: fixed overlay на mobile, static на desktop */}
+        {(!isMobile || sidebarOpen) && (
+          <>
+            {isMobile && (
+              <div
+                onClick={() => setSidebarOpen(false)}
+                style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.4)", zIndex: 40 }}
+              />
+            )}
+            <div style={isMobile ? { position: "fixed", top: 0, left: 0, bottom: 0, zIndex: 45, width: 280 } : {}}>
+              <SectionedSidebar
+                sections={sections}
+                active={current?.projectionId}
+                onSelect={(id) => { onSelectTab(id); if (isMobile) setSidebarOpen(false); }}
+                projectionNames={projectionNames}
+              />
+            </div>
+          </>
+        )}
         <div style={{ flex: 1, display: "flex", flexDirection: "column", minHeight: 0, overflow: "hidden" }}>
           {mainContent}
         </div>
@@ -319,7 +350,7 @@ function SectionedSidebar({ sections, active, onSelect, projectionNames }) {
 
   return (
     <div style={{
-      width: 240, flexShrink: 0,
+      width: 240, flexShrink: 0, height: "100%",
       background: "var(--mantine-color-default)",
       borderRight: "1px solid var(--mantine-color-default-border)",
       overflow: "auto",
