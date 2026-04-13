@@ -70,7 +70,7 @@ export const INTENTS = {
     ],
     particles: {
       entities: ["poll: Poll"],
-      conditions: ["poll.status = 'open'"],
+      conditions: ["poll.status = 'open'", "ratio(votes.participantId, participants, pollId=target.id) >= 1.0"],
       effects: [{ α: "replace", target: "poll.status", value: "closed", σ: "account" }],
       witnesses: ["votes.count", "participation_rate"],
       confirmation: "click"

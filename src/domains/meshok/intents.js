@@ -40,7 +40,7 @@ export const INTENTS = {
     "click", { antagonist: "cancel_listing" }),
 
   cancel_listing: intent("Снять с продажи", ["listing: Listing"],
-    ["listing.status = 'active'", "listing.sellerId = me.id", "listing.bidCount = 0"],
+    ["listing.status = 'active'", "listing.sellerId = me.id", "count(bids, listingId=target.id) = 0"],
     [ef("replace", "listing.status", "account", { value: "cancelled" })],
     [], "click", { antagonist: "publish_listing", irreversibility: "medium" }),
 
@@ -63,7 +63,7 @@ export const INTENTS = {
     "click"),
 
   lower_start_price: intent("Снизить начальную цену", ["listing: Listing"],
-    ["listing.status = 'active'", "listing.sellerId = me.id", "listing.bidCount = 0"],
+    ["listing.status = 'active'", "listing.sellerId = me.id", "count(bids, listingId=target.id) = 0"],
     [ef("replace", "listing.startPrice"), ef("replace", "listing.currentPrice")],
     ["startPrice"],
     "click"),
