@@ -87,7 +87,7 @@ export default function V2Shell({
   // hardcoded "self".
   const wrappedExec = useMemo(() => {
     if (!exec) return exec;
-    return (intentId, ctx = {}) => exec(intentId, { ...ctx, clientId: viewerObj.id });
+    return (intentId, ctx = {}) => exec(intentId, { ...ctx, clientId: viewerObj.id, userId: viewerObj.id, userName: viewerObj.name });
   }, [exec, viewerObj]);
 
   const wrappedExecBatch = useMemo(() => {
