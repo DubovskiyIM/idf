@@ -25,7 +25,8 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "agent-smoke": "node scripts/agent-smoke.mjs",
-    "crystallize-llm": "node scripts/crystallize-llm.mjs"
+    "crystallize-llm": "node scripts/crystallize-llm.mjs",
+    "meshok-demo": "node scripts/meshok-walkthrough.mjs"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.88.0",
