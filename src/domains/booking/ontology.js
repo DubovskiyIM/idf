@@ -1,11 +1,29 @@
 export const ONTOLOGY = {
   entities: {
+    ServiceCategory: {
+      fields: {
+        id: { type: "id" },
+        name: { type: "text", read: ["*"], label: "Категория" },
+        icon: { type: "text", read: ["*"], label: "Иконка" },
+        parentId: { type: "entityRef", label: "Родитель" },
+        sortOrder: { type: "number" },
+      },
+      type: "internal"
+    },
     Specialist: {
       fields: ["id", "name", "specialization"],
       type: "internal"
     },
     Service: {
-      fields: ["id", "specialistId", "name", "duration", "price", "active"],
+      fields: {
+        id: { type: "id" },
+        specialistId: { type: "entityRef" },
+        categoryId: { type: "entityRef", read: ["*"], label: "Категория" },
+        name: { type: "text", read: ["*"], write: ["self"], required: true, label: "Название" },
+        duration: { type: "number", read: ["*"], write: ["self"], label: "Длительность" },
+        price: { type: "number", read: ["*"], write: ["self"], label: "Цена" },
+        active: { type: "boolean", read: ["*"], label: "Активна" },
+      },
       type: "internal"
     },
     TimeSlot: {

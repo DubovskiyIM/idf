@@ -75,6 +75,7 @@ export const PROJECTIONS = {
         pick: ["serviceId"],
         source: { collection: "services", filter: "active !== false" },
         display: ["name", "duration", "price"],
+        groupBy: { field: "categoryId", collection: "servicecategorys", labelField: "name", iconField: "icon" },
       },
       {
         id: "slot",
@@ -85,7 +86,8 @@ export const PROJECTIONS = {
           filter: "status === 'free'",
           filterBy: { specialistId: "step.service.specialistId" },
         },
-        display: ["date", "startTime", "endTime"],
+        display: ["startTime", "endTime"],
+        displayAs: "calendar",
       },
       {
         id: "confirm",

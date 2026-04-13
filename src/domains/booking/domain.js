@@ -274,21 +274,41 @@ export function getSeedEffects() {
     context, created_at: now, resolved_at: now
   });
 
-  add("specialists", { id: "sp_anna", name: "Анна Иванова", specialization: "Парикмахер" });
-  add("services", { id: "svc_cut", specialistId: "sp_anna", name: "Стрижка", duration: 60, price: 2000, active: true });
-  add("services", { id: "svc_color", specialistId: "sp_anna", name: "Окрашивание", duration: 120, price: 5000, active: true });
-  add("services", { id: "svc_style", specialistId: "sp_anna", name: "Укладка", duration: 30, price: 1500, active: true });
+  // Категории услуг (рекурсивные)
+  add("servicecategorys", { id: "cat_beauty", name: "Красота", icon: "💇", parentId: null, sortOrder: 1 });
+  add("servicecategorys", { id: "cat_hair", name: "Волосы", icon: "✂️", parentId: "cat_beauty", sortOrder: 1 });
+  add("servicecategorys", { id: "cat_nails", name: "Ногти", icon: "💅", parentId: "cat_beauty", sortOrder: 2 });
+  add("servicecategorys", { id: "cat_health", name: "Здоровье", icon: "🏥", parentId: null, sortOrder: 2 });
+  add("servicecategorys", { id: "cat_massage", name: "Массаж", icon: "💆", parentId: "cat_health", sortOrder: 1 });
+  add("servicecategorys", { id: "cat_repair", name: "Ремонт", icon: "🔧", parentId: null, sortOrder: 3 });
 
+  // Специалисты
+  add("specialists", { id: "sp_anna", name: "Анна Иванова", specialization: "Парикмахер" });
+  add("specialists", { id: "sp_maria", name: "Мария Петрова", specialization: "Мастер маникюра" });
+  add("specialists", { id: "sp_igor", name: "Игорь Сидоров", specialization: "Массажист" });
+
+  // Услуги с категориями
+  add("services", { id: "svc_cut", specialistId: "sp_anna", categoryId: "cat_hair", name: "Стрижка", duration: 60, price: 2000, active: true });
+  add("services", { id: "svc_color", specialistId: "sp_anna", categoryId: "cat_hair", name: "Окрашивание", duration: 120, price: 5000, active: true });
+  add("services", { id: "svc_style", specialistId: "sp_anna", categoryId: "cat_hair", name: "Укладка", duration: 30, price: 1500, active: true });
+  add("services", { id: "svc_manicure", specialistId: "sp_maria", categoryId: "cat_nails", name: "Маникюр", duration: 60, price: 2500, active: true });
+  add("services", { id: "svc_pedicure", specialistId: "sp_maria", categoryId: "cat_nails", name: "Педикюр", duration: 75, price: 3000, active: true });
+  add("services", { id: "svc_massage", specialistId: "sp_igor", categoryId: "cat_massage", name: "Общий массаж", duration: 60, price: 3500, active: true });
+  add("services", { id: "svc_massage_back", specialistId: "sp_igor", categoryId: "cat_massage", name: "Массаж спины", duration: 30, price: 2000, active: true });
+
+  // Слоты для всех специалистов (7 дней)
   const today = new Date(); today.setHours(0, 0, 0, 0);
-  for (let d = 0; d < 7; d++) {
-    const date = new Date(today.getTime() + d * 86400000);
-    const dow = date.getDay();
-    if (dow === 0) continue;
-    const hours = dow === 6 ? [10, 11, 12] : [10, 11, 12, 14, 15, 16, 17];
-    const dateStr = date.toISOString().slice(0, 10);
-    for (const h of hours) {
-      add("slots", { id: `slot_${dateStr}_${h}`, specialistId: "sp_anna", date: dateStr,
-        startTime: `${String(h).padStart(2, "0")}:00`, endTime: `${String(h + 1).padStart(2, "0")}:00`, status: "free" });
+  for (const spId of ["sp_anna", "sp_maria", "sp_igor"]) {
+    for (let d = 0; d < 7; d++) {
+      const date = new Date(today.getTime() + d * 86400000);
+      const dow = date.getDay();
+      if (dow === 0) continue;
+      const hours = dow === 6 ? [10, 11, 12] : [10, 11, 12, 14, 15, 16, 17];
+      const dateStr = date.toISOString().slice(0, 10);
+      for (const h of hours) {
+        add("slots", { id: `slot_${spId}_${dateStr}_${h}`, specialistId: spId, date: dateStr,
+          startTime: `${String(h).padStart(2, "0")}:00`, endTime: `${String(h + 1).padStart(2, "0")}:00`, status: "free" });
+      }
     }
   }
 

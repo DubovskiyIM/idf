@@ -2,6 +2,183 @@ import { useState, useMemo, useCallback } from "react";
 import { getAdaptedComponent } from "../adapters/registry.js";
 import { humanLabel, humanValue } from "../adapters/labels.js";
 
+// ── Sub-components ──
+
+function ItemCard({ item, step, isSelected, onSelect }) {
+  return (
+    <div
+      onClick={() => onSelect(item)}
+      style={{
+        cursor: "pointer", padding: 14, borderRadius: 8,
+        border: isSelected
+          ? "2px solid var(--mantine-color-primary, #6366f1)"
+          : "1px solid var(--mantine-color-default-border)",
+        background: "var(--mantine-color-default)",
+        display: "flex", justifyContent: "space-between", alignItems: "center",
+        transition: "border-color 0.15s",
+      }}
+    >
+      <div>
+        {(step.display || ["name", "id"]).map((field, fi) => (
+          <div key={field} style={{
+            fontSize: fi === 0 ? 15 : 13,
+            fontWeight: fi === 0 ? 600 : 400,
+            color: fi === 0 ? "var(--mantine-color-text)" : "var(--mantine-color-dimmed)",
+          }}>
+            {fi > 0 && <span>{humanLabel(field)}: </span>}
+            {humanValue(field, item[field]) ?? "—"}
+            {field === "price" && typeof item[field] === "number" ? " ₽" : ""}
+            {field === "duration" && typeof item[field] === "number" ? " мин" : ""}
+          </div>
+        ))}
+      </div>
+      {isSelected && (
+        <span style={{ color: "var(--mantine-color-primary, #6366f1)", fontSize: 20, fontWeight: 700 }}>✓</span>
+      )}
+    </div>
+  );
+}
+
+function FlatList({ items, step, collected, onSelect }) {
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+      {items.map(item => (
+        <ItemCard key={item.id} item={item} step={step} isSelected={collected[step.id]?.id === item.id} onSelect={onSelect} />
+      ))}
+    </div>
+  );
+}
+
+function GroupedList({ items, step, collected, onSelect, world }) {
+  const gb = step.groupBy;
+  const categories = world[gb.collection] || [];
+  const catMap = {};
+  for (const cat of categories) catMap[cat.id] = cat;
+
+  // Группируем items по categoryId
+  const groups = {};
+  const ungrouped = [];
+  for (const item of items) {
+    const catId = item[gb.field];
+    if (catId && catMap[catId]) {
+      if (!groups[catId]) groups[catId] = { cat: catMap[catId], items: [] };
+      groups[catId].items.push(item);
+    } else {
+      ungrouped.push(item);
+    }
+  }
+
+  // Сортируем группы по sortOrder категории
+  const sorted = Object.values(groups).sort((a, b) => (a.cat.sortOrder || 0) - (b.cat.sortOrder || 0));
+
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+      {sorted.map(({ cat, items: groupItems }) => (
+        <div key={cat.id}>
+          <div style={{
+            fontSize: 14, fontWeight: 600, marginBottom: 8,
+            color: "var(--mantine-color-text)",
+            display: "flex", alignItems: "center", gap: 6,
+          }}>
+            {cat[gb.iconField] && <span>{cat[gb.iconField]}</span>}
+            {cat[gb.labelField] || cat.id}
+          </div>
+          <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+            {groupItems.map(item => (
+              <ItemCard key={item.id} item={item} step={step} isSelected={collected[step.id]?.id === item.id} onSelect={onSelect} />
+            ))}
+          </div>
+        </div>
+      ))}
+      {ungrouped.length > 0 && (
+        <div>
+          <div style={{ fontSize: 14, fontWeight: 600, marginBottom: 8, color: "var(--mantine-color-dimmed)" }}>Другое</div>
+          <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+            {ungrouped.map(item => (
+              <ItemCard key={item.id} item={item} step={step} isSelected={collected[step.id]?.id === item.id} onSelect={onSelect} />
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function CalendarView({ items, step, collected, onSelect }) {
+  // Группируем слоты по дате
+  const byDate = {};
+  for (const item of items) {
+    const d = item.date || "unknown";
+    if (!byDate[d]) byDate[d] = [];
+    byDate[d].push(item);
+  }
+  const dates = Object.keys(byDate).sort();
+  const [selectedDate, setSelectedDate] = useState(dates[0] || "");
+
+  const daySlots = byDate[selectedDate] || [];
+  daySlots.sort((a, b) => (a.startTime || "").localeCompare(b.startTime || ""));
+
+  const formatDate = (d) => {
+    try {
+      const dt = new Date(d + "T00:00:00");
+      return dt.toLocaleDateString("ru", { weekday: "short", day: "numeric", month: "short" });
+    } catch { return d; }
+  };
+
+  return (
+    <div>
+      {/* Date tabs */}
+      <div style={{ display: "flex", gap: 6, marginBottom: 16, overflowX: "auto", paddingBottom: 4 }}>
+        {dates.map(d => (
+          <button
+            key={d}
+            onClick={() => setSelectedDate(d)}
+            style={{
+              padding: "8px 14px", borderRadius: 8, fontSize: 13, fontWeight: 500,
+              border: d === selectedDate ? "2px solid var(--mantine-color-primary, #6366f1)" : "1px solid var(--mantine-color-default-border)",
+              background: d === selectedDate ? "var(--mantine-color-primary-light, #eef2ff)" : "var(--mantine-color-default)",
+              color: d === selectedDate ? "var(--mantine-color-primary, #6366f1)" : "var(--mantine-color-text)",
+              cursor: "pointer", whiteSpace: "nowrap",
+            }}
+          >
+            {formatDate(d)}
+          </button>
+        ))}
+      </div>
+
+      {/* Time slots grid */}
+      {daySlots.length === 0 ? (
+        <div style={{ padding: 16, textAlign: "center", color: "var(--mantine-color-dimmed)" }}>
+          Нет свободных слотов на эту дату
+        </div>
+      ) : (
+        <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+          {daySlots.map(slot => {
+            const isSelected = collected[step.id]?.id === slot.id;
+            return (
+              <button
+                key={slot.id}
+                onClick={() => onSelect(slot)}
+                style={{
+                  padding: "10px 18px", borderRadius: 8, fontSize: 14, fontWeight: 500,
+                  border: isSelected ? "2px solid var(--mantine-color-primary, #6366f1)" : "1px solid var(--mantine-color-default-border)",
+                  background: isSelected ? "var(--mantine-color-primary, #6366f1)" : "var(--mantine-color-default)",
+                  color: isSelected ? "#fff" : "var(--mantine-color-text)",
+                  cursor: "pointer", transition: "all 0.15s",
+                }}
+              >
+                {slot.startTime}–{slot.endTime}
+              </button>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ── Main component ──
+
 /**
  * ArchetypeWizard — 7-й архетип: multi-step flow.
  *
@@ -190,45 +367,12 @@ export default function ArchetypeWizard({ slots, projection, ctx }) {
             <div style={{ padding: 24, textAlign: "center", color: "var(--mantine-color-dimmed)" }}>
               Нет доступных вариантов
             </div>
+          ) : step.displayAs === "calendar" ? (
+            <CalendarView items={items} step={step} collected={collected} onSelect={(item) => handleSelect(step, item)} />
+          ) : step.groupBy ? (
+            <GroupedList items={items} step={step} collected={collected} onSelect={(item) => handleSelect(step, item)} world={world} />
           ) : (
-            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-              {items.map(item => {
-                const isSelected = collected[step.id]?.id === item.id;
-                return (
-                  <div
-                    key={item.id}
-                    onClick={() => handleSelect(step, item)}
-                    style={{
-                      cursor: "pointer", padding: 14, borderRadius: 8,
-                      border: isSelected
-                        ? "2px solid var(--mantine-color-primary, #6366f1)"
-                        : "1px solid var(--mantine-color-default-border)",
-                      background: "var(--mantine-color-default)",
-                      display: "flex", justifyContent: "space-between", alignItems: "center",
-                      transition: "border-color 0.15s",
-                    }}
-                  >
-                    <div>
-                      {(step.display || ["name", "id"]).map((field, fi) => (
-                        <div key={field} style={{
-                          fontSize: fi === 0 ? 15 : 13,
-                          fontWeight: fi === 0 ? 600 : 400,
-                          color: fi === 0 ? "var(--mantine-color-text)" : "var(--mantine-color-dimmed)",
-                        }}>
-                          {fi > 0 && <span>{humanLabel(field)}: </span>}
-                          {humanValue(field, item[field]) ?? "—"}
-                          {field === "price" && typeof item[field] === "number" ? " ₽" : ""}
-                          {field === "duration" && typeof item[field] === "number" ? " мин" : ""}
-                        </div>
-                      ))}
-                    </div>
-                    {isSelected && (
-                      <span style={{ color: "var(--mantine-color-primary, #6366f1)", fontSize: 20, fontWeight: 700 }}>✓</span>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
+            <FlatList items={items} step={step} collected={collected} onSelect={(item) => handleSelect(step, item)} />
           )}
           {currentStep > 0 && (
             <button
