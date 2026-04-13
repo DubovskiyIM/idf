@@ -1,4 +1,4 @@
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, beforeEach } from "vitest";
 
 const { matchTrigger, resolveContext } = require("./ruleEngine.js");
 
@@ -198,5 +198,108 @@ describe("evaluateRules", () => {
     evaluateRules({ intent_id: "vote_yes", context: { pollId: "P1" } }, worldThunk, deps);
 
     expect(thunkCalled).toBe(true);
+  });
+});
+
+const { registerIntents, getIntent: realGetIntent, validateIntentConditions: realValidate, getDomainByIntentId: realGetDomain, _registry } = require("./intents.js");
+
+describe("evaluateRules — real domain intents", () => {
+  beforeEach(() => {
+    for (const key of Object.keys(_registry)) delete _registry[key];
+    registerIntents({
+      vote_yes: {
+        name: "За", particles: {
+          entities: ["option: TimeOption", "participant: Participant"],
+          conditions: ["poll.status = 'open'"],
+          effects: [{ α: "add", target: "votes" }],
+          witnesses: [], confirmation: "click"
+        }, creates: "Vote(yes)"
+      },
+      close_poll: {
+        name: "Закрыть голосование", particles: {
+          entities: ["poll: Poll"],
+          conditions: ["poll.status = 'open'", "ratio(votes.participantId, participants, pollId=target.id) >= 1.0"],
+          effects: [{ α: "replace", target: "poll.status", value: "closed" }],
+          witnesses: [], confirmation: "click"
+        }
+      },
+    }, "planning");
+    registerIntents({
+      confirm_delivery: {
+        name: "Подтвердить получение", particles: {
+          entities: ["order: Order"],
+          conditions: ["order.status = 'shipped'"],
+          effects: [{ α: "replace", target: "order.status", value: "delivered" }, { α: "replace", target: "order.deliveredAt" }],
+          witnesses: [], confirmation: "click"
+        }
+      },
+      complete_order: {
+        name: "Завершить сделку", particles: {
+          entities: ["order: Order"],
+          conditions: ["order.status = 'delivered'"],
+          effects: [{ α: "replace", target: "order.status", value: "completed" }],
+          witnesses: [], confirmation: "click"
+        }
+      },
+    }, "meshok");
+  });
+
+  const planningOntology = {
+    rules: [{ id: "quorum_autoclose", trigger: "vote_*", action: "close_poll", context: { id: "effect.pollId" } }]
+  };
+  const meshokOntology = {
+    rules: [{ id: "delivery_autocomplete", trigger: "confirm_delivery", action: "complete_order", context: { id: "effect.id" } }]
+  };
+
+  const realDeps = {
+    getDomainByIntentId: realGetDomain,
+    getOntology: (d) => d === "planning" ? planningOntology : d === "meshok" ? meshokOntology : null,
+    validateIntentConditions: realValidate,
+    getIntent: realGetIntent,
+  };
+
+  it("planning: vote + кворум достигнут → close_poll", () => {
+    const stored = { intent_id: "vote_yes", context: { pollId: "P1" } };
+    const world = {
+      polls: [{ id: "P1", status: "open" }],
+      participants: [{ id: "pt1", pollId: "P1" }, { id: "pt2", pollId: "P1" }],
+      votes: [
+        { id: "v1", pollId: "P1", participantId: "pt1" },
+        { id: "v2", pollId: "P1", participantId: "pt2" },
+      ],
+    };
+    const result = evaluateRules(stored, () => world, realDeps);
+
+    expect(result).toHaveLength(1);
+    expect(result[0].rule.id).toBe("quorum_autoclose");
+    expect(result[0].effect.intent_id).toBe("close_poll");
+    expect(result[0].effect.alpha).toBe("replace");
+    expect(result[0].effect.value).toBe("closed");
+  });
+
+  it("planning: vote + кворум не достигнут → пусто", () => {
+    const stored = { intent_id: "vote_yes", context: { pollId: "P1" } };
+    const world = {
+      polls: [{ id: "P1", status: "open" }],
+      participants: [{ id: "pt1", pollId: "P1" }, { id: "pt2", pollId: "P1" }, { id: "pt3", pollId: "P1" }],
+      votes: [{ id: "v1", pollId: "P1", participantId: "pt1" }],
+    };
+    const result = evaluateRules(stored, () => world, realDeps);
+
+    expect(result).toHaveLength(0);
+  });
+
+  it("meshok: confirm_delivery + delivered → complete_order", () => {
+    const stored = { intent_id: "confirm_delivery", context: { id: "O1" } };
+    const world = {
+      orders: [{ id: "O1", status: "delivered" }],
+    };
+    const result = evaluateRules(stored, () => world, realDeps);
+
+    expect(result).toHaveLength(1);
+    expect(result[0].rule.id).toBe("delivery_autocomplete");
+    expect(result[0].effect.intent_id).toBe("complete_order");
+    expect(result[0].effect.alpha).toBe("replace");
+    expect(result[0].effect.value).toBe("completed");
   });
 });
