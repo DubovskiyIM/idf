@@ -29,7 +29,30 @@
     }
     *{margin:0;padding:0;box-sizing:border-box}
     html{scroll-behavior:smooth}
-    body{background:var(--bg);color:var(--text);font-family:var(--sans);overflow-x:hidden;-webkit-font-smoothing:antialiased}
+    body{background:var(--bg);color:var(--text);font-family:var(--sans);overflow-x:hidden;-webkit-font-smoothing:antialiased;position:relative}
+    body::before{content:'';position:fixed;inset:0;z-index:-1;background:
+      radial-gradient(ellipse 80% 50% at 20% 60%, rgba(108,138,255,.04) 0%, transparent 60%),
+      radial-gradient(ellipse 60% 40% at 80% 30%, rgba(167,139,250,.035) 0%, transparent 50%),
+      radial-gradient(ellipse 50% 60% at 50% 90%, rgba(34,211,238,.025) 0%, transparent 50%);
+      animation:bgDrift 20s ease-in-out infinite alternate;pointer-events:none}
+    @keyframes bgDrift{
+      0%{background:
+        radial-gradient(ellipse 80% 50% at 20% 60%, rgba(108,138,255,.04) 0%, transparent 60%),
+        radial-gradient(ellipse 60% 40% at 80% 30%, rgba(167,139,250,.035) 0%, transparent 50%),
+        radial-gradient(ellipse 50% 60% at 50% 90%, rgba(34,211,238,.025) 0%, transparent 50%)}
+      33%{background:
+        radial-gradient(ellipse 70% 60% at 70% 40%, rgba(167,139,250,.045) 0%, transparent 60%),
+        radial-gradient(ellipse 60% 50% at 30% 70%, rgba(108,138,255,.035) 0%, transparent 50%),
+        radial-gradient(ellipse 50% 40% at 60% 20%, rgba(74,222,128,.02) 0%, transparent 50%)}
+      66%{background:
+        radial-gradient(ellipse 60% 50% at 40% 30%, rgba(34,211,238,.04) 0%, transparent 60%),
+        radial-gradient(ellipse 80% 40% at 60% 80%, rgba(108,138,255,.03) 0%, transparent 50%),
+        radial-gradient(ellipse 50% 60% at 20% 50%, rgba(251,113,133,.02) 0%, transparent 50%)}
+      100%{background:
+        radial-gradient(ellipse 80% 50% at 80% 50%, rgba(108,138,255,.04) 0%, transparent 60%),
+        radial-gradient(ellipse 60% 40% at 20% 40%, rgba(167,139,250,.035) 0%, transparent 50%),
+        radial-gradient(ellipse 50% 60% at 50% 10%, rgba(34,211,238,.025) 0%, transparent 50%)}
+    }
     a{color:var(--accent);text-decoration:none}
     ::selection{background:rgba(108,138,255,0.3)}
 
@@ -177,7 +200,7 @@
       <a class="btn" href="https://github.com/ignatdubovskiy/idf">GitHub</a>
     </div>
     <div class="formula">
-      <span class="hl">World(t)</span> = fold(&oplus;, &empty;, sort<sub>&prec;</sub>(<span class="hl">&Phi;</span><sub>confirmed</sub> &darr; t))
+      <span class="hl">World(t)</span> = fold( &oplus;, &empty;, sort<span style="font-size:.7em;vertical-align:sub">&prec;</span>( <span class="hl">&Phi;</span><span style="font-size:.7em;vertical-align:sub">confirmed</span> &darr; t ) )
     </div>
   </div>
   <div class="scroll-arrow">&darr;</div>
