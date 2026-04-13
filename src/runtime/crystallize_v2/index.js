@@ -1,12 +1,17 @@
 /**
  * crystallizeV2: INTENTS + PROJECTIONS + ONTOLOGY → { projId: artifact }.
- * Поддерживает архетипы feed, catalog, detail, form.
- * Артефакт содержит nav.outgoing/incoming из deriveNavGraph.
  *
- * M3.4b: автогенерация синтетических edit-проекций (kind: form) из
- * detail-проекций через generateEditProjections. §16 манифеста:
- * «производные проекции».
+ * Поддерживает 6 архетипов: feed, catalog, detail, form, canvas, dashboard.
+ * Артефакт содержит nav.outgoing/incoming из deriveNavGraph.
+ * Автогенерация синтетических edit-проекций (kind: form) из detail-проекций.
+ *
+ * @module crystallize_v2
  */
+
+/** @typedef {import('../../types/idf.d.ts').IntentsMap} IntentsMap */
+/** @typedef {import('../../types/idf.d.ts').ProjectionsMap} ProjectionsMap */
+/** @typedef {import('../../types/idf.d.ts').Ontology} Ontology */
+/** @typedef {import('../../types/idf.d.ts').Artifact} Artifact */
 
 import { assignToSlots } from "./assignToSlots.js";
 import { hashInputs } from "./hash.js";
@@ -16,6 +21,15 @@ import { validateArtifact } from "../renderer/validation/validateArtifact.js";
 
 const SUPPORTED_ARCHETYPES = new Set(["feed", "catalog", "detail", "form", "canvas", "dashboard"]);
 
+/**
+ * Кристаллизация: INTENTS + PROJECTIONS + ONTOLOGY → артефакты v2.
+ *
+ * @param {IntentsMap} INTENTS — определения намерений домена
+ * @param {ProjectionsMap} PROJECTIONS — определения проекций домена
+ * @param {Ontology} ONTOLOGY — онтология домена
+ * @param {string} [domainId] — идентификатор домена
+ * @returns {Record<string, Artifact>} — артефакты по projection id
+ */
 export function crystallizeV2(INTENTS, PROJECTIONS, ONTOLOGY, domainId = "unknown") {
   const artifacts = {};
 

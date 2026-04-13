@@ -1,3 +1,8 @@
+/** @typedef {import('../types/idf.d.ts').Domain} Domain */
+/** @typedef {import('../types/idf.d.ts').Effect} Effect */
+/** @typedef {import('../types/idf.d.ts').World} World */
+/** @typedef {import('../types/idf.d.ts').AdjacencyMap} AdjacencyMap */
+
 import { useState, useMemo, useCallback, useEffect } from "react";
 import { v4 as uuid } from "uuid";
 import { computeAlgebra } from "./intentAlgebra.js";
@@ -6,8 +11,13 @@ import { fold, foldDrafts, filterByStatus, buildTypeMap, applyPresentation } fro
 const ts = () => new Date().toLocaleTimeString("ru", { hour: "2-digit", minute: "2-digit", second: "2-digit", fractionalSecondDigits: 2 });
 
 /**
- * Доменонезависимый движок.
- * @param {Object} domain — { INTENTS, buildEffects, describeEffect, signalForIntent, getSeedEffects }
+ * Доменонезависимый движок IDF.
+ *
+ * Загружает эффекты из /api/effects, подписывается на SSE,
+ * свёртывает world через fold(Φ_confirmed), предоставляет exec/execBatch.
+ *
+ * @param {Domain} domain — определение домена (INTENTS, buildEffects, ONTOLOGY, ...)
+ * @returns {{ world: World, worldForIntent: World, drafts: Object, effects: Effect[], signals: Object[], exec: Function, execBatch: Function, overlay: Object, overlayEntityIds: Set, startInvestigation: Function, commitInvestigation: Function, cancelInvestigation: Function, algebra: AdjacencyMap }}
  */
 export function useEngine(domain) {
   const [effects, setEffects] = useState([]);
