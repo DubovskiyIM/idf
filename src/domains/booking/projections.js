@@ -79,9 +79,7 @@ export const PROJECTIONS = {
       {
         id: "slot",
         label: "Время",
-        intent: "select_slot",
         pick: ["slotId"],
-        sideEffect: true,
         source: {
           collection: "slots",
           filter: "status === 'free'",
@@ -92,7 +90,7 @@ export const PROJECTIONS = {
       {
         id: "confirm",
         label: "Подтверждение",
-        intent: "confirm_booking",
+        intent: "create_booking",
         summary: true,
       },
     ],

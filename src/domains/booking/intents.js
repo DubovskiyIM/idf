@@ -6,7 +6,7 @@ export const INTENTS = {
       effects: [{ α: "add", target: "drafts", σ: "session" }],
       witnesses: ["service.name", "service.duration", "service.price", "specialist.name"],
       confirmation: "click"
-    }, antagonist: null, creates: "Booking(draft)"
+    }, antagonist: null, creates: null
   },
   select_slot: {
     name: "Выбрать слот", particles: {
@@ -145,7 +145,7 @@ export const INTENTS = {
       effects: [{ α: "add", target: "drafts", σ: "session" }],
       witnesses: ["booking.serviceName", "booking.specialistId"],
       confirmation: "click"
-    }, antagonist: null, creates: "Booking(draft)"
+    }, antagonist: null, creates: null
   },
   edit_review: {
     name: "Редактировать отзыв", particles: {

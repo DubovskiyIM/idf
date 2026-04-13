@@ -41,13 +41,19 @@ export default function ArchetypeWizard({ slots, projection, ctx }) {
 
   const handleConfirm = useCallback(() => {
     if (!step?.intent) return;
+    // Собираем pick-поля + все данные из collected для финального exec
     const allParams = {};
     for (const s of steps) {
       const data = collected[s.id];
-      if (data && s.pick) {
+      if (!data) continue;
+      if (s.pick) {
         for (const field of s.pick) {
           if (data[field] !== undefined) allParams[field] = data[field];
         }
+      }
+      // Передаём все поля entity (specialistId, price и т.д.)
+      for (const [k, v] of Object.entries(data)) {
+        if (allParams[k] === undefined && v !== undefined) allParams[k] = v;
       }
     }
     ctx.exec(step.intent, allParams);
