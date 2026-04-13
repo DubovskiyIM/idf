@@ -37,7 +37,13 @@ export default function PointACanvas({ world, viewer, exec }) {
         🧭 Точка А — колесо жизни
       </h2>
 
-      <RadarChart spheres={spheres} assessments={assessments} />
+      {spheres.length > 0 ? (
+        <RadarChart spheres={spheres} assessments={assessments} />
+      ) : (
+        <div style={{ padding: 24, textAlign: "center", color: inkLight }}>
+          Загрузка сфер... Перезагрузите страницу, если не появляются.
+        </div>
+      )}
 
       <div style={{ marginTop: 16 }}>
         {spheres.map(s => {
