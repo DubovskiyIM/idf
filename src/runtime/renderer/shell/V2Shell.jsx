@@ -7,6 +7,7 @@ import { generateEditProjections } from "../../crystallize_v2/formGrouping.js";
 import { useProjectionRoute } from "../navigation/useProjectionRoute.js";
 import Breadcrumbs from "../navigation/Breadcrumbs.jsx";
 import { getAdaptedComponent } from "../adapters/registry.js";
+import BottomTabs from "./BottomTabs.jsx";
 
 /**
  * V2Shell — доменонезависимый рендерер проекций через кристаллизатор v2.
@@ -35,6 +36,7 @@ export default function V2Shell({
   viewer,
   initialProjection,
   onLogout,
+  useBottomTabs = false,
 }) {
   const rawRootProjections = domain.ROOT_PROJECTIONS || [];
   const isSectioned = rawRootProjections.length > 0 && typeof rawRootProjections[0] === "object" && rawRootProjections[0].section;
@@ -250,6 +252,29 @@ export default function V2Shell({
   const isMobile = typeof window !== "undefined" && window.innerWidth < 768;
 
   if (sections) {
+    // Mobile + BottomTabs: контент сверху, bottom tabs снизу
+    if (isMobile && useBottomTabs) {
+      return (
+        <div style={{
+          display: "flex", flexDirection: "column", height: "100%", minHeight: 0,
+          fontFamily: "var(--font-doodle, system-ui, sans-serif)",
+          fontSize: "var(--idf-font-size, 14px)",
+          ...personalStyle,
+        }}>
+          <div style={{ flex: 1, overflow: "auto", paddingBottom: 100, padding: "var(--spacing-doodle, 16px)" }}>
+            {mainContent}
+          </div>
+          <BottomTabs
+            sections={sections}
+            active={current?.projectionId}
+            onSelect={(id) => onSelectTab(id)}
+            projectionNames={projectionNames}
+          />
+          {prefsOpen && <PrefsPanel prefs={prefs} setPref={setPref} resetPrefs={resetPrefs} onClose={() => setPrefsOpen(false)} />}
+        </div>
+      );
+    }
+
     return (
       <div style={{ display: "flex", height: "100%", minHeight: 0, fontFamily: "system-ui, sans-serif", fontSize: "var(--idf-font-size, 14px)", ...personalStyle }}>
         {/* Mobile hamburger */}
