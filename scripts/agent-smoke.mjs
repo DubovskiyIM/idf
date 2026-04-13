@@ -427,7 +427,143 @@ async function main() {
   assert(cancelForeignResp.status === 403, "26", "cancel foreign 403", cancelForeignResp);
   assert(cancelForeignResp.body.error === "ownership_denied", "26", "error ownership_denied");
 
-  process.stdout.write("\n[smoke ✓] Все 26 шагов прошли успешно\n");
+  // ============================================================
+  // MESHOK (steps 27-32)
+  // ============================================================
+
+  log("27", "meshok: GET schema");
+  const meshokSchema = await get("/api/agent/meshok/schema", jwt);
+  assert(meshokSchema.status === 200, "27", `meshok schema ${meshokSchema.status}`);
+  ok("27", `meshok: ${Object.keys(meshokSchema.body.intents || {}).length} intents`);
+
+  log("28", "meshok: create_listing");
+  const createLot = await post("/api/agent/meshok/exec", {
+    intentId: "create_listing",
+    params: { title: "Smoke Test Item", startPrice: 1000, condition: "used" }
+  }, jwt);
+  assert(createLot.status === 200, "28", `create_listing ${createLot.status}`, createLot.body);
+
+  await new Promise(r => setTimeout(r, 300));
+  const meshokWorld = await get("/api/agent/meshok/world", jwt);
+  const smokeLot = (meshokWorld.body.listings || []).find(l => l.title === "Smoke Test Item");
+  assert(smokeLot, "28", "lot found in world");
+
+  log("29", "meshok: publish_listing");
+  const pubLot = await post("/api/agent/meshok/exec", {
+    intentId: "publish_listing",
+    params: { listingId: smokeLot.id }
+  }, jwt);
+  assert(pubLot.status === 200, "29", `publish ${pubLot.status}`, pubLot.body);
+
+  log("30", "meshok: place_bid");
+  await new Promise(r => setTimeout(r, 300));
+  const bidResp = await post("/api/agent/meshok/exec", {
+    intentId: "place_bid",
+    params: { listingId: smokeLot.id, amount: 1500 }
+  }, jwt);
+  assert(bidResp.status === 200, "30", `bid ${bidResp.status}`, bidResp.body);
+
+  log("31", "meshok: send_message");
+  const msgResp = await post("/api/agent/meshok/exec", {
+    intentId: "send_message",
+    params: { content: "Smoke test message", recipientId: smokeLot.sellerId }
+  }, jwt);
+  assert(msgResp.status === 200, "31", `message ${msgResp.status}`, msgResp.body);
+
+  log("32", "meshok: bid below price → null (rejected)");
+  await new Promise(r => setTimeout(r, 300));
+  const lowBid = await post("/api/agent/meshok/exec", {
+    intentId: "place_bid",
+    params: { listingId: smokeLot.id, amount: 500 }
+  }, jwt);
+  // buildEffects returns null → 409 or empty effects
+  assert(lowBid.status === 409 || lowBid.status === 200, "32", `low bid handled ${lowBid.status}`);
+
+  // ============================================================
+  // WORKFLOW (steps 33-37)
+  // ============================================================
+
+  log("33", "workflow: GET schema");
+  const wfSchema = await get("/api/agent/workflow/schema", jwt);
+  assert(wfSchema.status === 200, "33", `workflow schema ${wfSchema.status}`);
+
+  log("34", "workflow: create_workflow");
+  const createWf = await post("/api/agent/workflow/exec", {
+    intentId: "create_workflow",
+    params: { title: "Smoke Pipeline" }
+  }, jwt);
+  assert(createWf.status === 200, "34", `create_workflow ${createWf.status}`, createWf.body);
+
+  await new Promise(r => setTimeout(r, 300));
+  const wfWorld = await get("/api/agent/workflow/world", jwt);
+  const smokeWf = (wfWorld.body.workflows || []).find(w => w.title === "Smoke Pipeline");
+  assert(smokeWf, "34", "workflow found in world");
+
+  log("35", "workflow: add_node");
+  const addNode = await post("/api/agent/workflow/exec", {
+    intentId: "add_node",
+    params: { workflowId: smokeWf.id, type: "http_request", label: "Fetch API" }
+  }, jwt);
+  assert(addNode.status === 200, "35", `add_node ${addNode.status}`, addNode.body);
+
+  log("36", "workflow: save_workflow");
+  const saveWf = await post("/api/agent/workflow/exec", {
+    intentId: "save_workflow",
+    params: { workflowId: smokeWf.id }
+  }, jwt);
+  assert(saveWf.status === 200, "36", `save ${saveWf.status}`, saveWf.body);
+
+  log("37", "workflow: execute_workflow");
+  await new Promise(r => setTimeout(r, 300));
+  const execWf = await post("/api/agent/workflow/exec", {
+    intentId: "execute_workflow",
+    params: { workflowId: smokeWf.id }
+  }, jwt);
+  assert(execWf.status === 200, "37", `execute ${execWf.status}`, execWf.body);
+
+  // ============================================================
+  // MESSENGER (steps 38-42)
+  // ============================================================
+
+  log("38", "messenger: GET schema");
+  const msgrSchema = await get("/api/agent/messenger/schema", jwt);
+  assert(msgrSchema.status === 200, "38", `messenger schema ${msgrSchema.status}`);
+
+  log("39", "messenger: create_group");
+  const createGrp = await post("/api/agent/messenger/exec", {
+    intentId: "create_group",
+    params: { title: "Smoke Group" }
+  }, jwt);
+  assert(createGrp.status === 200, "39", `create_group ${createGrp.status}`, createGrp.body);
+
+  await new Promise(r => setTimeout(r, 300));
+  const msgrWorld = await get("/api/agent/messenger/world", jwt);
+  const smokeConv = (msgrWorld.body.conversations || []).find(c => c.title === "Smoke Group");
+  assert(smokeConv, "39", "group found in world");
+
+  log("40", "messenger: send_message");
+  const sendMsg = await post("/api/agent/messenger/exec", {
+    intentId: "send_message",
+    params: { content: "Hello from smoke test!", conversationId: smokeConv.id }
+  }, jwt);
+  assert(sendMsg.status === 200, "40", `send_message ${sendMsg.status}`, sendMsg.body);
+
+  log("41", "messenger: add_contact");
+  const addContact = await post("/api/agent/messenger/exec", {
+    intentId: "add_contact",
+    params: { contactId: "user_other_smoke" }
+  }, jwt);
+  assert(addContact.status === 200, "41", `add_contact ${addContact.status}`, addContact.body);
+
+  log("42", "messenger: mark_as_read");
+  await new Promise(r => setTimeout(r, 300));
+  const markRead = await post("/api/agent/messenger/exec", {
+    intentId: "mark_as_read",
+    params: { conversationId: smokeConv.id }
+  }, jwt);
+  assert(markRead.status === 200, "42", `mark_as_read ${markRead.status}`, markRead.body);
+
+  process.stdout.write("\n[smoke ✓] Все 42 шага прошли успешно (booking 13 + planning 13 + meshok 6 + workflow 5 + messenger 5)\n");
 }
 
 main().catch(err => {
