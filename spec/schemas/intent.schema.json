@@ -1,0 +1,136 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "intent.schema.json",
+  "title": "IDF Intent",
+  "description": "Intent object defining a user intention with its particles, effects, and metadata.",
+  "type": "object",
+  "required": ["name", "particles"],
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Human-readable name of the intent."
+    },
+    "particles": {
+      "$ref": "#/$defs/Particles"
+    },
+    "antagonist": {
+      "oneOf": [
+        { "type": "string" },
+        { "type": "null" }
+      ],
+      "description": "Intent id of the antagonist (reversing) intent, or null."
+    },
+    "creates": {
+      "oneOf": [
+        { "type": "string" },
+        { "type": "null" }
+      ],
+      "description": "Entity type this intent creates, or null."
+    },
+    "irreversibility": {
+      "type": "string",
+      "enum": ["low", "medium", "high"],
+      "description": "How hard it is to undo this intent."
+    },
+    "extended": {
+      "type": "boolean",
+      "description": "If true, intent uses BulkWizard control archetype."
+    },
+    "phase": {
+      "type": "string",
+      "description": "Phase transition triggered by this intent."
+    },
+    "control": {
+      "type": "string",
+      "description": "Explicit control archetype override."
+    },
+    "parameters": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/Parameter"
+      },
+      "description": "Explicit parameter definitions (overrides inference)."
+    }
+  },
+  "additionalProperties": false,
+  "$defs": {
+    "Particles": {
+      "type": "object",
+      "required": ["entities", "conditions", "effects", "witnesses", "confirmation"],
+      "properties": {
+        "entities": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Entity types this intent operates on."
+        },
+        "conditions": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Preconditions that must hold for intent execution."
+        },
+        "effects": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/IntentEffect"
+          },
+          "description": "Effects produced by this intent."
+        },
+        "witnesses": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Fields or values the user must provide."
+        },
+        "confirmation": {
+          "type": "string",
+          "description": "Confirmation message template shown after execution."
+        }
+      },
+      "additionalProperties": false
+    },
+    "IntentEffect": {
+      "type": "object",
+      "required": ["alpha", "target"],
+      "properties": {
+        "alpha": {
+          "type": "string",
+          "enum": ["add", "replace", "remove", "batch"],
+          "description": "Effect type."
+        },
+        "target": {
+          "type": "string",
+          "description": "Target collection or field path."
+        },
+        "sigma": {
+          "type": "string",
+          "description": "Status transition value."
+        },
+        "value": {
+          "description": "Value template or literal for the effect."
+        }
+      },
+      "additionalProperties": false
+    },
+    "Parameter": {
+      "type": "object",
+      "required": ["name"],
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "type": {
+          "type": "string"
+        },
+        "required": {
+          "type": "boolean"
+        },
+        "label": {
+          "type": "string"
+        },
+        "isForeignKey": {
+          "type": "boolean"
+        }
+      },
+      "additionalProperties": true
+    }
+  }
+}
