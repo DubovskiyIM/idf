@@ -115,7 +115,7 @@ function assignToSlotsFeed(INTENTS, projection, ONTOLOGY) {
         slots.composer = buildComposer(id, intent, parameters, INTENTS);
       } else if (isPerItem && id.includes("reply")) {
         // reply_to_message → per-item кнопка с composerMode: "reply"
-        perItemIntents.push({
+        addItemIntent({
           type: "intent", intentId: id,
           label: intent.name || id, icon: "↩",
           composerMode: "reply",
