@@ -17,13 +17,18 @@ export default function ArchetypeFeed({ slots, ctx: parentCtx }) {
     });
   }, []);
 
-  // Расширить ctx методом openOverlay + viewState — используется inlineSearch/IntentButton
+  // Composer context mode (reply, react, forward)
+  const [composerMode, setComposerMode] = useState(null);
+
+  // Расширить ctx методом openOverlay + viewState + composerMode
   const ctx = useMemo(() => ({
     ...parentCtx,
     openOverlay,
     viewState,
     setViewState,
-  }), [parentCtx, openOverlay, viewState, setViewState]);
+    composerMode,
+    setComposerMode,
+  }), [parentCtx, openOverlay, viewState, setViewState, composerMode]);
 
   return (
     <div style={{

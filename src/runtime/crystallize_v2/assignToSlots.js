@@ -109,11 +109,17 @@ function assignToSlotsFeed(INTENTS, projection, ONTOLOGY) {
     }
 
     // composer: первое projection-level намерение confirmation:"enter" + creates → composer.
-    // Вторичные composerEntry (reply_to_message и т.п.) пропускаем — их UX в M1 не поддержан
-    // (нужен inline-режим композера с reply-контекстом, это M2).
+    // Вторичные composerEntry (reply_to_message и др.) → per-item с composerMode.
     if (isComposerEntry) {
       if (!isPerItem && intent.creates && !slots.composer) {
         slots.composer = buildComposer(id, intent, parameters, INTENTS);
+      } else if (isPerItem && id.includes("reply")) {
+        // reply_to_message → per-item кнопка с composerMode: "reply"
+        perItemIntents.push({
+          type: "intent", intentId: id,
+          label: intent.name || id, icon: "↩",
+          composerMode: "reply",
+        });
       }
       continue;
     }

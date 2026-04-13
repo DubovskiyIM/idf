@@ -9,6 +9,18 @@ export default function IntentButton({ spec, ctx, item }) {
       ctx.openOverlay(spec.overlayKey, { item });
       return;
     }
+    // Composer context mode: reply_to_message → set composer reply context
+    if (spec.composerMode === "reply" && ctx.setComposerMode && item) {
+      const senderName = item.senderName || ((ctx.world?.users || []).find(u => u.id === item.senderId))?.name || "";
+      ctx.setComposerMode({
+        type: "reply",
+        intentId: spec.intentId,
+        messageId: item.id,
+        senderName,
+        preview: item.content || "",
+      });
+      return;
+    }
     if (spec.filePicker) {
       const input = document.createElement("input");
       input.type = "file";
