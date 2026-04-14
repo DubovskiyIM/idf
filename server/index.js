@@ -119,3 +119,30 @@ server.listen(PORT, () => {
   console.log(`  POST /api/effects        — создать эффект`);
   console.log(`  GET  /api/effects/stream — SSE-стрим`);
 });
+
+// ─── Reactive Rules: schedule timer (v1.5) ───
+// Каждую минуту проверяем правила с schedule (daily/weekly).
+// Когда firing — генерируем эффект и пишем в БД.
+const { evaluateScheduledRules } = require("./ruleEngine.js");
+const { getAllOntologies } = require("./ontologyRegistry.cjs");
+const { getIntent } = require("./intents.js");
+const db = require("./db.js");
+const { ingestEffect } = require("./effect-pipeline.js");
+
+setInterval(async () => {
+  try {
+    const results = evaluateScheduledRules(new Date(), {
+      getAllOntologies,
+      getIntent,
+      db,
+    });
+    for (const { effect } of results) {
+      await ingestEffect(effect, { broadcast: () => {}, delay: 0 });
+    }
+    if (results.length > 0) {
+      console.log(`[schedule] fired ${results.length} scheduled rule(s)`);
+    }
+  } catch (e) {
+    console.error("[schedule] error:", e);
+  }
+}, 60 * 1000);

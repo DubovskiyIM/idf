@@ -25,4 +25,8 @@ function getAllDomains() {
   return Object.keys(REGISTRY);
 }
 
-module.exports = { registerOntology, getOntology, getAllDomains };
+function getAllOntologies() {
+  return { ...REGISTRY };
+}
+
+module.exports = { registerOntology, getOntology, getAllDomains, getAllOntologies };

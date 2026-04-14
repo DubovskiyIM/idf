@@ -1,8 +1,14 @@
 /**
- * Движок реактивных правил (event-condition-action).
+ * Движок реактивных правил (event-condition-action) — расширенная версия.
  *
- * Правила живут в ontology.rules. Формат:
+ * Базовое API (v1.4):
  *   { id, trigger, action, context }
+ *
+ * Расширения v1.5:
+ *   - aggregation: { everyN } — fire каждый Nй trigger per user (counter в rule_state)
+ *   - threshold: { lookback, field, condition } — predicate на last N entries
+ *   - schedule: "weekly:sun:20:00" | "daily:08:00" — cron-like server timer
+ *   - condition: "effect.x > 0.6" — JS expression evaluator (whitelisted)
  *
  * trigger — glob: "vote_*" (prefix) или "confirm_delivery" (exact).
  * action — intent_id, чьи conditions служат guard'ом.
@@ -49,7 +55,6 @@ function buildActionEffect(actionIntentId, intent, resolvedContext) {
     };
   }
 
-  // Multi-effect → batch
   const base = effects[0]?.target?.split(".")[0] || actionIntentId;
   return {
     id,
@@ -69,8 +74,142 @@ function buildActionEffect(actionIntentId, intent, resolvedContext) {
   };
 }
 
+// ─── Extensions v1.5 ───
+
+/**
+ * Aggregation: счётчик per (rule_id, user_id), fire каждый everyN-й раз.
+ */
+function shouldFireAggregation(rule, userId, db) {
+  if (!rule.aggregation) return true;
+  const { everyN } = rule.aggregation;
+  if (!everyN || !db) return true;
+
+  db.prepare(`
+    INSERT INTO rule_state (rule_id, user_id, counter)
+    VALUES (?, ?, 1)
+    ON CONFLICT (rule_id, user_id)
+    DO UPDATE SET counter = counter + 1
+  `).run(rule.id, userId);
+
+  const row = db.prepare(`
+    SELECT counter FROM rule_state WHERE rule_id = ? AND user_id = ?
+  `).get(rule.id, userId);
+
+  return row && row.counter % everyN === 0;
+}
+
+/**
+ * Threshold: lookback last N entries, evaluate predicate.
+ */
+function shouldFireThreshold(rule, world, userId) {
+  if (!rule.threshold) return true;
+  const { lookback, field, condition, collection = "moodEntries" } = rule.threshold;
+
+  const list = world?.[collection] || [];
+  const userEntries = list
+    .filter(e => e.userId === userId)
+    .sort((a, b) => (b.loggedAt || b.createdAt || 0) - (a.loggedAt || a.createdAt || 0))
+    .slice(0, lookback);
+
+  if (userEntries.length < lookback) return false;
+  return evaluateCondition(condition, userEntries.map(e => e[field]));
+}
+
+/**
+ * Простой DSL evaluator для threshold condition:
+ *   "all_equal:LEU" | "equals:7" | "gt:5" | "lt:5"
+ */
+function evaluateCondition(condition, values) {
+  if (!condition) return false;
+  const [op, target] = condition.split(":");
+  switch (op) {
+    case "all_equal":
+      return values.every(v => v === target || v === Number(target));
+    case "equals": {
+      const t = isNaN(Number(target)) ? target : Number(target);
+      return values[0] === t;
+    }
+    case "gt":
+      return Number(values[0]) > Number(target);
+    case "lt":
+      return Number(values[0]) < Number(target);
+    default:
+      return false;
+  }
+}
+
+/**
+ * Condition expression evaluator для rule.condition.
+ * Безопасный whitelist: только сравнения, Math.abs/min/max/floor/ceil/round, &&/||.
+ *   "effect.correlation > 0.6"
+ *   "Math.abs(effect.delta) > 0.5"
+ *   "effect.x > 0 && effect.y < 5"
+ */
+function evaluateRuleCondition(conditionExpr, effectContext) {
+  if (!conditionExpr) return true;
+  const safeExpr = conditionExpr.replace(/effect\.(\w+)/g, (_, field) => {
+    const val = effectContext?.[field];
+    return JSON.stringify(val ?? null);
+  });
+  const Math2 = {
+    abs: Math.abs, min: Math.min, max: Math.max,
+    floor: Math.floor, ceil: Math.ceil, round: Math.round,
+  };
+  try {
+    // eslint-disable-next-line no-new-func
+    const fn = new Function("Math", `"use strict"; return (${safeExpr});`);
+    return Boolean(fn(Math2));
+  } catch (e) {
+    return false;
+  }
+}
+
+/**
+ * Парсер schedule string.
+ * "weekly:sun:20:00" → { period: "weekly", day: 0, hour: 20, minute: 0 }
+ * "daily:08:00" → { period: "daily", hour: 8, minute: 0 }
+ */
+function parseSchedule(scheduleStr) {
+  if (!scheduleStr) return null;
+  const parts = scheduleStr.split(":");
+  if (parts[0] === "weekly") {
+    const dayMap = { sun: 0, mon: 1, tue: 2, wed: 3, thu: 4, fri: 5, sat: 6 };
+    return {
+      period: "weekly",
+      day: dayMap[parts[1]?.toLowerCase()] ?? 0,
+      hour: Number(parts[2] || 0),
+      minute: Number(parts[3] || 0),
+    };
+  }
+  if (parts[0] === "daily") {
+    return {
+      period: "daily",
+      hour: Number(parts[1] || 0),
+      minute: Number(parts[2] || 0),
+    };
+  }
+  return null;
+}
+
+/**
+ * Should fire schedule: проверка времени.
+ * 5-минутное окно от заданной минуты, deduplication через lastFiredAt.
+ */
+function shouldFireSchedule(schedule, now = new Date(), lastFiredAt = 0) {
+  if (!schedule) return false;
+  const { period, day, hour, minute } = schedule;
+
+  if (period === "weekly" && now.getDay() !== day) return false;
+  if (now.getHours() !== hour) return false;
+  if (now.getMinutes() < minute || now.getMinutes() >= minute + 5) return false;
+
+  return Date.now() - lastFiredAt > 4 * 60 * 1000;
+}
+
+// ─── Main evaluators ───
+
 function evaluateRules(stored, worldThunk, deps) {
-  const { getDomainByIntentId, getOntology, validateIntentConditions, getIntent } = deps;
+  const { getDomainByIntentId, getOntology, validateIntentConditions, getIntent, db } = deps;
 
   const storedCtx = typeof stored.context === "string"
     ? JSON.parse(stored.context)
@@ -90,16 +229,30 @@ function evaluateRules(stored, worldThunk, deps) {
   const results = [];
 
   for (const rule of matched) {
+    // Skip schedule-only rules — они firing через evaluateScheduledRules
+    if (rule.schedule && !rule.trigger) continue;
+
     const intent = getIntent(rule.action);
     if (!intent) continue;
 
     const resolvedCtx = resolveContext(rule.context || {}, storedCtx);
+
+    // Aggregation guard
+    const userId = resolvedCtx.userId || storedCtx.userId || "default";
+    if (!shouldFireAggregation(rule, userId, db)) continue;
+
+    // Threshold guard
+    if (!shouldFireThreshold(rule, world, userId)) continue;
+
+    // Condition guard (expression)
+    if (!evaluateRuleCondition(rule.condition, storedCtx)) continue;
+
+    // Validate action conditions
     const mockEffect = {
       intent_id: rule.action,
       target: intent.particles?.effects?.[0]?.target || rule.action,
       context: resolvedCtx,
     };
-
     const validation = validateIntentConditions(mockEffect, world);
     if (validation.valid) {
       const effect = buildActionEffect(rule.action, intent, resolvedCtx);
@@ -110,4 +263,64 @@ function evaluateRules(stored, worldThunk, deps) {
   return results;
 }
 
-module.exports = { matchTrigger, resolveContext, buildActionEffect, evaluateRules };
+/**
+ * Periodic evaluator — вызывается timer'ом каждую минуту.
+ * Для каждого домена → каждого rule с schedule — проверяет shouldFireSchedule
+ * и firing если время пришло.
+ */
+function evaluateScheduledRules(now, deps) {
+  const { getAllOntologies, getIntent, db } = deps;
+  if (!getAllOntologies || !db) return [];
+
+  const results = [];
+  const ontologies = getAllOntologies();
+
+  for (const [domain, ontology] of Object.entries(ontologies || {})) {
+    const rules = ontology?.rules || [];
+    for (const rule of rules) {
+      if (!rule.schedule) continue;
+      const parsed = parseSchedule(rule.schedule);
+      if (!parsed) continue;
+
+      // Get last_fired_at для schedule-rule
+      const row = db.prepare(`
+        SELECT last_fired_at FROM rule_state WHERE rule_id = ? AND user_id = ?
+      `).get(rule.id, "__schedule__");
+      const lastFiredAt = row?.last_fired_at || 0;
+
+      if (!shouldFireSchedule(parsed, now, lastFiredAt)) continue;
+
+      const intent = getIntent(rule.action);
+      if (!intent) continue;
+
+      const resolvedCtx = resolveContext(rule.context || {}, {});
+      const effect = buildActionEffect(rule.action, intent, resolvedCtx);
+      results.push({ rule, effect, domain });
+
+      // Update last_fired_at
+      db.prepare(`
+        INSERT INTO rule_state (rule_id, user_id, last_fired_at, counter)
+        VALUES (?, ?, ?, 0)
+        ON CONFLICT (rule_id, user_id)
+        DO UPDATE SET last_fired_at = excluded.last_fired_at
+      `).run(rule.id, "__schedule__", Date.now());
+    }
+  }
+
+  return results;
+}
+
+module.exports = {
+  matchTrigger,
+  resolveContext,
+  buildActionEffect,
+  evaluateRules,
+  evaluateScheduledRules,
+  // Extensions
+  shouldFireAggregation,
+  shouldFireThreshold,
+  evaluateCondition,
+  evaluateRuleCondition,
+  parseSchedule,
+  shouldFireSchedule,
+};
