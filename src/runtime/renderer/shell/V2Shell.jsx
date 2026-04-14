@@ -1,11 +1,8 @@
 import { useMemo, useState, useCallback, useEffect } from "react";
 import { usePersonalPrefs, prefsToStyle } from "../personal/usePersonalPrefs.js";
 import PrefsPanel from "../personal/PrefsPanel.jsx";
-import ProjectionRendererV2 from "../index.jsx";
+import { ProjectionRendererV2, useProjectionRoute, Breadcrumbs, getAdaptedComponent } from "@idf/renderer";
 import { crystallizeV2, generateEditProjections } from "@idf/core";
-import { useProjectionRoute } from "../navigation/useProjectionRoute.js";
-import Breadcrumbs from "../navigation/Breadcrumbs.jsx";
-import { getAdaptedComponent } from "../adapters/registry.js";
 import BottomTabs from "./BottomTabs.jsx";
 
 /**

@@ -4,6 +4,13 @@ import { MantineAdapterProvider } from '@idf/adapter-mantine';
 import App from './prototype.jsx';
 import StandaloneApp from './standalone.jsx';
 
+// Tailwind 4 entry — должен быть в src/, не в node_modules,
+// чтобы @tailwindcss/vite plugin его подхватил.
+import './tailwind.css';
+// CSS-темы адаптеров: @theme-блоки внутри обрабатываются глобально.
+import '@idf/adapter-shadcn/styles.css';
+import '@idf/adapter-apple/styles.css';
+
 function Root() {
   return (
     <MantineAdapterProvider>
