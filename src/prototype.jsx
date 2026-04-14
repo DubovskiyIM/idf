@@ -13,6 +13,7 @@ import * as workflowDomain from "./domains/workflow/domain.js";
 import * as messengerDomain from "./domains/messenger/domain.js";
 import * as meshokDomain from "./domains/meshok/domain.js";
 import * as lifequestDomain from "./domains/lifequest/domain.js";
+import * as reflectDomain from "./domains/reflect/domain.js";
 
 // Manual UI
 import BookingUI from "./domains/booking/ManualUI.jsx";
@@ -40,6 +41,7 @@ const DOMAINS = {
   messenger: { ...messengerDomain, UI: MessengerUI },
   meshok: meshokDomain,
   lifequest: lifequestDomain,
+  reflect: reflectDomain,
 };
 
 export default function App() {

@@ -17,6 +17,7 @@ import * as workflowDomain from "./domains/workflow/domain.js";
 import * as messengerDomain from "./domains/messenger/domain.js";
 import * as meshokDomain from "./domains/meshok/domain.js";
 import * as lifequestDomain from "./domains/lifequest/domain.js";
+import * as reflectDomain from "./domains/reflect/domain.js";
 
 import BookingUI from "./domains/booking/ManualUI.jsx";
 import PlanningUI from "./domains/planning/ManualUI.jsx";
@@ -82,6 +83,7 @@ const DOMAINS_RAW = {
   messenger: messengerDomain,
   meshok: meshokDomain,
   lifequest: lifequestDomain,
+  reflect: reflectDomain,
 };
 
 const DOMAIN_TITLES = {
@@ -94,6 +96,7 @@ const DOMAIN_TITLES = {
   "messenger-v2": "💬 Мессенджер",
   meshok: "🎒 Мешок",
   lifequest: "📓 LifeQuest",
+  reflect: "🌀 Reflect",
 };
 
 const DOMAINS = {
@@ -106,6 +109,7 @@ const DOMAINS = {
   "messenger-v2": { ...messengerDomain, UI: MessengerV2UI },
   meshok: { ...meshokDomain, UI: makeV2UI("meshok") },
   lifequest: { ...lifequestDomain, UI: makeV2UI("lifequest") },
+  reflect: { ...reflectDomain, UI: makeV2UI("reflect") },
 };
 
 export default function StandaloneApp({ domainId }) {

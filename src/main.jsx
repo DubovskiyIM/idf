@@ -51,6 +51,7 @@ function Root() {
             <Route path="/workflow" element={<StandaloneApp domainId="workflow" />} />
             <Route path="/meshok" element={<StandaloneApp domainId="meshok" />} />
             <Route path="/lifequest" element={<StandaloneApp domainId="lifequest" />} />
+            <Route path="/reflect" element={<StandaloneApp domainId="reflect" />} />
             <Route path="/*" element={<App />} />
           </Routes>
           </BrowserRouter>
