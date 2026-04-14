@@ -18,9 +18,13 @@ export default function ArchetypeDashboard({ slots, ctx }) {
   return (
     <div style={{
       display: "grid",
-      gridTemplateColumns: "repeat(auto-fill, minmax(360px, 1fr))",
+      gridTemplateColumns: "repeat(auto-fill, minmax(min(280px, 100%), 1fr))",
       gap: 16,
       padding: 16,
+      width: "100%",
+      maxWidth: "100%",
+      boxSizing: "border-box",
+      overflowX: "hidden",
     }}>
       {widgets.map((w, i) => {
         const widgetArtifact = artifacts[w.projection];
@@ -71,10 +75,13 @@ export default function ArchetypeDashboard({ slots, ctx }) {
 }
 
 const cardStyle = {
-  background: "var(--mantine-color-body, #fff)",
-  border: "1px solid var(--mantine-color-default-border, #e5e7eb)",
-  borderRadius: 8,
+  background: "var(--color-doodle-bg, var(--mantine-color-body, #fff))",
+  border: "1.5px solid var(--color-doodle-ink, var(--mantine-color-default-border, #e5e7eb))",
+  borderRadius: "var(--radius-doodle, 8px)",
   overflow: "hidden",
+  boxShadow: "2px 2px 0 var(--color-doodle-ink, transparent)",
+  minWidth: 0, // важно для grid: разрешаем элементу сжиматься
+  maxWidth: "100%",
 };
 
 const headerStyle = {
