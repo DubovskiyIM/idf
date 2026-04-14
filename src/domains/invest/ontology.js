@@ -344,6 +344,52 @@ export const ONTOLOGY = {
     },
   },
 
+  // ─── Глобальные инварианты (§14, v1.6.1) ──────────────────────
+  // ∀-свойства world(t) проверяются после каждой fold(Φ) в
+  // server/validator.js::checkInvariantsForDomain. Errors
+  // откатывают эффект через cascadeReject + SSE.
+  // План: docs/superpowers/plans/2026-04-14-global-invariants.md
+  // ───────────────────────────────────────────────────────────────
+  invariants: [
+    // 1. Observer read-only — миграция из baseRoles.auditOntologyRoles.
+    { name: "observer_read_only",
+      kind: "role-capability",
+      role: "observer",
+      require: { canExecute: "empty" },
+      severity: "error" },
+
+    // 2. FK: Position → Portfolio (удалённый портфель не должен
+    //    оставить висящих позиций).
+    { name: "position_portfolio_fk",
+      kind: "referential",
+      from: "Position.portfolioId", to: "Portfolio.id",
+      severity: "error" },
+
+    // 3. FK: Transaction → Portfolio.
+    { name: "transaction_portfolio_fk",
+      kind: "referential",
+      from: "Transaction.portfolioId", to: "Portfolio.id",
+      severity: "error" },
+
+    // 4. Recommendation.status монотонно: pending → accepted|rejected|expired.
+    { name: "recommendation_status_monotonic",
+      kind: "transition",
+      entity: "Recommendation", field: "status",
+      order: ["pending", "accepted", "rejected", "expired"],
+      severity: "error" },
+
+    // 5. Σ Position.currentPrice ≈ Portfolio.totalValue (warning —
+    //    рассинхронизация с рынком допустима в пределах tolerance).
+    { name: "portfolio_value_consistency",
+      kind: "aggregate",
+      op: "sum",
+      from: "Position.currentPrice",
+      where: { portfolioId: "$target.id" },
+      target: "Portfolio.totalValue",
+      tolerance: 0.5,
+      severity: "warning" },
+  ],
+
   // ─── Reactive Rules Engine §22 v1.5 ───
   // Все 4 extensions задействованы: aggregation / threshold / schedule / condition.
   rules: [
