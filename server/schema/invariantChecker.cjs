@@ -12,8 +12,10 @@
  * См. план: docs/superpowers/plans/2026-04-14-global-invariants.md
  */
 
+const { handler: roleCapability } = require("./invariants/roleCapability.cjs");
+
 const KIND_HANDLERS = {
-  // Заполняется в задачах 2–6
+  "role-capability": roleCapability,
 };
 
 function registerKind(name, handler) {
