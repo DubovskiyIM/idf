@@ -13,16 +13,9 @@ export const PROJECTIONS = {
 
   today: {
     name: "Планировщик дня",
-    kind: "detail",
+    kind: "canvas",
     query: "задачи и привычки на текущий день",
-    entities: ["Task", "HabitLog", "Habit"],
-    mainEntity: "User",
-    idParam: "userId",
-    witnesses: ["title", "date", "done", "priority", "habitId", "value"],
-    subCollections: [
-      { collection: "tasks", entity: "Task", foreignKey: "userId", title: "Задачи дня", addable: true },
-      { collection: "habitLogs", entity: "HabitLog", foreignKey: "userId", title: "Привычки", addable: false },
-    ],
+    entities: ["Task", "HabitLog", "Habit", "Sphere"],
   },
 
   week_progress: {
