@@ -9,10 +9,14 @@ function updateTypeMap(ontology) {
   const map = { draft: "drafts" };
   if (ontology?.entities) {
     for (const entityName of Object.keys(ontology.entities)) {
+      // Ключ lookup — lowercase (регистронезависимый), значение — camelCase plural.
+      // "ScheduledTimer" → ключ "scheduledtimer", значение "scheduledTimers"
       const singular = entityName.toLowerCase();
-      const plural = singular.endsWith("s") ? singular + "es"
-        : singular.endsWith("y") ? singular.slice(0, -1) + "ies"
-        : singular + "s";
+      // camelCase base: первая буква строчная, остальное как в оригинале
+      const camelBase = entityName.charAt(0).toLowerCase() + entityName.slice(1);
+      const plural = camelBase.endsWith("s") ? camelBase + "es"
+        : camelBase.endsWith("y") ? camelBase.slice(0, -1) + "ies"
+        : camelBase + "s";
       map[singular] = plural;
     }
   }
@@ -57,7 +61,8 @@ function foldWorld() {
     }
 
     const base = ef.target.split(".")[0];
-    const collType = SINGULAR_TO_PLURAL[base] || base;
+    // Lookup регистронезависимый: ключи SINGULAR_TO_PLURAL — в нижнем регистре
+    const collType = SINGULAR_TO_PLURAL[base.toLowerCase()] || base;
     if (!collections[collType]) collections[collType] = {};
 
     switch (ef.alpha) {
@@ -69,8 +74,16 @@ function foldWorld() {
       case "replace": {
         const entityId = ctx.id;
         if (entityId && collections[collType][entityId]) {
-          const field = ef.target.split(".").pop();
-          collections[collType][entityId] = { ...collections[collType][entityId], [field]: val };
+          const segments = ef.target.split(".");
+          if (segments.length > 1) {
+            // Target вида "Entity.field" — обновляем конкретное поле через val
+            const field = segments.pop();
+            collections[collType][entityId] = { ...collections[collType][entityId], [field]: val };
+          } else {
+            // Target вида "Entity" — мержим весь ctx (без id) поверх записи
+            const { id: _id, ...patch } = ctx;
+            collections[collType][entityId] = { ...collections[collType][entityId], ...patch };
+          }
         }
         break;
       }
