@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach } from "vitest";
-const { TimerQueue, hydrateFromWorld } = require("./timeEngine.js");
+const { TimerQueue, hydrateFromWorld, fireDue } = require("./timeEngine.js");
 
 describe("TimerQueue", () => {
   let q;
@@ -134,5 +134,74 @@ describe("onEffectConfirmed", () => {
   it("ignores effects with unrelated intent_id", () => {
     onEffectConfirmed(q, { intent_id: "place_order", value: null, context: "{}" });
     expect(q.size()).toBe(0);
+  });
+});
+
+describe("fireDue", () => {
+  let q;
+  let emitted;
+
+  beforeEach(() => {
+    q = new TimerQueue();
+    emitted = [];
+  });
+
+  const deps = (worldOverride = {}) => ({
+    ingestEffect: (ef) => emitted.push(ef),
+    foldWorld: () => ({ orders: [], ...worldOverride }),
+  });
+
+  it("fires due timer: emits fireIntent + mark firedAt", () => {
+    q.insert({
+      id: "tmr_1",
+      firesAt: 100,
+      fireIntent: "rule_cancel",
+      fireParams: { orderId: "o1" },
+      guard: null,
+    });
+    fireDue(q, 200, deps());
+    // 2 effects: fire + mark
+    expect(emitted.length).toBe(2);
+    expect(emitted[0].intent_id).toBe("rule_cancel");
+    expect(emitted[0].context.orderId).toBe("o1");
+    expect(emitted[0].parent_id).toBe("tmr_1");
+    expect(emitted[1].intent_id).toBe("revoke_timer");
+    expect(emitted[1].context.id).toBe("tmr_1");
+    expect(q.size()).toBe(0);
+  });
+
+  it("does not fire if not yet due", () => {
+    q.insert({ id: "t", firesAt: 1000, fireIntent: "x", guard: null });
+    fireDue(q, 500, deps());
+    expect(emitted).toEqual([]);
+    expect(q.size()).toBe(1);
+  });
+
+  it("guard true allows fire", () => {
+    q.insert({
+      id: "t", firesAt: 100, fireIntent: "x", guard: "world.orders.length > 0",
+    });
+    fireDue(q, 200, deps({ orders: [{ id: "o1" }] }));
+    expect(emitted.length).toBe(2); // fire + mark
+    expect(emitted[0].intent_id).toBe("x");
+  });
+
+  it("guard false skips fire but marks revoked", () => {
+    q.insert({
+      id: "t", firesAt: 100, fireIntent: "x", guard: "world.orders.length > 0",
+    });
+    fireDue(q, 200, deps({ orders: [] }));
+    // only revoke_timer emitted (no fire)
+    expect(emitted.length).toBe(1);
+    expect(emitted[0].intent_id).toBe("revoke_timer");
+    expect(q.size()).toBe(0);
+  });
+
+  it("multiple due timers fire in firesAt order", () => {
+    q.insert({ id: "a", firesAt: 100, fireIntent: "first", guard: null });
+    q.insert({ id: "b", firesAt: 50, fireIntent: "earliest", guard: null });
+    fireDue(q, 200, deps());
+    const fireIntents = emitted.filter(e => e.intent_id !== "revoke_timer");
+    expect(fireIntents.map(e => e.intent_id)).toEqual(["earliest", "first"]);
   });
 });

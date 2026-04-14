@@ -100,4 +100,76 @@ function onEffectConfirmed(queue, stored) {
   }
 }
 
-module.exports = { TimerQueue, hydrateFromWorld, onEffectConfirmed };
+/**
+ * Вычисляет guard-выражение против переданного world.
+ * Возвращает true, если guard отсутствует или вычислился в truthy.
+ * При ошибке парсинга/выполнения возвращает false (безопасный fallback).
+ */
+function evalGuard(expr, world) {
+  if (!expr) return true;
+  try {
+    // eslint-disable-next-line no-new-func
+    const fn = new Function("world", `"use strict"; return (${expr});`);
+    return Boolean(fn(world));
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Генерирует уникальный id для эффекта с заданным префиксом.
+ */
+function makeEffectId(prefix) {
+  return `${prefix}_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+}
+
+/**
+ * Прогнать due-таймеры очереди. Для каждого due-таймера:
+ *  - вычислить guard (если задан) против deps.foldWorld()
+ *  - если guard pass → emit fireIntent через deps.ingestEffect (parent_id=timer.id,
+ *    context: {...fireParams, causedByTimer})
+ *  - всегда emit revoke_timer (mark inactive — witness firedAt сохраняется,
+ *    guardEvaluatedTrue фиксируется в context)
+ *
+ * @param {TimerQueue} queue
+ * @param {number} now  — текущий timestamp (ms)
+ * @param {{ ingestEffect: Function, foldWorld: Function }} deps
+ */
+function fireDue(queue, now, deps) {
+  const due = queue.popDue(now);
+  if (due.length === 0) return;
+
+  const world = deps.foldWorld ? deps.foldWorld() : {};
+
+  for (const t of due) {
+    const guardOk = evalGuard(t.guard, world);
+
+    if (guardOk) {
+      deps.ingestEffect({
+        id: makeEffectId("fire"),
+        intent_id: t.fireIntent,
+        alpha: "add",
+        target: t.fireIntent,
+        value: null,
+        scope: "account",
+        parent_id: t.id,
+        context: { ...t.fireParams, causedByTimer: t.id },
+        created_at: Date.now(),
+      });
+    }
+
+    deps.ingestEffect({
+      id: makeEffectId("revoke"),
+      intent_id: "revoke_timer",
+      alpha: "replace",
+      target: "ScheduledTimer",
+      value: null,
+      scope: "account",
+      parent_id: t.id,
+      context: { id: t.id, firedAt: Date.now(), guardEvaluatedTrue: guardOk },
+      created_at: Date.now(),
+    });
+  }
+}
+
+module.exports = { TimerQueue, hydrateFromWorld, onEffectConfirmed, fireDue, evalGuard };
