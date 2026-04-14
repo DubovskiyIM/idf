@@ -630,7 +630,77 @@ async function main() {
   }, jwt);
   assert(setQuote.status === 200, "50", `set_quote ${setQuote.status}`, setQuote.body);
 
-  process.stdout.write("\n[smoke ✓] Все 50 шагов прошли успешно (booking 13 + planning 13 + meshok 6 + workflow 5 + messenger 5 + lifequest 8)\n");
+  // REFLECT (steps 51-58)
+  log("51", "reflect schema");
+  const reflSchema = await get("/api/agent/reflect/schema", jwt);
+  assert(reflSchema.status === 200, "51", `reflect schema ${reflSchema.status}`);
+  assert(reflSchema.body.intents.length >= 5, "51", `>=5 intents (got ${reflSchema.body.intents.length})`);
+
+  log("52", "quick_checkin HEP");
+  const qc1 = await post("/api/agent/reflect/exec", {
+    intentId: "quick_checkin",
+    params: { pleasantness: 3, energy: 2 }
+  }, jwt);
+  assert(qc1.status === 200, "52", `quick_checkin ${qc1.status}`, qc1.body);
+
+  const reflW1 = await get("/api/agent/reflect/world", jwt);
+  const entries = reflW1.body.world.moodEntries || [];
+  assert(entries.length >= 1, "52", `entry created (got ${entries.length})`);
+  assert(entries[0].quadrant === "HEP", "52", `quadrant === HEP (got ${entries[0].quadrant})`);
+
+  log("53", "quick_checkin LEU");
+  const qc2 = await post("/api/agent/reflect/exec", {
+    intentId: "quick_checkin",
+    params: { pleasantness: -3, energy: -2 }
+  }, jwt);
+  assert(qc2.status === 200, "53", `quick_checkin LEU ${qc2.status}`);
+
+  log("54", "create_activity");
+  const ca = await post("/api/agent/reflect/exec", {
+    intentId: "create_activity",
+    params: { name: "Smoke Activity", icon: "🧪", category: "other" }
+  }, jwt);
+  assert(ca.status === 200, "54", `create_activity ${ca.status}`, ca.body);
+
+  log("55", "detailed_checkin с активностью");
+  const reflW2 = await get("/api/agent/reflect/world", jwt);
+  const smokeAct = (reflW2.body.world.activities || []).find(a => a.name === "Smoke Activity");
+  assert(smokeAct, "55", "activity in world");
+  const dc = await post("/api/agent/reflect/exec", {
+    intentId: "detailed_checkin",
+    params: {
+      pleasantness: 2, energy: 1, emotion: "joyful",
+      note: "smoke test", activityIds: [smokeAct.id]
+    }
+  }, jwt);
+  assert(dc.status === 200, "55", `detailed_checkin ${dc.status}`, dc.body);
+
+  log("56", "propose_hypothesis");
+  const ph = await post("/api/agent/reflect/exec", {
+    intentId: "propose_hypothesis",
+    params: {
+      title: "Smoke даёт энергию",
+      whenActivity: smokeAct.id,
+      expectedEffect: "more_energy"
+    }
+  }, jwt);
+  assert(ph.status === 200, "56", `propose_hypothesis ${ph.status}`, ph.body);
+
+  log("57", "create_tag");
+  const ct = await post("/api/agent/reflect/exec", {
+    intentId: "create_tag",
+    params: { name: "work", color: "#007aff" }
+  }, jwt);
+  assert(ct.status === 200, "57", `create_tag ${ct.status}`, ct.body);
+
+  log("58", "create_reminder");
+  const cr = await post("/api/agent/reflect/exec", {
+    intentId: "create_reminder",
+    params: { text: "Чек-ин в 18:00", triggerKind: "time" }
+  }, jwt);
+  assert(cr.status === 200, "58", `create_reminder ${cr.status}`, cr.body);
+
+  process.stdout.write("\n[smoke ✓] Все 58 шагов прошли успешно (booking 13 + planning 13 + meshok 6 + workflow 5 + messenger 5 + lifequest 8 + reflect 8)\n");
 }
 
 main().catch(err => {
