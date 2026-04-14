@@ -5,6 +5,10 @@
 **Версия:** 1.6
 **Статус:** **восьмидоменный прототип: 527 намерений** (booking 21 + planning 17 + workflow 15 + messenger 100 + meshok 225 + lifequest 56 + reflect 47 + **invest 46**). **329 unit-тестов ядра + 541 unit-тест прикладной части** (итого 870 с legacy-тестами), CI (GitHub Actions), **71-шаговый agent-smoke**. **Пять слоёв проекции §17 реализованы** — добавлена document-материализация как 4-я базовая (§1). **Семь архетипов**. **Четыре UI-адаптера** (Mantine corporate / Doodle sketch / Apple visionOS-glass / **AntD enterprise-fintech**). **10-й полевой тест — invest** (fintech / personal investing): закрыл 6 §26 open items одним циклом — m2m ownership (role.scope), preapproval guard, document materialization, capability surface, reference entities, chart-primitive как новая категория.
 
+**Изменения в v1.6.1 (2026-04-14 post-release, унификация ролей):**
+
+- **Таксономия базовых ролей** (§5) — `role.base: owner | viewer | agent | observer` как метаданный маркер. Все 8 доменов аннотированы. Helpers в `server/schema/baseRoles.cjs` (`getRolesByBase`, `auditOntologyRoles`, observer-invariant). **Не замена** доменных имён, а semantic layer для cross-domain инструментов и SDK defaults. 26 unit-тестов.
+
 **Изменения в v1.6 (2026-04-14, десятый полевой тест):**
 
 - **Десятый полевой тест — invest** (personal investing + робо-эдвайзер). 12 сущностей, 4 роли (investor/advisor/agent/observer), 46 интентов, 7 правил Rules Engine (все 4 v1.5 extension), 3 canvas (allocation/market/advisor), 3 внешних ML-сервиса (:3003 / :3004 / :3006). Валидирует транзакционно-регуляторную зону силы парадигмы.
@@ -159,6 +163,39 @@ V = ⟨E, Q, W⟩
 Приоритет: `role.scope > entity.kind:"reference" > entity.ownerField > (no filter)`. Реализация — `server/schema/filterWorld.cjs`, 10+ unit-тестов с edge cases (изоляция advisor'ов, statusAllowed, пустые via, backcompat). Application-level фильтры в projections.js работают параллельно для UI-режима.
 
 **Reference-сущности** (v1.6, `entity.kind: "reference"`, §14) — справочные данные (Asset, Category, Currency) видны всем. Ownership не применяется; visibility через `role.visibleFields` остаётся. Применено к invest.Asset, invest.MarketSignal.
+
+### Таксономия базовых ролей (v1.6)
+
+Восемь доменов прототипа показали схождение к четырём таксономическим классам доступа. `role.base` — метаданная, **не замена** доменного имени:
+
+| base | Семантика | Примеры domain-ролей |
+|---|---|---|
+| **owner** | Самоакторный участник с CRUD над своими сущностями (single-owner + m2m scope) | booking.client, booking.specialist, meshok.buyer, meshok.seller, messenger.self, invest.investor, invest.advisor |
+| **viewer** | Связанный читатель с минимальным write (голосование, reactions) — видит через explicit-связь, не owner | messenger.contact |
+| **agent** | Автоматический актор (LLM-бот, human-agent, rule engine) с JWT-scope + canExecute + опциональным preapproval guard (§17) | agent-роль во всех 8 доменах, meshok.moderator |
+| **observer** | Pure read-only аудит (регулятор, compliance) — `canExecute` пустой, document-материализация для отчётов | invest.observer |
+
+Мотивация:
+
+1. **Cross-domain инструменты.** Agent-smoke итерирует `getRolesByBase(ontology, "agent")` вместо знания имени. Document-экспорт для `observer`-роли работает единообразно.
+2. **SDK defaults.** Domain authoring CLI при генерации нового домена знает: `owner` → ownerField + full canExecute, `agent` → canExecute whitelist + preapproval, `observer` → visibleFields "all" + canExecute "[]".
+3. **Узнавание паттернов.** Автор нового домена видит «meshok.buyer base:owner» — знает, что это как `investor` / `client` / `self`.
+4. **Audit.** `auditOntologyRoles(ontology)` enforces observer-invariant (`canExecute` пустой) как первичную защиту от ошибок декларации.
+
+**Реализация:** `server/schema/baseRoles.cjs` с helpers `validateBase`, `getRolesByBase`, `isAgentRole`, `isObserverRole`, `isOwnerRole`, `auditOntologyRoles`. 26 unit-тестов. Все 8 доменов аннотированы:
+
+```
+booking:   { owner: [client, specialist], agent: [agent] }
+planning:  { agent: [agent] }
+workflow:  { agent: [agent] }
+messenger: { owner: [self], viewer: [contact], agent: [agent] }
+meshok:    { owner: [buyer, seller], agent: [moderator, agent] }
+lifequest: { agent: [agent] }
+reflect:   { agent: [agent] }
+invest:    { owner: [investor, advisor], agent: [agent], observer: [observer] }
+```
+
+**Моделируется через `role.base`, не через общий enum.** Каждый домен сохраняет свои имена; `base` — слабая привязка к таксономии, не override. Несовпадение base с фактическими правами не вызывает runtime-ошибки; `auditOntologyRoles` даёт lint-уровневые warnings. Backcompat: роли без `base` обрабатываются как раньше (игнорируются helpers).
 
 **Параметры запроса.** Проекция принимает не только зрителя, но и набор *параметров запроса* — эфемерных значений, устанавливаемых пользователем в рантайме (query поиска, диапазон дат, фильтры сортировки). Параметры живут в сессии рендерера и **не участвуют в `World(t)`** — они ортогональны `Φ`, `Δ`, `Σ`, `Π`. Формально параметры — часть спецификации `Q` проекции, не внешнее состояние. Control-архетипы вроде `inlineSearch` пишут в параметры запроса; filter проекции читает их в выражении. Параметры запроса не персистентны — при смене проекции они сбрасываются. Стабилизировано в M3.2.
 

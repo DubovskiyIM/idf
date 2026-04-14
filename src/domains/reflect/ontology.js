@@ -196,6 +196,7 @@ export const ONTOLOGY = {
 
   roles: {
     agent: {
+      base: "agent", // §5 base role
       canExecute: [
         "quick_checkin", "detailed_checkin", "create_activity",
         "propose_hypothesis", "create_tag", "create_reminder",

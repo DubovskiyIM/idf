@@ -1,5 +1,56 @@
 # Changelog
 
+## v1.6.1 — 2026-04-14 (post-release)
+
+**Унифицированные базовые роли — §5 таксономия (owner / viewer / agent / observer)**
+
+### Added
+
+- **`server/schema/baseRoles.cjs`** — вокабуляр базовых ролей + helpers:
+  - `BASE_ROLES` — frozen `["owner", "viewer", "agent", "observer"]`
+  - `validateBase(roleDef)` — проверка корректности
+  - `getRolesByBase(ontology, base)` — cross-domain поиск ролей
+  - `isAgentRole` / `isObserverRole` / `isOwnerRole` — семантические helpers
+  - `auditOntologyRoles(ontology)` — валидация + observer-invariant check
+- **`role.base` аннотации** во всех 8 доменах:
+  - booking: owner (client, specialist), agent
+  - planning: agent
+  - workflow: agent
+  - messenger: owner (self), viewer (contact), agent
+  - meshok: owner (buyer, seller), agent (moderator, agent)
+  - lifequest: agent
+  - reflect: agent
+  - invest: owner (investor, advisor), agent, observer
+- **Манифест v1.6 §5** — новый раздел «Таксономия базовых ролей» с таблицей, мотивацией и snapshot'ом распределения
+
+### Rationale
+
+Восемь доменов прототипа — восемь разных ролевых моделей. Общий словарь нужен для:
+1. Cross-domain инструментов (agent-smoke, audit, document export) — работают по классу, не имени
+2. SDK defaults — domain authoring CLI знает, что owner = ownerField + CRUD, agent = canExecute + preapproval, observer = empty canExecute + full visibility
+3. Узнавание паттерна автором нового домена
+4. Observer-invariant enforcement через `auditOntologyRoles`
+
+### Design
+
+`role.base` — **метаданная**, не override. Domain сохраняет свои `canExecute` / `visibleFields` / `scope` / `preapproval`. Несовпадение — lint-warning, не runtime-ошибка. Backcompat: роли без `base` продолжают работать (игнорируются helpers).
+
+### Tests
+
+- **26 unit-тестов** в `server/schema/baseRoles.test.js`:
+  - Валидация вокабуляра + helpers
+  - Cross-domain integration: все 8 доменов имеют valid base
+  - Snapshot распределения ролей per-domain
+  - Observer-invariant проверка
+- **355 unit-тестов** суммарно (было 329, +26)
+
+### Documentation
+
+- **Манифест §5** — таблица + snapshot + мотивация + реализация
+- **CLAUDE.md** — секция «Базовые роли» в Ядре
+
+---
+
 ## v1.6.0 — 2026-04-14
 
 **10-й полевой тест: invest (fintech / personal investing) + AntD-адаптер + закрытие 6 §26 open items**

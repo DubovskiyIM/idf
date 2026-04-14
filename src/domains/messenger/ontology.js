@@ -61,6 +61,7 @@ export const ONTOLOGY = {
   },
   roles: {
     self: {
+      base: "owner", // §5 base role
       label: "Я",
       canExecute: ["send_message", "edit_message", "delete_message", "reply_to_message",
         "create_direct_chat", "create_group", "leave_group", "mark_as_read",
@@ -70,10 +71,12 @@ export const ONTOLOGY = {
       visibleFields: { Message: ["id", "conversationId", "senderId", "type", "content", "replyToId", "attachmentUrl", "status", "createdAt", "editedAt"] }
     },
     contact: {
+      base: "viewer", // §5 — связанный читатель (профиль другого)
       label: "Контакт",
       visibleFields: { User: ["id", "name", "avatar", "status"] }
     },
     agent: {
+      base: "agent",
       label: "Агент (API)",
       canExecute: [
         "send_message", "create_direct_chat", "create_group",

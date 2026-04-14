@@ -35,6 +35,7 @@ export const ONTOLOGY = {
   },
   roles: {
     agent: {
+      base: "agent", // §5 base role
       label: "Агент (API)",
       canExecute: [
         "create_workflow", "add_node", "connect_nodes",

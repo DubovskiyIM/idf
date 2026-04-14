@@ -45,6 +45,7 @@ export const ONTOLOGY = {
   ],
   roles: {
     agent: {
+      base: "agent", // §5 base role taxonomy
       label: "Агент (API)",
       canExecute: [
         "create_poll", "add_time_option", "invite_participant",

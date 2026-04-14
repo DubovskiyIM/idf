@@ -224,6 +224,7 @@ export const ONTOLOGY = {
 
   roles: {
     buyer: {
+      base: "owner", // §5 base role
       label: "Покупатель",
       canExecute: [
         "search_listings", "view_listing", "place_bid", "set_auto_bid",
@@ -240,6 +241,7 @@ export const ONTOLOGY = {
       statusMapping: { draft: null, suspended: null },
     },
     seller: {
+      base: "owner",
       label: "Продавец",
       canExecute: [
         "create_listing", "edit_listing", "publish_listing", "cancel_listing",
@@ -257,6 +259,7 @@ export const ONTOLOGY = {
       statusMapping: {},
     },
     moderator: {
+      base: "agent", // §5 — human-agent с elevated canExecute (ban/resolve)
       label: "Модератор",
       canExecute: [
         "suspend_listing", "restore_listing", "remove_listing",
@@ -271,6 +274,7 @@ export const ONTOLOGY = {
       },
     },
     agent: {
+      base: "agent",
       label: "Агент (API)",
       canExecute: [
         "search_listings", "place_bid", "buy_now",

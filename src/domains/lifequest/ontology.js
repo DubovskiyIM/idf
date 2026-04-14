@@ -182,6 +182,7 @@ export const ONTOLOGY = {
 
   roles: {
     agent: {
+      base: "agent", // §5 base role
       label: "Агент (API)",
       canExecute: [
         "create_goal", "complete_goal", "update_goal_progress",

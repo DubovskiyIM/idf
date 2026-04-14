@@ -202,6 +202,7 @@ export const ONTOLOGY = {
 
   roles: {
     investor: {
+      base: "owner", // §5 base role taxonomy — self-acting CRUD
       // self — клиент
       canExecute: [
         "register", "login", "update_profile", "set_preferences",
@@ -222,6 +223,7 @@ export const ONTOLOGY = {
     },
 
     advisor: {
+      base: "owner", // §5 — owner of Assignment + m2m scope to client data
       // human consultant. Many-to-many клиенты через Assignment entity.
       // §26.1 ЗАКРЫТ: role.scope поддерживается в server/schema/filterWorld.cjs.
       canExecute: [
@@ -274,6 +276,7 @@ export const ONTOLOGY = {
     },
 
     agent: {
+      base: "agent", // §5 — JWT-scoped automation + preapproval guard
       // робо-эдвайзер с JWT-scope (§17). Все канонические агентские
       // intents покрыты server/schema/buildInvestEffects.cjs.
       canExecute: [
@@ -332,6 +335,7 @@ export const ONTOLOGY = {
     },
 
     observer: {
+      base: "observer", // §5 — read-only audit (regulator, compliance)
       // read-only (аудит/регулятор)
       canExecute: [],
       visibleFields: {

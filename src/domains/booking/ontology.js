@@ -65,6 +65,7 @@ export const ONTOLOGY = {
   // Роли и доступ — раздел 5 манифеста (зависимость от зрителя)
   roles: {
     client: {
+      base: "owner", // §5 base role taxonomy
       label: "Клиент",
       canExecute: [
         "select_service", "select_slot", "confirm_booking", "cancel_booking",
@@ -80,6 +81,7 @@ export const ONTOLOGY = {
       statusMapping: { held: "booked", blocked: "booked" }
     },
     specialist: {
+      base: "owner",
       label: "Специалист",
       canExecute: [
         "add_service", "update_service", "remove_service",
@@ -95,6 +97,7 @@ export const ONTOLOGY = {
       statusMapping: {}  // видит всё
     },
     agent: {
+      base: "agent",
       label: "Агент (API)",
       canExecute: [
         "create_booking",
