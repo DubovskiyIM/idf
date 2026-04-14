@@ -51,6 +51,21 @@ registerCanvas("point_a", PointACanvas);
 registerCanvas("week_progress", WeekProgressCanvas);
 registerCanvas("today", (props) => <TodayCanvas {...props} ctx={props.ctx} />);
 
+// Reflect canvas-компоненты
+import MoodMeterCanvas from "./domains/reflect/canvas/MoodMeterCanvas.jsx";
+import TimelineCanvas from "./domains/reflect/canvas/TimelineCanvas.jsx";
+import CalendarHeatmapCanvas from "./domains/reflect/canvas/CalendarHeatmapCanvas.jsx";
+import MoodTrendsCanvas from "./domains/reflect/canvas/MoodTrendsCanvas.jsx";
+import ActivityCorrelationCanvas from "./domains/reflect/canvas/ActivityCorrelationCanvas.jsx";
+import MoodMeterClusterCanvas from "./domains/reflect/canvas/MoodMeterClusterCanvas.jsx";
+
+registerCanvas("checkin", MoodMeterCanvas);
+registerCanvas("timeline", TimelineCanvas);
+registerCanvas("calendar_heatmap", CalendarHeatmapCanvas);
+registerCanvas("mood_trends", MoodTrendsCanvas);
+registerCanvas("activity_correlation", ActivityCorrelationCanvas);
+registerCanvas("mood_meter_cluster", MoodMeterClusterCanvas);
+
 // Домены с переключением адаптера
 const DOMAIN_ADAPTERS = {
   lifequest: shadcnAdapter,
