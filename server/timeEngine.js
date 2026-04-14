@@ -57,4 +57,47 @@ function hydrateFromWorld(queue, world) {
   }
 }
 
-module.exports = { TimerQueue, hydrateFromWorld };
+/**
+ * Парсит JSON-строку или возвращает null/исходное значение.
+ */
+function parseJSON(s) {
+  if (s == null) return null;
+  if (typeof s !== "string") return s;
+  try {
+    return JSON.parse(s);
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Реакция queue на сохранённые эффекты schedule_timer / revoke_timer.
+ * stored — запись из таблицы effects (value/context — JSON-strings).
+ */
+function onEffectConfirmed(queue, stored) {
+  const intentId = stored.intent_id;
+  if (intentId !== "schedule_timer" && intentId !== "revoke_timer") return;
+
+  const value = parseJSON(stored.value);
+  const context = parseJSON(stored.context);
+  // payload: value приоритетно, fallback на context
+  const payload = (value && typeof value === "object") ? value : (context || {});
+  const id = payload.id || context?.id;
+
+  if (intentId === "schedule_timer") {
+    if (!id || payload.firesAt == null || !payload.fireIntent) return;
+    queue.insert({
+      id,
+      firesAt: payload.firesAt,
+      fireIntent: payload.fireIntent,
+      fireParams: payload.fireParams || {},
+      triggerEventKey: payload.triggerEventKey || null,
+      revokeOnEvents: payload.revokeOnEvents || [],
+      guard: payload.guard || null,
+    });
+  } else if (intentId === "revoke_timer") {
+    if (id) queue.removeById(id);
+  }
+}
+
+module.exports = { TimerQueue, hydrateFromWorld, onEffectConfirmed };

@@ -74,3 +74,65 @@ describe("hydrateFromWorld", () => {
     expect(q.size()).toBe(0);
   });
 });
+
+describe("onEffectConfirmed", () => {
+  const { onEffectConfirmed } = require("./timeEngine.js");
+  let q;
+  beforeEach(() => { q = new TimerQueue(); });
+
+  it("schedule_timer adds to queue with parsed payload", () => {
+    onEffectConfirmed(q, {
+      intent_id: "schedule_timer",
+      target: "ScheduledTimer",
+      alpha: "add",
+      value: JSON.stringify({
+        id: "tmr_1",
+        firesAt: 1700,
+        fireIntent: "rule_cancel",
+        fireParams: { orderId: "o1" },
+      }),
+      context: JSON.stringify({}),
+    });
+    expect(q.size()).toBe(1);
+    const t = q.all()[0];
+    expect(t.id).toBe("tmr_1");
+    expect(t.firesAt).toBe(1700);
+    expect(t.fireIntent).toBe("rule_cancel");
+    expect(t.fireParams).toEqual({ orderId: "o1" });
+  });
+
+  it("schedule_timer can also read from context (context.id, context.firesAt)", () => {
+    onEffectConfirmed(q, {
+      intent_id: "schedule_timer",
+      target: "ScheduledTimer",
+      alpha: "add",
+      value: null,
+      context: JSON.stringify({
+        id: "tmr_ctx",
+        firesAt: 9999,
+        fireIntent: "x",
+      }),
+    });
+    expect(q.size()).toBe(1);
+    expect(q.all()[0].id).toBe("tmr_ctx");
+  });
+
+  it("revoke_timer removes by id from value or context", () => {
+    q.insert({ id: "tmr_1", firesAt: 100 });
+    q.insert({ id: "tmr_2", firesAt: 200 });
+    onEffectConfirmed(q, {
+      intent_id: "revoke_timer",
+      target: "ScheduledTimer",
+      alpha: "replace",
+      value: null,
+      context: JSON.stringify({ id: "tmr_1" }),
+    });
+    expect(q.size()).toBe(1);
+    expect(q.all()[0].id).toBe("tmr_2");
+  });
+
+  it("ignores effects with unrelated intent_id", () => {
+    onEffectConfirmed(q, { intent_id: "place_order", value: null, context: "{}" });
+    expect(q.size()).toBe(0);
+  });
+});
