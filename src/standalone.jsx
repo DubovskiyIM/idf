@@ -192,16 +192,34 @@ export default function StandaloneApp({ domainId }) {
 
   // All other domains: shared auth gate
   const isLifequest = domainId === "lifequest";
+  const isDoodleAdapter = adapter === shadcnAdapter;
   const lifequestBg = "linear-gradient(135deg, #fdf2e9 0%, #fef3c7 25%, #fce7f3 50%, #e0f2fe 75%, #dcfce7 100%)";
   // key — заставляет React пересоздать дерево при смене UI-kit,
   // чтобы все компоненты (включая memo'д) подхватили новый адаптер.
   const adapterKey = `kit-${prefsForKit?.uiKit || domainId}`;
+  // Mantine-mode override doodle CSS variables на нейтральные tokens —
+  // чтобы lifequest canvas (TodayCanvas, RadarChart и др.) выглядели
+  // в Mantine-стиле, а не в захардкоженной doodle-палитре.
+  const mantineOverride = !isDoodleAdapter ? {
+    "--color-doodle-bg": "var(--mantine-color-body, #fff)",
+    "--color-doodle-ink": "var(--mantine-color-text, #1a1a2e)",
+    "--color-doodle-ink-light": "var(--mantine-color-dimmed, #6b7280)",
+    "--color-doodle-border": "var(--mantine-color-default-border, #e5e7eb)",
+    "--color-doodle-border-soft": "var(--mantine-color-default-border, #e5e7eb)",
+    "--color-doodle-highlight": "var(--mantine-color-default-hover, #f3f4f6)",
+    "--color-doodle-accent": "var(--mantine-color-indigo-6, #4f46e5)",
+    "--color-doodle-warn": "var(--mantine-color-red-6, #ef4444)",
+    "--color-doodle-gold": "var(--mantine-color-yellow-7, #ca8a04)",
+    "--font-doodle": "system-ui, sans-serif",
+    "--radius-doodle": "6px",
+  } : {};
   const content = (
     <div key={adapterKey} style={{
       height: "100vh",
-      background: isLifequest ? lifequestBg : "var(--mantine-color-body)",
+      background: isDoodleAdapter ? lifequestBg : "var(--mantine-color-body)",
       overflow: isV2 ? "hidden" : "auto",
       display: "flex", flexDirection: "column",
+      ...mantineOverride,
     }}>
       {/* Top bar with user info — скрыт для lifequest (логаут в PrefsPanel) */}
       {currentUser && !isLifequest && (
