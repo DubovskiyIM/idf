@@ -17,6 +17,7 @@ const DEFAULTS = {
   density: "comfortable",
   iconMode: "lucide",
   fontSize: "md",
+  uiKit: null, // null = использовать дефолт домена; "mantine" | "shadcn" — override
 };
 
 function loadPrefs() {

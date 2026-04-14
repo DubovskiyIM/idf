@@ -55,6 +55,18 @@ export default function PrefsPanel({ prefs, setPref, resetPrefs, onClose, onLogo
           />
         </PrefRow>
 
+        <PrefRow label="UI-kit (адаптер)">
+          <SegmentPicker
+            options={[
+              { value: null, label: "Авто" },
+              { value: "mantine", label: "Mantine" },
+              { value: "shadcn", label: "Doodle" },
+            ]}
+            value={prefs.uiKit}
+            onChange={v => setPref("uiKit", v)}
+          />
+        </PrefRow>
+
         <div style={{ display: "flex", gap: 8, marginTop: 16, flexWrap: "wrap" }}>
           <button
             onClick={resetPrefs}
@@ -102,7 +114,7 @@ function SegmentPicker({ options, value, onChange }) {
     <div style={{ display: "flex", gap: 2, background: "var(--mantine-color-default-hover, #f3f4f6)", borderRadius: 6, padding: 2 }}>
       {options.map(opt => (
         <button
-          key={opt.value}
+          key={String(opt.value)}
           onClick={() => onChange(opt.value)}
           style={{
             flex: 1, padding: "5px 10px", borderRadius: 4, border: "none", cursor: "pointer",

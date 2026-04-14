@@ -27,6 +27,9 @@ import V2Shell from "./runtime/renderer/shell/V2Shell.jsx";
 import { registerUIAdapter } from "./runtime/renderer/adapters/registry.js";
 import { mantineAdapter } from "./runtime/renderer/adapters/mantine/index.jsx";
 import { shadcnAdapter } from "./runtime/renderer/adapters/shadcn/index.jsx";
+import { usePersonalPrefs } from "./runtime/renderer/personal/usePersonalPrefs.js";
+
+const UI_KITS = { mantine: mantineAdapter, shadcn: shadcnAdapter };
 import { registerCanvas } from "./runtime/renderer/archetypes/ArchetypeCanvas.jsx";
 import CalendarCanvas from "./domains/lifequest/canvas/CalendarCanvas.jsx";
 import VisionBoardCanvas from "./domains/lifequest/canvas/VisionBoardCanvas.jsx";
@@ -107,8 +110,11 @@ export default function StandaloneApp({ domainId }) {
   const domain = DOMAINS[domainId];
   if (!domain) return <div style={{ padding: 40, textAlign: "center", fontFamily: "system-ui" }}>Домен "{domainId}" не найден</div>;
 
-  // Переключение UI-адаптера по домену (§17 адаптивный слой)
-  const adapter = DOMAIN_ADAPTERS[domainId] || mantineAdapter;
+  // Переключение UI-адаптера: prefs.uiKit (override) → DOMAIN_ADAPTERS → mantine
+  const { prefs: prefsForKit } = usePersonalPrefs();
+  const adapter = UI_KITS[prefsForKit?.uiKit]
+    || DOMAIN_ADAPTERS[domainId]
+    || mantineAdapter;
   registerUIAdapter(adapter);
 
   // Messenger v2 имеет собственный auth flow внутри V2UI — пропускаем shared
