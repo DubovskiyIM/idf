@@ -82,6 +82,28 @@ router.post("/", (req, res) => {
         console.error("[invariants] Ошибка проверки:", e);
       }
 
+      // === Темпоральный scheduler (Task 9 plan) ===
+      try {
+        const { onEffectConfirmed: timerOnConfirmed } = require("../timeEngine.js");
+        const { evaluateScheduleV2 } = require("../ruleEngine.js");
+        // Обновляем in-memory queue (schedule_timer/revoke_timer effects)
+        if (global.__timerQueue) {
+          timerOnConfirmed(global.__timerQueue, stored);
+        }
+        // Прогоняем правила scheduleV2 для других intent_id
+        evaluateScheduleV2(stored, {
+          getRulesForDomain: (domain) => {
+            const ont = getOntology(domain);
+            return ont?.rules || [];
+          },
+          getDomainByIntentId,
+          ingestEffect: (ef) => ingestEffect(ef, { broadcast, delay: 0 }),
+          foldWorld: () => foldWorld(),
+        });
+      } catch (e) {
+        console.error("[scheduler] hook error:", e);
+      }
+
       // === Реактивные правила (sync) ===
       // Декларативные правила из ontology.rules: trigger match → validate action conditions → emit.
       const ruleDeps = { getDomainByIntentId, getOntology, validateIntentConditions, getIntent };
