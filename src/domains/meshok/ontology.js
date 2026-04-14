@@ -290,4 +290,23 @@ export const ONTOLOGY = {
       statusMapping: { draft: null, suspended: null },
     },
   },
+
+  // ─── Глобальные инварианты (§14, v1.6.1) ──────────────────────
+  invariants: [
+    // FK: Bid → Listing.
+    { name: "bid_listing_fk", kind: "referential",
+      from: "Bid.listingId", to: "Listing.id",
+      severity: "error" },
+
+    // FK: Order → Listing.
+    { name: "order_listing_fk", kind: "referential",
+      from: "Order.listingId", to: "Listing.id",
+      severity: "error" },
+
+    // Order.status монотонно вперёд.
+    { name: "order_status_monotonic", kind: "transition",
+      entity: "Order", field: "status",
+      order: ["created", "paid", "shipped", "delivered", "closed"],
+      severity: "error" },
+  ],
 };
