@@ -22,7 +22,15 @@ export default function ArchetypeCanvas({ slots, ctx }) {
   const CanvasComponent = CANVAS_REGISTRY[projectionId] || CANVAS_REGISTRY[domainId];
 
   if (CanvasComponent) {
-    return <CanvasComponent artifact={artifact} ctx={ctx} world={world} exec={exec} viewer={viewer} />;
+    return (
+      <div style={{
+        height: "100%", width: "100%",
+        overflow: "auto", overflowX: "hidden",
+        WebkitOverflowScrolling: "touch",
+      }}>
+        <CanvasComponent artifact={artifact} ctx={ctx} world={world} exec={exec} viewer={viewer} />
+      </div>
+    );
   }
 
   // 2. Fallback — workflow (обратная совместимость)
