@@ -121,14 +121,42 @@ Document-граф (universal format):
 
 Все четыре работают поверх одной артефакт-модели v2.
 
-### 4. Chart-primitive: где живёт спец?
-Декларативный `{ type: "chart", chartType: "line", ... }` — часть проекции. Но конкретный chartType-диалект (`candlestick` есть в AntD, нет в SVG-fallback) — это уже адаптерная особенность. Возникает `capability surface` — проекция не знает, что адаптер поддерживает. **Возможное решение:** registry capabilities на адаптере, warning при mismatch.
+### 4+6. ~~Capability surface адаптера~~ **ЗАКРЫТО**
 
-### 5. `Asset` без ownership
-`ownerField` отсутствует — Asset это reference data. Но `role: investor.visibleFields.Asset` не декларирован, схема выдавала `Asset: undefined`. Graceful degradation: `"all"` для entities без ownerField. **Открытый вопрос:** формализовать `Asset.kind: "reference"` как явный маркер.
+Два уровня декларации — в реестре адаптера + helper'ы в `registry.js`:
 
-### 6. Capability-surface адаптера
-AntD поддерживает `Statistic` primitive (trend-стрелка), Mantine — нет. cardSpec для портфелей не знает, рендерить ли trend как текст или как Statistic. Сейчас — через `getAdaptedComponent("primitive", "statistic")` с fallback, но паттерн не формализован.
+```js
+adapter = {
+  name: "antd",
+  capabilities: {
+    primitive: {
+      chart: { chartTypes: ["line", "pie", "column", "area"] },
+      statistic: true,
+      sparkline: true,
+    },
+    shell: { modal: true, tabs: true },
+    button: { primary: true, intent: true, ... },
+  },
+  primitive: { ... },  // fallback-реестр компонентов
+}
+```
+
+API:
+- `getCapability(kind, type)` → descriptor (object / true / false / null)
+- `supportsVariant(kind, type, variantKey, variant)` → bool с backcompat (null = assume supported)
+
+Применено в `chart.jsx`: если адаптер объявляет `chartTypes: ["line", "pie"]` а проекция просит `"candlestick"` — `console.warn` + graceful SVG-fallback. Рендер не ломается.
+
+Mantine объявляет `statistic: false` явно — Mantine-адаптер не реализует Statistic, projection увидит это через `getAdaptedComponent("primitive", "statistic") === null` (через fallback-реестр) + capability = false (через декларацию). 7 unit-тестов в `adapter.test.js`.
+
+### 5. ~~Asset как reference-data без ownership~~ **ЗАКРЫТО**
+
+Формализован `entity.kind: "reference"` — маркер справочной сущности. В `filterWorld.cjs`:
+```
+приоритет row-filter: role.scope > entity.kind:"reference" > entity.ownerField > (no filter)
+```
+
+Reference-данные видны всем (shared), но всё равно требуют `visibleFields[entity]` для попадания в output — ownership отделена от visibility. Применено к `Asset` и `MarketSignal` в invest. 2 unit-теста в `filterWorld.test.js`.
 
 ## Метрики успеха — достижения
 

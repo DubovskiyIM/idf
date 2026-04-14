@@ -658,6 +658,19 @@ function MantineTabs({ items, active, onSelect, extra }) {
 
 export const mantineAdapter = {
   name: "mantine",
+  // §26.4 + §26.6: capability surface. Mantine-адаптер не реализует
+  // chart/sparkline/statistic напрямую — primitive.jsx рендерит SVG-
+  // fallback, капабилити явно документируют.
+  capabilities: {
+    primitive: {
+      chart: { chartTypes: ["line", "pie"], fallback: "svg" },
+      sparkline: { fallback: "svg" },
+      statistic: false, // нет — используется chart-fallback или text-primitive
+      heading: true, text: true, badge: true, avatar: true, paper: true,
+    },
+    shell: { modal: true, tabs: true },
+    button: { primary: true, secondary: true, danger: true, intent: true, overflow: true },
+  },
   parameter: {
     text: MantineTextInput,
     textarea: MantineTextarea,

@@ -288,6 +288,58 @@ describe("filterWorldForRole — many-to-many через role.scope", () => {
     expect(out.goals.map(g => g.id)).toEqual(["g_anna"]);
   });
 
+  // ───────────────────────────────────────────────────────────
+  // §26.5: entity.kind === "reference" → shared, ownership не применяется
+  // ───────────────────────────────────────────────────────────
+  it("reference-entity shared между всеми (ownership игнорируется)", () => {
+    const refOntology = {
+      entities: {
+        Asset: {
+          kind: "reference",
+          ownerField: "creatorId", // есть, но должен игнорироваться для reference
+        },
+        Portfolio: { ownerField: "userId" },
+      },
+      roles: {
+        trader: {
+          visibleFields: {
+            Asset: ["id", "ticker", "name"],
+            Portfolio: ["id", "name", "userId"],
+          },
+        },
+      },
+    };
+    const refWorld = {
+      assets: [
+        { id: "a1", ticker: "SBER", name: "Сбер", creatorId: "admin" },
+        { id: "a2", ticker: "GAZP", name: "Газпром", creatorId: "admin" },
+      ],
+      portfolios: [
+        { id: "pf1", userId: "alice", name: "Alice portfolio" },
+        { id: "pf2", userId: "bob", name: "Bob portfolio" },
+      ],
+    };
+    const alice = { id: "alice" };
+    const out = filterWorldForRole(refWorld, refOntology, "trader", alice);
+    // Assets: оба видны (reference), несмотря на creatorId !== alice
+    expect(out.assets.map(a => a.ticker).sort()).toEqual(["GAZP", "SBER"]);
+    // Portfolio: только своё (ownerField применяется)
+    expect(out.portfolios).toHaveLength(1);
+    expect(out.portfolios[0].id).toBe("pf1");
+  });
+
+  it("reference-entity без visibleFields всё равно не отдаётся (visibility !== ownership)", () => {
+    const refOntology = {
+      entities: { Asset: { kind: "reference" } },
+      roles: { trader: { visibleFields: {} } }, // Asset не объявлен
+    };
+    const out = filterWorldForRole(
+      { assets: [{ id: "a1", ticker: "X" }] },
+      refOntology, "trader", { id: "u1" }
+    );
+    expect(out.assets).toBeUndefined();
+  });
+
   it("scope с неверным localField — defensive empty, не throw", () => {
     const brokenOntology = {
       entities: {

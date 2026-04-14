@@ -99,7 +99,8 @@ function filterWorldForRole(rawWorld, ontology, roleName, viewer) {
 
     const { outputName, rows } = findCollection(rawWorld, entityName);
 
-    // 1) Row-filter: role.scope имеет приоритет над entity.ownerField.
+    // 1) Row-filter: приоритет role.scope > entity.kind:"reference" >
+    //    entity.ownerField > (no filter).
     // resolveAllowedIds вызывается per-entity, потому что scope может отличаться
     // по statusAllowed/statusField (Portfolio/Goal требуют status=active, User — нет).
     let owned;
@@ -113,6 +114,11 @@ function filterWorldForRole(rawWorld, ontology, roleName, viewer) {
       } else {
         owned = rows.filter(r => allowedIds.has(r[localField]));
       }
+    } else if (entityDef.kind === "reference") {
+      // Reference-data: shared справочник (Asset, Category, Currency...).
+      // ownership не применяется — все видят все строки. Role.visibleFields
+      // всё равно контролирует какие поля выдавать. §26.5 закрытие.
+      owned = rows;
     } else if (entityDef.ownerField) {
       owned = rows.filter(r => r[entityDef.ownerField] === viewer.id);
     } else {

@@ -54,6 +54,7 @@ export const ONTOLOGY = {
     },
 
     Asset: {
+      kind: "reference",  // §26.5: справочник, shared между всеми
       fields: {
         id: { type: "text" },
         ticker: { type: "ticker", label: "Тикер" },
@@ -149,6 +150,7 @@ export const ONTOLOGY = {
     },
 
     MarketSignal: {
+      kind: "reference",  // §26.5: shared поток сигналов из ML-сервисов
       fields: {
         id: { type: "text" },
         source: { type: "text" },

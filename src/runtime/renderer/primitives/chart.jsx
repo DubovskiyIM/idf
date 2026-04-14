@@ -16,7 +16,7 @@
  * не реализован явно.
  */
 
-import { getAdaptedComponent } from "../adapters/registry.js";
+import { getAdaptedComponent, supportsVariant, getCapability } from "../adapters/registry.js";
 import { resolve } from "../eval.js";
 
 function coerceData(spec, ctx) {
@@ -104,13 +104,23 @@ function SvgPieFallback({ data, xField = "type", yField = "value", height = 220 
 export function Chart({ node, ctx }) {
   const data = coerceData(node, ctx);
   const AdaptedChart = getAdaptedComponent("primitive", "chart");
+  const chartType = node.chartType || "line";
 
-  if (AdaptedChart) {
-    return <AdaptedChart chartType={node.chartType} data={data} xField={node.xField} yField={node.yField} seriesField={node.seriesField} height={node.height || 220} />;
+  // §26.4: проверяем capability — поддерживает ли адаптер этот chartType.
+  // Если нет — warn и fallback на SVG. Не падаем, graceful degradation.
+  const cap = getCapability("primitive", "chart");
+  const supported = supportsVariant("primitive", "chart", "chartTypes", chartType);
+
+  if (AdaptedChart && supported) {
+    return <AdaptedChart chartType={chartType} data={data} xField={node.xField} yField={node.yField} seriesField={node.seriesField} height={node.height || 220} />;
+  }
+
+  if (AdaptedChart && !supported && typeof console !== "undefined") {
+    console.warn(`[chart] chartType "${chartType}" не поддерживается адаптером (supported: ${cap?.chartTypes?.join(", ") || "—"}). Fallback → SVG.`);
   }
 
   // Fallback — SVG по chartType
-  if (node.chartType === "pie") {
+  if (chartType === "pie") {
     return <SvgPieFallback data={data} xField={node.xField} yField={node.yField} height={node.height || 220} />;
   }
   return <SvgLineFallback data={data} xField={node.xField} yField={node.yField} height={node.height || 220} />;

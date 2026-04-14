@@ -574,6 +574,18 @@ function AntdTabs({ items, active, onSelect, extra }) {
 
 export const antdAdapter = {
   name: "antd",
+  // §26.4 + §26.6: capability surface. Проекции могут читать через
+  // getCapability/supportsVariant и gracefully fallback при несоответствии.
+  capabilities: {
+    primitive: {
+      chart: { chartTypes: ["line", "pie", "column", "bar", "area"] },
+      sparkline: true,
+      statistic: true,
+      heading: true, text: true, badge: true, avatar: true, paper: true,
+    },
+    shell: { modal: true, tabs: true },
+    button: { primary: true, secondary: true, danger: true, intent: true, overflow: true },
+  },
   parameter: {
     text: AntdTextInput,
     textarea: AntdTextarea,

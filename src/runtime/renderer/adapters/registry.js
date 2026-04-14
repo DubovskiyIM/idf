@@ -43,3 +43,53 @@ export function getAdaptedComponent(kind, type) {
   if (!category || typeof category !== "object") return null;
   return category[type] || null;
 }
+
+/**
+ * Capability surface адаптера (§26.4 / §26.6).
+ *
+ * Адаптер может объявить `capabilities: { primitive: { chart: {
+ * chartTypes: ["line", "pie", "candlestick"] } } }` — это декларативная
+ * surface. Проекция декларирует "candlestick", адаптер говорит что
+ * умеет. Несовпадение → warning + graceful fallback, не ошибка.
+ *
+ * Возвращает:
+ *   true  — поддерживается (капабилити есть и не содержит отказа)
+ *   false — явно не поддерживается (capability = false)
+ *   object — детальный capability-descriptor ({ chartTypes, fallback, ... })
+ *   null  — не объявлено (unknown — по умолчанию считается supported,
+ *           чтобы не ломать существующие адаптеры)
+ *
+ * Пример использования в chart-primitive:
+ *   const cap = getCapability("primitive", "chart");
+ *   if (cap?.chartTypes && !cap.chartTypes.includes(spec.chartType)) {
+ *     console.warn("chartType not supported — fallback");
+ *   }
+ */
+export function getCapability(kind, type) {
+  if (!currentAdapter) return null;
+  const caps = currentAdapter.capabilities;
+  if (!caps) return null;
+  const category = caps[kind];
+  if (!category || typeof category !== "object") return null;
+  if (!(type in category)) return null;
+  return category[type];
+}
+
+/**
+ * Helper: проверяет, что адаптер поддерживает конкретный variant
+ * (chartType для chart, size для button, и т.п.).
+ * Возвращает true если:
+ *   - capability не объявлена (unknown = assume supported)
+ *   - capability === true
+ *   - variant входит в capability[variantKey] array
+ */
+export function supportsVariant(kind, type, variantKey, variant) {
+  const cap = getCapability(kind, type);
+  if (cap === null || cap === undefined) return true; // unknown → assume
+  if (cap === false) return false;
+  if (cap === true) return true;
+  if (typeof cap !== "object") return true;
+  const list = cap[variantKey];
+  if (!Array.isArray(list)) return true;
+  return list.includes(variant);
+}
