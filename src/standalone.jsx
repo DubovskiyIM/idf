@@ -73,8 +73,12 @@ registerCanvas("mood_meter_cluster", MoodMeterClusterCanvas);
 // Invest canvas-компоненты (ключ = projectionId)
 import AllocationPieCanvas from "./domains/invest/canvas/AllocationPieCanvas.jsx";
 import MarketLineCanvas from "./domains/invest/canvas/MarketLineCanvas.jsx";
+import AdvisorReviewCanvas from "./domains/invest/canvas/AdvisorReviewCanvas.jsx";
+import RegulatorReportCanvas from "./domains/invest/canvas/RegulatorReportCanvas.jsx";
 registerCanvas("allocation_breakdown", AllocationPieCanvas);
 registerCanvas("market_trends", MarketLineCanvas);
+registerCanvas("advisor_client_dashboard", AdvisorReviewCanvas);
+registerCanvas("regulator_report", RegulatorReportCanvas);
 
 // Домены с переключением адаптера
 const DOMAIN_ADAPTERS = {

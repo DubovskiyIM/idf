@@ -158,6 +158,22 @@ export const ONTOLOGY = {
         timestamp: { type: "datetime" },
       },
     },
+
+    // Assignment — many-to-many relationship между advisor и client.
+    // ⚠ Серверный filterWorld пока не поддерживает via-assignment
+    //   ownership — это §26.1 open item (see docs/field-test-10.md).
+    //   Клиентские projections используют виртуальный фильтр по assignment.
+    Assignment: {
+      ownerField: "advisorId",
+      fields: {
+        id: { type: "text" },
+        advisorId: { type: "text", required: true },
+        clientId: { type: "text", required: true },
+        status: { type: "select", options: ["active", "paused", "ended"] },
+        createdAt: { type: "datetime" },
+        notes: { type: "textarea" },
+      },
+    },
   },
 
   roles: {
@@ -182,14 +198,20 @@ export const ONTOLOGY = {
     },
 
     advisor: {
-      // human consultant
+      // human consultant. many-to-many клиенты через Assignment entity.
+      // ⚠ Клиентский фильтр покрывает UI-режим. Серверный filterWorld
+      //   с via-assignment — §26.1 open item.
       canExecute: [
-        "assign_client", "create_recommendation_for_client",
-        "send_client_message", "review_client_activity",
+        "assign_client", "unassign_client", "pause_assignment", "resume_assignment",
+        "create_recommendation_for_client", "send_client_message",
       ],
       visibleFields: {
         User: ["id", "name", "email"],
-        Portfolio: "assigned", Goal: "assigned",
+        Assignment: "own", // ownerField: advisorId = viewer.id
+        Portfolio: ["id", "userId", "name", "baseCurrency", "totalValue", "pnl", "riskProfile"],
+        Goal: ["id", "userId", "name", "targetAmount", "progress"],
+        Recommendation: ["id", "userId", "source", "type", "status", "createdAt"],
+        Alert: ["id", "userId", "severity", "message", "triggeredAt"],
       },
     },
 

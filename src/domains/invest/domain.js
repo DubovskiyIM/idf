@@ -301,5 +301,46 @@ export function getSeedEffects() {
   ];
   for (const s of signals) add("marketSignals", s);
 
+  // ─── Demo-клиенты для advisor-режима ───
+  // У каждого свой userId + портфель (чтобы advisor dashboard показывал
+  // реалистичные данные). userId=demo_cl_* — явный marker demo.
+  const demoClients = [
+    { id: "demo_cl_1", email: "anna@example.com", name: "Анна Смирнова", avatar: null, accreditation: "qualified" },
+    { id: "demo_cl_2", email: "boris@example.com", name: "Борис Петров", avatar: null, accreditation: "retail" },
+    { id: "demo_cl_3", email: "elena@example.com", name: "Елена Кузнецова", avatar: null, accreditation: "qualified" },
+  ];
+  for (const u of demoClients) add("users", u);
+
+  // Портфели клиентов (свои для каждого, кроме demo_cl_3)
+  const clientPortfolios = [
+    { id: "pf_anna_1", userId: "demo_cl_1", name: "Анна — основной", baseCurrency: "RUB", riskProfile: "balanced",
+      targetStocks: 50, targetBonds: 40, targetCrypto: 5, targetExotic: 5, totalValue: 820_000, pnl: 45_000, createdAt: now - 100 * day },
+    { id: "pf_boris_1", userId: "demo_cl_2", name: "Борис — ИИС", baseCurrency: "RUB", riskProfile: "conservative",
+      targetStocks: 20, targetBonds: 75, targetCrypto: 0, targetExotic: 5, totalValue: 310_000, pnl: -8_000, createdAt: now - 200 * day },
+    { id: "pf_elena_1", userId: "demo_cl_3", name: "Елена — Growth", baseCurrency: "USD", riskProfile: "aggressive",
+      targetStocks: 65, targetBonds: 5, targetCrypto: 25, targetExotic: 5, totalValue: 78_000, pnl: 12_400, createdAt: now - 50 * day },
+  ];
+  for (const p of clientPortfolios) add("portfolios", p);
+
+  // Risk profiles клиентов
+  add("riskProfiles", { id: "risk_anna", userId: "demo_cl_1", horizonYears: 5, lossTolerancePct: 20, computedScore: 55, level: "balanced", updatedAt: now - 20 * day });
+  add("riskProfiles", { id: "risk_boris", userId: "demo_cl_2", horizonYears: 10, lossTolerancePct: 10, computedScore: 25, level: "conservative", updatedAt: now - 40 * day });
+  add("riskProfiles", { id: "risk_elena", userId: "demo_cl_3", horizonYears: 3, lossTolerancePct: 50, computedScore: 82, level: "aggressive", updatedAt: now - 10 * day });
+
+  // Goals клиентов
+  add("goals", { id: "goal_anna_house", userId: "demo_cl_1", name: "Загородный дом", targetAmount: 5_000_000, deadline: now + 1000 * day, priority: "high", linkedPortfolioId: "pf_anna_1", currentAmount: 820_000, progress: 16 });
+  add("goals", { id: "goal_elena_car", userId: "demo_cl_3", name: "Tesla Model S", targetAmount: 120_000, deadline: now + 400 * day, priority: "medium", linkedPortfolioId: "pf_elena_1", currentAmount: 78_000, progress: 65 });
+
+  // Assignments: demo-advisor (userId=null = видит всем) связан со всеми 3 клиентами.
+  // Клиентский фильтр в проекциях — advisorId === viewer.id. Для demo-режима:
+  // используем advisorId:null + клиентский filter "advisorId === viewer.id || !advisorId".
+  // Это даёт любому залогиненному пользователю роль demo-advisor.
+  const assignments = [
+    { id: "asg_1", advisorId: null, clientId: "demo_cl_1", status: "active", createdAt: now - 90 * day, notes: "Новая клиентка, рекомендован сбалансированный профиль." },
+    { id: "asg_2", advisorId: null, clientId: "demo_cl_2", status: "active", createdAt: now - 180 * day, notes: "Консервативный инвестор, ИИС в приоритете." },
+    { id: "asg_3", advisorId: null, clientId: "demo_cl_3", status: "paused", createdAt: now - 40 * day, notes: "Пауза до июля — путешествует." },
+  ];
+  for (const a of assignments) add("assignments", a);
+
   return effects;
 }

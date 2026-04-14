@@ -209,6 +209,42 @@ export const INTENTS = {
     particles: { effects: [{ α: "add", target: "marketSignals", σ: "global" }] },
   },
 
+  // ─── Advisor intents ───
+
+  assign_client: {
+    name: "Взять клиента",
+    particles: { effects: [{ α: "add", target: "assignments", σ: "account" }] },
+    creates: "Assignment",
+    heroCreate: true,
+  },
+
+  unassign_client: {
+    name: "Завершить работу с клиентом",
+    particles: { effects: [{ α: "replace", target: "assignment.status", value: "ended" }] },
+    irreversibility: "medium",
+  },
+
+  pause_assignment: {
+    name: "Приостановить",
+    particles: { effects: [{ α: "replace", target: "assignment.status", value: "paused" }] },
+  },
+
+  resume_assignment: {
+    name: "Возобновить",
+    particles: { effects: [{ α: "replace", target: "assignment.status", value: "active" }] },
+  },
+
+  create_recommendation_for_client: {
+    name: "Рекомендация клиенту",
+    particles: { effects: [{ α: "add", target: "recommendations", σ: "account" }] },
+    creates: "Recommendation",
+  },
+
+  send_client_message: {
+    name: "Написать клиенту",
+    particles: { effects: [{ α: "add", target: "alerts", σ: "account" }] },
+  },
+
   // ─── Rule-triggered actions (вызываются из ruleEngine) ───
 
   weekly_portfolio_report: {

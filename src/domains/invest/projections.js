@@ -133,6 +133,30 @@ export const PROJECTIONS = {
     canvasType: "market_line",
   },
 
+  // ─── ADVISOR (many-to-many через Assignment) ───
+  // ⚠ Клиентский фильтр по advisorId. Server-side many-to-many — §26.1 open item.
+
+  advisor_clients: {
+    name: "Мои клиенты", kind: "catalog", mainEntity: "Assignment",
+    entities: ["Assignment"],
+    witnesses: ["clientId", "status", "createdAt", "notes"],
+    filter: "(advisorId === viewer.id || !advisorId) && status !== 'ended'",
+  },
+
+  advisor_client_dashboard: {
+    name: "Обзор клиента", kind: "canvas",
+    entities: ["Assignment", "Portfolio", "Goal", "Recommendation", "Alert"],
+    canvasType: "advisor_review",
+  },
+
+  // ─── REGULATOR (observer role) — PDF/print отчёт ───
+  // ⚠ §26 open item: "document" как материализация.
+  regulator_report: {
+    name: "Регуляторный отчёт", kind: "canvas",
+    entities: ["Transaction", "Portfolio"],
+    canvasType: "regulator_audit",
+  },
+
   // ─── CATALOG для advisor/observer (пока скрыты фильтром) ───
 
   assets_catalog: {
@@ -268,4 +292,6 @@ export const ROOT_PROJECTIONS = [
   { section: "Уведомления", icon: "🔔", items: ["recommendations_inbox", "alerts_feed"] },
   { section: "История", icon: "🗂", items: ["transactions_history"] },
   { section: "Автоматизация", icon: "⚡", items: ["rules_list"] },
+  { section: "Advisor", icon: "👤", items: ["advisor_clients", "advisor_client_dashboard"] },
+  { section: "Регулятор", icon: "📜", items: ["regulator_report"] },
 ];

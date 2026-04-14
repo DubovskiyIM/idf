@@ -9,10 +9,10 @@
 
 | Метрика | Значение |
 |---|---|
-| Сущности | 11 (User, Portfolio, Position, Asset, Transaction, Goal, RiskProfile, Recommendation, Alert, Watchlist, MarketSignal) |
-| Роли (§5) | 4 (investor / advisor / agent / observer) |
-| Намерения | 40 (включая 6 agent + 4 rule-triggered) |
-| Проекции | 17 (catalog/detail/dashboard/canvas/wizard) |
+| Сущности | 12 (User, Portfolio, Position, Asset, Transaction, Goal, RiskProfile, Recommendation, Alert, Watchlist, MarketSignal, **Assignment**) |
+| Роли (§5) | 4 (investor / advisor / agent / observer) — advisor активирован с m2m |
+| Намерения | 46 (включая 6 agent + 4 rule-triggered + 6 advisor) |
+| Проекции | 20 (catalog/detail/dashboard/canvas/wizard + advisor + regulator) |
 | Правила Rules Engine | 7 (все 4 extensions v1.5) |
 | Внешние сервисы | 3 (invest-ml:3003, invest-fuzzy:3004, market-data:3006) |
 | Seed-эффектов | ~60 (3 портфеля, 10 позиций, 14 сделок, 3 цели, 4 recommend, 4 alert) |
@@ -88,10 +88,25 @@ AntD поддерживает `Statistic` primitive (trend-стрелка), Mant
 | AntD покрывает все kind без доп. категорий в runtime | Pass (кроме chart) | chart добавлен как ожидаемое расширение |
 | 3–5 новых дыр в §26 | 3–5 | 6 |
 
+## Что реализовано частично
+
+### Advisor UI (Шаг 7) — MVP через клиентский фильтр
+- `Assignment` сущность (advisorId, clientId, status) с client-side фильтром по `advisorId === viewer.id || !advisorId`
+- 6 advisor intents: assign_client / unassign / pause / resume / create_recommendation_for_client / send_client_message
+- `AdvisorReviewCanvas` — выбор клиента → dashboard с P&L, аллокацией, risk profile, рекомендациями
+- 3 demo-клиента в seed (Анна, Борис, Елена) с полными портфелями, целями, risk profiles
+- **⚠ Server-side many-to-many через via-assignment filterWorld — зафиксирован как §26.1** — текущий MVP работает через клиентский фильтр, для production нужно расширить `filterWorld.cjs` до `ownerField: { via: "assignments", joinField: "clientId", viewerField: "advisorId" }`.
+
+### Regulator PDF report (Шаг 8) — через print media query
+- `RegulatorReportCanvas` — print-ready HTML с секциями: сводка / таблица сделок / правила
+- `window.print()` → браузерный «Save as PDF»
+- Разметка: цветовое кодирование по initiatedBy (user/agent/rule), footer с отсылкой к CausalityGraph
+- **⚠ "Document" как равноправная материализация (§1) — концептуальный вопрос в §26.3** — текущее решение минимально: HTML + print CSS. Полноценный server-side PDF (через puppeteer или PDFKit) с цифровой подписью — отдельная задача.
+
 ## Что отложено в v2 теста
 
-- **Advisor UI** (Шаг 7) — требует расширение ownerField до many-to-many
-- **Regulator PDF-export** (Шаг 8) — новая материализация, дизайн-вопрос открыт
+- **Server-side many-to-many ownership** (§26.1 полное решение) — расширение filterWorld до via-assignment scope
+- **Server-rendered PDF + signature** — вместо client-side print
 - **Tax-loss harvesting optimizer** — логика ушла бы в invest-ml, не в IDF-ядро
 - **Реальное исполнение ордеров** — мок broker-adapter достаточен для полевого теста
 
