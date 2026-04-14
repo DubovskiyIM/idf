@@ -172,7 +172,7 @@
     .matgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:28px}
     @media(max-width:860px){.matgrid{grid-template-columns:repeat(2,1fr)}}
     @media(max-width:480px){.matgrid{grid-template-columns:1fr}}
-    .mat{padding:36px 28px 32px;position:relative;overflow:hidden;border-radius:18px}
+    .mat{padding:36px 28px 32px;position:relative;overflow:hidden;border-radius:18px;min-width:0;display:flex;flex-direction:column}
     .mat::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:currentColor;opacity:.6}
     .mat::after{content:'';position:absolute;top:-60px;right:-60px;width:160px;height:160px;border-radius:50%;background:currentColor;opacity:.04;filter:blur(40px);transition:opacity .5s}
     .mat:hover::after{opacity:.08}
@@ -180,7 +180,7 @@
     .mat .sym .num{font-size:.7em;color:var(--text-dim);font-weight:500}
     .mat h3{font-weight:700;font-size:1.05rem;margin-bottom:8px;color:var(--text)}
     .mat p{font-size:.82rem;color:var(--text-mid);line-height:1.55;margin-bottom:14px}
-    .mat .api{font-family:var(--mono);font-size:.72rem;color:var(--text-dim);padding:6px 10px;background:rgba(255,255,255,.03);border-radius:6px;display:inline-block;letter-spacing:.02em}
+    .mat .api{font-family:var(--mono);font-size:.7rem;color:var(--text-dim);padding:6px 10px;background:rgba(255,255,255,.03);border-radius:6px;display:block;letter-spacing:.02em;overflow-wrap:anywhere;word-break:break-word;line-height:1.5;max-width:100%}
     .mat.m-pix{color:var(--accent)}
     .mat.m-voc{color:var(--cyan)}
     .mat.m-api{color:var(--purple)}
