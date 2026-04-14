@@ -16,12 +16,14 @@ const { handler: roleCapability } = require("./invariants/roleCapability.cjs");
 const { handler: referential }    = require("./invariants/referential.cjs");
 const { handler: transition }     = require("./invariants/transition.cjs");
 const { handler: cardinality }    = require("./invariants/cardinality.cjs");
+const { handler: aggregate }      = require("./invariants/aggregate.cjs");
 
 const KIND_HANDLERS = {
   "role-capability": roleCapability,
   "referential":     referential,
   "transition":      transition,
   "cardinality":     cardinality,
+  "aggregate":       aggregate,
 };
 
 function registerKind(name, handler) {

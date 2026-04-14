@@ -261,3 +261,61 @@ describe("kind: cardinality", () => {
     expect(checkInvariants(world, ontology).ok).toBe(true);
   });
 });
+
+describe("kind: aggregate", () => {
+  const ontology = {
+    invariants: [
+      { name: "portfolio_value_sum", kind: "aggregate",
+        op: "sum", from: "Position.value",
+        where: { portfolioId: "$target.id" },
+        target: "Portfolio.totalValue",
+        tolerance: 0.01, severity: "warning" }
+    ],
+  };
+
+  it("sum совпадает — ok", () => {
+    const world = {
+      portfolios: [{ id: "p1", totalValue: 300 }],
+      positions:  [{ id: "x", portfolioId: "p1", value: 100 },
+                   { id: "y", portfolioId: "p1", value: 200 }],
+    };
+    expect(checkInvariants(world, ontology).ok).toBe(true);
+  });
+
+  it("sum не совпадает — violation warning", () => {
+    const world = {
+      portfolios: [{ id: "p1", totalValue: 250 }],
+      positions:  [{ id: "x", portfolioId: "p1", value: 100 },
+                   { id: "y", portfolioId: "p1", value: 200 }],
+    };
+    const r = checkInvariants(world, ontology);
+    expect(r.ok).toBe(true);
+    expect(r.violations.length).toBe(1);
+    expect(r.violations[0].severity).toBe("warning");
+    expect(r.violations[0].details.computed).toBe(300);
+    expect(r.violations[0].details.expected).toBe(250);
+  });
+
+  it("tolerance поглощает малую дельту", () => {
+    const world = {
+      portfolios: [{ id: "p1", totalValue: 300.005 }],
+      positions:  [{ id: "x", portfolioId: "p1", value: 300 }],
+    };
+    expect(checkInvariants(world, ontology).ok).toBe(true);
+  });
+
+  it("op:count считает строки", () => {
+    const ont = {
+      invariants: [
+        { name: "c", kind: "aggregate", op: "count",
+          from: "Position.id", where: { portfolioId: "$target.id" },
+          target: "Portfolio.positionCount", tolerance: 0 }
+      ],
+    };
+    const world = {
+      portfolios: [{ id: "p1", positionCount: 2 }],
+      positions:  [{ id: "x", portfolioId: "p1" }, { id: "y", portfolioId: "p1" }],
+    };
+    expect(checkInvariants(world, ont).ok).toBe(true);
+  });
+});
