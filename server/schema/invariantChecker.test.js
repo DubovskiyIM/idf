@@ -205,3 +205,59 @@ describe("kind: transition", () => {
     expect(checkInvariants(world, ontology, opts).ok).toBe(true);
   });
 });
+
+describe("kind: cardinality", () => {
+  it("max:1 groupBy userId — ловит дублирование", () => {
+    const ontology = {
+      invariants: [
+        { name: "single_active", kind: "cardinality",
+          entity: "Portfolio", where: { status: "active" },
+          groupBy: "userId", max: 1 }
+      ],
+    };
+    const world = { portfolios: [
+      { id: "p1", userId: "u1", status: "active" },
+      { id: "p2", userId: "u1", status: "active" },
+      { id: "p3", userId: "u1", status: "archived" },
+    ]};
+    const r = checkInvariants(world, ontology);
+    expect(r.ok).toBe(false);
+    expect(r.violations[0].details.group).toBe("u1");
+    expect(r.violations[0].details.count).toBe(2);
+  });
+
+  it("max:1 без groupBy — по всей коллекции", () => {
+    const ontology = {
+      invariants: [
+        { name: "one", kind: "cardinality", entity: "Portfolio", max: 1 }
+      ],
+    };
+    const world = { portfolios: [{ id: "p1" }, { id: "p2" }] };
+    expect(checkInvariants(world, ontology).ok).toBe(false);
+  });
+
+  it("min:1 не ловит пустые группы (только населённые)", () => {
+    const ontology = {
+      invariants: [
+        { name: "m", kind: "cardinality", entity: "Portfolio",
+          groupBy: "userId", min: 1 }
+      ],
+    };
+    const world = { portfolios: [{ id: "p1", userId: "u1" }] };
+    expect(checkInvariants(world, ontology).ok).toBe(true);
+  });
+
+  it("where-фильтр применяется до groupBy", () => {
+    const ontology = {
+      invariants: [
+        { name: "m", kind: "cardinality", entity: "Portfolio",
+          where: { status: "active" }, groupBy: "userId", max: 1 }
+      ],
+    };
+    const world = { portfolios: [
+      { id: "p1", userId: "u1", status: "active" },
+      { id: "p2", userId: "u1", status: "archived" },
+    ]};
+    expect(checkInvariants(world, ontology).ok).toBe(true);
+  });
+});
