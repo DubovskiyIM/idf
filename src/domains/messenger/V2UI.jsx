@@ -1,7 +1,6 @@
 import { useState, useEffect, useRef, useMemo } from "react";
 import ProjectionRendererV2 from "../../runtime/renderer/index.jsx";
-import { crystallizeV2 } from "../../runtime/crystallize_v2/index.js";
-import { generateEditProjections } from "../../runtime/crystallize_v2/formGrouping.js";
+import { crystallizeV2, generateEditProjections } from "@idf/core";
 import { useProjectionRoute } from "../../runtime/renderer/navigation/useProjectionRoute.js";
 import Breadcrumbs from "../../runtime/renderer/navigation/Breadcrumbs.jsx";
 import { useAuth } from "../../runtime/renderer/auth/useAuth.js";

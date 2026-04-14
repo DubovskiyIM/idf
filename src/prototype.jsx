@@ -1,7 +1,6 @@
 import { useState, useCallback, useEffect } from "react";
 import { useMantineColorScheme } from "@mantine/core";
-import { useEngine } from "./runtime/engine.js";
-import { PARTICLE_COLORS, ALPHA_LABELS, LINK_COLORS } from "./runtime/constants.js";
+import { useEngine, PARTICLE_COLORS, ALPHA_LABELS, LINK_COLORS } from "@idf/core";
 import CausalityGraph from "./components/CausalityGraph.jsx";
 import OntologyInspector from "./components/OntologyInspector.jsx";
 import IntegrityGraph from "./components/IntegrityGraph.jsx";
