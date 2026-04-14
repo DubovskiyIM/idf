@@ -112,3 +112,198 @@ describe("filterWorldForRole", () => {
       .toThrow(/unknown/);
   });
 });
+
+// ───────────────────────────────────────────────────────────────────
+// Many-to-many ownership через role.scope (§17, закрытие §26.1)
+// ───────────────────────────────────────────────────────────────────
+
+describe("filterWorldForRole — many-to-many через role.scope", () => {
+  // Fintech-сценарий: advisor ↔ clients через Assignment-коллекцию.
+  const m2mOntology = {
+    entities: {
+      User: { type: "internal" },
+      Portfolio: {
+        type: "internal",
+        // ownerField принадлежит investor'у (его собственный портфель)
+        ownerField: "userId",
+      },
+      Goal: { type: "internal", ownerField: "userId" },
+      Assignment: {
+        type: "internal",
+        // Связующая коллекция: advisor владеет assignment-записью
+        ownerField: "advisorId",
+      },
+    },
+    roles: {
+      investor: {
+        // Классический single-owner: investor видит только свои портфели
+        visibleFields: {
+          Portfolio: ["id", "name", "userId"],
+          Goal: ["id", "name", "userId"],
+        },
+      },
+      advisor: {
+        // m2m: видит assignments, где он advisor, и — через них — portfolios/goals
+        // клиентов. scope заменяет ownerField для Portfolio/Goal.
+        visibleFields: {
+          Assignment: ["id", "clientId", "status"],
+          Portfolio: ["id", "name", "userId"],
+          Goal: ["id", "name", "userId"],
+          User: ["id", "name"],
+        },
+        scope: {
+          Portfolio: {
+            via: "assignments", viewerField: "advisorId",
+            joinField: "clientId", localField: "userId",
+            statusField: "status", statusAllowed: ["active"],
+          },
+          Goal: {
+            via: "assignments", viewerField: "advisorId",
+            joinField: "clientId", localField: "userId",
+            statusField: "status", statusAllowed: ["active"],
+          },
+          User: {
+            via: "assignments", viewerField: "advisorId",
+            joinField: "clientId", localField: "id",
+          },
+        },
+      },
+    },
+  };
+
+  const m2mWorld = {
+    users: [
+      { id: "advisor_alice", name: "Alice (advisor)" },
+      { id: "client_anna", name: "Анна" },
+      { id: "client_boris", name: "Борис" },
+      { id: "client_elena", name: "Елена (бывшая)" },
+      { id: "stranger_x", name: "Незнакомец" },
+    ],
+    portfolios: [
+      { id: "pf_anna_1", userId: "client_anna", name: "Анна-1" },
+      { id: "pf_anna_2", userId: "client_anna", name: "Анна-2" },
+      { id: "pf_boris_1", userId: "client_boris", name: "Борис-1" },
+      { id: "pf_elena_1", userId: "client_elena", name: "Елена-1" },
+      { id: "pf_stranger_1", userId: "stranger_x", name: "Чужой" },
+    ],
+    goals: [
+      { id: "g_anna", userId: "client_anna", name: "Квартира" },
+      { id: "g_elena", userId: "client_elena", name: "Машина" },
+      { id: "g_stranger", userId: "stranger_x", name: "Чужая цель" },
+    ],
+    assignments: [
+      { id: "asg_1", advisorId: "advisor_alice", clientId: "client_anna", status: "active" },
+      { id: "asg_2", advisorId: "advisor_alice", clientId: "client_boris", status: "active" },
+      { id: "asg_3", advisorId: "advisor_alice", clientId: "client_elena", status: "ended" },
+      { id: "asg_4", advisorId: "advisor_bob", clientId: "client_anna", status: "active" }, // чужой advisor
+    ],
+  };
+
+  const advisor = { id: "advisor_alice" };
+
+  it("advisor видит только портфели своих активных клиентов", () => {
+    const out = filterWorldForRole(m2mWorld, m2mOntology, "advisor", advisor);
+    const ids = out.portfolios.map(p => p.id).sort();
+    expect(ids).toEqual(["pf_anna_1", "pf_anna_2", "pf_boris_1"]);
+    // Елена — ended assignment → скрыта
+    expect(ids).not.toContain("pf_elena_1");
+    // Незнакомец — без assignment → скрыт
+    expect(ids).not.toContain("pf_stranger_1");
+  });
+
+  it("advisor видит только цели активных клиентов", () => {
+    const out = filterWorldForRole(m2mWorld, m2mOntology, "advisor", advisor);
+    const ids = out.goals.map(g => g.id).sort();
+    expect(ids).toEqual(["g_anna"]);
+  });
+
+  it("advisor видит своих клиентов-user'ов (scope без statusAllowed = все assignments, включая ended)", () => {
+    // scope.User НЕ объявляет statusAllowed → включаются все связи.
+    // Это осознанный trade-off: history клиентов остаётся видна,
+    // даже если активная работа завершена. Portfolio/Goal наоборот
+    // скрывают ended — деньги не трогаем после завершения работы.
+    const out = filterWorldForRole(m2mWorld, m2mOntology, "advisor", advisor);
+    const names = out.users.map(u => u.name).sort();
+    expect(names).toEqual(["Анна", "Борис", "Елена (бывшая)"]);
+  });
+
+  it("scope с statusAllowed скрывает ended-клиентов в users тоже", () => {
+    const strictOntology = {
+      ...m2mOntology,
+      roles: {
+        ...m2mOntology.roles,
+        advisor: {
+          ...m2mOntology.roles.advisor,
+          scope: {
+            ...m2mOntology.roles.advisor.scope,
+            User: {
+              via: "assignments", viewerField: "advisorId",
+              joinField: "clientId", localField: "id",
+              statusField: "status", statusAllowed: ["active"],
+            },
+          },
+        },
+      },
+    };
+    const out = filterWorldForRole(m2mWorld, strictOntology, "advisor", advisor);
+    const names = out.users.map(u => u.name).sort();
+    expect(names).toEqual(["Анна", "Борис"]);
+  });
+
+  it("advisor видит свои assignment-записи через стандартный ownerField", () => {
+    const out = filterWorldForRole(m2mWorld, m2mOntology, "advisor", advisor);
+    expect(out.assignments).toHaveLength(3);
+    expect(out.assignments.every(a => a.id !== "asg_4")).toBe(true);
+  });
+
+  it("чужой advisor видит только своих клиентов (изолирован)", () => {
+    const out = filterWorldForRole(m2mWorld, m2mOntology, "advisor", { id: "advisor_bob" });
+    // У Боба только asg_4 → client_anna → 2 её portfolio
+    expect(out.portfolios.map(p => p.id).sort()).toEqual(["pf_anna_1", "pf_anna_2"]);
+  });
+
+  it("advisor без активных клиентов видит пустоту (statusAllowed='active' отсекает)", () => {
+    const loneWorld = {
+      ...m2mWorld,
+      assignments: [
+        { id: "asg_x", advisorId: "advisor_alice", clientId: "client_anna", status: "ended" },
+      ],
+    };
+    const out = filterWorldForRole(loneWorld, m2mOntology, "advisor", advisor);
+    expect(out.portfolios).toEqual([]);
+    expect(out.goals).toEqual([]);
+  });
+
+  it("отсутствие via-коллекции в world → пустой набор, не throw", () => {
+    const emptyWorld = { ...m2mWorld, assignments: undefined };
+    const out = filterWorldForRole(emptyWorld, m2mOntology, "advisor", advisor);
+    expect(out.portfolios).toEqual([]);
+    expect(out.goals).toEqual([]);
+  });
+
+  it("investor-роль использует ownerField как раньше (scope не ломает backcompat)", () => {
+    const anna = { id: "client_anna" };
+    const out = filterWorldForRole(m2mWorld, m2mOntology, "investor", anna);
+    expect(out.portfolios.map(p => p.id).sort()).toEqual(["pf_anna_1", "pf_anna_2"]);
+    expect(out.goals.map(g => g.id)).toEqual(["g_anna"]);
+  });
+
+  it("scope с неверным localField — defensive empty, не throw", () => {
+    const brokenOntology = {
+      entities: {
+        Portfolio: { type: "internal" }, // нет ownerField
+      },
+      roles: {
+        weird: {
+          visibleFields: { Portfolio: ["id"] },
+          scope: {
+            Portfolio: { via: "assignments", viewerField: "advisorId", joinField: "clientId" },
+            // нет localField, нет entity.ownerField → fallback пустой
+          },
+        },
+      },
+    };
+    const out = filterWorldForRole(m2mWorld, brokenOntology, "weird", advisor);
+    expect(out.portfolios).toEqual([]);
+  });
+});

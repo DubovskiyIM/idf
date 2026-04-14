@@ -58,8 +58,8 @@
 
 ## Открытые дыры (§26 manifesto)
 
-### 1. Many-to-many ownership для advisor→clients
-`ownerField` — single user. Для advisor-assignment-паттерна нужен `assignmentEntity` или расширение онтологии. **Статус:** проект advisor-UI отложен — потребовало бы нового первичного механизма в ядре. Зафиксирован как honest open item.
+### 1. ~~Many-to-many ownership для advisor→clients~~ **ЗАКРЫТО**
+Реализован `role.scope` механизм в `filterWorld.cjs` (см. «Что реализовано частично»). Backcompat сохранён.
 
 ### 2. Preapproval scope для agent сверх JWT
 JWT даёт scope (какой пользователь), но не лимиты (max ордер, разрешённые активы). Робо-эдвайзер не может выполнять preapproved orders без дополнительного декларативного механизма. **Возможное решение:** `user.agentPreapproval: { maxOrderRUB, allowedAssetTypes, expiresAt }` + guard в `agent_execute_preapproved_order`.
@@ -90,12 +90,20 @@ AntD поддерживает `Statistic` primitive (trend-стрелка), Mant
 
 ## Что реализовано частично
 
-### Advisor UI (Шаг 7) — MVP через клиентский фильтр
-- `Assignment` сущность (advisorId, clientId, status) с client-side фильтром по `advisorId === viewer.id || !advisorId`
+### Advisor UI (Шаг 7) — закрыт, включая серверный m2m
+- `Assignment` сущность (advisorId, clientId, status)
 - 6 advisor intents: assign_client / unassign / pause / resume / create_recommendation_for_client / send_client_message
 - `AdvisorReviewCanvas` — выбор клиента → dashboard с P&L, аллокацией, risk profile, рекомендациями
 - 3 demo-клиента в seed (Анна, Борис, Елена) с полными портфелями, целями, risk profiles
-- **⚠ Server-side many-to-many через via-assignment filterWorld — зафиксирован как §26.1** — текущий MVP работает через клиентский фильтр, для production нужно расширить `filterWorld.cjs` до `ownerField: { via: "assignments", joinField: "clientId", viewerField: "advisorId" }`.
+- **§26.1 ЗАКРЫТ мини-тестом:** `role.scope` механизм в `server/schema/filterWorld.cjs`:
+  ```js
+  scope: {
+    Portfolio: { via: "assignments", viewerField: "advisorId",
+                 joinField: "clientId", localField: "userId",
+                 statusField: "status", statusAllowed: ["active"] }
+  }
+  ```
+  Семантика: `advisor.scope[X]` видит `X` где `X[localField] ∈ { a[joinField] | a ∈ world[via], a[viewerField] === viewer.id, a[statusField] ∈ statusAllowed }`. Backcompat сохранён (scope отсутствует → работает entity.ownerField как раньше). 10 unit-тестов в `server/schema/filterWorld.test.js` покрывают: строгий m2m, изоляцию advisor'ов, statusAllowed-фильтр, пустые via-коллекции, разные `localField` (userId / id), defensive empty при нечитаемой декларации.
 
 ### Regulator PDF report (Шаг 8) — через print media query
 - `RegulatorReportCanvas` — print-ready HTML с секциями: сводка / таблица сделок / правила

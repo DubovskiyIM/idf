@@ -198,20 +198,54 @@ export const ONTOLOGY = {
     },
 
     advisor: {
-      // human consultant. many-to-many клиенты через Assignment entity.
-      // ⚠ Клиентский фильтр покрывает UI-режим. Серверный filterWorld
-      //   с via-assignment — §26.1 open item.
+      // human consultant. Many-to-many клиенты через Assignment entity.
+      // §26.1 ЗАКРЫТ: role.scope поддерживается в server/schema/filterWorld.cjs.
       canExecute: [
         "assign_client", "unassign_client", "pause_assignment", "resume_assignment",
         "create_recommendation_for_client", "send_client_message",
       ],
       visibleFields: {
         User: ["id", "name", "email"],
-        Assignment: "own", // ownerField: advisorId = viewer.id
+        Assignment: ["id", "clientId", "status", "createdAt", "notes"],
         Portfolio: ["id", "userId", "name", "baseCurrency", "totalValue", "pnl", "riskProfile"],
-        Goal: ["id", "userId", "name", "targetAmount", "progress"],
+        Goal: ["id", "userId", "name", "targetAmount", "progress", "deadline"],
         Recommendation: ["id", "userId", "source", "type", "status", "createdAt"],
         Alert: ["id", "userId", "severity", "message", "triggeredAt"],
+        RiskProfile: ["id", "userId", "level", "computedScore"],
+      },
+      // M2M scope: advisor видит entity X, где X[localField] ∈ { a[joinField] | a ∈ assignments, a.advisorId === viewer.id, a.status === "active" }.
+      // Assignment сама фильтруется по entity.ownerField (advisorId).
+      scope: {
+        User: {
+          via: "assignments", viewerField: "advisorId",
+          joinField: "clientId", localField: "id",
+          statusField: "status", statusAllowed: ["active", "paused"],
+        },
+        Portfolio: {
+          via: "assignments", viewerField: "advisorId",
+          joinField: "clientId", localField: "userId",
+          statusField: "status", statusAllowed: ["active"],
+        },
+        Goal: {
+          via: "assignments", viewerField: "advisorId",
+          joinField: "clientId", localField: "userId",
+          statusField: "status", statusAllowed: ["active"],
+        },
+        Recommendation: {
+          via: "assignments", viewerField: "advisorId",
+          joinField: "clientId", localField: "userId",
+          statusField: "status", statusAllowed: ["active"],
+        },
+        Alert: {
+          via: "assignments", viewerField: "advisorId",
+          joinField: "clientId", localField: "userId",
+          statusField: "status", statusAllowed: ["active"],
+        },
+        RiskProfile: {
+          via: "assignments", viewerField: "advisorId",
+          joinField: "clientId", localField: "userId",
+          statusField: "status", statusAllowed: ["active"],
+        },
       },
     },
 
