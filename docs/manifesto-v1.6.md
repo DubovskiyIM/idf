@@ -5,6 +5,10 @@
 **Версия:** 1.6
 **Статус:** **восьмидоменный прототип: 527 намерений** (booking 21 + planning 17 + workflow 15 + messenger 100 + meshok 225 + lifequest 56 + reflect 47 + **invest 46**). **329 unit-тестов ядра + 541 unit-тест прикладной части** (итого 870 с legacy-тестами), CI (GitHub Actions), **71-шаговый agent-smoke**. **Пять слоёв проекции §17 реализованы** — добавлена document-материализация как 4-я базовая (§1). **Семь архетипов**. **Четыре UI-адаптера** (Mantine corporate / Doodle sketch / Apple visionOS-glass / **AntD enterprise-fintech**). **10-й полевой тест — invest** (fintech / personal investing): закрыл 6 §26 open items одним циклом — m2m ownership (role.scope), preapproval guard, document materialization, capability surface, reference entities, chart-primitive как новая категория.
 
+**Изменения в v1.6.2 (2026-04-14 post-release, voice prototype):**
+
+- **Voice — 4-я базовая материализация (§1, §17)**. `server/schema/voiceMaterializer.cjs` + `GET /api/voice/:domain/:projection` — generic функция превращает любую проекцию в speech-script: `turns: [{ role: "system" | "assistant" | "prompts", text, items? }]`. Три формата: **json** (для voice-agent: Claude Voice / OpenAI realtime), **ssml** (XML для TTS-движков), **plain** (для debug/IVR). Brevity: top-3 элемента, money человеческим языком ("2.5 миллионов рублей"), prompts из `roles[role].canExecute`. Переиспользует `filterWorldForRole`. Все 5 архетипов поддержаны (catalog/feed/detail/dashboard/wizard). 17 unit-тестов + 3 smoke-шага. **Voice больше не honest border §1 — четыре материализации реализованы.**
+
 **Изменения в v1.6.1 (2026-04-14 post-release, унификация ролей):**
 
 - **Таксономия базовых ролей** (§5) — `role.base: owner | viewer | agent | observer` как метаданный маркер. Все 8 доменов аннотированы. Helpers в `server/schema/baseRoles.cjs` (`getRolesByBase`, `auditOntologyRoles`, observer-invariant). **Не замена** доменных имён, а semantic layer для cross-domain инструментов и SDK defaults. 26 unit-тестов.
@@ -111,7 +115,7 @@
 | Материализация | Output | Реализация |
 |---|---|---|
 | **pixels** | React-дерево для человека | UI-адаптер (Mantine / shadcn / Apple / AntD) + ProjectionRendererV2 |
-| **voice** | speech turn-structured поток | [контракт формализован, реализация — v1.7+] |
+| **voice** | speech turn-structured поток | `voiceMaterializer.cjs` + `/api/voice/:domain/:projection` (v1.6.2 prototype) — JSON turns / SSML / plain |
 | **agent-API** | REST с schema / world / exec | `/api/agent/:domain/*` (§17) |
 | **document** | HTML / JSON / (PDF) для чтения или архива | `/api/document/:domain/:projection` (§17, закрыто v1.6) |
 
@@ -1259,7 +1263,7 @@ for (const iEf of intentEffects) {
 
 ### Частично реализовано
 
-- **§1 Voice materialization** — контракт сформулирован (speech-turn-structured поток), реализация отсутствует. Эксперимент в плане v1.7.
+- ~~§1 Voice materialization~~ — **закрыто в v1.6.2**: `voiceMaterializer.cjs` + `/api/voice/:domain/:projection` (3 формата: json / ssml / plain).
 - **§4 Темпоральная реактивность** — темпоральные предикаты работают через polling (pragmatic). Dedicated scheduler «условие станет истинным через N минут» не реализован.
 - **§7 Overlay(I)** — трёхслойный (W ⊕ O ⊕ Δ) с v1.5.
 - **§11 Алгебра композиции** — таблица есть, integrity rules через graph queries. Batch composition — рекурсивная валидация.
@@ -1309,7 +1313,7 @@ Field-test 10 (invest домен) за один цикл закрыл 6 open ite
 - **Темпоральная реактивность как first-class scheduler** — polling достаточен для прототипа, production нужен dedicated timer для «условие станет истинным через N минут».
 - **Composite / polymorphic entities** — union-типы и вложенные структуры не формализованы в `entity.kind`.
 - **Adapter capability mismatch при extending primitives** — когда кто-то добавляет новый primitive kind (как chart в v1.6), существующие адаптеры не уведомляются. Будущее: declare-and-check при startup.
-- **Voice materialization** — 4-я базовая по §1, контракт готов (speech-turn + projection), нет прототипа.
+- ~~Voice materialization~~ — **закрыто в v1.6.2** (`voiceMaterializer.cjs` + `/api/voice/*`). Production-extension: integration с Claude Voice realtime / Yandex SpeechKit / Amazon Polly + voice-агент с turn-by-turn session.
 - **Server-rendered PDF / DOCX** — `documentMaterializer` отдаёт HTML; PDF через puppeteer + цифровая подпись — production extension.
 
 ### Что это даёт

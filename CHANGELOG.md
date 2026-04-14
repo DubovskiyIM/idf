@@ -1,5 +1,66 @@
 # Changelog
 
+## v1.6.2 — 2026-04-14 (post-release)
+
+**Voice materialization prototype — §1 четыре материализации фактически реализованы**
+
+### Added
+
+- **`server/schema/voiceMaterializer.cjs`** — generic функция превращает любую проекцию в speech-script:
+  - Структура: `{ title, meta, turns: [{role, text, items?}], footer }`
+  - Роли turn'ов: `system` (контекст для LLM/intro), `assistant` (что озвучить), `prompts` (что ожидаем услышать)
+  - Поддержка всех 5 архетипов: catalog (top-3 + count), feed (newest first), detail (witness facts + sub-collection note), dashboard (multi-section), wizard (current step + session note), canvas (placeholder)
+- **`server/routes/voice.js`** — `GET /api/voice/:domain/:projection`:
+  - Auth: JWT, viewer из токена, role через `?as=`
+  - Format negotiation: `?format=json|ssml|plain` или Accept header
+  - Реиспользует `filterWorldForRole` — voice viewer-scoped
+- **Три output формата:**
+  - **`json`** — structured turns для voice-agent (Claude Voice, OpenAI realtime)
+  - **`ssml`** — XML с `<speak>`, `<prosody>`, `<break>` для TTS-движков (Amazon Polly, Google TTS, Yandex SpeechKit)
+  - **`plain`** — текст с маркерами `[role]` для debug / phone-IVR baseline
+- **Brevity heuristics для voice:**
+  - `TOP_ITEMS = 3` для catalog/feed → "и ещё N" для остатка
+  - Money читается человечески: `2_500_000` → "2.5 миллионов рублей"
+  - Percentage: `27` → "27 процентов"
+  - Timestamp: relative date format на русском
+  - Intent prompts: top-5 из `roles[role].canExecute`
+- **Russian field labels** — domain-agnostic dict (name → "название", totalValue → "стоимость", и т.д.)
+- **Numerical agreement** — `speakCount` склоняет правильно ("один элемент" / "2 элемента" / "5 элементов")
+
+### Tests
+
+- **17 unit-тестов** в `server/schema/voiceMaterializer.test.js`:
+  - catalog: count + top-3 + brevity + money speaking + empty fallback
+  - detail: title + facts + sub-collection note + missing id
+  - feed: count + summary first items
+  - wizard: первый шаг + system hint про session
+  - intent prompts: extract из ontology + brevity (max 5)
+  - SSML: валидный XML + escape + locale
+  - plain: маркеры ролей + prompts с дефисами
+- **3 smoke-шага** (72-74) → итого **74 шага**:
+  - 72: voice json + meta.materialization === "voice"
+  - 73: SSML по Accept header
+  - 74: plain text с маркерами
+
+### Documentation
+
+- **Манифест §1 / §17** — voice больше не honest border. Таблица §1: voice реализован.
+- **§26** — voice убран из open items, остаётся как production-extension (integration с Claude Voice / SpeechKit, turn-by-turn sessions).
+- **CHANGELOG** — v1.6.2 entry
+
+### Metrics
+
+- **371 unit-тестов** (было 355, +16)
+- **74-шаговый agent-smoke** (было 71, +3)
+- **24 test files**
+- 4-я материализация §1 фактически реализована (оставалась последней open border release v1.6)
+
+### Why now
+
+§25 roadmap «voice prototype» был next-priority. С этим закрытием §1 «pixels · voice · agent-API · document» — все 4 материализации работают через `/api/{voice|document|agent}/*` + UI-pixels. Главный тезис парадигмы (§2: «UI — пересечение проекций и намерений; pixels/voice/agent-API/document — равноправные материализации») теперь полностью проверяем на коде.
+
+---
+
 ## v1.6.1 — 2026-04-14 (post-release)
 
 **Унифицированные базовые роли — §5 таксономия (owner / viewer / agent / observer)**

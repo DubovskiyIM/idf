@@ -820,7 +820,35 @@ async function main() {
   const docMiss = await get("/api/document/invest/unknown_projection?format=json", jwt);
   assert(docMiss.status === 404, "71", `unknown projection 404 ${docMiss.status}`);
 
-  process.stdout.write("\n[smoke ✓] Все 71 шаг прошёл успешно (booking 13 + planning 13 + meshok 6 + workflow 5 + messenger 5 + lifequest 8 + reflect 8 + invest 10 preapproval + document 3)\n");
+  // §1: voice — 4-я базовая материализация (v1.6.2 prototype)
+
+  log("72", "GET /api/voice/invest/portfolios_root?format=json");
+  const voiceJson = await get("/api/voice/invest/portfolios_root?format=json&as=owner", jwt);
+  assert(voiceJson.status === 200, "72", `voice json ${voiceJson.status}`);
+  assert(voiceJson.body.meta?.materialization === "voice", "72",
+    "meta.materialization === voice", voiceJson.body);
+  assert(Array.isArray(voiceJson.body.turns), "72", "turns is array");
+  assert(voiceJson.body.turns[0]?.role === "system", "72", "первый turn — system");
+
+  log("73", "GET /api/voice/invest/portfolios_root (SSML по Accept)");
+  const voiceSsmlResp = await fetch(`${HOST}/api/voice/invest/portfolios_root?as=owner`, {
+    headers: { "Authorization": `Bearer ${jwt}`, "Accept": "application/xml" }
+  });
+  assert(voiceSsmlResp.status === 200, "73", `voice ssml ${voiceSsmlResp.status}`);
+  const ssml = await voiceSsmlResp.text();
+  assert(ssml.startsWith("<?xml"), "73", "ssml starts with <?xml");
+  assert(ssml.includes("<speak"), "73", "содержит <speak");
+
+  log("74", "GET /api/voice/invest/portfolios_root?format=plain");
+  const voicePlainResp = await fetch(`${HOST}/api/voice/invest/portfolios_root?format=plain&as=owner`, {
+    headers: { "Authorization": `Bearer ${jwt}` }
+  });
+  assert(voicePlainResp.status === 200, "74", `voice plain ${voicePlainResp.status}`);
+  const plain = await voicePlainResp.text();
+  assert(plain.includes("[system]"), "74", "plain содержит [system]");
+  assert(plain.includes("[assistant]"), "74", "plain содержит [assistant]");
+
+  process.stdout.write("\n[smoke ✓] Все 74 шага прошли успешно (booking 13 + planning 13 + meshok 6 + workflow 5 + messenger 5 + lifequest 8 + reflect 8 + invest 10 preapproval + document 3 + voice 3)\n");
 }
 
 main().catch(err => {

@@ -30,6 +30,11 @@ app.use("/api/agent/:domain", makeAgentRouter(effectsRouter.broadcast));
 const { makeDocumentRouter } = require("./routes/document.js");
 app.use("/api/document/:domain", makeDocumentRouter());
 
+// §1: voice — 4-я базовая материализация (v1.6.2 prototype).
+// /api/voice/:domain/:projection → JSON turns | SSML | plain text.
+const { makeVoiceRouter } = require("./routes/voice.js");
+app.use("/api/voice/:domain", makeVoiceRouter());
+
 // LLM enrichment — кристаллизация через Claude API
 const crystallizeRouter = require("./routes/crystallize.js");
 app.use("/api/crystallize", crystallizeRouter);
