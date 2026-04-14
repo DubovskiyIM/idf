@@ -24,6 +24,13 @@ import MessengerUI from "./domains/messenger/ManualUI.jsx";
 import V2Shell from "./runtime/renderer/shell/V2Shell.jsx";
 import { useAuth } from "./runtime/renderer/auth/useAuth.js";
 import AuthGate from "./runtime/renderer/auth/AuthGate.jsx";
+import { registerUIAdapter } from "./runtime/renderer/adapters/registry.js";
+import { mantineAdapter } from "./runtime/renderer/adapters/mantine/index.jsx";
+import { shadcnAdapter } from "./runtime/renderer/adapters/shadcn/index.jsx";
+import { usePersonalPrefs } from "./runtime/renderer/personal/usePersonalPrefs.js";
+
+const UI_KITS = { mantine: mantineAdapter, shadcn: shadcnAdapter };
+const DOMAIN_DEFAULT_KITS = { lifequest: shadcnAdapter };
 
 const DOMAINS = {
   booking: { ...bookingDomain, UI: BookingUI },
@@ -36,6 +43,15 @@ const DOMAINS = {
 
 export default function App() {
   const [domainId, setDomainId] = useState(() => localStorage.getItem("idf_domain") || "booking");
+
+  // UI-kit адаптер: prefs override → дефолт домена → mantine
+  const { prefs: uiPrefs } = usePersonalPrefs();
+  const adapter = UI_KITS[uiPrefs?.uiKit]
+    || DOMAIN_DEFAULT_KITS[domainId]
+    || mantineAdapter;
+  registerUIAdapter(adapter);
+  const adapterKey = `kit-${uiPrefs?.uiKit || domainId}`;
+
   const [topView, setTopView] = useState(null); // null | "graph" | "ontology" | "integrity"
   const [tab, setTab] = useState("intents");
   const [mode, setMode] = useState(() => localStorage.getItem("idf_mode") || "manual");
@@ -130,7 +146,7 @@ export default function App() {
   }, []);
 
   return (
-    <div style={{ height: "100vh", display: "flex", flexDirection: "column", background: "#0c0e14", color: "#c9cdd4", fontFamily: "ui-monospace, 'SF Mono', 'Cascadia Code', monospace", fontSize: 13, overflow: "hidden" }}>
+    <div key={adapterKey} style={{ height: "100vh", display: "flex", flexDirection: "column", background: "#0c0e14", color: "#c9cdd4", fontFamily: "ui-monospace, 'SF Mono', 'Cascadia Code', monospace", fontSize: 13, overflow: "hidden" }}>
       {/* HEADER */}
       <div style={{ padding: "8px 16px", borderBottom: "1px solid #1e2230", display: "flex", alignItems: "center", gap: 10, flexShrink: 0, position: "relative" }}>
         <span style={{ fontSize: 14, fontWeight: 700, color: "#e2e5eb" }}>IDF</span>
