@@ -28,7 +28,7 @@ UI — это пересечение двух структур: **проекци
 | **Planning** | 17 | 5 | Совместное планирование встреч: опросы, голосование, кворум |
 | **Workflow** | 15 | 6 | Редактор рабочих процессов с React Flow и серверным исполнением |
 
-Один движок, один рантайм, один валидатор — **семь наборов определений**. **541 unit-тест**, 58-шаговый agent-smoke, CI через GitHub Actions.
+Один движок, один рантайм, один валидатор — **семь наборов определений**. **541 unit-тест**, 71-шаговый agent-smoke, CI через GitHub Actions.
 
 ### Три UI-адаптера на одной онтологии (валидация §17)
 
@@ -51,7 +51,7 @@ UI — это пересечение двух структур: **проекци
 - **Custom Canvas registry** — `registerCanvas(projectionId, Component)` для domain-specific UI (charts, 2D inputs, spatial canvases).
 - **Reactive Rules Engine** — декларативная автоматизация: trigger + 4 модификатора (aggregation/threshold/schedule/condition).
 - **Token Bridge** — формальный CSS-vars contract между адаптером и domain code.
-- **Агентский слой** — JSON-API для LLM-агента, живущего в общем `Φ` с людьми. 7 доменов с agent layer.
+- **Агентский слой** — JSON-API для LLM-агента, живущего в общем `Φ` с людьми. 8 доменов с agent layer.
 - **LLM enrichment** — опциональный проход Claude API для обогащения артефактов (labels, icons, placeholders).
 
 ![IDF](./docs/screenshots/booking-v2.png)
@@ -59,7 +59,7 @@ UI — это пересечение двух структур: **проекци
 
 ## Агентский слой
 
-Демонстрация тезиса «LLM — равноправный пользователь намерений». REST endpoint'ы (`/api/agent/:domain/{schema,world,exec}`) под JWT превращают агента в обычного клиента интент-API. Все 7 доменов имеют agent layer с декларативным role-based доступом через `ontology.roles.agent`.
+Демонстрация тезиса «LLM — равноправный пользователь намерений». REST endpoint'ы (`/api/agent/:domain/{schema,world,exec}`) под JWT превращают агента в обычного клиента интент-API. Все 8 доменов имеют agent layer с декларативным role-based доступом через `ontology.roles.agent`.
 
 - Агент читает схему, фильтрует мир по роли, вызывает намерения
 - Конфликт-rejection работает естественно (два клиента → один 409)
@@ -99,20 +99,20 @@ npm run dev       # :5173 — Vite dev server
 ```bash
 npm test              # 541 unit-тест
 npm run build         # production-сборка
-npm run agent-smoke   # 58-шаговый integration test агентского слоя (7 доменов)
+npm run agent-smoke   # 71-шаговый integration test агентского слоя (8 доменов)
 npm run meshok-demo   # демо-сценарий аукциона (12 шагов)
 npm run crystallize-llm  # LLM enrichment (требует ANTHROPIC_API_KEY)
 ```
 
 ## Что читать
 
-1. **[Манифест v1.5](docs/manifesto-v1.5.md)** — 26 разделов, формальное описание парадигмы. Читать целиком, если интересно *почему*.
-2. **[Полевые тесты 1–9](docs/)** — девять доменов, в которых парадигма проверялась на прочность. Включая [reflect postmortem](docs/superpowers/specs/2026-04-14-reflect-postmortem.md) — анализ паттернов после 9-го теста.
+1. **[Манифест v1.6](docs/manifesto-v1.6.md)** — 26 разделов, формальное описание парадигмы. Читать целиком, если интересно *почему*.
+2. **[Полевые тесты 1–10](docs/)** — десять доменов, в которых парадигма проверялась на прочность. Включая [reflect postmortem](docs/superpowers/specs/2026-04-14-reflect-postmortem.md) — анализ паттернов после 10-го теста (invest, fintech).
 3. **[Agent-demo](docs/agent-demo.md)** — как LLM-агент становится клиентом интент-API. Читать, если интересно *как «UI — это не код»*.
 
 ## Статус
 
-**Исследовательский прототип v1.5.** Код работает, 541 тест проходит, CI настроен, TypeScript типы ядра определены. **Аспирационная категория §26 манифеста — пуста**: всё что декларировано, реализовано. Парадигма готова к SDK extraction и production usage.
+**Исследовательский прототип v1.6.** Код работает, 329 тестов ядра проходит, CI настроен, TypeScript типы ядра определены. **Аспирационная категория §26 манифеста — пуста**: всё что декларировано, реализовано. Парадигма готова к SDK extraction и production usage.
 
 ## Границы применимости
 
@@ -130,7 +130,7 @@ npm run crystallize-llm  # LLM enrichment (требует ANTHROPIC_API_KEY)
 - **Бэкенд:** Node.js + Express, SQLite (better-sqlite3), WebSocket, JWT + bcrypt
 - **Кристаллизатор:** чистые функции JavaScript, 7 архетипов, Custom Canvas registry, TypeScript типы
 - **Reactive Rules Engine:** event-condition-action + 4 модификатора (aggregation/threshold/schedule/condition)
-- **Агентский слой:** 7 доменов, REST API, `server/schema/*` (чистые CJS-модули)
+- **Агентский слой:** 8 доменов, REST API, `server/schema/*` (чистые CJS-модули)
 - **LLM enrichment:** Claude API через `@anthropic-ai/sdk` (опционально)
 - **CI:** GitHub Actions (vitest + vite build)
 

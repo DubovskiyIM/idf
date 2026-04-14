@@ -1,5 +1,144 @@
 # Changelog
 
+## v1.6.0 — 2026-04-14
+
+**10-й полевой тест: invest (fintech / personal investing) + AntD-адаптер + закрытие 6 §26 open items**
+
+### Added — Домен invest
+
+- **Домен `invest`** — personal investing + робо-эдвайзер:
+  - 46 интентов, 20 проекций, 12 сущностей (User, Portfolio, Position, Asset, Transaction, Goal, RiskProfile, Recommendation, Alert, Watchlist, MarketSignal, Assignment, AgentPreapproval)
+  - 4 роли: investor / advisor / agent / observer
+  - 7 правил Rules Engine — **все 4 v1.5 extension в одном домене** (aggregation × 2, threshold × 1, schedule × 2, condition × 2)
+  - 3 custom canvas: AllocationPieCanvas, MarketLineCanvas, AdvisorReviewCanvas
+  - 2 wizard: risk_questionnaire (4 шага), portfolio_onboarding (3 шага)
+  - Seed ~60 эффектов: 3 портфеля, 10 позиций, 14 сделок, 3 цели, 4 рекомендации, 4 alerts, 2 watchlist, 5 market signals, 3 демо-клиента
+
+### Added — Четвёртый UI-адаптер AntD
+
+- **AntD enterprise-fintech адаптер** — `src/runtime/renderer/adapters/antd/`:
+  - parameter / button / shell / primitive (+ chart / sparkline / statistic) / icon
+  - `@ant-design/plots` для chart (Line / Pie / Column / Area)
+  - `@ant-design/icons` для 70+ emoji mapping
+  - `Statistic` с trend-стрелкой для финансовых метрик
+  - ConfigProvider + русская локаль + dark-algorithm
+  - InputNumber с money/percentage форматтерами (prefix ₽, suffix %)
+  - PrefsPanel получил 4-й segment
+  - Дефолт для invest-домена через DOMAIN_ADAPTERS
+
+### Added — Закрытия §26 (6 items одним циклом)
+
+- **§26.1 Many-to-many ownership (§5, §17)** → `role.scope` в `server/schema/filterWorld.cjs`:
+  ```js
+  scope: { X: { via, viewerField, joinField, localField, statusAllowed? } }
+  ```
+  Приоритет: `role.scope > entity.kind:"reference" > entity.ownerField > none`. Backcompat 100%. 10+ unit-тестов.
+- **§26.2 Preapproval guard (§17)** → `server/schema/preapprovalGuard.cjs`:
+  - 5 типов предикатов: `active` / `notExpired` / `maxAmount` / `csvInclude` / `dailySum` (с фильтрацией по initiator)
+  - Hook в `agent.js::exec` перед `buildEffects` → 403 `preapproval_denied` с structured details
+  - 16 unit-тестов: whitelist, owner-изоляция, вчерашние / user-initiated не считаются в daily
+- **§26.3 Document materialization (§1, §17)** → `server/schema/documentMaterializer.cjs` + `server/routes/document.js`:
+  - Generic функция для catalog/feed/detail/dashboard → structured document-граф
+  - `GET /api/document/:domain/:projection?format=html|json&as=role`
+  - HTML print-ready + JSON для агентов/пайплайнов
+  - Переиспользует `filterWorldForRole` — document viewer-scoped через те же role.scope/ownerField/kind
+  - 15 unit-тестов: catalog с filter, detail + sub-collections, dashboard embedded, money-форматирование, HTML-escape
+  - §1 расширен до 4 базовых материализаций: pixels / voice / agent-API / document
+- **§26.4+26.6 Capability surface адаптера (§16a, §17)** → `adapter.capabilities`:
+  - Декларативная surface: `{ kind: { type: descriptor } }`, descriptor = true/false/{chartTypes}/…
+  - `getCapability(kind, type)` и `supportsVariant(kind, type, variantKey, variant)` helpers
+  - null = unknown → assume supported (backcompat)
+  - Chart-primitive: console.warn + SVG-fallback при mismatch
+  - 7 unit-тестов
+- **§26.5 Reference entities (§14)** → `entity.kind: "reference"`:
+  - Справочные данные (Asset, MarketSignal) видны всем; ownership не применяется
+  - Visibility через `role.visibleFields` остаётся
+  - 2 unit-теста
+
+### Added — Chart-primitive как новая категория (§16a)
+
+- `src/runtime/renderer/primitives/chart.jsx` — первый primitive вне text/image/container:
+  - Декларативный spec `{ type: "chart", chartType, data, xField, yField, seriesField, height }`
+  - SVG-fallback (Line + Pie) для адаптеров без chart-реализации
+  - Adapter-delegation через `getAdaptedComponent("primitive", "chart")` + capability check
+  - `Sparkline` для mini-графиков в cardSpec
+
+### Added — ArchetypeWizard source.inline
+
+- `source.inline: [...]` — статические опции без сидинга в Φ (приоритет над `source.collection`)
+- Используется в risk_questionnaire, portfolio_onboarding
+- Общее улучшение для всех доменов
+
+### Added — Внешние ML-сервисы
+
+- `invest-ml/` :3003 — мок market signals (price/volume/sentiment), push каждые 30с
+- `invest-fuzzy/` :3004 — fuzzy risk scoring для экзотических активов, push каждые 60с
+- `market-data/` :3006 — price tick feed, обновления каждые 15с
+- Все пушат foreign-эффекты через `POST /api/effects/seed`
+
+### Added — Agent smoke тест (71 шаг)
+
+- +7 invest шагов (59-65): schema / world / propose_rebalance / flag_anomaly / fetch_signal / buy_asset-403
+- +3 preapproval шага (66-68): success / maxAmount reject / csvInclude reject
+- +3 document шага (69-71): JSON, HTML, 404 на unknown projection
+
+### Added — Новые поля-роли (§14)
+
+- `money` — с currency-форматом
+- `percentage` — 0–100 с суффиксом %
+- `trend` — up/down/flat (Statistic в AntD)
+- `ticker` — моноширинный (финансовые тикеры)
+
+### Added — Advisor UI + Regulator report
+
+- `AdvisorReviewCanvas` — many-to-many dashboard клиентов: selector, P&L (Statistic), allocation (Pie), risk profile, рекомендации
+- 6 advisor intents: assign_client / unassign / pause / resume / create_recommendation_for_client / send_client_message
+- `RegulatorReportCanvas` — print-ready HTML с аудит-трейлом (causal chain, initiator colors)
+- Кнопка «📄 Server-side document» → открывает `/api/document/invest/transactions_history?as=observer`
+
+### Changed
+
+- **CLAUDE.md** — манифест v1.6 reference, 8 доменов в таблице, 4 адаптера с capability
+- **README.md** — 8 доменов, 527 интентов
+- **Манифест** → `docs/manifesto-v1.6.md` (1141 → ~1280 строк)
+- **`server/schema/filterWorld.cjs`** — приоритет row-filter: `role.scope > entity.kind > ownerField`
+- **`server/routes/agent.js`** — preapproval hook
+- **`server/index.js`** — смонтирован document-router
+- **`src/standalone.jsx`** — POST typemap включает projections, 4-й адаптер в UI_KITS
+- **`src/runtime/renderer/adapters/registry.js`** — `getCapability`/`supportsVariant`
+- **`src/runtime/renderer/primitives/index.js`** — chart + sparkline в реестре
+
+### Fixed
+
+- **nav-граф ambiguity**: catalog клик по Transaction уводил в Portfolio (entities overlap). Добавлены detail-проекции для всех mainEntity + сужены entities.
+- **feed requires composer**: transactions/recommendations/alerts заменены на catalog (нет creator-intent'ов для composer).
+- **pre-existing test**: `server/schema/userRegisterEffect.test.js` → `@idf/core` импорт
+
+### Metrics
+
+- **329 unit-тестов ядра** (было 279 в начале field-test 10, +50 закрытий)
+- **71-шаговый agent-smoke** (было 58, +13)
+- **527 интентов** в 8 доменах (было 481 в 7)
+- **4 UI-адаптера** (было 3)
+- **20 проекций** в invest + 2 wizard
+- Build ок
+
+### Honest Border (v1.6 new)
+
+- **§1 Voice** — контракт есть, реализации нет (v1.7+)
+- **§4 Темпоральный scheduler** — polling вместо dedicated timer
+- **Composite entities** — union-типы не формализованы в `entity.kind`
+- **Server-rendered PDF** — documentMaterializer отдаёт HTML, PDF через puppeteer — extension
+- **Adapter capability mismatch** — новый primitive kind (chart в v1.6) не нотифицирует существующие адаптеры
+
+### Documentation
+
+- `docs/manifesto-v1.6.md` — обновлённый манифест с новыми разделами §5 m2m, §14 entity.kind, §17 preapproval + document, §22 v1.5 extensions, §26 revision
+- `docs/field-test-10.md` — полевой тест invest с полной постмортем
+- `docs/superpowers/plans/2026-04-14-field-test-10-fintech.md` — план реализации
+
+---
+
 ## v1.5.0 — 2026-04-14
 
 **9-й полевой тест: reflect (дневник эмоций по Yale RULER)**
