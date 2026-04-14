@@ -135,6 +135,39 @@
     .algebra-legend span{display:inline-flex;align-items:center;gap:6px}
     .algebra-legend .d{width:10px;height:3px;border-radius:2px}
 
+    /* ===== PROCESS PIPELINE (v1.6.2) ===== */
+    .pipeline{display:grid;grid-template-columns:repeat(5,1fr);gap:0;border-radius:18px;overflow:hidden;border:1px solid var(--border);background:var(--surface-solid);position:relative}
+    @media(max-width:900px){.pipeline{grid-template-columns:1fr 1fr;gap:1px;background:var(--border)}}
+    @media(max-width:520px){.pipeline{grid-template-columns:1fr}}
+    .step{padding:32px 24px 28px;position:relative;background:var(--surface-solid);border-right:1px solid var(--border);min-height:200px;display:flex;flex-direction:column}
+    .step:last-child{border-right:none}
+    @media(max-width:900px){.step{border-right:none}}
+    .step::after{content:'';position:absolute;top:32px;right:-1px;width:1px;height:32px;background:linear-gradient(180deg,transparent,var(--accent),transparent);opacity:0;transition:opacity .3s}
+    .step:hover::after{opacity:.6}
+    .step .num{font-family:var(--mono);font-size:.7rem;font-weight:600;letter-spacing:.15em;color:var(--text-dim);margin-bottom:14px}
+    .step .num strong{color:var(--accent);font-weight:700}
+    .step h4{font-size:1rem;font-weight:700;margin-bottom:8px;color:var(--text);line-height:1.3}
+    .step p{font-size:.78rem;color:var(--text-mid);line-height:1.55;margin-bottom:14px;flex:1}
+    .step .actor{font-family:var(--mono);font-size:.66rem;color:var(--text-dim);text-transform:uppercase;letter-spacing:.12em;padding-top:12px;border-top:1px solid var(--border)}
+    .step .actor.h{color:var(--green)}
+    .step .actor.l{color:var(--purple)}
+    .step .actor.s{color:var(--accent)}
+
+    /* ===== METRICS (speed/tokens) ===== */
+    .metric-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:14px}
+    @media(max-width:760px){.metric-grid{grid-template-columns:1fr}}
+    .metric{padding:32px 28px;position:relative;overflow:hidden}
+    .metric .h{font-family:var(--mono);font-size:.72rem;letter-spacing:.14em;color:var(--text-dim);text-transform:uppercase;margin-bottom:18px}
+    .metric table{width:100%;border-collapse:collapse;font-family:var(--mono);font-size:.85rem}
+    .metric td{padding:11px 0;border-bottom:1px solid var(--border)}
+    .metric tr:last-child td{border-bottom:none}
+    .metric td:first-child{color:var(--text-mid);width:55%}
+    .metric td:last-child{text-align:right;font-weight:700;color:var(--text)}
+    .metric td:last-child .accent{color:var(--accent-bright)}
+    .metric td:last-child .green{color:var(--green)}
+    .metric td:last-child .strike{text-decoration:line-through;color:var(--text-dim);font-weight:400;margin-right:8px}
+    .metric .legend{font-family:var(--mono);font-size:.7rem;color:var(--text-dim);margin-top:18px;padding-top:14px;border-top:1px solid var(--border);line-height:1.5}
+
     /* ===== FOUR MATERIALIZATIONS (v1.6.2) ===== */
     .matgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:28px}
     @media(max-width:860px){.matgrid{grid-template-columns:repeat(2,1fr)}}
@@ -313,6 +346,89 @@
     <div class="code-wrap">
       <div class="code-bar"><div class="dots"><span></span><span></span><span></span></div>&nbsp;&nbsp;trading.js&nbsp;&middot;&nbsp;@idf/core@0.2</div>
 <pre id="codeBlock"></pre>
+    </div>
+  </div>
+</section>
+
+<!-- ===== PROCESS: from intent to result ===== -->
+<section>
+  <div class="container rv">
+    <div class="stag">Workflow &mdash; from intent to result</div>
+    <div class="stitle">Five steps. The author talks; the model derives; the runtime renders.</div>
+    <div class="sdesc">The LLM helps in <em>design</em> and <em>crystallization</em>, but never runs in production. Each step has a clear actor and a clear artifact.</div>
+    <div class="pipeline">
+
+      <div class="step">
+        <div class="num"><strong>01</strong> &middot; describe</div>
+        <h4>Author writes intentions</h4>
+        <p>Domain author enumerates user intentions in natural language. No screens, no endpoints &mdash; just <em>what people come to do</em>. Five particles per intent: conditions, effects, witnesses, confirmation.</p>
+        <div class="actor h">human</div>
+      </div>
+
+      <div class="step">
+        <div class="num"><strong>02</strong> &middot; refine</div>
+        <h4>LLM dialog &amp; ontology</h4>
+        <p>Claude assists in extracting entities, predicates, role taxonomy. Author validates and corrects. Output: declarative <code style="font-family:var(--mono);font-size:.78em;color:var(--accent-bright)">intents.js</code>, <code style="font-family:var(--mono);font-size:.78em;color:var(--accent-bright)">ontology.js</code>.</p>
+        <div class="actor l">human + LLM</div>
+      </div>
+
+      <div class="step">
+        <div class="num"><strong>03</strong> &middot; crystallize</div>
+        <h4>Derive every artifact</h4>
+        <p>78% of projections emerge from R1&ndash;R7 rules. Intent algebra (▷ ⇌ ⊕ ∥) inferred from particles. Agent schema, document graph, voice script &mdash; all derived from one ontology.</p>
+        <div class="actor s">SDK / pure</div>
+      </div>
+
+      <div class="step">
+        <div class="num"><strong>04</strong> &middot; render</div>
+        <h4>Four materializations</h4>
+        <p>One artifact, four outputs. Pixels via UI&nbsp;adapter, voice via SSML, agent via REST, document via HTML. All viewer-scoped through <code style="font-family:var(--mono);font-size:.78em;color:var(--accent-bright)">filterWorldForRole</code>.</p>
+        <div class="actor s">runtime</div>
+      </div>
+
+      <div class="step">
+        <div class="num"><strong>05</strong> &middot; observe</div>
+        <h4>Φ as audit trail</h4>
+        <p>Every effect has parent_id. Causal sort restores any chain. Schema-level invariants checked after every fold. Regulator gets the full audit through document materialization.</p>
+        <div class="actor s">runtime</div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- ===== METRICS: speed + tokenomics ===== -->
+<section>
+  <div class="container rv">
+    <div class="stag">Speed &amp; tokenomics</div>
+    <div class="stitle">Hours, not weeks. Cents, not dollars.</div>
+    <div class="sdesc">Measured across 8 production-shape domains. The bigger the domain, the bigger the leverage &mdash; declarative ontology compresses authoring time by 30&times;, LLM cost stays flat.</div>
+    <div class="metric-grid">
+
+      <div class="metric glass rv rv-d1">
+        <div class="h">Domain authoring &mdash; time to first run</div>
+        <table>
+          <tr><td>Booking &middot; 21 intents</td><td><span class="strike">~3 days</span><span class="accent">2&#x2009;h</span></td></tr>
+          <tr><td>Reflect &middot; 47 intents</td><td><span class="strike">~5 days</span><span class="accent">~3&#x2009;h</span></td></tr>
+          <tr><td>Invest &middot; 46 intents + 6 §26 closures</td><td><span class="strike">~10 days</span><span class="accent">1&#x2009;day</span></td></tr>
+          <tr><td>Meshok &middot; 225 intents (no ManualUI)</td><td><span class="strike">~3 weeks</span><span class="accent">~5&#x2009;h</span></td></tr>
+          <tr><td>Boilerplate per domain</td><td><span class="strike">~700 LOC</span><span class="green">~280 LOC</span></td></tr>
+        </table>
+        <div class="legend">Existing prototype baseline. With <code style="color:var(--accent-bright)">idf init &lt;domain&gt;</code> CLI (planned v0.3): &lt;&nbsp;10&nbsp;min for scaffold + 80% generated.</div>
+      </div>
+
+      <div class="metric glass rv rv-d2">
+        <div class="h">Tokenomics &mdash; LLM cost per stage</div>
+        <table>
+          <tr><td>Initial crystallization (14 intents)</td><td><span class="accent">~10&#x2009;k tokens</span></td></tr>
+          <tr><td>Full domain (52 intents)</td><td><span class="accent">~50&ndash;60&#x2009;k tokens</span></td></tr>
+          <tr><td>Incremental change (1 new intent)</td><td><span class="green">~80&#x2009;ms re-derive</span></td></tr>
+          <tr><td>LLM enrichment (labels, icons)</td><td><span class="accent">~2&#x2009;k tokens</span></td></tr>
+          <tr><td>Total cost per domain &middot; Haiku</td><td><span class="green">$0.05 &ndash; $0.10</span></td></tr>
+        </table>
+        <div class="legend">LLM only at design / crystallization. Runtime is pure functions &mdash; <em>zero LLM calls</em>, deterministic, traceable.</div>
+      </div>
+
     </div>
   </div>
 </section>
