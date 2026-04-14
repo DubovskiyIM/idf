@@ -1,8 +1,6 @@
 import { useState, useEffect, useRef, useMemo } from "react";
-import ProjectionRendererV2 from "../../runtime/renderer/index.jsx";
+import { ProjectionRendererV2, useProjectionRoute, Breadcrumbs } from "@idf/renderer";
 import { crystallizeV2, generateEditProjections } from "@idf/core";
-import { useProjectionRoute } from "../../runtime/renderer/navigation/useProjectionRoute.js";
-import Breadcrumbs from "../../runtime/renderer/navigation/Breadcrumbs.jsx";
 import { useAuth } from "../../runtime/renderer/auth/useAuth.js";
 import AuthGate from "../../runtime/renderer/auth/AuthGate.jsx";
 import * as messengerDomain from "./domain.js";

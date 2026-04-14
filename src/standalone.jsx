@@ -36,7 +36,7 @@ import ruRU from "antd/locale/ru_RU";
 import { usePersonalPrefs } from "./runtime/renderer/personal/usePersonalPrefs.js";
 
 const UI_KITS = { mantine: mantineAdapter, shadcn: shadcnAdapter, apple: appleAdapter, antd: antdAdapter };
-import { registerCanvas } from "./runtime/renderer/archetypes/ArchetypeCanvas.jsx";
+import { registerCanvas } from "@idf/renderer";
 import CalendarCanvas from "./domains/lifequest/canvas/CalendarCanvas.jsx";
 import VisionBoardCanvas from "./domains/lifequest/canvas/VisionBoardCanvas.jsx";
 import PointACanvas from "./domains/lifequest/canvas/PointACanvas.jsx";

@@ -4,8 +4,7 @@
  */
 
 import { useMemo, useState } from "react";
-import { Chart } from "../../../runtime/renderer/primitives/chart.jsx";
-import { getAdaptedComponent } from "../../../runtime/renderer/adapters/registry.js";
+import { Chart, getAdaptedComponent } from "@idf/renderer";
 
 export default function MarketLineCanvas({ world }) {
   const signals = (world?.marketSignals || []).slice().sort((a, b) => a.timestamp - b.timestamp);
