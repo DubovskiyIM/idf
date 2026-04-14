@@ -62,6 +62,7 @@ export default function PrefsPanel({ prefs, setPref, resetPrefs, onClose, onLogo
               { value: "mantine", label: "Mantine" },
               { value: "shadcn", label: "Doodle" },
               { value: "apple", label: "Apple" },
+              { value: "antd", label: "AntD" },
             ]}
             value={prefs.uiKit}
             onChange={v => setPref("uiKit", v)}

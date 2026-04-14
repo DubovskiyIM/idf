@@ -18,6 +18,7 @@ import * as messengerDomain from "./domains/messenger/domain.js";
 import * as meshokDomain from "./domains/meshok/domain.js";
 import * as lifequestDomain from "./domains/lifequest/domain.js";
 import * as reflectDomain from "./domains/reflect/domain.js";
+import * as investDomain from "./domains/invest/domain.js";
 
 import BookingUI from "./domains/booking/ManualUI.jsx";
 import PlanningUI from "./domains/planning/ManualUI.jsx";
@@ -29,9 +30,12 @@ import { registerUIAdapter } from "./runtime/renderer/adapters/registry.js";
 import { mantineAdapter } from "./runtime/renderer/adapters/mantine/index.jsx";
 import { shadcnAdapter } from "./runtime/renderer/adapters/shadcn/index.jsx";
 import { appleAdapter } from "./runtime/renderer/adapters/apple/index.jsx";
+import { antdAdapter } from "./runtime/renderer/adapters/antd/index.jsx";
+import { ConfigProvider as AntConfigProvider, theme as antTheme } from "antd";
+import ruRU from "antd/locale/ru_RU";
 import { usePersonalPrefs } from "./runtime/renderer/personal/usePersonalPrefs.js";
 
-const UI_KITS = { mantine: mantineAdapter, shadcn: shadcnAdapter, apple: appleAdapter };
+const UI_KITS = { mantine: mantineAdapter, shadcn: shadcnAdapter, apple: appleAdapter, antd: antdAdapter };
 import { registerCanvas } from "./runtime/renderer/archetypes/ArchetypeCanvas.jsx";
 import CalendarCanvas from "./domains/lifequest/canvas/CalendarCanvas.jsx";
 import VisionBoardCanvas from "./domains/lifequest/canvas/VisionBoardCanvas.jsx";
@@ -70,6 +74,7 @@ registerCanvas("mood_meter_cluster", MoodMeterClusterCanvas);
 const DOMAIN_ADAPTERS = {
   lifequest: shadcnAdapter,
   reflect: appleAdapter,
+  invest: antdAdapter,
 };
 
 function makeV2UI(domainId) {
@@ -99,6 +104,7 @@ const DOMAINS_RAW = {
   meshok: meshokDomain,
   lifequest: lifequestDomain,
   reflect: reflectDomain,
+  invest: investDomain,
 };
 
 const DOMAIN_TITLES = {
@@ -112,6 +118,7 @@ const DOMAIN_TITLES = {
   meshok: "🎒 Мешок",
   lifequest: "📓 LifeQuest",
   reflect: "🌀 Reflect",
+  invest: "💼 Invest",
 };
 
 const DOMAINS = {
@@ -125,6 +132,7 @@ const DOMAINS = {
   meshok: { ...meshokDomain, UI: makeV2UI("meshok") },
   lifequest: { ...lifequestDomain, UI: makeV2UI("lifequest") },
   reflect: { ...reflectDomain, UI: makeV2UI("reflect") },
+  invest: { ...investDomain, UI: makeV2UI("invest") },
 };
 
 export default function StandaloneApp({ domainId }) {
@@ -287,6 +295,20 @@ export default function StandaloneApp({ domainId }) {
     </div>
   );
 
+  const wrapped = adapter === antdAdapter
+    ? (
+      <AntConfigProvider
+        locale={ruRU}
+        theme={{
+          algorithm: antTheme.defaultAlgorithm,
+          token: { colorPrimary: "#1677ff", borderRadius: 8 },
+        }}
+      >
+        {content}
+      </AntConfigProvider>
+    )
+    : content;
+
   return (
     <AuthGate
       currentUser={currentUser}
@@ -295,7 +317,7 @@ export default function StandaloneApp({ domainId }) {
       isLoading={isLoading}
       title={DOMAIN_TITLES[domainId] || domainId}
     >
-      {content}
+      {wrapped}
     </AuthGate>
   );
 }
