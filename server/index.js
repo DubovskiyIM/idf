@@ -25,6 +25,11 @@ app.use("/api/entities", entitiesRouter);
 const { makeAgentRouter } = require("./routes/agent.js");
 app.use("/api/agent/:domain", makeAgentRouter(effectsRouter.broadcast));
 
+// §26.3: document как равноправная материализация (§1 manifesto).
+// /api/document/:domain/:projection → HTML (print-ready) | JSON-граф.
+const { makeDocumentRouter } = require("./routes/document.js");
+app.use("/api/document/:domain", makeDocumentRouter());
+
 // LLM enrichment — кристаллизация через Claude API
 const crystallizeRouter = require("./routes/crystallize.js");
 app.use("/api/crystallize", crystallizeRouter);

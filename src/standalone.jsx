@@ -187,7 +187,14 @@ export default function StandaloneApp({ domainId }) {
     fetch(`/api/typemap?domain=${domainId.replace("-v2", "")}`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(domain.ONTOLOGY),
+      // projections публикуются вместе с ontology — их читает
+      // documentMaterializer (/api/document/:domain/:projection, §26.3).
+      body: JSON.stringify({
+        ...domain.ONTOLOGY,
+        projections: Object.fromEntries(
+          Object.entries(domain.PROJECTIONS || {}).map(([id, p]) => [id, { id, ...p }])
+        ),
+      }),
     }).catch(() => {});
     fetch(`/api/intents?domain=${domainId.replace("-v2", "")}`, {
       method: "POST",

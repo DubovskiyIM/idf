@@ -798,7 +798,29 @@ async function main() {
   assert(orderBadType.body.failedCheck === "csvInclude", "68",
     `failedCheck === csvInclude`, orderBadType.body);
 
-  process.stdout.write("\n[smoke ✓] Все 68 шагов прошли успешно (booking 13 + planning 13 + meshok 6 + workflow 5 + messenger 5 + lifequest 8 + reflect 8 + invest 10 с preapproval)\n");
+  // §26.3: document materialization (§1 manifesto — равноправная с pixels)
+
+  log("69", "GET /api/document/invest/portfolios_root?format=json");
+  const docJson = await get("/api/document/invest/portfolios_root?format=json", jwt);
+  assert(docJson.status === 200, "69", `document json ${docJson.status}`);
+  assert(docJson.body.meta?.materialization === "document", "69",
+    "meta.materialization === document", docJson.body);
+  assert(Array.isArray(docJson.body.sections), "69", "sections is array");
+
+  log("70", "GET /api/document/invest/portfolios_root (HTML по умолчанию)");
+  const docHtmlResp = await fetch(`${HOST}/api/document/invest/portfolios_root`, {
+    headers: { "Authorization": `Bearer ${jwt}`, "Accept": "text/html" }
+  });
+  assert(docHtmlResp.status === 200, "70", `document html ${docHtmlResp.status}`);
+  const html = await docHtmlResp.text();
+  assert(html.startsWith("<!DOCTYPE html>"), "70", "html starts with DOCTYPE");
+  assert(html.includes("<title>Портфели</title>"), "70", "html содержит <title>Портфели</title>");
+
+  log("71", "GET /api/document/invest/unknown → 404");
+  const docMiss = await get("/api/document/invest/unknown_projection?format=json", jwt);
+  assert(docMiss.status === 404, "71", `unknown projection 404 ${docMiss.status}`);
+
+  process.stdout.write("\n[smoke ✓] Все 71 шаг прошёл успешно (booking 13 + planning 13 + meshok 6 + workflow 5 + messenger 5 + lifequest 8 + reflect 8 + invest 10 preapproval + document 3)\n");
 }
 
 main().catch(err => {

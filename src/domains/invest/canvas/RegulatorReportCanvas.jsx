@@ -42,7 +42,7 @@ export default function RegulatorReportCanvas({ world, viewer }) {
   return (
     <div style={{ padding: 16, maxWidth: 900, margin: "0 auto" }}>
       {/* Toolbar — скрывается при печати */}
-      <div className="no-print" style={{ display: "flex", gap: 12, marginBottom: 16, alignItems: "center" }}>
+      <div className="no-print" style={{ display: "flex", gap: 12, marginBottom: 16, alignItems: "center", flexWrap: "wrap" }}>
         <button
           onClick={() => window.print()}
           style={{
@@ -53,8 +53,20 @@ export default function RegulatorReportCanvas({ world, viewer }) {
         >
           🖨 Печать / Save as PDF
         </button>
+        <a
+          href="/api/document/invest/transactions_history?as=observer"
+          target="_blank" rel="noreferrer"
+          style={{
+            padding: "10px 20px", borderRadius: 6, fontSize: 14, fontWeight: 500, cursor: "pointer",
+            border: "1px solid var(--mantine-color-default-border, #d1d5db)",
+            background: "transparent", color: "var(--mantine-color-text, #111)",
+            textDecoration: "none",
+          }}
+        >
+          📄 Server-side document (§26.3)
+        </a>
         <span style={{ fontSize: 12, color: "#6b7280" }}>
-          Через Print → «Сохранить как PDF» в браузере
+          Client print или server document materialization
         </span>
       </div>
 

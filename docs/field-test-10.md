@@ -91,8 +91,35 @@ owner, дневные агрегаты с фильтрами по initiator, bac
 preapproval-конфига — no-op). Smoke-тест расширен до 68 шагов с
 проверкой: success / maxAmount reject / csvInclude reject.
 
-### 3. Regulator-export как новая материализация
-PDF-отчёт с causal chain — не пиксели, не голос, не agent-API. Манифест перечисляет материализации, но PDF/document вписывается неоднозначно. **Открытый вопрос:** добавлять document как равноправную материализацию или это просто рендер-формат проекции?
+### 3. ~~Document как равноправная материализация §1~~ **ЗАКРЫТО**
+
+Создан `server/schema/documentMaterializer.cjs` — generic функция, превращающая **любую** проекцию (catalog/feed/detail/dashboard) в структурированный document-граф + HTML-рендер. Это доказывает, что `document` ≡ `pixels` ≡ `agent-API` — разные рендеры одного артефакта.
+
+Document-граф (universal format):
+```js
+{
+  title, subtitle,
+  meta: { date, viewer, domain, projection, materialization: "document" },
+  sections: [
+    { id, heading, kind: "paragraph"|"table", columns?, rows?, content? }
+  ],
+  footer: { note, auditTrail }
+}
+```
+
+Маршрут: `GET /api/document/:domain/:projection?format=json|html&as=role`.
+- `format=html` (default) — print-ready HTML, открыть в новой вкладке → Save as PDF
+- `format=json` — структурированный граф для агентов/пайплайнов
+
+Переиспользуется **тот же** `filterWorldForRole` (role.scope / ownerField), что и agent-API — document viewer-scoped. 15 unit-тестов: catalog с filter, detail + sub-collections, dashboard с embedded, money-форматирование, HTML-escape, wizard/canvas edge cases. +3 smoke-шага (69-71).
+
+**Вывод для манифеста v1.6:** §1 расширяется до четырёх базовых материализаций:
+- **pixels** (UI через адаптер — Mantine/AntD/shadcn/Apple)
+- **voice** (voice-flow — не реализован, но контракт общий)
+- **agent-API** (`/api/agent/:domain/*`)
+- **document** (`/api/document/:domain/:projection`) — добавлено §26.3
+
+Все четыре работают поверх одной артефакт-модели v2.
 
 ### 4. Chart-primitive: где живёт спец?
 Декларативный `{ type: "chart", chartType: "line", ... }` — часть проекции. Но конкретный chartType-диалект (`candlestick` есть в AntD, нет в SVG-fallback) — это уже адаптерная особенность. Возникает `capability surface` — проекция не знает, что адаптер поддерживает. **Возможное решение:** registry capabilities на адаптере, warning при mismatch.
