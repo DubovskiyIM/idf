@@ -239,6 +239,19 @@ export function getSeedEffects() {
     updatedAt: now - 30 * day,
   });
 
+  // ─── AgentPreapproval — demo scope для робо-эдвайзера (§26.2) ───
+  // userId=null → shared demo. Agent с JWT любого пользователя получает
+  // эти лимиты. Для production — preapproval per viewer.id.
+  add("agentpreapprovals", {
+    id: "pa_demo", userId: null, active: true,
+    maxOrderAmount: 50_000,
+    allowedAssetTypes: "stock,bond,etf",
+    allowedPortfolioIds: "", // пустое + allowEmpty → все портфели
+    dailyLimit: 200_000,
+    expiresAt: now + 180 * day,
+    createdAt: now - 1 * day,
+  });
+
   // ─── Recommendations — пачка от робо-эдвайзера ───
   const recommendations = [
     {

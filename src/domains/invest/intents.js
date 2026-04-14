@@ -154,7 +154,19 @@ export const INTENTS = {
 
   delegate_to_agent: {
     name: "Доверить агенту",
-    particles: { effects: [{ α: "replace", target: "user.agentPreapproval" }] },
+    particles: { effects: [{ α: "add", target: "agentpreapprovals", σ: "account" }] },
+    creates: "AgentPreapproval",
+  },
+
+  revoke_agent_preapproval: {
+    name: "Отозвать полномочия",
+    particles: { effects: [{ α: "replace", target: "agentpreapproval.active", value: false }] },
+    irreversibility: "medium",
+  },
+
+  update_agent_preapproval: {
+    name: "Изменить лимиты",
+    particles: { effects: [{ α: "replace", target: "agentpreapproval" }] },
   },
 
   // ─── Alerts ───

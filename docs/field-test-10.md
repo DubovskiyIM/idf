@@ -61,8 +61,35 @@
 ### 1. ~~Many-to-many ownership для advisor→clients~~ **ЗАКРЫТО**
 Реализован `role.scope` механизм в `filterWorld.cjs` (см. «Что реализовано частично»). Backcompat сохранён.
 
-### 2. Preapproval scope для agent сверх JWT
-JWT даёт scope (какой пользователь), но не лимиты (max ордер, разрешённые активы). Робо-эдвайзер не может выполнять preapproved orders без дополнительного декларативного механизма. **Возможное решение:** `user.agentPreapproval: { maxOrderRUB, allowedAssetTypes, expiresAt }` + guard в `agent_execute_preapproved_order`.
+### 2. ~~Preapproval scope для agent сверх JWT~~ **ЗАКРЫТО**
+Реализован декларативный `preapprovalGuard.cjs` с 5 типами чек-предикатов:
+`active`, `notExpired`, `maxAmount`, `csvInclude`, `dailySum`.
+
+Контракт в ontology:
+```js
+roles.agent.preapproval = {
+  entity: "AgentPreapproval",
+  ownerField: "userId",
+  requiredFor: ["agent_execute_preapproved_order"],
+  checks: [
+    { kind: "active", field: "active" },
+    { kind: "notExpired", field: "expiresAt" },
+    { kind: "maxAmount", paramField: "total", limitField: "maxOrderAmount" },
+    { kind: "csvInclude", paramField: "assetType", limitField: "allowedAssetTypes" },
+    { kind: "dailySum", paramField: "total", limitField: "dailyLimit",
+      sumCollection: "transactions", sumField: "total",
+      sumOwnerField: "userId", sumTimestampField: "timestamp",
+      sumFilter: { field: "initiatedBy", equals: "agent" } },
+  ],
+}
+```
+
+Hook в `server/routes/agent.js` после ownership-check: возвращает 403
+`preapproval_denied` с `failedCheck` и `details`. 16 unit-тестов в
+`server/schema/preapprovalGuard.test.js` покрывают все чеки, изоляцию
+owner, дневные агрегаты с фильтрами по initiator, backcompat (без
+preapproval-конфига — no-op). Smoke-тест расширен до 68 шагов с
+проверкой: success / maxAmount reject / csvInclude reject.
 
 ### 3. Regulator-export как новая материализация
 PDF-отчёт с causal chain — не пиксели, не голос, не agent-API. Манифест перечисляет материализации, но PDF/document вписывается неоднозначно. **Открытый вопрос:** добавлять document как равноправную материализацию или это просто рендер-формат проекции?

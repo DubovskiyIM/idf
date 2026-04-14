@@ -159,6 +159,28 @@ export const ONTOLOGY = {
       },
     },
 
+    // AgentPreapproval — декларативные лимиты для робо-эдвайзера (§26.2).
+    // Поверх JWT: JWT отвечает «кто это», preapproval — «что этому агенту
+    // можно делать и с какими лимитами». Читается preapprovalGuard.cjs.
+    AgentPreapproval: {
+      ownerField: "userId",
+      fields: {
+        id: { type: "text" },
+        userId: { type: "text", required: true },
+        active: { type: "boolean" },
+        maxOrderAmount: { type: "number", fieldRole: "money",
+                          label: "Макс. сумма одного ордера" },
+        allowedAssetTypes: { type: "text",
+                             label: "Разрешённые типы активов (CSV)" },
+        allowedPortfolioIds: { type: "text",
+                               label: "Разрешённые портфели (CSV или пусто = все)" },
+        dailyLimit: { type: "number", fieldRole: "money",
+                      label: "Суточный лимит" },
+        expiresAt: { type: "datetime" },
+        createdAt: { type: "datetime" },
+      },
+    },
+
     // Assignment — many-to-many relationship между advisor и client.
     // ⚠ Серверный filterWorld пока не поддерживает via-assignment
     //   ownership — это §26.1 open item (see docs/field-test-10.md).
@@ -269,6 +291,41 @@ export const ONTOLOGY = {
         Recommendation: ["id", "userId", "source", "type", "status", "confidence", "createdAt"],
         Alert: ["id", "userId", "severity", "message", "triggeredAt"],
         RiskProfile: ["id", "userId", "level", "computedScore", "updatedAt"],
+        AgentPreapproval: ["id", "userId", "active", "maxOrderAmount",
+                           "allowedAssetTypes", "allowedPortfolioIds",
+                           "dailyLimit", "expiresAt"],
+      },
+      // §26.2 preapproval scope для agent — декларативные лимиты
+      // поверх JWT. preapprovalGuard.cjs применяется в agent.js
+      // перед `buildEffects` для intents в requiredFor.
+      preapproval: {
+        entity: "AgentPreapproval",       // коллекция preapproval-объектов
+        ownerField: "userId",             // привязка к user, от имени которого агент
+        requiredFor: [                    // intents, требующие preapproval
+          "agent_execute_preapproved_order",
+        ],
+        checks: [
+          { kind: "active", field: "active" },
+          { kind: "notExpired", field: "expiresAt" },
+          { kind: "maxAmount",
+            paramField: "total",          // если total нет — derived quantity*price
+            limitField: "maxOrderAmount" },
+          { kind: "csvInclude",
+            paramField: "assetType",
+            limitField: "allowedAssetTypes" },
+          { kind: "csvInclude",
+            paramField: "portfolioId",
+            limitField: "allowedPortfolioIds",
+            allowEmpty: true },           // пустое limitField = любое портфели ОК
+          { kind: "dailySum",
+            paramField: "total",
+            limitField: "dailyLimit",
+            sumCollection: "transactions",
+            sumField: "total",
+            sumOwnerField: "userId",
+            sumTimestampField: "timestamp",
+            sumFilter: { field: "initiatedBy", equals: "agent" } },
+        ],
       },
     },
 

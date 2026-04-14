@@ -757,7 +757,48 @@ async function main() {
   }, jwt);
   assert(buyResp.status === 403, "65", `buy_asset rejected ${buyResp.status}`, buyResp.body);
 
-  process.stdout.write("\n[smoke ✓] Все 65 шагов прошли успешно (booking 13 + planning 13 + meshok 6 + workflow 5 + messenger 5 + lifequest 8 + reflect 8 + invest 7)\n");
+  // §26.2: preapproval guard для agent_execute_preapproved_order
+
+  log("66", "execute_preapproved_order с суммой в пределах лимита → 200");
+  const orderOk = await post("/api/agent/invest/exec", {
+    intentId: "agent_execute_preapproved_order",
+    params: {
+      portfolioId: "pf_balanced", assetId: "ast_sber", α: "buy",
+      quantity: 10, price: 312, total: 3120,
+      assetType: "stock",
+    }
+  }, jwt);
+  assert(orderOk.status === 200, "66", `preapproved_order OK ${orderOk.status}`, orderOk.body);
+
+  log("67", "execute_preapproved_order с суммой > maxOrderAmount → 403 preapproval_denied");
+  const orderTooBig = await post("/api/agent/invest/exec", {
+    intentId: "agent_execute_preapproved_order",
+    params: {
+      portfolioId: "pf_balanced", assetId: "ast_sber", α: "buy",
+      quantity: 1000, price: 312, total: 312_000, // > 50_000 maxOrderAmount
+      assetType: "stock",
+    }
+  }, jwt);
+  assert(orderTooBig.status === 403, "67", `preapproval_denied ${orderTooBig.status}`, orderTooBig.body);
+  assert(orderTooBig.body.error === "preapproval_denied", "67",
+    "error === preapproval_denied", orderTooBig.body);
+  assert(orderTooBig.body.failedCheck === "maxAmount", "67",
+    `failedCheck === maxAmount (got ${orderTooBig.body.failedCheck})`, orderTooBig.body);
+
+  log("68", "execute_preapproved_order с недопустимым assetType → 403");
+  const orderBadType = await post("/api/agent/invest/exec", {
+    intentId: "agent_execute_preapproved_order",
+    params: {
+      portfolioId: "pf_balanced", assetId: "ast_btc", α: "buy",
+      quantity: 0.1, price: 62000, total: 6200,
+      assetType: "crypto", // не в allowedAssetTypes
+    }
+  }, jwt);
+  assert(orderBadType.status === 403, "68", `badType denied ${orderBadType.status}`, orderBadType.body);
+  assert(orderBadType.body.failedCheck === "csvInclude", "68",
+    `failedCheck === csvInclude`, orderBadType.body);
+
+  process.stdout.write("\n[smoke ✓] Все 68 шагов прошли успешно (booking 13 + planning 13 + meshok 6 + workflow 5 + messenger 5 + lifequest 8 + reflect 8 + invest 10 с preapproval)\n");
 }
 
 main().catch(err => {

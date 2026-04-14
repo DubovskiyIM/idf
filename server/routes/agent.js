@@ -23,6 +23,7 @@ const { checkOwnership } = require("../schema/checkOwnership.cjs");
 const { filterWorldForRole } = require("../schema/filterWorld.cjs");
 const { getEffectBuilder } = require("../schema/effectBuildersRegistry.cjs");
 const { parseCondition } = require("../schema/conditionParser.cjs");
+const { checkPreapproval } = require("../schema/preapprovalGuard.cjs");
 const { foldWorld, validate } = require("../validator.js");
 const { ingestEffect } = require("../effect-pipeline.js");
 const db = require("../db.js");
@@ -282,6 +283,22 @@ function makeAgentRouter(broadcast) {
         entityName: ownershipResult.entityName,
         entityId: ownershipResult.entityId,
         message: ownershipResult.reason
+      });
+    }
+
+    // §26.2: preapproval guard — декларативные лимиты поверх JWT.
+    // Только intent'ы в roles.agent.preapproval.requiredFor[] проверяются;
+    // остальные пропускаются через.
+    const preapproval = checkPreapproval(intentId, params, viewer, ontology, world, ROLE);
+    if (!preapproval.ok) {
+      console.log(`[agent] POST /exec/${intentId} ${domain} ${viewer.id} → 403 preapproval_${preapproval.reason}`);
+      return res.status(403).json({
+        error: "preapproval_denied",
+        intentId,
+        reason: preapproval.reason,
+        failedCheck: preapproval.failedCheck,
+        details: preapproval.details,
+        message: `Агент не имеет preapproval для ${intentId}: ${preapproval.reason}`,
       });
     }
 
