@@ -152,6 +152,13 @@ export function buildFormSpec(editProjection, INTENTS, ONTOLOGY, viewerRole = "s
     const writableByRole = canWrite(f, viewerRole);
     const editable = Boolean(coveredBy) && writableByRole;
 
+    // Для enum-полей пробрасываем options из onto (values + valueLabels)
+    let options = null;
+    if (f.type === "enum" && Array.isArray(f.values)) {
+      const labels = f.valueLabels || {};
+      options = f.values.map(v => ({ value: v, label: labels[v] || v }));
+    }
+
     fields.push({
       name: f.name,
       type: f.type || "text",
@@ -159,6 +166,7 @@ export function buildFormSpec(editProjection, INTENTS, ONTOLOGY, viewerRole = "s
       required: f.required || false,
       label: f.label || f.name,
       intentId: coveredBy || null,
+      options,
     });
   }
 

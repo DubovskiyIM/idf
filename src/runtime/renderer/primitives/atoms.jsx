@@ -292,6 +292,29 @@ export function PriceBlock({ node, ctx, item }) {
  */
 export function InfoSection({ node, ctx, item }) {
   const data = item || ctx.world;
+  // Резолвинг entityRef: foo_id (строка) → найти сущность в world, показать name
+  const resolveRef = (val, fieldName) => {
+    if (typeof val !== "string" || !ctx.world) return null;
+    // Эвристика: поле заканчивается на "Id" → искать в коллекции
+    const m = fieldName?.match(/^(.+)Id$/);
+    if (!m) return null;
+    const entityName = m[1]; // "user" / "sphere"
+    // Plural по простому правилу
+    const collectionCandidates = [
+      entityName + "s",       // sphere → spheres
+      entityName + "es",      // category → categories (нет)
+      entityName.replace(/y$/, "ies"), // category → categories
+    ];
+    for (const col of collectionCandidates) {
+      const list = ctx.world[col];
+      if (Array.isArray(list)) {
+        const found = list.find(e => e.id === val);
+        if (found) return found.name || found.title || null;
+      }
+    }
+    return null;
+  };
+
   const rows = (node.fields || [])
     .map(f => {
       const raw = resolve(data, f.bind);
@@ -302,7 +325,12 @@ export function InfoSection({ node, ctx, item }) {
         val = new Date(raw).toLocaleString("ru", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" });
       }
       else if (typeof raw === "boolean") val = raw ? "Да" : "Нет";
-      else val = humanValue(f.bind, raw);
+      else {
+        // Если bind заканчивается на Id — попытаться резолвить в имя сущности
+        const fieldName = f.bind?.split(".").pop();
+        const refName = resolveRef(raw, fieldName);
+        val = refName || humanValue(f.bind, raw);
+      }
       return { label: f.label, val };
     })
     .filter(Boolean);
