@@ -5,7 +5,7 @@ export const PROJECTIONS = {
     name: "Портфели", kind: "catalog", mainEntity: "Portfolio",
     entities: ["Portfolio"],
     witnesses: ["name", "baseCurrency", "totalValue", "pnl", "riskProfile"],
-    filter: "userId === viewer.id",
+    filter: "userId === viewer.id || !userId",
     layout: "grid",
   },
 
@@ -13,39 +13,39 @@ export const PROJECTIONS = {
     name: "Цели", kind: "catalog", mainEntity: "Goal",
     entities: ["Goal"],
     witnesses: ["name", "targetAmount", "currentAmount", "progress", "deadline", "priority"],
-    filter: "userId === viewer.id",
+    filter: "userId === viewer.id || !userId",
   },
 
   watchlists_root: {
     name: "Наблюдение", kind: "catalog", mainEntity: "Watchlist",
     entities: ["Watchlist", "Asset"],
     witnesses: ["name", "assetIds"],
-    filter: "userId === viewer.id",
+    filter: "userId === viewer.id || !userId",
   },
 
-  // ─── FEED ───
+  // ─── CATALOG (списки с per-item действиями, без composer) ───
 
   recommendations_inbox: {
-    name: "Рекомендации", kind: "feed", mainEntity: "Recommendation",
+    name: "Рекомендации", kind: "catalog", mainEntity: "Recommendation",
     entities: ["Recommendation"],
     witnesses: ["type", "source", "confidence", "rationale", "status", "createdAt"],
-    filter: "userId === viewer.id && status === 'pending'",
+    filter: "(userId === viewer.id || !userId) && status === 'pending'",
     sort: "createdAt:desc",
   },
 
   alerts_feed: {
-    name: "Сигналы", kind: "feed", mainEntity: "Alert",
+    name: "Сигналы", kind: "catalog", mainEntity: "Alert",
     entities: ["Alert"],
     witnesses: ["severity", "message", "triggeredAt", "acknowledged"],
-    filter: "userId === viewer.id",
+    filter: "userId === viewer.id || !userId",
     sort: "triggeredAt:desc",
   },
 
   transactions_history: {
-    name: "Сделки", kind: "feed", mainEntity: "Transaction",
+    name: "Сделки", kind: "catalog", mainEntity: "Transaction",
     entities: ["Transaction", "Asset"],
     witnesses: ["α", "quantity", "price", "total", "fee", "initiatedBy", "timestamp"],
-    filter: "userId === viewer.id",
+    filter: "userId === viewer.id || !userId",
     sort: "timestamp:desc",
   },
 
@@ -75,7 +75,7 @@ export const PROJECTIONS = {
   performance_dashboard: {
     name: "Обзор", kind: "dashboard",
     entities: ["Portfolio", "Position", "Transaction", "Alert"],
-    filter: "userId === viewer.id",
+    filter: "userId === viewer.id || !userId",
     embedded: [
       { projection: "portfolios_root", width: 12 },
       { projection: "recommendations_inbox", width: 6 },
@@ -95,7 +95,7 @@ export const PROJECTIONS = {
     name: "Правила", kind: "catalog", mainEntity: "Rule",
     entities: ["Rule"],
     witnesses: ["name", "trigger", "active"],
-    filter: "userId === viewer.id",
+    filter: "userId === viewer.id || !userId",
   },
 };
 
