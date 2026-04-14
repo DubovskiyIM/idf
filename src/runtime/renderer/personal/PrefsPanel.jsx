@@ -3,7 +3,7 @@
  * Показывается в V2Shell через кнопку ⚙.
  */
 
-export default function PrefsPanel({ prefs, setPref, resetPrefs, onClose }) {
+export default function PrefsPanel({ prefs, setPref, resetPrefs, onClose, onLogout, viewer }) {
   return (
     <div style={{
       position: "fixed", inset: 0, background: "rgba(0,0,0,0.4)",
@@ -55,14 +55,34 @@ export default function PrefsPanel({ prefs, setPref, resetPrefs, onClose }) {
           />
         </PrefRow>
 
-        <button
-          onClick={resetPrefs}
-          style={{
-            marginTop: 16, padding: "6px 16px", borderRadius: 6,
-            border: "1px solid var(--mantine-color-default-border, #d1d5db)",
-            background: "transparent", color: "var(--mantine-color-dimmed)", fontSize: 12, cursor: "pointer",
-          }}
-        >Сбросить</button>
+        <div style={{ display: "flex", gap: 8, marginTop: 16, flexWrap: "wrap" }}>
+          <button
+            onClick={resetPrefs}
+            style={{
+              padding: "6px 16px", borderRadius: 6,
+              border: "1px solid var(--mantine-color-default-border, #d1d5db)",
+              background: "transparent", color: "var(--mantine-color-dimmed)", fontSize: 12, cursor: "pointer",
+            }}
+          >Сбросить</button>
+          {onLogout && (
+            <>
+              <div style={{ flex: 1 }} />
+              {viewer?.email && (
+                <span style={{ fontSize: 11, color: "var(--mantine-color-dimmed)", alignSelf: "center" }}>
+                  {viewer.email}
+                </span>
+              )}
+              <button
+                onClick={onLogout}
+                style={{
+                  padding: "6px 16px", borderRadius: 6,
+                  border: "1px solid var(--mantine-color-default-border, #d1d5db)",
+                  background: "transparent", color: "var(--mantine-color-dimmed)", fontSize: 12, cursor: "pointer",
+                }}
+              >🚪 Выйти</button>
+            </>
+          )}
+        </div>
       </div>
     </div>
   );

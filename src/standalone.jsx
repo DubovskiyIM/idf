@@ -53,7 +53,7 @@ const DOMAIN_ADAPTERS = {
 
 function makeV2UI(domainId) {
   const useBottomTabs = domainId === "lifequest";
-  return function V2Standalone({ world, exec, execBatch, viewer }) {
+  return function V2Standalone({ world, exec, execBatch, viewer, onLogout }) {
     const domain = DOMAINS_RAW[domainId];
     return (
       <V2Shell
@@ -64,6 +64,7 @@ function makeV2UI(domainId) {
         execBatch={execBatch}
         viewer={viewer}
         useBottomTabs={useBottomTabs}
+        onLogout={onLogout}
       />
     );
   };
@@ -184,10 +185,17 @@ export default function StandaloneApp({ domainId }) {
   }
 
   // All other domains: shared auth gate
+  const isLifequest = domainId === "lifequest";
+  const lifequestBg = "linear-gradient(135deg, #fdf2e9 0%, #fef3c7 25%, #fce7f3 50%, #e0f2fe 75%, #dcfce7 100%)";
   const content = (
-    <div style={{ height: "100vh", background: "var(--mantine-color-body)", overflow: isV2 ? "hidden" : "auto", display: "flex", flexDirection: "column" }}>
-      {/* Top bar with user info */}
-      {currentUser && (
+    <div style={{
+      height: "100vh",
+      background: isLifequest ? lifequestBg : "var(--mantine-color-body)",
+      overflow: isV2 ? "hidden" : "auto",
+      display: "flex", flexDirection: "column",
+    }}>
+      {/* Top bar with user info — скрыт для lifequest (логаут в PrefsPanel) */}
+      {currentUser && !isLifequest && (
         <div style={{
           display: "flex", alignItems: "center", gap: 10,
           padding: "8px 16px",
@@ -225,6 +233,7 @@ export default function StandaloneApp({ domainId }) {
           viewer={viewer} layer="canonical"
           overlay={overlay} overlayEntityIds={overlayEntityIds}
           startInvestigation={startInvestigation} commitInvestigation={commitInvestigation} cancelInvestigation={cancelInvestigation}
+          onLogout={logout}
         />
       </div>
     </div>

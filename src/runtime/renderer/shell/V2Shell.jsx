@@ -270,7 +270,7 @@ export default function V2Shell({
             onSelect={(id) => onSelectTab(id)}
             projectionNames={projectionNames}
           />
-          {prefsOpen && <PrefsPanel prefs={prefs} setPref={setPref} resetPrefs={resetPrefs} onClose={() => setPrefsOpen(false)} />}
+          {prefsOpen && <PrefsPanel prefs={prefs} setPref={setPref} resetPrefs={resetPrefs} onClose={() => setPrefsOpen(false)} onLogout={onLogout} viewer={viewer} />}
         </div>
       );
     }
@@ -314,7 +314,7 @@ export default function V2Shell({
         <div style={{ flex: 1, display: "flex", flexDirection: "column", minHeight: 0, overflow: "hidden" }}>
           {mainContent}
         </div>
-        {prefsOpen && <PrefsPanel prefs={prefs} setPref={setPref} resetPrefs={resetPrefs} onClose={() => setPrefsOpen(false)} />}
+        {prefsOpen && <PrefsPanel prefs={prefs} setPref={setPref} resetPrefs={resetPrefs} onClose={() => setPrefsOpen(false)} onLogout={onLogout} viewer={viewer} />}
       </div>
     );
   }
@@ -364,7 +364,7 @@ export default function V2Shell({
         )
       )}
       {mainContent}
-      {prefsOpen && <PrefsPanel prefs={prefs} setPref={setPref} resetPrefs={resetPrefs} onClose={() => setPrefsOpen(false)} />}
+      {prefsOpen && <PrefsPanel prefs={prefs} setPref={setPref} resetPrefs={resetPrefs} onClose={() => setPrefsOpen(false)} onLogout={onLogout} viewer={viewer} />}
     </div>
   );
 }

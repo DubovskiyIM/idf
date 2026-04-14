@@ -17,7 +17,9 @@ export default function BottomTabs({ sections, active, onSelect, projectionNames
         <div style={{
           display: "flex",
           borderTop: "1px dashed var(--color-doodle-border, #c4a77d)",
-          background: "var(--color-doodle-bg, #fdf6e3)",
+          background: "rgba(253, 250, 243, 0.92)",
+          backdropFilter: "blur(8px)",
+          WebkitBackdropFilter: "blur(8px)",
           overflowX: "auto",
           padding: "0 var(--spacing-doodle, 16px)",
         }}>
@@ -51,8 +53,10 @@ export default function BottomTabs({ sections, active, onSelect, projectionNames
       {/* Main tabs */}
       <div style={{
         display: "flex",
-        borderTop: "2px solid var(--color-doodle-border, #8b7355)",
-        background: "var(--color-doodle-highlight, #f5e6d0)",
+        borderTop: "1.5px solid var(--color-doodle-ink, #2c2420)",
+        background: "rgba(253, 250, 243, 0.92)",
+        backdropFilter: "blur(8px)",
+        WebkitBackdropFilter: "blur(8px)",
       }}>
         {sections.map((sec, i) => {
           const isActive = sec === activeSection;
