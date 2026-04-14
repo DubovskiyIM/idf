@@ -113,19 +113,38 @@ function isOwnerRole(roleDef) {
 function auditOntologyRoles(ontology) {
   const errors = [];
   const roles = ontology?.roles || {};
+
+  // 1. Валидация base у каждой роли — schema-level check.
   for (const [name, def] of Object.entries(roles)) {
     const v = validateBase(def);
     if (!v.ok) {
       errors.push({ role: name, ...v });
-    } else if (def.base === "observer") {
-      if (def.canExecute && Array.isArray(def.canExecute) && def.canExecute.length > 0) {
-        errors.push({
-          role: name, reason: "observer_has_canExecute",
-          canExecute: def.canExecute,
-        });
-      }
     }
   }
+
+  // 2. Observer-invariant делегируется в invariantChecker (v1.6.1).
+  // Формируем виртуальную онтологию с синтетическим role-capability
+  // инвариантом — единый механизм вместо hardcoded-проверки.
+  const { checkInvariants } = require("./invariantChecker.cjs");
+  const virt = {
+    roles,
+    invariants: [
+      { name: "__observer_read_only__",
+        kind: "role-capability",
+        role: "observer",
+        require: { canExecute: "empty" } }
+    ],
+  };
+  const inv = checkInvariants({}, virt);
+  for (const v of inv.violations) {
+    if (v.details?.reason === "role_not_found") continue;
+    errors.push({
+      role: v.details?.role,
+      reason: "observer_has_canExecute",
+      canExecute: v.details?.canExecute,
+    });
+  }
+
   return { ok: errors.length === 0, errors };
 }
 
