@@ -27,10 +27,11 @@ import AuthGate from "./runtime/renderer/auth/AuthGate.jsx";
 import { registerUIAdapter } from "./runtime/renderer/adapters/registry.js";
 import { mantineAdapter } from "./runtime/renderer/adapters/mantine/index.jsx";
 import { shadcnAdapter } from "./runtime/renderer/adapters/shadcn/index.jsx";
+import { appleAdapter } from "./runtime/renderer/adapters/apple/index.jsx";
 import { usePersonalPrefs } from "./runtime/renderer/personal/usePersonalPrefs.js";
 
-const UI_KITS = { mantine: mantineAdapter, shadcn: shadcnAdapter };
-const DOMAIN_DEFAULT_KITS = { lifequest: shadcnAdapter };
+const UI_KITS = { mantine: mantineAdapter, shadcn: shadcnAdapter, apple: appleAdapter };
+const DOMAIN_DEFAULT_KITS = { lifequest: shadcnAdapter, reflect: appleAdapter };
 
 const DOMAINS = {
   booking: { ...bookingDomain, UI: BookingUI },

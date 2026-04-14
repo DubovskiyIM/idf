@@ -27,9 +27,10 @@ import V2Shell from "./runtime/renderer/shell/V2Shell.jsx";
 import { registerUIAdapter } from "./runtime/renderer/adapters/registry.js";
 import { mantineAdapter } from "./runtime/renderer/adapters/mantine/index.jsx";
 import { shadcnAdapter } from "./runtime/renderer/adapters/shadcn/index.jsx";
+import { appleAdapter } from "./runtime/renderer/adapters/apple/index.jsx";
 import { usePersonalPrefs } from "./runtime/renderer/personal/usePersonalPrefs.js";
 
-const UI_KITS = { mantine: mantineAdapter, shadcn: shadcnAdapter };
+const UI_KITS = { mantine: mantineAdapter, shadcn: shadcnAdapter, apple: appleAdapter };
 import { registerCanvas } from "./runtime/renderer/archetypes/ArchetypeCanvas.jsx";
 import CalendarCanvas from "./domains/lifequest/canvas/CalendarCanvas.jsx";
 import VisionBoardCanvas from "./domains/lifequest/canvas/VisionBoardCanvas.jsx";
@@ -52,6 +53,7 @@ registerCanvas("today", (props) => <TodayCanvas {...props} ctx={props.ctx} />);
 // Домены с переключением адаптера
 const DOMAIN_ADAPTERS = {
   lifequest: shadcnAdapter,
+  reflect: appleAdapter,
 };
 
 function makeV2UI(domainId) {
