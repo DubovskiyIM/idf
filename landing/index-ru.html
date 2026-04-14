@@ -1,14 +1,14 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ru">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>IDF — Intent-Driven Framework</title>
-  <meta name="description" content="The open standard for deriving applications from user intentions.">
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <title>IDF — Intent-Driven Framework · парадигма выводимых интерфейсов</title>
+  <meta name="description" content="Открытый стандарт построения приложений из формального описания пользовательских намерений. Один артефакт — четыре материализации.">
   <link rel="alternate" hreflang="en" href="./index.html">
   <link rel="alternate" hreflang="ru" href="./index-ru.html">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
   <style>
     :root {
       --bg: #050508;
@@ -241,11 +241,11 @@
 <section class="hero">
   <canvas id="particleCanvas"></canvas>
   <div class="hero-inner">
-    <div class="badge"><span class="pulse"></span>Spec v1.0&nbsp;&middot;&nbsp;Reference impl v1.6.2&nbsp;&middot;&nbsp;@idf/core v0.2&nbsp;&middot;&nbsp;<a href="./index-ru.html" style="color:inherit;text-decoration:underline;text-underline-offset:3px">RU</a></div>
-    <h1>One artifact.<br><span class="line2">Four materializations.</span></h1>
-    <p class="sub">A formal system that derives applications from what users come to do. Pixels, voice, agent API, and document &mdash; rendered from the same intent model.</p>
+    <div class="badge"><span class="pulse"></span>Стандарт v1.0&nbsp;&middot;&nbsp;Референсная реализация v1.6.2&nbsp;&middot;&nbsp;@idf/core v0.2&nbsp;&middot;&nbsp;<a href="./index.html" style="color:inherit;text-decoration:underline;text-underline-offset:3px">EN</a></div>
+    <h1>Один артефакт.<br><span class="line2">Четыре материализации.</span></h1>
+    <p class="sub">Формальная система, которая выводит приложение из того, <em style="font-style:normal;color:var(--text)">зачем люди к вам приходят</em>. Пиксели, голос, API для агентов и документ — рендерятся из одной интент-модели.</p>
     <div class="ctas">
-      <a class="btn btn-glow" href="https://github.com/ignatdubovskiy/idf/blob/main/spec/idf-v1.0-part1-core.md">Read the Specification</a>
+      <a class="btn btn-glow" href="https://github.com/ignatdubovskiy/idf/blob/main/spec/idf-v1.0-part1-core.md">Читать спецификацию</a>
       <a class="btn" href="https://github.com/ignatdubovskiy/idf/tree/main/packages/core">npm&nbsp;i&nbsp;@idf/core</a>
       <a class="btn" href="https://github.com/ignatdubovskiy/idf">GitHub</a>
     </div>
@@ -259,17 +259,17 @@
 <!-- ===== PARTICLES ===== -->
 <section>
   <div class="container rv">
-    <div class="stag">The atom</div>
-    <div class="stitle">Five particles. Complete decomposition.</div>
-    <div class="sdesc">Every user intention decomposes into exactly five types. This covers the full cycle: what exists, when applicable, what changes, what to show, how to confirm.</div>
+    <div class="stag">Атом системы</div>
+    <div class="stitle">Пять частиц. Полное разложение.</div>
+    <div class="sdesc">Любое намерение пользователя раскладывается ровно на пять типов. Это покрывает полный цикл: что существует, когда применимо, что изменится, что показать, как подтвердить.</div>
   </div>
   <div class="container">
     <div class="pgrid">
-      <div class="pcell rv rv-d1"><div class="pcell-glow" style="background:var(--accent)"></div><div class="sym" style="color:var(--accent)">C</div><h3>Conditions</h3><p>When is this available? Predicates on world state. Static or temporal.</p></div>
-      <div class="pcell rv rv-d2"><div class="pcell-glow" style="background:var(--purple)"></div><div class="sym" style="color:var(--purple)">F</div><h3>Effects</h3><p>What becomes true? The only substance of state. Add, replace, remove, batch.</p></div>
-      <div class="pcell rv rv-d3"><div class="pcell-glow" style="background:var(--cyan)"></div><div class="sym" style="color:var(--cyan)">W</div><h3>Witnesses</h3><p>What does the actor need to know? The human-readable dual of conditions.</p></div>
-      <div class="pcell rv rv-d1"><div class="pcell-glow" style="background:var(--green)"></div><div class="sym" style="color:var(--green)">P</div><h3>Confirmation</h3><p>What does the system need back? Click, text, form, or custom.</p></div>
-      <div class="pcell rv rv-d2" style="grid-column:span 2"><div class="pcell-glow" style="background:var(--yellow)"></div><div class="sym" style="color:var(--yellow)">&rarr;</div><h3>Maximum Derivation Principle</h3><p>If a structure is computable from intentions and ontology, it is not an input &mdash; it is a derived artifact. Projections, algebra, four materializations, agent schemas, audit reports &mdash; all derived. 78% of screens emerge automatically across 8 domains.</p></div>
+      <div class="pcell rv rv-d1"><div class="pcell-glow" style="background:var(--accent)"></div><div class="sym" style="color:var(--accent)">C</div><h3>Условия</h3><p>Когда намерение применимо? Предикаты на состоянии мира. Статические или темпоральные.</p></div>
+      <div class="pcell rv rv-d2"><div class="pcell-glow" style="background:var(--purple)"></div><div class="sym" style="color:var(--purple)">F</div><h3>Эффекты</h3><p>Что станет правдой? Единственная субстанция состояния. Add, replace, remove, batch.</p></div>
+      <div class="pcell rv rv-d3"><div class="pcell-glow" style="background:var(--cyan)"></div><div class="sym" style="color:var(--cyan)">W</div><h3>Свидетельства</h3><p>Что нужно знать актору для решения? Человекочитаемый дуал условий.</p></div>
+      <div class="pcell rv rv-d1"><div class="pcell-glow" style="background:var(--green)"></div><div class="sym" style="color:var(--green)">P</div><h3>Подтверждение</h3><p>Что система должна получить обратно? Клик, текст, форма или кастомный виджет.</p></div>
+      <div class="pcell rv rv-d2" style="grid-column:span 2"><div class="pcell-glow" style="background:var(--yellow)"></div><div class="sym" style="color:var(--yellow)">&rarr;</div><h3>Принцип максимальной деривации</h3><p>Если структура выводима из намерений и онтологии &mdash; она не вход системы, а производный артефакт. Проекции, алгебра связей, четыре материализации, агентские схемы, аудит-отчёты &mdash; всё выводится. 78% экранов возникают автоматически на 8 доменах.</p></div>
     </div>
   </div>
 </section>
@@ -277,26 +277,26 @@
 <!-- ===== COUNTERS (v1.6.2) ===== -->
 <div class="container rv">
   <div class="counters">
-    <div class="ctr"><div class="ctr-bg"></div><div class="v" data-target="8">0</div><div class="l">domains</div></div>
-    <div class="ctr"><div class="ctr-bg"></div><div class="v" data-target="527">0</div><div class="l">intentions</div></div>
-    <div class="ctr"><div class="ctr-bg"></div><div class="v" data-target="402">0</div><div class="l">tests</div></div>
-    <div class="ctr"><div class="ctr-bg"></div><div class="v" data-target="4">0</div><div class="l">UI&nbsp;adapters</div></div>
-    <div class="ctr"><div class="ctr-bg"></div><div class="v" data-target="78" data-suffix="%">0</div><div class="l">auto-derived</div></div>
+    <div class="ctr"><div class="ctr-bg"></div><div class="v" data-target="8">0</div><div class="l">доменов</div></div>
+    <div class="ctr"><div class="ctr-bg"></div><div class="v" data-target="527">0</div><div class="l">намерений</div></div>
+    <div class="ctr"><div class="ctr-bg"></div><div class="v" data-target="402">0</div><div class="l">тестов</div></div>
+    <div class="ctr"><div class="ctr-bg"></div><div class="v" data-target="4">0</div><div class="l">UI-адаптера</div></div>
+    <div class="ctr"><div class="ctr-bg"></div><div class="v" data-target="78" data-suffix="%">0</div><div class="l">выводится</div></div>
   </div>
 </div>
 
 <!-- ===== ALGEBRA ===== -->
 <section>
   <div class="container rv">
-    <div class="stag">Intent Algebra</div>
-    <div class="stitle">Relations derived, not declared.</div>
-    <div class="sdesc">Four relation types emerge automatically from intention particles. Hover the graph to explore.</div>
+    <div class="stag">Алгебра намерений</div>
+    <div class="stitle">Связи выводятся, не декларируются.</div>
+    <div class="sdesc">Четыре типа связей между намерениями возникают автоматически из их частиц. Наведите курсор на граф — покажутся связи.</div>
     <canvas id="algebraCanvas"></canvas>
     <div class="algebra-legend">
-      <span><span class="d" style="background:var(--accent)"></span>sequential &#x25B7;</span>
-      <span><span class="d" style="background:var(--purple)"></span>antagonistic &#x21CC;</span>
-      <span><span class="d" style="background:var(--rose)"></span>excluding &oplus;</span>
-      <span><span class="d" style="background:var(--green)"></span>parallel &#x2225;</span>
+      <span><span class="d" style="background:var(--accent)"></span>последовательность &#x25B7;</span>
+      <span><span class="d" style="background:var(--purple)"></span>антагонизм &#x21CC;</span>
+      <span><span class="d" style="background:var(--rose)"></span>исключение &oplus;</span>
+      <span><span class="d" style="background:var(--green)"></span>параллельность &#x2225;</span>
     </div>
   </div>
 </section>
@@ -304,37 +304,37 @@
 <!-- ===== FOUR MATERIALIZATIONS ===== -->
 <section>
   <div class="container rv">
-    <div class="stag">&sect;1 &mdash; Four materializations</div>
-    <div class="stitle">The same model. Every interface derived.</div>
-    <div class="sdesc">UI is the intersection of projections (what the user sees) and intentions (what they can do). Pixels, voice, agent&nbsp;API, document &mdash; equal renderings of one artifact, scoped by the same viewer&nbsp;function.</div>
+    <div class="stag">&sect;1 &mdash; Четыре материализации</div>
+    <div class="stitle">Одна модель. Все интерфейсы выводятся.</div>
+    <div class="sdesc">UI &mdash; это пересечение проекций (что видит пользователь) и намерений (что он может сделать). Пиксели, голос, агентский&nbsp;API, документ &mdash; равноправные рендеры одного артефакта, скоупленного единой viewer-функцией.</div>
     <div class="matgrid">
       <div class="mat glass m-pix rv rv-d1">
         <div class="sym"><span class="num">01</span> <span>&#x25A0;</span></div>
-        <h3>Pixels</h3>
-        <p>Four UI&nbsp;adapters: Mantine, shadcn-doodle, Apple visionOS-glass, AntD enterprise-fintech. Capability surface, graceful fallback.</p>
+        <h3>Пиксели</h3>
+        <p>Четыре UI-адаптера: Mantine, shadcn-doodle, Apple visionOS-glass, AntD enterprise-fintech. Capability-surface, graceful fallback.</p>
         <span class="api">ProjectionRendererV2</span>
       </div>
       <div class="mat glass m-voc rv rv-d2">
         <div class="sym"><span class="num">02</span> <span>&#x266B;</span></div>
-        <h3>Voice</h3>
-        <p>Speech-script with system &middot; assistant &middot; prompts turns. JSON for voice agents, SSML for TTS, plain text for IVR.</p>
+        <h3>Голос</h3>
+        <p>Речевой скрипт с turns: система &middot; ассистент &middot; prompts. JSON для голосовых агентов, SSML для TTS, plain text для IVR.</p>
         <span class="api">/api/voice/:domain/:projection</span>
       </div>
       <div class="mat glass m-api rv rv-d3">
         <div class="sym"><span class="num">03</span> <span>&#x21B5;</span></div>
-        <h3>Agent API</h3>
-        <p>JWT-scoped REST with role taxonomy and declarative preapproval guards. LLMs become first-class users of the same intent model.</p>
+        <h3>Агентский API</h3>
+        <p>REST с JWT-скоупом, ролевая таксономия и декларативные preapproval-лимиты. LLM становится первоклассным пользователем той&nbsp;же интент-модели.</p>
         <span class="api">/api/agent/:domain/{schema,world,exec}</span>
       </div>
       <div class="mat glass m-doc rv rv-d4">
         <div class="sym"><span class="num">04</span> <span>&#x25A1;</span></div>
-        <h3>Document</h3>
-        <p>Generic structured graph for catalog &middot; detail &middot; dashboard. Print-ready HTML, JSON for pipelines, regulatory exports.</p>
+        <h3>Документ</h3>
+        <p>Обобщённый structured-граф для catalog &middot; detail &middot; dashboard. HTML print-ready, JSON для пайплайнов, regulatory-экспорты.</p>
         <span class="api">/api/document/:domain/:projection</span>
       </div>
     </div>
     <div class="mat-footer">
-      All four reuse the <em>same</em> <code style="font-family:var(--mono)">filterWorldForRole(world, ontology, role, viewer)</code>. Equality is factored code, not metaphor.
+      Все четыре используют <em>одну и ту же</em> <code style="font-family:var(--mono)">filterWorldForRole(world, ontology, role, viewer)</code>. Равноправие &mdash; это factored code, а не метафора.
     </div>
   </div>
 </section>
@@ -343,8 +343,8 @@
 <section>
   <div class="container rv">
     <div class="stag">Developer experience</div>
-    <div class="stitle">Declare once. Render four ways.</div>
-    <div class="sdesc">@idf/core ships everything: fold, intent algebra, crystallizer, four materializers, role taxonomy, invariants. Pure functions, dual ESM&#x2009;+&#x2009;CJS.</div>
+    <div class="stitle">Опиши один раз. Отрендери четырьмя способами.</div>
+    <div class="sdesc">@idf/core содержит всё: fold, алгебра намерений, кристаллизатор, четыре материализатора, ролевая таксономия, инварианты. Чистые функции, двойная сборка ESM&#x2009;+&#x2009;CJS.</div>
     <div class="code-wrap">
       <div class="code-bar"><div class="dots"><span></span><span></span><span></span></div>&nbsp;&nbsp;trading.js&nbsp;&middot;&nbsp;@idf/core@0.2</div>
 <pre id="codeBlock"></pre>
@@ -355,44 +355,44 @@
 <!-- ===== PROCESS: from intent to result ===== -->
 <section>
   <div class="container rv">
-    <div class="stag">Workflow &mdash; from intent to result</div>
-    <div class="stitle">Five steps. The author talks; the model derives; the runtime renders.</div>
-    <div class="sdesc">The LLM helps in <em>design</em> and <em>crystallization</em>, but never runs in production. Each step has a clear actor and a clear artifact.</div>
+    <div class="stag">Процесс &mdash; от намерения до результата</div>
+    <div class="stitle">Пять шагов. Автор говорит, модель выводит, рантайм рендерит.</div>
+    <div class="sdesc">LLM помогает в <em>проектировании</em> и <em>кристаллизации</em>, но <em>не работает в рантайме</em>. У каждого шага чёткий актор и чёткий артефакт.</div>
     <div class="pipeline">
 
       <div class="step">
-        <div class="num"><strong>01</strong> &middot; describe</div>
-        <h4>Author writes intentions</h4>
-        <p>Domain author enumerates user intentions in natural language. No screens, no endpoints &mdash; just <em>what people come to do</em>. Five particles per intent: conditions, effects, witnesses, confirmation.</p>
-        <div class="actor h">human</div>
+        <div class="num"><strong>01</strong> &middot; опиши</div>
+        <h4>Автор пишет намерения</h4>
+        <p>Автор домена перечисляет пользовательские намерения на естественном языке. Без экранов, без endpoint'ов &mdash; только <em>зачем люди приходят</em>. Пять частиц на намерение: условия, эффекты, свидетельства, подтверждение.</p>
+        <div class="actor h">человек</div>
       </div>
 
       <div class="step">
-        <div class="num"><strong>02</strong> &middot; refine</div>
-        <h4>LLM dialog &amp; ontology</h4>
-        <p>Claude assists in extracting entities, predicates, role taxonomy. Author validates and corrects. Output: declarative <code style="font-family:var(--mono);font-size:.78em;color:var(--accent-bright)">intents.js</code>, <code style="font-family:var(--mono);font-size:.78em;color:var(--accent-bright)">ontology.js</code>.</p>
-        <div class="actor l">human + LLM</div>
+        <div class="num"><strong>02</strong> &middot; уточни</div>
+        <h4>Диалог с LLM и онтология</h4>
+        <p>Claude помогает извлечь сущности, предикаты, ролевую таксономию. Автор проверяет и поправляет. На выходе &mdash; декларативные <code style="font-family:var(--mono);font-size:.78em;color:var(--accent-bright)">intents.js</code>, <code style="font-family:var(--mono);font-size:.78em;color:var(--accent-bright)">ontology.js</code>.</p>
+        <div class="actor l">человек + LLM</div>
       </div>
 
       <div class="step">
-        <div class="num"><strong>03</strong> &middot; crystallize</div>
-        <h4>Derive every artifact</h4>
-        <p>78% of projections emerge from R1&ndash;R7 rules. Intent algebra (▷ ⇌ ⊕ ∥) inferred from particles. Agent schema, document graph, voice script &mdash; all derived from one ontology.</p>
-        <div class="actor s">SDK / pure</div>
+        <div class="num"><strong>03</strong> &middot; кристаллизуй</div>
+        <h4>Вывод всех артефактов</h4>
+        <p>78% проекций возникают из правил R1&ndash;R7. Алгебра связей (▷ ⇌ ⊕ ∥) выводится из частиц. Агентская схема, документ-граф, голосовой скрипт &mdash; всё выводится из одной онтологии.</p>
+        <div class="actor s">SDK / чисто</div>
       </div>
 
       <div class="step">
-        <div class="num"><strong>04</strong> &middot; render</div>
-        <h4>Four materializations</h4>
-        <p>One artifact, four outputs. Pixels via UI&nbsp;adapter, voice via SSML, agent via REST, document via HTML. All viewer-scoped through <code style="font-family:var(--mono);font-size:.78em;color:var(--accent-bright)">filterWorldForRole</code>.</p>
-        <div class="actor s">runtime</div>
+        <div class="num"><strong>04</strong> &middot; отрендери</div>
+        <h4>Четыре материализации</h4>
+        <p>Один артефакт, четыре output'а. Пиксели через UI-адаптер, голос через SSML, агент через REST, документ через HTML. Все viewer-scoped через <code style="font-family:var(--mono);font-size:.78em;color:var(--accent-bright)">filterWorldForRole</code>.</p>
+        <div class="actor s">рантайм</div>
       </div>
 
       <div class="step">
-        <div class="num"><strong>05</strong> &middot; observe</div>
-        <h4>Φ as audit trail</h4>
-        <p>Every effect has parent_id. Causal sort restores any chain. Schema-level invariants checked after every fold. Regulator gets the full audit through document materialization.</p>
-        <div class="actor s">runtime</div>
+        <div class="num"><strong>05</strong> &middot; наблюдай</div>
+        <h4>Φ как audit-trail</h4>
+        <p>У каждого эффекта есть parent_id. Причинная сортировка восстанавливает любую цепочку. Schema-level инварианты проверяются после каждого fold. Регулятор получает полный аудит через document-материализацию.</p>
+        <div class="actor s">рантайм</div>
       </div>
 
     </div>
@@ -402,33 +402,33 @@
 <!-- ===== METRICS: speed + tokenomics ===== -->
 <section>
   <div class="container rv">
-    <div class="stag">Speed &amp; tokenomics</div>
-    <div class="stitle">Hours, not weeks. Cents, not dollars.</div>
-    <div class="sdesc">Measured across 8 production-shape domains. The bigger the domain, the bigger the leverage &mdash; declarative ontology compresses authoring time by 30&times;, LLM cost stays flat.</div>
+    <div class="stag">Скорость и токеномика</div>
+    <div class="stitle">Часы вместо недель. Копейки вместо тысяч.</div>
+    <div class="sdesc">Замеры на 8 доменах production-масштаба. Чем больше домен, тем больше рычаг: декларативная онтология сжимает время разработки в&nbsp;30&times;, стоимость LLM при этом почти не растёт.</div>
     <div class="metric-grid">
 
       <div class="metric glass rv rv-d1">
-        <div class="h">Domain authoring &mdash; time to first run</div>
+        <div class="h">Разработка домена &mdash; время до первого запуска</div>
         <table>
-          <tr><td>Booking &middot; 21 intents</td><td><span class="strike">~3 days</span><span class="accent">2&#x2009;h</span></td></tr>
-          <tr><td>Reflect &middot; 47 intents</td><td><span class="strike">~5 days</span><span class="accent">~3&#x2009;h</span></td></tr>
-          <tr><td>Invest &middot; 46 intents + 6 §26 closures</td><td><span class="strike">~10 days</span><span class="accent">1&#x2009;day</span></td></tr>
-          <tr><td>Meshok &middot; 225 intents (no ManualUI)</td><td><span class="strike">~3 weeks</span><span class="accent">~5&#x2009;h</span></td></tr>
-          <tr><td>Boilerplate per domain</td><td><span class="strike">~700 LOC</span><span class="green">~280 LOC</span></td></tr>
+          <tr><td>Booking &middot; 21 намерение</td><td><span class="strike">~3 дня</span><span class="accent">2&#x2009;часа</span></td></tr>
+          <tr><td>Reflect &middot; 47 намерений</td><td><span class="strike">~5 дней</span><span class="accent">~3&#x2009;часа</span></td></tr>
+          <tr><td>Invest &middot; 46 + закрыто 6 §26</td><td><span class="strike">~10 дней</span><span class="accent">1&#x2009;день</span></td></tr>
+          <tr><td>Sales &middot; 225 (без ManualUI)</td><td><span class="strike">~3 недели</span><span class="accent">~5&#x2009;часов</span></td></tr>
+          <tr><td>Бойлерплейт на домен</td><td><span class="strike">~700 LOC</span><span class="green">~280 LOC</span></td></tr>
         </table>
-        <div class="legend">Existing prototype baseline. With <code style="color:var(--accent-bright)">idf init &lt;domain&gt;</code> CLI (planned v0.3): &lt;&nbsp;10&nbsp;min for scaffold + 80% generated.</div>
+        <div class="legend">Базлайн прототипа v1.6.2. С <code style="color:var(--accent-bright)">idf init &lt;domain&gt;</code> CLI (планируется в v0.3): &lt;&nbsp;10&nbsp;минут на scaffold + 80% сгенерировано.</div>
       </div>
 
       <div class="metric glass rv rv-d2">
-        <div class="h">Tokenomics &mdash; LLM cost per stage</div>
+        <div class="h">Токеномика &mdash; стоимость LLM на этапе</div>
         <table>
-          <tr><td>Initial crystallization (14 intents)</td><td><span class="accent">~10&#x2009;k tokens</span></td></tr>
-          <tr><td>Full domain (52 intents)</td><td><span class="accent">~50&ndash;60&#x2009;k tokens</span></td></tr>
-          <tr><td>Incremental change (1 new intent)</td><td><span class="green">~80&#x2009;ms re-derive</span></td></tr>
-          <tr><td>LLM enrichment (labels, icons)</td><td><span class="accent">~2&#x2009;k tokens</span></td></tr>
-          <tr><td>Total cost per domain &middot; Haiku</td><td><span class="green">$0.05 &ndash; $0.10</span></td></tr>
+          <tr><td>Первичная кристаллизация (14 намерений)</td><td><span class="accent">~10&#x2009;k tokens</span></td></tr>
+          <tr><td>Полный домен (52 намерения)</td><td><span class="accent">~50&ndash;60&#x2009;k tokens</span></td></tr>
+          <tr><td>Инкрементальное изменение (+1 намерение)</td><td><span class="green">~80&#x2009;ms re-derive</span></td></tr>
+          <tr><td>Обогащение labels + icons</td><td><span class="accent">~2&#x2009;k tokens</span></td></tr>
+          <tr><td>Итого на домен &middot; Haiku</td><td><span class="green">$0.05 &ndash; $0.10</span></td></tr>
         </table>
-        <div class="legend">LLM only at design / crystallization. Runtime is pure functions &mdash; <em>zero LLM calls</em>, deterministic, traceable.</div>
+        <div class="legend">LLM задействован только на этапе проектирования и кристаллизации. Рантайм &mdash; чистые функции: <em>ноль LLM-вызовов</em>, детерминированность, воспроизводимость.</div>
       </div>
 
     </div>
@@ -438,13 +438,13 @@
 <!-- ===== CONFORMANCE ===== -->
 <section>
   <div class="container rv">
-    <div class="stag">Open standard</div>
-    <div class="stitle">Three conformance levels. Any language.</div>
-    <div class="sdesc">54 language-agnostic JSON tests &mdash; pass them in Rust, Python, or&nbsp;Go and your implementation is conformant. The reference impl in JavaScript ships as <code style="font-family:var(--mono);color:var(--accent-bright)">@idf/core</code>.</div>
+    <div class="stag">Открытый стандарт</div>
+    <div class="stitle">Три уровня соответствия. Любой язык.</div>
+    <div class="sdesc">54 языконезависимых JSON-теста &mdash; пройдите их на Rust, Python или&nbsp;Go, и ваша реализация соответствует стандарту. Референсная реализация на JavaScript распространяется как <code style="font-family:var(--mono);color:var(--accent-bright)">@idf/core</code>.</div>
     <div class="lvls">
-      <div class="lvl glass rv rv-d1"><div class="n">L1</div><div class="nm">Core</div><div class="ts">24 tests</div><div class="detail">fold &bull; causal sort &bull; batch<br>TTL &bull; scope &bull; lifecycle</div></div>
-      <div class="lvl glass rv rv-d2"><div class="n">L2</div><div class="nm">Algebra</div><div class="ts">15 tests</div><div class="detail">sequential &bull; antagonistic<br>excluding &bull; parallel</div></div>
-      <div class="lvl glass rv rv-d3"><div class="n">L3</div><div class="nm">Full</div><div class="ts">15 tests</div><div class="detail">7 integrity rules<br>anchoring &bull; witnesses</div></div>
+      <div class="lvl glass rv rv-d1"><div class="n">L1</div><div class="nm">Core</div><div class="ts">24 теста</div><div class="detail">fold &bull; причинная сортировка &bull; batch<br>TTL &bull; область видимости &bull; жизненный цикл</div></div>
+      <div class="lvl glass rv rv-d2"><div class="n">L2</div><div class="nm">Algebra</div><div class="ts">15 тестов</div><div class="detail">последовательность &bull; антагонизм<br>исключение &bull; параллельность</div></div>
+      <div class="lvl glass rv rv-d3"><div class="n">L3</div><div class="nm">Full</div><div class="ts">15 тестов</div><div class="detail">7 правил целостности<br>анкеринг &bull; свидетельства</div></div>
     </div>
   </div>
 </section>
@@ -452,18 +452,18 @@
 <!-- ===== DOMAINS ===== -->
 <section>
   <div class="container rv">
-    <div class="stag">Field-tested</div>
-    <div class="stitle">8 domains. 527 intentions. Zero red blockers.</div>
-    <div class="sdesc">Each domain pushes the paradigm against a different shape of problem. The crystallizer renders all of them from declaration alone.</div>
+    <div class="stag">Проверено полевыми тестами</div>
+    <div class="stitle">8 доменов. 527 намерений. Ноль критических блокеров.</div>
+    <div class="sdesc">Каждый домен проверяет парадигму на разной форме задачи. Кристаллизатор собирает их все исключительно из декларации.</div>
     <div class="domains">
-      <div class="dcard glass rv rv-d1"><div class="cn">225</div><div class="dn">Meshok</div><div class="dd">Auction marketplace. 10 entities, 4 roles, full order lifecycle. No&nbsp;ManualUI.</div></div>
-      <div class="dcard glass rv rv-d2"><div class="cn">100</div><div class="dn">Messenger</div><div class="dd">Real-time chat. WebSocket, WebRTC, threads, reactions.</div></div>
-      <div class="dcard glass rv rv-d3"><div class="cn">56</div><div class="dn">LifeQuest</div><div class="dd">Goals + habits. Mobile-first, doodle aesthetic, 6 custom canvases.</div></div>
-      <div class="dcard glass rv rv-d4"><div class="cn">47</div><div class="dn">Reflect</div><div class="dd">Mood diary by Yale&nbsp;RULER. Apple visionOS-glass, analytical canvases.</div></div>
-      <div class="dcard glass rv rv-d1"><div class="cn">46</div><div class="dn">Invest</div><div class="dd">Personal investing + robo-adviser. m2m advisor, observer, regulatory exports.</div></div>
-      <div class="dcard glass rv rv-d2"><div class="cn">21</div><div class="dn">Booking</div><div class="dd">Service booking. Time slots, temporal predicates, calendar wizard.</div></div>
-      <div class="dcard glass rv rv-d3"><div class="cn">17</div><div class="dn">Planning</div><div class="dd">Collaborative polls. Voting, quorum policies, deadlines.</div></div>
-      <div class="dcard glass rv rv-d4"><div class="cn">15</div><div class="dn">Workflow</div><div class="dd">Visual process editor. Canvas, topological executor.</div></div>
+      <div class="dcard glass rv rv-d1"><div class="cn">225</div><div class="dn">Sales</div><div class="dd">Аукционная барахолка. 10 сущностей, 4 роли, полный жизненный цикл заказа. Без&nbsp;ManualUI.</div></div>
+      <div class="dcard glass rv rv-d2"><div class="cn">100</div><div class="dn">Messenger</div><div class="dd">Чат реального времени. WebSocket, WebRTC, треды, реакции.</div></div>
+      <div class="dcard glass rv rv-d3"><div class="cn">56</div><div class="dn">LifeQuest</div><div class="dd">Цели и привычки. Mobile-first, doodle-стилистика, 6 custom canvas.</div></div>
+      <div class="dcard glass rv rv-d4"><div class="cn">47</div><div class="dn">Reflect</div><div class="dd">Дневник эмоций по Yale&nbsp;RULER. Apple visionOS-glass, аналитические canvas.</div></div>
+      <div class="dcard glass rv rv-d1"><div class="cn">46</div><div class="dn">Invest</div><div class="dd">Личные инвестиции + робо-эдвайзер. m2m советник, observer, регуляторные выгрузки.</div></div>
+      <div class="dcard glass rv rv-d2"><div class="cn">21</div><div class="dn">Booking</div><div class="dd">Бронирование услуг. Временные слоты, темпоральные предикаты, календарный wizard.</div></div>
+      <div class="dcard glass rv rv-d3"><div class="cn">17</div><div class="dn">Planning</div><div class="dd">Коллективные опросы. Голосование, кворум, дедлайны.</div></div>
+      <div class="dcard glass rv rv-d4"><div class="cn">15</div><div class="dn">Workflow</div><div class="dd">Визуальный редактор процессов. Canvas, серверный исполнитель.</div></div>
     </div>
   </div>
 </section>
@@ -472,7 +472,7 @@
 <section>
   <div class="container rv">
     <div class="quote-wrap">
-      <blockquote>UI is not what you draw. UI is the intersection of <em>projections</em> and <em>intentions</em>. Pixels, voice, agent API, document &mdash; equal materializations of that intersection.</blockquote>
+      <blockquote>UI &mdash; это не то, что вы рисуете. UI &mdash; это пересечение <em>проекций</em> и <em>намерений</em>. Пиксели, голос, агентский API, документ &mdash; равноправные материализации этого пересечения.</blockquote>
     </div>
   </div>
 </section>
@@ -480,14 +480,14 @@
 <!-- ===== FOOTER ===== -->
 <footer>
   <div class="logo">IDF</div>
-  <p>Specification v1.0 &copy; 2026 IDF Authors &mdash; CC BY 4.0</p>
-  <p>Reference implementation v1.6.2 &mdash; MIT &middot; @idf/core v0.2</p>
+  <p>Спецификация v1.0 &copy; 2026 IDF Authors &mdash; CC BY 4.0</p>
+  <p>Референсная реализация v1.6.2 &mdash; MIT &middot; @idf/core v0.2</p>
   <div class="flinks">
-    <a href="https://github.com/ignatdubovskiy/idf/blob/main/spec/idf-v1.0-part1-core.md">Spec</a>
+    <a href="https://github.com/ignatdubovskiy/idf/blob/main/spec/idf-v1.0-part1-core.md">Спецификация</a>
     <a href="https://github.com/ignatdubovskiy/idf/tree/main/packages/core">@idf/core</a>
-    <a href="https://github.com/ignatdubovskiy/idf/tree/main/spec/conformance">Conformance</a>
+    <a href="https://github.com/ignatdubovskiy/idf/tree/main/spec/conformance">Тесты</a>
     <a href="https://github.com/ignatdubovskiy/idf">GitHub</a>
-    <a href="./index-ru.html" style="color:var(--accent-bright)">RU</a>
+    <a href="./index.html" style="color:var(--accent-bright)">EN</a>
   </div>
 </footer>
 
@@ -743,23 +743,23 @@
   <span class="fn">checkInvariants</span>, <span class="fn">checkPreapproval</span>,
 } <span class="kw">from</span> <span class="str">'@idf/core'</span>;
 
-<span class="cm">// 1. Declare what users come to do (intents \u00d7 ontology)</span>
+<span class="cm">// 1. Опишите что люди приходят делать (intents \u00d7 ontology)</span>
 <span class="kw">const</span> world = <span class="fn">fold</span>(\u03A6_confirmed, typeMap);
 
-<span class="cm">// 2. Same model, scoped per viewer \u2014 m2m via role.scope</span>
+<span class="cm">// 2. Та же модель, scoped под зрителя \u2014 m2m через role.scope</span>
 <span class="kw">const</span> scoped = <span class="fn">filterWorldForRole</span>(world, ontology, <span class="str">'advisor'</span>, viewer);
 
-<span class="cm">// 3. Render any of four materializations from the same artifact:</span>
+<span class="cm">// 3. Рендер любой из четырёх материализаций из одного артефакта:</span>
 <span class="kw">const</span> doc   = <span class="fn">materializeAsDocument</span>(projection, scoped, viewer);  <span class="cm">// HTML \/ JSON</span>
 <span class="kw">const</span> voice = <span class="fn">materializeAsVoice</span>(projection, scoped, viewer);     <span class="cm">// SSML \/ turns</span>
 <span class="cm">// pixels      \u2192 ProjectionRendererV2 + adapter (Mantine \/ AntD \/ ...)</span>
 <span class="cm">// agent API   \u2192 /api/agent/:domain/{schema,world,exec}</span>
 
-<span class="cm">// 4. Schema-level guarantees \u2014 declarative, enforced after every fold</span>
+<span class="cm">// 4. Schema-level гарантии \u2014 декларативно, проверяются после каждого fold</span>
 <span class="kw">const</span> { ok, violations } = <span class="fn">checkInvariants</span>(world, ontology);
 <span class="cm">// referential \u00b7 transition \u00b7 cardinality \u00b7 aggregate \u00b7 role-capability</span>
 
-<span class="cm">// 5. Agent guards \u2014 limits beyond JWT, declarative</span>
+<span class="cm">// 5. Agent guards \u2014 лимиты сверх JWT, декларативно</span>
 <span class="kw">const</span> guard = <span class="fn">checkPreapproval</span>(<span class="str">'agent_execute_order'</span>, params, viewer, ontology, world);`;
 
   const el=document.getElementById('codeBlock');
