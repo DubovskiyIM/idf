@@ -74,7 +74,7 @@ function ShadcnTextInput({ spec, value, onChange }) {
         type={spec.type === "email" ? "email" : spec.type === "url" ? "url" : spec.type === "tel" ? "tel" : "text"}
         style={{
           width: "100%", borderRadius: "var(--radius-doodle)",
-          border: "2px dashed var(--color-doodle-border)",
+          border: "1.5px solid var(--color-doodle-ink)",
           background: "var(--color-doodle-bg)",
           padding: "8px 12px", fontFamily: "var(--font-doodle)",
           color: "var(--color-doodle-ink)", fontSize: 14,
@@ -96,7 +96,7 @@ function ShadcnTextarea({ spec, value, onChange }) {
       <textarea
         style={{
           width: "100%", borderRadius: "var(--radius-doodle)",
-          border: "2px dashed var(--color-doodle-border)",
+          border: "1.5px solid var(--color-doodle-ink)",
           background: "var(--color-doodle-bg)",
           padding: "8px 12px", fontFamily: "var(--font-doodle)",
           color: "var(--color-doodle-ink)", fontSize: 14,
@@ -119,7 +119,7 @@ function ShadcnNumber({ spec, value, onChange }) {
         type="number"
         style={{
           width: "100%", borderRadius: "var(--radius-doodle)",
-          border: "2px dashed var(--color-doodle-border)",
+          border: "1.5px solid var(--color-doodle-ink)",
           background: "var(--color-doodle-bg)",
           padding: "8px 12px", fontFamily: "var(--font-doodle)",
           color: "var(--color-doodle-ink)", fontSize: 14, outline: "none",
@@ -142,7 +142,7 @@ function ShadcnDateTime({ spec, value, onChange }) {
         type={isTimeOnly ? "time" : "date"}
         style={{
           width: "100%", borderRadius: "var(--radius-doodle)",
-          border: "2px dashed var(--color-doodle-border)",
+          border: "1.5px solid var(--color-doodle-ink)",
           background: "var(--color-doodle-bg)",
           padding: "8px 12px", fontFamily: "var(--font-doodle)",
           color: "var(--color-doodle-ink)", fontSize: 14, outline: "none",
@@ -180,7 +180,7 @@ function ShadcnSelect({ spec, value, onChange }) {
               border: "2px solid var(--color-doodle-border)",
               borderRadius: "var(--radius-doodle)",
               boxShadow: "4px 4px 0 var(--color-doodle-border)",
-              zIndex: 50, fontFamily: "var(--font-doodle)",
+              zIndex: 9999, fontFamily: "var(--font-doodle)",
             }}
             position="popper" sideOffset={4}
           >
@@ -273,11 +273,12 @@ function ShadcnIntentButton({ spec, onClick, disabled }) {
       onClick={onClick} disabled={disabled}
       style={{
         ...btnBase, display: "inline-flex", alignItems: "center", gap: 6,
-        padding: "6px 12px", fontSize: 13,
-        background: "transparent",
+        padding: "6px 14px", fontSize: 14,
+        background: isDanger ? "transparent" : "var(--color-doodle-bg)",
         color: isDanger ? "var(--color-doodle-warn)" : "var(--color-doodle-ink)",
-        borderColor: isDanger ? "var(--color-doodle-warn)" : "var(--color-doodle-border)",
-        borderStyle: isDanger ? "solid" : "dashed",
+        borderColor: isDanger ? "var(--color-doodle-warn)" : "var(--color-doodle-ink)",
+        borderStyle: "solid", borderWidth: 1.5,
+        boxShadow: "1.5px 1.5px 0 var(--color-doodle-ink)",
         opacity: disabled ? 0.5 : 1,
       }}
       title={label}
@@ -304,15 +305,17 @@ function ShadcnOverflowMenu({ items, triggerIcon, triggerLabel }) {
       </DropdownMenu.Trigger>
       <DropdownMenu.Portal>
         <DropdownMenu.Content
+          align="end"
+          collisionPadding={16}
           style={{
             background: "var(--color-doodle-bg)",
-            border: "2px solid var(--color-doodle-border)",
+            border: "2px solid var(--color-doodle-ink)",
             borderRadius: "var(--radius-doodle)",
-            boxShadow: "4px 4px 0 var(--color-doodle-border)",
-            padding: 4, zIndex: 50, fontFamily: "var(--font-doodle)",
-            minWidth: 160,
+            boxShadow: "3px 3px 0 var(--color-doodle-ink)",
+            padding: 4, zIndex: 9999, fontFamily: "var(--font-doodle)",
+            minWidth: 180, maxWidth: "90vw",
           }}
-          sideOffset={4}
+          sideOffset={6}
         >
           {items.map((item, i) => {
             if (item.divider) return <DropdownMenu.Separator key={item.key} style={{ height: 1, background: "var(--color-doodle-border)", margin: "4px 0" }} />;
@@ -346,11 +349,11 @@ function ShadcnModalShell({ opened, onClose, title, children }) {
       <Dialog.Portal>
         <Dialog.Overlay style={{
           position: "fixed", inset: 0, background: "rgba(0,0,0,0.4)",
-          backdropFilter: "blur(4px)", zIndex: 50,
+          backdropFilter: "blur(4px)", zIndex: 9999,
         }} />
         <Dialog.Content style={{
           position: "fixed", left: "50%", top: "50%",
-          transform: "translate(-50%, -50%)", zIndex: 50,
+          transform: "translate(-50%, -50%)", zIndex: 9999,
           width: "calc(100% - 32px)", maxWidth: 420, maxHeight: "85vh",
           overflowY: "auto",
           background: "var(--color-doodle-bg)",
@@ -489,10 +492,10 @@ function ShadcnPaper({ children, ...props }) {
   return (
     <div style={{
       borderRadius: "var(--radius-doodle)",
-      border: "2px dashed var(--color-doodle-border)",
+      border: "1.5px solid var(--color-doodle-ink)",
       background: "var(--color-doodle-bg)",
       padding: "var(--spacing-doodle)",
-      boxShadow: "2px 2px 0 var(--color-doodle-border)",
+      boxShadow: "2px 2px 0 var(--color-doodle-ink)",
     }} {...props}>
       {children}
     </div>

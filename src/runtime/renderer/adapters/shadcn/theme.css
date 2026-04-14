@@ -1,19 +1,49 @@
 @import "tailwindcss";
 
 @theme {
-  --color-doodle-bg: #fdf6e3;
+  --color-doodle-bg: #fdfaf3;
   --color-doodle-line: #e8d5b7;
-  --color-doodle-ink: #5c4033;
-  --color-doodle-ink-light: #8b7355;
+  --color-doodle-ink: #2c2420;
+  --color-doodle-ink-light: #6b5d52;
   --color-doodle-accent: #4a7c59;
-  --color-doodle-warn: #d4764e;
-  --color-doodle-gold: #d4a76a;
-  --color-doodle-border: #c4a77d;
+  --color-doodle-warn: #c25a3a;
+  --color-doodle-gold: #c98f3f;
+  --color-doodle-border: #2c2420;
+  --color-doodle-border-soft: #b8a890;
   --color-doodle-highlight: #fff3cd;
-  --font-doodle: 'Comic Sans MS', 'Segoe Print', cursive;
-  --radius-doodle: 12px;
+  --font-doodle: 'Caveat', 'Comic Sans MS', 'Segoe Print', cursive;
+  --font-doodle-ui: 'Architects Daughter', 'Caveat', 'Comic Sans MS', cursive;
+  --radius-doodle: 14px;
   --spacing-doodle: 16px;
   --spacing-doodle-lg: 20px;
+}
+
+/* Sketch-шрифты для рукописного UI (как в wireframe-mockup) */
+@import url('https://fonts.googleapis.com/css2?family=Caveat:wght@400;600;700&family=Architects+Daughter&display=swap');
+
+/* Глобально предотвращаем горизонтальный scroll на корне */
+html, body {
+  overflow-x: hidden;
+  max-width: 100vw;
+}
+body {
+  background-color: var(--color-doodle-bg);
+}
+
+/* Кастомный scrollbar в doodle-стиле */
+*::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+*::-webkit-scrollbar-track {
+  background: transparent;
+}
+*::-webkit-scrollbar-thumb {
+  background: var(--color-doodle-border-soft);
+  border-radius: 5px;
+}
+*::-webkit-scrollbar-thumb:hover {
+  background: var(--color-doodle-ink-light);
 }
 
 /* Линованная бумага */

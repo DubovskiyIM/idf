@@ -89,6 +89,7 @@ export default function ArchetypeDetail({ slots, nav, ctx: parentCtx, projection
     <div style={{
       display: "flex", flexDirection: "column", height: "100%",
       background: "var(--mantine-color-body)",
+      overflowX: "hidden", maxWidth: "100%",
     }}>
       {(slots.header?.length > 0 || canEdit) && (
         <div style={{

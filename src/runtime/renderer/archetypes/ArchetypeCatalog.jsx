@@ -27,6 +27,7 @@ export default function ArchetypeCatalog({ slots, ctx: parentCtx }) {
     <div style={{
       display: "flex", flexDirection: "column", height: "100%",
       background: "var(--mantine-color-body)", position: "relative",
+      overflowX: "hidden", maxWidth: "100%",
     }}>
       {slots.header?.length > 0 && (
         <div style={{
