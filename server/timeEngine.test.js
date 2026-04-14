@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach } from "vitest";
-const { TimerQueue } = require("./timeEngine.js");
+const { TimerQueue, hydrateFromWorld } = require("./timeEngine.js");
 
 describe("TimerQueue", () => {
   let q;
@@ -49,5 +49,28 @@ describe("TimerQueue", () => {
     expect(due).toEqual([]);
     const due2 = q.popDue(250);
     expect(due2.map(t => t.id)).toEqual(["a"]);
+  });
+});
+
+describe("hydrateFromWorld", () => {
+  it("loads active && !firedAt timers from world", () => {
+    const q = new TimerQueue();
+    const world = {
+      scheduledTimers: [
+        { id: "t1", firesAt: 1000, active: true, firedAt: null, fireIntent: "x" },
+        { id: "t2", firesAt: 2000, active: true, firedAt: 500, fireIntent: "y" },  // already fired
+        { id: "t3", firesAt: 3000, active: false, firedAt: null, fireIntent: "z" }, // revoked
+        { id: "t4", firesAt: 4000, active: true, firedAt: null, fireIntent: "w" },
+      ],
+    };
+    hydrateFromWorld(q, world);
+    expect(q.size()).toBe(2);
+    expect(q.all().map(t => t.id).sort()).toEqual(["t1", "t4"]);
+  });
+
+  it("handles missing scheduledTimers collection", () => {
+    const q = new TimerQueue();
+    hydrateFromWorld(q, {});
+    expect(q.size()).toBe(0);
   });
 });

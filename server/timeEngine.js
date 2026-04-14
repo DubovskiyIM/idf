@@ -44,4 +44,17 @@ class TimerQueue {
   }
 }
 
-module.exports = { TimerQueue };
+/**
+ * Hydrate queue из текущего world (fold(Φ)).
+ * Грузит таймеры с active === true && firedAt == null.
+ */
+function hydrateFromWorld(queue, world) {
+  const timers = world?.scheduledTimers || [];
+  for (const t of timers) {
+    if (t.active === true && t.firedAt == null) {
+      queue.insert(t);
+    }
+  }
+}
+
+module.exports = { TimerQueue, hydrateFromWorld };
