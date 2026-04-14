@@ -148,3 +148,60 @@ describe("kind: referential", () => {
     expect(checkInvariants(world, ontology).ok).toBe(true);
   });
 });
+
+describe("kind: transition", () => {
+  const ontology = {
+    invariants: [
+      { name: "order_status", kind: "transition",
+        entity: "Order", field: "status",
+        order: ["created","paid","shipped","delivered"] }
+    ],
+  };
+
+  it("проходит если текущий статус в order", () => {
+    const world = { orders: [{ id: "o1", status: "paid" }] };
+    expect(checkInvariants(world, ontology).ok).toBe(true);
+  });
+
+  it("ловит статус не из допустимого набора", () => {
+    const world = { orders: [{ id: "o1", status: "frozen" }] };
+    const r = checkInvariants(world, ontology);
+    expect(r.ok).toBe(false);
+    expect(r.violations[0].details.currentValue).toBe("frozen");
+  });
+
+  it("с историей: проходит monotonic forward", () => {
+    const world = { orders: [{ id: "o1", status: "shipped" }] };
+    const opts = { history: { "o1.status": ["created", "paid", "shipped"] } };
+    expect(checkInvariants(world, ontology, opts).ok).toBe(true);
+  });
+
+  it("с историей: ловит backward transition", () => {
+    const world = { orders: [{ id: "o1", status: "paid" }] };
+    const opts = { history: { "o1.status": ["created", "shipped", "paid"] } };
+    const r = checkInvariants(world, ontology, opts);
+    expect(r.ok).toBe(false);
+    expect(r.violations[0].details.from).toBe("shipped");
+    expect(r.violations[0].details.to).toBe("paid");
+  });
+
+  it("explicit transitions[]: разрешены только объявленные пары", () => {
+    const ont = {
+      invariants: [
+        { name: "t", kind: "transition", entity: "Order", field: "status",
+          transitions: [["created","paid"], ["paid","shipped"]] }
+      ],
+    };
+    const world = { orders: [{ id: "o1", status: "shipped" }] };
+    const opts = { history: { "o1.status": ["created", "shipped"] } };
+    const r = checkInvariants(world, ont, opts);
+    expect(r.ok).toBe(false);
+    expect(r.violations[0].details.from).toBe("created");
+  });
+
+  it("повтор того же статуса допустим", () => {
+    const world = { orders: [{ id: "o1", status: "paid" }] };
+    const opts = { history: { "o1.status": ["created", "paid", "paid"] } };
+    expect(checkInvariants(world, ontology, opts).ok).toBe(true);
+  });
+});
