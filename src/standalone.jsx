@@ -193,8 +193,11 @@ export default function StandaloneApp({ domainId }) {
   // All other domains: shared auth gate
   const isLifequest = domainId === "lifequest";
   const lifequestBg = "linear-gradient(135deg, #fdf2e9 0%, #fef3c7 25%, #fce7f3 50%, #e0f2fe 75%, #dcfce7 100%)";
+  // key — заставляет React пересоздать дерево при смене UI-kit,
+  // чтобы все компоненты (включая memo'д) подхватили новый адаптер.
+  const adapterKey = `kit-${prefsForKit?.uiKit || domainId}`;
   const content = (
-    <div style={{
+    <div key={adapterKey} style={{
       height: "100vh",
       background: isLifequest ? lifequestBg : "var(--mantine-color-body)",
       overflow: isV2 ? "hidden" : "auto",
