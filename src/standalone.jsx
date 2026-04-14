@@ -31,6 +31,7 @@ import { registerCanvas } from "./runtime/renderer/archetypes/ArchetypeCanvas.js
 import CalendarCanvas from "./domains/lifequest/canvas/CalendarCanvas.jsx";
 import VisionBoardCanvas from "./domains/lifequest/canvas/VisionBoardCanvas.jsx";
 import PointACanvas from "./domains/lifequest/canvas/PointACanvas.jsx";
+import WeekProgressCanvas from "./domains/lifequest/canvas/WeekProgressCanvas.jsx";
 
 // Регистрация domain-specific canvas-компонентов
 registerCanvas("calendar", ({ world, exec, viewer, ctx }) => (
@@ -41,6 +42,7 @@ registerCanvas("vision_board", ({ world, exec, viewer }) => (
   <VisionBoardCanvas world={world} viewer={viewer} exec={exec} />
 ));
 registerCanvas("point_a", PointACanvas);
+registerCanvas("week_progress", WeekProgressCanvas);
 
 // Домены с переключением адаптера
 const DOMAIN_ADAPTERS = {

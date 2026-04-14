@@ -27,12 +27,9 @@ export const PROJECTIONS = {
 
   week_progress: {
     name: "Прогресс недели",
-    kind: "detail",
-    query: "прогресс привычек за неделю",
-    entities: ["HabitLog", "Habit"],
-    mainEntity: "User",
-    idParam: "userId",
-    witnesses: ["habitId", "date", "done", "value", "title", "streakCurrent"],
+    kind: "canvas",
+    query: "аналитика по всем целям и привычкам за неделю",
+    entities: ["HabitLog", "Habit", "Goal", "Task"],
   },
 
   habit_list: {
