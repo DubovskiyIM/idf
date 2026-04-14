@@ -9,7 +9,7 @@
  * Возвращает { prefs, setPref, resetPrefs, PrefsPanel }.
  */
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 
 const STORAGE_KEY = "idf_personal_prefs";
 
@@ -32,21 +32,40 @@ function savePrefs(prefs) {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(prefs));
 }
 
+// Глобальный кэш + listeners для синхронной читки из не-React кода (Icon.jsx).
+// Альтернатива: проброс iconMode через React Context — но Icon вызывается
+// из десятков мест (атомов, контролов), это раздуло бы сигнатуры.
+let GLOBAL_PREFS = loadPrefs();
+const LISTENERS = new Set();
+
+export function getGlobalPrefs() {
+  return GLOBAL_PREFS;
+}
+
+function notifyAndPersist(next) {
+  GLOBAL_PREFS = next;
+  savePrefs(next);
+  LISTENERS.forEach(fn => { try { fn(next); } catch {} });
+}
+
 export function usePersonalPrefs() {
-  const [prefs, setPrefsState] = useState(loadPrefs);
+  const [prefs, setPrefsState] = useState(GLOBAL_PREFS);
+
+  // Подписка на глобальные изменения с корректным cleanup
+  useEffect(() => {
+    const sub = (next) => setPrefsState(next);
+    LISTENERS.add(sub);
+    return () => { LISTENERS.delete(sub); };
+  }, []);
 
   const setPref = useCallback((key, value) => {
-    setPrefsState(prev => {
-      const next = { ...prev, [key]: value };
-      savePrefs(next);
-      return next;
-    });
+    const next = { ...GLOBAL_PREFS, [key]: value };
+    notifyAndPersist(next); // вызовет listener, который обновит state
   }, []);
 
   const resetPrefs = useCallback(() => {
     const d = { ...DEFAULTS };
-    savePrefs(d);
-    setPrefsState(d);
+    notifyAndPersist(d);
   }, []);
 
   return { prefs, setPref, resetPrefs };

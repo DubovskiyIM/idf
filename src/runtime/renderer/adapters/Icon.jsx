@@ -1,38 +1,35 @@
 import { getAdaptedComponent } from "./registry.js";
+import { getGlobalPrefs } from "../personal/usePersonalPrefs.js";
 
 /**
  * Универсальный `<Icon>` — рендерит иконку через UI-адаптер.
- *
- * Использование:
- *   <Icon emoji="✎" size={16} />
- *
- * Логика:
- *   1. Смотрит в adapter.icon.resolve(emoji) — функция, возвращающая
- *      React-компонент иконки (например, Lucide React).
- *   2. Если компонент есть — рендерит его с size.
- *   3. Иначе — fallback: <span>{emoji}</span>.
- *
- * Благодаря этому runtime компоненты не знают про Lucide напрямую —
- * вся связь идёт через адаптер, и другой kit (Phosphor, Heroicons,
- * собственный emoji-set) можно подключить одной строкой.
+ * Учитывает personal prefs.iconMode:
+ *   - "lucide": SVG-иконка через адаптер (default)
+ *   - "emoji":  emoji-символ как текст
+ *   - "none":   ничего не рендерим
  */
 export default function Icon({ emoji, size = 16, color, style }) {
   if (!emoji) return null;
+  const { iconMode = "lucide" } = getGlobalPrefs() || {};
 
-  const iconCategory = getAdaptedComponent("icon", "resolve");
-  const IconComponent = typeof iconCategory === "function" ? iconCategory(emoji) : null;
+  if (iconMode === "none") return null;
 
-  if (IconComponent) {
-    return (
-      <IconComponent
-        size={size}
-        color={color}
-        style={{ display: "inline-block", verticalAlign: "middle", ...(style || {}) }}
-        strokeWidth={2}
-      />
-    );
+  if (iconMode === "lucide") {
+    const iconCategory = getAdaptedComponent("icon", "resolve");
+    const IconComponent = typeof iconCategory === "function" ? iconCategory(emoji) : null;
+    if (IconComponent) {
+      return (
+        <IconComponent
+          size={size}
+          color={color}
+          style={{ display: "inline-block", verticalAlign: "middle", ...(style || {}) }}
+          strokeWidth={2}
+        />
+      );
+    }
   }
 
+  // iconMode === "emoji" или fallback
   return (
     <span
       style={{
