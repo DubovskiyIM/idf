@@ -24,10 +24,10 @@ import MessengerUI from "./domains/messenger/ManualUI.jsx";
 import V2Shell from "./runtime/renderer/shell/V2Shell.jsx";
 import { useAuth } from "./runtime/renderer/auth/useAuth.js";
 import AuthGate from "./runtime/renderer/auth/AuthGate.jsx";
-import { registerUIAdapter } from "./runtime/renderer/adapters/registry.js";
-import { mantineAdapter } from "./runtime/renderer/adapters/mantine/index.jsx";
-import { shadcnAdapter } from "./runtime/renderer/adapters/shadcn/index.jsx";
-import { appleAdapter } from "./runtime/renderer/adapters/apple/index.jsx";
+import { registerUIAdapter } from "@idf/renderer";
+import { mantineAdapter } from "@idf/adapter-mantine";
+import { shadcnAdapter } from "@idf/adapter-shadcn";
+import { appleAdapter } from "@idf/adapter-apple";
 import { usePersonalPrefs } from "./runtime/renderer/personal/usePersonalPrefs.js";
 
 const UI_KITS = { mantine: mantineAdapter, shadcn: shadcnAdapter, apple: appleAdapter };
