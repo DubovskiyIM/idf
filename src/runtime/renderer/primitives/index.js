@@ -1,5 +1,6 @@
 import { Text, Heading, Badge, Avatar, Image, Audio, Spacer, Divider, StatBar, PriceBlock, InfoSection, Timer } from "./atoms.jsx";
 import { Row, Column, Card, List } from "./containers.jsx";
+import { Chart, Sparkline } from "./chart.jsx";
 
 export const PRIMITIVES = {
   text: Text,
@@ -18,4 +19,6 @@ export const PRIMITIVES = {
   column: Column,
   card: Card,
   list: List,
+  chart: Chart,
+  sparkline: Sparkline,
 };

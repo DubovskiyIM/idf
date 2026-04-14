@@ -700,7 +700,64 @@ async function main() {
   }, jwt);
   assert(cr.status === 200, "58", `create_reminder ${cr.status}`, cr.body);
 
-  process.stdout.write("\n[smoke ✓] Все 58 шагов прошли успешно (booking 13 + planning 13 + meshok 6 + workflow 5 + messenger 5 + lifequest 8 + reflect 8)\n");
+  // ─── Invest agent layer (6 шагов) ───
+
+  log("59", "invest: публикуем ontology + intents");
+  const investOnt = await import("../src/domains/invest/ontology.js");
+  const investInt = await import("../src/domains/invest/intents.js");
+  await fetch(`${HOST}/api/typemap?domain=invest`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(investOnt.ONTOLOGY)
+  });
+  await fetch(`${HOST}/api/intents?domain=invest`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(investInt.INTENTS)
+  });
+  ok("59", "invest setup complete");
+
+  log("60", "GET /api/agent/invest/schema");
+  const invSchema = await get("/api/agent/invest/schema", jwt);
+  assert(invSchema.status === 200, "60", `schema ${invSchema.status}`, invSchema.body);
+  assert(invSchema.body.domain === "invest", "60", "domain === invest");
+  const agentIntents = (invSchema.body.intents || []).map(i => i.id);
+  assert(agentIntents.includes("agent_propose_rebalance"), "60", "schema содержит agent_propose_rebalance");
+
+  log("61", "GET /api/agent/invest/world");
+  const invWorld = await get("/api/agent/invest/world", jwt);
+  assert(invWorld.status === 200, "61", `world ${invWorld.status}`);
+  assert(Array.isArray(invWorld.body.world?.portfolios), "61", "world.portfolios is array");
+
+  log("62", "agent_propose_rebalance");
+  const rebResp = await post("/api/agent/invest/exec", {
+    intentId: "agent_propose_rebalance",
+    params: { portfolioId: "pf_balanced", confidence: 82, rationale: "Smoke-test rebalance" }
+  }, jwt);
+  assert(rebResp.status === 200, "62", `propose_rebalance ${rebResp.status}`, rebResp.body);
+
+  log("63", "agent_flag_anomaly");
+  const flagResp = await post("/api/agent/invest/exec", {
+    intentId: "agent_flag_anomaly",
+    params: { severity: "warning", message: "Smoke: test anomaly" }
+  }, jwt);
+  assert(flagResp.status === 200, "63", `flag_anomaly ${flagResp.status}`, flagResp.body);
+
+  log("64", "agent_fetch_market_signal");
+  const sigResp = await post("/api/agent/invest/exec", {
+    intentId: "agent_fetch_market_signal",
+    params: { assetId: "ast_aapl", kind: "sentiment", value: 0.65, source: "smoke" }
+  }, jwt);
+  assert(sigResp.status === 200, "64", `fetch_signal ${sigResp.status}`, sigResp.body);
+
+  log("65", "buy_asset (forbidden для agent — canExecute исключает) → 403 или rejected");
+  const buyResp = await post("/api/agent/invest/exec", {
+    intentId: "buy_asset",
+    params: { portfolioId: "pf_balanced", assetId: "ast_sber", quantity: 100, price: 312 }
+  }, jwt);
+  assert(buyResp.status === 403, "65", `buy_asset rejected ${buyResp.status}`, buyResp.body);
+
+  process.stdout.write("\n[smoke ✓] Все 65 шагов прошли успешно (booking 13 + planning 13 + meshok 6 + workflow 5 + messenger 5 + lifequest 8 + reflect 8 + invest 7)\n");
 }
 
 main().catch(err => {

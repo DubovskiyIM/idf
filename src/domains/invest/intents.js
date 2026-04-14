@@ -27,6 +27,15 @@ export const INTENTS = {
     particles: { effects: [] }, // wizard-start, эффектов нет до compute
   },
 
+  // Wizard-шаги risk_questionnaire — side-effect-free, собираются в collected.
+  set_risk_horizon: { name: "Шаг: горизонт", particles: { effects: [] } },
+  set_risk_tolerance: { name: "Шаг: толерантность", particles: { effects: [] } },
+  set_risk_goal: { name: "Шаг: цель", particles: { effects: [] } },
+
+  // Wizard-шаги portfolio_onboarding.
+  set_portfolio_profile: { name: "Шаг: профиль", particles: { effects: [] } },
+  set_portfolio_currency: { name: "Шаг: валюта", particles: { effects: [] } },
+
   compute_risk_profile: {
     name: "Рассчитать профиль риска",
     particles: { effects: [{ α: "add", target: "riskProfiles", σ: "account" }] },
@@ -198,5 +207,27 @@ export const INTENTS = {
   agent_fetch_market_signal: {
     name: "Сигнал рынка",
     particles: { effects: [{ α: "add", target: "marketSignals", σ: "global" }] },
+  },
+
+  // ─── Rule-triggered actions (вызываются из ruleEngine) ───
+
+  weekly_portfolio_report: {
+    name: "Недельный отчёт",
+    particles: { effects: [{ α: "add", target: "recommendations", σ: "account" }] },
+  },
+
+  auto_stop_loss: {
+    name: "Авто stop-loss",
+    particles: { effects: [{ α: "add", target: "alerts", σ: "account" }] },
+  },
+
+  volatility_spike_alert: {
+    name: "Всплеск волатильности",
+    particles: { effects: [{ α: "add", target: "alerts", σ: "account" }] },
+  },
+
+  drift_rebalance_proposal: {
+    name: "Дрейф аллокации",
+    particles: { effects: [{ α: "add", target: "recommendations", σ: "account" }] },
   },
 };

@@ -194,14 +194,25 @@ export const ONTOLOGY = {
     },
 
     agent: {
-      // робо-эдвайзер с JWT-scope
+      // робо-эдвайзер с JWT-scope (§17). Все канонические агентские
+      // intents покрыты server/schema/buildInvestEffects.cjs.
       canExecute: [
         "agent_propose_rebalance", "agent_execute_preapproved_order",
         "agent_flag_anomaly", "agent_fetch_market_signal",
         "agent_recompute_risk_score", "agent_generate_report",
       ],
       visibleFields: {
-        Portfolio: "scoped", Position: "scoped", MarketSignal: "all",
+        User: ["id", "name", "email"],
+        Portfolio: ["id", "userId", "name", "baseCurrency", "riskProfile",
+                    "targetStocks", "targetBonds", "targetCrypto", "targetExotic",
+                    "totalValue", "pnl"],
+        Position: ["id", "portfolioId", "userId", "assetId", "quantity",
+                   "avgPrice", "currentPrice", "unrealizedPnL", "stopLoss", "takeProfit"],
+        Asset: "all",
+        MarketSignal: "all",
+        Recommendation: ["id", "userId", "source", "type", "status", "confidence", "createdAt"],
+        Alert: ["id", "userId", "severity", "message", "triggeredAt"],
+        RiskProfile: ["id", "userId", "level", "computedScore", "updatedAt"],
       },
     },
 
@@ -213,4 +224,113 @@ export const ONTOLOGY = {
       },
     },
   },
+
+  // ─── Reactive Rules Engine §22 v1.5 ───
+  // Все 4 extensions задействованы: aggregation / threshold / schedule / condition.
+  rules: [
+    // 1. AGGREGATION: каждая 10-я сделка → запрос на ребаланс
+    {
+      id: "rebalance_every_10_trades",
+      trigger: "buy_asset",
+      action: "drift_rebalance_proposal",
+      aggregation: { everyN: 10 },
+      context: {
+        userId: "effect.userId",
+        source: "agent",
+        type: "rebalance",
+        rationale: "После 10 сделок пора проверить целевую аллокацию.",
+        confidence: 70,
+        status: "pending",
+      },
+    },
+
+    // 2. THRESHOLD: последние 5 market signals имеют kind="fuzzy_risk" >= 0.8 → алерт
+    //    lookback проверяет недавние события
+    {
+      id: "high_risk_exotic_alert",
+      trigger: "agent_fetch_market_signal",
+      action: "volatility_spike_alert",
+      threshold: { lookback: 3, field: "kind", condition: "all_equal:fuzzy_risk" },
+      context: {
+        userId: "effect.userId",
+        severity: "warning",
+        message: "3 подряд высоких fuzzy-risk сигнала по экзотическим активам",
+        acknowledged: false,
+      },
+    },
+
+    // 3. SCHEDULE: еженедельный отчёт в вс 18:00
+    {
+      id: "weekly_portfolio_report_rule",
+      trigger: "*",
+      action: "weekly_portfolio_report",
+      schedule: "weekly:sun:18:00",
+      context: {
+        userId: "effect.userId",
+        source: "agent",
+        type: "hold",
+        rationale: "Еженедельный отчёт: пересмотри portfolio и обнови цели.",
+        confidence: 100,
+        status: "pending",
+      },
+    },
+
+    // 4. SCHEDULE ежедневный: проверка stop-loss каждый день 09:00
+    {
+      id: "daily_stop_loss_check",
+      trigger: "*",
+      action: "auto_stop_loss",
+      schedule: "daily:09:00",
+      context: {
+        userId: null,
+        severity: "info",
+        message: "Ежедневная проверка stop-loss уровней",
+        acknowledged: false,
+      },
+    },
+
+    // 5. CONDITION: если sell_asset с qty > 100 → предложение ребаланса
+    {
+      id: "large_sell_triggers_rebalance",
+      trigger: "sell_asset",
+      action: "drift_rebalance_proposal",
+      condition: "effect.quantity > 100",
+      context: {
+        userId: "effect.userId",
+        source: "agent",
+        type: "rebalance",
+        rationale: "Крупная продажа изменила вес позиций — нужен ребаланс.",
+        confidence: 85,
+        status: "pending",
+      },
+    },
+
+    // 6. CONDITION: market signal с value > некий threshold → volatility alert
+    {
+      id: "volatility_threshold_alert",
+      trigger: "agent_fetch_market_signal",
+      action: "volatility_spike_alert",
+      condition: "effect.kind === 'sentiment' && Math.abs(effect.value) > 0.7",
+      context: {
+        userId: null,
+        severity: "info",
+        message: "Сильный sentiment-сигнал: возможна повышенная волатильность",
+        acknowledged: false,
+      },
+    },
+
+    // 7. AGGREGATION: каждые 5 новых recommendations → напомнить пользователю
+    {
+      id: "recommendations_overflow_alert",
+      trigger: "agent_propose_rebalance",
+      action: "volatility_spike_alert",
+      aggregation: { everyN: 5 },
+      context: {
+        userId: "effect.userId",
+        severity: "info",
+        message: "Накопилось 5 необработанных рекомендаций — стоит просмотреть.",
+        acknowledged: false,
+      },
+    },
+  ],
 };

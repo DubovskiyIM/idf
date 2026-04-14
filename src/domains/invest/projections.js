@@ -118,6 +118,21 @@ export const PROJECTIONS = {
     ],
   },
 
+  // ─── CANVAS: аллокация через chart-primitive ───
+
+  allocation_breakdown: {
+    name: "Аллокация", kind: "canvas",
+    entities: ["Portfolio"],
+    canvasType: "allocation_pie",
+  },
+
+  // Market trends — линейный график marketSignals
+  market_trends: {
+    name: "Тренды рынка", kind: "canvas",
+    entities: ["MarketSignal"],
+    canvasType: "market_line",
+  },
+
   // ─── CATALOG для advisor/observer (пока скрыты фильтром) ───
 
   assets_catalog: {
@@ -245,7 +260,7 @@ export const PROJECTIONS = {
 };
 
 export const ROOT_PROJECTIONS = [
-  { section: "Главная", icon: "📊", items: ["performance_dashboard"] },
+  { section: "Главная", icon: "📊", items: ["performance_dashboard", "allocation_breakdown", "market_trends"] },
   { section: "Онбординг", icon: "🚀", items: ["risk_questionnaire", "portfolio_onboarding"] },
   { section: "Портфели", icon: "💼", items: ["portfolios_root"] },
   { section: "Цели", icon: "🎯", items: ["goals_root"] },

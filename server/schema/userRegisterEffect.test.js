@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { fold, buildTypeMap, filterByStatus } from "../../src/runtime/fold.js";
+import { fold, buildTypeMap, filterByStatus } from "@idf/core";
 
 describe("_user_register эффект", () => {
   const typeMap = buildTypeMap({ entities: { User: {} } });

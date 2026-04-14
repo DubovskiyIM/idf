@@ -239,10 +239,14 @@ export default function ArchetypeWizard({ slots, projection, ctx }) {
     if (ctx.navigate) ctx.navigate("my_bookings", {});
   }, [step, steps, collected, ctx]);
 
-  // Фильтрация source
+  // Фильтрация source. source.inline (статический массив) имеет приоритет
+  // над world[collection] — используется для fixed-choice шагов (risk
+  // questionnaire, profile picker и т.п.) без необходимости сидить опции.
   const items = useMemo(() => {
     if (!step?.source) return [];
-    const collection = world[step.source.collection] || [];
+    const collection = Array.isArray(step.source.inline) && step.source.inline.length > 0
+      ? step.source.inline
+      : world[step.source.collection] || [];
     let filtered = collection;
 
     if (step.source.filter) {

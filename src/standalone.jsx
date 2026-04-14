@@ -70,6 +70,12 @@ registerCanvas("mood_trends", MoodTrendsCanvas);
 registerCanvas("activity_correlation", ActivityCorrelationCanvas);
 registerCanvas("mood_meter_cluster", MoodMeterClusterCanvas);
 
+// Invest canvas-компоненты (ключ = projectionId)
+import AllocationPieCanvas from "./domains/invest/canvas/AllocationPieCanvas.jsx";
+import MarketLineCanvas from "./domains/invest/canvas/MarketLineCanvas.jsx";
+registerCanvas("allocation_breakdown", AllocationPieCanvas);
+registerCanvas("market_trends", MarketLineCanvas);
+
 // Домены с переключением адаптера
 const DOMAIN_ADAPTERS = {
   lifequest: shadcnAdapter,
