@@ -10,15 +10,15 @@
   <style>
     :root {
       --bg: #050508;
-      --surface: rgba(14,14,22,0.7);
-      --surface-solid: #0e0e16;
-      --border: rgba(255,255,255,0.06);
-      --border-hover: rgba(108,138,255,0.3);
-      --text: #eaeaf2;
-      --text-dim: #5a5a78;
-      --text-mid: #8a8aa8;
+      --surface: rgba(14,14,22,0.65);
+      --surface-solid: #0c0c14;
+      --border: rgba(255,255,255,0.05);
+      --border-hover: rgba(108,138,255,0.28);
+      --text: #eef0f8;
+      --text-dim: #52526e;
+      --text-mid: #8c8ca8;
       --accent: #6c8aff;
-      --accent-bright: #92adff;
+      --accent-bright: #9fb5ff;
       --purple: #a78bfa;
       --green: #4ade80;
       --rose: #fb7185;
@@ -26,6 +26,7 @@
       --cyan: #22d3ee;
       --mono: 'JetBrains Mono', monospace;
       --sans: 'Inter', system-ui, sans-serif;
+      --rhythm: 140px;
     }
     *{margin:0;padding:0;box-sizing:border-box}
     html{scroll-behavior:smooth}
@@ -66,15 +67,15 @@
     #particleCanvas{position:absolute;inset:0;z-index:0;width:100%;height:100%;display:block}
     .hero-inner{position:relative;z-index:2;text-align:center;max-width:900px;padding:40px 24px}
 
-    .badge{display:inline-flex;align-items:center;gap:8px;font-family:var(--mono);font-size:11px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--green);border:1px solid rgba(74,222,128,.25);background:rgba(74,222,128,.06);backdrop-filter:blur(10px);border-radius:100px;padding:8px 18px;margin-bottom:36px}
-    .badge .pulse{width:6px;height:6px;background:var(--green);border-radius:50%;animation:pulse 2s ease-in-out infinite}
-    @keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(74,222,128,.6)}50%{box-shadow:0 0 0 8px rgba(74,222,128,0)}}
+    .badge{display:inline-flex;align-items:center;gap:10px;font-family:var(--mono);font-size:10.5px;font-weight:500;letter-spacing:.12em;color:var(--text-mid);border:1px solid var(--border);background:rgba(14,14,22,.5);backdrop-filter:blur(14px);border-radius:100px;padding:9px 20px;margin-bottom:42px}
+    .badge .pulse{width:6px;height:6px;background:var(--green);border-radius:50%;animation:pulse 2s ease-in-out infinite;flex-shrink:0}
+    @keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(74,222,128,.5)}50%{box-shadow:0 0 0 7px rgba(74,222,128,0)}}
 
-    .hero h1{font-family:var(--mono);font-size:clamp(2.4rem,6.5vw,4.5rem);font-weight:800;line-height:1.05;letter-spacing:-.04em;margin-bottom:28px}
-    .hero h1 .line2{display:block;background:linear-gradient(135deg,var(--accent),var(--purple),var(--cyan),var(--accent));background-size:300% 300%;-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;animation:aurora 8s ease-in-out infinite}
+    .hero h1{font-family:var(--mono);font-size:clamp(2.6rem,7vw,5rem);font-weight:800;line-height:1.02;letter-spacing:-.045em;margin-bottom:32px}
+    .hero h1 .line2{display:block;background:linear-gradient(135deg,var(--accent) 0%,var(--purple) 35%,var(--cyan) 70%,var(--accent) 100%);background-size:280% 280%;-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;animation:aurora 9s ease-in-out infinite}
     @keyframes aurora{0%{background-position:0% 50%}50%{background-position:100% 50%}100%{background-position:0% 50%}}
 
-    .hero .sub{font-family:var(--mono);font-size:clamp(.9rem,1.8vw,1.05rem);color:var(--text-mid);max-width:620px;margin:0 auto 44px;font-weight:400;line-height:1.7}
+    .hero .sub{font-family:var(--mono);font-size:clamp(.92rem,1.7vw,1.08rem);color:var(--text-mid);max-width:640px;margin:0 auto 48px;font-weight:400;line-height:1.7}
 
     .ctas{display:flex;gap:12px;justify-content:center;flex-wrap:wrap;margin-bottom:56px}
     .btn{font-family:var(--mono);font-size:13px;font-weight:600;padding:13px 26px;border-radius:12px;border:1px solid var(--border);background:var(--surface);backdrop-filter:blur(12px);color:var(--text);cursor:pointer;transition:all .35s cubic-bezier(.16,1,.3,1);display:inline-flex;align-items:center;gap:8px}
@@ -98,11 +99,12 @@
     .glass:hover{border-color:var(--border-hover);transform:translateY(-6px);box-shadow:0 16px 48px rgba(108,138,255,.08)}
 
     /* ===== SECTIONS ===== */
-    section{padding:120px 24px}
+    section{padding:var(--rhythm) 24px}
     .container{max-width:1060px;margin:0 auto}
-    .stag{font-family:var(--mono);font-size:11px;font-weight:600;letter-spacing:.15em;text-transform:uppercase;color:var(--accent);margin-bottom:14px}
-    .stitle{font-size:clamp(2rem,4.5vw,3rem);font-weight:800;letter-spacing:-.04em;line-height:1.1;margin-bottom:18px}
-    .sdesc{font-size:1.1rem;color:var(--text-mid);max-width:560px;margin-bottom:56px;line-height:1.6}
+    .stag{font-family:var(--mono);font-size:11px;font-weight:600;letter-spacing:.18em;text-transform:uppercase;color:var(--accent);margin-bottom:16px;display:inline-flex;align-items:center;gap:10px}
+    .stag::before{content:'';width:24px;height:1px;background:linear-gradient(90deg,transparent,var(--accent));display:inline-block}
+    .stitle{font-size:clamp(2rem,4.5vw,3.1rem);font-weight:800;letter-spacing:-.045em;line-height:1.08;margin-bottom:20px;max-width:760px}
+    .sdesc{font-size:1.08rem;color:var(--text-mid);max-width:600px;margin-bottom:64px;line-height:1.65;font-weight:400}
 
     /* ===== PARTICLES ===== */
     .pgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--border);border-radius:20px;overflow:hidden}
@@ -116,14 +118,16 @@
     .pcell p{font-size:.82rem;color:var(--text-dim);line-height:1.5}
 
     /* ===== COUNTERS ===== */
-    .counters{display:grid;grid-template-columns:repeat(5,1fr);border:1px solid var(--border);border-radius:20px;overflow:hidden;margin:80px 0}
-    @media(max-width:700px){.counters{grid-template-columns:repeat(3,1fr)}}
-    .ctr{padding:36px 12px;text-align:center;border-right:1px solid var(--border);position:relative;overflow:hidden}
+    .counters{display:grid;grid-template-columns:repeat(5,1fr);border:1px solid var(--border);border-radius:20px;overflow:hidden;margin:96px 0;background:var(--surface-solid)}
+    @media(max-width:860px){.counters{grid-template-columns:repeat(3,1fr)}}
+    @media(max-width:520px){.counters{grid-template-columns:repeat(2,1fr)}}
+    .ctr{padding:42px 12px 38px;text-align:center;border-right:1px solid var(--border);border-bottom:1px solid var(--border);position:relative;overflow:hidden}
     .ctr:last-child{border-right:none}
+    @media(max-width:860px){.ctr{border-bottom:1px solid var(--border)}}
     .ctr:hover .ctr-bg{opacity:1}
-    .ctr-bg{position:absolute;inset:0;background:radial-gradient(circle at 50% 50%,rgba(108,138,255,.06),transparent 70%);opacity:0;transition:opacity .5s}
-    .ctr .v{font-family:var(--mono);font-size:clamp(2rem,5vw,3rem);font-weight:900;position:relative;z-index:1}
-    .ctr .l{font-size:.75rem;color:var(--text-dim);margin-top:6px;position:relative;z-index:1}
+    .ctr-bg{position:absolute;inset:0;background:radial-gradient(circle at 50% 50%,rgba(108,138,255,.07),transparent 70%);opacity:0;transition:opacity .5s}
+    .ctr .v{font-family:var(--mono);font-size:clamp(2.1rem,5vw,3.2rem);font-weight:900;position:relative;z-index:1;letter-spacing:-.03em;color:var(--text)}
+    .ctr .l{font-family:var(--mono);font-size:.72rem;color:var(--text-dim);margin-top:8px;position:relative;z-index:1;letter-spacing:.08em;text-transform:lowercase}
 
     /* ===== ALGEBRA ===== */
     #algebraCanvas{width:100%;height:320px;border-radius:20px;border:1px solid var(--border);background:var(--surface-solid);margin-bottom:20px;cursor:crosshair}
@@ -131,14 +135,25 @@
     .algebra-legend span{display:inline-flex;align-items:center;gap:6px}
     .algebra-legend .d{width:10px;height:3px;border-radius:2px}
 
-    /* ===== TARGETS ===== */
-    .tgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:12px}
-    .tcard{display:flex;align-items:center;gap:14px;padding:18px 22px;font-family:var(--mono);font-size:.88rem}
-    .tcard .dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;position:relative}
-    .tcard .dot.live::after{content:'';position:absolute;inset:-3px;border-radius:50%;border:1px solid;animation:ringPulse 2s ease-out infinite;opacity:0}
-    .tcard .dot.live.g::after{border-color:var(--green)}
-    @keyframes ringPulse{0%{transform:scale(1);opacity:.6}100%{transform:scale(2.5);opacity:0}}
-    .tcard .st{margin-left:auto;font-size:.68rem;color:var(--text-dim)}
+    /* ===== FOUR MATERIALIZATIONS (v1.6.2) ===== */
+    .matgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:28px}
+    @media(max-width:860px){.matgrid{grid-template-columns:repeat(2,1fr)}}
+    @media(max-width:480px){.matgrid{grid-template-columns:1fr}}
+    .mat{padding:36px 28px 32px;position:relative;overflow:hidden;border-radius:18px}
+    .mat::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:currentColor;opacity:.6}
+    .mat::after{content:'';position:absolute;top:-60px;right:-60px;width:160px;height:160px;border-radius:50%;background:currentColor;opacity:.04;filter:blur(40px);transition:opacity .5s}
+    .mat:hover::after{opacity:.08}
+    .mat .sym{font-family:var(--mono);font-size:1.6rem;font-weight:700;margin-bottom:12px;display:flex;align-items:baseline;gap:10px}
+    .mat .sym .num{font-size:.7em;color:var(--text-dim);font-weight:500}
+    .mat h3{font-weight:700;font-size:1.05rem;margin-bottom:8px;color:var(--text)}
+    .mat p{font-size:.82rem;color:var(--text-mid);line-height:1.55;margin-bottom:14px}
+    .mat .api{font-family:var(--mono);font-size:.72rem;color:var(--text-dim);padding:6px 10px;background:rgba(255,255,255,.03);border-radius:6px;display:inline-block;letter-spacing:.02em}
+    .mat.m-pix{color:var(--accent)}
+    .mat.m-voc{color:var(--cyan)}
+    .mat.m-api{color:var(--purple)}
+    .mat.m-doc{color:var(--green)}
+    .mat-footer{text-align:center;font-family:var(--mono);font-size:.82rem;color:var(--text-dim);padding-top:28px;border-top:1px solid var(--border)}
+    .mat-footer em{color:var(--accent-bright);font-style:normal;font-weight:600}
 
     /* ===== CODE ===== */
     .code-wrap{border-radius:20px;overflow:hidden;border:1px solid var(--border);background:var(--surface-solid);position:relative}
@@ -191,9 +206,9 @@
 <section class="hero">
   <canvas id="particleCanvas"></canvas>
   <div class="hero-inner">
-    <div class="badge"><span class="pulse"></span>Open Standard v1.0</div>
-    <h1>Describe intentions.<br><span class="line2">Derive everything.</span></h1>
-    <p class="sub">A formal system for building applications from what users come to do. Not screens. Not endpoints. Intentions.</p>
+    <div class="badge"><span class="pulse"></span>Spec v1.0&nbsp;&middot;&nbsp;Reference impl v1.6.2&nbsp;&middot;&nbsp;@idf/core v0.2</div>
+    <h1>One artifact.<br><span class="line2">Four materializations.</span></h1>
+    <p class="sub">A formal system that derives applications from what users come to do. Pixels, voice, agent API, and document &mdash; rendered from the same intent model.</p>
     <div class="ctas">
       <a class="btn btn-glow" href="https://github.com/ignatdubovskiy/idf/blob/main/spec/idf-v1.0-part1-core.md">Read the Specification</a>
       <a class="btn" href="https://github.com/ignatdubovskiy/idf/tree/main/packages/core">npm&nbsp;i&nbsp;@idf/core</a>
@@ -219,19 +234,19 @@
       <div class="pcell rv rv-d2"><div class="pcell-glow" style="background:var(--purple)"></div><div class="sym" style="color:var(--purple)">F</div><h3>Effects</h3><p>What becomes true? The only substance of state. Add, replace, remove, batch.</p></div>
       <div class="pcell rv rv-d3"><div class="pcell-glow" style="background:var(--cyan)"></div><div class="sym" style="color:var(--cyan)">W</div><h3>Witnesses</h3><p>What does the actor need to know? The human-readable dual of conditions.</p></div>
       <div class="pcell rv rv-d1"><div class="pcell-glow" style="background:var(--green)"></div><div class="sym" style="color:var(--green)">P</div><h3>Confirmation</h3><p>What does the system need back? Click, text, form, or custom.</p></div>
-      <div class="pcell rv rv-d2" style="grid-column:span 2"><div class="pcell-glow" style="background:var(--yellow)"></div><div class="sym" style="color:var(--yellow)">&rarr;</div><h3>Maximum Derivation Principle</h3><p>If a structure is computable from intentions and ontology, it is not an input &mdash; it is a derived artifact. Projections, workflows, algebra, UI, API &mdash; all derived. 78% of screens across 5 domains emerge automatically.</p></div>
+      <div class="pcell rv rv-d2" style="grid-column:span 2"><div class="pcell-glow" style="background:var(--yellow)"></div><div class="sym" style="color:var(--yellow)">&rarr;</div><h3>Maximum Derivation Principle</h3><p>If a structure is computable from intentions and ontology, it is not an input &mdash; it is a derived artifact. Projections, algebra, four materializations, agent schemas, audit reports &mdash; all derived. 78% of screens emerge automatically across 8 domains.</p></div>
     </div>
   </div>
 </section>
 
-<!-- ===== COUNTERS ===== -->
+<!-- ===== COUNTERS (v1.6.2) ===== -->
 <div class="container rv">
   <div class="counters">
-    <div class="ctr"><div class="ctr-bg"></div><div class="v" data-target="384">0</div><div class="l">intentions</div></div>
-    <div class="ctr"><div class="ctr-bg"></div><div class="v" data-target="544">0</div><div class="l">tests</div></div>
+    <div class="ctr"><div class="ctr-bg"></div><div class="v" data-target="8">0</div><div class="l">domains</div></div>
+    <div class="ctr"><div class="ctr-bg"></div><div class="v" data-target="527">0</div><div class="l">intentions</div></div>
+    <div class="ctr"><div class="ctr-bg"></div><div class="v" data-target="402">0</div><div class="l">tests</div></div>
+    <div class="ctr"><div class="ctr-bg"></div><div class="v" data-target="4">0</div><div class="l">UI&nbsp;adapters</div></div>
     <div class="ctr"><div class="ctr-bg"></div><div class="v" data-target="78" data-suffix="%">0</div><div class="l">auto-derived</div></div>
-    <div class="ctr"><div class="ctr-bg"></div><div class="v" data-target="54">0</div><div class="l">conformance</div></div>
-    <div class="ctr"><div class="ctr-bg"></div><div class="v" data-target="0">0</div><div class="l">dependencies</div></div>
   </div>
 </div>
 
@@ -251,21 +266,40 @@
   </div>
 </section>
 
-<!-- ===== TARGETS ===== -->
+<!-- ===== FOUR MATERIALIZATIONS ===== -->
 <section>
   <div class="container rv">
-    <div class="stag">Multi-target</div>
-    <div class="stitle">One source. Every target derived.</div>
-    <div class="sdesc">The same intention set crystallizes into any executable artifact. UI is just one projection.</div>
-    <div class="tgrid">
-      <div class="tcard glass rv rv-d1"><span class="dot live g" style="background:var(--green)"></span>React UI<span class="st">shipped</span></div>
-      <div class="tcard glass rv rv-d2"><span class="dot live g" style="background:var(--green)"></span>REST API<span class="st">shipped</span></div>
-      <div class="tcard glass rv rv-d3"><span class="dot live g" style="background:var(--green)"></span>Test generation<span class="st">shipped</span></div>
-      <div class="tcard glass rv rv-d4"><span class="dot live g" style="background:var(--green)"></span>OpenAPI schema<span class="st">shipped</span></div>
-      <div class="tcard glass rv rv-d1"><span class="dot" style="background:var(--yellow)"></span>GraphQL<span class="st">designed</span></div>
-      <div class="tcard glass rv rv-d2"><span class="dot" style="background:var(--yellow)"></span>Smart contracts<span class="st">designed</span></div>
-      <div class="tcard glass rv rv-d3"><span class="dot" style="background:var(--yellow)"></span>Compliance<span class="st">designed</span></div>
-      <div class="tcard glass rv rv-d4"><span class="dot" style="background:var(--text-dim)"></span>Lab protocols<span class="st">theoretical</span></div>
+    <div class="stag">&sect;1 &mdash; Four materializations</div>
+    <div class="stitle">The same model. Every interface derived.</div>
+    <div class="sdesc">UI is the intersection of projections (what the user sees) and intentions (what they can do). Pixels, voice, agent&nbsp;API, document &mdash; equal renderings of one artifact, scoped by the same viewer&nbsp;function.</div>
+    <div class="matgrid">
+      <div class="mat glass m-pix rv rv-d1">
+        <div class="sym"><span class="num">01</span> <span>&#x25A0;</span></div>
+        <h3>Pixels</h3>
+        <p>Four UI&nbsp;adapters: Mantine, shadcn-doodle, Apple visionOS-glass, AntD enterprise-fintech. Capability surface, graceful fallback.</p>
+        <span class="api">ProjectionRendererV2</span>
+      </div>
+      <div class="mat glass m-voc rv rv-d2">
+        <div class="sym"><span class="num">02</span> <span>&#x266B;</span></div>
+        <h3>Voice</h3>
+        <p>Speech-script with system &middot; assistant &middot; prompts turns. JSON for voice agents, SSML for TTS, plain text for IVR.</p>
+        <span class="api">/api/voice/:domain/:projection</span>
+      </div>
+      <div class="mat glass m-api rv rv-d3">
+        <div class="sym"><span class="num">03</span> <span>&#x21B5;</span></div>
+        <h3>Agent API</h3>
+        <p>JWT-scoped REST with role taxonomy and declarative preapproval guards. LLMs become first-class users of the same intent model.</p>
+        <span class="api">/api/agent/:domain/{schema,world,exec}</span>
+      </div>
+      <div class="mat glass m-doc rv rv-d4">
+        <div class="sym"><span class="num">04</span> <span>&#x25A1;</span></div>
+        <h3>Document</h3>
+        <p>Generic structured graph for catalog &middot; detail &middot; dashboard. Print-ready HTML, JSON for pipelines, regulatory exports.</p>
+        <span class="api">/api/document/:domain/:projection</span>
+      </div>
+    </div>
+    <div class="mat-footer">
+      All four reuse the <em>same</em> <code style="font-family:var(--mono)">filterWorldForRole(world, ontology, role, viewer)</code>. Equality is factored code, not metaphor.
     </div>
   </div>
 </section>
@@ -274,9 +308,10 @@
 <section>
   <div class="container rv">
     <div class="stag">Developer experience</div>
-    <div class="stitle">Define. Derive. Done.</div>
+    <div class="stitle">Declare once. Render four ways.</div>
+    <div class="sdesc">@idf/core ships everything: fold, intent algebra, crystallizer, four materializers, role taxonomy, invariants. Pure functions, dual ESM&#x2009;+&#x2009;CJS.</div>
     <div class="code-wrap">
-      <div class="code-bar"><div class="dots"><span></span><span></span><span></span></div>&nbsp;&nbsp;app.js</div>
+      <div class="code-bar"><div class="dots"><span></span><span></span><span></span></div>&nbsp;&nbsp;trading.js&nbsp;&middot;&nbsp;@idf/core@0.2</div>
 <pre id="codeBlock"></pre>
     </div>
   </div>
@@ -287,7 +322,7 @@
   <div class="container rv">
     <div class="stag">Open standard</div>
     <div class="stitle">Three conformance levels. Any language.</div>
-    <div class="sdesc">54 language-agnostic JSON tests. Pass them in Rust, Python, Go — your implementation is conformant.</div>
+    <div class="sdesc">54 language-agnostic JSON tests &mdash; pass them in Rust, Python, or&nbsp;Go and your implementation is conformant. The reference impl in JavaScript ships as <code style="font-family:var(--mono);color:var(--accent-bright)">@idf/core</code>.</div>
     <div class="lvls">
       <div class="lvl glass rv rv-d1"><div class="n">L1</div><div class="nm">Core</div><div class="ts">24 tests</div><div class="detail">fold &bull; causal sort &bull; batch<br>TTL &bull; scope &bull; lifecycle</div></div>
       <div class="lvl glass rv rv-d2"><div class="n">L2</div><div class="nm">Algebra</div><div class="ts">15 tests</div><div class="detail">sequential &bull; antagonistic<br>excluding &bull; parallel</div></div>
@@ -299,14 +334,18 @@
 <!-- ===== DOMAINS ===== -->
 <section>
   <div class="container rv">
-    <div class="stag">Battle-tested</div>
-    <div class="stitle">5 domains. 384 intentions. Zero red blockers.</div>
+    <div class="stag">Field-tested</div>
+    <div class="stitle">8 domains. 527 intentions. Zero red blockers.</div>
+    <div class="sdesc">Each domain pushes the paradigm against a different shape of problem. The crystallizer renders all of them from declaration alone.</div>
     <div class="domains">
-      <div class="dcard glass rv rv-d1"><div class="cn">226</div><div class="dn">Meshok</div><div class="dd">Auction marketplace. 10 entities, 4 roles, order lifecycle.</div></div>
-      <div class="dcard glass rv rv-d2"><div class="cn">100</div><div class="dn">Messenger</div><div class="dd">Full messaging. Real-time, WebRTC, threads.</div></div>
-      <div class="dcard glass rv rv-d3"><div class="cn">20</div><div class="dn">Booking</div><div class="dd">Service booking. Time slots, temporal predicates.</div></div>
-      <div class="dcard glass rv rv-d4"><div class="cn">17</div><div class="dn">Planning</div><div class="dd">Collaborative polls. Voting, quorum, deadlines.</div></div>
-      <div class="dcard glass rv rv-d1"><div class="cn">15</div><div class="dn">Workflow</div><div class="dd">Process editor. Canvas, server execution.</div></div>
+      <div class="dcard glass rv rv-d1"><div class="cn">225</div><div class="dn">Meshok</div><div class="dd">Auction marketplace. 10 entities, 4 roles, full order lifecycle. No&nbsp;ManualUI.</div></div>
+      <div class="dcard glass rv rv-d2"><div class="cn">100</div><div class="dn">Messenger</div><div class="dd">Real-time chat. WebSocket, WebRTC, threads, reactions.</div></div>
+      <div class="dcard glass rv rv-d3"><div class="cn">56</div><div class="dn">LifeQuest</div><div class="dd">Goals + habits. Mobile-first, doodle aesthetic, 6 custom canvases.</div></div>
+      <div class="dcard glass rv rv-d4"><div class="cn">47</div><div class="dn">Reflect</div><div class="dd">Mood diary by Yale&nbsp;RULER. Apple visionOS-glass, analytical canvases.</div></div>
+      <div class="dcard glass rv rv-d1"><div class="cn">46</div><div class="dn">Invest</div><div class="dd">Personal investing + robo-adviser. m2m advisor, observer, regulatory exports.</div></div>
+      <div class="dcard glass rv rv-d2"><div class="cn">21</div><div class="dn">Booking</div><div class="dd">Service booking. Time slots, temporal predicates, calendar wizard.</div></div>
+      <div class="dcard glass rv rv-d3"><div class="cn">17</div><div class="dn">Planning</div><div class="dd">Collaborative polls. Voting, quorum policies, deadlines.</div></div>
+      <div class="dcard glass rv rv-d4"><div class="cn">15</div><div class="dn">Workflow</div><div class="dd">Visual process editor. Canvas, topological executor.</div></div>
     </div>
   </div>
 </section>
@@ -315,7 +354,7 @@
 <section>
   <div class="container rv">
     <div class="quote-wrap">
-      <blockquote>"Any executable artifact is a projection of intentions onto a specific target. <em>UI is a special case where the target is human perception.</em>"</blockquote>
+      <blockquote>UI is not what you draw. UI is the intersection of <em>projections</em> and <em>intentions</em>. Pixels, voice, agent API, document &mdash; equal materializations of that intersection.</blockquote>
     </div>
   </div>
 </section>
@@ -323,12 +362,12 @@
 <!-- ===== FOOTER ===== -->
 <footer>
   <div class="logo">IDF</div>
-  <p>Specification &copy; 2026 IDF Authors &mdash; CC BY 4.0</p>
-  <p>Reference implementation &mdash; MIT</p>
+  <p>Specification v1.0 &copy; 2026 IDF Authors &mdash; CC BY 4.0</p>
+  <p>Reference implementation v1.6.2 &mdash; MIT &middot; @idf/core v0.2</p>
   <div class="flinks">
     <a href="https://github.com/ignatdubovskiy/idf/blob/main/spec/idf-v1.0-part1-core.md">Spec</a>
     <a href="https://github.com/ignatdubovskiy/idf/tree/main/packages/core">@idf/core</a>
-    <a href="https://github.com/ignatdubovskiy/idf/tree/main/spec/conformance">Tests</a>
+    <a href="https://github.com/ignatdubovskiy/idf/tree/main/spec/conformance">Conformance</a>
     <a href="https://github.com/ignatdubovskiy/idf">GitHub</a>
   </div>
 </footer>
@@ -579,25 +618,30 @@
 
 // ===== CODE TYPING =====
 (function(){
-  const code=`<span class="kw">import</span> { <span class="fn">fold</span>, <span class="fn">computeAlgebra</span>, <span class="fn">deriveProjections</span> } <span class="kw">from</span> <span class="str">'@idf/core'</span>;
+  const code=`<span class="kw">import</span> {
+  <span class="fn">fold</span>, <span class="fn">filterWorldForRole</span>,
+  <span class="fn">materializeAsDocument</span>, <span class="fn">materializeAsVoice</span>,
+  <span class="fn">checkInvariants</span>, <span class="fn">checkPreapproval</span>,
+} <span class="kw">from</span> <span class="str">'@idf/core'</span>;
 
-<span class="cm">// Define what users come to do</span>
-<span class="kw">const</span> INTENTS = {
-  create_task:   { creates: <span class="str">"Task(draft)"</span>,   confirmation: <span class="str">"enter"</span> },
-  publish_task:  { conditions: [<span class="str">"task.status = 'draft'"</span>],  effects: [<span class="str">"status \u2192 active"</span>] },
-  complete_task: { conditions: [<span class="str">"task.status = 'active'"</span>], effects: [<span class="str">"status \u2192 done"</span>] },
-};
+<span class="cm">// 1. Declare what users come to do (intents \u00d7 ontology)</span>
+<span class="kw">const</span> world = <span class="fn">fold</span>(\u03A6_confirmed, typeMap);
 
-<span class="cm">// World is computed, never stored</span>
-<span class="kw">const</span> world = <span class="fn">fold</span>(effects, typeMap);
+<span class="cm">// 2. Same model, scoped per viewer \u2014 m2m via role.scope</span>
+<span class="kw">const</span> scoped = <span class="fn">filterWorldForRole</span>(world, ontology, <span class="str">'advisor'</span>, viewer);
 
-<span class="cm">// Relations emerge automatically</span>
-<span class="kw">const</span> algebra = <span class="fn">computeAlgebra</span>(INTENTS, ONTOLOGY);
-<span class="cm">// create \u25B7 publish \u25B7 complete  \u2014 derived, not declared</span>
+<span class="cm">// 3. Render any of four materializations from the same artifact:</span>
+<span class="kw">const</span> doc   = <span class="fn">materializeAsDocument</span>(projection, scoped, viewer);  <span class="cm">// HTML \/ JSON</span>
+<span class="kw">const</span> voice = <span class="fn">materializeAsVoice</span>(projection, scoped, viewer);     <span class="cm">// SSML \/ turns</span>
+<span class="cm">// pixels      \u2192 ProjectionRendererV2 + adapter (Mantine \/ AntD \/ ...)</span>
+<span class="cm">// agent API   \u2192 /api/agent/:domain/{schema,world,exec}</span>
 
-<span class="cm">// Screens emerge automatically</span>
-<span class="kw">const</span> projections = <span class="fn">deriveProjections</span>(INTENTS, ONTOLOGY);
-<span class="cm">// \u2192 task_list (catalog), task_detail (detail)  \u2014 78% coverage</span>`;
+<span class="cm">// 4. Schema-level guarantees \u2014 declarative, enforced after every fold</span>
+<span class="kw">const</span> { ok, violations } = <span class="fn">checkInvariants</span>(world, ontology);
+<span class="cm">// referential \u00b7 transition \u00b7 cardinality \u00b7 aggregate \u00b7 role-capability</span>
+
+<span class="cm">// 5. Agent guards \u2014 limits beyond JWT, declarative</span>
+<span class="kw">const</span> guard = <span class="fn">checkPreapproval</span>(<span class="str">'agent_execute_order'</span>, params, viewer, ontology, world);`;
 
   const el=document.getElementById('codeBlock');
   let shown=false;
