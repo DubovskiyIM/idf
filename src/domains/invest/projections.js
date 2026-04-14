@@ -43,7 +43,7 @@ export const PROJECTIONS = {
 
   transactions_history: {
     name: "Сделки", kind: "catalog", mainEntity: "Transaction",
-    entities: ["Transaction", "Asset"],
+    entities: ["Transaction"],
     witnesses: ["α", "quantity", "price", "total", "fee", "initiatedBy", "timestamp"],
     filter: "userId === viewer.id || !userId",
     sort: "timestamp:desc",
@@ -54,7 +54,7 @@ export const PROJECTIONS = {
   portfolio_detail: {
     name: "Портфель", kind: "detail", mainEntity: "Portfolio",
     idParam: "portfolioId",
-    entities: ["Portfolio", "Position", "Transaction", "Recommendation", "Alert"],
+    entities: ["Portfolio"],
     witnesses: ["name", "baseCurrency", "totalValue", "pnl", "riskProfile",
                 "targetStocks", "targetBonds", "targetCrypto", "targetExotic"],
     subCollections: [
@@ -66,8 +66,43 @@ export const PROJECTIONS = {
   goal_detail: {
     name: "Цель", kind: "detail", mainEntity: "Goal",
     idParam: "goalId",
-    entities: ["Goal", "Portfolio"],
+    entities: ["Goal"],
     witnesses: ["name", "targetAmount", "currentAmount", "progress", "deadline", "priority"],
+  },
+
+  transaction_detail: {
+    name: "Сделка", kind: "detail", mainEntity: "Transaction",
+    idParam: "transactionId",
+    entities: ["Transaction"],
+    witnesses: ["α", "quantity", "price", "fee", "total", "initiatedBy", "ruleId", "timestamp", "assetId", "portfolioId"],
+  },
+
+  recommendation_detail: {
+    name: "Рекомендация", kind: "detail", mainEntity: "Recommendation",
+    idParam: "recommendationId",
+    entities: ["Recommendation"],
+    witnesses: ["type", "source", "confidence", "status", "rationale", "payload", "createdAt"],
+  },
+
+  alert_detail: {
+    name: "Сигнал", kind: "detail", mainEntity: "Alert",
+    idParam: "alertId",
+    entities: ["Alert"],
+    witnesses: ["severity", "message", "triggeredAt", "acknowledged", "ruleId"],
+  },
+
+  asset_detail: {
+    name: "Актив", kind: "detail", mainEntity: "Asset",
+    idParam: "assetId",
+    entities: ["Asset"],
+    witnesses: ["ticker", "name", "type", "exchange", "currency"],
+  },
+
+  watchlist_detail: {
+    name: "Список наблюдения", kind: "detail", mainEntity: "Watchlist",
+    idParam: "watchlistId",
+    entities: ["Watchlist"],
+    witnesses: ["name", "assetIds"],
   },
 
   // ─── DASHBOARD ───

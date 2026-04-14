@@ -7,7 +7,7 @@
  * пользователь из auth_users, не hardcoded "client".
  */
 import { useState, useEffect, useMemo } from "react";
-import { useEngine } from "./runtime/engine.js";
+import { useEngine } from "@idf/core";
 import { useAuth } from "./runtime/renderer/auth/useAuth.js";
 import AuthGate from "./runtime/renderer/auth/AuthGate.jsx";
 
