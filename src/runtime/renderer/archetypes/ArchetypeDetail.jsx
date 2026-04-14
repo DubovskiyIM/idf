@@ -97,6 +97,7 @@ export default function ArchetypeDetail({ slots, nav, ctx: parentCtx, projection
           padding: "12px 16px",
           background: "var(--mantine-color-default)",
           borderBottom: "1px solid var(--mantine-color-default-border)",
+          flexWrap: "wrap", minWidth: 0,
         }}>
           <SlotRenderer items={slots.header} ctx={ctx} contextItem={target} />
           <div style={{ flex: 1 }} />
@@ -124,14 +125,15 @@ export default function ArchetypeDetail({ slots, nav, ctx: parentCtx, projection
           padding: "8px 16px",
           background: "var(--mantine-color-default)",
           borderBottom: "1px solid var(--mantine-color-default-border)",
-          flexWrap: "wrap",
+          flexWrap: "wrap", minWidth: 0, maxWidth: "100%",
+          boxSizing: "border-box",
         }}>
           <SlotRenderer items={slots.toolbar} ctx={ctx} contextItem={target} />
         </div>
       )}
 
-      <div style={{ flex: 1, overflow: "auto", padding: 24 }}>
-        <div style={{ maxWidth: 640, margin: "0 auto", display: "flex", flexDirection: "column", gap: 16 }}>
+      <div style={{ flex: 1, overflow: "auto", padding: 16, maxWidth: "100%", boxSizing: "border-box" }}>
+        <div style={{ maxWidth: 640, margin: "0 auto", display: "flex", flexDirection: "column", gap: 16, minWidth: 0 }}>
           <PaperSection>
             <SlotRenderer item={slots.body} ctx={ctx} contextItem={target} />
           </PaperSection>

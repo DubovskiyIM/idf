@@ -209,17 +209,7 @@ export default function V2Shell({
             fontSize: 11, cursor: "pointer", whiteSpace: "nowrap",
           }}
         >⚙</button>
-        {onLogout && viewer && (
-          <button
-            onClick={onLogout}
-            title={`${viewer.name || ""} — выйти`}
-            style={{
-              padding: "4px 10px", borderRadius: 6, border: "1px solid var(--mantine-color-default-border, #d1d5db)",
-              background: "transparent", color: "var(--mantine-color-dimmed, #6b7280)",
-              fontSize: 11, cursor: "pointer", whiteSpace: "nowrap",
-            }}
-          >{viewer.name || "Выйти"} ✕</button>
-        )}
+        {/* Кнопка логаута перенесена в PrefsPanel (доступна через ⚙) */}
       </div>
       <div style={{ flex: 1, overflow: "hidden", position: "relative", minHeight: 0 }}>
         {currentArtifact ? (
