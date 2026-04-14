@@ -1,6 +1,6 @@
 const { Router } = require("express");
 const db = require("../db.js");
-const { validate, cascadeReject, foldWorld } = require("../validator.js");
+const { validate, cascadeReject, foldWorld, checkInvariantsForDomain } = require("../validator.js");
 const { ingestEffect } = require("../effect-pipeline.js");
 const { validateIntentConditions, getIntent, getDomainByIntentId } = require("../intents.js");
 const { getOntology } = require("../ontologyRegistry.cjs");
@@ -51,6 +51,37 @@ router.post("/", (req, res) => {
     broadcast,
     delay,
     onConfirmed: (stored) => {
+      // === Глобальные инварианты (§14, v1.6.1) ===
+      // Проверяем world(t) после применения подтверждённого эффекта.
+      // Response 201 уже улетел (ingestEffect async), поэтому rollback
+      // идёт через cascadeReject + SSE `effect:rejected`.
+      try {
+        const domain = getDomainByIntentId(stored.intent_id);
+        if (domain) {
+          const inv = checkInvariantsForDomain(domain);
+          const errors = inv.violations.filter(v => v.severity === "error");
+          if (errors.length > 0) {
+            const now = Date.now();
+            db.prepare("UPDATE effects SET status='rejected', resolved_at=? WHERE id=?")
+              .run(now, stored.id);
+            cascadeReject(stored.id);
+            broadcast("effect:rejected", {
+              id: stored.id,
+              reason: "invariant_violation",
+              violations: errors,
+            });
+            console.log(`[invariants] Эффект ${stored.id} откачен: ${errors.map(v=>v.name).join(", ")}`);
+            return; // не запускаем реактивные правила на rejected
+          }
+          if (inv.violations.length > 0) {
+            // warnings: логируем, но не блокируем
+            console.log(`[invariants] ${stored.id} warnings: ${inv.violations.map(v=>v.name).join(", ")}`);
+          }
+        }
+      } catch (e) {
+        console.error("[invariants] Ошибка проверки:", e);
+      }
+
       // === Реактивные правила (sync) ===
       // Декларативные правила из ontology.rules: trigger match → validate action conditions → emit.
       const ruleDeps = { getDomainByIntentId, getOntology, validateIntentConditions, getIntent };

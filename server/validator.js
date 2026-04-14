@@ -192,4 +192,23 @@ function cascadeReject(effectId) {
   return allCascaded;
 }
 
-module.exports = { validate, cascadeReject, foldWorld, updateTypeMap };
+// ──────────────────────────────────────────────────────────────
+// Глобальные инварианты (§14, v1.6.1).
+// checkInvariantsForDomain — read-only проверка world(t) против
+// ontology.invariants домена. Используется в effects-route (async)
+// для rollback через cascadeReject + SSE и в agent-route (sync)
+// для 409-ответа перед response.
+// ──────────────────────────────────────────────────────────────
+const { checkInvariants } = require("./schema/invariantChecker.cjs");
+const { getOntology } = require("./ontologyRegistry.cjs");
+
+function checkInvariantsForDomain(domain) {
+  const ontology = getOntology(domain);
+  if (!ontology || !Array.isArray(ontology.invariants) || ontology.invariants.length === 0) {
+    return { ok: true, violations: [] };
+  }
+  const world = foldWorld();
+  return checkInvariants(world, ontology);
+}
+
+module.exports = { validate, cascadeReject, foldWorld, updateTypeMap, checkInvariantsForDomain };
