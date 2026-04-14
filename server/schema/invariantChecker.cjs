@@ -13,9 +13,11 @@
  */
 
 const { handler: roleCapability } = require("./invariants/roleCapability.cjs");
+const { handler: referential }    = require("./invariants/referential.cjs");
 
 const KIND_HANDLERS = {
   "role-capability": roleCapability,
+  "referential":     referential,
 };
 
 function registerKind(name, handler) {

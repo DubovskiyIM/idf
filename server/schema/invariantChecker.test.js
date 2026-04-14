@@ -91,3 +91,60 @@ describe("kind: role-capability", () => {
     expect(r.violations[0].details.reason).toBe("role_not_found");
   });
 });
+
+describe("kind: referential", () => {
+  const ontology = {
+    entities: { Bid: {}, Listing: {} },
+    invariants: [
+      { name: "bid_listing_fk", kind: "referential",
+        from: "Bid.listingId", to: "Listing.id" }
+    ],
+  };
+
+  it("проходит при валидных FK", () => {
+    const world = {
+      bids:     [{ id: "b1", listingId: "L1" }],
+      listings: [{ id: "L1" }],
+    };
+    expect(checkInvariants(world, ontology).ok).toBe(true);
+  });
+
+  it("ловит dangling reference", () => {
+    const world = {
+      bids:     [{ id: "b1", listingId: "L_GONE" }],
+      listings: [{ id: "L1" }],
+    };
+    const r = checkInvariants(world, ontology);
+    expect(r.ok).toBe(false);
+    expect(r.violations[0].details.fromId).toBe("b1");
+    expect(r.violations[0].details.danglingValue).toBe("L_GONE");
+  });
+
+  it("несколько нарушений — каждое отдельный violation", () => {
+    const world = {
+      bids:     [{ id: "b1", listingId: "X" }, { id: "b2", listingId: "Y" }],
+      listings: [],
+    };
+    const r = checkInvariants(world, ontology);
+    expect(r.violations.length).toBe(2);
+  });
+
+  it("allowNull:true — null FK пропускает", () => {
+    const ont = {
+      ...ontology,
+      invariants: [{ ...ontology.invariants[0], allowNull: true }],
+    };
+    const world = { bids: [{ id: "b1", listingId: null }], listings: [] };
+    expect(checkInvariants(world, ont).ok).toBe(true);
+  });
+
+  it("allowNull:false (default) — null тоже нарушение", () => {
+    const world = { bids: [{ id: "b1", listingId: null }], listings: [] };
+    expect(checkInvariants(world, ontology).ok).toBe(false);
+  });
+
+  it("пустая from-коллекция — ok", () => {
+    const world = { bids: [], listings: [] };
+    expect(checkInvariants(world, ontology).ok).toBe(true);
+  });
+});
