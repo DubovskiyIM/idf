@@ -70,10 +70,12 @@ export default function OntologyInspector({ world, domain, dark }) {
   // Связи: какие предикаты используются в каких намерениях
   const predicateIntents = useMemo(() => {
     const map = {};
-    for (const [predName, predDef] of Object.entries(ONTOLOGY.predicates)) {
+    const predicates = ONTOLOGY?.predicates || {};
+    for (const [predName, predDef] of Object.entries(predicates)) {
       map[predName] = [];
       for (const [id, intent] of Object.entries(INTENTS)) {
-        if (intent.particles.conditions.some(c => c.includes(predDef.split("=")[0].trim().split(".").pop()))) {
+        const conds = intent?.particles?.conditions || [];
+        if (conds.some(c => typeof c === "string" && c.includes(predDef.split("=")[0].trim().split(".").pop()))) {
           map[predName].push({ id, name: intent.name });
         }
       }
@@ -213,13 +215,13 @@ export default function OntologyInspector({ world, domain, dark }) {
         })}
       </div>
 
-      {/* Предикаты */}
+      {/* Предикаты (опциональны — не все домены их декларируют) */}
       <div style={{ fontSize: 11, color: t.textSec, textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 8, fontFamily: "system-ui, sans-serif" }}>
-        Предикаты ({Object.keys(ONTOLOGY.predicates).length})
+        Предикаты ({Object.keys(ONTOLOGY.predicates || {}).length})
       </div>
 
       <div style={{ display: "flex", flexDirection: "column", gap: 6, marginBottom: 24 }}>
-        {Object.entries(ONTOLOGY.predicates).map(([name, definition]) => {
+        {Object.entries(ONTOLOGY.predicates || {}).map(([name, definition]) => {
           const intents = predicateIntents[name] || [];
           return (
             <div key={name} style={{
