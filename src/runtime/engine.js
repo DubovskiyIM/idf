@@ -84,7 +84,13 @@ export function useEngine(domain) {
       });
     });
 
-    es.addEventListener("effects:reset", () => { setEffects([]); setSignals([]); });
+    es.addEventListener("effects:reset", () => {
+      // Сервер сообщает что эффекты изменились (например, seed-загрузка от
+      // другого клиента). Перезагружаем с сервера, не очищаем, иначе
+      // клиент потеряет seed только что загруженный другим вкладкой.
+      reloadEffects();
+      setSignals([]);
+    });
 
     es.addEventListener("signal:drift", (e) => {
       const { description, time } = JSON.parse(e.data);
