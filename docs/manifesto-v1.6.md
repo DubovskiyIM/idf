@@ -489,6 +489,8 @@ Session B (2026-04-12).
 
 Правила не применяются к проекциям (у них нет эффектов) и к сигналам (они не часть мира).
 
+**Глобальные инварианты (v1.6.1).** Правила §13 — intent-schema consistency («мёртвые намерения», «orphan effects»). Семантическая консистентность *мира* — отдельный слой `ontology.invariants[]` (§14), проверяется runtime после `fold(Φ)`, не на этапе кристаллизации.
+
 ## 14. Онтология
 
 Явная, эволюционирующая, человеко-читаемая доменная онтология — разделяемая память между автором и моделью. Содержит три типа элементов.
@@ -531,6 +533,24 @@ Session B (2026-04-12).
 ### searchConfig
 
 `entity.searchConfig: { fields, returnFields, minQueryLength, limit }` — декларация для server-side entity search (`GET /api/entities/:collection/search`). Используется EntityPicker'ом customCapture (§16a).
+
+### Глобальные инварианты (v1.6.1)
+
+`ontology.invariants: []` — массив ∀-свойств `World(t)`, проверяемых после каждой свёртки `fold(Φ)`. Замкнутое множество типов:
+
+| kind | Семантика | Пример |
+|---|---|---|
+| `role-capability` | Контракт прав роли | observer.canExecute = ∅ |
+| `referential` | Foreign key: `row[field]` существует в target-коллекции | Bid.listingId → Listing.id |
+| `transition` | Допустимые переходы значения поля (`order` monotonic или `transitions` whitelist) | Order.status: created→paid→shipped |
+| `cardinality` | max/min count после `where` + `groupBy` | ≤1 active Portfolio per user |
+| `aggregate` | sum/count c tolerance против target-поля | Σ Position.value ≈ Portfolio.totalValue |
+
+Проверка — `server/validator.js::checkInvariantsForDomain`. Если violations c `severity: "error"` — эффект откатывается через `cascadeReject`, клиент уведомляется SSE `effect:rejected` c `violations[]`. Warnings логируются, не блокируют.
+
+Observer-invariant (v1.6 §5) — первая реализация паттерна, мигрировала из `baseRoles.cjs::auditOntologyRoles` в `kind: "role-capability"` (invest: 5 инвариантов, meshok: 3). Неформальная декларация `entity.transitions` теперь формально enforceable через `kind: "transition"`.
+
+Handlers — чистые функции в `server/schema/invariants/*.cjs`. Новый kind добавляется через `registerKind(name, handler)` без изменений в потребителях.
 
 ## 15. Анкеринг и верификация
 
