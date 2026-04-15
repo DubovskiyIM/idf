@@ -175,7 +175,20 @@ function validate(effect) {
     if (!condResult.valid) return condResult;
   }
 
-  // 4. Для replace/remove — сущность должна существовать
+  // 4. Irreversibility — α:"remove" заблокирован, если в истории сущности
+  // есть confirmed effect с irreversibility.point === "high" && at !== null
+  // (forward-correction через α:"replace" всегда разрешён).
+  if (effect.alpha === "remove" && ctx.id && !effect.target.startsWith("drafts")) {
+    const { hasIrreversiblePast } = require("./irreversibility.cjs");
+    const historyRows = db.prepare(
+      "SELECT context FROM effects WHERE status = 'confirmed' AND context LIKE ?"
+    ).all(`%"id":"${ctx.id}"%`);
+    if (hasIrreversiblePast(historyRows)) {
+      return { valid: false, reason: `irreversible_point_passed: сущность ${ctx.id} имеет эффект в истории с irreversibility.point=high` };
+    }
+  }
+
+  // 5. Для replace/remove — сущность должна существовать
   // Системные intent'ы scheduler'а (schedule_timer/revoke_timer) пропускаем:
   // они могут прийти до регистрации typeMap или в race-окне с fold'ом.
   // Зомбирование предотвращается самим ingestEffect'ом через Φ-append.
