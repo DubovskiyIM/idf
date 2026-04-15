@@ -26,6 +26,7 @@
     "invest-fuzzy": "node invest-fuzzy/index.js",
     "market-data": "node market-data/index.js",
     "courier-feed": "node courier-location-feed/index.js",
+    "geocoder": "node geocoder/index.js",
     "test": "vitest run --config vitest.config.js",
     "test:watch": "vitest --config vitest.config.js",
     "test:core": "cd packages/core && npx vitest run",
