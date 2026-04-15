@@ -13,6 +13,7 @@ const { buildMessengerEffects } = require("./buildMessengerEffects.cjs");
 const { buildLifequestEffects } = require("./buildLifequestEffects.cjs");
 const { buildReflectEffects } = require("./buildReflectEffects.cjs");
 const { buildInvestEffects } = require("./buildInvestEffects.cjs");
+const { buildDeliveryEffects } = require("./buildDeliveryEffects.cjs");
 
 const REGISTRY = {
   booking: buildBookingEffects,
@@ -23,6 +24,7 @@ const REGISTRY = {
   lifequest: buildLifequestEffects,
   reflect: buildReflectEffects,
   invest: buildInvestEffects,
+  delivery: buildDeliveryEffects,
 };
 
 function getEffectBuilder(domain) {
