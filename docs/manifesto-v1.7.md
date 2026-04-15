@@ -1,0 +1,1473 @@
+# Intent-Driven Frontend
+
+## Технический манифест парадигмы выводимых интерфейсов
+
+**Версия:** 1.7
+**Статус:** **восьмидоменный прототип: 527 намерений** (booking 21 + planning 17 + workflow 15 + messenger 100 + meshok 225 + lifequest 56 + reflect 47 + **invest 46**). **329 unit-тестов ядра + 406 unit-тестов прикладной части** (53 теста переехали в SDK-пакеты), **71-шаговый agent-smoke**. **Пять слоёв проекции §17 реализованы**. **Семь архетипов**. **Четыре UI-адаптера**. **Темпоральный scheduler first-class (§4)** — `schedule_timer` / `revoke_timer` как системные intent'ы, TimerQueue с hydrateFromWorld, миграция cron-rules v1 → self-rescheduling timers. **SDK Phase 2 завершён**: `@idf/renderer` + 4× `@idf/adapter-*` + `@idf/canvas-kit` (6 пакетов поверх `@idf/core@0.2.0`); прототип потребляет через `file:` deps, `src/runtime/renderer/` теперь только host-concerns (auth / personal / shell).
+
+**Изменения в v1.7 (2026-04-15, темпоральный scheduler + SDK Phase 2):**
+
+- **Темпоральный scheduler first-class (§4)** — закрыт v1.6 §26 open item. Два системных intent'а: `schedule_timer(afterMs | atISO, target, revokeOn?)` и `revoke_timer(timerId)`. Сервер: `server/timeEngine.js` с `TimerQueue` (in-memory min-heap по `firesAt`) + `hydrateFromWorld` (восстановление таймеров из Φ при старте) + `onEffectConfirmed` (реакция на schedule/revoke эффекты) + `fireDue` с guard evaluation. `schedule_timer` эмитит effect τ=`scheduled_timer` (обычный, живёт в мире); `revoke_timer` удаляет по timerId. Парсер `evaluateScheduleV2`: `after:"5m"` / `at:"2026-05-01T12:00:00Z"` → schedule effects; `revokeOn:[effect patterns]` → revoke effects автоматически. 13 коммитов, интеграционные тесты (`scheduler.integration.test.js`, `scheduledTimerFold.test.js`, `ruleEngine.scheduleV2.test.js`, `timeEngine.test.js`, `cronMigration.test.js`, `booking-scheduler-demo.test.js`, `systemIntents.test.js`). **Первое применение**: booking `auto_cancel_pending_booking` (отмена через 24h если not confirmed). Старые cron-правила Rules Engine v1 (`schedule: "weekly:sun:10:00"`) мигрированы на self-rescheduling timers.
+- **SDK Phase 2 — 6 новых пакетов** (`idf-sdk/packages/`). Продолжение `@idf/core@0.2.0`. Scope B выноса: `@idf/renderer` включает `primitives / archetypes / controls / parameters / navigation / validation / eval / hooks / adapter registry`. Host остаётся: `auth / personal-panel-UI / shell`.
+  - **`@idf/renderer@0.1.0`** — 36 тестов, ProjectionRendererV2 + 7 архетипов + 11 controls + 3 primitives (atoms/containers/chart) + 6 parameters + navigation + validation + adapter registry (capability surface). dts 21.6KB.
+  - **4× `@idf/adapter-*@0.1.0`** — mantine (720 LOC, 4 теста), shadcn (545 LOC, 2), apple (545 LOC, 2), antd (700 LOC, 4). Каждый: spec-object + `{Name}AdapterProvider` обёртка + peerDep на UI-kit и `@idf/renderer`. CSS-темы adapter-shadcn/apple экспортируются через `exports["./styles.css"]`, хост импортирует явно из entry (rolldown не может резолвить `@import "tailwindcss"` из `node_modules`, поэтому build-script стрипает его из dist).
+  - **`@idf/canvas-kit@0.1.0`** — 9 SVG-утилит (makeSvgScale / axisTicks / pointsToPath / heatmapColorScale / useTooltipPosition / useDraggablePoint / useZoomPan / clusterLayout / calendarGrid), standalone (peer только react), 36 TDD-тестов. Для будущего переиспользования между reflect / lifequest / invest canvas'ами.
+  - **Прототип после миграции**: `npm test` 406/406 ✓, `vite build` 805ms ✓. Codemod затронул всего 5 потребительских файлов (3 invest-канваса + V2UI.jsx + standalone.jsx) — renderer оказался почти self-contained, большинство импортов жили внутри мигрированной папки. **Третий раз подтверждена extraction-стабильность**: API ядра/renderer'а достаточно зрелы, чтобы миграция не требовала переписывания.
+- **Новые implementation-уроки SDK Phase 2** (см. `docs/superpowers/specs/2026-04-15-renderer-extraction-postmortem.md`):
+  - **DTS conflict при одинаковых basenames** — tsup коллизионит на `index.js` (barrel) + `index.jsx` (component) → `dist/index.d.ts` конфликт. Workaround: переименование `.jsx` в осмысленное имя (`ProjectionRendererV2.jsx`).
+  - **Personal hook vs UI split** — `usePersonalPrefs.js` (read-hook) логичнее в SDK рядом с Icon, `PrefsPanel.jsx` (write-UI) остаётся в host'е. Граница «personal/ остаётся в host'е» была слишком грубой.
+  - **Tailwind 4 + CSS в node_modules** — `@tailwindcss/vite` plugin не сканирует CSS из `node_modules`. Convention: adapter build-script стрипает `@import "tailwindcss"` из dist, host явно импортирует tailwind entry + SDK styles. Документировать в README каждого adapter-пакета.
+- **§26 пусто по v1.6 open items в части scheduler'а.** Темпоральный scheduler как first-class (был главный v1.6 open) — закрыт. Остальные v1.6 open items (composite/polymorphic entities, adapter capability check-at-startup, server-rendered PDF) переносятся в v1.7.
+
+**Изменения в v1.6.2 (2026-04-14 post-release, voice prototype):**
+
+- **Voice — 4-я базовая материализация (§1, §17)**. `server/schema/voiceMaterializer.cjs` + `GET /api/voice/:domain/:projection` — generic функция превращает любую проекцию в speech-script: `turns: [{ role: "system" | "assistant" | "prompts", text, items? }]`. Три формата: **json** (для voice-agent: Claude Voice / OpenAI realtime), **ssml** (XML для TTS-движков), **plain** (для debug/IVR). Brevity: top-3 элемента, money человеческим языком ("2.5 миллионов рублей"), prompts из `roles[role].canExecute`. Переиспользует `filterWorldForRole`. Все 5 архетипов поддержаны (catalog/feed/detail/dashboard/wizard). 17 unit-тестов + 3 smoke-шага. **Voice больше не honest border §1 — четыре материализации реализованы.**
+
+**Изменения в v1.6.1 (2026-04-14 post-release, унификация ролей):**
+
+- **Таксономия базовых ролей** (§5) — `role.base: owner | viewer | agent | observer` как метаданный маркер. Все 8 доменов аннотированы. Helpers в `server/schema/baseRoles.cjs` (`getRolesByBase`, `auditOntologyRoles`, observer-invariant). **Не замена** доменных имён, а semantic layer для cross-domain инструментов и SDK defaults. 26 unit-тестов.
+
+**Изменения в v1.6 (2026-04-14, десятый полевой тест):**
+
+- **Десятый полевой тест — invest** (personal investing + робо-эдвайзер). 12 сущностей, 4 роли (investor/advisor/agent/observer), 46 интентов, 7 правил Rules Engine (все 4 v1.5 extension), 3 canvas (allocation/market/advisor), 3 внешних ML-сервиса (:3003 / :3004 / :3006). Валидирует транзакционно-регуляторную зону силы парадигмы.
+- **Document — 4-я базовая материализация (§1, §17)**. `server/schema/documentMaterializer.cjs` + `GET /api/document/:domain/:projection` — generic функция превращает **любую** проекцию в структурированный document-граф (HTML / JSON). Переиспользует `filterWorldForRole` (viewer-scoped). Не per-domain hack. **pixels · voice · agent-API · document** — четыре выхода одного артефакта.
+- **Role.scope — many-to-many ownership (§5, §17)**. `roles.X.scope[entity] = { via, viewerField, joinField, localField, statusAllowed? }` как декларативный m2m-механизм поверх `entity.ownerField`. Применено в invest.advisor для 6 сущностей через Assignment bridge. Бэккомпат: scope отсутствует → ownerField как раньше.
+- **Preapproval guard (§17)**. `server/schema/preapprovalGuard.cjs` — декларативные лимиты для агента поверх JWT. 5 типов предикатов: `active`, `notExpired`, `maxAmount`, `csvInclude`, `dailySum` (с фильтрацией по initiator). Hook в `agent.js::exec` перед `buildEffects`. Intent не в `requiredFor` → no-op (бэккомпат).
+- **Entity.kind (§14)**. `entity.kind: "reference"` — формальный маркер справочной сущности. Ownership skip'ается; visibility через `role.visibleFields` остаётся. Применено к invest.Asset / MarketSignal. Приоритет row-filter: `role.scope > entity.kind:"reference" > entity.ownerField > none`.
+- **Adapter capabilities (§16a, §17)**. Декларативная surface адаптера: `capabilities: { primitive: { chart: { chartTypes: [...] }, statistic: false } }`. Helper'ы `getCapability`/`supportsVariant`. Chart-primitive консультируется с capability → console.warn + SVG-fallback при mismatch. Unknown capability = assume supported (100% бэккомпат).
+- **Chart — новая primitive-категория (§16a)**. `src/runtime/renderer/primitives/chart.jsx` — первая primitive за пределами text/image/container. Spec `{ chartType, data, xField, yField }`. SVG-fallback (Line + Pie) + `@ant-design/plots` в AntD. Sparkline для cardSpec.
+- **AntD-адаптер — 4-й UI-kit** (§16a). Enterprise-fintech эстетика: Statistic (trend-стрелка), Charts, ProComponents (опц.). Русская локаль, dark-algorithm, money/percentage форматтеры в InputNumber. Контрактная parity: параметр/button/shell/primitive/icon + новые chart/sparkline/statistic.
+- **Wizard source.inline (§16a)**. `source.inline: [...]` — статические опции без сидинга. Использовано в risk_questionnaire (4 шага), portfolio_onboarding (3 шага).
+- **Новые fieldRole** (§14, §16a): `money`, `percentage`, `trend`, `ticker` для финтех-доменов. AntD-адаптер рендерит нативно (Statistic + InputNumber с prefix ₽ / suffix %).
+- **§26 пусто по v1.5 open items**. Все 6 пунктов, зафиксированных в field-test-10 (m2m ownership, preapproval, document, chart capability, reference entities, capability surface), закрыты в этом же цикле. Новые §26 open items (см. раздел) — другие.
+
+**Изменения в v1.5 (2026-04-14, девятый полевой тест):**
+
+- **Девятый полевой тест — reflect** (дневник эмоций по Yale RULER / Marc Brackett). 47 интентов, 13 проекций, 6 custom canvas (~1300 LOC), 10 сущностей.
+- **Apple visionOS-glass адаптер** — третий UI-kit. Frosted glass, SF Pro / Inter, iOS blue accent. Окончательная валидация §17 «адаптивного слоя» — один артефакт через 3 эстетически разные эпохи продуктов (corporate / handcrafted / premium).
+- **Reactive Rules Engine extensions** (§22) — переход от простого event→action к декларативной аналитике:
+  - `aggregation: { everyN }` — counter-based firing per-user
+  - `threshold: { lookback, field, condition }` — predicate over last N entries
+  - `schedule: "weekly:sun:HH:MM" | "daily:HH:MM"` — cron-like server timer
+  - `condition: "<expr>"` — JS expression evaluator (whitelisted Math)
+  - Новая таблица `rule_state` (counter, last_fired_at) per (rule, user)
+- **Token Bridge spec** (§17) — формальный contract. Каждый адаптер обязан предоставлять canonical CSS-vars (bg/ink/text-secondary/accent/success/warn/danger + font/radius/shadow). Custom canvases пишут только в canonical tokens — адаптер мапит в свои значения.
+- **Custom Canvas registry** (§16a) — formalized: `registerCanvas(projectionId, Component)` как extension point для domain-specific UI. Контракт props `{ world, viewer, exec, ctx, artifact }`. 12 примеров в lifequest + reflect.
+- **Server-side aggregation** как паттерн (§10/§16) — intent может быть **аналитическим** (читает world, вычисляет, эмитит meta-effect). Третий тип intent после CRUD и workflow.
+- **§21 Analytical UI как граница** — формализована как honest border. Charts/heatmaps/2D-inputs **inherent требуют** custom canvas (~1300 LOC в reflect, ~1500 LOC в lifequest).
+- **541 unit-тест** (было 475), 58-шаговый agent-smoke (было 42).
+- **Параллелизация подагентов** — proven workflow для new domain implementation. Reflect построен ~3 часа благодаря 5+6 параллельным задачам.
+
+**Изменения в v1.4 (2026-04-14, ревизия манифест↔код v1.3):**
+
+- **Wizard — седьмой архетип** (§16a) — многошаговый guided flow: booking_wizard (392 LOC). FlatList/GroupedList/CalendarView, cross-step filtering (`filterBy`), аккумуляция состояния, шаг `summary` для подтверждения. Формализован и документирован.
+- **Reactive Rules Engine** (§22) — `server/ruleEngine.js`: event-condition-action модель для доменной автоматизации. Trigger matching (glob/exact/wildcard), context mapping (`effect.<field>`), guard-валидация через `validateIntentConditions`. Используется для auto-close polls. Обобщённый паттерн «когда X → проверь Y → сделай Z».
+- **Секционированная навигация** (§16a) — `ROOT_PROJECTIONS` поддерживает `[{section, icon, items}]`. V2Shell auto-detect + `SectionedSidebar` с collapse/expand. meshok использует 5 секций (Главная, Покупаю, Продаю, Общение, Справочник).
+- **Чисто-кристаллизационный домен** — meshok не имеет ManualUI.jsx. 225 интентов, 15 проекций, 4 роли рендерятся целиком через кристаллизатор + рендерер v2. Валидация основного тезиса парадигмы на масштабе.
+- **Generic Effect Handler** — fallback в `buildEffects` читает `intent.particles.effects` и применяет механически. ~70% интентов meshok используют этот путь. Паттерн для авторов доменов.
+- **Intent Factory Pattern** — `intent()` + `ef()` хелперы в messenger/meshok сжимают boilerplate ~60%. Код-паттерн масштабирования определений.
+- **computeWitness** — runtime-агрегация (`count()`, `ratio()`) в `eval.js` над world-коллекциями. Мост Φ→рендер без серверных запросов. Используется `progressWidget`.
+- **475 unit-тестов** (было 372), **35 файлов** (было 30). Уточнённые подсчёты: booking 21, meshok 225.
+- **Ревизия §23/§26** — обновлены закрытые/открытые пункты, wizard и reactive rules документированы, честные границы актуализированы.
+
+**Изменения в v1.3 (2026-04-13, Session D):**
+
+- **Agent layer для всех 5 доменов** — workflow (6 intents, 12 тестов) и messenger (5 intents, 10 тестов) добавлены к booking/planning/meshok. 100% покрытие доменов.
+- **Декларативные политики кворума** — `ontology.entities.Poll.quorum: {closeWhen, absentVote}`. `checkQuorum` читает policy: `all_voted | quorum(N) | manual`. 9 тестов.
+- **LLM enrichment pass** — POST `/api/crystallize/enrich`, Claude API обогащает артефакты (labels, icons, placeholders). Кеш в SQLite. CLI: `npm run crystallize-llm`. Кнопка «✨ LLM» в V2Shell.
+- **TypeScript типы ядра** — `src/types/idf.d.ts`: Intent, Effect, Projection, Ontology, Artifact, World, Domain. JSDoc в fold.js.
+- **ErrorBoundary** — graceful degradation при ошибках рендера архетипов.
+- **CI** — GitHub Actions: vitest + vite build на каждый push/PR.
+- **README** обновлён — 378 намерений, 5 доменов, 6 архетипов, 372 теста.
+- **Meshok walkthrough** — `npm run meshok-demo`, 12-шаговый демо-сценарий аукциона.
+- **Composer reply mode** — per-item кнопка ↩ устанавливает reply-контекст, Composer показывает preview-banner, submit передаёт replyToId.
+- **SubCollection inline-edit** — кнопка ✎ переключает item в edit-mode с input-полями, editableFields выводятся из ontology write-полей.
+- **Personal layer §17** — usePersonalPrefs (density/fontSize/iconMode), PrefsPanel, CSS variables `--idf-padding/--idf-gap/--idf-font-size`. Четвёртый слой проекции закрыт.
+- **Agent-smoke 42 шага** — расширен на meshok (6) + workflow (5) + messenger (5).
+- **JSDoc аннотации** — engine.js, crystallize_v2/index.js с типами из idf.d.ts.
+- **Deploy config** — Dockerfile, fly.toml, Express static serving, IDF_DB_PATH env.
+- 372 unit-теста (было 312 → 341 → 372). 45 коммитов за сессию.
+
+**Изменения в v1.2 (2026-04-13):**
+
+- **Новый домен meshok** — 226 намерений, 10 сущностей, 4 роли. Восьмой полевой тест.
+- §16a: **Семантические роли полей**, выводимая карточка, секционированная форма.
+- §16a: **Post-create навигация** — HeroCreate → `{detail}_edit`.
+- **auth_users → Φ** — dual-write `_user_register`, seed удалён, §5 закрыт.
+- **M5: удаление legacy** — crystallize.js, renderer.jsx, crystallized/ (-2111 LOC).
+- **Canvas-архетип** + **Dashboard-архетип** — все 6 архетипов закрыты.
+- **Auto-close по кворуму** — `checkQuorum` + серверный watcher.
+- **Agent layer для meshok** — 8 intents, 18 тестов.
+
+**Изменения в v1.1 (2026-04-11):**
+
+- Раздел 16a: **Архетипы и слоты** — формальная структура артефакта v2, выведенная из M1/M2.
+- Раздел 22: добавлены расширения, открытые в M1/M2 — кастомные виджеты захвата, entity-picker, reply-контекст композера.
+- Раздел 23: разрыв манифест↔код зафиксирован отдельной подсекцией «честных границ».
+- Раздел 24: обновлено — седьмой полевой тест (мессенджер), M1/M2 милестоуны.
+- Раздел 25: переписано с учётом пересмотренных приоритетов.
+- **Новый раздел 26**: ревизия манифест↔код — что объявлено, что реализовано, что недоработано.
+
+---
+
+## 1. Контекст и мотивация
+
+Современная фронтенд-разработка достигла локального максимума. Каждое из её решений по отдельности оправдано, но в сумме они создают систему, в которой разработчик тратит большую часть времени на согласование артефактов: состояние клиента с состоянием сервера, дизайн-макеты с разметкой, типы с рантаймом, тесты с реализацией.
+
+Появление LLM-агентов как полноценных пользователей делает прежнюю архитектуру несостоятельной. Агент не хочет смотреть на пиксели — ему нужны намерения, доступные действия и причинно-следственные связи.
+
+Документ описывает альтернативу: переход от написания приложений к их выводу из формального описания пользовательских намерений. Парадигма разработана с расчётом на симбиоз с большими языковыми моделями как на конструктивную предпосылку.
+
+Версия 1.0 — все концепты манифеста реализованы в коде. Прототип: 3 домена (booking 20 + planning 17 + workflow 15 = 52 намерения), 11 кристаллизованных проекций, визуальный язык (2 темы × 3 варианта), три слоя проекций (canonical/mobile/agent), зависимость от зрителя (client/specialist/agent через онтологию), Overlay(I) для многофазных намерений, алгебра композиции с проверкой ⊥, анкеринг всех частиц к онтологии, правила целостности с 3D-визуализацией и инструментами разрешения, поток Π для косметических эффектов, батчинг (α: batch), серверное исполнение workflow с топологическим обходом, реляционные предикаты (null, IN, !=), автодеривация fold-маппинга из онтологии.
+
+## 2. Основной тезис
+
+**UI — это не то, что отрисовано. UI — это пересечение двух структур: проекций (что видит пользователь) и намерений (что он может сделать). Пиксели, голос, агентский API, документ — равноправные материализации этого пересечения.**
+
+Четыре базовые материализации работают поверх **одной** артефакт-модели v2 (archetype + slots + projections + ontology):
+
+| Материализация | Output | Реализация |
+|---|---|---|
+| **pixels** | React-дерево для человека | UI-адаптер (Mantine / shadcn / Apple / AntD) + ProjectionRendererV2 |
+| **voice** | speech turn-structured поток | `voiceMaterializer.cjs` + `/api/voice/:domain/:projection` (v1.6.2 prototype) — JSON turns / SSML / plain |
+| **agent-API** | REST с schema / world / exec | `/api/agent/:domain/*` (§17) |
+| **document** | HTML / JSON / (PDF) для чтения или архива | `/api/document/:domain/:projection` (§17, закрыто v1.6) |
+
+«Равноправные» означает: **не** пиксели-first с остальными как вторичными рендерами, а четыре выхода одной семантики. Один артефакт пригоден для всех четырёх через соответствующий renderer. Это формализация на смену v1.0-идее «отдельный артефакт на каждое устройство».
+
+## 3. Вход системы: намерения
+
+Единственным входом для построения приложения является множество пользовательских намерений, описанных автором на естественном языке. Намерение — то, что пользователь приходит делать: оплатить заказ, вернуть товар, запланировать встречу, сохранить статью. Намерения не описывают внешний вид, компоненты и запросы.
+
+**Принцип максимальной деривации.** Если структура X однозначно выводима из множества намерений I и онтологии O, то X не является входом системы — X является промежуточным артефактом. Ручная спецификация деривируемой структуры — дупликация, источник рассогласования. Proof-of-concept `deriveProjections` подтвердил: 78% проекций (25 из 32) на пяти доменах деривируются из намерений автоматически (правила R1-R7). Автор аннотирует выведенные проекции (layout, dashboard-виджеты), а не проектирует экраны с нуля.
+
+## 4. Атом системы: намерение и его частицы
+
+Намерение — атомарная единица, состоящая из пяти типов частиц.
+
+**Сущности** — доменные объекты, участвующие в намерении. **Условия** — предикаты применимости. **Эффекты** — декларативные утверждения о том, что станет правдой. **Свидетельства** — данные для осознанного решения. **Подтверждения** — то, что система должна получить обратно.
+
+Полнота пяти типов покрывает замкнутый цикл осмысленного действия: *что есть → когда применимо → что станет → что показать → как убедиться*.
+
+**Темпоральные предикаты.** Условия бывают двух типов. **Статические** зависят от `World(t)` и меняются при эффектах (`task.status = 'pending'`). **Темпоральные** зависят от `now` и меняются непрерывно без единого эффекта (`booking.slot.endTime <= now`). Множество применимых намерений может измениться просто потому, что прошла секунда. Для прототипов достаточно периодического пересчёта; для зрелой реализации нужен механизм темпоральной реактивности: система знает, *когда* условие станет истинным, и планирует пересчёт. Подтверждён на трёх доменах: календарь (события по времени), интернет-магазин (промо-цены с дедлайном), бронирование (завершение приёма).
+
+## 5. Проекции
+
+**Проекция** — первоклассная структура, параллельная намерению:
+
+```
+V = ⟨E, Q, W⟩
+```
+
+где `E` — задействованные сущности, `Q` — запрос (предикат плюс проекция из мира в результирующее множество), `W` — свидетельства.
+
+Проекции описывают *чтение* мира без изменения. Просмотр каталога, день/неделя/месяц в календаре, поиск, фильтрация, дашборд — всё это проекции. Они анкерируются в онтологию так же, как намерения, но не имеют эффектов и подтверждений.
+
+**Реактивность.** Проекция пересчитывается при изменении потока эффектов. Она устанавливает стоячий запрос к `Φ` и обновляется при появлении новых эффектов, затрагивающих её результат.
+
+**Композиция.** Проекции композируются: «моя очередь, отфильтрованная по тегу X» = «моя очередь» ∘ «фильтр по тегу X». Сортировки, группировки, поиски — трансформации проекций.
+
+**Связь с намерениями.** Проекция предоставляет контекст, в котором намерения становятся применимыми. Пользователь смотрит список статей (проекция) → каждая статья является контекстом, в котором доступны намерения «пометить прочитанной», «архивировать», «удалить». Проекция не вызывает намерения — она предоставляет сущности, на которых они применимы.
+
+**Свидетельства как частный случай.** Свидетельства намерения — это проекции, ограниченные контекстом одного рассматриваемого намерения. Свидетельства могут включать вычисляемые данные: списки конфликтов, расчёты цен, сводки доступности.
+
+**Зависимость от зрителя.** Проекции принимают зрителя как неявный параметр. Правила доступа на сущностях определяют, какие поля видны каким зрителям. Одна и та же проекция с разными зрителями даёт разное содержимое (пример: free/busy в календаре скрывает заголовки событий от чужих).
+
+**Ownership single и many-to-many (v1.6 formalized).** Два уровня row-filter — какие строки сущности видит зритель:
+
+1. **Single-owner** через `entity.ownerField: "userId"` — базовый случай, строка видна если `row[ownerField] === viewer.id` (клиент видит свои bookings, автор — свои reviews).
+2. **Many-to-many** через `role.scope[entity] = { via, viewerField, joinField, localField, statusAllowed? }` — для случаев «advisor видит портфели клиентов, с которыми подписан договор». Семантика: `row[localField] ∈ { bridge[joinField] | bridge ∈ world[via], bridge[viewerField] === viewer.id, (opt) bridge[statusField] ∈ statusAllowed }`. Bridge-коллекция (Assignment) — первоклассная сущность с собственным single-owner.
+
+Приоритет: `role.scope > entity.kind:"reference" > entity.ownerField > (no filter)`. Реализация — `server/schema/filterWorld.cjs`, 10+ unit-тестов с edge cases (изоляция advisor'ов, statusAllowed, пустые via, backcompat). Application-level фильтры в projections.js работают параллельно для UI-режима.
+
+**Reference-сущности** (v1.6, `entity.kind: "reference"`, §14) — справочные данные (Asset, Category, Currency) видны всем. Ownership не применяется; visibility через `role.visibleFields` остаётся. Применено к invest.Asset, invest.MarketSignal.
+
+### Таксономия базовых ролей (v1.6)
+
+Восемь доменов прототипа показали схождение к четырём таксономическим классам доступа. `role.base` — метаданная, **не замена** доменного имени:
+
+| base | Семантика | Примеры domain-ролей |
+|---|---|---|
+| **owner** | Самоакторный участник с CRUD над своими сущностями (single-owner + m2m scope) | booking.client, booking.specialist, meshok.buyer, meshok.seller, messenger.self, invest.investor, invest.advisor |
+| **viewer** | Связанный читатель с минимальным write (голосование, reactions) — видит через explicit-связь, не owner | messenger.contact |
+| **agent** | Автоматический актор (LLM-бот, human-agent, rule engine) с JWT-scope + canExecute + опциональным preapproval guard (§17) | agent-роль во всех 8 доменах, meshok.moderator |
+| **observer** | Pure read-only аудит (регулятор, compliance) — `canExecute` пустой, document-материализация для отчётов | invest.observer |
+
+Мотивация:
+
+1. **Cross-domain инструменты.** Agent-smoke итерирует `getRolesByBase(ontology, "agent")` вместо знания имени. Document-экспорт для `observer`-роли работает единообразно.
+2. **SDK defaults.** Domain authoring CLI при генерации нового домена знает: `owner` → ownerField + full canExecute, `agent` → canExecute whitelist + preapproval, `observer` → visibleFields "all" + canExecute "[]".
+3. **Узнавание паттернов.** Автор нового домена видит «meshok.buyer base:owner» — знает, что это как `investor` / `client` / `self`.
+4. **Audit.** `auditOntologyRoles(ontology)` enforces observer-invariant (`canExecute` пустой) как первичную защиту от ошибок декларации.
+
+**Реализация:** `server/schema/baseRoles.cjs` с helpers `validateBase`, `getRolesByBase`, `isAgentRole`, `isObserverRole`, `isOwnerRole`, `auditOntologyRoles`. 26 unit-тестов. Все 8 доменов аннотированы:
+
+```
+booking:   { owner: [client, specialist], agent: [agent] }
+planning:  { agent: [agent] }
+workflow:  { agent: [agent] }
+messenger: { owner: [self], viewer: [contact], agent: [agent] }
+meshok:    { owner: [buyer, seller], agent: [moderator, agent] }
+lifequest: { agent: [agent] }
+reflect:   { agent: [agent] }
+invest:    { owner: [investor, advisor], agent: [agent], observer: [observer] }
+```
+
+**Моделируется через `role.base`, не через общий enum.** Каждый домен сохраняет свои имена; `base` — слабая привязка к таксономии, не override. Несовпадение base с фактическими правами не вызывает runtime-ошибки; `auditOntologyRoles` даёт lint-уровневые warnings. Backcompat: роли без `base` обрабатываются как раньше (игнорируются helpers).
+
+**Параметры запроса.** Проекция принимает не только зрителя, но и набор *параметров запроса* — эфемерных значений, устанавливаемых пользователем в рантайме (query поиска, диапазон дат, фильтры сортировки). Параметры живут в сессии рендерера и **не участвуют в `World(t)`** — они ортогональны `Φ`, `Δ`, `Σ`, `Π`. Формально параметры — часть спецификации `Q` проекции, не внешнее состояние. Control-архетипы вроде `inlineSearch` пишут в параметры запроса; filter проекции читает их в выражении. Параметры запроса не персистентны — при смене проекции они сбрасываются. Стабилизировано в M3.2.
+
+## 6. Сигналы
+
+**Сигнал** — транзиентное событие, порождаемое намерением, не участвующее в вычислении мира:
+
+```
+s = ⟨κ, σ, ρ, ε, δ⟩
+```
+
+где `κ` — вид (уведомление, аналитическое событие, внешний вызов), `σ` — подсистема-получатель, `ρ` — причинная история, `ε` — порождающее намерение, `δ` — режим доставки (`fire-and-forget`, `at-least-once`, `at-most-once`).
+
+Сигналы живут в отдельном потоке `Σ`, изолированном от `Φ`. Они никогда не участвуют в свёртке мира.
+
+**Правило эмиссии при коммите.** Сигналы испускаются при коммите порождающего намерения. Если намерение отвергнуто — сигналы не уходят. Это даёт чистое свойство: на каждый испущенный сигнал есть подтверждённый эффект-причина.
+
+**Необратимость.** Сигналы не могут быть откачены после испускания. Если эффект-родитель позже отменён, сигнал уже улетел. Компенсация — отдельное намерение.
+
+**Различение при анкеринге.** Модель различает эффекты и сигналы по семантике описания: изменение поля сущности — эффект, отправка сообщения или внешний вызов без отслеживания — сигнал.
+
+**Запланированные (времятриггерные) сигналы.** Не все сигналы испускаются при коммите. Запланированный сигнал испускается при наступлении времени: напоминание за N часов до приёма, предупреждение о дедлайне, SLA-алерт. Запланированный сигнал привязан к якорю — полю сущности, определяющему время срабатывания (`booking.slot.startTime - 24h`). При смещении якоря (перенос записи) — сигнал перепланируется. При удалении якоря (отмена записи) — сигнал отменяется. Требует темпоральной планирующей подсистемы, но семантически остаётся сигналом: транзиентное событие, не участвующее в мире. Подтверждён на трёх доменах: календарь (напоминания), интернет-магазин (восстановление брошенной корзины), бронирование (напоминание о приёме).
+
+## 7. Многофазные намерения
+
+Намерение может иметь две фазы.
+
+**Фаза исследования** — опциональная, безвредная для канонического мира. Может читать из внешних источников, наполняет свидетельства. Её эффекты материализуются в провизорном наложении `Overlay(I)`, существующем, пока намерение рассматривается. Прерывание — без последствий внутри системы.
+
+**Фаза коммитмента** — обязательная, порождает настоящие эффекты в `Φ` и сигналы в `Σ`. Запускается после подтверждения.
+
+Мир, в котором оценивается намерение:
+```
+World_for(I) = World(t) ⊕ Overlay(I) ⊕ Δ(user)
+```
+где `Δ(user)` — персистентные черновики пользователя (см. раздел 9).
+
+**Подшаги исследования.** Сложные фазы исследования могут иметь внутреннюю структуру — направленный граф подшагов с зависимостями. Обратный ход вызывает каскадную инвалидацию (пример: смена адреса в чекауте инвалидирует стоимость доставки). Это уточнение, не новый концепт.
+
+**Изоморфизм с проекциями.** Проекция — это намерение с фазой исследования и без фазы коммитмента. Концепты различны по роли, но математически проекция ≈ намерение − (F, P, commitment).
+
+## 8. Персистентные черновики
+
+**Черновой поток** `Δ` — параллельный `Φ`, содержащий эффекты, которые хранятся долговечно (по правилам области видимости: session, device, account), но не участвуют в свёртке `World(t)`.
+
+Черновики видны только владельцу, не влияют на глобальное состояние. При коммите порождающего намерения черновые эффекты промотируются в `Φ`. При отказе — удаляются.
+
+**Типичные случаи:** корзина покупок, wishlist, сохранённый черновик формы, неотправленное письмо — всё это персистентные черновики.
+
+**Устаревание свидетельств.** Черновики расширяют временное окно между созданием и коммитом. Мир может измениться за это время. При каждом возврате к персистентному черновику система обязана пересчитать свидетельства против актуального `World(t)` и показать дифф. Пример: «Цена на Product X изменилась с $10 до $15 с момента добавления в корзину».
+
+## 9. Расширенные намерения
+
+Надстройка над обычными намерениями для массовых или длительных операций:
+
+```
+I_ext = ⟨
+  template: I,
+  collection: source,
+  summary_witnesses: [...],
+  bulk_confirmation: ...,
+  partial_success_policy: allow | all_or_nothing,
+  progress_semantics: per_item | percentage
+⟩
+```
+
+**Двухуровневая структура.** Внешнее намерение имеет свои свидетельства (сводка), подтверждение (один клик) и жизненный цикл. Внутренний шаблон применяется к каждому элементу коллекции.
+
+**Политика частичного успеха.** Автор явно объявляет, допустим ли частичный успех. `allow`: неудачные экземпляры не блокируют успешные. `all_or_nothing`: первый провал триггерит откат всех.
+
+**Прогресс как свидетельство.** Прогресс — это проекция текущего состояния исполнения расширенного намерения.
+
+**Покрытие длительных операций.** Массовость и длительность — два проявления одного свойства: намерения с промежуточными наблюдаемыми состояниями.
+
+## 9a. Рабочие процессы
+
+**Рабочий процесс** — гетерогенная последовательность фаз, где на каждой фазе разные роли имеют доступ к разным намерениям.
+
+```
+W = ⟨Phases, Transitions, Roles⟩
+```
+
+где `Phases` — множество фаз (предикатов на сущности), `Transitions` — намерения, меняющие фазу, `Roles` — подмножества акторов.
+
+Пример: опрос для планирования встречи. Фазы: `draft → open → closed → resolved | cancelled`. На фазе `draft` — только организатор (add_option, invite, open). На фазе `open` — организатор + участники (vote, suggest, close). На фазе `closed` — только организатор (resolve, cancel).
+
+**Отличие от многофазных намерений.** Многофазное намерение (раздел 7) — это две фазы *одного* действия *одного* актора. Рабочий процесс — это несколько фаз *разных* действий *разных* акторов.
+
+**Отличие от расширенных намерений.** Расширенное намерение (раздел 9) — это один шаблон, применяемый к коллекции. Рабочий процесс — это гетерогенная последовательность разных намерений.
+
+**Выражение через условия.** Фазы выражаются через условия на статусе сущности (`poll.status = 'open'`). Доступные намерения на каждой фазе определяются этими условиями. Рабочий процесс — это **явная декларация** того, что модель и так выводит из условий, но с добавлением: (1) визуализация как граф фаз, (2) верификация полноты (нет тупиков), (3) генерация UI по фазам при кристаллизации.
+
+Подтверждён на трёх доменах: календарь (планирование встречи), бронирование (шумный дрейф как микро-процесс), совместное планирование (полный процесс опроса).
+
+## 10. Формальная нотация
+
+Намерение:
+```
+I = ⟨E, C, F, W, P⟩
+```
+
+Эффект:
+```
+f = ⟨τ, σ, α, ρ, ε, ttl⟩
+```
+
+где `τ` — описание изменения, `σ` — область видимости `{session, device, account, shared, global}`, `α` — алгебраический тип `{replace, add, remove, batch}`, `ρ` — причинная история, `ε` — порождающее намерение, `ttl` — опциональное время жизни.
+
+Ранние версии манифеста также декларировали `increment` и `cas` как отдельные α-типы (CRDT-счётчики и оптимистичные блокировки), но за всё время прототипирования ни одно намерение их не использовало, и fold.js их не обрабатывал. В v1.3 они удалены как cut bait (см. §23). Если появится реальный use-case — восстанавливаются вместе с полноценной реализацией.
+
+Поток эффектов `Φ = Φ_proposed ∪ Φ_local ∪ Φ_propagating ∪ Φ_confirmed ∪ Φ_rejected`. Черновой поток `Δ`. Поток сигналов `Σ`.
+
+Причинный порядок: `f₁ ≺ f₂` ⟺ `f₁` в транзитивном замыкании `ρ(f₂)`.
+
+Мир:
+```
+World(t) = fold(⊕, ∅, sort≺(Φ_confirmed ↓ t))
+```
+
+**Истекающие эффекты.** Эффект с ненулевым `ttl` автоматически переводится в `Φ_rejected` по истечении срока. Причинная история каскадирует: все потомки просроченного эффекта становятся подозрительными. Типичные случаи: резервирование инвентаря, сессионные токены, временные грантсы доступа, промо-цены с дедлайном.
+
+## 11. Алгебра композиции эффектов
+
+Таблица композиции для эффектов на одну ячейку:
+
+| `α₁` \ `α₂` | replace | add | remove | batch |
+|---|---|---|---|---|
+| **replace** | побеждает ≺-поздний | ⊥ | ⊥ | всегда валиден |
+| **add** | ⊥ | объединение | зависит от ≺ | всегда валиден |
+| **remove** | ⊥ | зависит от ≺ | объединение | всегда валиден |
+| **batch** | всегда валиден | всегда валиден | всегда валиден | всегда валиден |
+
+`⊥` — запрещённая пара, ловится как ошибка типизации при кристаллизации.
+
+`batch` (§10) — композитный α-тип: атомарная группировка нескольких под-эффектов по принципу all-or-nothing. Сервер рекурсивно валидирует каждый под-эффект, и если любой невалиден, весь batch отвергается. В таблице всегда валиден с любыми α-типами, потому что участники композиции — это сам batch-контейнер и какой-то внешний эффект, а не под-эффекты.
+
+## 12. Связи между намерениями
+
+Связи между намерениями — часть алгебры парадигмы. Они **выводятся**
+автоматически из частиц намерений, за редкими honestly-документированными
+исключениями. Граф связей — артефакт, не декларация.
+
+### Пять типов связей
+
+**Последовательная** `I₁ ▷ I₂` — эффект `I₁` делает истинным условие `I₂`.
+Выводится через field-level matching: для каждого condition в `I₂`
+(парсится как `{entity, field, op, value}`) проверяется, существует ли
+effect в `I₁`, чей target соответствует `entity.field` и чей алгебраический
+тип транзитивно производит value условия:
+
+- `replace` с совпадающим value → `▷`
+- `remove` + condition `= null` → `▷`
+- `add` + condition `!= null` — возможное слабое соответствие, в первой
+  версии не генерирует `▷` из-за ложных срабатываний.
+
+**Derivation через `intent.creates` implied status** (wave 2, закрыто).
+Если intent имеет `creates: "Poll(draft)"`, алгоритм парсит parenthesized
+суффикс как implied `status = "draft"` и проверяет match с condition'ом
+`poll.status = 'draft'`. Это замыкает workflow-граф от первого intent'а:
+`create_poll ▷ open_poll`, `create_poll ▷ add_time_option`,
+`create_poll ▷ invite_participant` — все выводятся автоматически.
+Ограничение: implied status работает только для поля `status` — другие
+поля (title, price) не захватываются через creates-строку.
+
+**Связь с §9a рабочими процессами.** Рабочий процесс
+`W = ⟨Phases, Transitions, Roles⟩` формально — это связный подграф
+графа `▷`, ограниченный рёбрами, где effect меняет `{entity}.status`
+(status-transition edges). Фазы — значения status, transitions — `▷`-рёбра
+между ними. §9a описывает *view* этого подграфа для автора; §12 описывает
+*вывод* подграфа из частиц. Планинг-домен (`draft → open → closed →
+resolved`) и booking lifecycle — конкретные воплощения этой структуры
+на сущностях `Poll` и `Booking`.
+
+**Антагонистическая** `I₁ ⇌ I₂` — последовательное применение возвращает
+мир в исходное состояние. Выводится через effect-pair reversal: для каждого
+effect `e₁ ∈ I₁` ищется `e₂ ∈ I₂`, реверсирующий его:
+
+- `replace + replace` на одном target с разными values — bistable candidate
+- `add + remove` на одной коллекции — reversal
+- `remove + add` на одной коллекции — reversal
+
+`I₁ ⇌ I₂` признаётся только если симметричные effects покрывают всё
+множество изменений с обеих сторон.
+
+**Declared override.** Антагонистическая связь — единственный тип, который
+дополнительно может быть объявлен автором через поле `intent.antagonist`.
+Декларация применяется как hint для крайне распространённого случая
+**асимметричного lifecycle'а**: когда пара интентов семантически взаимо-
+исключающая, но их effects не возвращают мир в исходное через pair reversal.
+Например, `accept_contact` и `reject_contact` оба производят
+`replace contact.status` из `'pending'` в разные терминальные статусы —
+это НЕ формально reversible, но UI хочет рендерить их как группу.
+
+Classification declared `⇌` следует §15:
+
+- **Structural witness**: derivation нашла полный effect pair-reversal —
+  декларация подтверждена структурно.
+- **Rule-based witness**: зарезервировано для будущих правил типа
+  «status transitions form antagonist sets» — сейчас не реализовано.
+- **Heuristic witness**: декларация принимается на веру автора, derivation
+  не подтверждает — помечается как эвристическое решение.
+
+Integrity-rule для declared antagonists выдаёт info с указанием category,
+не блокирует кристаллизацию, но делает автору явным, какие его декларации
+держатся на эвристике.
+
+Все остальные связи выводятся строго, без declared override'ов.
+
+**Исключающая** `I₁ ⊕ I₂` — effects конфликтуют по таблице композиции §11.
+Выводится проверкой каждой пары `(e₁, e₂) ∈ I₁.effects × I₂.effects` через
+`checkComposition`: если хотя бы одна пара даёт `⊥` — связь существует.
+Таблица строгая: `replace + replace` не считается конфликтом (разрешается
+причинным порядком), только смешивание structural и field operations
+(например, `replace + add` на одной коллекции) даёт `⊥`. В практике 4
+доменов прототипа `⊕`-граф разреженный — это правильно, потому что автор
+избегает явно несовместимых интентов.
+
+**Замечание о voteGroup.** UX-паттерн voteGroup из §16a — это **НЕ `⊕`**
+в строгом алгебраическом смысле. Три vote-intent'а (`vote_yes`/`vote_no`/
+`vote_maybe`) формально `∥` между собой (их `add votes` эффекты не
+конфликтуют по composition table). Эксклюзивность «один голос на участника
+на опцию» — **доменное правило уникальности**, enforced через uniqueness
+constraint на `(participantId, optionId)`, а не через алгебру связей.
+Классификация voteGroup как «специализации ⊕-алгебры» в ранних версиях
+§26 была неточной — исправлено в §12 v2.
+
+**Параллельная** `I₁ ∥ I₂` — effects пересекаются по entities, не
+конфликтуют, не последовательны, не антагонистичны. Выводится как
+complement всех предыдущих: после вычисления `▷`, `⇌`, `⊕` пара
+объявляется `∥`, если их effects касаются общих сущностей, но ни одна
+из прежних связей не сработала. Это слабейший тип связи, самый шумный —
+почти любые operationally-independent intent'ы на общих entities будут
+`∥`. Для агента это даёт clean сигнал «безопасно делать независимо».
+
+### Частичная антагонистическая и вложенность — открытые
+
+**Частично антагонистическая** связь (`I₂` реверсирует подмножество
+`S ⊂ F(I₁)`) декларируется манифестом, но **не реализуется в первой
+версии**. Формализация требует concept «subset reversal» и не имеет
+чётких test cases в прототипе — любые 152 интента из четырёх доменов
+либо reversible полностью, либо нет. Когда появится конкретный use case,
+реализуется в v2 с дополнительным link type `⇌₋`.
+
+**Вложенность** `I₁ ⊂ I₂` — единственная связь, задаваемая исключительно
+автором. Также не используется в текущем прототипе ни в одном домене.
+Упоминается в манифесте для completeness и как якорь будущих расширений.
+
+### Граф как source of truth
+
+Результат вычисления — adjacency map `{intentId → {sequentialIn,
+sequentialOut, antagonists, excluding, parallel}}`, пересчитывается при
+каждом изменении набора намерений.
+
+**Алгебра связей — параллельный выход кристаллизации.** Рядом с
+проекционными артефактами (§16) модуль `intentAlgebra` производит
+adjacency map. Свойства §16 (детерминированность, перегенерируемость,
+расщепляемость) применимы к обоим выходам: один корпус намерений даёт
+два когерентных представления — что можно сделать (проекции) и как
+эти действия связаны между собой (алгебра). Оба пересчитываются
+единообразно при любом изменении определений.
+
+Consumer'ы:
+
+- **Агентский слой §17** — `GET /schema` включает блок `relations` для
+  каждого intent'а, позволяя LLM-агенту планировать multi-step цепочки,
+  избегать конфликтов, находить способы отката. Relations экспонируют
+  *все* связи, даже к intent'ам не из `canExecute` — это даёт агенту
+  полную карту зависимостей, а не искажённо-фильтрованную.
+- **Кристаллизация §16** — продолжает читать declared `intent.antagonist`
+  для toggle-pair collapse в UI-слоях; derivation используется для
+  валидации этих деклараций через §15 classification.
+- **Integrity §13** — правила «no dead intents» и «algebra composition»
+  становятся тривиальными graph queries поверх adjacency map. Правило
+  «antagonist exists» расширяется classification-check'ом declared vs derived.
+- **UI debug-панели** — sidebar прототипа отображает все пять типов связей
+  с цветовым кодированием.
+
+Все consumer'ы разделяют один источник — модуль `intentAlgebra`,
+чистая функция `(INTENTS, ONTOLOGY) → adjacency map`. Реализовано в
+Session B (2026-04-12).
+
+## 13. Правила целостности
+
+Кристаллизация не начнётся, пока не соблюдены:
+
+**Нет мёртвых намерений** — для каждого существует путь, делающий его условия выполнимыми. **Нет эффектов-сирот** — каждый эффект наблюдаем. **Полнота свидетельств** — покрывают все переменные, от которых зависит решение. **Пропорциональность подтверждения** — сила подтверждения ≥ необратимость эффектов.
+
+Правила не применяются к проекциям (у них нет эффектов) и к сигналам (они не часть мира).
+
+**Глобальные инварианты (v1.6.1).** Правила §13 — intent-schema consistency («мёртвые намерения», «orphan effects»). Семантическая консистентность *мира* — отдельный слой `ontology.invariants[]` (§14), проверяется runtime после `fold(Φ)`, не на этапе кристаллизации.
+
+## 14. Онтология
+
+Явная, эволюционирующая, человеко-читаемая доменная онтология — разделяемая память между автором и моделью. Содержит три типа элементов.
+
+**Сущности с состояниями** — доменные объекты, их поля, допустимые значения, переходы. Включая **сущности-отношения** — связи вида «пользователь-статья» (`UserArticle`), моделируемые как сущности с внешними ключами.
+
+**Предикаты с определениями** — условия, выраженные через сущности. Имеют имена, переиспользуются.
+
+**Правила импликации** — связи между предикатами с контекстом применимости. Отражают доменное знание.
+
+Онтология не описывается заранее — вырастает из описаний намерений через диалог автора с моделью.
+
+### Entity kinds — таксономия сущностей (v1.6)
+
+Маркер `entity.kind` классифицирует сущность по отношению к ownership и жизненному циклу:
+
+| kind | Семантика | ownership | Пример |
+|---|---|---|---|
+| `"internal"` (default) | Собственные данные системы | `ownerField` применяется | Booking, Message, Portfolio |
+| `"reference"` | Справочные данные, shared между всеми | ownership не применяется, shared | Asset, Category, Currency |
+| `"mirror"` | Зеркальная сущность внешнего мира | `foreign:<source>`, граница (§19) | TimeSlot из external-calendar |
+| `"assignment"` *(implied)* | Bridge для m2m — сущность-отношение с самостоятельным owner'ом | `ownerField` принадлежит одной стороне связи | Assignment (advisor ↔ client), Participant (user ↔ poll) |
+
+`kind` читается `filterWorld.cjs` — reference-сущность видна всем через `visibleFields`, internal — только owner'у, assignment — своему owner'у через ownerField (а другая сторона связи видит через `role.scope.via`).
+
+### Типизированные поля и семантические роли
+
+Поля сущности — объекты с контрактом `{type, read, write, required, label, fieldRole?}`:
+
+- **type** — UI-контрол: `text / textarea / number / datetime / email / url / tel / select / boolean / id / entityRef / enum`. `inferControlType()` читает приоритетно, имя-эвристика — fallback.
+- **read / write** — массивы ролей (`["*"]`, `["self"]`, `["agent"]`). `canRead` / `canWrite` проверяют по viewer-role.
+- **fieldRole** — **семантическая роль** для layout-hinting (v1.2 + v1.6 финтех-расширения):
+  - v1.2: `title`, `description`, `heroImage`, `price`, `timer`, `location`, `badge`, `metric`, `ref`, `info`
+  - v1.6: `money` (с currency-форматом), `percentage` (0–100), `trend` (up/down/flat), `ticker` (моноширинный)
+  
+  `inferFieldRole(field, ontology)` выводит роль из типа + имени. Третий уровень вывода: *ontology → controlType → fieldRole → layout*.
+
+`cardSpec` в catalog-grid и `buildFormSpec` в синтетических формах читают fieldRole для компоновки. AntD-адаптер рендерит `money/percentage` через `InputNumber` с prefix/suffix, а `trend` через `Statistic` с цветной стрелкой.
+
+### searchConfig
+
+`entity.searchConfig: { fields, returnFields, minQueryLength, limit }` — декларация для server-side entity search (`GET /api/entities/:collection/search`). Используется EntityPicker'ом customCapture (§16a).
+
+### Глобальные инварианты (v1.6.1)
+
+`ontology.invariants: []` — массив ∀-свойств `World(t)`, проверяемых после каждой свёртки `fold(Φ)`. Замкнутое множество типов:
+
+| kind | Семантика | Пример |
+|---|---|---|
+| `role-capability` | Контракт прав роли | observer.canExecute = ∅ |
+| `referential` | Foreign key: `row[field]` существует в target-коллекции | Bid.listingId → Listing.id |
+| `transition` | Допустимые переходы значения поля (`order` monotonic или `transitions` whitelist) | Order.status: created→paid→shipped |
+| `cardinality` | max/min count после `where` + `groupBy` | ≤1 active Portfolio per user |
+| `aggregate` | sum/count c tolerance против target-поля | Σ Position.value ≈ Portfolio.totalValue |
+
+Проверка — `server/validator.js::checkInvariantsForDomain`. Если violations c `severity: "error"` — эффект откатывается через `cascadeReject`, клиент уведомляется SSE `effect:rejected` c `violations[]`. Warnings логируются, не блокируют.
+
+Observer-invariant (v1.6 §5) — первая реализация паттерна, мигрировала из `baseRoles.cjs::auditOntologyRoles` в `kind: "role-capability"` (invest: 5 инвариантов, meshok: 3). Неформальная декларация `entity.transitions` теперь формально enforceable через `kind: "transition"`.
+
+Handlers — чистые функции в `server/schema/invariants/*.cjs`. Новый kind добавляется через `registerKind(name, handler)` без изменений в потребителях.
+
+## 15. Анкеринг и верификация
+
+**Анкеринг** — привязка частиц намерения к элементам онтологии. Либо успешен и явен, либо требует вмешательства автора. Промежуточных состояний нет.
+
+Проверка `f ⊨ c` после анкеринга — преимущественно символическая. Каждая проверка сопровождается **свидетельством**: анкерное основание, пример-свидетель, попытка контрпримера, оценка надёжности (структурная, правиловая, эвристическая).
+
+Эвристические решения автора становятся правилами импликации в онтологии. **Каждое эвристическое решение применяется ровно один раз** — дальше работает автоматически.
+
+## 16. Кристаллизация
+
+**Модель не работает в рантайме.** Описание намерений один раз превращается в стабильный артефакт — **исполнимую проекцию**.
+
+Свойства: **детерминированность** (одинаковый вход → одинаковый выход), **перегенерируемость** (пересобирается при изменении входа), **расщепляемость** (одно ядро → несколько проекций).
+
+Инкрементальность обеспечивается локальностью анкеринга и выводимых связей: малое изменение → малое обновление.
+
+**Деривация проекций.** Проекции — не первоклассный вход, а деривируемый промежуточный артефакт. Пайплайн кристаллизации имеет три этапа: (1) **деривация** — `deriveProjections(I, O)` выводит структурный скелет проекций из намерений и онтологии, (2) **мерж** — `mergeProjections(derived, authored)` накладывает авторские аннотации (shallow merge, authored-поле побеждает derived-поле целиком), (3) **кристаллизация** — распределение по архетипам, слотам, контролам.
+
+Семь правил деривации: R1 — `creates(E)` → catalog; R2 — `confirmation:"enter"` + foreignKey → feed; R3 — `|mutators(E)| > 1` → detail; R4 — foreignKey E'→E → subCollection; R5 — группа replace → form (formGrouping); R6 — witnesses из пересекающихся intents; R7 — `ownerField` → owner-filtered `my_*` catalog. Покрытие: 78% на пяти доменах (booking 80%, planning 67%, workflow 75%, messenger 80%, meshok 80%). Непокрытые: dashboard, canvas, специфические views — authored-only.
+
+Семантика мержа: `authored[id] = false` удаляет выведенную проекцию; `authored[id] = {...}` — shallow merge (каждое authored-поле заменяет derived-поле целиком); новый id в authored — добавляет проекцию. Пустой authored → чистая деривация. Полный authored → полный override (backward compat).
+
+Реализовано в `deriveProjections.js` (R1-R7) + `mergeProjections.js` (shallow merge). 45 unit-тестов + domain validation на всех 5 доменах.
+
+## 17. Пять слоёв проекции (v1.6)
+
+Пять выходов одного канонического артефакта — разные материализации §1, не разные артефакты.
+
+**1. Канонический** — общий для всех, стабильный между релизами, тестируемый. Результат кристаллизации: declarative артефакт v2 со слотами, control-спецификациями и nav-графом. Один и тот же канонический артефакт идёт во все 4 нижних слоя.
+
+**2. Адаптивный** — профили для устройств, тем, плотности, типа потребителя. Реализован как **UI-адаптер** (§16a): реестр, сопоставляющий declarative control-типы (`parameter.datetime`, `button.intent`, `shell.modal`, `primitive.avatar`, `primitive.chart`, `icon.resolve`) конкретным React-компонентам UI-kit'а. Четыре реализации: Mantine / shadcn-doodle / Apple visionOS-glass / **AntD enterprise-fintech** (v1.6). **Capability surface** (v1.6) — адаптер декларирует `capabilities: {...}`, runtime делает graceful fallback при mismatch.
+
+Адаптивный слой решает: платформа, тема (light/dark), локаль (`humanLabel` + ontology.field.label), иконки (emoji → SVG через `icon.resolve`), capability variants (chartTypes). Один канонический артефакт + N адаптеров = N визуальных реализаций.
+
+**3. Личный** — индивидуальные предпочтения, хранятся в localStorage, применяются как override поверх канонического. Реализовано v1.3: `usePersonalPrefs` (density / fontSize / iconMode / uiKit) + `PrefsPanel` + CSS-переменные `--idf-padding/--idf-gap/--idf-font-size`. **uiKit override** (v1.5) — пользователь может переключить адаптер (например, доменный дефолт AntD → Mantine) без перезагрузки.
+
+**4. Агентский** — REST API как output: schema интентов + world + exec. Архитектурно — «адаптер без React»: `parameter/*` превращается в JSON-схему параметра, `button/*` — в POST endpoint. Реализован для **всех 7 доменов** через `/api/agent/:domain/{schema,world,exec}`. JWT-auth + `roles.agent.canExecute` whitelist + `visibleFields` (с поддержкой single-owner и m2m via `role.scope`, v1.6) + ownership-check.
+
+**Preapproval guard (v1.6).** JWT даёт *kто агент*, но не *какие лимиты*. `roles.agent.preapproval` — декларативный пакет правил поверх JWT:
+
+```js
+preapproval: {
+  entity: "AgentPreapproval", ownerField: "userId",
+  requiredFor: ["agent_execute_preapproved_order"],
+  checks: [
+    { kind: "active", field: "active" },
+    { kind: "notExpired", field: "expiresAt" },
+    { kind: "maxAmount", paramField: "total", limitField: "maxOrderAmount" },
+    { kind: "csvInclude", paramField: "assetType", limitField: "allowedAssetTypes" },
+    { kind: "dailySum", paramField: "total", limitField: "dailyLimit",
+      sumCollection: "transactions", sumField: "total",
+      sumOwnerField: "userId", sumTimestampField: "timestamp",
+      sumFilter: { field: "initiatedBy", equals: "agent" } },
+  ],
+}
+```
+
+5 типов check-предикатов: `active`, `notExpired`, `maxAmount`, `csvInclude` (с `allowEmpty`), `dailySum` (с sum-filter для изоляции agent-сделок от user-сделок). Hook в `agent.js::exec` перед `buildEffects`, возвращает 403 `preapproval_denied` со structured `failedCheck`. Intent не в `requiredFor` → no-op (бэккомпат).
+
+**5. Документ** (v1.6 — четвёртая базовая материализация §1). Output: HTML / JSON / (в будущем — PDF, DOCX). Generic `materializeAsDocument(projection, world, viewer)` превращает **любую** проекцию (catalog / feed / detail / dashboard) в структурированный document-граф:
+
+```js
+{
+  title, subtitle,
+  meta: { date, viewer, domain, projection, materialization: "document" },
+  sections: [{ id, heading, kind: "table" | "paragraph", columns?, rows?, content? }],
+  footer: { note, auditTrail }
+}
+```
+
+Маршрут: `GET /api/document/:domain/:projection?format=html|json&as=role`. Переиспользует `filterWorldForRole` — document viewer-scoped через тот же `role.scope` / `entity.kind:"reference"` / `ownerField`, что и agent-API. Ключевое свойство: **не per-domain hack**. Одна функция работает для всех архетипов; canvas → placeholder, wizard → not-supported.
+
+**Важно:** canonical + adaptive + personal + agent + document — **разные выходы**, не разные артефакты. Один артефакт v2 пригоден для всех пяти через разные рендер-адаптеры. Это формализация §1 тезиса: «четыре равноправные материализации».
+
+## 18. Модель данных: два потока и черновик
+
+В парадигме три хранилища данных.
+
+**Поток эффектов** `Φ` — первичная субстанция состояния. Любое «состояние» — свёртка `Φ_confirmed`. Эффекты проходят стадии: proposed → local → propagating → confirmed | rejected. Эффекты с `ttl` автоматически истекают.
+
+**Черновой поток** `Δ` — персистентные, но не закоммиченные эффекты. Не участвуют в `World(t)`. Промотируются в `Φ` при коммите, удаляются при отказе.
+
+**Поток сигналов** `Σ` — транзиентные события, не участвующие в мире. Испускаются при коммите, необратимы.
+
+Жизненный цикл эффекта, область видимости, алгебраический тип и причинная история — четыре независимых характеристики, выводимые при кристаллизации (подробности в разделе 10).
+
+Причинная история каскадирует: отвержение предка → все потомки подозрительны. Это работает единообразно для внутренних и внешних (чужих) эффектов.
+
+## 19. Граница с внешним миром
+
+Граница — **часть онтологии**, не отдельный слой кода.
+
+**Чужие эффекты** — порождены внешним миром, входят в `Φ` в статусе `confirmed`, маркер `foreign:<source>`.
+
+**Типы сущностей по отношению к внешнему миру:**
+- **Внутренняя** — только в нашей системе.
+- **Зеркальная** — авторитет снаружи, мы работаем с копией.
+- **Гибридная** — часть полей внутренние, часть зеркальные.
+
+**Декларация границы** для зеркальных/гибридных: авторитет, материализация, распространение, входящий канал, разрешение конфликтов, ожидания.
+
+**Авторитет:** внешний (внешний источник всегда прав), локальный (мы всегда правы), последнее-слово (побеждает хронологически последний), слитный (оба применяются, для коммутативных типов).
+
+**Активный фрагмент и стоячие запросы** — механизмы работы с бесконечностью внешнего мира. Материализация по запросу и подписка на предикат.
+
+**Шумный дрейф** — расхождение с ожиданиями останавливает работу и требует ревизии. Молчаливая адаптация запрещена.
+
+**Опаковые адаптеры** — произвольный код для случаев, не укладывающихся в декларации. Три ограничения: анкерирование порождаемых эффектов, отсутствие внешнего состояния, покрытие ожиданиями.
+
+## 20. Авторство
+
+Автор — **режиссёр**, ведущий диалог с моделью о намерениях, онтологии и границах.
+
+Три грани: **доменное мышление** (какие намерения существуют, их условия, эффекты, связи), **чувство ограничений** (где жёсткость, где свобода, где границы автогенерации), **чувство целостности** (система как живой организм, замечание дисгармонии).
+
+Модель **оптимизирует внутри заданного**. Человек **задаёт само заданное**: зачем существует приложение, кому служит, что священно. Плохой автор — не тот, кто плохо описывает намерения (модель поправит), а тот, у кого нет видения зачем.
+
+## 21. Транзакционный уклон парадигмы
+
+Шесть полевых тестов выявили характеристику, которую нужно признавать открыто.
+
+Ядро парадигмы (эффекты, причинность, области видимости, алгебра) имплицитно спроектировано для транзакционных доменов. **Транзакционные домены** (e-commerce, финтех) — зона максимальной силы. **Транзакционно-темпоральные** (бронирование) — зона высокой силы. **Темпоральные** (календари) — зона средней силы. **Коллаборативные** (голосование, планирование) — зона, требующая расширений (рабочие процессы, кворум). **Графовые/инструментальные** (workflow-редактор) — граница парадигмы: ядро работает для CRUD на графах, но не покрывает автоматическое исполнение и пространственные свойства.
+
+Траектория блокеров по шести тестам:
+
+| Тест | Домен | Тип | 🔴 | 🟡 | 🟢 |
+|---|---|---|---|---|---|
+| 0.2 | Очередь чтения | персональный | 4 | 5 | 1 |
+| 0.2.1 | Календарь | темпоральный | 4 | 4 | 1 |
+| 0.2.2 | Интернет-магазин | транзакционный | 2 | 4 | 0 |
+| 0.3.1 | Бронирование | транз.-темпоральный | 0 | 4 | 2 |
+| 0.5.1 | Совместное планирование | коллаборативный | 2 | 3 | 1 |
+| 0.6.1 | Workflow-редактор | графовый/инструм. | 2 | 3 | 1 |
+| 0.7.1 | Мессенджер | коммуникационный | 0 | 4 | 0 |
+| 0.8.1 | Аукцион (meshok) | транзакц.-аукционный | 0 | 2 | 0 |
+
+Кривая блокеров: 4→4→2→0→2→2→0→0. **Аукционный домен** (meshok, 226 намерений, 10 сущностей) — подтверждение зоны максимальной силы: ноль красных блокеров. Два жёлтых: agent-layer для meshok (архитектура готова, нужен buildEffects) и canvas-архетип (не относится к meshok). Meshok — крупнейший домен прототипа, с ролями buyer/seller/moderator/agent, рабочими процессами заказов (pending_payment → paid → shipped → delivered → completed), аукционными дедлайнами и темпоральными предикатами.
+
+Это не слабость, а характеристика. Парадигма имеет ясную зону силы и честно зафиксированную границу.
+
+## 16a. Архетипы и слоты
+
+Ревизия в M1/M2 показала: между абстрактным артефактом проекции (раздел 16) и конкретной раскладкой UI живёт формальный промежуточный слой — **архетип**. Архетип — это скелет экрана, состоящий из именованных **слотов** (позиций-ролей), куда кристаллизатор распределяет намерения по правилам.
+
+**Семь архетипов** покрывают все полевые тесты:
+
+- `feed` — поток сообщений/событий с композером внизу (мессенджер chat_view, лента комментариев).
+- `catalog` — коллекция однородных сущностей с фильтрами и созданием (списки бесед, каталог услуг, my_bookings). Поддерживает `layout: "grid"` с выводимой карточкой (`cardSpec` + `GridCard`).
+- `detail` — одна сущность с её свойствами и действиями (профиль, просмотр бронирования).
+- `form` — синтетическая edit-проекция, автогенерируемая из наборов replace-намерений (`formGrouping.js`). Поддерживает секции по семантическим ролям полей.
+- `dashboard` — агрегат из субпроекций-виджетов (meshok_home). Проекция декларирует `widgets: [{projection, title, size}]`, рендерер показывает grid embedded проекций.
+- `canvas` — 2D-пространство с объектами и инструментами (workflow-редактор). Обёртка domain-specific компонента (WorkflowCanvas с React Flow).
+- `wizard` — многошаговый guided flow (booking_wizard, risk_questionnaire, portfolio_onboarding). Проекция декларирует `steps: [{id, title, source, display, filterBy?, sideEffect?}]`, рендерер ведёт пользователя через последовательность выборов с аккумуляцией состояния. Поддерживает три вида отображения: `FlatList` (простой список), `GroupedList` (группировка по полю), `CalendarView` (временные слоты с интервалами). **`source.inline: [...]`** (v1.6) — статические опции без сидинга в Φ, приоритет над `source.collection`. Cross-step filtering (`filterBy: {field: "step.selectedId"}`) связывает шаги — выбор на шаге N фильтрует данные шага N+1. Финальный шаг `summary` показывает собранные выборы для подтверждения.
+
+**Шесть слотов:** `header`, `toolbar`, `body`, `context`, `fab`, `overlay`. Плюс специальный `composer` для `feed`.
+
+**Правила назначения:** детерминированные, выводятся из частиц намерения:
+
+- `creates: X` где X — главная сущность → `fab`
+- `confirmation: "enter"` + `creates` → `composer` (для feed)
+- `confirmation: "form"` → `toolbar` триггер + `overlay` formModal
+- `irreversibility: high/medium` → `overlay` confirmDialog с пропорциональным подтверждением (§13)
+- `phase: "investigation"` → двухтактный overlay с предзаполненными значениями
+- `antagonist: "X"` → toggle-контрол в `header`
+- per-item (условие/witness ссылается на mainEntity) → `body.item.intents`
+- Творцы без collectable-параметров (требующие entity-picker) пропускаются как нереализованные
+
+**Навигационный граф** выводится из пересечений `entities`/`mainEntity` проекций: если P1 показывает коллекцию сущностей X и P2 — detail с `mainEntity: X`, создаётся ребро `P1 --item-click--> P2`. Граф хранится в артефакте как `nav.outgoing`/`nav.incoming`.
+
+**Секционированная навигация.** Для доменов со сложной навигационной структурой (meshok: 15 проекций) `ROOT_PROJECTIONS` поддерживает секционированный формат:
+```js
+ROOT_PROJECTIONS = [
+  { section: "Покупаю", icon: "🛒", items: ["listing_feed", "my_bids", "watchlist"] },
+  { section: "Продаю", icon: "🏷️", items: ["my_listings", "order_list"] },
+]
+```
+V2Shell автоматически различает плоский массив (flat tabs, booking/planning/messenger) и секционированный (SectionedSidebar с collapse/expand, meshok). Топология навигации — характеристика домена: простые домены используют 3-5 корневых табов, сложные — секционированный sidebar.
+
+**Инвариант:** артефакт v2 валидируется перед рендером. Обязательные слоты для каждого архетипа, уникальность ключей overlay, типы параметр-контролов из белого списка. Невалидный артефакт отвергается рендером с явной ошибкой — нет silent-деградации.
+
+Это — реализация §16 (детерминированность, перегенерируемость, расщепляемость) в конкретном формализме. Раньше эти свойства жили в устных обещаниях, теперь они — свойства схемы артефакта, проверяемые программно.
+
+### Control-архетипы (M3)
+
+**Control-архетипы** — первоклассная сущность, ортогональная slot-архетипам. Если slot-архетип отвечает на вопрос «где элемент лежит на экране», то control-архетип отвечает «как намерение материализуется в UI-контрол». Примеры: `auto`, `composerEntry`, `formModal`, `confirmDialog`, `clickForm`, `filePicker`, `inlineSearch`, `customCapture`, `bulkWizard`.
+
+Control-архетип выбирается по правилам (эвристика на основе частиц намерения + возможность явного override через `intent.control`). **Реестр control-архетипов** — расширяемая структура (`controlArchetypes.js`): добавление нового архетипа — одна запись `{id, match, build}`, не модификация ядра.
+
+Кристаллизация делает два независимых прохода:
+1. **`selectArchetype(intent, projection)`** — какой control применить (с учётом контекста проекции, чтобы entityPicker не перехватывал intents, у которых все дополнительные сущности уже в route scope).
+2. **`assignToSlots(wrapped, projection)`** — куда положить полученный control в архетипе проекции.
+
+Это разделение позволяет один и тот же intent рендерить по-разному в разных проекциях (`send_message` в feed — composer; в detail — форма), и добавлять новые контролы без риска сломать существующие проекции.
+
+**customCapture** — подреестр кастомных виджетов захвата (`capture/registry.js`): voiceRecorder (match по witness `recording_duration`/`duration`), emojiPicker (match `react_*` / witness `available_reactions`), entityPicker (match `creates` + extra entity вне route scope). Match-правила продублированы в crystallize_v2 (JS-чистая функция) и в runtime-реестре (React-компоненты) — согласованы вручную; crystallize не импортирует React, runtime не импортирует crystallize.
+
+**bulkWizard** — overlay для `extended: true` intents (§9). Шаги `select → summary → progress → done` с последовательным `ctx.exec` по каждому выбранному id. Prepend'нут в реестр, чтобы перехватить до обычных confirmation-архетипов.
+
+**Ownership-check для write-intents на User.** Control-архетипы учитывают self-owner правило: кнопки `update_profile`, `set_status` и прочие intent'ы, меняющие `user.*`, показываются только когда `viewer.id === target.id`. В `assignToSlotsCatalog` synthetic condition добавляется к per-item кнопкам, в `assignToSlotsDetail` — к toolbar-кнопкам через `item.condition`. Пока hardcoded для User; в будущем `ontology.entities[X].ownerField` сделает это обобщённым для Message (`senderId`), Participant (`userId`) и др.
+
+### UX-паттерны detail (M4)
+
+Прототипирование domain'а `planning` (опросы + кворум + голосование) показало, что detail-архетип недостаточен сам по себе — для stateful-сущностей с фазами и связанными коллекциями нужен набор **декларативных UX-паттернов**, которые кристаллизатор собирает из intents + проекции.
+
+- **`heroCreate`** (control-архетип) — inline-создатель главной сущности в catalog. Match: `creates === mainEntity` + один простой текстовый параметр. Рендер: большой input + primary-button над списком, Enter submit. Заменяет fab+formModal для простых creator'ов (create_poll, create_group). UX-паттерн «hero-input для быстрого создания» из todo-lists и каналов Slack.
+
+- **`subCollections`** (декларация в проекции) — связанные sub-entity рендерятся как секции в body:
+  ```js
+  poll_overview: {
+    kind: "detail",
+    mainEntity: "Poll",
+    subCollections: [
+      { collection: "options", entity: "TimeOption", foreignKey: "pollId", title: "Варианты времени", addable: true },
+      { collection: "participants", entity: "Participant", foreignKey: "pollId", title: "Участники", addable: true },
+    ],
+  }
+  ```
+  Кристаллизатор для каждой секции находит creator-intent sub-entity → inline-композер (`SubCollectionAdd`), собирает per-item intents → кнопки под каждым items. Phase-фильтрация через `evalIntentCondition` на уровне рантайма: в draft можно добавлять, в open — только голосовать. Это расширение `detail` слота `sections` (массив объектов секций).
+
+- **Phase-aware primary CTA** — intents, переводящие `mainEntity.status` в следующую фазу (`replace {entity}.status`) с не-high irreversibility, попадают в отдельный слот `primaryCTA` и рендерятся как крупные primary-кнопки внизу body (не в toolbar). Для Poll это `open_poll` / `close_poll` / `resolve_poll`. Destructive (`cancel_poll`, `high` irreversibility) остаются в toolbar через `confirmDialog`. Даёт пользователю явный «что делать дальше».
+
+- **`voteGroup`** — компаунд-паттерн: взаимоисключающие creator-intents одной sub-entity с discriminator в `creates` (`Vote(yes)` / `Vote(no)` / `Vote(maybe)`) схлопываются в одну группу цветных кнопок (зелёный / жёлтый / красный). Discriminator парсится из скобок, стили выбираются через `voteStyleFor(discriminator)`. Это — специализация §12 алгебры связей намерений (⊕ исключение), материализованная как UI-паттерн.
+
+- **`progressWidget`** — декларативный прогресс-виджет из проекции:
+  ```js
+  progress: {
+    type: "quorum",
+    totalSource: "participants",
+    currentSource: "votes",
+    currentDistinct: "participantId",
+    foreignKey: "pollId",
+    waitingField: "name",
+  }
+  ```
+  Runtime вычисляет `distinct(votes.participantId) / count(participants)` для текущего target, показывает bar + список «ждём кого». Это computed witness из §22 «многоакторная координация / кворум».
+
+- **`InlineSetter`** / `footerIntents` — single-param intents (set_deadline и подобные) в отдельном `footer`-слоте detail рендерятся как inline-форма `[label]: [input] [Установить]`, без модала. Менее прерывистый UX для «tweak»-настроек. Интенты объявляются явно в проекции через `footerIntents: ["set_deadline"]`.
+
+- **Overflow menu** как control-архетип — хвост toolbar-кнопок (>5) автоматически собирается в `{type: "overflow", children: [...]}`. `Overflow.jsx` делегирует `button.overflow` адаптеру (Mantine Menu с иконкой ⋯, правильным позиционированием, shadow и hover). UX-паттерн «More actions dropdown».
+
+Эти шесть паттернов — не жёсткие хардкоды: они реализованы как комбинация новых control-архетипов (`heroCreate`) и декларативных полей проекции (`subCollections`, `progress`, `footerIntents`). Полевой тест planning'а подтвердил, что стандартного набора `fab/toolbar/body` недостаточно для stateful-workflow; detail должен знать про фазы и связанные коллекции.
+
+### UI-адаптер (M4)
+
+**Адаптер** — отдельный уровень резолва, ортогональный архетипам и кристаллизатору. Он превращает declarative spec'ы из артефакта (например, `{type: "text", preset: "secondary", bind: "title"}`) в конкретные React-компоненты стороннего UI-kit'а (Mantine, shadcn/ui, Ant Design, собственный).
+
+**Реестр адаптеров** (`adapters/registry.js`):
+
+```js
+registerUIAdapter(adapter);
+getAdaptedComponent(kind, type);  // → React-компонент или null
+```
+
+Адаптер — это plain-data объект с категориями:
+
+```js
+adapter = {
+  parameter: { text, textarea, datetime, select, number, ... },
+  button:    { primary, secondary, danger, intent, overflow },
+  shell:     { modal, tabs },
+  primitive: { heading, text, badge, avatar, paper },
+  icon:      { resolve(emoji) → Component },
+}
+```
+
+Runtime-компоненты (`ParameterControl`, `IntentButton`, `Overflow`, `atoms.Text/Heading/Badge/Avatar`, `ModalShell`, `SubCollectionSection`, `PrimaryCTA`, `Chart`, `Sparkline`, …) сначала запрашивают `getAdaptedComponent(kind, type)`; если найден — используют его, иначе падают на **inline-styled fallback** с CSS-переменными (`var(--mantine-color-default)`, `var(--mantine-color-text)`, и т.п.) или SVG (для chart/sparkline).
+
+**Четыре реализации адаптера** (v1.6): Mantine (corporate / data-dense), shadcn-doodle (handcrafted / sketch), Apple visionOS-glass (premium / minimal), **AntD enterprise-fintech** (Alipay-style dashboard / Statistic / @ant-design/plots). Четвёртая реализация без изменений в `src/runtime/` — прямое доказательство стабильности контракта §17.
+
+### Capability surface адаптера (v1.6)
+
+Адаптер декларирует `capabilities: { kind: { type: descriptor } }` — что он умеет и в каких вариантах. Необходимо, потому что проекция может запросить что-то, что конкретный адаптер не реализует (`candlestick` chart в Mantine, `ProTable` в shadcn). Варианты descriptor'а:
+
+```js
+capabilities: {
+  primitive: {
+    chart:      { chartTypes: ["line", "pie", "column", "area"] },
+    statistic:  true,         // AntD — есть нативно
+    statistic:  false,        // Mantine — явно не поддерживает
+    sparkline:  { fallback: "svg" },  // есть, но через SVG
+  },
+  shell: { modal: true, tabs: true },
+  button: { primary: true, intent: true },
+}
+```
+
+Helper'ы в `adapters/registry.js`:
+
+- `getCapability(kind, type)` → descriptor | true | false | null
+- `supportsVariant(kind, type, variantKey, variant)` → bool с backcompat (**null = assume supported**, чтобы не ломать existing адаптеры)
+
+Runtime-компоненты консультируются с capability и делают graceful fallback. Chart-primitive: если адаптер не умеет `candlestick`, `console.warn` + SVG-fallback Line; рендер не ломается. Это honest decl'арация возможностей без runtime-сюрпризов.
+
+### Chart-primitive как новая категория (v1.6)
+
+`chart` и `sparkline` — первые primitive, выходящие за рамки text/image/container. Проекция декларирует:
+
+```js
+{ type: "chart", chartType: "line" | "pie" | "column" | "area",
+  data: "world.positions" | [...inline],
+  xField: "ts", yField: "value", seriesField?: "asset", height?: 220 }
+```
+
+Реализация — в `src/runtime/renderer/primitives/chart.jsx`:
+
+1. Запрашивает `getAdaptedComponent("primitive", "chart")`
+2. Если адаптер есть + capability `chartTypes` includes требуемый — делегирует (AntD → `@ant-design/plots`)
+3. Иначе — SVG-fallback (Line / Pie) прямо в primitive
+
+Это паттерн для любой новой primitive-категории с variant-surface.
+
+**Свойства адаптера:**
+
+- **Единая точка переключения визуального языка.** Смена kit'а — один файл адаптера, одна строка `registerUIAdapter(newAdapter)`.
+- **Инкрементальная миграция.** Можно переводить один control за раз: `parameter.datetime` через Mantine, `primitive.avatar` через Chakra, остальное — на built-in.
+- **Изоляция kit'а.** Runtime-компоненты не импортируют `@mantine/core` напрямую; всё идёт через адаптер. Смена библиотеки не трогает доменную семантику.
+- **Dark-mode automatic.** Адаптер передаёт всю работу с темой UI-kit'у (Mantine → `MantineProvider` + `colorSchemeManager`). Dark/light становится свойством визуального слоя, а не каждого компонента.
+
+**Icon-резолвер как функциональная категория.** `adapter.icon.resolve(emoji)` — единственное поле, являющееся функцией, а не компонентом. Mantine-адаптер содержит таблицу `EMOJI_TO_LUCIDE` (70+ emoji → Lucide React), и `resolveLucide(emoji)` возвращает React-компонент или null. Универсальный `<Icon emoji="..." size={16}>` сначала спрашивает адаптер, потом — fallback на `<span>{emoji}</span>`. Это позволяет runtime-компонентам писать `spec.icon = "✎"` без знания о Lucide или Phosphor — адаптер маппит эмодзи-строку в SVG-компонент kit'а.
+
+**Human-readable labels** (`adapters/labels.js::humanLabel`) — словарь стандартных field-имён (`startTime` → «Начало», `email` → «Email», `statusMessage` → «Статус») с fallback на camelCase→humanize (`poll_title` → «Poll Title»). Используется адаптером при построении label'ов параметров, когда spec не задаёт явный `label`. Решение временное — в будущем `ontology.entities[X].fields[name].label` должен быть основным источником, адаптер `humanLabel` — fallback.
+
+### Связь с §17
+
+Раньше §17 «три слоя проекции» (canonical / adaptive / personal) понимался как **разные артефакты** под одни intents. В M4 стало ясно: «адаптивный слой» материализуется именно как **адаптер UI-kit'а**. Семантика (canonical artifact) одна, но рендер-реализация переключается через `registerUIAdapter`. Это ближе к реальному разделению frontend'а на «design tokens / components / pages», чем к идее «генерировать отдельный артефакт на каждое устройство».
+
+Personal-слой (индивидуальные предпочтения) **реализован в v1.3**: `usePersonalPrefs` (density/fontSize/iconMode) + PrefsPanel + CSS variables `--idf-padding/--idf-gap/--idf-font-size`. Живёт как локальный override поверх канонического артефакта, хранится в localStorage. Agent-слой (§17) реализован как REST API для **всех 5 доменов** через `/api/agent/:domain/*` — это фактически «адаптер без React», генерирующий JSON-API из intents + ontology.
+
+### Семантические роли полей (v1.2)
+
+**Третий уровень вывода.** Кристаллизатор v2 оперирует тремя уровнями вывода из онтологии:
+
+1. **`inferControlType(field)`** — какой UI-контрол показать (text, datetime, select, number, ...). Источник: `ontology.entities[X].fields[name].type`, fallback на эвристику имени.
+2. **`inferFieldRole(field, ontology)`** — какую **семантическую роль** поле играет в компоновке. Роли: `title`, `description`, `heroImage`, `price`, `timer`, `location`, `badge`, `metric`, `ref`, `info`. Источник: тип + имя поля через pattern-matching.
+3. **Layout** — как расположить поля по ролям в конкретном архетипе (карточка, форма, detail).
+
+Этот третий уровень решает проблему: два поля могут иметь одинаковый контрол (`number`), но играть разные роли в компоновке (`price` → крупным шрифтом с валютой, `bidCount` → мелким как метрика). `inferFieldRole` выводит роль из имени и типа поля: `startPrice`/`currentPrice` → `price`, `auctionEnd` → `timer`, `images` → `heroImage`, `shippingFrom` → `location`, `condition` → `badge`.
+
+**Выводимая карточка** (`cardSpec` + `GridCard`). Для catalog-проекций с `layout: "grid"` кристаллизатор генерирует декларативный `cardSpec` из witness-полей проекции, маппя их на семантические зоны: `image` (heroImage), `title`, `price` (primary/secondary), `badge`, `timer`, `location`, `metrics` (все остальные). `GridCard` рендерит по спеку вместо hardcoded разметки. Домен meshok (аукцион) подтвердил паттерн: карточка лота с фото, ценой, таймером завершения, бейджем состояния — целиком выведена из witness-полей + онтологии.
+
+**Секционированная форма** (`buildFormSpec` с секциями). `formGrouping.js` группирует поля синтетической edit-формы по семантическим ролям в именованные секции: «Основное» (title, description), «Цена» (price-поля), «Доставка» (shipping*), «Время» (datetime-поля). `ArchetypeForm` рендерит секции с разделителями. Обратная совместимость: формы без секций рендерятся как flat-список.
+
+**Новые примитивы.** Семантические роли породили три domain-agnostic примитива в `atoms.jsx`:
+- **PriceBlock** — группа primary/secondary цен с hideEmpty-логикой
+- **InfoSection** — секция label:value пар, скрывается если все пусты
+- **Timer** — обратный отсчёт по datetime с авто-обновлением (setInterval)
+
+Все три — через адаптер, не импортируют Mantine напрямую.
+
+**Post-create навигация.** HeroCreate (inline-создатель в catalog) после успешного `exec` автоматически навигирует в `{detail}_edit` (секционированную форму) с id созданной сущности. Spec дополняется полем `postCreate: { projection, idParam }`, выводимым из nav-графа. Паттерн «создал → сразу редактируй» подтверждён на meshok (create_listing → listing_detail_edit).
+
+---
+
+## 22. Домен-специфичные расширения в исследовании
+
+Полевые тесты обнаружили концепты, которые необходимы для определённых доменов, но ещё не имеют чистого решения. Четыре расширения стабилизированы: запланированные сигналы (разделы 6), темпоральные предикаты (раздел 4), зависимость проекций от зрителя (раздел 5), рабочие процессы (раздел 9a). Оставшиеся зафиксированы здесь.
+
+**Многоакторная координация.** Одно логическое намерение, распределённое между пользователями: инициатор предлагает, участники отвечают, система резолвит. Включает проблему кворума (когда достаточно голосов?) и политику неголосовавших (abstain/no/exclude). Обнаружено на двух доменах (тест 2, тест 5). **Закрыто в v1.3-v1.4:**
+- **UI-паттерны** (M4): декларативный `progressWidget`, `voteGroup` компаунд-control, phase-aware primary CTA.
+- **Auto-close по кворуму** (v1.2): `checkQuorum(pollId, world)` в `server/schema/checkQuorum.cjs`, 7 тестов.
+- **Декларативные политики** (v1.3): `ontology.entities.Poll.quorum: {closeWhen, absentVote}`. Три режима: `all_voted | quorum(N) | manual`. `checkQuorum` читает policy из онтологии. 9 тестов.
+- **Reactive Rules Engine** (v1.4): обобщает паттерн — `ontology.rules` с trigger/action/context.
+Остаётся открытым: расширение кворумных политик на другие домены помимо planning.
+
+**Переговорные намерения.** Открытие пространства возможностей → голосование/сужение → коммит. Обнаружено на двух доменах (тест 2, тест 5). Возможно, частный случай рабочих процессов (раздел 9a) с ролью «переговорщик».
+
+**Генеративные сущности.** Правило, порождающее сущности (повторяющееся событие, регулярный счёт). Обнаружено на одном домене (тест 2).
+
+**Правиловые эффекты.** Один эффект логически применяется ко многим сущностям через декларативное правило (скидка на категорию). Проекции разрешают правило на лету. Обнаружено на одном домене (тест 3).
+
+**Промоция TTL-эффекта в постоянный.** Временный эффект (удержание слота с TTL) заменяется постоянным (подтверждение бронирования). Подтверждено на двух доменах (тест 3, тест 4) и инженерно в прототипе. Алгебра и причинный порядок обрабатывают это корректно. **Стабилизирован** — паттерн описан в разделе 10 как следствие алгебры replace.
+
+**Многослотовые сущности.** Одно намерение может затрагивать несколько экземпляров одной сущности (услуга длительностью 120 мин занимает 2 слота). Обнаружено при прототипировании. Решение: хранить массив ID в контексте эффекта, обрабатывать атомарно.
+
+**Косметические эффекты (поток Π).** **Решено инженерно.** Эффекты с `scope: "presentation"` не участвуют в семантическом fold, но применяются через `applyPresentation()` поверх World(t) для рендера. Реализовано для `move_node` в workflow-домене. Панель Φ скрывает presentation-эффекты.
+
+**Автоматические процессы.** Рабочий процесс, где часть переходов выполняется системой по правилу. **Решено инженерно** в прототипе: серверный executor с топологическим обходом графа, реальным исполнением (HTTP fetch, JS eval, ветвление по condition), результатами по узлам в Φ. Каждый узел — эффект. SSE стримит прогресс. Кандидат на стабилизацию при подтверждении на втором домене.
+
+**Reactive Rules Engine.** **Стабилизировано в v1.4, расширено в v1.5, валидировано на invest в v1.6.** Обобщённый механизм доменной автоматизации (`server/ruleEngine.js`): при подтверждении эффекта сервер проверяет декларативные правила из `ontology.rules` и автоматически генерирует следующие эффекты. Модель **event → condition → action**:
+
+```js
+ontology.rules = [
+  { id: "auto_close_poll", trigger: "vote_*", action: "close_poll",
+    context: { id: "effect.pollId" } },
+]
+```
+
+- **Trigger matching:** exact (`"confirm_delivery"`), glob prefix (`"vote_*"`), wildcard (`"*"`).
+- **Context mapping:** `"effect.<field>"` → значение из контекста подтверждённого эффекта; литералы подставляются as-is.
+- **Guard:** перед firing правила проверяются `validateIntentConditions` action-intent'а с resolved context. Правило не сработает, если условия action'а не выполнены (e.g., poll ещё не в статусе open).
+- **Автоматический эффект:** если guard пройден, `buildActionEffect` генерирует эффект (single или batch) из определения action-intent'а и записывает в Φ как confirmed.
+- **Lazy world:** `worldThunk` вычисляет world только если есть matched rules, избегая fold на каждый эффект.
+
+### Четыре v1.5 extensions — декларативная аналитика
+
+Базовая модель event→action расширена четырьмя ортогональными guards. Каждое правило может комбинировать их:
+
+1. **Aggregation (counter)** — `aggregation: { everyN: 10 }`. Таблица `rule_state (rule_id, user_id, counter, last_fired_at)`. Fire когда `counter % everyN === 0`. Пример: каждая 10-я сделка → предложение ребаланса.
+2. **Threshold (lookback predicate)** — `threshold: { lookback: 5, field: "quadrant", condition: "all_equal:LEU" }`. DSL-условия: `all_equal:X | equals:N | gt:N | lt:N`. Читает последние N записей заданной коллекции, применяет предикат. Пример: 5 подряд low-energy чек-инов → mood_drift_alert.
+3. **Schedule (cron-like)** — `schedule: "daily:09:00" | "weekly:sun:18:00"`. Server-side `setInterval` каждую минуту, 4-минутный dedup через `last_fired_at`. Пример: еженедельный portfolio-отчёт в воскресенье 18:00.
+4. **Condition (JS expression)** — `condition: "Math.abs(effect.delta) > 0.5"`. Sandboxed `Function` с whitelisted `Math`-функциями (abs/min/max/floor/ceil/round). Предикат над effect context. Пример: sentiment > 0.7 → volatility alert.
+
+Valdирован на invest (v1.6) — 7 правил используют **все четыре** extensions одновременно: aggregation × 2 (каждые 10 trades, каждые 5 recommendations), threshold × 1 (3 подряд fuzzy_risk), schedule × 2 (daily:09:00 stop-loss, weekly:sun:18:00 report), condition × 2 (large sell, high sentiment).
+
+Паттерн обобщает: auto-close по кворуму, stop-loss, рекуррентные отчёты, накопительные триггеры, price-alerts. Каждый домен декларирует правила в онтологии, движок — домен-агностичный. Unit-тесты (matchTrigger, resolveContext, aggregation, threshold, schedule, condition) в `server/ruleEngine.test.js`.
+
+### Generic Effect Handler (v1.4 формализован, v1.6 повторно валидирован)
+
+Паттерн авторства: `domain.buildEffects(intentId, ctx, world, drafts)` имеет **generic fallback**, который читает `intent.particles.effects` и применяет механически:
+
+```js
+// после switch(intentId) со специальными случаями:
+const intent = INTENTS[intentId];
+const intentEffects = intent.particles.effects || [];
+for (const iEf of intentEffects) {
+  switch (iEf.α) {
+    case "add":     ef({ alpha: "add", target: iEf.target, scope: iEf.σ, context: { id, ...ctx } }); break;
+    case "replace": ef({ alpha: "replace", target: iEf.target, value: iEf.value ?? ctx[field], context: { id: ctx.id } }); break;
+    case "remove":  ef({ alpha: "remove", target: iEf.target, context: { id: ctx.id } }); break;
+  }
+}
+```
+
+Применимость (процент интентов, покрываемых generic handler):
+- meshok (225): ~70%
+- invest (46): ~85%
+- booking / planning / workflow: ~40% (больше custom-логики)
+
+Высокий процент generic — сигнал зрелости декларативного языка. Остаются custom-случаи: вычисляемые поля (`total = qty * price + fee`), cascade-эффекты через multiple `ef()`, computed values (например, `level` из `computedScore` через if-else). Это паттерн для SDK: domain authoring CLI генерирует `buildEffects` с generic-fallback по умолчанию, custom логика — опциональный overlay.
+
+**Реляционные предикаты.** Условие на паре сущностей (совместимость портов при соединении узлов). Текущие предикаты — на одной сущности. Обнаружено на одном домене (тест 6).
+
+**Глубокие пути в target.** `replace node.config.url` — замена поля внутри вложенного объекта. Текущий fold заменяет целиком. Обнаружено на одном домене (тест 6).
+
+**Кастомные виджеты захвата.** **Закрыто в M3.5b.** Реестр в `capture/registry.js` + control-архетип `customCapture` (§16a). Реализованы три виджета первого уровня: `voiceRecorder` (MediaRecorder → data URL, match по witness `recording_duration`/`duration`), `emojiPicker` (match по `react_*` intent-id или witness `available_reactions`), `entityPicker` (match по `creates` + extra entity вне route scope). Match-правила живут в crystallize_v2 (`CAPTURE_RULES` — чистый JS) и дублируются в runtime-реестре React-компонентов — оба источника правды согласуются вручную. Стикеры, GIF, геолокация, опросы внутри сообщения остаются на M3.6+ и пока скипаются через `CAPTURE_WITNESSES`.
+
+**Entity-picker для многосущностных creator-интентов.** **Закрыто в M3.5a+b.** `create_direct_chat`, `forward_message`, `add_to_group` и аналогичные теперь проходят через `customCapture.entityPicker`. Серверный API `GET /api/entities/:collection/search?q=...&domain=...` ищет по `searchConfig` из онтологии (`ontology.entities[X].searchConfig: {fields, returnFields, minQueryLength, limit}`). EntityPicker кладёт id под `[alias]`-ключом из декларации `entities: ["user: User"]` (нельзя коллидировать с `userId` из viewerContext). Match-правило entityPicker учитывает route scope — intents, у которых все не-creates сущности уже в scope проекции (типа `send_message` в chat_view с Conversation в routeEntities), идут через composer, а не через picker.
+
+**Контекстные сайд-каналы композера** (открыто в M1). Несколько creator-интентов мессенджера (`reply_to_message`, `react_to_message`) создают новое сообщение, но требуют контекст существующего — на какое сообщение отвечают, какую эмоцию ставят. Стандартный композер «text → Enter → send» не знает про этот контекст. Паттерн: композер имеет режимы (`default`, `reply`, `react`, `forward`) и может быть переведён в режим per-item intent'ом с item-контекстом. Это специализация `feed`-архетипа, не общее решение. Рассмотреть на M3.
+
+**Multi-actor экран** (открыто в M1). Для гибридных проекций, где разные акторы видят разные наборы намерений на одном экране (админ группы видит promote/ban, участник — только leave). Сейчас `canExecute` в онтологии фильтрует в рантайме, но не структурирует. Нужен явный концепт «ролевых секций» в body/context слотах, пересекающийся с §5 (зависимость от зрителя). На данный момент это выражается через условия `conversation.creatorId = me.id`, но без явной семантики.
+
+Каждое из расширений подтверждено одним-двумя полевыми тестами. M1/M2 (седьмой тест на мессенджере) принесло четыре новых расширения выше.
+
+## 23. Слабые места и открытые задачи
+
+**Закрытые в v0.5 (решены прототипом):**
+- ~~Отладка причинных цепочек~~ — реализован 3D-визуализатор с подсветкой каскадов.
+- ~~Инкрементальность кристаллизации~~ — проверена на 8 → 14 намерениях; **повторно проверена в v1.1 на 14 → 100 намерениях (мессенджер)** — малое изменение (новое намерение) → локальное обновление одной проекции, ~80ms на полную ре-кристаллизацию 100 интентов.
+
+**Закрытые в v1.1:**
+- ~~Серверная валидация при многоэффектных намерениях~~ — универсальный реестр `server/intents.js`, клиент регистрирует `INTENTS` через `POST /api/intents`. Условие применяется только к эффектам, чей target совпадает с типом сущности в условии. Hardcoded `INTENT_CONDITIONS` удалён.
+- ~~Обобщённый fold по типам на сервере~~ — `updateTypeMap` принимает онтологию от клиента через `POST /api/typemap`. Union fallback остался на случай старых клиентов.
+- ~~Единый путь записи Φ~~ — `server/effect-pipeline.js` с `ingestEffect()`, REST и WS-транспорты вызывают один модуль. До v1.1 логика была продублирована вручную.
+
+**Закрытые в M3:**
+- ~~Полная поддержка α:"batch" в ядре~~ — `server/validator.js` рекурсивно разворачивает batch и валидирует каждый под-эффект (all-or-nothing, §11). Клиентский `execBatch()` API собирает множественные под-эффекты в один atomic batch-эффект. `fold.js` разворачивает batch при применении. Закрыто в M3.4a.
+- ~~Типизация полей онтологии + read/write матрица~~ — поля могут быть объектами с `{type, read, write, required, label}`. `getEntityFields()` + `canRead/canWrite` в `ontologyHelpers.js`. `inferControlType` приоритетно использует ontology-тип, имя-эвристика — fallback. Закрыто в M3.3.
+- ~~Control-архетипы как первоклассная сущность~~ — реестр `controlArchetypes.js` с `registerArchetype`/`prependArchetype`/`selectArchetype`. Добавление нового control-архетипа (inlineSearch, entityForm, customCapture, bulkWizard) — одна запись, не модификация ядра. `wrapByConfirmation` стал тонким диспетчером. Закрыто в M3.1.
+- ~~Параметры запроса проекции (viewState)~~ — формализованы в §5 как эфемерное состояние, не участвующее в `World(t)`. Control-архетип `inlineSearch` пишет в `ctx.viewState`, `List.filter` читает через eval-контекст. Закрыто в M3.2.
+- ~~Производные проекции (синтетические edit-формы)~~ — `formGrouping.js` автогенерирует `{detail}_edit` form-проекции для наборов replace-намерений, navGraph добавляет detail→form edge `edit-action`. ArchetypeForm сохраняет через `execBatch`. Закрыто в M3.4b.
+- ~~Кастомные виджеты захвата (реестр + первые три)~~ — `capture/registry.js` + VoiceRecorder / EmojiPicker / EntityPicker. Match-правила живут в crystallize_v2 (`CAPTURE_RULES`) и в runtime-реестре параллельно. Закрыто в M3.5b.
+- ~~Серверный entity search API~~ — `GET /api/entities/:collection/search?q=...&domain=...` читает `searchConfig` из онтологии, работает поверх `foldWorld()` с seed'ом `auth_users`. Используется EntityPicker'ом. Закрыто в M3.5a.
+- ~~BulkWizard для extended-интентов~~ — `BulkWizard.jsx` с шагами `select → summary → progress → done`, регистрируется как control-архетип `bulkWizard` по `intent.extended === true`. Закрыто в M3.6.
+- ~~Ownership-check для write-intents на User~~ — `assignToSlotsDetail`/`assignToSlotsCatalog` добавляют synthetic condition `id === viewer.id` к intent'ам, меняющим `user.*`. `ArchetypeDetail` и `ArchetypeForm` проверяют owner-role перед показом edit-UI. Пока hardcoded для User; в M4 вынести в `ontology.ownerField`. Закрыто в M3.5b.
+
+**Закрытые в M4 (UX-паттерны detail + UI-адаптер):**
+- ~~UX-паттерны stateful-detail~~ — в detail-архетип введены шесть декларативных паттернов (§16a): `heroCreate`, `subCollections`, phase-aware `primaryCTA`, `voteGroup`, `progressWidget`, `InlineSetter`/`footerIntents`. Кристаллизатор автоматически собирает секции, inline-композеры, primary CTA и прогресс из intents + декларации проекции. Полевой тест planning'а (опросы с фазами draft→open→closed→resolved) подтвердил, что стандартного набора слотов недостаточно для workflow-сущностей — они требуют своих паттернов.
+- ~~Overflow menu как control-архетип~~ — хвост toolbar-кнопок (>5) собирается в `{type: "overflow", children}`, `Overflow.jsx` делегирует `button.overflow` адаптеру (Mantine Menu). Раньше был native popover с inline-стилями.
+- ~~UI-адаптер как первоклассная сущность (§16a, §17)~~ — реестр `adapters/registry.js` + `adapters/mantine/*`, категории `parameter/button/shell/primitive/icon`. Runtime-компоненты вызывают `getAdaptedComponent(kind, type)` и делегируют рендер kit'у. Адаптер заменил inline-стили на Mantine компоненты + CSS variables. Dark mode работает автоматически через `colorSchemeManager`. Это реализация §17 «адаптивного слоя» — один канонический артефакт + N адаптеров → N визуальных реализаций.
+- ~~Lucide-иконки через адаптер~~ — категория `icon.resolve(emoji) → LucideComponent`. Универсальный `<Icon emoji="..." size={16}>` маппит emoji-строку в SVG-компонент через адаптер; fallback — span. 70+ emoji в таблице `EMOJI_TO_LUCIDE`. Runtime не импортирует Lucide напрямую.
+- ~~Human-readable labels~~ — `adapters/labels.js::humanLabel(fieldName)` со словарём стандартных field-имён (startTime → Начало, email → Email) и humanize-fallback. Используется Mantine-адаптером для label'ов параметров.
+- ~~`normalizeCreates` для booking-суффиксов~~ — `Booking(draft)` / `Vote(yes)` → нормализованные `Booking` / `Vote` через regex. Открыло путь к voteGroup pattern (discriminator парсится из скобок).
+- ~~`isForeignKey` в inferParameters~~ — поля с суффиксом `Id` (кроме `id`) исключаются из inferred параметров как foreign keys, которые рантайм подставляет сам (`conversationId`, `pollId`).
+- ~~`inferTypeFromName` для camelCase datetime~~ — `startTime` / `endTime` / `scheduledAt` теперь правильно распознаются как datetime. Раньше регулярка требовала `_`-разделитель.
+- ~~foldWorld upsert для replace~~ — `fold.js` и `server/validator.js::foldWorld` создают partial entity при `replace` без предыдущего `add`. Нужно для auth_users, которые не в Φ (см. открытую границу ниже).
+- ~~Chat view navigation через idParam~~ — `chat_view.idParam: "conversationId"` в projections.js + обновлён `buildBody::filter`. Раньше navGraph генерировал `currentConversationId`, а handler ждал `conversationId` — сообщения в V2UI вообще не отправлялись (скрытый баг с M1).
+
+**Закрытые в Agent Layer milestone (booking):**
+- ~~Агентский слой §17~~ — реализован для booking-домена как три REST endpoint'а `/api/agent/booking/{schema,world,exec}`. Declarative role-based access через `ontology.roles.agent.canExecute` + `visibleFields` + `ontology.entities[X].ownerField`. Серверные чистые функции в `server/schema/*`: conditionParser (string → AST), inferParameters (server port), filterWorld (row+field+statusMapping), buildBookingEffects (port client-side для 7 intent'ов), buildIntentSchema (композиция). JWT-auth через существующий `/api/auth/*`. Ontology/intents публикуются клиентом через `POST /api/typemap?domain=booking` с in-memory `ontologyRegistry`. Sync exec с обогащённым 409: `failedCondition` парсится обратно из reason через conditionParser. Новый intent `create_booking` — one-shot для агента (без session-draft workflow). 37 unit-тестов + 11-шаговый integration smoke (`npm run agent-smoke`), проверяющий happy-path + конфликт-rejection + 403. Demo через claude-code-as-agent: `scripts/agent-login.mjs` + `npm run agent-smoke`.
+- ~~Обобщённый `ownerField` для read-фильтрации~~ — частично закрыт в Agent Layer: `ontology.entities[X].ownerField` реализован как decларативный источник для row-filter в `filterWorld.cjs`. Booking/Review получили ownerField (clientId/authorId).
+- ~~Synthetic write-ownership для agent write-intents~~ — **закрыто в Write-Ownership milestone (2026-04-12)**. `server/schema/checkOwnership.cjs` автоматически проверяет `entity[ownerField] === viewer.id` для replace/remove effects на owned entities (Booking, Review). Вызывается в `routes/agent.js::exec` ДО buildEffects. При отказе — 403 `ownership_denied`. 8 unit-тестов + smoke step 13 (booking) + step 26 (planning).
+
+**Закрытые в Planning Agent Layer milestone (Session C, 2026-04-12):**
+- ~~Agent layer для второго домена (planning)~~ — `/api/agent/planning/*` работает через generalized route `/api/agent/:domain/*`. Structural refactor `server/intents.js::REGISTRY[domain][id]` (клиент POST'ит `?domain=X`, сервер хранит per-domain). `effectBuildersRegistry.cjs` dispatch по domain. Planning получил `roles.agent` (15 intents), ownerField для Poll (`organizerId`) и Participant (`userId`), `Participant.userId` с email-match через `world.users`. `buildPlanningEffects.cjs` (15 cases + inline voter ownership check). Agent-smoke расширен до 26 шагов (booking 13 + planning 13). ~29 unit-тестов + 4 real-domain property теста.
+- ~~Voter identity (частично)~~ — для agent-role `Participant.userId` автоматически резолвится через `world.users` email-match при `invite_participant`. UI VoterSelector (от начала сессии) продолжает работать параллельно для human-флоу.
+
+**Закрытые в Session D (v1.2 стабилизация, 2026-04-13):**
+- ~~**auth_users ↔ Φ (§5)**~~ — dual-write: при регистрации `server/auth.js` эмитит `_user_register` эффект. Seed в foldWorld удалён. Клиенты не fetch'ат `/api/auth/users`. Автомиграция при старте. 4 unit-теста.
+- ~~**M5: удаление legacy v1**~~ — удалены `crystallize.js`, `renderer.jsx`, `ArtifactView.jsx`, `crystallized/*.jsx` (7 файлов), `theme.js`. Итого -2111 LOC, 11 файлов. Все домены через v2.
+- ~~**Canvas-архетип (§16a)**~~ — `ArchetypeCanvas.jsx` обёртывает `WorkflowCanvas` из ManualUI. `WorkflowCanvas` выделен как named export. Кристаллизатор поддерживает `kind:"canvas"`, рендерер диспатчит. Пятый архетип.
+- ~~**Dashboard-архетип (§16a)**~~ — `ArchetypeDashboard.jsx`: grid виджетов, каждый — embedded ProjectionRendererV2. Проекция декларирует `widgets: [{projection, title, size}]`. `meshok_home` — первый dashboard. Шестой архетип.
+- ~~**Agent layer для meshok**~~ — `buildMeshokEffects.cjs` (8 intents: create_listing, publish_listing, place_bid, buy_now, pay_order, confirm_delivery, leave_review, send_message). Зарегистрирован в `effectBuildersRegistry`. 18 unit-тестов. Третий домен с agent layer.
+- ~~**Auto-close по кворуму (§22)**~~ — `checkQuorum(pollId, world)` в `server/schema/checkQuorum.cjs`. При confirmed vote-эффекте сервер проверяет `distinct(votes.participantId) >= count(participants)` → auto close_poll. 7 unit-тестов.
+
+**Закрытые в v1.4 (ревизия 2026-04-14):**
+- ~~**Wizard-архетип (§16a)**~~ — `ArchetypeWizard.jsx` (392 LOC): многошаговый guided flow с FlatList/GroupedList/CalendarView, cross-step filtering, state accumulation. Первое применение — `booking_wizard`. Седьмой архетип.
+- ~~**Reactive Rules Engine (§22)**~~ — `server/ruleEngine.js`: event-condition-action модель доменной автоматизации. Trigger matching (glob/exact/wildcard), context mapping, guard validation. Обобщает auto-close по кворуму и аналогичные паттерны. Unit-тесты.
+- ~~**Секционированная навигация**~~ — `ROOT_PROJECTIONS` поддерживает `[{section, icon, items}]`. V2Shell auto-detect + SectionedSidebar. meshok: 5 секций.
+- ~~**Чисто-кристаллизационный домен**~~ — meshok (225 интентов, 15 проекций) не имеет ManualUI.jsx — весь UI выводится кристаллизатором. Подтверждение основного тезиса парадигмы.
+- ~~**Generic Effect Handler**~~ — fallback в `buildEffects` механически применяет `intent.particles.effects`. ~70% интентов meshok проходят этот путь.
+- ~~**§22 Декларативные политики кворума**~~ — `ontology.entities.Poll.quorum: {closeWhen, absentVote}`, `checkQuorum` читает policy: `all_voted | quorum(N) | manual`. 9 тестов. Закрывает ранее открытый пункт.
+- ~~**§17 Personal-слой**~~ — полностью реализован: `usePersonalPrefs` (density/fontSize/iconMode) + PrefsPanel + CSS variables. Перенесён из «частично» в «полностью» реализованные.
+
+### Открытые (инженерные):
+
+**Хранение истории эффектов** — поток растёт бесконечно. Снапшоты компрометируют чистоту модели. В прототипе с SQLite проблема не критична, но при масштабировании нужна стратегия компактификации.
+
+**Необратимые побочные эффекты** (email, платежи) требуют статуса «точка невозврата». В прототипе не реализовано.
+
+**Социальная цена индивидуализации** — «скелет узнаваемости» для личных проекций не проработан.
+
+**Совместное владение онтологией** — дедупликация и согласование при нескольких авторах.
+
+**Качество начального анкеринга** — первые решения каскадны, нужен режим «формирование онтологии».
+
+**Распределённые транзакции** на границе наследуют все известные сложности. В прототипе граница однонаправленная (pull).
+
+**Авторизация на границе** — токены, ротация, области доступа.
+
+**Болезненность перехода** — парадигма обесценивает часть существующих навыков, подходит для зелёных полей.
+
+### Открытые (инфраструктурные):
+
+**Навигационное состояние vs каузальное** — route params (`conversationId`, `userId`) это UI-состояние, живёт в стеке `useProjectionRoute`, не участвует в `Φ`. Но filter'ы body читают их через `world.conversationId` (V2UI склеивает params в world). Это pragmatic hack. Формально: либо ввести отдельный поток «навигационных сигналов», либо признать UI state как присутствующий параметр рендерера.
+
+~~**Broken Δ**~~ — **закрыто** (Session A, 2026-04-12): `engine.worldForIntent` теперь экспонирует `worldForIntent.drafts` как отдельную коллекцию, реализуя формулу §7 `W ⊕ O ⊕ Δ`. Для обратной совместимости `drafts` также по-прежнему передаются как отдельный arg в `domain.buildEffects(intentId, ctx, world, drafts)` — domain'ы могут читать draft.* через любой из двух путей.
+
+~~**Auth-users живут вне Φ.**~~ — **закрыто** (v1.2). Dual-write: при регистрации `server/auth.js` эмитит `_user_register` эффект (α:"add", target:"users") в Φ с публичными полями. Seed в `foldWorld` удалён. Клиенты (useAuth, V2UI, standalone) не fetch'ат `/api/auth/users` — users приходят из Φ. auth_users таблица остаётся для паролей/JWT. Автомиграция существующих пользователей при старте сервера (идемпотентная). §5 «мир = свёртка Φ» закрыт.
+
+~~**Synthetic write-ownership для agent write-intents.**~~ — **закрыто** (Write-Ownership milestone, 2026-04-12): `checkOwnership` helper через `ontology.ownerField`, вызывается в agent exec route перед buildEffects. См. закрытые пункты выше.
+
+~~**Voter identity в voteGroup.**~~ — **частично закрыто** (v1.2). `VoterSelector.jsx` автоматически match'ит viewer по email с participant'ом poll'а и пишет в `ctx.viewState`. Используется в ArchetypeDetail, SubCollectionSection читает для vote-интентов. Для agent-role `Participant.userId` резолвится через `world.users` email-match. Открытый edge case: что если email не совпадает (пользователь участвует под другим аккаунтом).
+
+**SubCollection inline-editing vs add.** Текущая реализация `SubCollectionSection` показывает **один** SubCollectionAdd сверху (для добавления нового item) и per-item read-only view + action buttons. Inline-редактирование существующего item (замена имени участника, исправление времени) пока не поддержано. Нужен отдельный паттерн «inline edit row» либо переход на `entityForm` (синтетическая edit-проекция) для sub-entities.
+
+**Label'ы из ontology.** `humanLabel` — временный словарь в адаптере. Правильное решение: `ontology.entities[X].fields[name].label` как первичный источник, словарь — fallback для массивов legacy fields. Мигрировать постепенно: каждое новое декларирование поля пишет label явно, старые — через словарь до полной миграции.
+
+**Composer audio-controls в dark.** Native `<audio controls>` стилизуется браузером. Добавлен `color-scheme: "light dark"` inline — Safari/Chrome применяют dark палитру к нативным controls. Firefox может игнорировать. Полноценное решение — Mantine/Howler.js аудио-плеер через адаптер.
+
+### Честные границы v1.2 (ревизия манифест↔код)
+
+**Принцип:** если декларировано, но не реализовано — это *либо будущая работа, либо ошибка в манифесте*. Ниже — то, что пока не дотягивает до декларации. Обозначено явно, чтобы следующий исполнитель не опирался на обещание.
+
+- ~~**α-типы `increment` и `cas`**~~ (§10, §11) — **удалены** (Session A, 2026-04-12) как cut bait: за время прототипирования 152 интентов в 4 доменах ни один не использовал их, а fold.js их не обрабатывал. Таблица композиции §11 приведена в соответствие с реализацией. Если появится конкретный use-case (CRDT-счётчики голосов, оптимистичные блокировки сообщений) — возвращаются вместе с полноценной реализацией в fold + тесты.
+- ~~**Причинный порядок ≺ в fold**~~ (§10, §13) — **закрыто** (Session A, 2026-04-12): реализована топологическая сортировка Φ по `parent_id` перед fold (`src/runtime/causalSort.js` + `server/causalSort.cjs`). Теперь parent всегда применяется до child'а даже при concurrent/foreign записях с более ранним created_at. 12 unit-тестов покрывают edge cases: линейные цепочки, ветвистые деревья, множественные roots, orphaned refs, циклы.
+- ~~**Расширенная алгебра связей намерений §12**~~ — **закрыто в Session B (2026-04-12)**. Полная formalization всех пяти типов связей в `src/runtime/intentAlgebra.js` + `server/schema/intentAlgebra.cjs`: `▷` (field-level matching через conditionParser), `⇌` (strict derivation effect pair-reversal + declared-as-hint с §15 classification: structural/heuristic-lifecycle), `⊕` (через composition table), `∥` (complement всех предыдущих на общих entities). Consumer'ы: integrity rules #1 и #7 теперь graph queries, agent `GET /schema` экспонирует блок `relations`, prototype sidebar показывает 5 типов связей с цветами. 37 unit-тестов + 12 real-domain property-тестов. Частично антагонистическая и вложенность `⊂` — документированы как open для wave 2.
+- ~~**Четыре слоя проекции §17**~~ — **Все 4 слоя реализованы**: Canonical (артефакт v2), Adaptive (UI-адаптер Mantine), Agent (REST API для всех 5 доменов), Personal (usePersonalPrefs: density/fontSize/iconMode + PrefsPanel).
+- **Анкеринг §15** — проверки в `integrity.js` дают warnings/info, не блокируют кристаллизацию. «Свидетельство проверки» (основание, пример-свидетель, контрпример, оценка надёжности) не реализовано — только имя проверки. Решение: сделать errors эскалируемыми до блокировки, добавить структуру witness-of-proof.
+- **3D-визуализатор причинных цепочек** — показывает `parent_id`-граф эффектов, а не граф связей *намерений*. CLAUDE.md смешивает эти два графа. Решение: либо два визуализатора, либо явно переименовать «Causality Graph».
+
+## 24. Результаты прототипирования
+
+**v1.0:** Трёхдоменный прототип (52 намерения) проверил **большинство** концептов манифеста инженерно. Честная ревизия в v1.1 показала, что часть концептов работает только на поверхностном уровне (см. §23 «честные границы»).
+
+**v1.1:** Седьмой полевой тест — мессенджер, **100 намерений**. Общий корпус v1.1: booking (20) + planning (17) + workflow (15) + messenger (100) = **152 намерения** в четырёх доменах. Введена формальная схема артефакта v2 с архетипами и слотами (M1/M2).
+
+**v1.2:** Восьмой полевой тест — meshok (аукционная барахолка), **225 намерений**, 10 сущностей, 4 роли. Общий корпус: booking (21) + planning (17) + workflow (15) + messenger (100) + meshok (225) = **378 намерений** в пяти доменах. **341 unit-тестов.** Агентский слой реализован для трёх доменов (booking, planning, meshok). Все шесть архетипов реализованы (feed, catalog, detail, form, canvas, dashboard). auth_users ↔ Φ закрыт через `_user_register` dual-write. Legacy v1 удалён (-2111 LOC). Auto-close по кворуму. Семантические роли полей → выводимая карточка + секционированная форма.
+
+**Ядро (разделы 1-12):**
+- `World(t) = fold(Φ_confirmed)` — мир вычисляется, не хранится ✓
+- `proposed → confirmed | rejected` с серверной валидацией и SSE ✓
+- Черновики Δ с промоцией, TTL с автоматическим reject ✓
+- Граница с зеркальными сущностями, foreign-эффекты, шумный дрейф ✓
+- Причинная история (parent_id), каскадный reject, 3D-визуализация ✓
+- Алгебра композиции: проверка ⊥ между намерениями, таблица совместимости ✓
+- Связи между намерениями: автовывод ⇌, ▷, ⊕ из частиц ✓
+
+**Кристаллизация (разделы 16-17):**
+- LLM-кристаллизация через Claude Code: 11 проекций из определений ✓
+- Визуальный язык: 2 темы × 3 варианта = 6 комбинаций ✓
+- Три слоя: canonical (полный), adaptive:mobile (компактный), adaptive:agent (JSON API) ✓
+- Зависимость от зрителя через roles в онтологии (client/specialist/agent) ✓
+- Overlay(I): провизорное наложение для многофазных намерений с preview ✓
+
+**Расширения (разделы 9a, 22):**
+- Рабочие процессы: draft → open → closed → resolved в planning ✓
+- Автоматические процессы: серверный executor с топологическим обходом графа ✓
+- Поток Π: scope "presentation" для косметических эффектов (move_node) ✓
+- Батчинг: α "batch" для каскадных операций (delete/duplicate workflow) ✓
+- Реляционные предикаты: null, IN, != ✓
+- Автодеривация fold-маппинга из онтологии ✓
+
+**Целостность (разделы 13, 15):**
+- Правила целостности: 7 проверок с 3D-визуализацией и инструментами разрешения ✓
+- Анкеринг: привязка всех 5 типов частиц к онтологии (entity, effect, field, witness) ✓
+
+**Трёхдоменный прототип:**
+- Booking (20) + Planning (17) + Workflow (15) = 52 намерения
+- Доменонезависимый движок: один fold, один engine, один validator
+- Домены сосуществуют в одной БД без конфликтов
+- React Flow canvas для workflow с drag-and-drop и серверным исполнением
+
+**Визуальный язык кристаллизации:**
+- 2 темы (light/dark) × 3 варианта (clean/dense/playful) = 6 комбинаций.
+- 8 кристаллизованных проекций (5 booking + 3 planning, включая voting_matrix).
+- Переключатель ручной/кристаллизованный с роутингом в booking.
+
+**Кворум и дедлайн:**
+- Прогресс-бар голосования, список ожидающих.
+- Дедлайн с автозакрытием (серверный setTimeout).
+
+**Серверное исполнение workflow:**
+- Executor с топологическим обходом графа (алгоритм Кана).
+- Реальное исполнение: HTTP fetch, JavaScript eval для transform/condition, вывод.
+- Результаты по узлам записываются как эффекты в Φ, стримятся через SSE.
+- Пауза 500мс между узлами для визуализации прогресса.
+- Condition-ветвление: true/false ветки, skipped для пропущенных.
+- Partial success: ошибка одного узла не останавливает весь пайплайн.
+
+**Токеномика кристаллизации:** ~10-12K токенов на сессию (14 намерений → 3 проекции). При 52 намерениях × 3 домена — ~50-60K. Не является узким местом.
+
+**Седьмой полевой тест — мессенджер (v1.1):**
+- 100 намерений в 7 категориях: сообщения (25), беседы (20), контакты (15), профиль (10), группы/админ (15), медиа (10), звонки (5).
+- Стресс-тест инкрементальности кристаллизации: прошла (~80ms на полную перегенерацию).
+- Выявила четыре новых расширения (§22): кастомные виджеты захвата, entity-picker, контекстные сайд-каналы композера, multi-actor экран.
+- Реальная авторизация (JWT+bcrypt), WebSocket для real-time, WebRTC для голосовых/видеозвонков.
+- Блокеры: 🔴 0 (парадигма выдержала), 🟡 4 (расширения выше), 🟢 — остальное.
+
+**M1/M2 милестоуны:**
+- **M1** (feed-архетип для chat_view): формальная схема артефакта v2, валидатор инвариантов, 5 контролов (Composer, FormModal, ConfirmDialog, Overflow, Toggle), 4 параметр-типа, ArchetypeFeed. 14 задач, ~49 unit-тестов. Устранил все `prompt()` из мессенджера.
+- **M2** (catalog + detail + навигация): два новых архетипа, навигационный граф, `useProjectionRoute` стек, Breadcrumbs, `onItemClick` на List. Кристаллизатор стал dispatcher по `kind`. V2UI стал multi-projection роутером. 13 задач, +17 тестов.
+- **Итого v1.1:** 66 unit-тестов, 152 намерения через новый рендерер.
+
+**Восьмой полевой тест — meshok (v1.2):**
+- 226 намерений в 21 категории: лоты (20), ставки (15), торговля/покупка (15), заказы (20), доставка (10), оплата (10), отзывы (10), споры (10), модерация (15), профиль (10), избранное/поиск (10), уведомления (10), категории (10), аналитика (10), промо (10), сообщения (10), верификация (5), автоставки (5), рекомендации (5), массовые операции (10), admin (6).
+- 10 сущностей: User, Listing, Bid, Category, Order, Review, Dispute, Watchlist, Message, SavedSearch, Notification.
+- 4 роли: buyer, seller, moderator, agent — с полноценным `roles.agent.canExecute` (10 интентов).
+- Богатейшая онтология: `ownerField` на 8 из 10 сущностей, typed fields с read/write matrix, enum с valueLabels, searchConfig.
+- Стресс-тест семантических ролей: `inferFieldRole` корректно выводит price/timer/badge/heroImage/location из полей Listing.
+- Стресс-тест выводимой карточки: `cardSpec` для listing_feed (grid layout) генерирует карточки с фото, ценой, таймером, бейджем — без единой строчки domain-specific UI-кода.
+- Блокеры: 🔴 0, 🟡 2 (agent-layer для meshok не реализован; canvas-архетип для workflow), 🟢 — остальное.
+
+**Итого v1.2:** 312 unit-тестов, 378 намерений через v2 рендерер, 5 доменов.
+
+**v1.3:** Agent layer для всех 5 доменов (workflow 12 + messenger 10 тестов). LLM enrichment pass (Claude API). Personal layer реализован (usePersonalPrefs). Декларативные политики кворума. TypeScript типы ядра. ErrorBoundary. CI (GitHub Actions). 372 unit-теста, 42-шаговый agent-smoke.
+
+**v1.4:** Ревизия манифест↔код выявила 7 недокументированных паттернов. **475 unit-тестов** в **35 файлах**. **Семь архетипов** (wizard формализован). Reactive Rules Engine документирован. Секционированная навигация документирована. **Аспирационная категория §26 впервые пуста**. **Чисто-кристаллизационный домен** (meshok без ManualUI) подтверждает зрелость кристаллизатора.
+
+**v1.5:** Девятый полевой тест — reflect (дневник эмоций по Yale RULER, 47 интентов, 6 custom canvas). Apple visionOS-glass адаптер — третий UI-kit. Reactive Rules Engine extensions (aggregation / threshold / schedule / condition). Token Bridge contract. Custom Canvas registry. Formalized § 21 analytical UI как honest border. 541 unit-тест, 58-шаговый agent-smoke.
+
+**v1.6 (текущая):** **Десятый полевой тест — invest** (fintech / personal investing). **12 сущностей** (User, Portfolio, Position, Asset, Transaction, Goal, RiskProfile, Recommendation, Alert, Watchlist, MarketSignal, Assignment, AgentPreapproval), **4 роли** (investor / advisor / agent / observer), **46 интентов**, **7 правил** Rules Engine (все 4 v1.5 extension в одном домене), **3 custom canvas** (allocation / market / advisor), **3 внешних ML-сервиса** (:3003 invest-ml / :3004 invest-fuzzy / :3006 market-data).
+
+**Шесть §26 open items закрыты в одном цикле:**
+
+1. **Many-to-many ownership** → `role.scope` с via/viewerField/joinField/localField/statusAllowed в `filterWorld.cjs` (§5, §17).
+2. **Preapproval scope для agent** → `preapprovalGuard.cjs` с 5 типами предикатов (§17).
+3. **Document как материализация** → `documentMaterializer.cjs` + `/api/document/:domain/:projection` (§1, §17).
+4. **Capability surface адаптера** → `adapter.capabilities` + `getCapability`/`supportsVariant` helper'ы (§16a, §17).
+5. **Reference entities** → `entity.kind: "reference"` как маркер (§14).
+6. **Chart-primitive** → новая primitive-категория с декларативным spec + SVG-fallback + adapter-delegation (§16a).
+
+**Четвёртый UI-адаптер — AntD enterprise-fintech**. Finalизация §17 «адаптивного слоя» — четыре независимых реализации без изменений в `src/runtime/`. Каждый адаптер представляет свою продуктовую эпоху: corporate data-dense (Mantine) / handcrafted sketch (shadcn) / premium minimal (Apple) / enterprise-fintech (AntD). Один и тот же invest-артефакт пригоден во всех четырёх.
+
+**Четвёртая базовая материализация — document**. Вместе с pixels, voice (контракт готов), agent-API завершает §1 тезис «равноправные материализации». Ключевое доказательство: один `materializeAsDocument` работает на catalog / feed / detail / dashboard без domain-специфичного кода.
+
+**329 unit-тестов ядра** (было 279 в начале field-test 10, +50 за цикл закрытий). **71-шаговый agent-smoke** (+3 document-шага, +3 preapproval-шага, +7 invest-шагов). Build ок, CI green.
+
+**Ревизия ядра v1.1:**
+- Удалён hardcoded `INTENT_CONDITIONS` на сервере; универсальная валидация через `server/intents.js`, читающий клиентский `INTENTS` registry.
+- Единый пайплайн приёма эффектов `server/effect-pipeline.js`; REST и WS вызывают один `ingestEffect()`.
+- Удалён dead code `checkRuntimeConflicts`.
+- CLAUDE.md получил раздел «Границы реализации» с честной классификацией.
+
+## 25. Что делать дальше
+
+**v1.7 статус.** К v1.6 closed items прибавились: темпоральный scheduler first-class (§4, v1.6 open) + SDK Phase 2 (6 пакетов: renderer / 4 adapters / canvas-kit). Унифицированные роли (§5 v1.6.1) и voice materialization (§1 v1.6.2) тоже закрыты. Фокус v1.7 → v1.8: `@idf/server` extraction, CI + public npm, production deploy, публикация, domain authoring CLI.
+
+### Ближайший горизонт (1-2 месяца)
+
+1. **Deploy invest + meshok.** VPS/Fly.io, публичные URL для демо. Эта задача висит третий релиз — перед публикацией статьи обязательно. invest — самый свежий полевой тест с финтех-нагрузкой.
+2. **Публикация статьи.** Хабр / Medium. Главные аргументы: 8 доменов / 527 интентов / один артефакт → 4 материализации (pixels / voice / agent-API / document) / 4 UI-адаптера через capability surface. После deploy'а.
+3. **SDK `@idf/server` — Phase 3.** Выделение серверной пайплайн (`validator.js`, `ruleEngine.js` + 4 extensions, `timeEngine.js`+`TimerQueue`, `invariantChecker` с 5 kind-handlers, `buildEffects` generic handler, schema helpers). `routes/*` не уносим (host-specific Express). После 1-2 недель стабилизации scheduler'а.
+4. **CI для SDK monorepo.** GitHub Actions: `pnpm -r test`, `pnpm -r build`, PR checks, version-bump через changesets. Блокер public npm publish.
+
+### Средний горизонт (2-4 месяца)
+
+5. **Public npm publish под scope `@idf`.** После CI + первой стабилизации SDK + документации. 7 пакетов (core + renderer + 4 adapters + canvas-kit) + planned server.
+6. **Domain authoring CLI.** `idf init <domain>` — scaffolding из диалога с LLM. Generic Effect Handler → минимальный buildEffects из коробки. Claude API integration.
+7. **Production-ready invest.** Real broker adapter (не мок), real KYC-flow, 10 реальных пользователей.
+8. **Server-rendered PDF через puppeteer.** `documentMaterializer` уже отдаёт HTML; production — PDF с цифровой подписью для регуляторной отчётности.
+9. **Docs site (Docusaurus / Astro).** После публичной публикации — когда появятся внешние пользователи.
+
+### Открытые задачи, найденные аудитом кода v1.7
+
+- ~~**Темпоральный scheduler.**~~ — **закрыто в v1.7**: `schedule_timer` / `revoke_timer` системные intent'ы + `TimerQueue` + `hydrateFromWorld`.
+- **Composite / Polymorphic entities.** Не формализованы в §14 — entities с union-типами или вложенными структурами остаются open.
+- **Capability capability.** adapter.capabilities покрывает текущие variants, но не декларирует что адаптер **поддерживает** новый kind (chart/statistic добавили без уведомления существующих адаптеров). Future: declare-and-check при startup.
+- **SDK extraction не отражён в CI.** 7 пакетов (`@idf/core@0.2.0` + 6 новых v0.1.0), но нет автоматической сборки / testing / version-bump. Блокер для public npm publish.
+- **CSS-темы adapter-* требуют explicit-import convention.** В README каждого пакета должен быть раздел «Setup → Import styles», иначе build ломается на `@import "tailwindcss"` в node_modules.
+
+### Постоянные задачи
+
+- **Регулярная ревизия манифест↔код.** Раз в релиз проходить по каждому разделу. Обновлять §23 и §26. v1.6 цикл: 6 §26 закрытий за один field test — паттерн эффективен.
+- **Честная фиксация.** Парадигма v1.6 покрывает: транзакционные (e-commerce / финтех / аукционы), темпоральные (календари, бронирование), коллаборативные (голосование, планирование), графовые (workflow), аналитические (mood tracking), регуляторные (invest с audit-trail). Граница: распределённые системы с eventual consistency, real-time collaboration (CRDT), машинное обучение, voice-first UX. Парадигма остаётся фальсифицируемой.
+
+---
+
+## 26. Ревизия манифест↔код (v1.7)
+
+**Этот раздел — зеркало §23 для публичной честности.** Здесь то, что отличает парадигму v1.7 от аспирационных деклараций: явное признание разрывов между декларированными и реализованными концептами.
+
+Идея ревизии: раз в релиз пройти по разделам манифеста и ответить на один вопрос — *можно ли это продемонстрировать в коде?* Результат — три категории.
+
+### Реализовано полностью
+
+Разделы, где декларация соответствует коду без упрощений:
+
+- §1 **Четыре равноправные материализации** — pixels (4 UI-адаптера) + agent-API (8 доменов) + document (documentMaterializer). Voice формализован контрактом, реализация в v1.7+.
+- §3-5 (намерения, проекции, витнессы) — реализованы в определениях доменов и `crystallize_v2/inferParameters.js`.
+- **§5 Ownership single + m2m** (v1.6) — `entity.ownerField` для single-owner, `role.scope` с via/viewerField/joinField/localField/statusAllowed для many-to-many. Приоритет: `role.scope > entity.kind:"reference" > entity.ownerField`. 10+ unit-тестов в `filterWorld.test.js`.
+- §5 параметры запроса проекции — `ctx.viewState` + eval в filter, control-архетип `inlineSearch`.
+- §6 (сигналы) — `server/ws.js`, scheduled signals через anchor-rescheduling.
+- §8 (черновики Δ) — `foldDrafts`, промоция при `commitInvestigation`, трёхслойный overlay (v1.5).
+- §9 (расширенные намерения) — `extended: true` + `bulkWizard` control-архетип.
+- §9a (рабочие процессы) — фазы в planning, phase-aware primary CTA.
+- **§10 α:"batch"** — рекурсивная валидация, `execBatch` API, fold.js разворачивает batch.
+- **§10 Причинный порядок ≺** — `causalSort` в fold.js и server/validator.js, топологическая сортировка по parent_id, DFS-защита циклов. 12 unit-тестов.
+- **§12 Алгебра связей намерений** — полная formalization пяти типов в `intentAlgebra.js`: ▷ (sequential), ⇌ (antagonistic), ⊕ (excluding), ∥ (parallel). 37 unit-тестов.
+- §13 (пропорциональность подтверждения) — `irreversibility: high/medium/low` → `ConfirmDialog` с typed-confirmation.
+- **§14 Онтология** — типизированные поля с read/write matrix (`ontologyHelpers.js`), семантические роли (`inferFieldRole` с v1.2+v1.6 ролями), `entity.kind` таксономия (v1.6), `searchConfig` для entity-picker.
+- §16 (кристаллизация свойства) — детерминированность + перегенерируемость + расщепляемость. Деривация 78% проекций (25/32) по правилам R1-R7. Производные формы (`formGrouping.js`).
+- §16a (архетипы и слоты) — **все 7 архетипов**: Feed/Catalog/Detail/Form/Canvas/Dashboard/Wizard. Control-архетипы (9 типов). customCapture реестр. UX-паттерны detail. UI-адаптер (4 реализации). Секционированная навигация. **Chart-primitive** как новая категория (v1.6).
+- **§16a / §17 Adapter capability surface** (v1.6) — `capabilities` declarative surface, `getCapability`/`supportsVariant` helpers, graceful fallback при mismatch. 7 unit-тестов.
+- **§17 Пять слоёв проекции** — Canonical (артефакт v2) + Adaptive (4 UI-адаптера с capability surface) + Personal (usePersonalPrefs + uiKit override) + Agent (REST для 8 доменов + preapproval guard) + **Document** (documentMaterializer + `/api/document/*`, v1.6).
+- **§17 Agent-слой** — 8 доменов (booking 37 + planning 29 + meshok 18 + workflow 12 + messenger 10 + lifequest 8 + reflect 17 + invest 6 тестов) + 71-шаговый integration smoke.
+- **§17 Preapproval guard** (v1.6) — 5 типов check-предикатов (active/notExpired/maxAmount/csvInclude/dailySum), 16 unit-тестов.
+- §18 (Φ, Δ, Σ) — реализованы как отдельные потоки.
+- **§22 Reactive Rules Engine** — event-condition-action + 4 v1.5 extensions (aggregation/threshold/schedule/condition). Invest использует все 4 одновременно (7 правил).
+- **§22 Generic Effect Handler** — формализован как паттерн, покрывает ~70% meshok / ~85% invest интентов. Documented для SDK.
+- **Чисто-кристаллизационные домены** — meshok (225), reflect (47), invest (46) не имеют ManualUI.jsx.
+
+### Частично реализовано
+
+- ~~§1 Voice materialization~~ — **закрыто в v1.6.2**: `voiceMaterializer.cjs` + `/api/voice/:domain/:projection` (3 формата: json / ssml / plain).
+- ~~**§4 Темпоральная реактивность**~~ — **закрыто в v1.7**: `schedule_timer` / `revoke_timer` системные intent'ы, `TimerQueue` в `server/timeEngine.js`, `hydrateFromWorld` восстановление при старте. booking `auto_cancel_pending_booking` — первое применение; cron-правила мигрированы на self-rescheduling timers.
+- **SDK Phase 2** (v1.7) — 6 пакетов (`@idf/renderer` + 4 adapters + canvas-kit) выделены поверх `@idf/core@0.2.0`. Потребление через `file:` deps (как `@idf/core`). Public npm publish — после CI Phase 3.
+- **§7 Overlay(I)** — трёхслойный (W ⊕ O ⊕ Δ) с v1.5.
+- **§11 Алгебра композиции** — таблица есть, integrity rules через graph queries. Batch composition — рекурсивная валидация.
+- **§15 Анкеринг** — warnings/info, не блокирует. Witness-of-proof структура отсутствует (honest border).
+- **§19 Граница** — однонаправленная (pull), без распределённых транзакций.
+
+### Аспирационно / нереализовано
+
+Категория **пуста** в v1.7 (как и в v1.6). v1.6 open item по scheduler'у закрыт в v1.7 (§4 first-class). Остальные honest borders — в «частично реализовано» или «открытые инженерные задачи» §23.
+
+### Что закрыто в v1.7
+
+Два крупных закрытия без новых полевых тестов — консолидация v1.6 открытых задач + инфраструктура SDK:
+
+1. **Темпоральный scheduler first-class (§4)** → `server/timeEngine.js` с `TimerQueue` + `hydrateFromWorld` + `onEffectConfirmed` реакцией на schedule/revoke эффекты. Системные intent'ы `schedule_timer(afterMs | atISO, target, revokeOn?)` / `revoke_timer(timerId)`. Полная интеграция: парсер `evaluateScheduleV2` для `after:/at:/revokeOn:` синтаксиса, booking `auto_cancel_pending_booking` — первое применение. Старые cron-правила Rules Engine v1 мигрированы. 7 интеграционных тестов.
+2. **SDK Phase 2** → 6 npm-пакетов (`@idf/renderer` + 4× `@idf/adapter-*` + `@idf/canvas-kit`) поверх `@idf/core@0.2.0`. Прототип теперь чистый host: `src/runtime/renderer/` содержит только `auth / personal / shell`. 120+ тестов в SDK (renderer 36 + adapters 12 + canvas-kit 36 + core 238). Codemod затронул 5 потребительских файлов в прототипе — минимальная миграция.
+
+**Ключевой наблюдение v1.7:** оба закрытия **additive**, не breaking. Scheduler — новые системные intent'ы + новый effect τ; SDK extraction — file moves + import changes. Это третий цикл подтверждения **architectural stability**: парадигма поддерживает расширение без перелопачивания.
+
+### Что закрыто в v1.6
+
+Field-test 10 (invest домен) за один цикл закрыл 6 open items:
+
+1. **Many-to-many ownership** → `role.scope` с via/viewerField/joinField/localField/statusAllowed в filterWorld.cjs.
+2. **Preapproval scope для agent** → preapprovalGuard.cjs с 5 типами предикатов, 16 тестов.
+3. **Document как материализация §1** → documentMaterializer.cjs + /api/document/:domain/:projection, 15 тестов.
+4. **Capability surface адаптера** → adapter.capabilities + getCapability/supportsVariant, 7 тестов.
+5. **Reference entities** → entity.kind: "reference" как декларативный маркер.
+6. **Chart-primitive** → новая primitive-категория с SVG-fallback + adapter-delegation.
+
+**Ключевой наблюдение:** все 6 закрытий — **additive** (расширения существующих контрактов), ни одного breaking change в runtime. Это валидация архитектурных срезов §14 (онтология), §16a (архетипы/слоты), §17 (адаптивный + агентский слои) — правильные уровни абстракции, куда добавление нового не требует перелопачивания ядра.
+
+### Новые инсайты v1.7
+
+Два закрытия v1.7 дали три инсайта об устойчивости парадигмы:
+
+1. **Scheduler — пример «новый subsystem как системные intent'ы».** Вместо ad-hoc таймерного API scheduler реализован через пару `schedule_timer` / `revoke_timer` — обычные intent'ы, которые эмитят обычные эффекты `scheduled_timer`. TimerQueue — это не отдельный state, это индекс над `world.scheduledTimers`. `hydrateFromWorld` гарантирует: restart сервера не теряет таймеры, причинный порядок сохраняется. Урок: при добавлении нового core-механизма **не вводить отдельное хранилище** — использовать Φ как единственный источник истины. То же самое с Rules Engine (правила хранятся как ontology.rules, `rule_state` — индекс), preapproval (roles.agent.preapproval — декларация в ontology).
+
+2. **SDK extraction — третий подтверждённый цикл API-stability.** `@idf/core@0.1.0` (Phase 1), `@idf/core@0.2.0` (Phase 1.5, +materializations), `@idf/renderer` + adapters + canvas-kit (Phase 2). Все три migration — 5±2 потребительских файла в прототипе, zero breaking API changes в SDK. Паттерн: extract только когда API стабилизировался (3+ месяца без changes). Следующий пакет `@idf/server` требует 1-2 недели стабилизации scheduler'а, дальше extraction будет такой же лёгкий.
+
+3. **CSS-темы в node_modules — convention, не код.** Tailwind 4 + adapter theme.css → `@tailwindcss/vite` plugin не сканирует node_modules. Workaround — хост явно импортирует `@idf/adapter-X/styles.css` + SDK build-script стрипает `@import "tailwindcss"`. Это пример: **не всё, что работает в monolith, работает после SDK extraction**. Граница «работает in-source → работает в npm» требует отдельной convention-работы (documentation, README sections). Для public npm publish потребуется полный DX-аудит.
+
+### Унаследованные инсайты v1.6
+
+Ревизия кода v1.6 выявила паттерны, ранее неформализованные:
+
+1. **Field test → manifesto cycle как рабочий процесс.** Field-test 10 обнаружил 6 дыр → формализовал → закрыл за 1 цикл. Это воспроизводимый паттерн: новый домен с реальными требованиями находит края парадигмы, формальная фиксация (§26) → декларативное расширение (не hack) → закрытие. v1.4→v1.5→v1.6 три раза подряд подтвердили паттерн.
+
+2. **Capability surface как cross-cutting concept.** Три уровня декларации «что это и как с этим работать»:
+   - `entity.kind` (онтология) — что за сущность (internal / reference / mirror / assignment)
+   - `role.scope` (роль) — какой доступ даём
+   - `adapter.capabilities` (адаптер) — какие варианты umeem рендерить
+
+   Вместе формируют **capability surface** парадигмы. Runtime консультируется с ней, делает graceful fallback при mismatch. Нет silent-деградации и нет runtime-surprises.
+
+3. **Materialization-equality доказана эмпирически.** До v1.6 «равноправные материализации» (§1) были декларацией. v1.6 показал: одна функция `materializeAsDocument` работает для catalog/feed/detail/dashboard без per-domain кода, и переиспользует `filterWorldForRole` — та же viewer-scoping логика, что у agent-API. Четыре выхода (pixels/voice/agent-API/document) поверх одной артефакт-модели — не метафора, а factored code.
+
+4. **Agent layer — первоклассный актор, не вторичный рендер.** В invest 6 agent-intents (~13%), Rules Engine автоматически генерирует ~20% эффектов, user — остальное. JWT identity + preapproval scope + capability-based tool-call = full agentic stack. Паттерн «робо-эдвайзер» универсальный для любого домена где автоматизация первоклассна (trading, healthcare monitoring, supply chain).
+
+5. **4 UI-адаптера без изменений runtime — stability proof §17.** Mantine/shadcn/Apple/AntD — четыре независимых UI-kit'а, четыре эстетические эпохи (corporate / handcrafted / premium / enterprise-fintech). Каждый добавлен `registerUIAdapter({...})` + capability declaration. Runtime (SlotRenderer, archetypes, crystallize) нетронут между адаптерами. Контракт §17 стабилен.
+
+6. **Role taxonomy gap уменьшается естественно.** К v1.6 8 доменов показали схождение: **investor/owner** (self), **advisor/specialist** (m2m через assignment), **agent** (автоматизация), **observer** (read-only audit). Это уже минимальный общий словарь, валидный для SDK — но декларативно, не через общий enum.
+
+### Открытые задачи v1.7 (новые)
+
+- ~~**Темпоральная реактивность как first-class scheduler**~~ — **закрыто в v1.7**.
+- **Composite / polymorphic entities** — union-типы и вложенные структуры не формализованы в `entity.kind`. Переносится из v1.6.
+- **Adapter capability mismatch при extending primitives** — когда кто-то добавляет новый primitive kind (как chart в v1.6), существующие адаптеры не уведомляются. Будущее: declare-and-check при startup. Переносится из v1.6.
+- **Server-rendered PDF / DOCX** — `documentMaterializer` отдаёт HTML; PDF через puppeteer + цифровая подпись — production extension. Переносится из v1.6.
+- **CI для SDK monorepo** — 7 пакетов без автоматической сборки/тестов/publish. Блокер public npm. Требуется GitHub Actions + changesets (или аналог) + release-PR workflow.
+- **DX-аудит SDK перед public publish** — CSS-темы, peer-deps, README каждого пакета («Setup», «Usage», «Migration from monolith»). DX-уровень, не архитектурный, но блокирует внешних пользователей.
+- **`@idf/server` extraction (SDK Phase 3)** — следующая SDK-фаза после стабилизации scheduler'а. ~1500 LOC: validator + ruleEngine + timeEngine + invariantChecker + buildEffects generic + schema helpers. `routes/*` остаётся в host'е.
+
+### Что это даёт
+
+1. **Четвёртый цикл «manifesto ↔ code synchrony».** v1.4, v1.5, v1.6, v1.7 — четыре релиза подряд с пустой аспирационной категорией. Паттерн устойчивый.
+2. **v1.7 — первый consolidation-релиз без field test'а.** v1.4-1.6 каждый был triggered новым доменом (8/9/10-м field test'ом). v1.7 закрывает v1.6 open items (scheduler) + инфраструктурную работу (SDK Phase 2). Это другой вид валидности: парадигма способна делать infrastructure-level итерации, не только adding domains.
+3. **Парадигма остаётся фальсифицируемой.** §21 честно фиксирует domain-границы, §23 — инженерные задачи, §26 — implementation-границы. Четыре оси честности сохранены.
+4. **Следующий фокус не-архитектурный, а DX-инфраструктурный.** v1.8 roadmap: deploy + publish + CI + `@idf/server`. Это переход парадигмы от «работает у автора» к «может использоваться внешними разработчиками». Тестирование гипотезы «domain authoring как диалог с LLM» потребует именно этого инфраструктурного слоя.
+
+Раздел 26 нужно обновлять при каждом релизе вместе с §23.
+
+---
+
+## Приложение: словарь терминов
+
+**Намерение** — атомарная единица системы. Кортеж `⟨E, C, F, W, P⟩`. Может быть многофазным.
+
+**Частицы намерения** — сущности, условия, эффекты, свидетельства, подтверждения.
+
+**Проекция** — первоклассная читающая структура. Кортеж `⟨E, Q, W⟩`. Реактивна, композируема, зависима от зрителя.
+
+**Эффект** — декларативное изменение мира. Кортеж `⟨τ, σ, α, ρ, ε, ttl⟩`. Единственная субстанция состояния.
+
+**Сигнал** — транзиентное событие. Кортеж `⟨κ, σ, ρ, ε, δ⟩`. Не участвует в мире. Необратим.
+
+**Поток эффектов** `Φ` — множество всех эффектов, разбитое по стадиям жизненного цикла.
+
+**Черновой поток** `Δ` — персистентные, но не закоммиченные эффекты. Не участвуют в `World(t)`.
+
+**Поток сигналов** `Σ` — транзиентные события, изолированные от `Φ`.
+
+**Мир** `World(t)` — свёртка `Φ_confirmed` с причинным порядком. Не хранится, вычисляется.
+
+**Фаза исследования** — опциональная фаза намерения: чтение, внешние запросы, наполнение свидетельств без изменения мира.
+
+**Фаза коммитмента** — обязательная фаза: порождение эффектов и сигналов.
+
+**Провизорное наложение** `Overlay(I)` — эфемерные эффекты фазы исследования, видимые только в контексте одного намерения.
+
+**Персистентный черновик** — долговечный, но не закоммиченный набор эффектов (корзина, wishlist, черновик формы).
+
+**Расширенное намерение** — надстройка для массовых/длительных операций: шаблон + коллекция + политика частичного успеха.
+
+**Рабочий процесс** — гетерогенная последовательность фаз с разными ролями. Кортеж `⟨Phases, Transitions, Roles⟩`. Выражается через условия на статусе.
+
+**Автоматический процесс** — рабочий процесс, где часть переходов выполняется системой по правилу (обход графа, таймер). Расширение рабочих процессов.
+
+**Косметический эффект** — эффект на визуальные свойства (позиция, порядок), не меняющий семантику мира. Кандидат на отдельный поток `Π`.
+
+**Реляционный предикат** — условие на паре сущностей (совместимость портов). Расширение модели предикатов.
+
+**Поток Π** — поток косметических эффектов (`scope: "presentation"`). Не участвует в семантическом fold, применяется через `applyPresentation()` для рендера.
+
+**Батч-эффект** — эффект с `α: "batch"`, содержащий массив под-эффектов в `value`. Fold разворачивает атомарно.
+
+**Overlay(I)** — провизорное наложение для многофазных намерений. `World_for(I) = World(t) ⊕ Overlay(I) ⊕ Δ(user)`. Эфемерен — исчезает при отмене исследования.
+
+**Анкеринг** — привязка всех частиц намерения к элементам онтологии. Проверяет: entities → типы, effects → коллекции/поля, witnesses → наблюдаемые поля.
+
+**Правила целостности** — 7 проверок перед кристаллизацией: мёртвые намерения, эффекты-сироты, полнота свидетельств, пропорциональность подтверждения, антагонисты, анкеринг, алгебра.
+
+**Истекающий эффект** — эффект с ненулевым `ttl`, автоматически отвергаемый по истечении.
+
+**Алгебра композиции** — таблица правил сочетания эффектов по типам.
+
+**Алгебра намерений** — выводимые связи: последовательные, параллельные, исключающие, антагонистические, частично антагонистические; плюс явная вложенность.
+
+**Онтология** — сущности с состояниями, предикаты с определениями, правила импликации с контекстом. Разделяемая память автора и модели.
+
+**Анкеринг** — привязка частиц к онтологии. Успешен и явен, или требует вмешательства.
+
+**Свидетельство проверки** — структура, сопровождающая вывод связи: основание, пример, контрпример, оценка надёжности.
+
+**Кристаллизация** — до-рантаймное превращение намерений в исполнимую проекцию.
+
+**Исполнимая проекция** — детерминированный, перегенерируемый, расщепляемый артефакт.
+
+**Канонический, адаптивный, личный слои** — стек проекций.
+
+**Чужой эффект** — порождён внешним миром. Маркер `foreign:<source>`.
+
+**Зеркальная сущность** — авторитет снаружи. **Гибридная** — часть полей зеркальна.
+
+**Авторитет** — приоритет при конфликте: внешний, локальный, последнее-слово, слитный.
+
+**Активный фрагмент** — материализованное подмножество внешнего мира.
+
+**Стоячий запрос** — подписка на изменения по предикату.
+
+**Опаковый адаптер** — произвольный код с тремя ограничениями: анкерирование, безстейтность, ожидания.
+
+**Запланированный сигнал** — сигнал, испускаемый по наступлению времени, а не при коммите. Привязан к якорю. Перепланируется при смещении, отменяется при удалении.
+
+**Темпоральный предикат** — условие, зависящее от `now`. Меняется непрерывно без эффектов.
+
+**Статический предикат** — условие, зависящее от `World(t)`. Меняется при эффектах.
+
+**Автор** — человек или команда, ведущая диалог с моделью. Доменное мышление + чувство ограничений + чувство целостности.
