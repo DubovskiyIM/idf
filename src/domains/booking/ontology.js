@@ -117,5 +117,16 @@ export const ONTOLOGY = {
       },
       statusMapping: { held: "booked", blocked: "unavailable" }
     }
-  }
+  },
+  // v1.5 schedule v2 demo: если создан booking и в течение 5мин не подтвердили/отменили — авто-отмена
+  rules: [
+    {
+      id: "auto_cancel_pending_booking",
+      trigger: "create_booking",
+      after: "5min",
+      revokeOn: ["confirm_booking", "cancel_booking"],
+      fireIntent: "cancel_booking",
+      params: { id: "$.id" },
+    },
+  ],
 };
