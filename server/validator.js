@@ -176,7 +176,16 @@ function validate(effect) {
   }
 
   // 4. Для replace/remove — сущность должна существовать
-  if ((effect.alpha === "replace" || effect.alpha === "remove") && ctx.id && !effect.target.startsWith("drafts")) {
+  // Системные intent'ы scheduler'а (schedule_timer/revoke_timer) пропускаем:
+  // они могут прийти до регистрации typeMap или в race-окне с fold'ом.
+  // Зомбирование предотвращается самим ingestEffect'ом через Φ-append.
+  if (
+    (effect.alpha === "replace" || effect.alpha === "remove") &&
+    ctx.id &&
+    !effect.target.startsWith("drafts") &&
+    effect.intent_id !== "schedule_timer" &&
+    effect.intent_id !== "revoke_timer"
+  ) {
     const world = foldWorld();
     const target = findEntity(world, ctx.id);
     if (!target) {
