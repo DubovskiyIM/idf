@@ -149,7 +149,7 @@ nginx -t && systemctl reload nginx
 
 На **локальной** машине:
 ```bash
-cd /Users/ignatdubovskiy/WebstormProjects/idf
+cd /Users/DubovskiyIM/WebstormProjects/idf
 ./landing/deploy.sh
 ```
 
