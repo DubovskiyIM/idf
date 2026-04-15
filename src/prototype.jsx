@@ -13,6 +13,7 @@ import * as messengerDomain from "./domains/messenger/domain.js";
 import * as meshokDomain from "./domains/meshok/domain.js";
 import * as lifequestDomain from "./domains/lifequest/domain.js";
 import * as reflectDomain from "./domains/reflect/domain.js";
+import * as deliveryDomain from "./domains/delivery/domain.js";
 
 // Manual UI
 import BookingUI from "./domains/booking/ManualUI.jsx";
@@ -41,6 +42,7 @@ const DOMAINS = {
   meshok: meshokDomain,
   lifequest: lifequestDomain,
   reflect: reflectDomain,
+  delivery: deliveryDomain,
 };
 
 export default function App() {
