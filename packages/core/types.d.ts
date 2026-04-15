@@ -1,5 +1,5 @@
 /**
- * @idf/core — TypeScript type definitions
+ * @intent-driven/core — TypeScript type definitions
  *
  * IDF Specification v1.0 — Part 1: Core Model
  */

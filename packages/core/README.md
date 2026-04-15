@@ -1,4 +1,4 @@
-# @idf/core
+# @intent-driven/core
 
 Reference implementation of the [IDF Specification](../../spec/idf-v1.0-part1-core.md) — a formal, language-agnostic standard for building applications from user intentions.
 
@@ -21,13 +21,13 @@ One source of truth. Multiple targets: React UI, REST API, OpenAPI spec, test su
 ## Install
 
 ```bash
-npm install @idf/core
+npm install @intent-driven/core
 ```
 
 ## Quick Start
 
 ```js
-import { fold, computeAlgebra, checkIntegrity, deriveProjections } from '@idf/core';
+import { fold, computeAlgebra, checkIntegrity, deriveProjections } from '@intent-driven/core';
 
 // Define your domain
 const ONTOLOGY = {

@@ -1,5 +1,5 @@
 /**
- * @idf/core re-export (v0.2.0).
+ * @intent-driven/core re-export (v0.2.0).
  * Реализация в SDK: packages/core/src/baseRoles.js.
  */
 const {
@@ -10,7 +10,7 @@ const {
   isObserverRole,
   isOwnerRole,
   auditOntologyRoles,
-} = require("@idf/core");
+} = require("@intent-driven/core");
 
 module.exports = {
   BASE_ROLES,

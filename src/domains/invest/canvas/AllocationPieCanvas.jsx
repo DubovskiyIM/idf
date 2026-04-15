@@ -5,7 +5,7 @@
  * @ant-design/plots Pie или SVG-fallback.
  */
 
-import { Chart, getAdaptedComponent } from "@idf/renderer";
+import { Chart, getAdaptedComponent } from "@intent-driven/renderer";
 
 export default function AllocationPieCanvas({ world }) {
   const portfolios = (world?.portfolios || []).filter(p => !p.userId || true);

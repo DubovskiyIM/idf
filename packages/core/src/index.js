@@ -1,5 +1,5 @@
 /**
- * @idf/core — reference implementation of the Intent-Driven Framework specification.
+ * @intent-driven/core — reference implementation of the Intent-Driven Framework specification.
  *
  * IDF Specification v1.0 — Part 1: Core Model
  * Conformance: Level 3 (Full)

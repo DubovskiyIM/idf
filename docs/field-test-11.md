@@ -177,4 +177,4 @@ npm run dev                 # :5173 — domain-switcher → delivery
 
 Field-test 11 — **самый paradigmatic-heavy** field-test из одиннадцати: три одновременных paradigm-additions (scheduler + map + irreversibility) + полноценный domain authoring с 9-м в корпусе. Все additions additive, zero breaking, четвёртый подряд релиз «manifesto ↔ code synchrony».
 
-Следующий focus не paradigm, а **infrastructure / DX**: `@idf/server` extraction (SDK Phase 3), CI pipeline, public npm publish, DX-аудит, documentation. Paradigm стабилизировалась — нужно довести до переиспользуемого tooling.
+Следующий focus не paradigm, а **infrastructure / DX**: `@intent-driven/server` extraction (SDK Phase 3), CI pipeline, public npm publish, DX-аудит, documentation. Paradigm стабилизировалась — нужно довести до переиспользуемого tooling.

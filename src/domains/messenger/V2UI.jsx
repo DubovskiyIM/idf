@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useMemo } from "react";
-import { ProjectionRendererV2, useProjectionRoute, Breadcrumbs } from "@idf/renderer";
-import { crystallizeV2, generateEditProjections } from "@idf/core";
+import { ProjectionRendererV2, useProjectionRoute, Breadcrumbs } from "@intent-driven/renderer";
+import { crystallizeV2, generateEditProjections } from "@intent-driven/core";
 import { useAuth } from "../../runtime/renderer/auth/useAuth.js";
 import AuthGate from "../../runtime/renderer/auth/AuthGate.jsx";
 import * as messengerDomain from "./domain.js";

@@ -1,6 +1,6 @@
 import { useState, useCallback, useEffect } from "react";
 import { useMantineColorScheme } from "@mantine/core";
-import { useEngine, PARTICLE_COLORS, ALPHA_LABELS, LINK_COLORS } from "@idf/core";
+import { useEngine, PARTICLE_COLORS, ALPHA_LABELS, LINK_COLORS } from "@intent-driven/core";
 import CausalityGraph from "./components/CausalityGraph.jsx";
 import OntologyInspector from "./components/OntologyInspector.jsx";
 import IntegrityGraph from "./components/IntegrityGraph.jsx";
@@ -25,10 +25,10 @@ import MessengerUI from "./domains/messenger/ManualUI.jsx";
 import V2Shell from "./runtime/renderer/shell/V2Shell.jsx";
 import { useAuth } from "./runtime/renderer/auth/useAuth.js";
 import AuthGate from "./runtime/renderer/auth/AuthGate.jsx";
-import { registerUIAdapter } from "@idf/renderer";
-import { mantineAdapter } from "@idf/adapter-mantine";
-import { shadcnAdapter } from "@idf/adapter-shadcn";
-import { appleAdapter } from "@idf/adapter-apple";
+import { registerUIAdapter } from "@intent-driven/renderer";
+import { mantineAdapter } from "@intent-driven/adapter-mantine";
+import { shadcnAdapter } from "@intent-driven/adapter-shadcn";
+import { appleAdapter } from "@intent-driven/adapter-apple";
 import { usePersonalPrefs } from "./runtime/renderer/personal/usePersonalPrefs.js";
 
 const UI_KITS = { mantine: mantineAdapter, shadcn: shadcnAdapter, apple: appleAdapter };

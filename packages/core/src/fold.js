@@ -1,5 +1,5 @@
 /**
- * @idf/core — fold: World(t) = fold(⊕, ∅, sort≺(Φ_confirmed ↓ t))
+ * @intent-driven/core — fold: World(t) = fold(⊕, ∅, sort≺(Φ_confirmed ↓ t))
  *
  * Pure functions for computing world state from an effect stream.
  */

@@ -10,7 +10,7 @@
  */
 
 import { useState, useMemo } from "react";
-import { Chart, getAdaptedComponent } from "@idf/renderer";
+import { Chart, getAdaptedComponent } from "@intent-driven/renderer";
 
 export default function AdvisorReviewCanvas({ world, viewer, exec }) {
   // Клиентский фильтр many-to-many: advisorId = viewer.id. Demo-режим с

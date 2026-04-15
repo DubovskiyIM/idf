@@ -224,7 +224,7 @@
 
 - **nav-граф ambiguity**: catalog клик по Transaction уводил в Portfolio (entities overlap). Добавлены detail-проекции для всех mainEntity + сужены entities.
 - **feed requires composer**: transactions/recommendations/alerts заменены на catalog (нет creator-intent'ов для composer).
-- **pre-existing test**: `server/schema/userRegisterEffect.test.js` → `@idf/core` импорт
+- **pre-existing test**: `server/schema/userRegisterEffect.test.js` → `@intent-driven/core` импорт
 
 ### Metrics
 

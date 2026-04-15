@@ -1,5 +1,5 @@
 {
-  "name": "@idf/core",
+  "name": "@intent-driven/core",
   "version": "0.1.0-alpha.1",
   "description": "IDF Core — reference implementation of the Intent-Driven Framework specification",
   "type": "module",

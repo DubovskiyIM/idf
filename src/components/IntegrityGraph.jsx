@@ -6,7 +6,7 @@
  */
 
 import { useState, useMemo, useCallback, useRef, useEffect } from "react";
-import { checkIntegrity } from "@idf/core";
+import { checkIntegrity } from "@intent-driven/core";
 
 const NODE_COLORS = {
   intent: "#22c55e",

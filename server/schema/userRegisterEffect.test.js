@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { fold, buildTypeMap, filterByStatus } from "@idf/core";
+import { fold, buildTypeMap, filterByStatus } from "@intent-driven/core";
 
 describe("_user_register эффект", () => {
   const typeMap = buildTypeMap({ entities: { User: {} } });

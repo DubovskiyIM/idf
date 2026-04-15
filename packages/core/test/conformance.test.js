@@ -2,7 +2,7 @@
  * Conformance test runner for IDF Specification v1.0 Part 1.
  *
  * Reads JSON test files from spec/conformance/ and runs them against
- * the @idf/core reference implementation.
+ * the @intent-driven/core reference implementation.
  */
 import { describe, it, expect } from "vitest";
 import { readFileSync, readdirSync } from "fs";

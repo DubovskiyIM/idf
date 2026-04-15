@@ -7,7 +7,7 @@
  * пользователь из auth_users, не hardcoded "client".
  */
 import { useState, useEffect, useMemo } from "react";
-import { useEngine } from "@idf/core";
+import { useEngine } from "@intent-driven/core";
 import { useAuth } from "./runtime/renderer/auth/useAuth.js";
 import AuthGate from "./runtime/renderer/auth/AuthGate.jsx";
 
@@ -26,17 +26,17 @@ import WorkflowUI from "./domains/workflow/ManualUI.jsx";
 import MessengerUI from "./domains/messenger/ManualUI.jsx";
 import MessengerV2UI from "./domains/messenger/V2UI.jsx";
 import V2Shell from "./runtime/renderer/shell/V2Shell.jsx";
-import { registerUIAdapter } from "@idf/renderer";
-import { mantineAdapter } from "@idf/adapter-mantine";
-import { shadcnAdapter } from "@idf/adapter-shadcn";
-import { appleAdapter } from "@idf/adapter-apple";
-import { antdAdapter } from "@idf/adapter-antd";
+import { registerUIAdapter } from "@intent-driven/renderer";
+import { mantineAdapter } from "@intent-driven/adapter-mantine";
+import { shadcnAdapter } from "@intent-driven/adapter-shadcn";
+import { appleAdapter } from "@intent-driven/adapter-apple";
+import { antdAdapter } from "@intent-driven/adapter-antd";
 import { ConfigProvider as AntConfigProvider, theme as antTheme } from "antd";
 import ruRU from "antd/locale/ru_RU";
 import { usePersonalPrefs } from "./runtime/renderer/personal/usePersonalPrefs.js";
 
 const UI_KITS = { mantine: mantineAdapter, shadcn: shadcnAdapter, apple: appleAdapter, antd: antdAdapter };
-import { registerCanvas } from "@idf/renderer";
+import { registerCanvas } from "@intent-driven/renderer";
 import CalendarCanvas from "./domains/lifequest/canvas/CalendarCanvas.jsx";
 import VisionBoardCanvas from "./domains/lifequest/canvas/VisionBoardCanvas.jsx";
 import PointACanvas from "./domains/lifequest/canvas/PointACanvas.jsx";

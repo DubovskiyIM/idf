@@ -1,6 +1,6 @@
 import { createRoot } from 'react-dom/client';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
-import { MantineAdapterProvider } from '@idf/adapter-mantine';
+import { MantineAdapterProvider } from '@intent-driven/adapter-mantine';
 import App from './prototype.jsx';
 import StandaloneApp from './standalone.jsx';
 
@@ -8,8 +8,8 @@ import StandaloneApp from './standalone.jsx';
 // чтобы @tailwindcss/vite plugin его подхватил.
 import './tailwind.css';
 // CSS-темы адаптеров: @theme-блоки внутри обрабатываются глобально.
-import '@idf/adapter-shadcn/styles.css';
-import '@idf/adapter-apple/styles.css';
+import '@intent-driven/adapter-shadcn/styles.css';
+import '@intent-driven/adapter-apple/styles.css';
 
 function Root() {
   return (

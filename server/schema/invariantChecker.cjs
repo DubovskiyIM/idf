@@ -1,8 +1,8 @@
 /**
- * @idf/core re-export (v0.2.0).
+ * @intent-driven/core re-export (v0.2.0).
  * Реализация в SDK: packages/core/src/invariants/index.js.
  *
  * Удалённые локальные handler-файлы (invariants/*.cjs) — в SDK.
  */
-const { checkInvariants, registerKind, KIND_HANDLERS } = require("@idf/core");
+const { checkInvariants, registerKind, KIND_HANDLERS } = require("@intent-driven/core");
 module.exports = { checkInvariants, registerKind, KIND_HANDLERS };
