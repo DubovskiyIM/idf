@@ -241,7 +241,7 @@
 <section class="hero">
   <canvas id="particleCanvas"></canvas>
   <div class="hero-inner">
-    <div class="badge"><span class="pulse"></span>Стандарт v1.0&nbsp;&middot;&nbsp;Референсная реализация v1.6.2&nbsp;&middot;&nbsp;@idf/core v0.2&nbsp;&middot;&nbsp;<a href="./index.html" style="color:inherit;text-decoration:underline;text-underline-offset:3px">EN</a></div>
+    <div class="badge"><span class="pulse"></span>Стандарт v1.0&nbsp;&middot;&nbsp;Референсная реализация v1.7&nbsp;&middot;&nbsp;@idf/core v0.2&nbsp;&middot;&nbsp;<a href="./index.html" style="color:inherit;text-decoration:underline;text-underline-offset:3px">EN</a></div>
     <h1>Один артефакт.<br><span class="line2">Четыре материализации.</span></h1>
     <p class="sub">Формальная система, которая выводит приложение из того, <em style="font-style:normal;color:var(--text)">зачем люди к вам приходят</em>. Пиксели, голос, API для агентов и документ — рендерятся из одной интент-модели.</p>
     <div class="ctas">
@@ -269,7 +269,7 @@
       <div class="pcell rv rv-d2"><div class="pcell-glow" style="background:var(--purple)"></div><div class="sym" style="color:var(--purple)">F</div><h3>Эффекты</h3><p>Что станет правдой? Единственная субстанция состояния. Add, replace, remove, batch.</p></div>
       <div class="pcell rv rv-d3"><div class="pcell-glow" style="background:var(--cyan)"></div><div class="sym" style="color:var(--cyan)">W</div><h3>Свидетельства</h3><p>Что нужно знать актору для решения? Человекочитаемый дуал условий.</p></div>
       <div class="pcell rv rv-d1"><div class="pcell-glow" style="background:var(--green)"></div><div class="sym" style="color:var(--green)">P</div><h3>Подтверждение</h3><p>Что система должна получить обратно? Клик, текст, форма или кастомный виджет.</p></div>
-      <div class="pcell rv rv-d2" style="grid-column:span 2"><div class="pcell-glow" style="background:var(--yellow)"></div><div class="sym" style="color:var(--yellow)">&rarr;</div><h3>Принцип максимальной деривации</h3><p>Если структура выводима из намерений и онтологии &mdash; она не вход системы, а производный артефакт. Проекции, алгебра связей, четыре материализации, агентские схемы, аудит-отчёты &mdash; всё выводится. 78% экранов возникают автоматически на 8 доменах.</p></div>
+      <div class="pcell rv rv-d2" style="grid-column:span 2"><div class="pcell-glow" style="background:var(--yellow)"></div><div class="sym" style="color:var(--yellow)">&rarr;</div><h3>Принцип максимальной деривации</h3><p>Если структура выводима из намерений и онтологии &mdash; она не вход системы, а производный артефакт. Проекции, алгебра связей, четыре материализации, агентские схемы, аудит-отчёты &mdash; всё выводится. 78% экранов возникают автоматически на 9 доменах.</p></div>
     </div>
   </div>
 </section>
@@ -277,9 +277,9 @@
 <!-- ===== COUNTERS (v1.6.2) ===== -->
 <div class="container rv">
   <div class="counters">
-    <div class="ctr"><div class="ctr-bg"></div><div class="v" data-target="8">0</div><div class="l">доменов</div></div>
-    <div class="ctr"><div class="ctr-bg"></div><div class="v" data-target="527">0</div><div class="l">намерений</div></div>
-    <div class="ctr"><div class="ctr-bg"></div><div class="v" data-target="402">0</div><div class="l">тестов</div></div>
+    <div class="ctr"><div class="ctr-bg"></div><div class="v" data-target="9">0</div><div class="l">доменов</div></div>
+    <div class="ctr"><div class="ctr-bg"></div><div class="v" data-target="572">0</div><div class="l">намерений</div></div>
+    <div class="ctr"><div class="ctr-bg"></div><div class="v" data-target="426">0</div><div class="l">тестов</div></div>
     <div class="ctr"><div class="ctr-bg"></div><div class="v" data-target="4">0</div><div class="l">UI-адаптера</div></div>
     <div class="ctr"><div class="ctr-bg"></div><div class="v" data-target="78" data-suffix="%">0</div><div class="l">выводится</div></div>
   </div>
@@ -404,7 +404,7 @@
   <div class="container rv">
     <div class="stag">Скорость и токеномика</div>
     <div class="stitle">Часы вместо недель. Копейки вместо тысяч.</div>
-    <div class="sdesc">Замеры на 8 доменах production-масштаба. Чем больше домен, тем больше рычаг: декларативная онтология сжимает время разработки в&nbsp;30&times;, стоимость LLM при этом почти не растёт.</div>
+    <div class="sdesc">Замеры на 9 доменах production-масштаба. Чем больше домен, тем больше рычаг: декларативная онтология сжимает время разработки в&nbsp;30&times;, стоимость LLM при этом почти не растёт.</div>
     <div class="metric-grid">
 
       <div class="metric glass rv rv-d1">
@@ -412,11 +412,12 @@
         <table>
           <tr><td>Booking &middot; 21 намерение</td><td><span class="strike">~3 дня</span><span class="accent">2&#x2009;часа</span></td></tr>
           <tr><td>Reflect &middot; 47 намерений</td><td><span class="strike">~5 дней</span><span class="accent">~3&#x2009;часа</span></td></tr>
-          <tr><td>Invest &middot; 46 + закрыто 6 §26</td><td><span class="strike">~10 дней</span><span class="accent">1&#x2009;день</span></td></tr>
-          <tr><td>Sales &middot; 225 (без ManualUI)</td><td><span class="strike">~3 недели</span><span class="accent">~5&#x2009;часов</span></td></tr>
+          <tr><td>Invest &middot; 49 + закрыто 6 §26</td><td><span class="strike">~10 дней</span><span class="accent">1&#x2009;день</span></td></tr>
+          <tr><td>Delivery &middot; 45 + 3 paradigm additions</td><td><span class="strike">~2 недели</span><span class="accent">~1&#x2009;день</span></td></tr>
+          <tr><td>Sales &middot; 223 (без ManualUI)</td><td><span class="strike">~3 недели</span><span class="accent">~5&#x2009;часов</span></td></tr>
           <tr><td>Бойлерплейт на домен</td><td><span class="strike">~700 LOC</span><span class="green">~280 LOC</span></td></tr>
         </table>
-        <div class="legend">Базлайн прототипа v1.6.2. С <code style="color:var(--accent-bright)">idf init &lt;domain&gt;</code> CLI (планируется в v0.3): &lt;&nbsp;10&nbsp;минут на scaffold + 80% сгенерировано.</div>
+        <div class="legend">Базлайн прототипа v1.7. С <code style="color:var(--accent-bright)">idf init &lt;domain&gt;</code> CLI (планируется в v0.3): &lt;&nbsp;10&nbsp;минут на scaffold + 80% сгенерировано.</div>
       </div>
 
       <div class="metric glass rv rv-d2">
@@ -453,17 +454,18 @@
 <section>
   <div class="container rv">
     <div class="stag">Проверено полевыми тестами</div>
-    <div class="stitle">8 доменов. 527 намерений. Ноль критических блокеров.</div>
+    <div class="stitle">9 доменов. 572 намерения. Ноль критических блокеров.</div>
     <div class="sdesc">Каждый домен проверяет парадигму на разной форме задачи. Кристаллизатор собирает их все исключительно из декларации.</div>
     <div class="domains">
-      <div class="dcard glass rv rv-d1"><div class="cn">225</div><div class="dn">Sales</div><div class="dd">Аукционная барахолка. 10 сущностей, 4 роли, полный жизненный цикл заказа. Без&nbsp;ManualUI.</div></div>
-      <div class="dcard glass rv rv-d2"><div class="cn">100</div><div class="dn">Messenger</div><div class="dd">Чат реального времени. WebSocket, WebRTC, треды, реакции.</div></div>
+      <div class="dcard glass rv rv-d1"><div class="cn">223</div><div class="dn">Sales</div><div class="dd">Аукционная барахолка. 10 сущностей, 4 роли, полный жизненный цикл заказа. Без&nbsp;ManualUI.</div></div>
+      <div class="dcard glass rv rv-d2"><div class="cn">99</div><div class="dn">Messenger</div><div class="dd">Чат реального времени. WebSocket, WebRTC, треды, реакции.</div></div>
       <div class="dcard glass rv rv-d3"><div class="cn">56</div><div class="dn">LifeQuest</div><div class="dd">Цели и привычки. Mobile-first, doodle-стилистика, 6 custom canvas.</div></div>
-      <div class="dcard glass rv rv-d4"><div class="cn">47</div><div class="dn">Reflect</div><div class="dd">Дневник эмоций по Yale&nbsp;RULER. Apple visionOS-glass, аналитические canvas.</div></div>
-      <div class="dcard glass rv rv-d1"><div class="cn">46</div><div class="dn">Invest</div><div class="dd">Личные инвестиции + робо-эдвайзер. m2m советник, observer, регуляторные выгрузки.</div></div>
-      <div class="dcard glass rv rv-d2"><div class="cn">21</div><div class="dn">Booking</div><div class="dd">Бронирование услуг. Временные слоты, темпоральные предикаты, календарный wizard.</div></div>
-      <div class="dcard glass rv rv-d3"><div class="cn">17</div><div class="dn">Planning</div><div class="dd">Коллективные опросы. Голосование, кворум, дедлайны.</div></div>
-      <div class="dcard glass rv rv-d4"><div class="cn">15</div><div class="dn">Workflow</div><div class="dd">Визуальный редактор процессов. Canvas, серверный исполнитель.</div></div>
+      <div class="dcard glass rv rv-d4"><div class="cn">49</div><div class="dn">Invest</div><div class="dd">Личные инвестиции + робо-эдвайзер. m2m советник, observer, регуляторные выгрузки.</div></div>
+      <div class="dcard glass rv rv-d1"><div class="cn">47</div><div class="dn">Reflect</div><div class="dd">Дневник эмоций по Yale&nbsp;RULER. Apple visionOS-glass, аналитические canvas.</div></div>
+      <div class="dcard glass rv rv-d2"><div class="cn">45</div><div class="dn">Delivery</div><div class="dd">Food last-mile. 5 ролей, темпоральный scheduler, map-primitive, необратимость платежа.</div></div>
+      <div class="dcard glass rv rv-d3"><div class="cn">21</div><div class="dn">Booking</div><div class="dd">Бронирование услуг. Временные слоты, темпоральные предикаты, календарный wizard.</div></div>
+      <div class="dcard glass rv rv-d4"><div class="cn">17</div><div class="dn">Planning</div><div class="dd">Коллективные опросы. Голосование, кворум, дедлайны.</div></div>
+      <div class="dcard glass rv rv-d1"><div class="cn">15</div><div class="dn">Workflow</div><div class="dd">Визуальный редактор процессов. Canvas, серверный исполнитель.</div></div>
     </div>
   </div>
 </section>
@@ -481,7 +483,7 @@
 <footer>
   <div class="logo">IDF</div>
   <p>Спецификация v1.0 &copy; 2026 IDF Authors &mdash; CC BY 4.0</p>
-  <p>Референсная реализация v1.6.2 &mdash; MIT &middot; @idf/core v0.2</p>
+  <p>Референсная реализация v1.7 &mdash; MIT &middot; @idf/core v0.2</p>
   <div class="flinks">
     <a href="https://github.com/ignatdubovskiy/idf/blob/main/spec/idf-v1.0-part1-core.md">Спецификация</a>
     <a href="https://github.com/ignatdubovskiy/idf/tree/main/packages/core">@idf/core</a>
