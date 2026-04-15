@@ -1,13 +1,13 @@
 #!/usr/bin/env node
 /**
- * Meshok walkthrough — полный демо-сценарий аукциона.
+ * Sales walkthrough — полный демо-сценарий аукциона.
  *
  * Предпосылки:
  *   1. Сервер запущен: npm run server
- *   2. Клиент подключался: npm run dev + открыть /meshok (POST ontology+intents)
+ *   2. Клиент подключался: npm run dev + открыть /sales (POST ontology+intents)
  *
  * Запуск:
- *   npm run meshok-demo
+ *   npm run sales-demo
  *
  * Сценарий: регистрация продавца и покупателя → создание лота → публикация →
  * ставки → «купить сейчас» → оплата → подтверждение ��оставки → отзыв → сообщение.
@@ -52,7 +52,7 @@ function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
 // ============================================================
 
 async function main() {
-  console.log("🏪 Meshok Walkthrough — полный демо аукциона\n");
+  console.log("🏪 Sales Walkthrough — полный демо аукциона\n");
 
   // --- 1. Регистрация продавца ---
   log("Регистрация продавца");
@@ -75,15 +75,15 @@ async function main() {
   ok(`Покупатель: ${buyerId}`);
 
   // --- 3. Проверяем agent schema ---
-  log("Проверяем agent schema для meshok");
-  const schema = await get("/api/agent/meshok/schema", sellerToken);
+  log("Проверяем agent schema для sales");
+  const schema = await get("/api/agent/sales/schema", sellerToken);
   assert(schema.status === 200, `Schema: ${schema.status}`, schema.body);
   const intentIds = Object.keys(schema.body.intents || {});
   ok(`${intentIds.length} интентов в schema`);
 
   // --- 4. Продавец создаёт лот ---
   log("Продавец создаёт лот");
-  const createRes = await post("/api/agent/meshok/exec", {
+  const createRes = await post("/api/agent/sales/exec", {
     intentId: "create_listing",
     params: {
       title: "Vintage Fender Stratocaster 1962",
@@ -100,7 +100,7 @@ async function main() {
 
   // Найти ID лота из эффектов
   await sleep(300);
-  const world1 = await get("/api/agent/meshok/world", sellerToken);
+  const world1 = await get("/api/agent/sales/world", sellerToken);
   const listings = world1.body.listings || [];
   const myLot = listings.find(l => l.title?.includes("Fender") && l.sellerId === sellerId);
   assert(myLot, "Лот найден в world", { listingsCount: listings.length });
@@ -108,7 +108,7 @@ async function main() {
 
   // --- 5. Продавец публикует лот ---
   log("Продавец публикует лот");
-  const pubRes = await post("/api/agent/meshok/exec", {
+  const pubRes = await post("/api/agent/sales/exec", {
     intentId: "publish_listing",
     params: { listingId: myLot.id }
   }, sellerToken);
@@ -119,7 +119,7 @@ async function main() {
 
   // --- 6. Покупатель делает ставку ---
   log("Покупатель делает ставку 360 000₽");
-  const bid1Res = await post("/api/agent/meshok/exec", {
+  const bid1Res = await post("/api/agent/sales/exec", {
     intentId: "place_bid",
     params: { listingId: myLot.id, amount: 360000 }
   }, buyerToken);
@@ -129,7 +129,7 @@ async function main() {
   // --- 7. Покупатель делает вторую ставку (перебивает себя) ---
   log("Покупатель повышает ставку до 380 000₽");
   await sleep(300);
-  const bid2Res = await post("/api/agent/meshok/exec", {
+  const bid2Res = await post("/api/agent/sales/exec", {
     intentId: "place_bid",
     params: { listingId: myLot.id, amount: 380000 }
   }, buyerToken);
@@ -139,7 +139,7 @@ async function main() {
   // --- 8. Проверяем текущую цену ---
   log("Проверяем текущую цену лота");
   await sleep(300);
-  const world2 = await get("/api/agent/meshok/world", buyerToken);
+  const world2 = await get("/api/agent/sales/world", buyerToken);
   const updatedLot = (world2.body.listings || []).find(l => l.id === myLot.id);
   assert(updatedLot, "Лот найден");
   ok(`Текущая цена: ${updatedLot.currentPrice}₽, ставок: ${updatedLot.bidCount}`);
@@ -150,7 +150,7 @@ async function main() {
   if (!seedLot) {
     ok("⚠ Нет seed-лота с buyNowPrice — пропускаем buy_now + order flow");
   } else {
-    const buyRes = await post("/api/agent/meshok/exec", {
+    const buyRes = await post("/api/agent/sales/exec", {
       intentId: "buy_now",
       params: { listingId: seedLot.id }
     }, buyerToken);
@@ -161,12 +161,12 @@ async function main() {
 
     // --- 10. Оплата заказа ---
     log("Покупатель оплачивает заказ");
-    const world3 = await get("/api/agent/meshok/world", buyerToken);
+    const world3 = await get("/api/agent/sales/world", buyerToken);
     const order = (world3.body.orders || []).find(o => o.listingId === seedLot.id && o.buyerId === buyerId);
     assert(order, "Заказ найден", { orders: world3.body.orders?.length });
     ok(`Заказ: ${order.id}, сумма: ${order.totalAmount}₽, статус: ${order.status}`);
 
-    const payRes = await post("/api/agent/meshok/exec", {
+    const payRes = await post("/api/agent/sales/exec", {
       intentId: "pay_order",
       params: { orderId: order.id }
     }, buyerToken);
@@ -181,7 +181,7 @@ async function main() {
 
     // --- 12. Сообщение продавцу ---
     log("Покупатель пишет сообщение продавцу");
-    const msgRes = await post("/api/agent/meshok/exec", {
+    const msgRes = await post("/api/agent/sales/exec", {
       intentId: "send_message",
       params: {
         recipientId: seedLot.sellerId,
@@ -196,9 +196,9 @@ async function main() {
   // --- Итоговая статистика ---
   log("Итоговая статистика");
   await sleep(300);
-  const finalWorld = await get("/api/agent/meshok/world", buyerToken);
+  const finalWorld = await get("/api/agent/sales/world", buyerToken);
   const w = finalWorld.body;
-  console.log(`\n📊 Мир meshok:`);
+  console.log(`\n📊 Мир sales:`);
   console.log(`   Лоты: ${(w.listings || []).length}`);
   console.log(`   Ставки: ${(w.bids || []).length}`);
   console.log(`   Заказы: ${(w.orders || []).length}`);

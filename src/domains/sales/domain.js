@@ -5,8 +5,8 @@ export { PROJECTIONS, ROOT_PROJECTIONS } from "./projections.js";
 export { ONTOLOGY } from "./ontology.js";
 import { INTENTS } from "./intents.js";
 
-export const DOMAIN_ID = "meshok";
-export const DOMAIN_NAME = "Мешок";
+export const DOMAIN_ID = "sales";
+export const DOMAIN_NAME = "Sales";
 
 const ts = () => new Date().toLocaleTimeString("ru", { hour: "2-digit", minute: "2-digit", second: "2-digit", fractionalSecondDigits: 2 });
 
@@ -251,19 +251,19 @@ export function getSeedEffects() {
 
   // Тестовые пользователи (seed в Φ, чтобы sellerId резолвился)
   add("users", {
-    id: "user_demo", name: "Иван Продавцов", email: "demo@meshok.ru",
+    id: "user_demo", name: "Иван Продавцов", email: "demo@sales.ru",
     avatar: null, bio: "Продаю качественные вещи с 2020 года.",
     rating: 4.8, salesCount: 47, location: "Москва",
     verified: true, registeredAt: now - 365 * 86400000,
   });
   add("users", {
-    id: "user_other", name: "Мария Торгова", email: "maria@meshok.ru",
+    id: "user_other", name: "Мария Торгова", email: "maria@sales.ru",
     avatar: null, bio: "Домашний уют и стиль.",
     rating: 4.5, salesCount: 23, location: "Санкт-Петербург",
     verified: true, registeredAt: now - 200 * 86400000,
   });
   add("users", {
-    id: "user_buyer", name: "Алексей Покупайкин", email: "buyer@meshok.ru",
+    id: "user_buyer", name: "Алексей Покупайкин", email: "buyer@sales.ru",
     avatar: null, bio: "Коллекционер и охотник за скидками.",
     rating: 4.9, salesCount: 0, location: "Екатеринбург",
     verified: false, registeredAt: now - 30 * 86400000,

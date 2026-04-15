@@ -20,7 +20,7 @@ UI — это пересечение двух структур: **проекци
 
 | Домен | Намерений | Сущностей | Описание |
 |-------|-----------|-----------|----------|
-| **Meshok** | 225 | 11 | Аукционная барахолка (eBay-style): лоты, ставки, заказы, споры, отзывы |
+| **Sales** | 225 | 11 | Аукционная барахолка (eBay-style): лоты, ставки, заказы, споры, отзывы |
 | **Messenger** | 100 | 6 | Мессенджер с WebSocket, WebRTC-звонками, групповыми чатами |
 | **LifeQuest** | 56 | 10 | Цели + привычки + геймификация (боевой домен), shadcn/doodle стилистика, 6 custom canvas |
 | **Reflect** | 47 | 10 | Дневник эмоций по Yale RULER (Mood Meter), Apple visionOS-glass, 6 analytical canvas |
@@ -34,7 +34,7 @@ UI — это пересечение двух структур: **проекци
 
 | Адаптер | Стиль | Дефолт для |
 |---------|-------|-----------|
-| **Mantine** | Corporate / data-dense | booking, planning, workflow, messenger, meshok |
+| **Mantine** | Corporate / data-dense | booking, planning, workflow, messenger, sales |
 | **shadcn/ui (Doodle)** | Handcrafted / sketch | lifequest |
 | **Apple visionOS-glass** | Premium / minimal frosted glass | reflect |
 
@@ -86,7 +86,7 @@ npm run dev       # :5173 — Vite dev server
 | Маршрут | Описание |
 |---------|----------|
 | `/` | IDF-каркас: панели определений, поток Φ, граф причинности |
-| `/meshok` | Аукцион (dashboard + catalog + detail + form) |
+| `/sales` | Аукцион (dashboard + catalog + detail + form) |
 | `/messenger-v2` | Мессенджер (feed + catalog + detail) |
 | `/lifequest` | Цели + привычки + геймификация (Doodle стиль, mobile-first) |
 | `/reflect` | Дневник эмоций (Mood Meter + analytics, Apple visionOS-glass) |
@@ -100,7 +100,7 @@ npm run dev       # :5173 — Vite dev server
 npm test              # 541 unit-тест
 npm run build         # production-сборка
 npm run agent-smoke   # 71-шаговый integration test агентского слоя (8 доменов)
-npm run meshok-demo   # демо-сценарий аукциона (12 шагов)
+npm run sales-demo   # демо-сценарий аукциона (12 шагов)
 npm run crystallize-llm  # LLM enrichment (требует ANTHROPIC_API_KEY)
 ```
 

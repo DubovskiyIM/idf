@@ -194,12 +194,12 @@ describe("getDomainByIntentId", () => {
   beforeEach(() => {
     for (const key of Object.keys(_registry)) delete _registry[key];
     registerIntents({ vote_yes: { name: "Vote Yes", particles: { conditions: [] } } }, "planning");
-    registerIntents({ place_bid: { name: "Place Bid", particles: { conditions: [] } } }, "meshok");
+    registerIntents({ place_bid: { name: "Place Bid", particles: { conditions: [] } } }, "sales");
   });
 
   it("находит домен по intent_id", () => {
     expect(getDomainByIntentId("vote_yes")).toBe("planning");
-    expect(getDomainByIntentId("place_bid")).toBe("meshok");
+    expect(getDomainByIntentId("place_bid")).toBe("sales");
   });
 
   it("возвращает null для неизвестного intent_id", () => {

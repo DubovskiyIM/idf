@@ -194,7 +194,7 @@ export const PROJECTIONS = {
     sort: "-createdAt",
     witnesses: ["query", "minPrice", "maxPrice", "notifyOnNew"],
   },
-  meshok_home: {
+  sales_home: {
     name: "Главная",
     kind: "dashboard",
     query: "сводка активности",
@@ -209,7 +209,7 @@ export const PROJECTIONS = {
 
 export const ROOT_PROJECTIONS = [
   { section: "Главная", icon: "🏠", items: [
-    "meshok_home",
+    "sales_home",
   ]},
   { section: "Покупаю", icon: "🛒", items: [
     "listing_feed", "my_bids", "watchlist", "saved_searches",

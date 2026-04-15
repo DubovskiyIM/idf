@@ -15,7 +15,7 @@ import * as bookingDomain from "./domains/booking/domain.js";
 import * as planningDomain from "./domains/planning/domain.js";
 import * as workflowDomain from "./domains/workflow/domain.js";
 import * as messengerDomain from "./domains/messenger/domain.js";
-import * as meshokDomain from "./domains/meshok/domain.js";
+import * as salesDomain from "./domains/sales/domain.js";
 import * as lifequestDomain from "./domains/lifequest/domain.js";
 import * as reflectDomain from "./domains/reflect/domain.js";
 import * as investDomain from "./domains/invest/domain.js";
@@ -111,7 +111,7 @@ const DOMAINS_RAW = {
   planning: planningDomain,
   workflow: workflowDomain,
   messenger: messengerDomain,
-  meshok: meshokDomain,
+  sales: salesDomain,
   lifequest: lifequestDomain,
   reflect: reflectDomain,
   invest: investDomain,
@@ -125,7 +125,7 @@ const DOMAIN_TITLES = {
   workflow: "⚡ Workflow",
   messenger: "💬 Мессенджер",
   "messenger-v2": "💬 Мессенджер",
-  meshok: "🎒 Мешок",
+  sales: "🛒 Sales",
   lifequest: "📓 LifeQuest",
   reflect: "🌀 Reflect",
   invest: "💼 Invest",
@@ -139,7 +139,7 @@ const DOMAINS = {
   workflow: { ...workflowDomain, UI: WorkflowUI },
   messenger: { ...messengerDomain, UI: MessengerUI },
   "messenger-v2": { ...messengerDomain, UI: MessengerV2UI },
-  meshok: { ...meshokDomain, UI: makeV2UI("meshok") },
+  sales: { ...salesDomain, UI: makeV2UI("sales") },
   lifequest: { ...lifequestDomain, UI: makeV2UI("lifequest") },
   reflect: { ...reflectDomain, UI: makeV2UI("reflect") },
   invest: { ...investDomain, UI: makeV2UI("invest") },

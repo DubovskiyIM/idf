@@ -10,7 +10,7 @@ import * as bookingDomain from "./domains/booking/domain.js";
 import * as planningDomain from "./domains/planning/domain.js";
 import * as workflowDomain from "./domains/workflow/domain.js";
 import * as messengerDomain from "./domains/messenger/domain.js";
-import * as meshokDomain from "./domains/meshok/domain.js";
+import * as salesDomain from "./domains/sales/domain.js";
 import * as lifequestDomain from "./domains/lifequest/domain.js";
 import * as reflectDomain from "./domains/reflect/domain.js";
 import * as deliveryDomain from "./domains/delivery/domain.js";
@@ -39,7 +39,7 @@ const DOMAINS = {
   planning: { ...planningDomain, UI: PlanningUI },
   workflow: { ...workflowDomain, UI: WorkflowUI },
   messenger: { ...messengerDomain, UI: MessengerUI },
-  meshok: meshokDomain,
+  sales: salesDomain,
   lifequest: lifequestDomain,
   reflect: reflectDomain,
   delivery: deliveryDomain,

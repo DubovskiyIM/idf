@@ -129,7 +129,7 @@ describe("все 8 доменов аннотированы", async () => {
     ["planning",  (await import("../../src/domains/planning/ontology.js")).ONTOLOGY],
     ["workflow",  (await import("../../src/domains/workflow/ontology.js")).ONTOLOGY],
     ["messenger", (await import("../../src/domains/messenger/ontology.js")).ONTOLOGY],
-    ["meshok",    (await import("../../src/domains/meshok/ontology.js")).ONTOLOGY],
+    ["sales",    (await import("../../src/domains/sales/ontology.js")).ONTOLOGY],
     ["lifequest", (await import("../../src/domains/lifequest/ontology.js")).ONTOLOGY],
     ["reflect",   (await import("../../src/domains/reflect/ontology.js")).ONTOLOGY],
     ["invest",    (await import("../../src/domains/invest/ontology.js")).ONTOLOGY],
@@ -174,7 +174,7 @@ describe("все 8 доменов аннотированы", async () => {
       agent: ["agent"],
       observer: ["observer"],
     });
-    expect(summary.meshok).toEqual({
+    expect(summary.sales).toEqual({
       owner: ["buyer", "seller"],
       agent: ["moderator", "agent"],
     });

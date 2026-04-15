@@ -23,7 +23,7 @@ function Root() {
           <Route path="/planning" element={<StandaloneApp domainId="planning" />} />
           <Route path="/planning-v2" element={<StandaloneApp domainId="planning-v2" />} />
           <Route path="/workflow" element={<StandaloneApp domainId="workflow" />} />
-          <Route path="/meshok" element={<StandaloneApp domainId="meshok" />} />
+          <Route path="/sales" element={<StandaloneApp domainId="sales" />} />
           <Route path="/lifequest" element={<StandaloneApp domainId="lifequest" />} />
           <Route path="/reflect" element={<StandaloneApp domainId="reflect" />} />
           <Route path="/invest" element={<StandaloneApp domainId="invest" />} />

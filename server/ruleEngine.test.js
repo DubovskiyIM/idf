@@ -242,19 +242,19 @@ describe("evaluateRules — real domain intents", () => {
           witnesses: [], confirmation: "click"
         }
       },
-    }, "meshok");
+    }, "sales");
   });
 
   const planningOntology = {
     rules: [{ id: "quorum_autoclose", trigger: "vote_*", action: "close_poll", context: { id: "effect.pollId" } }]
   };
-  const meshokOntology = {
+  const salesOntology = {
     rules: [{ id: "delivery_autocomplete", trigger: "confirm_delivery", action: "complete_order", context: { id: "effect.id" } }]
   };
 
   const realDeps = {
     getDomainByIntentId: realGetDomain,
-    getOntology: (d) => d === "planning" ? planningOntology : d === "meshok" ? meshokOntology : null,
+    getOntology: (d) => d === "planning" ? planningOntology : d === "sales" ? salesOntology : null,
     validateIntentConditions: realValidate,
     getIntent: realGetIntent,
   };
@@ -290,7 +290,7 @@ describe("evaluateRules — real domain intents", () => {
     expect(result).toHaveLength(0);
   });
 
-  it("meshok: confirm_delivery + delivered → complete_order", () => {
+  it("sales: confirm_delivery + delivered → complete_order", () => {
     const stored = { intent_id: "confirm_delivery", context: { id: "O1" } };
     const world = {
       orders: [{ id: "O1", status: "delivered" }],

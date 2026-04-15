@@ -1,7 +1,7 @@
 /**
- * Серверный builder эффектов для agent-разрешённых meshok-intent'ов.
+ * Серверный builder эффектов для agent-разрешённых sales-intent'ов.
  *
- * Зеркалит client-side src/domains/meshok/domain.js::buildEffects, но
+ * Зеркалит client-side src/domains/sales/domain.js::buildEffects, но
  * только для 8 intent'ов из roles.agent.canExecute (search_listings — read-only,
  * не нуждается в buildEffects). Принимает (intentId, params, viewer, world),
  * возвращает массив effect-объектов или null.
@@ -28,7 +28,7 @@ function makeEffect(intentId, props) {
   };
 }
 
-function buildMeshokEffects(intentId, params, viewer, world) {
+function buildSalesEffects(intentId, params, viewer, world) {
   const now = Date.now();
 
   switch (intentId) {
@@ -182,4 +182,4 @@ function buildMeshokEffects(intentId, params, viewer, world) {
   }
 }
 
-module.exports = { buildMeshokEffects };
+module.exports = { buildSalesEffects };

@@ -30,7 +30,7 @@ const domains = {
   planning: () => import("../src/domains/planning/domain.js"),
   workflow: () => import("../src/domains/workflow/domain.js"),
   messenger: () => import("../src/domains/messenger/domain.js"),
-  meshok: () => import("../src/domains/meshok/domain.js"),
+  sales: () => import("../src/domains/sales/domain.js"),
 };
 
 const { crystallizeV2 } = await import("../src/runtime/crystallize_v2/index.js");

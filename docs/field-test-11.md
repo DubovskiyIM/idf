@@ -56,7 +56,7 @@
 
 ### Domain authoring как чистый template-follow
 
-Delivery-домен — **9-й в прототипе**, ~1700 LOC доменного кода (сравнимо с invest 1438). Авторинг по проверенному паттерну invest/meshok/reflect. Generic Effect Handler покрыл **41 из 45 intents** (~91%); специфика только для `place_order` (batch), `capture_payment` (irreversibility), `cancel_order` (compensating), `request_refund` (forward-correction).
+Delivery-домен — **9-й в прототипе**, ~1700 LOC доменного кода (сравнимо с invest 1438). Авторинг по проверенному паттерну invest/sales/reflect. Generic Effect Handler покрыл **41 из 45 intents** (~91%); специфика только для `place_order` (batch), `capture_payment` (irreversibility), `cancel_order` (compensating), `request_refund` (forward-correction).
 
 ### Внешняя граница §19 — 4-й подряд сценарий
 
@@ -151,8 +151,8 @@ v1.6 §26 содержал 5 основных open items:
 
 ## Результаты прототипирования
 
-- **9 доменов** (+ delivery): booking, planning, workflow, messenger, meshok, lifequest, reflect, invest, **delivery**
-- **527+ намерений** в прототипе (делаем учёт: messenger 100 + meshok 225 + lifequest 56 + reflect 47 + invest 46 + **delivery 45** + остальные ~50)
+- **9 доменов** (+ delivery): booking, planning, workflow, messenger, sales, lifequest, reflect, invest, **delivery**
+- **527+ намерений** в прототипе (делаем учёт: messenger 100 + sales 225 + lifequest 56 + reflect 47 + invest 46 + **delivery 45** + остальные ~50)
 - **424/424 server/* unit-тестов** (+60 от field-test 11)
 - **Пять UI-адаптеров-вариаций в использовании**: Mantine / shadcn / Apple / AntD + возможный 5-й для KDS (отложен, H3)
 - **Шесть паттернов внешней границы** §19: pull-sync / periodic-push-append / periodic-push-replace / request-response / async-state-machine / fire-and-forget

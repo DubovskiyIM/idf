@@ -78,7 +78,7 @@
   - planning: agent
   - workflow: agent
   - messenger: owner (self), viewer (contact), agent
-  - meshok: owner (buyer, seller), agent (moderator, agent)
+  - sales: owner (buyer, seller), agent (moderator, agent)
   - lifequest: agent
   - reflect: agent
   - invest: owner (investor, advisor), agent, observer
@@ -328,7 +328,7 @@
 
 ### Added
 
-- Agent layer для всех 5 доменов (workflow + messenger добавлены к booking/planning/meshok)
+- Agent layer для всех 5 доменов (workflow + messenger добавлены к booking/planning/sales)
 - Декларативные политики кворума (`closeWhen` / `absentVote`)
 - LLM enrichment pass (Claude API)
 - TypeScript типы ядра (`src/types/idf.d.ts`)
@@ -342,13 +342,13 @@
 
 ## v1.2 — 2026-04-13
 
-**8-й полевой тест: meshok (аукцион)**
+**8-й полевой тест: sales (аукцион)**
 
 ### Added
 
-- Домен `meshok` — 226 намерений, 10 сущностей, 4 роли (buyer/seller/moderator/agent)
+- Домен `sales` — 226 намерений, 10 сущностей, 4 роли (buyer/seller/moderator/agent)
 - Auto-close по кворуму (`checkQuorum`)
-- Agent layer для meshok
+- Agent layer для sales
 - Canvas + Dashboard архетипы (5-й и 6-й)
 - M5: удаление legacy v1 (-2111 LOC)
 - auth_users → Φ через `_user_register` dual-write

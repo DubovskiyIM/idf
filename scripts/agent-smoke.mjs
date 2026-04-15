@@ -431,48 +431,48 @@ async function main() {
   // MESHOK (steps 27-32)
   // ============================================================
 
-  log("27", "meshok: GET schema");
-  const meshokSchema = await get("/api/agent/meshok/schema", jwt);
-  assert(meshokSchema.status === 200, "27", `meshok schema ${meshokSchema.status}`);
-  ok("27", `meshok: ${Object.keys(meshokSchema.body.intents || {}).length} intents`);
+  log("27", "sales: GET schema");
+  const salesSchema = await get("/api/agent/sales/schema", jwt);
+  assert(salesSchema.status === 200, "27", `sales schema ${salesSchema.status}`);
+  ok("27", `sales: ${Object.keys(salesSchema.body.intents || {}).length} intents`);
 
-  log("28", "meshok: create_listing");
-  const createLot = await post("/api/agent/meshok/exec", {
+  log("28", "sales: create_listing");
+  const createLot = await post("/api/agent/sales/exec", {
     intentId: "create_listing",
     params: { title: "Smoke Test Item", startPrice: 1000, condition: "used" }
   }, jwt);
   assert(createLot.status === 200, "28", `create_listing ${createLot.status}`, createLot.body);
 
   await new Promise(r => setTimeout(r, 300));
-  const meshokWorld = await get("/api/agent/meshok/world", jwt);
-  const smokeLot = (meshokWorld.body.listings || []).find(l => l.title === "Smoke Test Item");
+  const salesWorld = await get("/api/agent/sales/world", jwt);
+  const smokeLot = (salesWorld.body.listings || []).find(l => l.title === "Smoke Test Item");
   assert(smokeLot, "28", "lot found in world");
 
-  log("29", "meshok: publish_listing");
-  const pubLot = await post("/api/agent/meshok/exec", {
+  log("29", "sales: publish_listing");
+  const pubLot = await post("/api/agent/sales/exec", {
     intentId: "publish_listing",
     params: { listingId: smokeLot.id }
   }, jwt);
   assert(pubLot.status === 200, "29", `publish ${pubLot.status}`, pubLot.body);
 
-  log("30", "meshok: place_bid");
+  log("30", "sales: place_bid");
   await new Promise(r => setTimeout(r, 300));
-  const bidResp = await post("/api/agent/meshok/exec", {
+  const bidResp = await post("/api/agent/sales/exec", {
     intentId: "place_bid",
     params: { listingId: smokeLot.id, amount: 1500 }
   }, jwt);
   assert(bidResp.status === 200, "30", `bid ${bidResp.status}`, bidResp.body);
 
-  log("31", "meshok: send_message");
-  const msgResp = await post("/api/agent/meshok/exec", {
+  log("31", "sales: send_message");
+  const msgResp = await post("/api/agent/sales/exec", {
     intentId: "send_message",
     params: { content: "Smoke test message", recipientId: smokeLot.sellerId }
   }, jwt);
   assert(msgResp.status === 200, "31", `message ${msgResp.status}`, msgResp.body);
 
-  log("32", "meshok: bid below price → null (rejected)");
+  log("32", "sales: bid below price → null (rejected)");
   await new Promise(r => setTimeout(r, 300));
-  const lowBid = await post("/api/agent/meshok/exec", {
+  const lowBid = await post("/api/agent/sales/exec", {
     intentId: "place_bid",
     params: { listingId: smokeLot.id, amount: 500 }
   }, jwt);
@@ -848,7 +848,7 @@ async function main() {
   assert(plain.includes("[system]"), "74", "plain содержит [system]");
   assert(plain.includes("[assistant]"), "74", "plain содержит [assistant]");
 
-  process.stdout.write("\n[smoke ✓] Все 74 шага прошли успешно (booking 13 + planning 13 + meshok 6 + workflow 5 + messenger 5 + lifequest 8 + reflect 8 + invest 10 preapproval + document 3 + voice 3)\n");
+  process.stdout.write("\n[smoke ✓] Все 74 шага прошли успешно (booking 13 + planning 13 + sales 6 + workflow 5 + messenger 5 + lifequest 8 + reflect 8 + invest 10 preapproval + document 3 + voice 3)\n");
 }
 
 main().catch(err => {

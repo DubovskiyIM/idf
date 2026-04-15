@@ -2,7 +2,7 @@
  * Invest domain — personal investing / робо-эдвайзер.
  *
  * Тонкий buildEffects: большинство намерений через Generic Effect Handler
- * (как в meshok). Специальные случаи: register, compute_risk_profile.
+ * (как в sales). Специальные случаи: register, compute_risk_profile.
  */
 
 import { v4 as uuid } from "uuid";
