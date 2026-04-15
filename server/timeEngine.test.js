@@ -205,3 +205,63 @@ describe("fireDue", () => {
     expect(fireIntents.map(e => e.intent_id)).toEqual(["earliest", "first"]);
   });
 });
+
+describe("fireDue — cron self-rescheduling", () => {
+  let q;
+  let emitted;
+
+  beforeEach(() => {
+    q = new TimerQueue();
+    emitted = [];
+  });
+
+  const deps = () => ({
+    ingestEffect: (ef) => emitted.push(ef),
+    foldWorld: () => ({}),
+  });
+
+  it("таймер с cronSchedule hint → после fire эмитит следующий schedule_timer", () => {
+    const now = new Date("2026-04-15T09:00:00Z").getTime();
+    q.insert({
+      id: "cron_tmr",
+      firesAt: now,
+      fireIntent: "daily_report",
+      fireParams: {},
+      cronSchedule: "daily:09:00",
+      triggerEventKey: "cron:test_domain:daily_report",
+      guard: null,
+    });
+    fireDue(q, now, deps());
+
+    // Ожидаем 3 effect: fireIntent + revoke_timer (witness) + новый schedule_timer на завтра
+    const fireIntents = emitted.filter(e => e.intent_id === "daily_report");
+    const revokes = emitted.filter(e => e.intent_id === "revoke_timer");
+    const schedules = emitted.filter(e => e.intent_id === "schedule_timer");
+
+    expect(fireIntents.length).toBe(1);
+    expect(revokes.length).toBe(1);
+    expect(schedules.length).toBe(1);
+
+    const nextCtx = schedules[0].context;
+    expect(nextCtx.cronSchedule).toBe("daily:09:00");
+    expect(nextCtx.fireIntent).toBe("daily_report");
+    // Следующий запуск — завтра 09:00 UTC
+    const nextDate = new Date(nextCtx.firesAt);
+    expect(nextDate.getUTCHours()).toBe(9);
+    expect(nextDate.getUTCDate()).toBe(16); // next day (2026-04-16)
+  });
+
+  it("таймер без cronSchedule — обычное firing без re-emit", () => {
+    q.insert({
+      id: "one_shot",
+      firesAt: 100,
+      fireIntent: "rule_cancel",
+      fireParams: {},
+      guard: null,
+    });
+    fireDue(q, 200, deps());
+
+    const schedules = emitted.filter(e => e.intent_id === "schedule_timer");
+    expect(schedules.length).toBe(0); // ничего не re-emit'ится
+  });
+});
