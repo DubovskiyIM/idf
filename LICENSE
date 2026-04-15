@@ -1,21 +1,76 @@
-MIT License
+Intent-Driven Frontend — многолицензионный репозиторий
+
+Этот репозиторий содержит материалы под тремя разными лицензиями,
+разделёнными по зонам ответственности:
+
+================================================================================
+ 1) СПЕЦИФИКАЦИЯ И КОНФОРМНОСТЬ — Apache License 2.0
+================================================================================
+
+Пути:
+  - spec/                   (формальная спецификация IDF)
+  - spec/conformance/       (conformance-тесты)
+  - spec/schemas/           (JSON schemas)
+  - docs/                   (манифест, field-test отчёты, design docs)
+
+Полный текст: spec/LICENSE и docs/LICENSE (идентичны, SPDX: Apache-2.0).
+
+Суть: спецификация открыта для любой реализации на любом языке. Permissive
+лицензия с явным patent grant. Распространение реализаций под другими
+лицензиями (включая commercial) не ограничено.
+
+================================================================================
+ 2) ЯДРО И КРИСТАЛЛИЗАТОР — Business Source License 1.1
+================================================================================
+
+Пути:
+  - @idf/core (в отдельном repo: https://github.com/ignatdubovskiy/idf-sdk)
+    └── packages/core/LICENSE  (BUSL-1.1, Change Date 2030-04-15,
+                                Change License Apache 2.0)
+
+Суть: некоммерческое + внутреннее производственное использование — свободно.
+Hosted SaaS / PaaS, где третьи лица строят приложения на @idf/core без
+собственной установки экземпляра — требует коммерческой лицензии. Через
+4 года (Change Date 2030-04-15) автоматически конвертируется в Apache 2.0.
+
+Ядро живёт в sibling-репозитории idf-sdk и не входит в этот репозиторий
+напрямую. Прототип использует его как npm-зависимость (@idf/core).
+
+================================================================================
+ 3) ПРОТОТИП, ДОМЕНЫ, ВСПОМОГАТЕЛЬНЫЕ СКРИПТЫ — MIT
+================================================================================
+
+Пути:
+  - src/                    (прототип хоста, 9 доменов, runtime glue)
+  - server/                 (Express + validator + ruleEngine + timeEngine +
+                             schema helpers для прототипа)
+  - scripts/                (agent-smoke, agent-login, delivery-seed)
+  - landing/                (index.html, index-ru.html, nginx conf, DEPLOY.md)
+  - courier-location-feed/  (внешний сервис demo)
+  - geocoder/               (внешний сервис demo)
+  - payment-gateway/        (внешний сервис demo)
+  - notification-gateway/   (внешний сервис demo)
+  - invest-ml/, invest-fuzzy/, market-data/  (внешние сервисы demo)
+  - external-calendar/      (внешний сервис demo)
+
+Полный текст: LICENSE-CODE (SPDX: MIT).
+
+Суть: permissive, free reuse без ограничений при сохранении copyright notice.
+
+================================================================================
+ Клиентские SDK пакеты — MIT (в sibling repo idf-sdk)
+================================================================================
+
+  - @idf/renderer, @idf/adapter-{mantine,shadcn,apple,antd}, @idf/canvas-kit
+
+Все клиентские пакеты MIT (см. их индивидуальные LICENSE файлы в
+idf-sdk/packages/*/). Примечание: они используют @idf/core как peer-dep,
+поэтому потребители транзитивно соглашаются с условиями BUSL-1.1 для ядра
+до Change Date 2030-04-15.
+
+================================================================================
 
 Copyright (c) 2026 Ignat Dubovsky
 
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in
-all copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-THE SOFTWARE.
+Вопросы по коммерческой лицензии ядра — через GitHub Issues или email
+указанный в package.json каждого пакета.
