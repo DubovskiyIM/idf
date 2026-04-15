@@ -130,29 +130,97 @@ server.listen(PORT, () => {
   console.log(`  GET  /api/effects/stream — SSE-стрим`);
 });
 
-// ─── Reactive Rules: schedule timer (v1.5) ───
-// Каждую минуту проверяем правила с schedule (daily/weekly).
-// Когда firing — генерируем эффект и пишем в БД.
-const { evaluateScheduledRules } = require("./ruleEngine.js");
-const { getAllOntologies } = require("./ontologyRegistry.cjs");
-const { getIntent } = require("./intents.js");
-const db = require("./db.js");
-const { ingestEffect } = require("./effect-pipeline.js");
+// ─── Темпоральный scheduler v2 (§4 спеки, Task 10 plan) ───
+{
+  const { TimerQueue, hydrateFromWorld, fireDue } = require("./timeEngine.js");
+  const { foldWorld } = require("./validator.js");
+  const { ingestEffect: ingest2 } = require("./effect-pipeline.js");
+  require("./systemIntents.cjs"); // регистрирует schedule_timer/revoke_timer в _system
 
-setInterval(async () => {
+  global.__timerQueue = new TimerQueue();
   try {
-    const results = evaluateScheduledRules(new Date(), {
-      getAllOntologies,
-      getIntent,
-      db,
-    });
-    for (const { effect } of results) {
-      await ingestEffect(effect, { broadcast: () => {}, delay: 0 });
-    }
-    if (results.length > 0) {
-      console.log(`[schedule] fired ${results.length} scheduled rule(s)`);
-    }
+    hydrateFromWorld(global.__timerQueue, foldWorld());
+    console.log(`  [timer] hydrated ${global.__timerQueue.size()} active timer(s) из Φ`);
   } catch (e) {
-    console.error("[schedule] error:", e);
+    console.error("  [timer] hydrate error:", e);
   }
-}, 60 * 1000);
+
+  const TIMER_TICK_MS = Number(process.env.IDF_TIMER_TICK_MS || 1000);
+  setInterval(() => {
+    try {
+      fireDue(global.__timerQueue, Date.now(), {
+        ingestEffect: (ef) => ingest2(ef, { broadcast: () => {}, delay: 0 }),
+        foldWorld,
+      });
+    } catch (e) {
+      console.error("[timer] tick error:", e);
+    }
+  }, TIMER_TICK_MS);
+}
+
+// ─── Cron-rules v1 → schedule v2 (self-rescheduling timers) ───
+// Старый формат "daily:09:00" / "weekly:sun:20:00" переводится на timeEngine:
+// при boot создаётся первый ScheduledTimer на next slot. Re-emission после
+// firing — honest border (см. §26 open items / Task 13 validation report):
+// для этого нужно либо системное правило на revoke_timer, либо спец-handler
+// в fireDue. В прототипе нет живых cron-rules, формальная миграция достаточна.
+//
+// Fallback: IDF_DISABLE_CRON_MIGRATION=1 оставляет старый polling.
+{
+  const db = require("./db.js");
+  const { ingestEffect } = require("./effect-pipeline.js");
+  const { getAllOntologies } = require("./ontologyRegistry.cjs");
+
+  if (process.env.IDF_DISABLE_CRON_MIGRATION === "1") {
+    // ── LEGACY path: старый 60s polling ──
+    const { evaluateScheduledRules } = require("./ruleEngine.js");
+    const { getIntent } = require("./intents.js");
+    setInterval(async () => {
+      try {
+        const results = evaluateScheduledRules(new Date(), { getAllOntologies, getIntent, db });
+        for (const { effect } of results) {
+          await ingestEffect(effect, { broadcast: () => {}, delay: 0 });
+        }
+        if (results.length > 0) console.log(`[schedule] fired ${results.length} scheduled rule(s)`);
+      } catch (e) {
+        console.error("[schedule] error:", e);
+      }
+    }, 60 * 1000);
+  } else {
+    // ── NEW path: cron → schedule_timer ──
+    const { cronToFirstFiresAt, parseSchedule } = require("./ruleEngine.js");
+    setTimeout(() => {
+      try {
+        const ontologies = getAllOntologies();
+        let migrated = 0;
+        for (const [domain, ont] of Object.entries(ontologies || {})) {
+          for (const rule of (ont?.rules || [])) {
+            if (!rule.schedule) continue;
+            const parsed = parseSchedule(rule.schedule);
+            const firesAt = cronToFirstFiresAt(parsed, Date.now());
+            if (firesAt == null) continue;
+            ingestEffect({
+              id: `cron_migr_${domain}_${rule.id}_${Date.now()}`,
+              intent_id: "schedule_timer",
+              alpha: "add",
+              target: "ScheduledTimer",
+              value: null,
+              scope: "account",
+              context: {
+                id: `cron_${domain}_${rule.id}`,
+                firesAt,
+                fireIntent: rule.action || rule.fireIntent,
+                triggerEventKey: `cron:${domain}:${rule.id}`,
+              },
+              created_at: Date.now(),
+            }, { broadcast: () => {}, delay: 0 });
+            migrated++;
+          }
+        }
+        if (migrated > 0) console.log(`  [cron-migration] перенесено ${migrated} cron-rule(s) на timeEngine`);
+      } catch (e) {
+        console.error("  [cron-migration] error:", e);
+      }
+    }, 1000);
+  }
+}

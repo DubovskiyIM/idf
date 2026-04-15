@@ -310,6 +310,129 @@ function evaluateScheduledRules(now, deps) {
   return results;
 }
 
+// ─── Schedule v2 (Task 7 plan) ───────────────────────────────────────────
+const { resolveFiresAt } = require("./scheduleV2.cjs");
+
+function resolveParams(params, payload) {
+  if (!params) return {};
+  const out = {};
+  for (const [k, v] of Object.entries(params)) {
+    if (typeof v === "string" && v.startsWith("$.")) {
+      const path = v.slice(2).split(".");
+      let cur = payload;
+      for (const p of path) cur = cur?.[p];
+      out[k] = cur;
+    } else {
+      out[k] = v;
+    }
+  }
+  return out;
+}
+
+function makeId(prefix) {
+  return `${prefix}_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+}
+
+function parseContext(c) {
+  if (c == null) return {};
+  if (typeof c !== "string") return c;
+  try { return JSON.parse(c); } catch { return {}; }
+}
+
+/**
+ * Cron → первый абсолютный firesAt.
+ * parsed: { period: "daily"|"weekly", day?, hour, minute }
+ * Возвращает timestamp (ms) следующего срабатывания cron-правила.
+ * Self-rescheduling после firing — honest border (§26 open items, Task 13).
+ */
+function cronToFirstFiresAt(parsed, nowMs) {
+  if (!parsed) return null;
+  const now = new Date(nowMs);
+  const target = new Date(now);
+  target.setUTCSeconds(0, 0);
+  target.setUTCHours(parsed.hour, parsed.minute);
+
+  if (parsed.period === "daily") {
+    if (target.getTime() <= nowMs) target.setUTCDate(target.getUTCDate() + 1);
+    return target.getTime();
+  }
+  if (parsed.period === "weekly") {
+    let daysAhead = (parsed.day - target.getUTCDay() + 7) % 7;
+    if (daysAhead === 0 && target.getTime() <= nowMs) daysAhead = 7;
+    target.setUTCDate(target.getUTCDate() + daysAhead);
+    return target.getTime();
+  }
+  return null;
+}
+
+/**
+ * Schedule v2 — для каждого подтверждённого effect'а:
+ *  1) Если rule.trigger == intent_id и (after|at) есть → emit schedule_timer
+ *  2) Если intent_id ∈ rule.revokeOn → emit revoke_timer для всех active
+ *     timers с triggerEventKey === `${rule.id}:${rule.trigger}`
+ */
+function evaluateScheduleV2(stored, deps) {
+  const { getRulesForDomain, getDomainByIntentId, ingestEffect, foldWorld, now } = deps;
+  const nowMs = now ? now() : Date.now();
+  const domain = getDomainByIntentId(stored.intent_id);
+  if (!domain) return;
+  const rules = getRulesForDomain(domain) || [];
+
+  const payload = parseContext(stored.context);
+
+  // 1) trigger match → schedule
+  for (const rule of rules) {
+    if (!matchTrigger(rule.trigger, stored.intent_id)) continue;
+    if (!rule.after && !rule.at) continue;
+    const firesAt = resolveFiresAt(rule, payload, nowMs);
+    if (firesAt == null) continue;
+    const fireParams = resolveParams(rule.params, payload);
+    const triggerEventKey = `${rule.id}:${rule.trigger}`;
+    const timerId = makeId("tmr");
+    ingestEffect({
+      id: makeId("eff"),
+      intent_id: "schedule_timer",
+      alpha: "add",
+      target: "ScheduledTimer",
+      value: null,
+      scope: "account",
+      parent_id: null,
+      context: {
+        id: timerId,
+        firesAt,
+        fireIntent: rule.fireIntent,
+        fireParams,
+        triggerEventKey,
+        revokeOnEvents: rule.revokeOn || [],
+        guard: rule.guard || null,
+      },
+      created_at: nowMs,
+    });
+  }
+
+  // 2) revokeOn match → revoke matching active timers
+  const world = foldWorld ? foldWorld() : {};
+  const activeTimers = (world.scheduledTimers || []).filter(t => t.active && t.firedAt == null);
+  for (const rule of rules) {
+    if (!rule.revokeOn || !rule.revokeOn.includes(stored.intent_id)) continue;
+    const triggerEventKey = `${rule.id}:${rule.trigger}`;
+    const matching = activeTimers.filter(t => t.triggerEventKey === triggerEventKey);
+    for (const t of matching) {
+      ingestEffect({
+        id: makeId("eff"),
+        intent_id: "revoke_timer",
+        alpha: "replace",
+        target: "ScheduledTimer",
+        value: null,
+        scope: "account",
+        parent_id: t.id,
+        context: { id: t.id, reason: "revokedByEvent", revokedBy: stored.intent_id },
+        created_at: nowMs,
+      });
+    }
+  }
+}
+
 module.exports = {
   matchTrigger,
   resolveContext,
@@ -323,4 +446,8 @@ module.exports = {
   evaluateRuleCondition,
   parseSchedule,
   shouldFireSchedule,
+  // Schedule v2
+  evaluateScheduleV2,
+  // Cron migration v1 → schedule v2 (Task 12)
+  cronToFirstFiresAt,
 };
