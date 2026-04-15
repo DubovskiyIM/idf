@@ -340,6 +340,32 @@ function parseContext(c) {
 }
 
 /**
+ * Cron → первый абсолютный firesAt.
+ * parsed: { period: "daily"|"weekly", day?, hour, minute }
+ * Возвращает timestamp (ms) следующего срабатывания cron-правила.
+ * Self-rescheduling после firing — honest border (§26 open items, Task 13).
+ */
+function cronToFirstFiresAt(parsed, nowMs) {
+  if (!parsed) return null;
+  const now = new Date(nowMs);
+  const target = new Date(now);
+  target.setUTCSeconds(0, 0);
+  target.setUTCHours(parsed.hour, parsed.minute);
+
+  if (parsed.period === "daily") {
+    if (target.getTime() <= nowMs) target.setUTCDate(target.getUTCDate() + 1);
+    return target.getTime();
+  }
+  if (parsed.period === "weekly") {
+    let daysAhead = (parsed.day - target.getUTCDay() + 7) % 7;
+    if (daysAhead === 0 && target.getTime() <= nowMs) daysAhead = 7;
+    target.setUTCDate(target.getUTCDate() + daysAhead);
+    return target.getTime();
+  }
+  return null;
+}
+
+/**
  * Schedule v2 — для каждого подтверждённого effect'а:
  *  1) Если rule.trigger == intent_id и (after|at) есть → emit schedule_timer
  *  2) Если intent_id ∈ rule.revokeOn → emit revoke_timer для всех active
@@ -422,4 +448,6 @@ module.exports = {
   shouldFireSchedule,
   // Schedule v2
   evaluateScheduleV2,
+  // Cron migration v1 → schedule v2 (Task 12)
+  cronToFirstFiresAt,
 };
