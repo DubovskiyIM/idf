@@ -130,6 +130,34 @@ server.listen(PORT, () => {
   console.log(`  GET  /api/effects/stream — SSE-стрим`);
 });
 
+// ─── Темпоральный scheduler v2 (§4 спеки, Task 10 plan) ───
+{
+  const { TimerQueue, hydrateFromWorld, fireDue } = require("./timeEngine.js");
+  const { foldWorld } = require("./validator.js");
+  const { ingestEffect: ingest2 } = require("./effect-pipeline.js");
+  require("./systemIntents.cjs"); // регистрирует schedule_timer/revoke_timer в _system
+
+  global.__timerQueue = new TimerQueue();
+  try {
+    hydrateFromWorld(global.__timerQueue, foldWorld());
+    console.log(`  [timer] hydrated ${global.__timerQueue.size()} active timer(s) из Φ`);
+  } catch (e) {
+    console.error("  [timer] hydrate error:", e);
+  }
+
+  const TIMER_TICK_MS = Number(process.env.IDF_TIMER_TICK_MS || 1000);
+  setInterval(() => {
+    try {
+      fireDue(global.__timerQueue, Date.now(), {
+        ingestEffect: (ef) => ingest2(ef, { broadcast: () => {}, delay: 0 }),
+        foldWorld,
+      });
+    } catch (e) {
+      console.error("[timer] tick error:", e);
+    }
+  }, TIMER_TICK_MS);
+}
+
 // ─── Reactive Rules: schedule timer (v1.5) ───
 // Каждую минуту проверяем правила с schedule (daily/weekly).
 // Когда firing — генерируем эффект и пишем в БД.
