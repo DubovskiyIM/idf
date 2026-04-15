@@ -211,6 +211,7 @@ server.listen(PORT, () => {
                 firesAt,
                 fireIntent: rule.action || rule.fireIntent,
                 triggerEventKey: `cron:${domain}:${rule.id}`,
+                cronSchedule: rule.schedule, // для self-respawn в fireDue
               },
               created_at: Date.now(),
             }, { broadcast: () => {}, delay: 0 });

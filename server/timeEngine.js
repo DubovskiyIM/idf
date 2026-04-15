@@ -169,7 +169,62 @@ function fireDue(queue, now, deps) {
       context: { id: t.id, firedAt: Date.now(), guardEvaluatedTrue: guardOk },
       created_at: Date.now(),
     });
+
+    // Cron self-rescheduling: если timer — cron, эмитим следующий.
+    // Лежит в одном require-файле, не даёт циклического import'а.
+    if (t.cronSchedule) {
+      const nextFiresAt = computeNextCronFiresAt(t.cronSchedule, Date.now());
+      if (nextFiresAt != null) {
+        deps.ingestEffect({
+          id: makeEffectId("eff"),
+          intent_id: "schedule_timer",
+          alpha: "add",
+          target: "ScheduledTimer",
+          value: null,
+          scope: "account",
+          parent_id: t.id,
+          context: {
+            id: makeEffectId("cron"),
+            firesAt: nextFiresAt,
+            fireIntent: t.fireIntent,
+            fireParams: t.fireParams || {},
+            triggerEventKey: t.triggerEventKey,
+            cronSchedule: t.cronSchedule,
+          },
+          created_at: Date.now(),
+        });
+      }
+    }
   }
+}
+
+/**
+ * Lightweight cron next-slot computation. Дублирует логику
+ * ruleEngine.js::cronToFirstFiresAt чтобы избежать циклического require:
+ * ruleEngine.js уже require'ит scheduleV2.cjs, не хотим добавлять цепочку.
+ */
+function computeNextCronFiresAt(scheduleStr, nowMs) {
+  if (!scheduleStr) return null;
+  const parts = scheduleStr.split(":");
+  const now = new Date(nowMs);
+  const target = new Date(now);
+  target.setUTCSeconds(0, 0);
+
+  if (parts[0] === "daily") {
+    target.setUTCHours(Number(parts[1] || 0), Number(parts[2] || 0));
+    if (target.getTime() <= nowMs) target.setUTCDate(target.getUTCDate() + 1);
+    return target.getTime();
+  }
+  if (parts[0] === "weekly") {
+    const dayMap = { sun: 0, mon: 1, tue: 2, wed: 3, thu: 4, fri: 5, sat: 6 };
+    const day = dayMap[parts[1]?.toLowerCase()] ?? 0;
+    target.setUTCHours(Number(parts[2] || 0), Number(parts[3] || 0));
+    let daysAhead = (day - target.getUTCDay() + 7) % 7;
+    if (daysAhead === 0 && target.getTime() <= nowMs) daysAhead = 7;
+    target.setUTCDate(target.getUTCDate() + daysAhead);
+    return target.getTime();
+  }
+  return null;
 }
 
 module.exports = { TimerQueue, hydrateFromWorld, onEffectConfirmed, fireDue, evalGuard };
