@@ -10,8 +10,7 @@
  */
 
 import { useState, useMemo } from "react";
-import { Chart } from "../../../runtime/renderer/primitives/chart.jsx";
-import { getAdaptedComponent } from "../../../runtime/renderer/adapters/registry.js";
+import { Chart, getAdaptedComponent } from "@idf/renderer";
 
 export default function AdvisorReviewCanvas({ world, viewer, exec }) {
   // Клиентский фильтр many-to-many: advisorId = viewer.id. Demo-режим с
