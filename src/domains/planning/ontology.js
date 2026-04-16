@@ -1,4 +1,5 @@
 export const ONTOLOGY = {
+  systemCollections: ["options"],
   entities: {
     Poll: {
       fields: ["id", "organizerId", "title", "description", "status", "createdAt", "deadline"],
