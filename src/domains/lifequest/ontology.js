@@ -1,4 +1,5 @@
 export const ONTOLOGY = {
+  systemCollections: ["assessment"],
   entities: {
     User: {
       fields: {
