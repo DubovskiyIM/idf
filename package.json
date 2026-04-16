@@ -86,5 +86,9 @@
     "typescript": "^5.5.3",
     "vitest": "^4.1.4"
   },
+  "overrides": {
+    "@emnapi/core": "1.10.0",
+    "@emnapi/runtime": "1.10.0"
+  },
   "private": true
 }
