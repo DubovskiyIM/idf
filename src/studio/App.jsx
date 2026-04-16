@@ -4,6 +4,7 @@ import Graph3D from "./Graph3D.jsx";
 import Inspector from "./Inspector.jsx";
 import ChatDrawer from "./ChatDrawer.jsx";
 import NewDomainModal from "./NewDomainModal.jsx";
+import ThinkingCat from "./ThinkingCat.jsx";
 import { fetchGraph } from "./api/graph.js";
 import { subscribeDomain } from "./api/watch.js";
 
@@ -40,6 +41,7 @@ export default function App() {
   const prevGraphRef = useRef(null);
   const pingTimerRef = useRef(null);
   const [flyToken, setFlyToken] = useState(0);
+  const [chatBusy, setChatBusy] = useState(false);
 
   useEffect(() => {
     if (!domain) return;
@@ -121,6 +123,7 @@ export default function App() {
         <button onClick={() => setChatOpen(true)} style={{ marginLeft: 8 }}>⌘K chat</button>
       </div>
       <Graph3D graph={graph} onNodeClick={setSelected} pings={pings} selectedId={selected?.id} flyToken={flyToken} />
+      <ThinkingCat visible={chatBusy} />
       <Inspector
         node={selected}
         warnings={graph.warnings}
@@ -134,6 +137,7 @@ export default function App() {
         domain={domain}
         prefill={chatPrefill}
         onPrefillConsumed={() => setChatPrefill("")}
+        onBusyChange={setChatBusy}
       />
     </div>
   );
