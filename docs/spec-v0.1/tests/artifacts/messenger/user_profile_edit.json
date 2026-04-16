@@ -1,0 +1,150 @@
+{
+  "projection": "user_profile_edit",
+  "name": "Профиль: редактирование",
+  "domain": "messenger",
+  "layer": "canonical",
+  "archetype": "form",
+  "version": 2,
+  "generatedAt": 0,
+  "generatedBy": "rules",
+  "inputsHash": "accept_contact,add_contact,add_sticker_to_pack,add_to_album,add_to_contact_group,add_to_group,approve_join_request,archive_conversation,ban_user,block_contact,bookmark_message,bulk_delete_messages,clear_history,close_poll,copy_message,create_album,create_channel,create_contact_group,create_direct_chat,create_group,create_sticker_pack,delete_account,delete_avatar,delete_contact,delete_conversation,delete_message,demote_admin,edit_message,enable_2fa,end_call,export_chat,forward_message,import_contacts,invite_by_link,leave_group,mark_as_read,mark_as_unread,message_info,mute_conversation,mute_mic,pin_conversation,pin_group_message,pin_message,promote_to_admin,react_to_message,record_voice_note,reject_contact,reject_join_request,remove_bookmark,remove_from_contact_group,remove_from_group,remove_reaction,rename_group,reply_to_message,report_message,revoke_invite_link,schedule_message,search_contacts,search_messages,select_messages,send_contact_card,send_document,send_gif,send_image,send_location,send_message,send_poll,send_sticker,send_video,send_voice_message,set_auto_delete,set_avatar,set_chat_wallpaper,set_contact_nickname,set_group_avatar,set_group_description,set_group_permissions,set_group_rules,set_join_approval,set_language,set_notification_settings,set_privacy_settings,set_slow_mode,set_status_message,set_theme,set_welcome_message,share_contact,start_video_call,start_voice_call,toggle_video,transfer_ownership,translate_message,unarchive_conversation,unban_user,unblock_contact,unmute_conversation,unpin_conversation,unpin_message,update_profile,vote_poll|chat_view,contact_list,conversation_list,people_list,user_profile,user_profile_edit|Contact,Conversation,Message,Participant,Reaction,User",
+  "slots": {
+    "header": [],
+    "toolbar": [],
+    "body": {
+      "type": "formBody",
+      "mainEntity": "User",
+      "fields": [
+        {
+          "name": "email",
+          "type": "email",
+          "editable": false,
+          "required": false,
+          "label": "Email",
+          "intentId": null,
+          "options": null
+        },
+        {
+          "name": "name",
+          "type": "text",
+          "editable": true,
+          "required": true,
+          "label": "Имя",
+          "intentId": "update_profile",
+          "options": null
+        },
+        {
+          "name": "avatar",
+          "type": "image",
+          "editable": true,
+          "required": false,
+          "label": "Аватар",
+          "intentId": "set_avatar",
+          "options": null
+        },
+        {
+          "name": "statusMessage",
+          "type": "textarea",
+          "editable": true,
+          "required": false,
+          "label": "Статус-сообщение",
+          "intentId": "set_status_message",
+          "options": null
+        },
+        {
+          "name": "status",
+          "type": "enum",
+          "editable": false,
+          "required": false,
+          "label": "Онлайн-статус",
+          "intentId": null,
+          "options": null
+        },
+        {
+          "name": "lastSeen",
+          "type": "datetime",
+          "editable": false,
+          "required": false,
+          "label": "Был в сети",
+          "intentId": null,
+          "options": null
+        }
+      ],
+      "sections": [
+        {
+          "id": "main",
+          "title": "Основное",
+          "fields": [
+            {
+              "name": "name",
+              "type": "text",
+              "editable": true,
+              "required": true,
+              "label": "Имя",
+              "intentId": "update_profile",
+              "options": null
+            }
+          ]
+        },
+        {
+          "id": "media",
+          "title": "Медиа",
+          "fields": [
+            {
+              "name": "avatar",
+              "type": "image",
+              "editable": true,
+              "required": false,
+              "label": "Аватар",
+              "intentId": "set_avatar",
+              "options": null
+            }
+          ]
+        },
+        {
+          "id": "attrs",
+          "title": "Характеристики",
+          "fields": [
+            {
+              "name": "statusMessage",
+              "type": "textarea",
+              "editable": true,
+              "required": false,
+              "label": "Статус-сообщение",
+              "intentId": "set_status_message",
+              "options": null
+            }
+          ]
+        }
+      ],
+      "editIntents": [
+        "update_profile",
+        "set_status_message",
+        "set_avatar",
+        "set_privacy_settings",
+        "set_notification_settings",
+        "set_theme",
+        "set_language"
+      ]
+    },
+    "context": [],
+    "fab": [],
+    "overlay": []
+  },
+  "nav": {
+    "outgoing": [],
+    "incoming": [
+      {
+        "from": "user_profile",
+        "to": "user_profile_edit",
+        "kind": "edit-action",
+        "itemEntity": "User",
+        "params": {
+          "userId": "routeParams.userId"
+        }
+      }
+    ]
+  },
+  "editProjection": null,
+  "sourceProjection": "user_profile"
+}

@@ -1,0 +1,211 @@
+{
+  "projection": "contact_list",
+  "name": "Контакты",
+  "domain": "messenger",
+  "layer": "canonical",
+  "archetype": "catalog",
+  "version": 2,
+  "generatedAt": 0,
+  "generatedBy": "rules",
+  "inputsHash": "accept_contact,add_contact,add_sticker_to_pack,add_to_album,add_to_contact_group,add_to_group,approve_join_request,archive_conversation,ban_user,block_contact,bookmark_message,bulk_delete_messages,clear_history,close_poll,copy_message,create_album,create_channel,create_contact_group,create_direct_chat,create_group,create_sticker_pack,delete_account,delete_avatar,delete_contact,delete_conversation,delete_message,demote_admin,edit_message,enable_2fa,end_call,export_chat,forward_message,import_contacts,invite_by_link,leave_group,mark_as_read,mark_as_unread,message_info,mute_conversation,mute_mic,pin_conversation,pin_group_message,pin_message,promote_to_admin,react_to_message,record_voice_note,reject_contact,reject_join_request,remove_bookmark,remove_from_contact_group,remove_from_group,remove_reaction,rename_group,reply_to_message,report_message,revoke_invite_link,schedule_message,search_contacts,search_messages,select_messages,send_contact_card,send_document,send_gif,send_image,send_location,send_message,send_poll,send_sticker,send_video,send_voice_message,set_auto_delete,set_avatar,set_chat_wallpaper,set_contact_nickname,set_group_avatar,set_group_description,set_group_permissions,set_group_rules,set_join_approval,set_language,set_notification_settings,set_privacy_settings,set_slow_mode,set_status_message,set_theme,set_welcome_message,share_contact,start_video_call,start_voice_call,toggle_video,transfer_ownership,translate_message,unarchive_conversation,unban_user,unblock_contact,unmute_conversation,unpin_conversation,unpin_message,update_profile,vote_poll|chat_view,contact_list,conversation_list,people_list,user_profile,user_profile_edit|Contact,Conversation,Message,Participant,Reaction,User",
+  "slots": {
+    "header": [],
+    "toolbar": [
+      {
+        "type": "inlineSearch",
+        "intentId": "search_messages",
+        "paramName": "query",
+        "label": "Поиск по сообщениям",
+        "icon": "🔍",
+        "placeholder": "Поиск в сообщениях…"
+      }
+    ],
+    "hero": [],
+    "body": {
+      "type": "list",
+      "source": "contacts",
+      "gap": 8,
+      "empty": {
+        "type": "text",
+        "content": "Пусто",
+        "style": "muted"
+      },
+      "item": {
+        "type": "card",
+        "children": [
+          {
+            "type": "row",
+            "gap": 10,
+            "children": [
+              {
+                "type": "avatar",
+                "bind": "avatar",
+                "nameBind": "name",
+                "size": 40
+              },
+              {
+                "type": "column",
+                "sx": {
+                  "flex": 1
+                },
+                "children": [
+                  {
+                    "type": "text",
+                    "bind": "name",
+                    "style": "heading"
+                  },
+                  {
+                    "type": "text",
+                    "bind": "status",
+                    "style": "secondary"
+                  }
+                ]
+              }
+            ]
+          }
+        ],
+        "intents": [
+          {
+            "intentId": "accept_contact",
+            "label": "Принять запрос",
+            "icon": "✓",
+            "conditions": [
+              "contact.status = 'pending'",
+              "contact.direction = 'incoming'"
+            ]
+          },
+          {
+            "intentId": "reject_contact",
+            "label": "Отклонить",
+            "icon": "🚫",
+            "conditions": [
+              "contact.status = 'pending'",
+              "contact.direction = 'incoming'"
+            ]
+          },
+          {
+            "intentId": "block_contact",
+            "opens": "overlay",
+            "overlayKey": "overlay_block_contact",
+            "label": "Заблокировать",
+            "icon": "🚫",
+            "conditions": [
+              "contact.status = 'accepted'"
+            ]
+          },
+          {
+            "intentId": "unblock_contact",
+            "label": "Разблокировать",
+            "icon": "✓",
+            "conditions": [
+              "contact.status = 'blocked'"
+            ]
+          },
+          {
+            "intentId": "delete_contact",
+            "opens": "overlay",
+            "overlayKey": "overlay_delete_contact",
+            "label": "Удалить контакт",
+            "icon": "🗑",
+            "conditions": []
+          },
+          {
+            "intentId": "set_contact_nickname",
+            "opens": "overlay",
+            "overlayKey": "overlay_set_contact_nickname",
+            "label": "Никнейм контакта",
+            "icon": "✎",
+            "conditions": [
+              "contact.status = 'accepted'"
+            ]
+          }
+        ]
+      },
+      "filter": "userId === (viewer && viewer.id)",
+      "onItemClick": {
+        "action": "navigate",
+        "to": "user_profile",
+        "params": {
+          "userId": "item.contactId"
+        }
+      }
+    },
+    "context": [],
+    "fab": [
+      {
+        "type": "intentButton",
+        "intentId": "add_contact",
+        "label": "Добавить контакт",
+        "icon": "➕",
+        "opens": "overlay",
+        "overlayKey": "overlay_add_contact"
+      }
+    ],
+    "overlay": [
+      {
+        "type": "customCapture",
+        "key": "overlay_add_contact",
+        "widgetId": "entityPicker",
+        "intentId": "add_contact",
+        "label": "Добавить контакт",
+        "targetEntity": "User",
+        "targetAlias": "user",
+        "targetCollection": "users",
+        "entityLabel": "User"
+      },
+      {
+        "type": "confirmDialog",
+        "key": "overlay_block_contact",
+        "triggerIntentId": "block_contact",
+        "irreversibility": "medium",
+        "message": "Заблокировать: {user.name}?",
+        "confirmBy": {
+          "type": "button"
+        }
+      },
+      {
+        "type": "confirmDialog",
+        "key": "overlay_delete_contact",
+        "triggerIntentId": "delete_contact",
+        "irreversibility": "medium",
+        "message": "Удалить контакт: {contact.name}?",
+        "confirmBy": {
+          "type": "button"
+        }
+      },
+      {
+        "type": "formModal",
+        "key": "overlay_set_contact_nickname",
+        "intentId": "set_contact_nickname",
+        "title": "Никнейм контакта",
+        "witnessPanel": [
+          {
+            "type": "text",
+            "bind": "contact.name"
+          },
+          {
+            "type": "text",
+            "bind": "contact.nickname"
+          }
+        ],
+        "parameters": []
+      }
+    ]
+  },
+  "nav": {
+    "outgoing": [
+      {
+        "from": "contact_list",
+        "to": "user_profile",
+        "kind": "item-click",
+        "itemEntity": "User",
+        "params": {
+          "userId": "item.id"
+        }
+      }
+    ],
+    "incoming": []
+  },
+  "editProjection": null,
+  "sourceProjection": null
+}

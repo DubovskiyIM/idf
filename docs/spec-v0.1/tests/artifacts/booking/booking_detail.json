@@ -1,0 +1,224 @@
+{
+  "projection": "booking_detail",
+  "name": "Запись",
+  "domain": "booking",
+  "layer": "canonical",
+  "archetype": "detail",
+  "version": 2,
+  "generatedAt": 0,
+  "generatedBy": "rules",
+  "inputsHash": "abandon_draft,add_service,block_slot,bulk_cancel_day,cancel_booking,cancel_client_booking,complete_booking,confirm_booking,create_booking,delete_review,edit_review,leave_review,mark_no_show,remove_service,repeat_booking,reschedule_booking,respond_to_review,select_service,select_slot,studio_test_intent_zzz,unblock_slot,update_service|booking_detail,booking_wizard,my_bookings,service_catalog,service_detail,service_detail_edit,specialist_schedule|Booking,Review,Service,ServiceCategory,Specialist,TimeSlot",
+  "slots": {
+    "header": [],
+    "toolbar": [
+      {
+        "type": "intentButton",
+        "intentId": "reschedule_booking",
+        "label": "Перенести запись",
+        "icon": "🔄",
+        "opens": "overlay",
+        "overlayKey": "overlay_reschedule_booking",
+        "condition": "clientId === viewer.id"
+      },
+      {
+        "type": "intentButton",
+        "intentId": "repeat_booking",
+        "label": "Повторить запись",
+        "icon": "⚡"
+      },
+      {
+        "type": "intentButton",
+        "intentId": "cancel_client_booking",
+        "label": "Отменить запись клиента",
+        "icon": "🗑",
+        "opens": "overlay",
+        "overlayKey": "overlay_cancel_client_booking",
+        "condition": "clientId === viewer.id"
+      }
+    ],
+    "body": {
+      "type": "column",
+      "gap": 16,
+      "children": [
+        {
+          "type": "priceBlock",
+          "fields": [
+            {
+              "bind": "price",
+              "label": "Цена",
+              "primary": true
+            }
+          ]
+        },
+        {
+          "type": "infoSection",
+          "title": "Характеристики",
+          "fields": [
+            {
+              "bind": "status",
+              "label": "Статус"
+            },
+            {
+              "bind": "serviceName",
+              "label": "Услуга"
+            },
+            {
+              "bind": "slotIds",
+              "label": "slotIds"
+            },
+            {
+              "bind": "date",
+              "label": "Дата"
+            },
+            {
+              "bind": "startTime",
+              "label": "Начало"
+            }
+          ]
+        },
+        {
+          "type": "infoSection",
+          "title": "Связи",
+          "fields": [
+            {
+              "bind": "clientId",
+              "label": "clientId"
+            },
+            {
+              "bind": "specialistId",
+              "label": "specialistId"
+            },
+            {
+              "bind": "serviceId",
+              "label": "serviceId"
+            },
+            {
+              "bind": "slotId",
+              "label": "slotId"
+            }
+          ]
+        }
+      ]
+    },
+    "context": [],
+    "fab": [],
+    "overlay": [
+      {
+        "type": "formModal",
+        "key": "overlay_reschedule_booking",
+        "intentId": "reschedule_booking",
+        "title": "Перенести запись",
+        "witnessPanel": [
+          {
+            "type": "text",
+            "bind": "booking.serviceName"
+          },
+          {
+            "type": "text",
+            "bind": "booking.date"
+          },
+          {
+            "type": "text",
+            "bind": "new_slot.date"
+          },
+          {
+            "type": "text",
+            "bind": "new_slot.startTime"
+          }
+        ],
+        "parameters": [
+          {
+            "name": "serviceName",
+            "bind": "booking.serviceName",
+            "editable": true,
+            "inferredFrom": "phase-investigation",
+            "control": "text"
+          },
+          {
+            "name": "date",
+            "bind": "booking.date",
+            "editable": true,
+            "inferredFrom": "phase-investigation",
+            "control": "datetime"
+          },
+          {
+            "name": "date",
+            "bind": "new_slot.date",
+            "editable": true,
+            "inferredFrom": "phase-investigation",
+            "control": "datetime"
+          },
+          {
+            "name": "startTime",
+            "bind": "new_slot.startTime",
+            "editable": true,
+            "inferredFrom": "phase-investigation",
+            "control": "datetime"
+          }
+        ]
+      },
+      {
+        "type": "confirmDialog",
+        "key": "overlay_cancel_client_booking",
+        "triggerIntentId": "cancel_client_booking",
+        "irreversibility": "high",
+        "message": "Отменить запись клиента: {booking.client.name}, {booking.serviceName}, {booking.date}?",
+        "confirmBy": {
+          "type": "typeText",
+          "expected": "booking.client.name"
+        }
+      }
+    ],
+    "sections": [],
+    "primaryCTA": [
+      {
+        "intentId": "cancel_booking",
+        "label": "Отменить запись",
+        "icon": "🗑",
+        "conditions": [
+          "booking.status = 'confirmed'"
+        ],
+        "parameters": []
+      },
+      {
+        "intentId": "complete_booking",
+        "label": "Завершить приём",
+        "icon": "✓",
+        "conditions": [
+          "booking.status = 'confirmed'",
+          "booking.specialistId = me.id"
+        ],
+        "parameters": []
+      },
+      {
+        "intentId": "mark_no_show",
+        "label": "Отметить неявку",
+        "icon": "⚠",
+        "conditions": [
+          "booking.status = 'confirmed'",
+          "booking.specialistId = me.id"
+        ],
+        "parameters": []
+      }
+    ],
+    "progress": null,
+    "footer": [],
+    "voterSelector": null
+  },
+  "nav": {
+    "outgoing": [],
+    "incoming": [
+      {
+        "from": "my_bookings",
+        "to": "booking_detail",
+        "kind": "item-click",
+        "itemEntity": "Booking",
+        "params": {
+          "bookingId": "item.id"
+        }
+      }
+    ]
+  },
+  "editProjection": null,
+  "sourceProjection": null
+}

@@ -1,0 +1,110 @@
+{
+  "projection": "assignments_form",
+  "name": "Назначение курьера",
+  "domain": "delivery",
+  "layer": "canonical",
+  "archetype": "wizard",
+  "version": 2,
+  "generatedAt": 0,
+  "generatedBy": "rules",
+  "inputsHash": "accept_assignment,accept_order,add_to_cart,adjust_eta,agent_auto_assign_courier,agent_auto_notify_customer,agent_auto_reassign,agent_auto_release_hold,assign_courier_manual,cancel_order,confirm_delivery,confirm_pickup,create_dispatcher_assignment,create_draft_order,escalate_order,foreign_geocode_ready,foreign_ingest_location,foreign_notification_sent,foreign_payment_webhook,go_online,mark_ready,pause_orders_reception,pause_zone,place_order,rate_delivery,reassign_delivery,reject_assignment,reject_order,remove_from_cart,report_issue,request_refund,resume_orders_reception,rule_cancel_stale_order,rule_escalate_order,rule_notify_cooking_delay,rule_reassign_delivery,rule_release_expired_hold,rule_send_review_reminder,set_delivery_address,set_stop_list_item,start_cooking,start_delivery,tip_courier,update_cart_quantity,update_menu_item|active_delivery,assignments_form,cart,cart_edit,checkout,courier_lobby,couriers_list,customer_home,delivery_history,dispatcher_map,earnings_dashboard,kds_board,menu_detail,menu_management,merchant_analytics,merchant_catalog,order_detail,order_detail_edit,order_history,order_tracker,orders_feed,preapproval_form,preapprovals_list,scheduled_timers_debug,settings,stop_list,zones_catalog|Address,AgentPreapproval,CourierLocation,Delivery,DispatcherAssignment,MenuItem,Merchant,Notification,Order,OrderItem,Payment,Review,User,Zone",
+  "slots": {
+    "kind": "wizard",
+    "steps": [
+      {
+        "id": "select_order",
+        "label": "Выбор заказа",
+        "intent": "create_dispatcher_assignment",
+        "pick": [
+          "orderId"
+        ],
+        "source": {
+          "collection": "orders",
+          "filter": "item.status === 'ready'"
+        },
+        "display": [
+          "id",
+          "merchantId",
+          "totalAmount"
+        ]
+      },
+      {
+        "id": "select_courier",
+        "label": "Выбор курьера",
+        "intent": "create_dispatcher_assignment",
+        "pick": [
+          "courierId"
+        ],
+        "source": {
+          "collection": "couriers",
+          "filter": "item.status === 'available'"
+        },
+        "display": [
+          "name",
+          "currentZoneId"
+        ]
+      },
+      {
+        "id": "confirm",
+        "label": "Подтвердить назначение",
+        "intent": "create_dispatcher_assignment",
+        "summary": true
+      }
+    ],
+    "projection": {
+      "name": "Назначение курьера",
+      "kind": "wizard",
+      "mainEntity": "Delivery",
+      "roleVisibility": [
+        "dispatcher"
+      ],
+      "steps": [
+        {
+          "id": "select_order",
+          "label": "Выбор заказа",
+          "intent": "create_dispatcher_assignment",
+          "pick": [
+            "orderId"
+          ],
+          "source": {
+            "collection": "orders",
+            "filter": "item.status === 'ready'"
+          },
+          "display": [
+            "id",
+            "merchantId",
+            "totalAmount"
+          ]
+        },
+        {
+          "id": "select_courier",
+          "label": "Выбор курьера",
+          "intent": "create_dispatcher_assignment",
+          "pick": [
+            "courierId"
+          ],
+          "source": {
+            "collection": "couriers",
+            "filter": "item.status === 'available'"
+          },
+          "display": [
+            "name",
+            "currentZoneId"
+          ]
+        },
+        {
+          "id": "confirm",
+          "label": "Подтвердить назначение",
+          "intent": "create_dispatcher_assignment",
+          "summary": true
+        }
+      ]
+    }
+  },
+  "nav": {
+    "outgoing": [],
+    "incoming": []
+  },
+  "editProjection": null,
+  "sourceProjection": null
+}

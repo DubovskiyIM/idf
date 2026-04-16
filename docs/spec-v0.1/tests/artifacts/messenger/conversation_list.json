@@ -1,0 +1,282 @@
+{
+  "projection": "conversation_list",
+  "name": "Беседы",
+  "domain": "messenger",
+  "layer": "canonical",
+  "archetype": "catalog",
+  "version": 2,
+  "generatedAt": 0,
+  "generatedBy": "rules",
+  "inputsHash": "accept_contact,add_contact,add_sticker_to_pack,add_to_album,add_to_contact_group,add_to_group,approve_join_request,archive_conversation,ban_user,block_contact,bookmark_message,bulk_delete_messages,clear_history,close_poll,copy_message,create_album,create_channel,create_contact_group,create_direct_chat,create_group,create_sticker_pack,delete_account,delete_avatar,delete_contact,delete_conversation,delete_message,demote_admin,edit_message,enable_2fa,end_call,export_chat,forward_message,import_contacts,invite_by_link,leave_group,mark_as_read,mark_as_unread,message_info,mute_conversation,mute_mic,pin_conversation,pin_group_message,pin_message,promote_to_admin,react_to_message,record_voice_note,reject_contact,reject_join_request,remove_bookmark,remove_from_contact_group,remove_from_group,remove_reaction,rename_group,reply_to_message,report_message,revoke_invite_link,schedule_message,search_contacts,search_messages,select_messages,send_contact_card,send_document,send_gif,send_image,send_location,send_message,send_poll,send_sticker,send_video,send_voice_message,set_auto_delete,set_avatar,set_chat_wallpaper,set_contact_nickname,set_group_avatar,set_group_description,set_group_permissions,set_group_rules,set_join_approval,set_language,set_notification_settings,set_privacy_settings,set_slow_mode,set_status_message,set_theme,set_welcome_message,share_contact,start_video_call,start_voice_call,toggle_video,transfer_ownership,translate_message,unarchive_conversation,unban_user,unblock_contact,unmute_conversation,unpin_conversation,unpin_message,update_profile,vote_poll|chat_view,contact_list,conversation_list,people_list,user_profile,user_profile_edit|Contact,Conversation,Message,Participant,Reaction,User",
+  "slots": {
+    "header": [],
+    "toolbar": [
+      {
+        "type": "inlineSearch",
+        "intentId": "search_messages",
+        "paramName": "query",
+        "label": "Поиск по сообщениям",
+        "icon": "🔍",
+        "placeholder": "Поиск в сообщениях…"
+      }
+    ],
+    "hero": [
+      {
+        "type": "heroCreate",
+        "intentId": "create_group",
+        "paramName": "title",
+        "placeholder": "Название…",
+        "buttonLabel": "Групповой чат",
+        "icon": "👥",
+        "postCreate": {
+          "collection": "conversations",
+          "matchField": null,
+          "matchValue": null
+        }
+      }
+    ],
+    "body": {
+      "type": "list",
+      "source": "conversations",
+      "gap": 8,
+      "empty": {
+        "type": "text",
+        "content": "Пусто",
+        "style": "muted"
+      },
+      "item": {
+        "type": "card",
+        "children": [
+          {
+            "type": "row",
+            "gap": 10,
+            "children": [
+              {
+                "type": "avatar",
+                "bind": "avatar",
+                "nameBind": "title",
+                "size": 40
+              },
+              {
+                "type": "column",
+                "sx": {
+                  "flex": 1
+                },
+                "children": [
+                  {
+                    "type": "text",
+                    "bind": "title",
+                    "style": "heading"
+                  }
+                ]
+              }
+            ]
+          }
+        ],
+        "intents": [
+          {
+            "intentId": "rename_group",
+            "opens": "overlay",
+            "overlayKey": "overlay_rename_group",
+            "label": "Переименовать группу",
+            "icon": "✎",
+            "conditions": [
+              "conversation.type = 'group'"
+            ]
+          },
+          {
+            "intentId": "set_group_description",
+            "opens": "overlay",
+            "overlayKey": "overlay_set_group_description",
+            "label": "Описание группы",
+            "icon": "⚙",
+            "conditions": [
+              "conversation.type = 'group'"
+            ]
+          },
+          {
+            "intentId": "delete_conversation",
+            "opens": "overlay",
+            "overlayKey": "overlay_delete_conversation",
+            "label": "Удалить беседу",
+            "icon": "🗑",
+            "conditions": []
+          },
+          {
+            "intentId": "clear_history",
+            "opens": "overlay",
+            "overlayKey": "overlay_clear_history",
+            "label": "Очистить историю",
+            "icon": "🗑",
+            "conditions": []
+          },
+          {
+            "intentId": "set_welcome_message",
+            "opens": "overlay",
+            "overlayKey": "overlay_set_welcome_message",
+            "label": "Приветствие",
+            "icon": "⚙",
+            "conditions": [
+              "conversation.type = 'group'"
+            ]
+          },
+          {
+            "intentId": "set_group_rules",
+            "opens": "overlay",
+            "overlayKey": "overlay_set_group_rules",
+            "label": "Правила группы",
+            "icon": "⚙",
+            "conditions": [
+              "conversation.type = 'group'"
+            ]
+          },
+          {
+            "intentId": "start_voice_call",
+            "label": "Голосовой звонок",
+            "icon": "📞",
+            "conditions": []
+          },
+          {
+            "intentId": "start_video_call",
+            "label": "Видеозвонок",
+            "icon": "📹",
+            "conditions": []
+          }
+        ]
+      },
+      "filter": "(world.participants || []).some(p => p.conversationId === id && p.userId === (viewer && viewer.id)) && (!(viewState && viewState.query) || (title || '').toLowerCase().includes((viewState.query || '').toLowerCase()))",
+      "sort": "-lastMessageAt",
+      "onItemClick": {
+        "action": "navigate",
+        "to": "chat_view",
+        "params": {
+          "conversationId": "item.id"
+        }
+      }
+    },
+    "context": [],
+    "fab": [
+      {
+        "type": "intentButton",
+        "intentId": "create_direct_chat",
+        "label": "Личный чат",
+        "icon": "💬",
+        "opens": "overlay",
+        "overlayKey": "overlay_create_direct_chat"
+      }
+    ],
+    "overlay": [
+      {
+        "type": "customCapture",
+        "key": "overlay_create_direct_chat",
+        "widgetId": "entityPicker",
+        "intentId": "create_direct_chat",
+        "label": "Личный чат",
+        "targetEntity": "User",
+        "targetAlias": "user",
+        "targetCollection": "users",
+        "entityLabel": "User"
+      },
+      {
+        "type": "formModal",
+        "key": "overlay_rename_group",
+        "intentId": "rename_group",
+        "title": "Переименовать группу",
+        "witnessPanel": [
+          {
+            "type": "text",
+            "bind": "conversation.title"
+          }
+        ],
+        "parameters": [
+          {
+            "name": "title",
+            "type": "text",
+            "required": true,
+            "bind": "conversation.title",
+            "editable": true,
+            "placeholder": "Новое название",
+            "control": "text"
+          }
+        ]
+      },
+      {
+        "type": "formModal",
+        "key": "overlay_set_group_description",
+        "intentId": "set_group_description",
+        "title": "Описание группы",
+        "witnessPanel": [
+          {
+            "type": "text",
+            "bind": "conversation.description"
+          }
+        ],
+        "parameters": []
+      },
+      {
+        "type": "confirmDialog",
+        "key": "overlay_delete_conversation",
+        "triggerIntentId": "delete_conversation",
+        "irreversibility": "high",
+        "message": "Удалить беседу: {conversation.title}, {messages.count}?",
+        "confirmBy": {
+          "type": "typeText",
+          "expected": "conversation.title"
+        }
+      },
+      {
+        "type": "confirmDialog",
+        "key": "overlay_clear_history",
+        "triggerIntentId": "clear_history",
+        "irreversibility": "high",
+        "message": "Очистить историю: {messages.count}?",
+        "confirmBy": {
+          "type": "typeText",
+          "expected": "messages.count"
+        }
+      },
+      {
+        "type": "formModal",
+        "key": "overlay_set_welcome_message",
+        "intentId": "set_welcome_message",
+        "title": "Приветствие",
+        "witnessPanel": [
+          {
+            "type": "text",
+            "bind": "conversation.welcomeMessage"
+          }
+        ],
+        "parameters": []
+      },
+      {
+        "type": "formModal",
+        "key": "overlay_set_group_rules",
+        "intentId": "set_group_rules",
+        "title": "Правила группы",
+        "witnessPanel": [
+          {
+            "type": "text",
+            "bind": "conversation.rules"
+          }
+        ],
+        "parameters": []
+      }
+    ]
+  },
+  "nav": {
+    "outgoing": [
+      {
+        "from": "conversation_list",
+        "to": "chat_view",
+        "kind": "item-click",
+        "itemEntity": "Conversation",
+        "params": {
+          "conversationId": "item.id"
+        }
+      }
+    ],
+    "incoming": []
+  },
+  "editProjection": null,
+  "sourceProjection": null
+}

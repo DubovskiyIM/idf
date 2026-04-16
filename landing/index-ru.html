@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>IDF — Intent-Driven Framework · парадигма выводимых интерфейсов</title>
-  <meta name="description" content="Открытый стандарт построения приложений из формального описания пользовательских намерений. Один артефакт — четыре материализации.">
+  <title>IDF — Intent-Driven Format · формат описания приложений</title>
+  <meta name="description" content="IDF — это тип данных, а не фреймворк. Открытый формат описания приложений из намерений — как OpenAPI, но для UI + голос + агент + документ.">
   <link rel="alternate" hreflang="en" href="./index.html">
   <link rel="alternate" hreflang="ru" href="./index-ru.html">
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -241,13 +241,14 @@
 <section class="hero">
   <canvas id="particleCanvas"></canvas>
   <div class="hero-inner">
-    <div class="badge"><span class="pulse"></span>Стандарт v1.0&nbsp;&middot;&nbsp;Референсная реализация v1.7&nbsp;&middot;&nbsp;@intent-driven/core 0.3&nbsp;&middot;&nbsp;<a href="./index.html" style="color:inherit;text-decoration:underline;text-underline-offset:3px">EN</a></div>
-    <h1>Один артефакт.<br><span class="line2">Четыре материализации.</span></h1>
-    <p class="sub">Формальная система, которая выводит приложение из того, <em style="font-style:normal;color:var(--text)">зачем люди к вам приходят</em>. Пиксели, голос, API для агентов и документ — рендерятся из одной интент-модели.</p>
+    <div class="badge"><span class="pulse"></span>Спецификация формата v0.1&nbsp;&middot;&nbsp;6 JSON Schema&nbsp;&middot;&nbsp;@intent-driven/core 0.7&nbsp;&middot;&nbsp;<a href="./index.html" style="color:inherit;text-decoration:underline;text-underline-offset:3px">EN</a></div>
+    <h1>Не фреймворк.<br><span class="line2">Тип данных.</span></h1>
+    <p class="sub">IDF — формат описания приложений, как OpenAPI для full-stack. Артефакт v2 с онтологией, намерениями, проекциями и ролями — это схема. Адаптеры и материализаторы — <em style="font-style:normal;color:var(--text)">читатели формата</em>, а не части фреймворка.</p>
     <div class="ctas">
-      <a class="btn btn-glow" href="https://github.com/DubovskiyIM/idf/tree/main/spec">Читать спецификацию</a>
+      <a class="btn btn-glow" href="https://github.com/DubovskiyIM/idf/tree/main/docs/spec-v0.1">Читать спецификацию</a>
       <a class="btn" href="https://www.npmjs.com/package/@intent-driven/core">npm&nbsp;i&nbsp;@intent-driven/core</a>
       <a class="btn" href="https://github.com/DubovskiyIM/idf">GitHub</a>
+      <a class="btn" href="https://idf.intent-design.tech">Демо</a>
     </div>
     <div class="formula">
       <span class="hl">World(t)</span> = fold( &oplus;, &empty;, sort<span style="font-size:.7em;vertical-align:sub">&prec;</span>( <span class="hl">&Phi;</span><span style="font-size:.7em;vertical-align:sub">confirmed</span> &darr; t ) )
@@ -344,9 +345,9 @@
   <div class="container rv">
     <div class="stag">Developer experience</div>
     <div class="stitle">Опиши один раз. Отрендери четырьмя способами.</div>
-    <div class="sdesc">@intent-driven/core содержит всё: fold, алгебра намерений, кристаллизатор, четыре материализатора, ролевая таксономия, инварианты. Чистые функции, двойная сборка ESM&#x2009;+&#x2009;CJS.</div>
+    <div class="sdesc">@intent-driven/core содержит всё: fold, алгебра намерений, кристаллизатор, четыре материализатора, ролевая таксономия, инварианты. Чистые функции, двойная сборка ESM&#x2009;+&#x2009;CJS. Верификация: 6 JSON Schema + 138 conformance-тестов.</div>
     <div class="code-wrap">
-      <div class="code-bar"><div class="dots"><span></span><span></span><span></span></div>&nbsp;&nbsp;trading.js&nbsp;&middot;&nbsp;@intent-driven/core@0.3</div>
+      <div class="code-bar"><div class="dots"><span></span><span></span><span></span></div>&nbsp;&nbsp;trading.js&nbsp;&middot;&nbsp;@intent-driven/core@0.7</div>
 <pre id="codeBlock"></pre>
     </div>
   </div>
@@ -439,13 +440,14 @@
 <!-- ===== CONFORMANCE ===== -->
 <section>
   <div class="container rv">
-    <div class="stag">Открытый стандарт</div>
-    <div class="stitle">Три уровня соответствия. Любой язык.</div>
-    <div class="sdesc">54 языконезависимых JSON-теста &mdash; пройдите их на Rust, Python или&nbsp;Go, и ваша реализация соответствует стандарту. Референсная реализация на JavaScript распространяется как <code style="font-family:var(--mono);color:var(--accent-bright)">@intent-driven/core</code>.</div>
-    <div class="lvls">
-      <div class="lvl glass rv rv-d1"><div class="n">L1</div><div class="nm">Core</div><div class="ts">24 теста</div><div class="detail">fold &bull; причинная сортировка &bull; batch<br>TTL &bull; область видимости &bull; жизненный цикл</div></div>
-      <div class="lvl glass rv rv-d2"><div class="n">L2</div><div class="nm">Algebra</div><div class="ts">15 тестов</div><div class="detail">последовательность &bull; антагонизм<br>исключение &bull; параллельность</div></div>
-      <div class="lvl glass rv rv-d3"><div class="n">L3</div><div class="nm">Full</div><div class="ts">15 тестов</div><div class="detail">7 правил целостности<br>анкеринг &bull; свидетельства</div></div>
+    <div class="stag">Открытый формат</div>
+    <div class="stitle">Четыре уровня соответствия. Любой язык.</div>
+    <div class="sdesc">6 JSON Schema + 138 языконезависимых тестов. Пройдите их на Rust, Python, Swift или&nbsp;Go &mdash; ваша реализация соответствует формату. Четыре оси: архетипы &times; контролы &times; track'и &times; features. Референсная реализация: <code style="font-family:var(--mono);color:var(--accent-bright)">@intent-driven/core</code>.</div>
+    <div class="lvls" style="grid-template-columns:repeat(4,1fr)">
+      <div class="lvl glass rv rv-d1"><div class="n">L1</div><div class="nm">Parser</div><div class="ts">все schemas</div><div class="detail">парсинг &bull; валидация &bull; fold<br>причинная сортировка &bull; композиция</div></div>
+      <div class="lvl glass rv rv-d2"><div class="n">L2</div><div class="nm">Standard</div><div class="ts">A2 + C2</div><div class="detail">catalog &bull; detail &bull; form &bull; feed<br>+ 1 track материализации</div></div>
+      <div class="lvl glass rv rv-d3"><div class="n">L3</div><div class="nm">Full</div><div class="ts">A4 + C3</div><div class="detail">все 7 архетипов &bull; capability surface<br>необратимость &bull; инварианты</div></div>
+      <div class="lvl glass rv rv-d4"><div class="n">L4</div><div class="nm">Multi-track</div><div class="ts">L3 &times; 2+</div><div class="detail">пиксели + голос + агент + документ<br>viewer-scope консистентность</div></div>
     </div>
   </div>
 </section>
@@ -474,7 +476,7 @@
 <section>
   <div class="container rv">
     <div class="quote-wrap">
-      <blockquote>UI &mdash; это не то, что вы рисуете. UI &mdash; это пересечение <em>проекций</em> и <em>намерений</em>. Пиксели, голос, агентский API, документ &mdash; равноправные материализации этого пересечения.</blockquote>
+      <blockquote>IDF &mdash; это не фреймворк, это <em>тип данных</em>. Артефакт с онтологией, намерениями, проекциями и ролями &mdash; это <em>формат</em>, как HTML или JSON-LD. Системы, рендерящие пиксели, озвучивающие голос, обслуживающие API агентов, печатающие документы &mdash; <em>читатели</em> этого формата.</blockquote>
     </div>
   </div>
 </section>
@@ -482,12 +484,13 @@
 <!-- ===== FOOTER ===== -->
 <footer>
   <div class="logo">IDF</div>
-  <p>Спецификация v1.0 &copy; 2026 IDF Authors &mdash; Apache&nbsp;2.0</p>
-  <p>Референсная реализация v1.7: <strong>@intent-driven/core 0.3 &mdash; BSL&nbsp;1.1</strong> (Change Date 2030-04-15 &rarr; Apache&nbsp;2.0) &middot; SDK клиенты + прототип &mdash; MIT</p>
+  <p>Спецификация формата v0.1 &copy; 2026 IDF Authors &mdash; CC&nbsp;BY&nbsp;4.0</p>
+  <p>Референсная реализация: <strong>@intent-driven/core 0.7 &mdash; BSL&nbsp;1.1</strong> (Change Date 2030-04-15 &rarr; Apache&nbsp;2.0) &middot; SDK клиенты + прототип &mdash; MIT</p>
   <div class="flinks">
-    <a href="https://github.com/DubovskiyIM/idf/tree/main/spec">Спецификация</a>
+    <a href="https://github.com/DubovskiyIM/idf/tree/main/docs/spec-v0.1">Спецификация</a>
     <a href="https://www.npmjs.com/package/@intent-driven/core">@intent-driven/core</a>
-    <a href="https://github.com/DubovskiyIM/idf/tree/main/spec/conformance">Тесты</a>
+    <a href="https://github.com/DubovskiyIM/idf/tree/main/docs/spec-v0.1/tests">Тесты</a>
+    <a href="https://idf.intent-design.tech">Демо</a>
     <a href="https://github.com/DubovskiyIM/idf">GitHub</a>
     <a href="./index.html" style="color:var(--accent-bright)">EN</a>
   </div>

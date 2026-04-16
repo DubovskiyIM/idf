@@ -1,0 +1,169 @@
+{
+  "projection": "service_detail",
+  "name": "Услуга",
+  "domain": "booking",
+  "layer": "canonical",
+  "archetype": "detail",
+  "version": 2,
+  "generatedAt": 0,
+  "generatedBy": "rules",
+  "inputsHash": "abandon_draft,add_service,block_slot,bulk_cancel_day,cancel_booking,cancel_client_booking,complete_booking,confirm_booking,create_booking,delete_review,edit_review,leave_review,mark_no_show,remove_service,repeat_booking,reschedule_booking,respond_to_review,select_service,select_slot,studio_test_intent_zzz,unblock_slot,update_service|booking_detail,booking_wizard,my_bookings,service_catalog,service_detail,service_detail_edit,specialist_schedule|Booking,Review,Service,ServiceCategory,Specialist,TimeSlot",
+  "slots": {
+    "header": [],
+    "toolbar": [
+      {
+        "type": "intentButton",
+        "intentId": "select_service",
+        "label": "Выбрать услугу",
+        "icon": "⚡"
+      },
+      {
+        "type": "intentButton",
+        "intentId": "update_service",
+        "label": "Изменить услугу",
+        "icon": "✎",
+        "opens": "overlay",
+        "overlayKey": "overlay_update_service"
+      },
+      {
+        "type": "intentButton",
+        "intentId": "remove_service",
+        "label": "Убрать услугу",
+        "icon": "🗑"
+      }
+    ],
+    "body": {
+      "type": "column",
+      "gap": 16,
+      "children": [
+        {
+          "type": "heading",
+          "bind": "name",
+          "level": 1
+        },
+        {
+          "type": "priceBlock",
+          "fields": [
+            {
+              "bind": "price",
+              "label": "Цена",
+              "primary": true
+            }
+          ]
+        },
+        {
+          "type": "statBar",
+          "fields": [
+            {
+              "name": "duration",
+              "label": "Длительность",
+              "type": "number"
+            }
+          ]
+        },
+        {
+          "type": "infoSection",
+          "title": "Характеристики",
+          "fields": [
+            {
+              "bind": "active",
+              "label": "Активна"
+            }
+          ]
+        },
+        {
+          "type": "infoSection",
+          "title": "Связи",
+          "fields": [
+            {
+              "bind": "specialistId",
+              "label": "specialistId"
+            },
+            {
+              "bind": "categoryId",
+              "label": "Категория"
+            }
+          ]
+        }
+      ]
+    },
+    "context": [],
+    "fab": [],
+    "overlay": [
+      {
+        "type": "formModal",
+        "key": "overlay_update_service",
+        "intentId": "update_service",
+        "title": "Изменить услугу",
+        "witnessPanel": [
+          {
+            "type": "text",
+            "bind": "service.name"
+          },
+          {
+            "type": "text",
+            "bind": "service.price"
+          },
+          {
+            "type": "text",
+            "bind": "service.duration"
+          }
+        ],
+        "parameters": [
+          {
+            "name": "name",
+            "bind": "service.name",
+            "editable": true,
+            "inferredFrom": "phase-investigation",
+            "control": "text"
+          },
+          {
+            "name": "price",
+            "bind": "service.price",
+            "editable": true,
+            "inferredFrom": "phase-investigation",
+            "control": "number"
+          },
+          {
+            "name": "duration",
+            "bind": "service.duration",
+            "editable": true,
+            "inferredFrom": "phase-investigation",
+            "control": "number"
+          }
+        ]
+      }
+    ],
+    "sections": [],
+    "primaryCTA": [],
+    "progress": null,
+    "footer": [],
+    "voterSelector": null
+  },
+  "nav": {
+    "outgoing": [
+      {
+        "from": "service_detail",
+        "to": "service_detail_edit",
+        "kind": "edit-action",
+        "itemEntity": "Service",
+        "params": {
+          "serviceId": "routeParams.serviceId"
+        }
+      }
+    ],
+    "incoming": [
+      {
+        "from": "service_catalog",
+        "to": "service_detail",
+        "kind": "item-click",
+        "itemEntity": "Service",
+        "params": {
+          "serviceId": "item.id"
+        }
+      }
+    ]
+  },
+  "editProjection": "service_detail_edit",
+  "sourceProjection": null
+}

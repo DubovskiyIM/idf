@@ -1,0 +1,220 @@
+{
+  "projection": "hypothesis_detail_edit",
+  "name": "Гипотеза: редактирование",
+  "domain": "reflect",
+  "layer": "canonical",
+  "archetype": "form",
+  "version": 2,
+  "generatedAt": 0,
+  "generatedBy": "rules",
+  "inputsHash": "add_activity_to_entry,add_tag_to_entry,archive_activity,archive_hypothesis,auto_resolve_hypothesis,award_milestone,compute_correlation,confirm_hypothesis,create_activity,create_reminder,create_tag,delete_account,delete_activity,delete_entry,delete_hypothesis,delete_reminder,delete_tag,detailed_checkin,detect_pattern,dismiss_insight,duplicate_entry,edit_activity,edit_entry_note,edit_hypothesis,edit_reminder,edit_tag,evaluate_hypothesis,export_data,generate_insight,mark_insight_seen,merge_activities,merge_tags,mood_drift_alert,move_entry_time,pin_insight,propose_hypothesis,quick_checkin,reject_hypothesis,remove_activity_from_entry,remove_tag_from_entry,reset_progress,set_avatar,start_testing,toggle_reminder,update_profile,update_streak,weekly_summary|activity_correlation,activity_list,calendar_heatmap,checkin,entry_detail,hypothesis_detail,hypothesis_detail_edit,hypothesis_list,insights_feed,mood_meter_cluster,mood_trends,tag_list,timeline,weekly_summary,weekly_summary_edit|Activity,EntryActivity,EntryTag,Hypothesis,HypothesisEvidence,Insight,MoodEntry,Reminder,Tag,User",
+  "slots": {
+    "header": [],
+    "toolbar": [],
+    "body": {
+      "type": "formBody",
+      "mainEntity": "Hypothesis",
+      "fields": [
+        {
+          "name": "userId",
+          "type": "entityRef",
+          "editable": false,
+          "required": false,
+          "label": "Пользователь",
+          "intentId": null,
+          "options": null
+        },
+        {
+          "name": "title",
+          "type": "text",
+          "editable": true,
+          "required": true,
+          "label": "Название",
+          "intentId": "edit_hypothesis",
+          "options": null
+        },
+        {
+          "name": "whenActivity",
+          "type": "entityRef",
+          "editable": true,
+          "required": true,
+          "label": "При активности",
+          "intentId": "edit_hypothesis",
+          "options": null
+        },
+        {
+          "name": "expectedEffect",
+          "type": "enum",
+          "editable": true,
+          "required": false,
+          "label": "Ожидаемый эффект",
+          "intentId": "edit_hypothesis",
+          "options": [
+            {
+              "value": "more_energy",
+              "label": "Больше энергии"
+            },
+            {
+              "value": "less_stress",
+              "label": "Меньше стресса"
+            },
+            {
+              "value": "more_pleasantness",
+              "label": "Больше радости"
+            },
+            {
+              "value": "less_pleasantness",
+              "label": "Меньше радости"
+            },
+            {
+              "value": "more_calm",
+              "label": "Больше спокойствия"
+            },
+            {
+              "value": "more_focus",
+              "label": "Больше фокуса"
+            }
+          ]
+        },
+        {
+          "name": "status",
+          "type": "enum",
+          "editable": false,
+          "required": false,
+          "label": "Статус",
+          "intentId": null,
+          "options": [
+            {
+              "value": "testing",
+              "label": "Тестируется"
+            },
+            {
+              "value": "confirmed",
+              "label": "Подтверждена"
+            },
+            {
+              "value": "rejected",
+              "label": "Опровергнута"
+            },
+            {
+              "value": "archived",
+              "label": "Архивирована"
+            }
+          ]
+        },
+        {
+          "name": "confidence",
+          "type": "number",
+          "editable": false,
+          "required": false,
+          "label": "Уверенность",
+          "intentId": null,
+          "options": null
+        },
+        {
+          "name": "resolvedAt",
+          "type": "datetime",
+          "editable": false,
+          "required": false,
+          "label": "Разрешена",
+          "intentId": null,
+          "options": null
+        }
+      ],
+      "sections": [
+        {
+          "id": "main",
+          "title": "Основное",
+          "fields": [
+            {
+              "name": "title",
+              "type": "text",
+              "editable": true,
+              "required": true,
+              "label": "Название",
+              "intentId": "edit_hypothesis",
+              "options": null
+            }
+          ]
+        },
+        {
+          "id": "attrs",
+          "title": "Характеристики",
+          "fields": [
+            {
+              "name": "expectedEffect",
+              "type": "enum",
+              "editable": true,
+              "required": false,
+              "label": "Ожидаемый эффект",
+              "intentId": "edit_hypothesis",
+              "options": [
+                {
+                  "value": "more_energy",
+                  "label": "Больше энергии"
+                },
+                {
+                  "value": "less_stress",
+                  "label": "Меньше стресса"
+                },
+                {
+                  "value": "more_pleasantness",
+                  "label": "Больше радости"
+                },
+                {
+                  "value": "less_pleasantness",
+                  "label": "Меньше радости"
+                },
+                {
+                  "value": "more_calm",
+                  "label": "Больше спокойствия"
+                },
+                {
+                  "value": "more_focus",
+                  "label": "Больше фокуса"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "refs",
+          "title": "Связи",
+          "fields": [
+            {
+              "name": "whenActivity",
+              "type": "entityRef",
+              "editable": true,
+              "required": true,
+              "label": "При активности",
+              "intentId": "edit_hypothesis",
+              "options": null
+            }
+          ]
+        }
+      ],
+      "editIntents": [
+        "edit_hypothesis"
+      ]
+    },
+    "context": [],
+    "fab": [],
+    "overlay": []
+  },
+  "nav": {
+    "outgoing": [],
+    "incoming": [
+      {
+        "from": "hypothesis_detail",
+        "to": "hypothesis_detail_edit",
+        "kind": "edit-action",
+        "itemEntity": "Hypothesis",
+        "params": {
+          "hypothesisId": "routeParams.hypothesisId"
+        }
+      }
+    ]
+  },
+  "editProjection": null,
+  "sourceProjection": "hypothesis_detail"
+}

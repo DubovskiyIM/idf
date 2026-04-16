@@ -1,0 +1,240 @@
+{
+  "projection": "entry_detail",
+  "name": "Запись",
+  "domain": "reflect",
+  "layer": "canonical",
+  "archetype": "detail",
+  "version": 2,
+  "generatedAt": 0,
+  "generatedBy": "rules",
+  "inputsHash": "add_activity_to_entry,add_tag_to_entry,archive_activity,archive_hypothesis,auto_resolve_hypothesis,award_milestone,compute_correlation,confirm_hypothesis,create_activity,create_reminder,create_tag,delete_account,delete_activity,delete_entry,delete_hypothesis,delete_reminder,delete_tag,detailed_checkin,detect_pattern,dismiss_insight,duplicate_entry,edit_activity,edit_entry_note,edit_hypothesis,edit_reminder,edit_tag,evaluate_hypothesis,export_data,generate_insight,mark_insight_seen,merge_activities,merge_tags,mood_drift_alert,move_entry_time,pin_insight,propose_hypothesis,quick_checkin,reject_hypothesis,remove_activity_from_entry,remove_tag_from_entry,reset_progress,set_avatar,start_testing,toggle_reminder,update_profile,update_streak,weekly_summary|activity_correlation,activity_list,calendar_heatmap,checkin,entry_detail,hypothesis_detail,hypothesis_detail_edit,hypothesis_list,insights_feed,mood_meter_cluster,mood_trends,tag_list,timeline,weekly_summary,weekly_summary_edit|Activity,EntryActivity,EntryTag,Hypothesis,HypothesisEvidence,Insight,MoodEntry,Reminder,Tag,User",
+  "slots": {
+    "header": [],
+    "toolbar": [
+      {
+        "type": "intentButton",
+        "intentId": "add_activity_to_entry",
+        "label": "Добавить активность",
+        "icon": "➕"
+      },
+      {
+        "type": "intentButton",
+        "intentId": "edit_entry_note",
+        "label": "Изменить заметку",
+        "icon": "✎",
+        "opens": "overlay",
+        "overlayKey": "overlay_edit_entry_note"
+      },
+      {
+        "type": "intentButton",
+        "intentId": "delete_entry",
+        "label": "Удалить запись",
+        "icon": "🗑",
+        "opens": "overlay",
+        "overlayKey": "overlay_delete_entry"
+      },
+      {
+        "type": "overflow",
+        "children": [
+          {
+            "type": "intentButton",
+            "intentId": "move_entry_time",
+            "label": "Изменить время",
+            "icon": "✥",
+            "opens": "overlay",
+            "overlayKey": "overlay_move_entry_time"
+          },
+          {
+            "type": "intentButton",
+            "intentId": "add_tag_to_entry",
+            "label": "Прикрепить тег",
+            "icon": "➕"
+          }
+        ]
+      }
+    ],
+    "body": {
+      "type": "column",
+      "gap": 16,
+      "children": [
+        {
+          "type": "statBar",
+          "fields": [
+            {
+              "name": "pleasantness",
+              "label": "Приятность",
+              "type": "number"
+            },
+            {
+              "name": "energy",
+              "label": "Энергия",
+              "type": "number"
+            }
+          ]
+        },
+        {
+          "type": "infoSection",
+          "title": "Характеристики",
+          "fields": [
+            {
+              "bind": "quadrant",
+              "label": "Квадрант"
+            },
+            {
+              "bind": "emotion",
+              "label": "Эмоция"
+            },
+            {
+              "bind": "note",
+              "label": "Заметка"
+            },
+            {
+              "bind": "loggedAt",
+              "label": "Время",
+              "format": "datetime"
+            }
+          ]
+        },
+        {
+          "type": "infoSection",
+          "title": "Связи",
+          "fields": [
+            {
+              "bind": "userId",
+              "label": "Пользователь"
+            }
+          ]
+        }
+      ]
+    },
+    "context": [],
+    "fab": [],
+    "overlay": [
+      {
+        "type": "formModal",
+        "key": "overlay_edit_entry_note",
+        "intentId": "edit_entry_note",
+        "title": "Изменить заметку",
+        "witnessPanel": [],
+        "parameters": [
+          {
+            "name": "note",
+            "inferredFrom": "direct-witness",
+            "control": "textarea"
+          }
+        ]
+      },
+      {
+        "type": "confirmDialog",
+        "key": "overlay_delete_entry",
+        "triggerIntentId": "delete_entry",
+        "irreversibility": "medium",
+        "message": "Удалить запись?",
+        "confirmBy": {
+          "type": "button"
+        }
+      },
+      {
+        "type": "formModal",
+        "key": "overlay_move_entry_time",
+        "intentId": "move_entry_time",
+        "title": "Изменить время",
+        "witnessPanel": [],
+        "parameters": [
+          {
+            "name": "loggedAt",
+            "inferredFrom": "direct-witness",
+            "control": "datetime"
+          }
+        ]
+      }
+    ],
+    "sections": [
+      {
+        "id": "entryActivities",
+        "title": "Активности",
+        "source": "entryActivities",
+        "foreignKey": "entryId",
+        "itemEntity": "EntryActivity",
+        "itemView": {
+          "type": "text",
+          "bind": "userId",
+          "style": {
+            "fontWeight": 600,
+            "fontSize": 14
+          }
+        },
+        "itemIntents": [
+          {
+            "intentId": "remove_activity_from_entry",
+            "label": "Убрать активность",
+            "icon": "🗑",
+            "conditions": [
+              "link.userId = me.id"
+            ],
+            "createsDiscriminator": null
+          }
+        ],
+        "addControl": null,
+        "emptyLabel": "Пока пусто"
+      },
+      {
+        "id": "entryTags",
+        "title": "Теги",
+        "source": "entryTags",
+        "foreignKey": "entryId",
+        "itemEntity": "EntryTag",
+        "itemView": {
+          "type": "text",
+          "bind": "userId",
+          "style": {
+            "fontWeight": 600,
+            "fontSize": 14
+          }
+        },
+        "itemIntents": [
+          {
+            "intentId": "remove_tag_from_entry",
+            "label": "Открепить тег",
+            "icon": "🗑",
+            "conditions": [
+              "link.userId = me.id"
+            ],
+            "createsDiscriminator": null
+          }
+        ],
+        "addControl": null,
+        "emptyLabel": "Пока пусто"
+      }
+    ],
+    "primaryCTA": [],
+    "progress": null,
+    "footer": [],
+    "voterSelector": null
+  },
+  "nav": {
+    "outgoing": [],
+    "incoming": [
+      {
+        "from": "activity_list",
+        "to": "entry_detail",
+        "kind": "item-click",
+        "itemEntity": "Activity",
+        "params": {
+          "entryId": "item.id"
+        }
+      },
+      {
+        "from": "tag_list",
+        "to": "entry_detail",
+        "kind": "item-click",
+        "itemEntity": "Tag",
+        "params": {
+          "entryId": "item.id"
+        }
+      }
+    ]
+  },
+  "editProjection": null,
+  "sourceProjection": null
+}

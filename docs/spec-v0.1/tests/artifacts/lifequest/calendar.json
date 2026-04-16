@@ -1,0 +1,27 @@
+{
+  "projection": "calendar",
+  "name": "Календарь",
+  "domain": "lifequest",
+  "layer": "canonical",
+  "archetype": "canvas",
+  "version": 2,
+  "generatedAt": 0,
+  "generatedBy": "rules",
+  "inputsHash": "abandon_goal,add_goal_note,add_sphere_note,add_vision_image,archive_habit,assess_sphere,change_habit_frequency,check_habit,clear_quote,clear_sphere_vision,complete_goal,complete_task,create_goal,create_habit,create_task,delete_account,delete_goal,delete_habit,delete_task,delete_vision_item,earn_badge,earn_xp,edit_goal,edit_habit,edit_quote,edit_task,edit_vision_caption,export_data,level_up,link_task_goal,log_habit_value,move_goal_sphere,move_habit_sphere,move_task_date,move_vision_item,pause_habit,random_quote,reactivate_goal,reassess_all,replace_vision_image,reset_progress,reset_streak,resize_vision_item,resume_habit,set_avatar,set_goal_deadline,set_quote,set_sphere_target,toggle_task_priority,uncheck_habit,uncomplete_task,update_assessment,update_goal_progress,update_profile,update_streak,upload_vision_image|all_time_stats,all_time_stats_edit,badge_list,calendar,dashboard,goal_list,habit_detail,habit_detail_edit,habit_list,point_a,today,vision_board,week_progress|Badge,Goal,Habit,HabitLog,Quote,Sphere,SphereAssessment,Task,User,VisionItem",
+  "slots": {
+    "header": [],
+    "toolbar": [],
+    "body": {
+      "type": "canvas"
+    },
+    "context": [],
+    "fab": [],
+    "overlay": []
+  },
+  "nav": {
+    "outgoing": [],
+    "incoming": []
+  },
+  "editProjection": null,
+  "sourceProjection": null
+}

@@ -1,0 +1,208 @@
+{
+  "projection": "activity_list",
+  "name": "Активности",
+  "domain": "reflect",
+  "layer": "canonical",
+  "archetype": "catalog",
+  "version": 2,
+  "generatedAt": 0,
+  "generatedBy": "rules",
+  "inputsHash": "add_activity_to_entry,add_tag_to_entry,archive_activity,archive_hypothesis,auto_resolve_hypothesis,award_milestone,compute_correlation,confirm_hypothesis,create_activity,create_reminder,create_tag,delete_account,delete_activity,delete_entry,delete_hypothesis,delete_reminder,delete_tag,detailed_checkin,detect_pattern,dismiss_insight,duplicate_entry,edit_activity,edit_entry_note,edit_hypothesis,edit_reminder,edit_tag,evaluate_hypothesis,export_data,generate_insight,mark_insight_seen,merge_activities,merge_tags,mood_drift_alert,move_entry_time,pin_insight,propose_hypothesis,quick_checkin,reject_hypothesis,remove_activity_from_entry,remove_tag_from_entry,reset_progress,set_avatar,start_testing,toggle_reminder,update_profile,update_streak,weekly_summary|activity_correlation,activity_list,calendar_heatmap,checkin,entry_detail,hypothesis_detail,hypothesis_detail_edit,hypothesis_list,insights_feed,mood_meter_cluster,mood_trends,tag_list,timeline,weekly_summary,weekly_summary_edit|Activity,EntryActivity,EntryTag,Hypothesis,HypothesisEvidence,Insight,MoodEntry,Reminder,Tag,User",
+  "slots": {
+    "header": [],
+    "toolbar": [],
+    "hero": [
+      {
+        "type": "heroCreate",
+        "intentId": "create_activity",
+        "paramName": "name",
+        "placeholder": "Название…",
+        "buttonLabel": "Создать активность",
+        "icon": "➕",
+        "postCreate": {
+          "collection": "activities",
+          "matchField": null,
+          "matchValue": null
+        }
+      }
+    ],
+    "body": {
+      "type": "list",
+      "source": "activities",
+      "gap": 8,
+      "empty": {
+        "type": "text",
+        "content": "Пусто",
+        "style": "muted"
+      },
+      "item": {
+        "type": "card",
+        "children": [
+          {
+            "type": "row",
+            "gap": 10,
+            "children": [
+              {
+                "type": "avatar",
+                "bind": "avatar",
+                "nameBind": "name",
+                "size": 40
+              },
+              {
+                "type": "column",
+                "sx": {
+                  "flex": 1
+                },
+                "children": [
+                  {
+                    "type": "text",
+                    "bind": "name",
+                    "style": "heading"
+                  }
+                ]
+              }
+            ]
+          }
+        ],
+        "intents": [
+          {
+            "intentId": "edit_activity",
+            "opens": "overlay",
+            "overlayKey": "overlay_edit_activity",
+            "label": "Редактировать активность",
+            "icon": "✎",
+            "conditions": [
+              "activity.userId = me.id",
+              "activity.userId = me.id"
+            ]
+          },
+          {
+            "intentId": "delete_activity",
+            "opens": "overlay",
+            "overlayKey": "overlay_delete_activity",
+            "label": "Удалить активность",
+            "icon": "🗑",
+            "conditions": [
+              "activity.userId = me.id"
+            ]
+          },
+          {
+            "intentId": "archive_activity",
+            "label": "Архивировать",
+            "icon": "📦",
+            "conditions": [
+              "activity.userId = me.id",
+              "activity.userId = me.id"
+            ]
+          }
+        ]
+      },
+      "filter": "userId === viewer.id || userId === null",
+      "onItemClick": {
+        "action": "navigate",
+        "to": "entry_detail",
+        "params": {
+          "entryId": "item.id"
+        }
+      }
+    },
+    "context": [],
+    "fab": [],
+    "overlay": [
+      {
+        "type": "formModal",
+        "key": "overlay_edit_activity",
+        "intentId": "edit_activity",
+        "title": "Редактировать активность",
+        "witnessPanel": [],
+        "parameters": [
+          {
+            "name": "name",
+            "inferredFrom": "direct-witness",
+            "control": "text"
+          },
+          {
+            "name": "icon",
+            "inferredFrom": "direct-witness",
+            "control": "text"
+          },
+          {
+            "name": "category",
+            "inferredFrom": "direct-witness",
+            "control": "select",
+            "options": [
+              {
+                "value": "work",
+                "label": "Работа"
+              },
+              {
+                "value": "health",
+                "label": "Здоровье"
+              },
+              {
+                "value": "social",
+                "label": "Социальное"
+              },
+              {
+                "value": "leisure",
+                "label": "Отдых"
+              },
+              {
+                "value": "mind",
+                "label": "Разум"
+              },
+              {
+                "value": "other",
+                "label": "Другое"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "type": "confirmDialog",
+        "key": "overlay_delete_activity",
+        "triggerIntentId": "delete_activity",
+        "irreversibility": "medium",
+        "message": "Удалить активность?",
+        "confirmBy": {
+          "type": "button"
+        }
+      }
+    ]
+  },
+  "nav": {
+    "outgoing": [
+      {
+        "from": "activity_list",
+        "to": "entry_detail",
+        "kind": "item-click",
+        "itemEntity": "Activity",
+        "params": {
+          "entryId": "item.id"
+        }
+      },
+      {
+        "from": "activity_list",
+        "to": "weekly_summary",
+        "kind": "item-click",
+        "itemEntity": "Activity",
+        "params": {
+          "userId": "item.id"
+        }
+      },
+      {
+        "from": "activity_list",
+        "to": "hypothesis_detail",
+        "kind": "item-click",
+        "itemEntity": "Activity",
+        "params": {
+          "hypothesisId": "item.id"
+        }
+      }
+    ],
+    "incoming": []
+  },
+  "editProjection": null,
+  "sourceProjection": null
+}

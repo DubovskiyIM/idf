@@ -1,0 +1,299 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://intent-design.tech/spec/v0.1/projection.schema.json",
+  "title": "IDF Projection",
+  "description": "Форма одной проекции (запись в PROJECTIONS). Спецификация v0.1 / §5, §16 манифеста v1.7. Нормативны только name и kind; остальное — опциональные аннотации, 78% которых деривируются автоматически из namespace + intents.",
+  "type": "object",
+  "required": ["name", "kind"],
+  "properties": {
+    "name": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Человеко-читаемое имя проекции."
+    },
+    "kind": {
+      "type": "string",
+      "enum": ["feed", "catalog", "detail", "form", "dashboard", "canvas", "wizard"]
+    },
+    "query": {
+      "type": "string",
+      "description": "SQL-like описание для человека / LLM. Ненормативно — не исполняется рантаймом."
+    },
+    "entities": {
+      "type": "array",
+      "description": "Сущности, участвующие в проекции.",
+      "items": { "type": "string" }
+    },
+    "mainEntity": {
+      "type": "string",
+      "description": "Главная сущность (обязательна для catalog/detail в большинстве реализаций)."
+    },
+    "idParam": {
+      "type": "string",
+      "description": "Имя параметра маршрута для detail/form (например, \"bookingId\")."
+    },
+    "routeEntities": {
+      "type": "array",
+      "description": "Дополнительные entity-параметры маршрута (помимо mainEntity).",
+      "items": { "type": "string" }
+    },
+    "filter": {
+      "type": "string",
+      "description": "JS-выражение / DSL-предикат для фильтрации коллекции."
+    },
+    "sort": {
+      "type": "string",
+      "description": "Поле сортировки. Префикс \"-\" — descending."
+    },
+    "witnesses": {
+      "type": "array",
+      "description": "Поля, которые проекция показывает в item / карточке. Элемент — строка (имя поля) или объект (computed witness: {field, compute}).",
+      "items": {
+        "oneOf": [
+          { "type": "string" },
+          { "type": "object", "additionalProperties": true }
+        ]
+      }
+    },
+    "layout": {
+      "type": "string",
+      "enum": ["list", "grid", "table"],
+      "description": "Макет для catalog. Рендерер MAY использовать cardSpec для grid."
+    },
+
+    "subCollections": {
+      "type": "array",
+      "description": "Связанные sub-entity как секции в detail-body.",
+      "items": { "$ref": "#/$defs/SubCollection" }
+    },
+    "progress": { "$ref": "#/$defs/Progress" },
+    "footerIntents": {
+      "type": "array",
+      "description": "Intent-ID для inline-footer в detail (single-param setter'ы).",
+      "items": { "type": "string" }
+    },
+    "primaryCTA": {
+      "type": "array",
+      "description": "Фазо-зависимые primary-кнопки detail (авто-выводятся кристаллизатором; допустим override).",
+      "items": { "type": "object", "additionalProperties": true }
+    },
+
+    "widgets": {
+      "type": "array",
+      "description": "Виджеты dashboard-архетипа.",
+      "items": { "$ref": "#/$defs/Widget" }
+    },
+    "embedded": {
+      "type": "array",
+      "description": "Встраиваемые проекции (альтернативная форма widgets; некоторые домены используют).",
+      "items": {
+        "type": "object",
+        "properties": {
+          "projection": { "type": "string" },
+          "width":      { "type": ["string", "integer"] },
+          "height":     { "type": ["string", "integer"] }
+        },
+        "additionalProperties": true
+      }
+    },
+
+    "steps": {
+      "type": "array",
+      "description": "Шаги wizard-архетипа.",
+      "items": { "$ref": "#/$defs/WizardStep" }
+    },
+
+    "primitive": {
+      "type": "string",
+      "description": "Тип primitive для canvas-архетипа (\"map\", \"flow\", ...)."
+    },
+    "canvasType": {
+      "type": "string",
+      "description": "Domain-specific тип canvas'а (\"allocation_pie\", \"order_tracker\", ...)."
+    },
+    "data": {
+      "type": "object",
+      "description": "Конфигурация canvas-рендера (layers / source / bindings).",
+      "additionalProperties": true
+    },
+    "height": { "type": ["integer", "string"] },
+
+    "sourceProjection": {
+      "type": "string",
+      "description": "Для form: ссылка на исходную detail-проекцию."
+    },
+    "editIntents": {
+      "type": "array",
+      "description": "Whitelist intent-ID для form-архетипа.",
+      "items": { "type": "string" }
+    },
+
+    "onItemClick": { "$ref": "#/$defs/OnItemClick" },
+    "clickNavigate": {
+      "type": "string",
+      "description": "Альтернативная краткая форма: ID проекции для навигации при клике по item."
+    },
+    "actions": {
+      "type": "array",
+      "description": "Additional actions — per-item кнопки, не через intent-рейту.",
+      "items": { "type": "string" }
+    },
+    "body": {
+      "description": "Ручная декларация body-секций (для form / detail). Массив бинд-объектов или объект со slot-структурой.",
+      "oneOf": [
+        { "type": "array" },
+        { "type": "object" }
+      ]
+    },
+    "inline": {
+      "type": "object",
+      "description": "Inline-фильтр: проекция внутри item (редко).",
+      "additionalProperties": true
+    },
+
+    "roleVisibility": {
+      "type": "array",
+      "description": "Whitelist ролей, для которых проекция видна (override canExecute).",
+      "items": { "type": "string" }
+    }
+  },
+  "additionalProperties": true,
+
+  "allOf": [
+    {
+      "description": "wizard: MUST иметь steps.",
+      "if": { "properties": { "kind": { "const": "wizard" } } },
+      "then": { "required": ["steps"] }
+    },
+    {
+      "description": "dashboard: SHOULD иметь widgets или embedded (но допустимо сгенерированное позже).",
+      "if": { "properties": { "kind": { "const": "dashboard" } } },
+      "then": {
+        "anyOf": [
+          { "required": ["widgets"] },
+          { "required": ["embedded"] },
+          { "not": { "required": [] } }
+        ]
+      }
+    },
+    {
+      "description": "canvas: MAY иметь primitive или canvasType. Custom canvas'ы (registerCanvas) могут не декларировать — рендер делегируется компоненту."
+    }
+  ],
+
+  "$defs": {
+    "SubCollection": {
+      "type": "object",
+      "properties": {
+        "collection": { "type": "string" },
+        "entity":     { "type": "string" },
+        "foreignKey": { "type": "string" },
+        "title":      { "type": "string" },
+        "label":      { "type": "string" },
+        "addable":    { "type": "boolean" },
+        "sort":       { "type": "string" },
+        "filter":     { "type": "string" }
+      },
+      "additionalProperties": true
+    },
+
+    "Progress": {
+      "type": "object",
+      "properties": {
+        "type":           { "type": "string", "description": "Например, \"quorum\"." },
+        "totalSource":    { "type": "string" },
+        "currentSource":  { "type": "string" },
+        "currentDistinct": { "type": "string" },
+        "foreignKey":     { "type": "string" },
+        "waitingField":   { "type": "string" }
+      },
+      "additionalProperties": true
+    },
+
+    "Widget": {
+      "description": "Dashboard widget: ссылка на другую проекцию или inline-вычисляемое значение.",
+      "type": "object",
+      "properties": {
+        "projection": { "type": "string" },
+        "key":        { "type": "string" },
+        "title":      { "type": "string" },
+        "size": {
+          "oneOf": [
+            { "type": "string", "enum": ["full", "half", "third", "quarter", "sm", "md", "lg"] },
+            { "type": "integer", "minimum": 1, "maximum": 12 }
+          ]
+        },
+        "width":     { "type": ["string", "integer"] },
+        "aggregate": { "type": "string", "description": "Inline aggregate выражение (например, \"sum(deliveries, tip)\")." }
+      },
+      "additionalProperties": true
+    },
+
+    "WizardStep": {
+      "description": "Один шаг wizard-а.",
+      "type": "object",
+      "required": ["id"],
+      "properties": {
+        "id":        { "type": "string" },
+        "label":     { "type": "string" },
+        "title":     { "type": "string" },
+        "intent":    { "type": "string", "description": "Intent-ID, исполняемый на этом шаге." },
+        "pick":      { "type": "array", "items": { "type": "string" } },
+        "source": {
+          "description": "Источник данных для шага.",
+          "oneOf": [
+            {
+              "type": "object",
+              "properties": {
+                "collection": { "type": "string" },
+                "filter":     { "type": "string" },
+                "inline": {
+                  "type": "array",
+                  "description": "Статические опции без сидинга (v1.6)."
+                }
+              },
+              "additionalProperties": true
+            },
+            { "type": "string" }
+          ]
+        },
+        "display":    {
+          "oneOf": [
+            { "type": "array", "items": { "type": "string" } },
+            { "type": "string" }
+          ]
+        },
+        "displayAs": {
+          "type": "string",
+          "enum": ["FlatList", "GroupedList", "CalendarView", "flat", "grouped", "calendar"]
+        },
+        "groupBy": {
+          "type": "object",
+          "additionalProperties": true
+        },
+        "filterBy": {
+          "type": "object",
+          "description": "Cross-step filtering: связать поле шага с полем предыдущего.",
+          "additionalProperties": true
+        },
+        "sideEffect": { "type": "string", "description": "ID intent'а, исполняемого как side-effect шага." },
+        "summary":    { "type": "boolean", "description": "Финальный summary-шаг." }
+      },
+      "additionalProperties": true
+    },
+
+    "OnItemClick": {
+      "type": "object",
+      "required": ["action"],
+      "properties": {
+        "action": { "type": "string", "enum": ["navigate"] },
+        "to":     { "type": "string" },
+        "params": {
+          "type": "object",
+          "additionalProperties": { "type": "string" }
+        }
+      },
+      "additionalProperties": true
+    }
+  }
+}

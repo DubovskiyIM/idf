@@ -1,0 +1,178 @@
+{
+  "projection": "all_time_stats",
+  "name": "Статистика",
+  "domain": "lifequest",
+  "layer": "canonical",
+  "archetype": "detail",
+  "version": 2,
+  "generatedAt": 0,
+  "generatedBy": "rules",
+  "inputsHash": "abandon_goal,add_goal_note,add_sphere_note,add_vision_image,archive_habit,assess_sphere,change_habit_frequency,check_habit,clear_quote,clear_sphere_vision,complete_goal,complete_task,create_goal,create_habit,create_task,delete_account,delete_goal,delete_habit,delete_task,delete_vision_item,earn_badge,earn_xp,edit_goal,edit_habit,edit_quote,edit_task,edit_vision_caption,export_data,level_up,link_task_goal,log_habit_value,move_goal_sphere,move_habit_sphere,move_task_date,move_vision_item,pause_habit,random_quote,reactivate_goal,reassess_all,replace_vision_image,reset_progress,reset_streak,resize_vision_item,resume_habit,set_avatar,set_goal_deadline,set_quote,set_sphere_target,toggle_task_priority,uncheck_habit,uncomplete_task,update_assessment,update_goal_progress,update_profile,update_streak,upload_vision_image|all_time_stats,all_time_stats_edit,badge_list,calendar,dashboard,goal_list,habit_detail,habit_detail_edit,habit_list,point_a,today,vision_board,week_progress|Badge,Goal,Habit,HabitLog,Quote,Sphere,SphereAssessment,Task,User,VisionItem",
+  "slots": {
+    "header": [],
+    "toolbar": [
+      {
+        "type": "intentButton",
+        "intentId": "update_profile",
+        "label": "Обновить профиль",
+        "icon": "✎",
+        "opens": "overlay",
+        "overlayKey": "overlay_update_profile",
+        "condition": "id === viewer.id"
+      },
+      {
+        "type": "intentButton",
+        "intentId": "reset_progress",
+        "label": "Сбросить прогресс",
+        "icon": "⚡",
+        "opens": "overlay",
+        "overlayKey": "overlay_reset_progress",
+        "condition": "id === viewer.id"
+      }
+    ],
+    "body": {
+      "type": "column",
+      "gap": 16,
+      "children": [
+        {
+          "type": "image",
+          "bind": "avatar"
+        },
+        {
+          "type": "row",
+          "gap": 16,
+          "align": "flex-start",
+          "children": [
+            {
+              "type": "avatar",
+              "bind": "avatar",
+              "size": 80
+            },
+            {
+              "type": "column",
+              "gap": 4,
+              "sx": {
+                "flex": 1
+              },
+              "children": [
+                {
+                  "type": "heading",
+                  "bind": "name",
+                  "level": 2
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "statBar",
+          "fields": [
+            {
+              "name": "level",
+              "label": "Уровень",
+              "type": "number"
+            },
+            {
+              "name": "xp",
+              "label": "Опыт (XP)",
+              "type": "number"
+            },
+            {
+              "name": "streak",
+              "label": "Серия дней",
+              "type": "number"
+            }
+          ]
+        },
+        {
+          "type": "infoSection",
+          "title": "Характеристики",
+          "fields": [
+            {
+              "bind": "email",
+              "label": "Email"
+            }
+          ]
+        }
+      ]
+    },
+    "context": [],
+    "fab": [],
+    "overlay": [
+      {
+        "type": "formModal",
+        "key": "overlay_update_profile",
+        "intentId": "update_profile",
+        "title": "Обновить профиль",
+        "witnessPanel": [],
+        "parameters": [
+          {
+            "name": "name",
+            "inferredFrom": "direct-witness",
+            "control": "text"
+          }
+        ]
+      },
+      {
+        "type": "confirmDialog",
+        "key": "overlay_reset_progress",
+        "triggerIntentId": "reset_progress",
+        "irreversibility": "high",
+        "message": "Сбросить прогресс?",
+        "confirmBy": {
+          "type": "typeText",
+          "expected": "delete"
+        }
+      }
+    ],
+    "sections": [],
+    "primaryCTA": [],
+    "progress": null,
+    "footer": [],
+    "voterSelector": null
+  },
+  "nav": {
+    "outgoing": [
+      {
+        "from": "all_time_stats",
+        "to": "all_time_stats_edit",
+        "kind": "edit-action",
+        "itemEntity": "User",
+        "params": {
+          "userId": "routeParams.userId"
+        }
+      }
+    ],
+    "incoming": [
+      {
+        "from": "habit_list",
+        "to": "all_time_stats",
+        "kind": "item-click",
+        "itemEntity": "Habit",
+        "params": {
+          "userId": "item.id"
+        }
+      },
+      {
+        "from": "goal_list",
+        "to": "all_time_stats",
+        "kind": "item-click",
+        "itemEntity": "Goal",
+        "params": {
+          "userId": "item.id"
+        }
+      },
+      {
+        "from": "badge_list",
+        "to": "all_time_stats",
+        "kind": "item-click",
+        "itemEntity": "Badge",
+        "params": {
+          "userId": "item.id"
+        }
+      }
+    ]
+  },
+  "editProjection": "all_time_stats_edit",
+  "sourceProjection": null
+}

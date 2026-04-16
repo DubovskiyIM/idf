@@ -1,0 +1,249 @@
+{
+  "projection": "habit_detail_edit",
+  "name": "Привычка: редактирование",
+  "domain": "lifequest",
+  "layer": "canonical",
+  "archetype": "form",
+  "version": 2,
+  "generatedAt": 0,
+  "generatedBy": "rules",
+  "inputsHash": "abandon_goal,add_goal_note,add_sphere_note,add_vision_image,archive_habit,assess_sphere,change_habit_frequency,check_habit,clear_quote,clear_sphere_vision,complete_goal,complete_task,create_goal,create_habit,create_task,delete_account,delete_goal,delete_habit,delete_task,delete_vision_item,earn_badge,earn_xp,edit_goal,edit_habit,edit_quote,edit_task,edit_vision_caption,export_data,level_up,link_task_goal,log_habit_value,move_goal_sphere,move_habit_sphere,move_task_date,move_vision_item,pause_habit,random_quote,reactivate_goal,reassess_all,replace_vision_image,reset_progress,reset_streak,resize_vision_item,resume_habit,set_avatar,set_goal_deadline,set_quote,set_sphere_target,toggle_task_priority,uncheck_habit,uncomplete_task,update_assessment,update_goal_progress,update_profile,update_streak,upload_vision_image|all_time_stats,all_time_stats_edit,badge_list,calendar,dashboard,goal_list,habit_detail,habit_detail_edit,habit_list,point_a,today,vision_board,week_progress|Badge,Goal,Habit,HabitLog,Quote,Sphere,SphereAssessment,Task,User,VisionItem",
+  "slots": {
+    "header": [],
+    "toolbar": [],
+    "body": {
+      "type": "formBody",
+      "mainEntity": "Habit",
+      "fields": [
+        {
+          "name": "userId",
+          "type": "entityRef",
+          "editable": false,
+          "required": false,
+          "label": "Пользователь",
+          "intentId": null,
+          "options": null
+        },
+        {
+          "name": "title",
+          "type": "text",
+          "editable": true,
+          "required": true,
+          "label": "Название",
+          "intentId": "edit_habit",
+          "options": null
+        },
+        {
+          "name": "sphereId",
+          "type": "entityRef",
+          "editable": true,
+          "required": false,
+          "label": "Сфера",
+          "intentId": "move_habit_sphere",
+          "options": null
+        },
+        {
+          "name": "type",
+          "type": "enum",
+          "editable": false,
+          "required": false,
+          "label": "Тип",
+          "intentId": null,
+          "options": [
+            {
+              "value": "binary",
+              "label": "Да/Нет"
+            },
+            {
+              "value": "quantitative",
+              "label": "Количественная"
+            }
+          ]
+        },
+        {
+          "name": "targetValue",
+          "type": "number",
+          "editable": true,
+          "required": false,
+          "label": "Целевое значение",
+          "intentId": "edit_habit",
+          "options": null
+        },
+        {
+          "name": "unit",
+          "type": "text",
+          "editable": true,
+          "required": false,
+          "label": "Единица измерения",
+          "intentId": "edit_habit",
+          "options": null
+        },
+        {
+          "name": "frequency",
+          "type": "enum",
+          "editable": true,
+          "required": false,
+          "label": "Частота",
+          "intentId": "change_habit_frequency",
+          "options": [
+            {
+              "value": "daily",
+              "label": "Ежедневно"
+            },
+            {
+              "value": "weekdays",
+              "label": "По будням"
+            },
+            {
+              "value": "custom",
+              "label": "Своя"
+            }
+          ]
+        },
+        {
+          "name": "status",
+          "type": "enum",
+          "editable": false,
+          "required": false,
+          "label": "Статус",
+          "intentId": null,
+          "options": [
+            {
+              "value": "active",
+              "label": "Активная"
+            },
+            {
+              "value": "paused",
+              "label": "На паузе"
+            },
+            {
+              "value": "archived",
+              "label": "В архиве"
+            }
+          ]
+        },
+        {
+          "name": "streakCurrent",
+          "type": "number",
+          "editable": false,
+          "required": false,
+          "label": "Текущая серия",
+          "intentId": "update_streak",
+          "options": null
+        },
+        {
+          "name": "streakBest",
+          "type": "number",
+          "editable": false,
+          "required": false,
+          "label": "Лучшая серия",
+          "intentId": null,
+          "options": null
+        }
+      ],
+      "sections": [
+        {
+          "id": "main",
+          "title": "Основное",
+          "fields": [
+            {
+              "name": "title",
+              "type": "text",
+              "editable": true,
+              "required": true,
+              "label": "Название",
+              "intentId": "edit_habit",
+              "options": null
+            }
+          ]
+        },
+        {
+          "id": "attrs",
+          "title": "Характеристики",
+          "fields": [
+            {
+              "name": "targetValue",
+              "type": "number",
+              "editable": true,
+              "required": false,
+              "label": "Целевое значение",
+              "intentId": "edit_habit",
+              "options": null
+            },
+            {
+              "name": "unit",
+              "type": "text",
+              "editable": true,
+              "required": false,
+              "label": "Единица измерения",
+              "intentId": "edit_habit",
+              "options": null
+            },
+            {
+              "name": "frequency",
+              "type": "enum",
+              "editable": true,
+              "required": false,
+              "label": "Частота",
+              "intentId": "change_habit_frequency",
+              "options": [
+                {
+                  "value": "daily",
+                  "label": "Ежедневно"
+                },
+                {
+                  "value": "weekdays",
+                  "label": "По будням"
+                },
+                {
+                  "value": "custom",
+                  "label": "Своя"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "refs",
+          "title": "Связи",
+          "fields": [
+            {
+              "name": "sphereId",
+              "type": "entityRef",
+              "editable": true,
+              "required": false,
+              "label": "Сфера",
+              "intentId": "move_habit_sphere",
+              "options": null
+            }
+          ]
+        }
+      ],
+      "editIntents": [
+        "edit_habit",
+        "change_habit_frequency",
+        "move_habit_sphere",
+        "update_streak"
+      ]
+    },
+    "context": [],
+    "fab": [],
+    "overlay": []
+  },
+  "nav": {
+    "outgoing": [],
+    "incoming": [
+      {
+        "from": "habit_detail",
+        "to": "habit_detail_edit",
+        "kind": "edit-action",
+        "itemEntity": "Habit",
+        "params": {
+          "habitId": "routeParams.habitId"
+        }
+      }
+    ]
+  },
+  "editProjection": null,
+  "sourceProjection": "habit_detail"
+}

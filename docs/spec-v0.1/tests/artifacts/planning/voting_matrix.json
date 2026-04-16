@@ -1,0 +1,27 @@
+{
+  "projection": "voting_matrix",
+  "name": "Матрица голосов",
+  "domain": "planning",
+  "layer": "canonical",
+  "archetype": "canvas",
+  "version": 2,
+  "generatedAt": 0,
+  "generatedBy": "rules",
+  "inputsHash": "accept_invitation,add_time_option,cancel_meeting,cancel_poll,change_vote,close_poll,create_poll,decline_invitation,invite_participant,open_poll,resolve_poll,send_reminder,set_deadline,suggest_alternative,vote_maybe,vote_no,vote_yes|my_polls,poll_overview,voting_matrix|Meeting,Participant,Poll,TimeOption,Vote",
+  "slots": {
+    "header": [],
+    "toolbar": [],
+    "body": {
+      "type": "canvas"
+    },
+    "context": [],
+    "fab": [],
+    "overlay": []
+  },
+  "nav": {
+    "outgoing": [],
+    "incoming": []
+  },
+  "editProjection": null,
+  "sourceProjection": null
+}

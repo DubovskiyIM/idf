@@ -1,0 +1,114 @@
+{
+  "projection": "weekly_summary",
+  "name": "Итоги недели",
+  "domain": "reflect",
+  "layer": "canonical",
+  "archetype": "detail",
+  "version": 2,
+  "generatedAt": 0,
+  "generatedBy": "rules",
+  "inputsHash": "add_activity_to_entry,add_tag_to_entry,archive_activity,archive_hypothesis,auto_resolve_hypothesis,award_milestone,compute_correlation,confirm_hypothesis,create_activity,create_reminder,create_tag,delete_account,delete_activity,delete_entry,delete_hypothesis,delete_reminder,delete_tag,detailed_checkin,detect_pattern,dismiss_insight,duplicate_entry,edit_activity,edit_entry_note,edit_hypothesis,edit_reminder,edit_tag,evaluate_hypothesis,export_data,generate_insight,mark_insight_seen,merge_activities,merge_tags,mood_drift_alert,move_entry_time,pin_insight,propose_hypothesis,quick_checkin,reject_hypothesis,remove_activity_from_entry,remove_tag_from_entry,reset_progress,set_avatar,start_testing,toggle_reminder,update_profile,update_streak,weekly_summary|activity_correlation,activity_list,calendar_heatmap,checkin,entry_detail,hypothesis_detail,hypothesis_detail_edit,hypothesis_list,insights_feed,mood_meter_cluster,mood_trends,tag_list,timeline,weekly_summary,weekly_summary_edit|Activity,EntryActivity,EntryTag,Hypothesis,HypothesisEvidence,Insight,MoodEntry,Reminder,Tag,User",
+  "slots": {
+    "header": [],
+    "toolbar": [
+      {
+        "type": "intentButton",
+        "intentId": "update_profile",
+        "label": "Обновить профиль",
+        "icon": "✎",
+        "opens": "overlay",
+        "overlayKey": "overlay_update_profile",
+        "condition": "id === viewer.id"
+      }
+    ],
+    "body": {
+      "type": "column",
+      "gap": 16,
+      "children": [
+        {
+          "type": "heading",
+          "bind": "name",
+          "level": 1
+        },
+        {
+          "type": "statBar",
+          "fields": [
+            {
+              "name": "streakCurrent",
+              "label": "Текущая серия",
+              "type": "number"
+            },
+            {
+              "name": "entryCount",
+              "label": "Количество записей",
+              "type": "number"
+            }
+          ]
+        },
+        {
+          "type": "infoSection",
+          "title": "Характеристики",
+          "fields": [
+            {
+              "bind": "email",
+              "label": "Email"
+            },
+            {
+              "bind": "avatar",
+              "label": "Аватар"
+            }
+          ]
+        }
+      ]
+    },
+    "context": [],
+    "fab": [],
+    "overlay": [
+      {
+        "type": "formModal",
+        "key": "overlay_update_profile",
+        "intentId": "update_profile",
+        "title": "Обновить профиль",
+        "witnessPanel": [],
+        "parameters": [
+          {
+            "name": "name",
+            "inferredFrom": "direct-witness",
+            "control": "text"
+          }
+        ]
+      }
+    ],
+    "sections": [],
+    "primaryCTA": [],
+    "progress": null,
+    "footer": [],
+    "voterSelector": null
+  },
+  "nav": {
+    "outgoing": [
+      {
+        "from": "weekly_summary",
+        "to": "weekly_summary_edit",
+        "kind": "edit-action",
+        "itemEntity": "User",
+        "params": {
+          "userId": "routeParams.userId"
+        }
+      }
+    ],
+    "incoming": [
+      {
+        "from": "activity_list",
+        "to": "weekly_summary",
+        "kind": "item-click",
+        "itemEntity": "Activity",
+        "params": {
+          "userId": "item.id"
+        }
+      }
+    ]
+  },
+  "editProjection": "weekly_summary_edit",
+  "sourceProjection": null
+}

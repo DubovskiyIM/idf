@@ -1,0 +1,168 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://intent-design.tech/spec/v0.1/effect.schema.json",
+  "title": "IDF Effect",
+  "description": "Нормативная форма эффекта в потоке Φ (или Δ, Π, — форма одинакова, различие только в scope и routing'е). Спецификация v0.1 / §2 core semantics.",
+  "type": "object",
+  "required": ["id", "alpha", "target", "scope", "status", "parent_id", "created_at"],
+  "properties": {
+    "id": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Уникальный идентификатор эффекта. Формат не нормативен (UUID, ULID, KSUID и т.д. допустимы)."
+    },
+    "alpha": {
+      "type": "string",
+      "enum": ["add", "replace", "remove", "batch"],
+      "description": "Алгебраический тип операции. См. §2.5."
+    },
+    "target": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Таргет эффекта: \"collection\" (для add/remove/batch) или \"collection.field\" (для replace)."
+    },
+    "value": {
+      "description": "Данные эффекта. Семантика зависит от alpha: для add — объект сущности; для replace — новое значение поля; для batch — массив под-эффектов; для remove — обычно отсутствует.",
+      "oneOf": [
+        { "type": "object" },
+        { "type": "array" },
+        { "type": "string" },
+        { "type": "number" },
+        { "type": "boolean" },
+        { "type": "null" }
+      ]
+    },
+    "scope": {
+      "type": "string",
+      "enum": ["session", "device", "account", "shared", "global", "presentation"],
+      "description": "Область видимости. \"presentation\" — косметический (Π), не участвует в fold."
+    },
+    "parent_id": {
+      "type": ["string", "null"],
+      "description": "Каузальный родитель. null — root-эффект. Orphan-ссылка (target отсутствует в Φ) MUST трактоваться как root."
+    },
+    "intent_id": {
+      "type": "string",
+      "description": "ID намерения, породившего эффект. Рекомендовано для audit-trail."
+    },
+    "status": {
+      "type": "string",
+      "enum": ["proposed", "confirmed", "rejected"],
+      "description": "Стадия жизненного цикла (§2.3)."
+    },
+    "ttl": {
+      "type": ["integer", "null"],
+      "minimum": 0,
+      "description": "Миллисекунды до автоматического rejected после перехода в confirmed. null — без TTL."
+    },
+    "context": {
+      "type": "object",
+      "description": "Метаданные эффекта. SHOULD содержать id затрагиваемой сущности.",
+      "properties": {
+        "id": {
+          "description": "Идентификатор сущности, к которой применяется эффект. Формально опционален, но для корректной свёртки через add/replace/remove почти всегда требуется.",
+          "type": ["string", "number"]
+        },
+        "__irr": { "$ref": "#/$defs/Irreversibility" },
+        "__witness": { "$ref": "#/$defs/Witness" }
+      },
+      "additionalProperties": true
+    },
+    "created_at": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "UNIX timestamp в миллисекундах (момент попадания в Φ_proposed)."
+    },
+    "resolved_at": {
+      "type": ["integer", "null"],
+      "minimum": 0,
+      "description": "UNIX ms момента перехода в confirmed или rejected."
+    },
+    "desc": {
+      "type": "string",
+      "description": "Ненормативное человеко-читаемое описание."
+    },
+    "time": {
+      "type": "string",
+      "description": "Ненормативная строковая метка времени (в некоторых реализациях — ISO-строка параллельно с created_at)."
+    }
+  },
+  "additionalProperties": true,
+
+  "allOf": [
+    {
+      "description": "batch: value MUST быть массивом под-эффектов.",
+      "if": { "properties": { "alpha": { "const": "batch" } } },
+      "then": {
+        "properties": {
+          "value": {
+            "type": "array",
+            "items": { "$ref": "#" }
+          }
+        },
+        "required": ["value"]
+      }
+    },
+    {
+      "description": "replace: target MUST быть формы \"collection.field\".",
+      "if": { "properties": { "alpha": { "const": "replace" } } },
+      "then": {
+        "properties": {
+          "target": {
+            "pattern": "^[^.]+\\.[^.].*$"
+          }
+        }
+      }
+    }
+  ],
+
+  "$defs": {
+    "Irreversibility": {
+      "description": "Точка невозврата. Блокирует α:\"remove\" на сущности, если point === \"high\" && at !== null. См. §2.11.",
+      "type": "object",
+      "required": ["point"],
+      "properties": {
+        "point": {
+          "type": "string",
+          "enum": ["none", "low", "medium", "high"]
+        },
+        "at": {
+          "type": ["integer", "null"],
+          "description": "UNIX ms момента фактического перехода точки невозврата. null — декларирована, но не наступила."
+        },
+        "reason": {
+          "type": ["string", "null"],
+          "description": "Человеко-читаемое основание."
+        }
+      },
+      "additionalProperties": true
+    },
+    "Witness": {
+      "description": "Witness-of-action: причина порождения derived-эффекта рантайм-механизмом (scheduler, Rules Engine, invariant checker). Convention, не enforced. См. §2.12.",
+      "type": "object",
+      "properties": {
+        "basis": {
+          "type": "string",
+          "description": "Короткая человеко-читаемая причина (например, \"rule 'quorum_autoclose' fired\")."
+        },
+        "example": {
+          "type": "string",
+          "description": "Пример конкретного действия/параметра."
+        },
+        "ruleId": {
+          "type": "string",
+          "description": "ID правила Rules Engine, породившего эффект."
+        },
+        "firedAt": {
+          "type": "integer",
+          "description": "UNIX ms момента firing."
+        },
+        "causedByTimer": {
+          "type": "string",
+          "description": "ID таймера, если эффект порождён scheduler'ом."
+        }
+      },
+      "additionalProperties": true
+    }
+  }
+}

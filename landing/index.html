@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>IDF — Intent-Driven Framework</title>
-  <meta name="description" content="The open standard for deriving applications from user intentions.">
+  <title>IDF — Intent-Driven Format</title>
+  <meta name="description" content="IDF is a data type, not a framework. An open format for describing applications from user intentions — like OpenAPI, but for full-stack UI + voice + agent + document.">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="alternate" hreflang="en" href="./index.html">
@@ -241,13 +241,14 @@
 <section class="hero">
   <canvas id="particleCanvas"></canvas>
   <div class="hero-inner">
-    <div class="badge"><span class="pulse"></span>Spec v1.0&nbsp;&middot;&nbsp;Reference impl v1.7&nbsp;&middot;&nbsp;@intent-driven/core 0.3&nbsp;&middot;&nbsp;<a href="./index-ru.html" style="color:inherit;text-decoration:underline;text-underline-offset:3px">RU</a></div>
-    <h1>One artifact.<br><span class="line2">Four materializations.</span></h1>
-    <p class="sub">A formal system that derives applications from what users come to do. Pixels, voice, agent API, and document &mdash; rendered from the same intent model.</p>
+    <div class="badge"><span class="pulse"></span>Format Spec v0.1&nbsp;&middot;&nbsp;6 JSON Schemas&nbsp;&middot;&nbsp;@intent-driven/core 0.7&nbsp;&middot;&nbsp;<a href="./index-ru.html" style="color:inherit;text-decoration:underline;text-underline-offset:3px">RU</a></div>
+    <h1>Not a framework.<br><span class="line2">A data type.</span></h1>
+    <p class="sub">IDF is a format for describing applications &mdash; like OpenAPI for full-stack. Artifact v2 with ontology, intents, projections, and roles is the schema. Adapters and materializers are readers of the format, not parts of a framework.</p>
     <div class="ctas">
-      <a class="btn btn-glow" href="https://github.com/DubovskiyIM/idf/tree/main/spec">Read the Specification</a>
+      <a class="btn btn-glow" href="https://github.com/DubovskiyIM/idf/tree/main/docs/spec-v0.1">Read the Specification</a>
       <a class="btn" href="https://www.npmjs.com/package/@intent-driven/core">npm&nbsp;i&nbsp;@intent-driven/core</a>
       <a class="btn" href="https://github.com/DubovskiyIM/idf">GitHub</a>
+      <a class="btn" href="https://idf.intent-design.tech">Live Demo</a>
     </div>
     <div class="formula">
       <span class="hl">World(t)</span> = fold( &oplus;, &empty;, sort<span style="font-size:.7em;vertical-align:sub">&prec;</span>( <span class="hl">&Phi;</span><span style="font-size:.7em;vertical-align:sub">confirmed</span> &darr; t ) )
@@ -344,9 +345,9 @@
   <div class="container rv">
     <div class="stag">Developer experience</div>
     <div class="stitle">Declare once. Render four ways.</div>
-    <div class="sdesc">@intent-driven/core ships everything: fold, intent algebra, crystallizer, four materializers, role taxonomy, invariants. Pure functions, dual ESM&#x2009;+&#x2009;CJS.</div>
+    <div class="sdesc">@intent-driven/core ships everything: fold, intent algebra, crystallizer, four materializers, role taxonomy, invariants. Pure functions, dual ESM&#x2009;+&#x2009;CJS. Verified against 6 JSON Schemas and 138 conformance tests.</div>
     <div class="code-wrap">
-      <div class="code-bar"><div class="dots"><span></span><span></span><span></span></div>&nbsp;&nbsp;trading.js&nbsp;&middot;&nbsp;@intent-driven/core@0.3</div>
+      <div class="code-bar"><div class="dots"><span></span><span></span><span></span></div>&nbsp;&nbsp;trading.js&nbsp;&middot;&nbsp;@intent-driven/core@0.7</div>
 <pre id="codeBlock"></pre>
     </div>
   </div>
@@ -439,13 +440,14 @@
 <!-- ===== CONFORMANCE ===== -->
 <section>
   <div class="container rv">
-    <div class="stag">Open standard</div>
-    <div class="stitle">Three conformance levels. Any language.</div>
-    <div class="sdesc">54 language-agnostic JSON tests &mdash; pass them in Rust, Python, or&nbsp;Go and your implementation is conformant. The reference impl in JavaScript ships as <code style="font-family:var(--mono);color:var(--accent-bright)">@intent-driven/core</code>.</div>
-    <div class="lvls">
-      <div class="lvl glass rv rv-d1"><div class="n">L1</div><div class="nm">Core</div><div class="ts">24 tests</div><div class="detail">fold &bull; causal sort &bull; batch<br>TTL &bull; scope &bull; lifecycle</div></div>
-      <div class="lvl glass rv rv-d2"><div class="n">L2</div><div class="nm">Algebra</div><div class="ts">15 tests</div><div class="detail">sequential &bull; antagonistic<br>excluding &bull; parallel</div></div>
-      <div class="lvl glass rv rv-d3"><div class="n">L3</div><div class="nm">Full</div><div class="ts">15 tests</div><div class="detail">7 integrity rules<br>anchoring &bull; witnesses</div></div>
+    <div class="stag">Open format</div>
+    <div class="stitle">Four conformance levels. Any language.</div>
+    <div class="sdesc">6 JSON Schemas + 138 language-agnostic test fixtures. Pass them in Rust, Python, Swift, or&nbsp;Go &mdash; your implementation is conformant. Four axes: archetypes &times; controls &times; tracks &times; features. Reference impl: <code style="font-family:var(--mono);color:var(--accent-bright)">@intent-driven/core</code>.</div>
+    <div class="lvls" style="grid-template-columns:repeat(4,1fr)">
+      <div class="lvl glass rv rv-d1"><div class="n">L1</div><div class="nm">Parser</div><div class="ts">all schemas</div><div class="detail">parse &bull; validate &bull; fold<br>causal sort &bull; composition</div></div>
+      <div class="lvl glass rv rv-d2"><div class="n">L2</div><div class="nm">Standard</div><div class="ts">A2 + C2</div><div class="detail">catalog &bull; detail &bull; form &bull; feed<br>+ 1 materialization track</div></div>
+      <div class="lvl glass rv rv-d3"><div class="n">L3</div><div class="nm">Full</div><div class="ts">A4 + C3</div><div class="detail">all 7 archetypes &bull; capability surface<br>irreversibility &bull; invariants</div></div>
+      <div class="lvl glass rv rv-d4"><div class="n">L4</div><div class="nm">Multi-track</div><div class="ts">L3 &times; 2+</div><div class="detail">pixels + voice + agent + document<br>viewer-scope consistency</div></div>
     </div>
   </div>
 </section>
@@ -474,7 +476,7 @@
 <section>
   <div class="container rv">
     <div class="quote-wrap">
-      <blockquote>UI is not what you draw. UI is the intersection of <em>projections</em> and <em>intentions</em>. Pixels, voice, agent API, document &mdash; equal materializations of that intersection.</blockquote>
+      <blockquote>IDF is not a framework &mdash; it's a <em>data type</em>. The artifact with ontology, intents, projections, and roles is a <em>format</em>, like HTML or JSON-LD. Systems that render pixels, speak voice, serve agent APIs, print documents &mdash; are <em>readers</em> of that format.</blockquote>
     </div>
   </div>
 </section>
@@ -482,12 +484,13 @@
 <!-- ===== FOOTER ===== -->
 <footer>
   <div class="logo">IDF</div>
-  <p>Specification v1.0 &copy; 2026 IDF Authors &mdash; Apache&nbsp;2.0</p>
-  <p>Reference implementation v1.7: <strong>@intent-driven/core 0.3 &mdash; BSL&nbsp;1.1</strong> (Change Date 2030-04-15 &rarr; Apache&nbsp;2.0) &middot; SDK client packages + prototype &mdash; MIT</p>
+  <p>Format Specification v0.1 &copy; 2026 IDF Authors &mdash; CC&nbsp;BY&nbsp;4.0</p>
+  <p>Reference implementation: <strong>@intent-driven/core 0.7 &mdash; BSL&nbsp;1.1</strong> (Change Date 2030-04-15 &rarr; Apache&nbsp;2.0) &middot; SDK client packages + prototype &mdash; MIT</p>
   <div class="flinks">
-    <a href="https://github.com/DubovskiyIM/idf/tree/main/spec">Spec</a>
+    <a href="https://github.com/DubovskiyIM/idf/tree/main/docs/spec-v0.1">Specification</a>
     <a href="https://www.npmjs.com/package/@intent-driven/core">@intent-driven/core</a>
-    <a href="https://github.com/DubovskiyIM/idf/tree/main/spec/conformance">Conformance</a>
+    <a href="https://github.com/DubovskiyIM/idf/tree/main/docs/spec-v0.1/tests">Test Suite</a>
+    <a href="https://idf.intent-design.tech">Live Demo</a>
     <a href="https://github.com/DubovskiyIM/idf">GitHub</a>
     <a href="./index-ru.html" style="color:var(--accent-bright)">RU</a>
   </div>

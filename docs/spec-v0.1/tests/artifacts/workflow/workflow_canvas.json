@@ -1,0 +1,28 @@
+{
+  "projection": "workflow_canvas",
+  "name": "Canvas",
+  "domain": "workflow",
+  "layer": "canonical",
+  "archetype": "canvas",
+  "version": 2,
+  "generatedAt": 0,
+  "generatedBy": "rules",
+  "inputsHash": "add_custom_node_type,add_node,configure_node,connect_nodes,create_workflow,delete_workflow,disconnect_nodes,duplicate_workflow,execute_workflow,import_workflow,move_node,remove_node,rename_node,save_workflow,stop_execution|execution_log,node_inspector,node_inspector_edit,workflow_canvas,workflow_list|Edge,Execution,Node,NodeResult,NodeType,Workflow",
+  "slots": {
+    "header": [],
+    "toolbar": [],
+    "body": {
+      "type": "canvas",
+      "mainEntity": "Workflow"
+    },
+    "context": [],
+    "fab": [],
+    "overlay": []
+  },
+  "nav": {
+    "outgoing": [],
+    "incoming": []
+  },
+  "editProjection": null,
+  "sourceProjection": null
+}

@@ -1,0 +1,87 @@
+{
+  "description": "Базовые кейсы для anchoring gate §2.13. В strict-mode конструктивные misses MUST эмитить AnchoringError; описательные — warning/info.",
+  "cases": [
+    {
+      "name": "entity-anchors-to-ontology",
+      "intent": {
+        "particles": {
+          "entities": ["booking: Booking"],
+          "effects": [{ "alpha": "add", "target": "bookings" }]
+        }
+      },
+      "ontology": {
+        "entities": {
+          "Booking": { "fields": ["id", "status"] }
+        }
+      },
+      "expected": { "passes": true, "reliability": "structural" }
+    },
+    {
+      "name": "plural-lookup-user-to-users",
+      "intent": {
+        "particles": {
+          "entities": ["me: User"],
+          "effects": [{ "alpha": "add", "target": "users" }]
+        }
+      },
+      "ontology": {
+        "entities": {
+          "User": { "fields": ["id", "email"] }
+        }
+      },
+      "expected": { "passes": true, "reliability": "heuristic", "basis": "plural rule" }
+    },
+    {
+      "name": "system-collection-accepted",
+      "intent": {
+        "particles": {
+          "entities": [],
+          "effects": [{ "alpha": "add", "target": "drafts" }]
+        }
+      },
+      "ontology": {
+        "entities": {},
+        "systemCollections": ["drafts"]
+      },
+      "expected": { "passes": true, "reliability": "rule-based" }
+    },
+    {
+      "name": "unknown-target-strict-blocks",
+      "intent": {
+        "particles": {
+          "entities": [],
+          "effects": [{ "alpha": "add", "target": "mystery_collection" }]
+        }
+      },
+      "ontology": { "entities": {} },
+      "expected": { "passes": false, "mode": "strict", "errorKind": "AnchoringError" }
+    },
+    {
+      "name": "unknown-target-soft-warns",
+      "intent": {
+        "particles": {
+          "entities": [],
+          "effects": [{ "alpha": "add", "target": "mystery_collection" }]
+        }
+      },
+      "ontology": { "entities": {} },
+      "expected": { "passes": true, "mode": "soft", "warning": true }
+    },
+    {
+      "name": "descriptive-miss-soft",
+      "intent": {
+        "particles": {
+          "entities": ["booking: Booking"],
+          "conditions": ["booking.nonExistentField = true"],
+          "effects": [{ "alpha": "add", "target": "bookings" }]
+        }
+      },
+      "ontology": {
+        "entities": {
+          "Booking": { "fields": ["id", "status"] }
+        }
+      },
+      "expected": { "passes": true, "info": true, "note": "Описательная частица conditions.field — warning/info, не блокирует даже в strict." }
+    }
+  ]
+}

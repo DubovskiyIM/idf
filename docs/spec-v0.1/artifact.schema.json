@@ -1,0 +1,314 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://intent-design.tech/spec/v0.1/artifact.schema.json",
+  "title": "IDF Artifact v2",
+  "description": "Формат артефакта Intent-Driven Frontend, версия 2. Спецификация v0.1 / 2026-04-16. Этот schema фиксирует нормативную часть формата — то, что conformant parser MUST принимать. Shape содержимого слотов описан как ненормативные $defs: конкретный рендерер (pixel / voice / document / agent) MAY интерпретировать их по-своему, но обязан делать это консистентно с семантикой из §01-artifact.md.",
+  "type": "object",
+  "required": ["version", "projection", "archetype", "slots", "domain"],
+  "properties": {
+    "version": {
+      "type": "integer",
+      "const": 2,
+      "description": "Major-версия формата артефакта. MUST быть 2."
+    },
+    "projection": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Идентификатор проекции, из которой получен этот артефакт. MUST быть уникален в пределах домена."
+    },
+    "archetype": {
+      "$ref": "#/$defs/Archetype"
+    },
+    "domain": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Идентификатор домена (например, \"booking\", \"delivery\")."
+    },
+    "name": {
+      "type": "string",
+      "description": "Человеко-читаемое имя проекции."
+    },
+    "layer": {
+      "type": "string",
+      "const": "canonical",
+      "description": "Зарезервировано под будущие layer-overrides. В v0.1 всегда \"canonical\"."
+    },
+    "generatedAt": {
+      "type": "integer",
+      "description": "UNIX timestamp в миллисекундах, когда артефакт был произведён кристаллизатором."
+    },
+    "generatedBy": {
+      "type": "string",
+      "enum": ["rules", "llm-enriched"],
+      "description": "Источник артефакта: \"rules\" — детерминированная кристаллизация; \"llm-enriched\" — с обогащением от LLM (labels, icons, placeholders)."
+    },
+    "inputsHash": {
+      "type": "string",
+      "description": "Стабильный хеш входных данных (INTENTS + PROJECTIONS + ONTOLOGY). Используется для кеширования и обнаружения изменений."
+    },
+    "slots": {
+      "$ref": "#/$defs/Slots"
+    },
+    "nav": {
+      "$ref": "#/$defs/Nav"
+    },
+    "editProjection": {
+      "type": ["string", "null"],
+      "description": "Для detail-архетипа: ID производной form-проекции, в которую ведёт edit-action. null — если edit не доступен."
+    },
+    "sourceProjection": {
+      "type": ["string", "null"],
+      "description": "Для form-архетипа: ID исходной detail-проекции, из которой производная form была выведена."
+    }
+  },
+  "additionalProperties": true,
+
+  "allOf": [
+    {
+      "description": "Требование: feed MUST иметь слоты body и composer.",
+      "if": { "properties": { "archetype": { "const": "feed" } } },
+      "then": {
+        "properties": {
+          "slots": {
+            "required": ["body", "composer"]
+          }
+        }
+      }
+    },
+    {
+      "description": "Требование: catalog / detail / dashboard / canvas / form MUST иметь слот body.",
+      "if": {
+        "properties": {
+          "archetype": { "enum": ["catalog", "detail", "dashboard", "canvas", "form"] }
+        }
+      },
+      "then": {
+        "properties": {
+          "slots": {
+            "required": ["body"]
+          }
+        }
+      }
+    },
+    {
+      "description": "Требование: wizard MAY иметь steps вместо slots-content, но поле slots всё равно REQUIRED (может быть пустым объектом).",
+      "if": { "properties": { "archetype": { "const": "wizard" } } },
+      "then": {
+        "properties": {
+          "slots": { "type": "object" }
+        }
+      }
+    }
+  ],
+
+  "$defs": {
+    "Archetype": {
+      "type": "string",
+      "enum": ["feed", "catalog", "detail", "dashboard", "canvas", "form", "wizard"],
+      "description": "Один из семи архетипов. Задаёт скелет артефакта и обязательные слоты."
+    },
+
+    "Slots": {
+      "type": "object",
+      "description": "Контейнер позиций артефакта. Все слоты опциональны на уровне типа; обязательность задаётся архетипом через allOf.",
+      "properties": {
+        "header":   { "type": "array", "items": { "$ref": "#/$defs/SlotItem" } },
+        "toolbar":  { "type": "array", "items": { "$ref": "#/$defs/SlotItem" } },
+        "hero":     { "type": "array", "items": { "$ref": "#/$defs/SlotItem" } },
+        "body":     { "$ref": "#/$defs/Body" },
+        "context":  { "type": "array", "items": { "$ref": "#/$defs/SlotItem" } },
+        "fab":      { "type": "array", "items": { "$ref": "#/$defs/SlotItem" } },
+        "overlay": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/Overlay" },
+          "description": "Оверлеи (модальные окна, диалоги подтверждения). Значение overlay[i].key MUST быть уникальным в пределах этого массива."
+        },
+        "composer": { "$ref": "#/$defs/Composer" },
+        "sections":       { "type": "array", "items": { "$ref": "#/$defs/SlotItem" } },
+        "primaryCTA":     { "type": "array", "items": { "$ref": "#/$defs/SlotItem" } },
+        "progress":       { "type": ["object", "null"] },
+        "footer":         { "type": "array", "items": { "$ref": "#/$defs/SlotItem" } },
+        "voterSelector":  { "type": ["object", "null"] }
+      },
+      "additionalProperties": true
+    },
+
+    "SlotItem": {
+      "description": "Контрол в слоте. Минимально — объект с полем type. Содержимое зависит от control-архетипа; см. §01-artifact.md.",
+      "type": "object",
+      "properties": {
+        "type":        { "type": "string" },
+        "intentId":    { "type": "string" },
+        "label":       { "type": "string" },
+        "icon": {
+          "description": "Иконка. Строка — одна эмодзи/имя иконки. Объект — state-map (для toggle-control): {\"true\": \"🔔\", \"false\": \"🔇\"}.",
+          "oneOf": [
+            { "type": "string" },
+            { "type": "object", "additionalProperties": { "type": "string" } }
+          ]
+        },
+        "placeholder": { "type": "string" },
+        "hint":        { "type": "string" },
+        "condition":   { "type": ["string", "array"] }
+      },
+      "additionalProperties": true
+    },
+
+    "Body": {
+      "description": "Основное тело артефакта. Форма зависит от архетипа. Для list / formBody / canvas / dashboard используются разные shapes; минимальный нормативный контракт — это объект с полем type (строка) или массив SlotItem.",
+      "oneOf": [
+        {
+          "type": "object",
+          "required": ["type"],
+          "properties": {
+            "type": { "type": "string" }
+          },
+          "additionalProperties": true
+        },
+        {
+          "type": "array",
+          "items": { "$ref": "#/$defs/SlotItem" }
+        }
+      ]
+    },
+
+    "Overlay": {
+      "description": "Оверлей (модальное окно / диалог подтверждения / customCapture / bulkWizard). MUST содержать уникальный key и поле type.",
+      "type": "object",
+      "required": ["type", "key"],
+      "properties": {
+        "type": {
+          "type": "string",
+          "description": "Тип оверлея. Каноничные значения: \"formModal\", \"confirmDialog\", \"customCapture\", \"bulkWizard\". Реализация MAY поддерживать дополнительные типы, но MUST игнорировать неизвестные (не падать)."
+        },
+        "key": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Уникальный идентификатор оверлея в пределах slots.overlay."
+        },
+        "intentId": {
+          "type": "string",
+          "description": "ID намерения, которое открывает/исполняет оверлей (для formModal, bulkWizard, customCapture)."
+        },
+        "triggerIntentId": {
+          "type": "string",
+          "description": "Альтернативная форма intentId для confirmDialog (исторически)."
+        },
+        "title":   { "type": "string" },
+        "message": { "type": "string" },
+        "irreversibility": {
+          "type": "string",
+          "enum": ["low", "medium", "high"]
+        },
+        "parameters": {
+          "type": "array",
+          "description": "Параметры формы. Применимо для formModal и bulkWizard. Значение parameters[i].control MUST принадлежать whitelist'у ParameterControl.",
+          "items": { "$ref": "#/$defs/Parameter" }
+        },
+        "witnessPanel": {
+          "type": "array",
+          "description": "Превью-данные, показываемые в оверлее рядом с формой.",
+          "items": { "$ref": "#/$defs/SlotItem" }
+        },
+        "widgetId":     { "type": "string", "description": "Для customCapture: идентификатор виджета (voiceRecorder / emojiPicker / entityPicker / ...)." },
+        "targetEntity": { "type": "string", "description": "Для customCapture.entityPicker: какую сущность выбираем." },
+        "source":       { "type": "string", "description": "Для bulkWizard: имя коллекции-источника." },
+        "filter":       { "type": ["string", "null"], "description": "Для bulkWizard: фильтр коллекции." },
+        "confirmBy":    { "$ref": "#/$defs/ConfirmBy" },
+        "confirmedBy":  { "$ref": "#/$defs/ConfirmBy" }
+      },
+      "additionalProperties": true
+    },
+
+    "ConfirmBy": {
+      "description": "Способ получения явного подтверждения в confirmDialog.",
+      "type": "object",
+      "required": ["type"],
+      "properties": {
+        "type":     { "type": "string", "enum": ["typeText", "button"] },
+        "expected": { "type": "string", "description": "Для typeText: путь к полю, значение которого пользователь должен напечатать." }
+      },
+      "additionalProperties": true
+    },
+
+    "Composer": {
+      "description": "Composer-слот (только для архетипа feed). Input-линия внизу экрана с кнопкой отправки. MUST содержать primaryIntent — ID намерения, исполняемого при Enter.",
+      "type": "object",
+      "required": ["primaryIntent"],
+      "properties": {
+        "type":             { "type": "string", "const": "composer" },
+        "primaryIntent":    { "type": "string", "description": "ID намерения с confirmation: \"enter\"." },
+        "primaryParameter": { "type": "string", "description": "Имя параметра намерения, привязанного к основному input'у." },
+        "label":            { "type": "string" },
+        "icon":             { "type": "string" },
+        "placeholder":      { "type": "string" },
+        "attachments": {
+          "type": "array",
+          "description": "Дополнительные параметры (вложения, доп. control'ы).",
+          "items": { "$ref": "#/$defs/Parameter" }
+        },
+        "params": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/Parameter" }
+        }
+      },
+      "additionalProperties": true
+    },
+
+    "Parameter": {
+      "description": "Параметр намерения. Поле control — ссылка на один из KNOWN_PARAMETER_TYPES.",
+      "type": "object",
+      "required": ["name"],
+      "properties": {
+        "name":     { "type": "string" },
+        "label":    { "type": "string" },
+        "control":  { "$ref": "#/$defs/ParameterControl" },
+        "bind":     { "type": "string" },
+        "editable": { "type": "boolean" },
+        "required": { "type": "boolean" },
+        "inferredFrom": { "type": "string" }
+      },
+      "additionalProperties": true
+    },
+
+    "ParameterControl": {
+      "description": "Whitelist типов параметр-контролов. Реализация MUST принимать эти значения; незнакомые значения MUST отвергаться валидатором в formModal/bulkWizard.",
+      "type": "string",
+      "enum": [
+        "text", "textarea", "datetime", "url", "email", "tel",
+        "number", "file", "image", "multiImage", "select",
+        "entityPicker", "assetPicker", "multiSelect",
+        "entityRef", "enum", "boolean"
+      ]
+    },
+
+    "Nav": {
+      "description": "Навигационный граф: рёбра от/к этой проекции. Выводится кристаллизатором из пересечений entities.",
+      "type": "object",
+      "properties": {
+        "outgoing": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/NavEdge" }
+        },
+        "incoming": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/NavEdge" }
+        }
+      },
+      "additionalProperties": false
+    },
+
+    "NavEdge": {
+      "type": "object",
+      "required": ["from", "to", "kind"],
+      "properties": {
+        "from":       { "type": "string" },
+        "to":         { "type": "string" },
+        "kind":       { "type": "string", "description": "Тип ребра (например, \"item-click\", \"edit-action\")." },
+        "itemEntity": { "type": "string" },
+        "params":     { "type": "object", "additionalProperties": { "type": "string" } }
+      },
+      "additionalProperties": true
+    }
+  }
+}

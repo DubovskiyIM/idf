@@ -1,0 +1,251 @@
+{
+  "projection": "goal_list",
+  "name": "Цели",
+  "domain": "lifequest",
+  "layer": "canonical",
+  "archetype": "catalog",
+  "version": 2,
+  "generatedAt": 0,
+  "generatedBy": "rules",
+  "inputsHash": "abandon_goal,add_goal_note,add_sphere_note,add_vision_image,archive_habit,assess_sphere,change_habit_frequency,check_habit,clear_quote,clear_sphere_vision,complete_goal,complete_task,create_goal,create_habit,create_task,delete_account,delete_goal,delete_habit,delete_task,delete_vision_item,earn_badge,earn_xp,edit_goal,edit_habit,edit_quote,edit_task,edit_vision_caption,export_data,level_up,link_task_goal,log_habit_value,move_goal_sphere,move_habit_sphere,move_task_date,move_vision_item,pause_habit,random_quote,reactivate_goal,reassess_all,replace_vision_image,reset_progress,reset_streak,resize_vision_item,resume_habit,set_avatar,set_goal_deadline,set_quote,set_sphere_target,toggle_task_priority,uncheck_habit,uncomplete_task,update_assessment,update_goal_progress,update_profile,update_streak,upload_vision_image|all_time_stats,all_time_stats_edit,badge_list,calendar,dashboard,goal_list,habit_detail,habit_detail_edit,habit_list,point_a,today,vision_board,week_progress|Badge,Goal,Habit,HabitLog,Quote,Sphere,SphereAssessment,Task,User,VisionItem",
+  "slots": {
+    "header": [],
+    "toolbar": [],
+    "hero": [
+      {
+        "type": "heroCreate",
+        "intentId": "create_goal",
+        "paramName": "title",
+        "placeholder": "Название…",
+        "buttonLabel": "Создать цель",
+        "icon": "➕",
+        "postCreate": {
+          "collection": "goals",
+          "matchField": "status",
+          "matchValue": "active"
+        }
+      }
+    ],
+    "body": {
+      "type": "list",
+      "source": "goals",
+      "gap": 8,
+      "empty": {
+        "type": "text",
+        "content": "Пусто",
+        "style": "muted"
+      },
+      "item": {
+        "type": "card",
+        "children": [
+          {
+            "type": "row",
+            "gap": 10,
+            "children": [
+              {
+                "type": "avatar",
+                "bind": "avatar",
+                "nameBind": "title",
+                "size": 40
+              },
+              {
+                "type": "column",
+                "sx": {
+                  "flex": 1
+                },
+                "children": [
+                  {
+                    "type": "text",
+                    "bind": "title",
+                    "style": "heading"
+                  },
+                  {
+                    "type": "text",
+                    "bind": "status",
+                    "style": "secondary"
+                  }
+                ]
+              }
+            ]
+          }
+        ],
+        "intents": [
+          {
+            "intentId": "edit_goal",
+            "opens": "overlay",
+            "overlayKey": "overlay_edit_goal",
+            "label": "Редактировать цель",
+            "icon": "✎",
+            "conditions": [
+              "goal.userId = me.id",
+              "goal.userId = me.id"
+            ]
+          },
+          {
+            "intentId": "update_goal_progress",
+            "label": "Обновить прогресс",
+            "icon": "✎",
+            "conditions": [
+              "goal.status = 'active'",
+              "goal.userId = me.id",
+              "goal.userId = me.id"
+            ]
+          },
+          {
+            "intentId": "complete_goal",
+            "label": "Завершить цель",
+            "icon": "✓",
+            "conditions": [
+              "goal.status = 'active'",
+              "goal.userId = me.id",
+              "goal.userId = me.id"
+            ]
+          },
+          {
+            "intentId": "abandon_goal",
+            "opens": "overlay",
+            "overlayKey": "overlay_abandon_goal",
+            "label": "Отказаться от цели",
+            "icon": "🗑",
+            "conditions": [
+              "goal.status = 'active'",
+              "goal.userId = me.id",
+              "goal.userId = me.id"
+            ]
+          },
+          {
+            "intentId": "reactivate_goal",
+            "label": "Возобновить цель",
+            "icon": "⚡",
+            "conditions": [
+              "goal.status = 'abandoned'",
+              "goal.userId = me.id",
+              "goal.userId = me.id"
+            ]
+          },
+          {
+            "intentId": "delete_goal",
+            "opens": "overlay",
+            "overlayKey": "overlay_delete_goal",
+            "label": "Удалить цель",
+            "icon": "🗑",
+            "conditions": [
+              "goal.userId = me.id"
+            ]
+          },
+          {
+            "intentId": "move_goal_sphere",
+            "label": "Перенести в сферу",
+            "icon": "✥",
+            "conditions": [
+              "goal.userId = me.id",
+              "goal.userId = me.id"
+            ]
+          },
+          {
+            "intentId": "set_goal_deadline",
+            "label": "Установить дедлайн",
+            "icon": "⚡",
+            "conditions": [
+              "goal.userId = me.id",
+              "goal.userId = me.id"
+            ]
+          },
+          {
+            "intentId": "add_goal_note",
+            "opens": "overlay",
+            "overlayKey": "overlay_add_goal_note",
+            "label": "Добавить заметку",
+            "icon": "➕",
+            "conditions": [
+              "goal.userId = me.id",
+              "goal.userId = me.id"
+            ]
+          }
+        ]
+      },
+      "filter": "userId === viewer.id",
+      "onItemClick": {
+        "action": "navigate",
+        "to": "all_time_stats",
+        "params": {
+          "userId": "item.id"
+        }
+      }
+    },
+    "context": [],
+    "fab": [],
+    "overlay": [
+      {
+        "type": "formModal",
+        "key": "overlay_edit_goal",
+        "intentId": "edit_goal",
+        "title": "Редактировать цель",
+        "witnessPanel": [
+          {
+            "type": "text",
+            "bind": "goal.title"
+          },
+          {
+            "type": "text",
+            "bind": "goal.description"
+          },
+          {
+            "type": "text",
+            "bind": "goal.deadline"
+          }
+        ],
+        "parameters": []
+      },
+      {
+        "type": "confirmDialog",
+        "key": "overlay_abandon_goal",
+        "triggerIntentId": "abandon_goal",
+        "irreversibility": "medium",
+        "message": "Отказаться от цели?",
+        "confirmBy": {
+          "type": "button"
+        }
+      },
+      {
+        "type": "confirmDialog",
+        "key": "overlay_delete_goal",
+        "triggerIntentId": "delete_goal",
+        "irreversibility": "medium",
+        "message": "Удалить цель?",
+        "confirmBy": {
+          "type": "button"
+        }
+      },
+      {
+        "type": "formModal",
+        "key": "overlay_add_goal_note",
+        "intentId": "add_goal_note",
+        "title": "Добавить заметку",
+        "witnessPanel": [
+          {
+            "type": "text",
+            "bind": "goal.description"
+          }
+        ],
+        "parameters": []
+      }
+    ]
+  },
+  "nav": {
+    "outgoing": [
+      {
+        "from": "goal_list",
+        "to": "all_time_stats",
+        "kind": "item-click",
+        "itemEntity": "Goal",
+        "params": {
+          "userId": "item.id"
+        }
+      }
+    ],
+    "incoming": []
+  },
+  "editProjection": null,
+  "sourceProjection": null
+}

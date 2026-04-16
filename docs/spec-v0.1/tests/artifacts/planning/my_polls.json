@@ -1,0 +1,211 @@
+{
+  "projection": "my_polls",
+  "name": "Опросы",
+  "domain": "planning",
+  "layer": "canonical",
+  "archetype": "catalog",
+  "version": 2,
+  "generatedAt": 0,
+  "generatedBy": "rules",
+  "inputsHash": "accept_invitation,add_time_option,cancel_meeting,cancel_poll,change_vote,close_poll,create_poll,decline_invitation,invite_participant,open_poll,resolve_poll,send_reminder,set_deadline,suggest_alternative,vote_maybe,vote_no,vote_yes|my_polls,poll_overview,voting_matrix|Meeting,Participant,Poll,TimeOption,Vote",
+  "slots": {
+    "header": [],
+    "toolbar": [],
+    "hero": [
+      {
+        "type": "heroCreate",
+        "intentId": "create_poll",
+        "paramName": "title",
+        "placeholder": "Название…",
+        "buttonLabel": "Создать опрос",
+        "icon": "🗳",
+        "postCreate": {
+          "collection": "polls",
+          "matchField": "status",
+          "matchValue": "draft"
+        }
+      }
+    ],
+    "body": {
+      "type": "list",
+      "source": "polls",
+      "gap": 8,
+      "empty": {
+        "type": "text",
+        "content": "Пусто",
+        "style": "muted"
+      },
+      "item": {
+        "type": "card",
+        "children": [
+          {
+            "type": "row",
+            "gap": 10,
+            "children": [
+              {
+                "type": "avatar",
+                "bind": "avatar",
+                "nameBind": "title",
+                "size": 40
+              },
+              {
+                "type": "column",
+                "sx": {
+                  "flex": 1
+                },
+                "children": [
+                  {
+                    "type": "text",
+                    "bind": "title",
+                    "style": "heading"
+                  },
+                  {
+                    "type": "text",
+                    "bind": "status",
+                    "style": "secondary"
+                  }
+                ]
+              }
+            ]
+          }
+        ],
+        "intents": [
+          {
+            "intentId": "open_poll",
+            "label": "Открыть голосование",
+            "icon": "▶",
+            "conditions": [
+              "poll.status = 'draft'",
+              "poll.organizerId = me.id"
+            ]
+          },
+          {
+            "intentId": "close_poll",
+            "opens": "overlay",
+            "overlayKey": "overlay_close_poll",
+            "label": "Закрыть голосование",
+            "icon": "⏹",
+            "conditions": [
+              "poll.status = 'open'",
+              "ratio(votes.participantId, participants, pollId=target.id) >= 1.0",
+              "poll.organizerId = me.id"
+            ]
+          },
+          {
+            "intentId": "cancel_poll",
+            "opens": "overlay",
+            "overlayKey": "overlay_cancel_poll",
+            "label": "Отменить опрос",
+            "icon": "🗑",
+            "conditions": [
+              "poll.status IN ('draft','open','closed')",
+              "poll.organizerId = me.id"
+            ]
+          },
+          {
+            "intentId": "set_deadline",
+            "opens": "overlay",
+            "overlayKey": "overlay_set_deadline",
+            "label": "Установить дедлайн",
+            "icon": "⏰",
+            "conditions": [
+              "poll.status = 'open'",
+              "poll.organizerId = me.id"
+            ]
+          }
+        ]
+      },
+      "sort": "-createdAt",
+      "onItemClick": {
+        "action": "navigate",
+        "to": "poll_overview",
+        "params": {
+          "pollId": "item.id"
+        }
+      }
+    },
+    "context": [],
+    "fab": [],
+    "overlay": [
+      {
+        "type": "formModal",
+        "key": "overlay_close_poll",
+        "intentId": "close_poll",
+        "title": "Закрыть голосование",
+        "witnessPanel": [
+          {
+            "type": "text",
+            "bind": "votes.count"
+          }
+        ],
+        "parameters": [
+          {
+            "name": "pollId",
+            "type": "entityRef",
+            "entity": "Poll",
+            "required": true,
+            "control": "entityRef"
+          }
+        ]
+      },
+      {
+        "type": "confirmDialog",
+        "key": "overlay_cancel_poll",
+        "triggerIntentId": "cancel_poll",
+        "irreversibility": "high",
+        "message": "Отменить опрос: {poll.title}, {participants.count}?",
+        "confirmBy": {
+          "type": "typeText",
+          "expected": "poll.title"
+        }
+      },
+      {
+        "type": "formModal",
+        "key": "overlay_set_deadline",
+        "intentId": "set_deadline",
+        "title": "Установить дедлайн",
+        "witnessPanel": [
+          {
+            "type": "text",
+            "bind": "poll.current_deadline"
+          },
+          {
+            "type": "text",
+            "bind": "votes.count"
+          }
+        ],
+        "parameters": [
+          {
+            "name": "pollId",
+            "type": "entityRef",
+            "entity": "Poll",
+            "required": true,
+            "control": "entityRef"
+          },
+          {
+            "name": "deadline",
+            "type": "datetime",
+            "required": true,
+            "control": "datetime"
+          }
+        ]
+      }
+    ]
+  },
+  "nav": {
+    "outgoing": [
+      {
+        "from": "my_polls",
+        "to": "poll_overview",
+        "kind": "item-click",
+        "itemEntity": "Poll",
+        "params": {
+          "pollId": "item.id"
+        }
+      }
+    ],
+    "incoming": []
+  },
+  "editProjection": null,
+  "sourceProjection": null
+}

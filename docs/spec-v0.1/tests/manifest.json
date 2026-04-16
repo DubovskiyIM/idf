@@ -1,0 +1,843 @@
+{
+  "tests": [
+    {
+      "kind": "artifact",
+      "domain": "booking",
+      "projection": "service_catalog",
+      "archetype": "catalog",
+      "fixture": "artifacts/booking/service_catalog.json"
+    },
+    {
+      "kind": "artifact",
+      "domain": "booking",
+      "projection": "specialist_schedule",
+      "archetype": "catalog",
+      "fixture": "artifacts/booking/specialist_schedule.json"
+    },
+    {
+      "kind": "artifact",
+      "domain": "booking",
+      "projection": "my_bookings",
+      "archetype": "catalog",
+      "fixture": "artifacts/booking/my_bookings.json"
+    },
+    {
+      "kind": "artifact",
+      "domain": "booking",
+      "projection": "booking_detail",
+      "archetype": "detail",
+      "fixture": "artifacts/booking/booking_detail.json"
+    },
+    {
+      "kind": "artifact",
+      "domain": "booking",
+      "projection": "service_detail",
+      "archetype": "detail",
+      "fixture": "artifacts/booking/service_detail.json"
+    },
+    {
+      "kind": "artifact",
+      "domain": "booking",
+      "projection": "booking_wizard",
+      "archetype": "wizard",
+      "fixture": "artifacts/booking/booking_wizard.json"
+    },
+    {
+      "kind": "artifact",
+      "domain": "booking",
+      "projection": "service_detail_edit",
+      "archetype": "form",
+      "fixture": "artifacts/booking/service_detail_edit.json"
+    },
+    {
+      "kind": "artifact",
+      "domain": "planning",
+      "projection": "my_polls",
+      "archetype": "catalog",
+      "fixture": "artifacts/planning/my_polls.json"
+    },
+    {
+      "kind": "artifact",
+      "domain": "planning",
+      "projection": "poll_overview",
+      "archetype": "detail",
+      "fixture": "artifacts/planning/poll_overview.json"
+    },
+    {
+      "kind": "artifact",
+      "domain": "planning",
+      "projection": "voting_matrix",
+      "archetype": "canvas",
+      "fixture": "artifacts/planning/voting_matrix.json"
+    },
+    {
+      "kind": "artifact",
+      "domain": "workflow",
+      "projection": "workflow_list",
+      "archetype": "catalog",
+      "fixture": "artifacts/workflow/workflow_list.json"
+    },
+    {
+      "kind": "artifact",
+      "domain": "workflow",
+      "projection": "workflow_canvas",
+      "archetype": "canvas",
+      "fixture": "artifacts/workflow/workflow_canvas.json"
+    },
+    {
+      "kind": "artifact",
+      "domain": "workflow",
+      "projection": "node_inspector",
+      "archetype": "detail",
+      "fixture": "artifacts/workflow/node_inspector.json"
+    },
+    {
+      "kind": "artifact",
+      "domain": "workflow",
+      "projection": "execution_log",
+      "archetype": "detail",
+      "fixture": "artifacts/workflow/execution_log.json"
+    },
+    {
+      "kind": "artifact",
+      "domain": "workflow",
+      "projection": "node_inspector_edit",
+      "archetype": "form",
+      "fixture": "artifacts/workflow/node_inspector_edit.json"
+    },
+    {
+      "kind": "artifact",
+      "domain": "messenger",
+      "projection": "conversation_list",
+      "archetype": "catalog",
+      "fixture": "artifacts/messenger/conversation_list.json"
+    },
+    {
+      "kind": "artifact",
+      "domain": "messenger",
+      "projection": "chat_view",
+      "archetype": "feed",
+      "fixture": "artifacts/messenger/chat_view.json"
+    },
+    {
+      "kind": "artifact",
+      "domain": "messenger",
+      "projection": "contact_list",
+      "archetype": "catalog",
+      "fixture": "artifacts/messenger/contact_list.json"
+    },
+    {
+      "kind": "artifact",
+      "domain": "messenger",
+      "projection": "user_profile",
+      "archetype": "detail",
+      "fixture": "artifacts/messenger/user_profile.json"
+    },
+    {
+      "kind": "artifact",
+      "domain": "messenger",
+      "projection": "people_list",
+      "archetype": "catalog",
+      "fixture": "artifacts/messenger/people_list.json"
+    },
+    {
+      "kind": "artifact",
+      "domain": "messenger",
+      "projection": "user_profile_edit",
+      "archetype": "form",
+      "fixture": "artifacts/messenger/user_profile_edit.json"
+    },
+    {
+      "kind": "artifact",
+      "domain": "sales",
+      "projection": "listing_feed",
+      "archetype": "catalog",
+      "fixture": "artifacts/sales/listing_feed.json"
+    },
+    {
+      "kind": "artifact",
+      "domain": "sales",
+      "projection": "listing_detail",
+      "archetype": "detail",
+      "fixture": "artifacts/sales/listing_detail.json"
+    },
+    {
+      "kind": "artifact",
+      "domain": "sales",
+      "projection": "listing_detail_edit",
+      "archetype": "form",
+      "fixture": "artifacts/sales/listing_detail_edit.json"
+    },
+    {
+      "kind": "artifact",
+      "domain": "sales",
+      "projection": "my_listings",
+      "archetype": "catalog",
+      "fixture": "artifacts/sales/my_listings.json"
+    },
+    {
+      "kind": "artifact",
+      "domain": "sales",
+      "projection": "my_bids",
+      "archetype": "catalog",
+      "fixture": "artifacts/sales/my_bids.json"
+    },
+    {
+      "kind": "artifact",
+      "domain": "sales",
+      "projection": "order_list",
+      "archetype": "catalog",
+      "fixture": "artifacts/sales/order_list.json"
+    },
+    {
+      "kind": "artifact",
+      "domain": "sales",
+      "projection": "order_detail",
+      "archetype": "detail",
+      "fixture": "artifacts/sales/order_detail.json"
+    },
+    {
+      "kind": "artifact",
+      "domain": "sales",
+      "projection": "watchlist",
+      "archetype": "catalog",
+      "fixture": "artifacts/sales/watchlist.json"
+    },
+    {
+      "kind": "artifact",
+      "domain": "sales",
+      "projection": "inbox",
+      "archetype": "feed",
+      "fixture": "artifacts/sales/inbox.json"
+    },
+    {
+      "kind": "artifact",
+      "domain": "sales",
+      "projection": "seller_profile",
+      "archetype": "detail",
+      "fixture": "artifacts/sales/seller_profile.json"
+    },
+    {
+      "kind": "artifact",
+      "domain": "sales",
+      "projection": "category_browse",
+      "archetype": "catalog",
+      "fixture": "artifacts/sales/category_browse.json"
+    },
+    {
+      "kind": "artifact",
+      "domain": "sales",
+      "projection": "dispute_detail",
+      "archetype": "detail",
+      "fixture": "artifacts/sales/dispute_detail.json"
+    },
+    {
+      "kind": "artifact",
+      "domain": "sales",
+      "projection": "notifications",
+      "archetype": "catalog",
+      "fixture": "artifacts/sales/notifications.json"
+    },
+    {
+      "kind": "artifact",
+      "domain": "sales",
+      "projection": "saved_searches",
+      "archetype": "catalog",
+      "fixture": "artifacts/sales/saved_searches.json"
+    },
+    {
+      "kind": "artifact",
+      "domain": "sales",
+      "projection": "sales_home",
+      "archetype": "dashboard",
+      "fixture": "artifacts/sales/sales_home.json"
+    },
+    {
+      "kind": "artifact",
+      "domain": "sales",
+      "projection": "order_detail_edit",
+      "archetype": "form",
+      "fixture": "artifacts/sales/order_detail_edit.json"
+    },
+    {
+      "kind": "artifact",
+      "domain": "sales",
+      "projection": "seller_profile_edit",
+      "archetype": "form",
+      "fixture": "artifacts/sales/seller_profile_edit.json"
+    },
+    {
+      "kind": "artifact",
+      "domain": "sales",
+      "projection": "dispute_detail_edit",
+      "archetype": "form",
+      "fixture": "artifacts/sales/dispute_detail_edit.json"
+    },
+    {
+      "kind": "artifact",
+      "domain": "lifequest",
+      "projection": "dashboard",
+      "archetype": "dashboard",
+      "fixture": "artifacts/lifequest/dashboard.json"
+    },
+    {
+      "kind": "artifact",
+      "domain": "lifequest",
+      "projection": "today",
+      "archetype": "canvas",
+      "fixture": "artifacts/lifequest/today.json"
+    },
+    {
+      "kind": "artifact",
+      "domain": "lifequest",
+      "projection": "week_progress",
+      "archetype": "canvas",
+      "fixture": "artifacts/lifequest/week_progress.json"
+    },
+    {
+      "kind": "artifact",
+      "domain": "lifequest",
+      "projection": "habit_list",
+      "archetype": "catalog",
+      "fixture": "artifacts/lifequest/habit_list.json"
+    },
+    {
+      "kind": "artifact",
+      "domain": "lifequest",
+      "projection": "habit_detail",
+      "archetype": "detail",
+      "fixture": "artifacts/lifequest/habit_detail.json"
+    },
+    {
+      "kind": "artifact",
+      "domain": "lifequest",
+      "projection": "goal_list",
+      "archetype": "catalog",
+      "fixture": "artifacts/lifequest/goal_list.json"
+    },
+    {
+      "kind": "artifact",
+      "domain": "lifequest",
+      "projection": "calendar",
+      "archetype": "canvas",
+      "fixture": "artifacts/lifequest/calendar.json"
+    },
+    {
+      "kind": "artifact",
+      "domain": "lifequest",
+      "projection": "point_a",
+      "archetype": "canvas",
+      "fixture": "artifacts/lifequest/point_a.json"
+    },
+    {
+      "kind": "artifact",
+      "domain": "lifequest",
+      "projection": "vision_board",
+      "archetype": "canvas",
+      "fixture": "artifacts/lifequest/vision_board.json"
+    },
+    {
+      "kind": "artifact",
+      "domain": "lifequest",
+      "projection": "all_time_stats",
+      "archetype": "detail",
+      "fixture": "artifacts/lifequest/all_time_stats.json"
+    },
+    {
+      "kind": "artifact",
+      "domain": "lifequest",
+      "projection": "badge_list",
+      "archetype": "catalog",
+      "fixture": "artifacts/lifequest/badge_list.json"
+    },
+    {
+      "kind": "artifact",
+      "domain": "lifequest",
+      "projection": "habit_detail_edit",
+      "archetype": "form",
+      "fixture": "artifacts/lifequest/habit_detail_edit.json"
+    },
+    {
+      "kind": "artifact",
+      "domain": "lifequest",
+      "projection": "all_time_stats_edit",
+      "archetype": "form",
+      "fixture": "artifacts/lifequest/all_time_stats_edit.json"
+    },
+    {
+      "kind": "artifact",
+      "domain": "reflect",
+      "projection": "checkin",
+      "archetype": "canvas",
+      "fixture": "artifacts/reflect/checkin.json"
+    },
+    {
+      "kind": "artifact",
+      "domain": "reflect",
+      "projection": "timeline",
+      "archetype": "canvas",
+      "fixture": "artifacts/reflect/timeline.json"
+    },
+    {
+      "kind": "artifact",
+      "domain": "reflect",
+      "projection": "calendar_heatmap",
+      "archetype": "canvas",
+      "fixture": "artifacts/reflect/calendar_heatmap.json"
+    },
+    {
+      "kind": "artifact",
+      "domain": "reflect",
+      "projection": "mood_trends",
+      "archetype": "canvas",
+      "fixture": "artifacts/reflect/mood_trends.json"
+    },
+    {
+      "kind": "artifact",
+      "domain": "reflect",
+      "projection": "activity_correlation",
+      "archetype": "canvas",
+      "fixture": "artifacts/reflect/activity_correlation.json"
+    },
+    {
+      "kind": "artifact",
+      "domain": "reflect",
+      "projection": "mood_meter_cluster",
+      "archetype": "canvas",
+      "fixture": "artifacts/reflect/mood_meter_cluster.json"
+    },
+    {
+      "kind": "artifact",
+      "domain": "reflect",
+      "projection": "entry_detail",
+      "archetype": "detail",
+      "fixture": "artifacts/reflect/entry_detail.json"
+    },
+    {
+      "kind": "artifact",
+      "domain": "reflect",
+      "projection": "weekly_summary",
+      "archetype": "detail",
+      "fixture": "artifacts/reflect/weekly_summary.json"
+    },
+    {
+      "kind": "artifact",
+      "domain": "reflect",
+      "projection": "hypothesis_detail",
+      "archetype": "detail",
+      "fixture": "artifacts/reflect/hypothesis_detail.json"
+    },
+    {
+      "kind": "artifact",
+      "domain": "reflect",
+      "projection": "hypothesis_list",
+      "archetype": "catalog",
+      "fixture": "artifacts/reflect/hypothesis_list.json"
+    },
+    {
+      "kind": "artifact",
+      "domain": "reflect",
+      "projection": "activity_list",
+      "archetype": "catalog",
+      "fixture": "artifacts/reflect/activity_list.json"
+    },
+    {
+      "kind": "artifact",
+      "domain": "reflect",
+      "projection": "tag_list",
+      "archetype": "catalog",
+      "fixture": "artifacts/reflect/tag_list.json"
+    },
+    {
+      "kind": "artifact",
+      "domain": "reflect",
+      "projection": "insights_feed",
+      "archetype": "feed",
+      "fixture": "artifacts/reflect/insights_feed.json"
+    },
+    {
+      "kind": "artifact",
+      "domain": "reflect",
+      "projection": "weekly_summary_edit",
+      "archetype": "form",
+      "fixture": "artifacts/reflect/weekly_summary_edit.json"
+    },
+    {
+      "kind": "artifact",
+      "domain": "reflect",
+      "projection": "hypothesis_detail_edit",
+      "archetype": "form",
+      "fixture": "artifacts/reflect/hypothesis_detail_edit.json"
+    },
+    {
+      "kind": "artifact",
+      "domain": "invest",
+      "projection": "portfolios_root",
+      "archetype": "catalog",
+      "fixture": "artifacts/invest/portfolios_root.json"
+    },
+    {
+      "kind": "artifact",
+      "domain": "invest",
+      "projection": "goals_root",
+      "archetype": "catalog",
+      "fixture": "artifacts/invest/goals_root.json"
+    },
+    {
+      "kind": "artifact",
+      "domain": "invest",
+      "projection": "watchlists_root",
+      "archetype": "catalog",
+      "fixture": "artifacts/invest/watchlists_root.json"
+    },
+    {
+      "kind": "artifact",
+      "domain": "invest",
+      "projection": "recommendations_inbox",
+      "archetype": "catalog",
+      "fixture": "artifacts/invest/recommendations_inbox.json"
+    },
+    {
+      "kind": "artifact",
+      "domain": "invest",
+      "projection": "alerts_feed",
+      "archetype": "catalog",
+      "fixture": "artifacts/invest/alerts_feed.json"
+    },
+    {
+      "kind": "artifact",
+      "domain": "invest",
+      "projection": "transactions_history",
+      "archetype": "catalog",
+      "fixture": "artifacts/invest/transactions_history.json"
+    },
+    {
+      "kind": "artifact",
+      "domain": "invest",
+      "projection": "portfolio_detail",
+      "archetype": "detail",
+      "fixture": "artifacts/invest/portfolio_detail.json"
+    },
+    {
+      "kind": "artifact",
+      "domain": "invest",
+      "projection": "goal_detail",
+      "archetype": "detail",
+      "fixture": "artifacts/invest/goal_detail.json"
+    },
+    {
+      "kind": "artifact",
+      "domain": "invest",
+      "projection": "transaction_detail",
+      "archetype": "detail",
+      "fixture": "artifacts/invest/transaction_detail.json"
+    },
+    {
+      "kind": "artifact",
+      "domain": "invest",
+      "projection": "recommendation_detail",
+      "archetype": "detail",
+      "fixture": "artifacts/invest/recommendation_detail.json"
+    },
+    {
+      "kind": "artifact",
+      "domain": "invest",
+      "projection": "alert_detail",
+      "archetype": "detail",
+      "fixture": "artifacts/invest/alert_detail.json"
+    },
+    {
+      "kind": "artifact",
+      "domain": "invest",
+      "projection": "asset_detail",
+      "archetype": "detail",
+      "fixture": "artifacts/invest/asset_detail.json"
+    },
+    {
+      "kind": "artifact",
+      "domain": "invest",
+      "projection": "watchlist_detail",
+      "archetype": "detail",
+      "fixture": "artifacts/invest/watchlist_detail.json"
+    },
+    {
+      "kind": "artifact",
+      "domain": "invest",
+      "projection": "performance_dashboard",
+      "archetype": "dashboard",
+      "fixture": "artifacts/invest/performance_dashboard.json"
+    },
+    {
+      "kind": "artifact",
+      "domain": "invest",
+      "projection": "allocation_breakdown",
+      "archetype": "canvas",
+      "fixture": "artifacts/invest/allocation_breakdown.json"
+    },
+    {
+      "kind": "artifact",
+      "domain": "invest",
+      "projection": "market_trends",
+      "archetype": "canvas",
+      "fixture": "artifacts/invest/market_trends.json"
+    },
+    {
+      "kind": "artifact",
+      "domain": "invest",
+      "projection": "advisor_clients",
+      "archetype": "catalog",
+      "fixture": "artifacts/invest/advisor_clients.json"
+    },
+    {
+      "kind": "artifact",
+      "domain": "invest",
+      "projection": "advisor_client_dashboard",
+      "archetype": "canvas",
+      "fixture": "artifacts/invest/advisor_client_dashboard.json"
+    },
+    {
+      "kind": "artifact",
+      "domain": "invest",
+      "projection": "regulator_report",
+      "archetype": "canvas",
+      "fixture": "artifacts/invest/regulator_report.json"
+    },
+    {
+      "kind": "artifact",
+      "domain": "invest",
+      "projection": "assets_catalog",
+      "archetype": "catalog",
+      "fixture": "artifacts/invest/assets_catalog.json"
+    },
+    {
+      "kind": "artifact",
+      "domain": "invest",
+      "projection": "rules_list",
+      "archetype": "catalog",
+      "fixture": "artifacts/invest/rules_list.json"
+    },
+    {
+      "kind": "artifact",
+      "domain": "invest",
+      "projection": "risk_questionnaire",
+      "archetype": "wizard",
+      "fixture": "artifacts/invest/risk_questionnaire.json"
+    },
+    {
+      "kind": "artifact",
+      "domain": "invest",
+      "projection": "portfolio_onboarding",
+      "archetype": "wizard",
+      "fixture": "artifacts/invest/portfolio_onboarding.json"
+    },
+    {
+      "kind": "artifact",
+      "domain": "invest",
+      "projection": "portfolio_detail_edit",
+      "archetype": "form",
+      "fixture": "artifacts/invest/portfolio_detail_edit.json"
+    },
+    {
+      "kind": "artifact",
+      "domain": "invest",
+      "projection": "watchlist_detail_edit",
+      "archetype": "form",
+      "fixture": "artifacts/invest/watchlist_detail_edit.json"
+    },
+    {
+      "kind": "artifact",
+      "domain": "delivery",
+      "projection": "customer_home",
+      "archetype": "catalog",
+      "fixture": "artifacts/delivery/customer_home.json"
+    },
+    {
+      "kind": "artifact",
+      "domain": "delivery",
+      "projection": "merchant_catalog",
+      "archetype": "catalog",
+      "fixture": "artifacts/delivery/merchant_catalog.json"
+    },
+    {
+      "kind": "artifact",
+      "domain": "delivery",
+      "projection": "menu_detail",
+      "archetype": "detail",
+      "fixture": "artifacts/delivery/menu_detail.json"
+    },
+    {
+      "kind": "artifact",
+      "domain": "delivery",
+      "projection": "cart",
+      "archetype": "detail",
+      "fixture": "artifacts/delivery/cart.json"
+    },
+    {
+      "kind": "artifact",
+      "domain": "delivery",
+      "projection": "checkout",
+      "archetype": "wizard",
+      "fixture": "artifacts/delivery/checkout.json"
+    },
+    {
+      "kind": "artifact",
+      "domain": "delivery",
+      "projection": "order_tracker",
+      "archetype": "canvas",
+      "fixture": "artifacts/delivery/order_tracker.json"
+    },
+    {
+      "kind": "artifact",
+      "domain": "delivery",
+      "projection": "order_history",
+      "archetype": "catalog",
+      "fixture": "artifacts/delivery/order_history.json"
+    },
+    {
+      "kind": "artifact",
+      "domain": "delivery",
+      "projection": "order_detail",
+      "archetype": "detail",
+      "fixture": "artifacts/delivery/order_detail.json"
+    },
+    {
+      "kind": "artifact",
+      "domain": "delivery",
+      "projection": "courier_lobby",
+      "archetype": "catalog",
+      "fixture": "artifacts/delivery/courier_lobby.json"
+    },
+    {
+      "kind": "artifact",
+      "domain": "delivery",
+      "projection": "active_delivery",
+      "archetype": "canvas",
+      "fixture": "artifacts/delivery/active_delivery.json"
+    },
+    {
+      "kind": "artifact",
+      "domain": "delivery",
+      "projection": "delivery_history",
+      "archetype": "catalog",
+      "fixture": "artifacts/delivery/delivery_history.json"
+    },
+    {
+      "kind": "artifact",
+      "domain": "delivery",
+      "projection": "earnings_dashboard",
+      "archetype": "dashboard",
+      "fixture": "artifacts/delivery/earnings_dashboard.json"
+    },
+    {
+      "kind": "artifact",
+      "domain": "delivery",
+      "projection": "kds_board",
+      "archetype": "dashboard",
+      "fixture": "artifacts/delivery/kds_board.json"
+    },
+    {
+      "kind": "artifact",
+      "domain": "delivery",
+      "projection": "menu_management",
+      "archetype": "catalog",
+      "fixture": "artifacts/delivery/menu_management.json"
+    },
+    {
+      "kind": "artifact",
+      "domain": "delivery",
+      "projection": "stop_list",
+      "archetype": "catalog",
+      "fixture": "artifacts/delivery/stop_list.json"
+    },
+    {
+      "kind": "artifact",
+      "domain": "delivery",
+      "projection": "merchant_analytics",
+      "archetype": "dashboard",
+      "fixture": "artifacts/delivery/merchant_analytics.json"
+    },
+    {
+      "kind": "artifact",
+      "domain": "delivery",
+      "projection": "dispatcher_map",
+      "archetype": "canvas",
+      "fixture": "artifacts/delivery/dispatcher_map.json"
+    },
+    {
+      "kind": "artifact",
+      "domain": "delivery",
+      "projection": "orders_feed",
+      "archetype": "catalog",
+      "fixture": "artifacts/delivery/orders_feed.json"
+    },
+    {
+      "kind": "artifact",
+      "domain": "delivery",
+      "projection": "couriers_list",
+      "archetype": "catalog",
+      "fixture": "artifacts/delivery/couriers_list.json"
+    },
+    {
+      "kind": "artifact",
+      "domain": "delivery",
+      "projection": "zones_catalog",
+      "archetype": "catalog",
+      "fixture": "artifacts/delivery/zones_catalog.json"
+    },
+    {
+      "kind": "artifact",
+      "domain": "delivery",
+      "projection": "assignments_form",
+      "archetype": "wizard",
+      "fixture": "artifacts/delivery/assignments_form.json"
+    },
+    {
+      "kind": "artifact",
+      "domain": "delivery",
+      "projection": "settings",
+      "archetype": "form",
+      "fixture": "artifacts/delivery/settings.json"
+    },
+    {
+      "kind": "artifact",
+      "domain": "delivery",
+      "projection": "preapprovals_list",
+      "archetype": "catalog",
+      "fixture": "artifacts/delivery/preapprovals_list.json"
+    },
+    {
+      "kind": "artifact",
+      "domain": "delivery",
+      "projection": "preapproval_form",
+      "archetype": "wizard",
+      "fixture": "artifacts/delivery/preapproval_form.json"
+    },
+    {
+      "kind": "artifact",
+      "domain": "delivery",
+      "projection": "scheduled_timers_debug",
+      "archetype": "catalog",
+      "fixture": "artifacts/delivery/scheduled_timers_debug.json"
+    },
+    {
+      "kind": "artifact",
+      "domain": "delivery",
+      "projection": "cart_edit",
+      "archetype": "form",
+      "fixture": "artifacts/delivery/cart_edit.json"
+    },
+    {
+      "kind": "artifact",
+      "domain": "delivery",
+      "projection": "order_detail_edit",
+      "archetype": "form",
+      "fixture": "artifacts/delivery/order_detail_edit.json"
+    },
+    {
+      "kind": "effect-corpus",
+      "source": "reference prototype idf.db",
+      "count": 100,
+      "fixture": "effects/sample-confirmed.json"
+    }
+  ]
+}

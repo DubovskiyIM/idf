@@ -1,0 +1,27 @@
+{
+  "projection": "calendar_heatmap",
+  "name": "Календарь",
+  "domain": "reflect",
+  "layer": "canonical",
+  "archetype": "canvas",
+  "version": 2,
+  "generatedAt": 0,
+  "generatedBy": "rules",
+  "inputsHash": "add_activity_to_entry,add_tag_to_entry,archive_activity,archive_hypothesis,auto_resolve_hypothesis,award_milestone,compute_correlation,confirm_hypothesis,create_activity,create_reminder,create_tag,delete_account,delete_activity,delete_entry,delete_hypothesis,delete_reminder,delete_tag,detailed_checkin,detect_pattern,dismiss_insight,duplicate_entry,edit_activity,edit_entry_note,edit_hypothesis,edit_reminder,edit_tag,evaluate_hypothesis,export_data,generate_insight,mark_insight_seen,merge_activities,merge_tags,mood_drift_alert,move_entry_time,pin_insight,propose_hypothesis,quick_checkin,reject_hypothesis,remove_activity_from_entry,remove_tag_from_entry,reset_progress,set_avatar,start_testing,toggle_reminder,update_profile,update_streak,weekly_summary|activity_correlation,activity_list,calendar_heatmap,checkin,entry_detail,hypothesis_detail,hypothesis_detail_edit,hypothesis_list,insights_feed,mood_meter_cluster,mood_trends,tag_list,timeline,weekly_summary,weekly_summary_edit|Activity,EntryActivity,EntryTag,Hypothesis,HypothesisEvidence,Insight,MoodEntry,Reminder,Tag,User",
+  "slots": {
+    "header": [],
+    "toolbar": [],
+    "body": {
+      "type": "canvas"
+    },
+    "context": [],
+    "fab": [],
+    "overlay": []
+  },
+  "nav": {
+    "outgoing": [],
+    "incoming": []
+  },
+  "editProjection": null,
+  "sourceProjection": null
+}

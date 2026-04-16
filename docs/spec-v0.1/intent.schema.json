@@ -1,0 +1,176 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://intent-design.tech/spec/v0.1/intent.schema.json",
+  "title": "IDF Intent",
+  "description": "Форма одного намерения (запись в INTENTS). Спецификация v0.1 / §4, §22 манифеста v1.7. Нормативны только name и particles; остальное — опциональные авторские аннотации.",
+  "type": "object",
+  "required": ["name", "particles"],
+  "properties": {
+    "name": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Человеко-читаемое имя (используется в UI-контролах и voice-output'е)."
+    },
+    "description": {
+      "type": "string",
+      "description": "Расширенное описание для агентов и document-материализации."
+    },
+    "particles": { "$ref": "#/$defs/Particles" },
+    "creates": {
+      "description": "Какую сущность создаёт намерение. Формы: \"Entity\" или \"Entity(discriminator)\" (напр., \"Vote(yes)\").",
+      "oneOf": [
+        { "type": "string", "minLength": 1 },
+        { "type": "null" }
+      ]
+    },
+    "antagonist": {
+      "description": "ID противоположного intent'а для toggle-pair collapse.",
+      "oneOf": [
+        { "type": "string" },
+        { "type": "null" }
+      ]
+    },
+    "irreversibility": {
+      "type": "string",
+      "enum": ["low", "medium", "high"]
+    },
+    "extended": {
+      "type": "boolean",
+      "description": "Массовая операция (template над коллекцией). Триггер control-архетипа bulkWizard."
+    },
+    "phase": {
+      "type": "string",
+      "description": "Фаза намерения. Каноничные значения: \"investigation\" (§7 — эффекты попадают в Overlay(I) до коммита), \"presentation\" (Π — косметические). Дополнительные доменные значения допустимы."
+    },
+    "control": {
+      "type": "string",
+      "description": "Явный override control-архетипа. Каноничные значения: auto, composerEntry, formModal, confirmDialog, clickForm, filePicker, inlineSearch, heroCreate, customCapture, bulkWizard."
+    },
+    "parameters": {
+      "type": "array",
+      "description": "Явные параметры намерения (override inferParameters).",
+      "items": { "$ref": "#/$defs/Parameter" }
+    },
+    "antagonistDeclared": {
+      "type": "boolean",
+      "description": "Маркер declared antagonist (§12 manifesto). Используется classification-check в derivation."
+    },
+
+    "variant": {
+      "type": "string",
+      "description": "UI-подсказка: primary, secondary, danger (используется адаптером при вариации кнопки)."
+    },
+    "category": {
+      "type": "string",
+      "description": "Категоризация для агентского слоя / rules engine (\"system\" / \"user\" / \"rule-triggered\" / \"foreign\")."
+    },
+    "heroCreate": {
+      "type": "boolean",
+      "description": "Доменный override: требовать heroCreate control-архетип."
+    },
+    "canBeCalledBy": {
+      "type": "array",
+      "description": "Ограничение по ролям. Если отсутствует — intent доступен всем ролям с canExecute включающим этот ID.",
+      "items": { "type": "string" }
+    },
+    "α": {
+      "type": "string",
+      "enum": ["add", "replace", "remove", "batch"],
+      "description": "Доменное сокращение: основная α операции (первый effect). Используется generic-handler §22."
+    }
+  },
+  "additionalProperties": true,
+
+  "$defs": {
+    "Particles": {
+      "description": "Пять частиц намерения ⟨E, C, F, W, P⟩.",
+      "type": "object",
+      "required": ["effects"],
+      "properties": {
+        "entities": {
+          "type": "array",
+          "description": "Участвующие сущности. Формы: \"alias: Entity\" или \"alias: Entity[]\" для коллекций.",
+          "items": { "type": "string" }
+        },
+        "conditions": {
+          "type": "array",
+          "description": "Предикаты применимости. Формат DSL §2 (простые выражения над полями сущностей и viewer).",
+          "items": { "type": "string" }
+        },
+        "effects": {
+          "type": "array",
+          "description": "Декларативные эффекты.",
+          "items": { "$ref": "#/$defs/ParticleEffect" }
+        },
+        "witnesses": {
+          "type": "array",
+          "description": "Поля-свидетельства. Формат: \"entity.field\" или просто \"field\".",
+          "items": { "type": "string" }
+        },
+        "confirmation": {
+          "type": "string",
+          "description": "Способ подтверждения. Каноничные значения: auto, click, enter, form, file, confirm, none. Дополнительные доменные значения (drag, drag-end и др.) допустимы."
+        },
+        "parameters": {
+          "type": "array",
+          "description": "Явные параметры намерения (дубликат верхнего parameters; некоторые домены декларируют здесь).",
+          "items": { "$ref": "#/$defs/Parameter" }
+        }
+      },
+      "additionalProperties": true
+    },
+
+    "ParticleEffect": {
+      "description": "Эффект в декларации намерения (ещё не materialized в Φ). α может писаться греческой буквой или словом alpha.",
+      "type": "object",
+      "properties": {
+        "α": {
+          "type": "string",
+          "enum": ["add", "replace", "remove", "batch"]
+        },
+        "alpha": {
+          "type": "string",
+          "enum": ["add", "replace", "remove", "batch"]
+        },
+        "target": {
+          "type": "string",
+          "description": "Путь: \"collection\" или \"collection.field\"."
+        },
+        "value": {
+          "description": "Литеральное значение (для replace / add preset) или ссылка на параметр."
+        },
+        "σ": {
+          "type": "string",
+          "enum": ["session", "device", "account", "shared", "global", "presentation"]
+        },
+        "scope": {
+          "type": "string",
+          "enum": ["session", "device", "account", "shared", "global", "presentation"]
+        },
+        "ttl": {
+          "type": ["integer", "null"],
+          "minimum": 0
+        }
+      },
+      "additionalProperties": true,
+      "anyOf": [
+        { "required": ["α"] },
+        { "required": ["alpha"] }
+      ]
+    },
+
+    "Parameter": {
+      "type": "object",
+      "required": ["name"],
+      "properties": {
+        "name":     { "type": "string" },
+        "type":     { "type": "string" },
+        "control":  { "type": "string" },
+        "entity":   { "type": "string" },
+        "required": { "type": "boolean" },
+        "label":    { "type": "string" }
+      },
+      "additionalProperties": true
+    }
+  }
+}

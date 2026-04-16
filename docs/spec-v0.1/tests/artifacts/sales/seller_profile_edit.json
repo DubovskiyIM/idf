@@ -1,0 +1,205 @@
+{
+  "projection": "seller_profile_edit",
+  "name": "Профиль продавца: редактирование",
+  "domain": "sales",
+  "layer": "canonical",
+  "archetype": "form",
+  "version": 2,
+  "generatedAt": 0,
+  "generatedBy": "rules",
+  "inputsHash": "accept_bid,accept_offer,accept_resolution,add_dispute_evidence,add_listing_image,add_order_note,add_payment_method,add_shipping_address,add_tag,add_to_bundle,add_to_collection,add_to_watchlist,add_tracking,apply_coupon,apply_store_credit,apply_template,approve_listing,approve_return,approve_verification,archive_listing,ban_user,block_bidder,block_user,browse_by_tag,bulk_delete_listings,bulk_edit_price,bulk_export_orders,bulk_mark_shipped,bulk_print_labels,bulk_relist,bulk_relist_expired,bulk_send_invoices,bulk_update_shipping,buy_now,calculate_shipping,cancel_listing,cancel_order,cancel_promotion,certify_listing,change_password,choose_payment_method,clear_all_notifications,close_dispute,combine_shipping,comment_on_listing,compare_listings,complete_order,confirm_delivery,confirm_shipment,create_bundle,create_category,create_collection,create_coupon,create_listing,create_shipping_profile,create_store_page,create_template,deactivate_coupon,delete_account,delete_category,delete_comment,delete_message,delete_review,delete_saved_search,delete_shipping_profile,delete_template,disable_2fa,disable_auto_payout,disable_international_shipping,disable_vacation_mode,download_personal_data,duplicate_listing,edit_category,edit_listing,edit_review,edit_shipping_profile,edit_store_page,edit_template,enable_2fa,escalate_dispute,export_listings,export_sales_report,extend_auction,feature_listing,filter_by_category,filter_by_condition,filter_by_price,flag_review_helpful,follow_seller,import_template,increase_bid,invite_friend,issue_partial_refund,leave_review,leave_seller_feedback,like_listing,lower_start_price,make_offer,mark_all_read,mark_as_gift,mark_message_read,mark_notification_read,move_to_category,mute_notifications,open_dispute,pay_order,place_bid,print_shipping_label,process_refund,promote_listing,publish_collection,publish_listing,rate_app,reject_offer,reject_return,reject_verification,relist_item,remove_from_bundle,remove_from_collection,remove_from_watchlist,remove_listing,remove_payment_method,remove_price_alert,remove_review,remove_tag,rename_template,reply_to_message,report_counterfeit,report_listing,report_message,report_review,report_shipping_issue,report_user,request_authenticity_check,request_feature,request_payout,request_pickup,request_refund,request_return,request_verification,resolve_dispute,respond_to_dispute,respond_to_review,restore_listing,retract_bid,revoke_session,save_as_template,save_search,schedule_listing,search_listings,send_listing_question,send_message,send_order_message,set_auto_bid,set_auto_payout,set_auto_reply,set_avatar,set_buy_now_price,set_currency,set_default_payment,set_free_shipping,set_international_shipping,set_language,set_listing_category,set_listing_condition,set_minimum_bid_increment,set_notification_preferences,set_price_alert,set_privacy_settings,set_reserve_price,set_return_policy,set_sales_goal,set_shipping_address,set_shipping_cost,set_shipping_from,set_store_banner,set_store_logo,set_store_policies,set_subcategory,set_template_defaults,set_vacation_mode,set_working_hours,share_listing,ship_order,snipe_protect,sort_listings,submit_feedback,subscribe_to_category,subscribe_to_listing,subscribe_to_seller,suggest_category,suspend_listing,suspend_user,thank_reviewer,toggle_dark_mode,toggle_light_mode,toggle_search_notifications,unarchive_listing,unban_user,unblock_bidder,unblock_user,unfeature_listing,unfollow_seller,unlike_listing,unmute_notifications,unsubscribe_from_category,unsubscribe_from_listing,unsubscribe_from_seller,update_profile,verify_identity,view_analytics,view_bid_analytics,view_bid_history,view_buyer_demographics,view_category_tree,view_listing_performance,view_login_history,view_order_timeline,view_payout_history,view_price_history,view_sales_dashboard,view_seller_profile,view_similar_listings,view_traffic_stats,warn_user|category_browse,dispute_detail,dispute_detail_edit,inbox,listing_detail,listing_detail_edit,listing_feed,my_bids,my_listings,notifications,order_detail,order_detail_edit,order_list,sales_home,saved_searches,seller_profile,seller_profile_edit,watchlist|Bid,Category,Dispute,Listing,Message,Notification,Order,Review,SavedSearch,User,Watchlist",
+  "slots": {
+    "header": [],
+    "toolbar": [],
+    "body": {
+      "type": "formBody",
+      "mainEntity": "User",
+      "fields": [
+        {
+          "name": "name",
+          "type": "text",
+          "editable": true,
+          "required": true,
+          "label": "Имя",
+          "intentId": "update_profile",
+          "options": null
+        },
+        {
+          "name": "email",
+          "type": "email",
+          "editable": false,
+          "required": false,
+          "label": "Email",
+          "intentId": null,
+          "options": null
+        },
+        {
+          "name": "avatar",
+          "type": "image",
+          "editable": true,
+          "required": false,
+          "label": "Аватар",
+          "intentId": "set_avatar",
+          "options": null
+        },
+        {
+          "name": "bio",
+          "type": "textarea",
+          "editable": true,
+          "required": false,
+          "label": "О себе",
+          "intentId": "update_profile",
+          "options": null
+        },
+        {
+          "name": "rating",
+          "type": "number",
+          "editable": false,
+          "required": false,
+          "label": "Рейтинг",
+          "intentId": null,
+          "options": null
+        },
+        {
+          "name": "salesCount",
+          "type": "number",
+          "editable": false,
+          "required": false,
+          "label": "Продаж",
+          "intentId": null,
+          "options": null
+        },
+        {
+          "name": "purchasesCount",
+          "type": "number",
+          "editable": false,
+          "required": false,
+          "label": "Покупок",
+          "intentId": null,
+          "options": null
+        },
+        {
+          "name": "verified",
+          "type": "boolean",
+          "editable": false,
+          "required": false,
+          "label": "Верифицирован",
+          "intentId": null,
+          "options": null
+        },
+        {
+          "name": "balance",
+          "type": "number",
+          "editable": false,
+          "required": false,
+          "label": "Баланс",
+          "intentId": null,
+          "options": null
+        },
+        {
+          "name": "location",
+          "type": "text",
+          "editable": true,
+          "required": false,
+          "label": "Город",
+          "intentId": "update_profile",
+          "options": null
+        },
+        {
+          "name": "registeredAt",
+          "type": "datetime",
+          "editable": false,
+          "required": false,
+          "label": "На сайте с",
+          "intentId": null,
+          "options": null
+        }
+      ],
+      "sections": [
+        {
+          "id": "main",
+          "title": "Основное",
+          "fields": [
+            {
+              "name": "name",
+              "type": "text",
+              "editable": true,
+              "required": true,
+              "label": "Имя",
+              "intentId": "update_profile",
+              "options": null
+            },
+            {
+              "name": "bio",
+              "type": "textarea",
+              "editable": true,
+              "required": false,
+              "label": "О себе",
+              "intentId": "update_profile",
+              "options": null
+            }
+          ]
+        },
+        {
+          "id": "media",
+          "title": "Медиа",
+          "fields": [
+            {
+              "name": "avatar",
+              "type": "image",
+              "editable": true,
+              "required": false,
+              "label": "Аватар",
+              "intentId": "set_avatar",
+              "options": null
+            }
+          ]
+        },
+        {
+          "id": "shipping",
+          "title": "Доставка",
+          "fields": [
+            {
+              "name": "location",
+              "type": "text",
+              "editable": true,
+              "required": false,
+              "label": "Город",
+              "intentId": "update_profile",
+              "options": null
+            }
+          ]
+        }
+      ],
+      "editIntents": [
+        "update_profile",
+        "set_avatar",
+        "set_auto_reply",
+        "set_sales_goal",
+        "change_password",
+        "set_privacy_settings",
+        "set_language",
+        "set_currency"
+      ]
+    },
+    "context": [],
+    "fab": [],
+    "overlay": []
+  },
+  "nav": {
+    "outgoing": [],
+    "incoming": [
+      {
+        "from": "seller_profile",
+        "to": "seller_profile_edit",
+        "kind": "edit-action",
+        "itemEntity": "User",
+        "params": {
+          "userId": "routeParams.userId"
+        }
+      }
+    ]
+  },
+  "editProjection": null,
+  "sourceProjection": "seller_profile"
+}

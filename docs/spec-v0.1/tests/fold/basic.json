@@ -1,0 +1,74 @@
+{
+  "description": "Базовые кейсы свёртки Φ_confirmed → World(t). Реализация MUST давать идентичный World для каждого input'а (независимо от иного порядка свёртки, согласованного с causal DAG).",
+  "cases": [
+    {
+      "name": "add-only",
+      "effects": [
+        { "id": "e1", "alpha": "add", "target": "bookings", "scope": "account", "parent_id": null, "status": "confirmed", "context": { "id": "b1", "serviceId": "s1", "status": "confirmed" }, "value": { "id": "b1", "serviceId": "s1", "status": "confirmed" }, "created_at": 1 }
+      ],
+      "expectedWorld": {
+        "bookings": { "b1": { "id": "b1", "serviceId": "s1", "status": "confirmed" } }
+      }
+    },
+    {
+      "name": "add-then-replace-field",
+      "effects": [
+        { "id": "e1", "alpha": "add",     "target": "bookings",        "scope": "account", "parent_id": null, "status": "confirmed", "context": { "id": "b1" }, "value": { "id": "b1", "status": "pending" }, "created_at": 1 },
+        { "id": "e2", "alpha": "replace", "target": "bookings.status", "scope": "account", "parent_id": "e1", "status": "confirmed", "context": { "id": "b1" }, "value": "confirmed", "created_at": 2 }
+      ],
+      "expectedWorld": {
+        "bookings": { "b1": { "id": "b1", "status": "confirmed" } }
+      }
+    },
+    {
+      "name": "add-then-remove",
+      "effects": [
+        { "id": "e1", "alpha": "add",    "target": "bookings", "scope": "account", "parent_id": null, "status": "confirmed", "context": { "id": "b1" }, "value": { "id": "b1" }, "created_at": 1 },
+        { "id": "e2", "alpha": "remove", "target": "bookings", "scope": "account", "parent_id": "e1", "status": "confirmed", "context": { "id": "b1" }, "created_at": 2 }
+      ],
+      "expectedWorld": { "bookings": {} }
+    },
+    {
+      "name": "drafts-excluded-from-fold",
+      "effects": [
+        { "id": "e1", "alpha": "add", "target": "drafts",   "scope": "account", "parent_id": null, "status": "confirmed", "context": { "id": "d1" }, "value": { "id": "d1" }, "created_at": 1 },
+        { "id": "e2", "alpha": "add", "target": "bookings", "scope": "account", "parent_id": null, "status": "confirmed", "context": { "id": "b1" }, "value": { "id": "b1" }, "created_at": 2 }
+      ],
+      "expectedWorld": {
+        "bookings": { "b1": { "id": "b1" } }
+      },
+      "note": "Drafts-эффекты не попадают в Φ-fold; они свёртываются отдельно для viewer-owner'а."
+    },
+    {
+      "name": "presentation-excluded-from-fold",
+      "effects": [
+        { "id": "e1", "alpha": "add",     "target": "nodes",          "scope": "shared",       "parent_id": null, "status": "confirmed", "context": { "id": "n1" }, "value": { "id": "n1", "x": 0, "y": 0 }, "created_at": 1 },
+        { "id": "e2", "alpha": "replace", "target": "nodes.x",        "scope": "presentation", "parent_id": null, "status": "confirmed", "context": { "id": "n1" }, "value": 100, "created_at": 2 }
+      ],
+      "expectedWorld": {
+        "nodes": { "n1": { "id": "n1", "x": 0, "y": 0 } }
+      },
+      "note": "Π-эффекты применяются отдельным проходом applyPresentation(); fold их игнорирует."
+    },
+    {
+      "name": "causal-order-parent-before-child",
+      "effects": [
+        { "id": "e2", "alpha": "replace", "target": "bookings.status", "scope": "account", "parent_id": "e1", "status": "confirmed", "context": { "id": "b1" }, "value": "confirmed", "created_at": 2 },
+        { "id": "e1", "alpha": "add",     "target": "bookings",        "scope": "account", "parent_id": null, "status": "confirmed", "context": { "id": "b1" }, "value": { "id": "b1", "status": "pending" }, "created_at": 1 }
+      ],
+      "expectedWorld": {
+        "bookings": { "b1": { "id": "b1", "status": "confirmed" } }
+      },
+      "note": "Даже если e2 передан первым, causalSort ставит e1 (родитель) раньше."
+    },
+    {
+      "name": "rejected-cascades-skip",
+      "effects": [
+        { "id": "e1", "alpha": "add",     "target": "bookings",        "scope": "account", "parent_id": null, "status": "rejected",  "context": { "id": "b1" }, "value": { "id": "b1" }, "created_at": 1 },
+        { "id": "e2", "alpha": "replace", "target": "bookings.status", "scope": "account", "parent_id": "e1", "status": "confirmed", "context": { "id": "b1" }, "value": "confirmed", "created_at": 2 }
+      ],
+      "expectedWorld": { "bookings": {} },
+      "note": "e1 rejected → не попадает в fold. e2 при этом либо уже rejected каскадно рантаймом, либо его target создаёт partial upsert §2.6 — но спецификация требует skip rejected-эффектов на стадии fold."
+    }
+  ]
+}

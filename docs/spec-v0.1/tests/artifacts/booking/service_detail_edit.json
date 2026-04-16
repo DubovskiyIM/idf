@@ -1,0 +1,129 @@
+{
+  "projection": "service_detail_edit",
+  "name": "Услуга: редактирование",
+  "domain": "booking",
+  "layer": "canonical",
+  "archetype": "form",
+  "version": 2,
+  "generatedAt": 0,
+  "generatedBy": "rules",
+  "inputsHash": "abandon_draft,add_service,block_slot,bulk_cancel_day,cancel_booking,cancel_client_booking,complete_booking,confirm_booking,create_booking,delete_review,edit_review,leave_review,mark_no_show,remove_service,repeat_booking,reschedule_booking,respond_to_review,select_service,select_slot,studio_test_intent_zzz,unblock_slot,update_service|booking_detail,booking_wizard,my_bookings,service_catalog,service_detail,service_detail_edit,specialist_schedule|Booking,Review,Service,ServiceCategory,Specialist,TimeSlot",
+  "slots": {
+    "header": [],
+    "toolbar": [],
+    "body": {
+      "type": "formBody",
+      "mainEntity": "Service",
+      "fields": [
+        {
+          "name": "specialistId",
+          "type": "entityRef",
+          "editable": false,
+          "required": false,
+          "label": "specialistId",
+          "intentId": null,
+          "options": null
+        },
+        {
+          "name": "categoryId",
+          "type": "entityRef",
+          "editable": false,
+          "required": false,
+          "label": "Категория",
+          "intentId": null,
+          "options": null
+        },
+        {
+          "name": "name",
+          "type": "text",
+          "editable": false,
+          "required": true,
+          "label": "Название",
+          "intentId": null,
+          "options": null
+        },
+        {
+          "name": "duration",
+          "type": "number",
+          "editable": true,
+          "required": false,
+          "label": "Длительность",
+          "intentId": "update_service",
+          "options": null
+        },
+        {
+          "name": "price",
+          "type": "number",
+          "editable": true,
+          "required": false,
+          "label": "Цена",
+          "intentId": "update_service",
+          "options": null
+        },
+        {
+          "name": "active",
+          "type": "boolean",
+          "editable": false,
+          "required": false,
+          "label": "Активна",
+          "intentId": null,
+          "options": null
+        }
+      ],
+      "sections": [
+        {
+          "id": "price",
+          "title": "Цена",
+          "fields": [
+            {
+              "name": "price",
+              "type": "number",
+              "editable": true,
+              "required": false,
+              "label": "Цена",
+              "intentId": "update_service",
+              "options": null
+            }
+          ]
+        },
+        {
+          "id": "attrs",
+          "title": "Характеристики",
+          "fields": [
+            {
+              "name": "duration",
+              "type": "number",
+              "editable": true,
+              "required": false,
+              "label": "Длительность",
+              "intentId": "update_service",
+              "options": null
+            }
+          ]
+        }
+      ],
+      "editIntents": [
+        "update_service"
+      ]
+    },
+    "context": [],
+    "fab": [],
+    "overlay": []
+  },
+  "nav": {
+    "outgoing": [],
+    "incoming": [
+      {
+        "from": "service_detail",
+        "to": "service_detail_edit",
+        "kind": "edit-action",
+        "itemEntity": "Service",
+        "params": {
+          "serviceId": "routeParams.serviceId"
+        }
+      }
+    ]
+  },
+  "editProjection": null,
+  "sourceProjection": "service_detail"
+}

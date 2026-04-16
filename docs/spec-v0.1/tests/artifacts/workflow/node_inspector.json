@@ -1,0 +1,142 @@
+{
+  "projection": "node_inspector",
+  "name": "Инспектор узла",
+  "domain": "workflow",
+  "layer": "canonical",
+  "archetype": "detail",
+  "version": 2,
+  "generatedAt": 0,
+  "generatedBy": "rules",
+  "inputsHash": "add_custom_node_type,add_node,configure_node,connect_nodes,create_workflow,delete_workflow,disconnect_nodes,duplicate_workflow,execute_workflow,import_workflow,move_node,remove_node,rename_node,save_workflow,stop_execution|execution_log,node_inspector,node_inspector_edit,workflow_canvas,workflow_list|Edge,Execution,Node,NodeResult,NodeType,Workflow",
+  "slots": {
+    "header": [],
+    "toolbar": [
+      {
+        "type": "intentButton",
+        "intentId": "remove_node",
+        "label": "Удалить узел",
+        "icon": "🗑",
+        "opens": "overlay",
+        "overlayKey": "overlay_remove_node"
+      },
+      {
+        "type": "intentButton",
+        "intentId": "configure_node",
+        "label": "Настроить узел",
+        "icon": "⚙",
+        "opens": "overlay",
+        "overlayKey": "overlay_configure_node"
+      },
+      {
+        "type": "intentButton",
+        "intentId": "rename_node",
+        "label": "Переименовать узел",
+        "icon": "✎"
+      }
+    ],
+    "body": {
+      "type": "column",
+      "gap": 16,
+      "children": [
+        {
+          "type": "heading",
+          "bind": "label",
+          "level": 1
+        },
+        {
+          "type": "infoSection",
+          "title": "Характеристики",
+          "fields": [
+            {
+              "bind": "workflowId",
+              "label": "workflowId"
+            },
+            {
+              "bind": "type",
+              "label": "type"
+            },
+            {
+              "bind": "x",
+              "label": "x"
+            },
+            {
+              "bind": "y",
+              "label": "y"
+            },
+            {
+              "bind": "config",
+              "label": "config"
+            }
+          ]
+        }
+      ]
+    },
+    "context": [],
+    "fab": [],
+    "overlay": [
+      {
+        "type": "confirmDialog",
+        "key": "overlay_remove_node",
+        "triggerIntentId": "remove_node",
+        "irreversibility": "medium",
+        "message": "Удалить узел: {node.label}, {connected_edges.count}?",
+        "confirmBy": {
+          "type": "button"
+        }
+      },
+      {
+        "type": "formModal",
+        "key": "overlay_configure_node",
+        "intentId": "configure_node",
+        "title": "Настроить узел",
+        "witnessPanel": [
+          {
+            "type": "text",
+            "bind": "node.type"
+          },
+          {
+            "type": "text",
+            "bind": "node.config"
+          }
+        ],
+        "parameters": [
+          {
+            "name": "type",
+            "bind": "node.type",
+            "editable": true,
+            "inferredFrom": "phase-investigation",
+            "control": "text"
+          },
+          {
+            "name": "config",
+            "bind": "node.config",
+            "editable": true,
+            "inferredFrom": "phase-investigation",
+            "control": "text"
+          }
+        ]
+      }
+    ],
+    "sections": [],
+    "primaryCTA": [],
+    "progress": null,
+    "footer": [],
+    "voterSelector": null
+  },
+  "nav": {
+    "outgoing": [
+      {
+        "from": "node_inspector",
+        "to": "node_inspector_edit",
+        "kind": "edit-action",
+        "itemEntity": "Node",
+        "params": {
+          "nodeId": "routeParams.nodeId"
+        }
+      }
+    ],
+    "incoming": []
+  },
+  "editProjection": "node_inspector_edit",
+  "sourceProjection": null
+}

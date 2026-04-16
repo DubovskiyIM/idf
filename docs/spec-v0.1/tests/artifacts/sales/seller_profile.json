@@ -1,0 +1,1076 @@
+{
+  "projection": "seller_profile",
+  "name": "Профиль продавца",
+  "domain": "sales",
+  "layer": "canonical",
+  "archetype": "detail",
+  "version": 2,
+  "generatedAt": 0,
+  "generatedBy": "rules",
+  "inputsHash": "accept_bid,accept_offer,accept_resolution,add_dispute_evidence,add_listing_image,add_order_note,add_payment_method,add_shipping_address,add_tag,add_to_bundle,add_to_collection,add_to_watchlist,add_tracking,apply_coupon,apply_store_credit,apply_template,approve_listing,approve_return,approve_verification,archive_listing,ban_user,block_bidder,block_user,browse_by_tag,bulk_delete_listings,bulk_edit_price,bulk_export_orders,bulk_mark_shipped,bulk_print_labels,bulk_relist,bulk_relist_expired,bulk_send_invoices,bulk_update_shipping,buy_now,calculate_shipping,cancel_listing,cancel_order,cancel_promotion,certify_listing,change_password,choose_payment_method,clear_all_notifications,close_dispute,combine_shipping,comment_on_listing,compare_listings,complete_order,confirm_delivery,confirm_shipment,create_bundle,create_category,create_collection,create_coupon,create_listing,create_shipping_profile,create_store_page,create_template,deactivate_coupon,delete_account,delete_category,delete_comment,delete_message,delete_review,delete_saved_search,delete_shipping_profile,delete_template,disable_2fa,disable_auto_payout,disable_international_shipping,disable_vacation_mode,download_personal_data,duplicate_listing,edit_category,edit_listing,edit_review,edit_shipping_profile,edit_store_page,edit_template,enable_2fa,escalate_dispute,export_listings,export_sales_report,extend_auction,feature_listing,filter_by_category,filter_by_condition,filter_by_price,flag_review_helpful,follow_seller,import_template,increase_bid,invite_friend,issue_partial_refund,leave_review,leave_seller_feedback,like_listing,lower_start_price,make_offer,mark_all_read,mark_as_gift,mark_message_read,mark_notification_read,move_to_category,mute_notifications,open_dispute,pay_order,place_bid,print_shipping_label,process_refund,promote_listing,publish_collection,publish_listing,rate_app,reject_offer,reject_return,reject_verification,relist_item,remove_from_bundle,remove_from_collection,remove_from_watchlist,remove_listing,remove_payment_method,remove_price_alert,remove_review,remove_tag,rename_template,reply_to_message,report_counterfeit,report_listing,report_message,report_review,report_shipping_issue,report_user,request_authenticity_check,request_feature,request_payout,request_pickup,request_refund,request_return,request_verification,resolve_dispute,respond_to_dispute,respond_to_review,restore_listing,retract_bid,revoke_session,save_as_template,save_search,schedule_listing,search_listings,send_listing_question,send_message,send_order_message,set_auto_bid,set_auto_payout,set_auto_reply,set_avatar,set_buy_now_price,set_currency,set_default_payment,set_free_shipping,set_international_shipping,set_language,set_listing_category,set_listing_condition,set_minimum_bid_increment,set_notification_preferences,set_price_alert,set_privacy_settings,set_reserve_price,set_return_policy,set_sales_goal,set_shipping_address,set_shipping_cost,set_shipping_from,set_store_banner,set_store_logo,set_store_policies,set_subcategory,set_template_defaults,set_vacation_mode,set_working_hours,share_listing,ship_order,snipe_protect,sort_listings,submit_feedback,subscribe_to_category,subscribe_to_listing,subscribe_to_seller,suggest_category,suspend_listing,suspend_user,thank_reviewer,toggle_dark_mode,toggle_light_mode,toggle_search_notifications,unarchive_listing,unban_user,unblock_bidder,unblock_user,unfeature_listing,unfollow_seller,unlike_listing,unmute_notifications,unsubscribe_from_category,unsubscribe_from_listing,unsubscribe_from_seller,update_profile,verify_identity,view_analytics,view_bid_analytics,view_bid_history,view_buyer_demographics,view_category_tree,view_listing_performance,view_login_history,view_order_timeline,view_payout_history,view_price_history,view_sales_dashboard,view_seller_profile,view_similar_listings,view_traffic_stats,warn_user|category_browse,dispute_detail,dispute_detail_edit,inbox,listing_detail,listing_detail_edit,listing_feed,my_bids,my_listings,notifications,order_detail,order_detail_edit,order_list,sales_home,saved_searches,seller_profile,seller_profile_edit,watchlist|Bid,Category,Dispute,Listing,Message,Notification,Order,Review,SavedSearch,User,Watchlist",
+  "slots": {
+    "header": [],
+    "toolbar": [
+      {
+        "type": "intentButton",
+        "intentId": "update_profile",
+        "label": "Редактировать профиль",
+        "icon": "✎",
+        "opens": "overlay",
+        "overlayKey": "overlay_update_profile",
+        "condition": "id === viewer.id"
+      },
+      {
+        "type": "intentButton",
+        "intentId": "verify_identity",
+        "label": "Верифицировать аккаунт",
+        "icon": "⚡",
+        "condition": "id === viewer.id"
+      },
+      {
+        "type": "intentButton",
+        "intentId": "approve_verification",
+        "label": "Одобрить верификацию",
+        "icon": "✓",
+        "condition": "id === viewer.id"
+      },
+      {
+        "type": "overflow",
+        "children": [
+          {
+            "type": "intentButton",
+            "intentId": "warn_user",
+            "label": "Предупредить пользователя",
+            "icon": "⚡"
+          },
+          {
+            "type": "intentButton",
+            "intentId": "suspend_user",
+            "label": "Заблокировать пользователя",
+            "icon": "⚡",
+            "antagonist": "unban_user",
+            "opens": "overlay",
+            "overlayKey": "overlay_suspend_user",
+            "condition": "id === viewer.id"
+          },
+          {
+            "type": "intentButton",
+            "intentId": "report_user",
+            "label": "Пожаловаться на пользователя",
+            "icon": "⚡"
+          },
+          {
+            "type": "intentButton",
+            "intentId": "subscribe_to_seller",
+            "label": "Подписка на продавца",
+            "icon": "⚡"
+          },
+          {
+            "type": "divider"
+          },
+          {
+            "type": "intentButton",
+            "intentId": "follow_seller",
+            "label": "Подписаться на продавца",
+            "icon": "⚡",
+            "antagonist": "unfollow_seller"
+          },
+          {
+            "type": "intentButton",
+            "intentId": "unfollow_seller",
+            "label": "Отписаться от продавца",
+            "icon": "⚡",
+            "antagonist": "follow_seller"
+          },
+          {
+            "type": "divider"
+          },
+          {
+            "type": "intentButton",
+            "intentId": "reject_verification",
+            "label": "Отклонить верификацию",
+            "icon": "🚫",
+            "antagonist": "approve_verification",
+            "condition": "id === viewer.id"
+          },
+          {
+            "type": "divider"
+          },
+          {
+            "type": "intentButton",
+            "intentId": "unsubscribe_from_seller",
+            "label": "Отписка от продавца",
+            "icon": "⚡",
+            "antagonist": "subscribe_to_seller"
+          },
+          {
+            "type": "intentButton",
+            "intentId": "subscribe_to_seller",
+            "label": "Подписка на продавца",
+            "icon": "⚡"
+          },
+          {
+            "type": "divider"
+          },
+          {
+            "type": "intentButton",
+            "intentId": "block_user",
+            "label": "Заблокировать пользователя",
+            "icon": "🚫",
+            "antagonist": "unblock_user"
+          },
+          {
+            "type": "intentButton",
+            "intentId": "unblock_user",
+            "label": "Разблокировать",
+            "icon": "✓",
+            "antagonist": "block_user"
+          }
+        ]
+      }
+    ],
+    "body": {
+      "type": "column",
+      "gap": 16,
+      "children": [
+        {
+          "type": "image",
+          "bind": "avatar"
+        },
+        {
+          "type": "row",
+          "gap": 16,
+          "align": "flex-start",
+          "children": [
+            {
+              "type": "avatar",
+              "bind": "avatar",
+              "size": 80
+            },
+            {
+              "type": "column",
+              "gap": 4,
+              "sx": {
+                "flex": 1
+              },
+              "children": [
+                {
+                  "type": "heading",
+                  "bind": "name",
+                  "level": 2
+                },
+                {
+                  "type": "text",
+                  "bind": "bio",
+                  "style": "secondary",
+                  "hideEmpty": true
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "statBar",
+          "fields": [
+            {
+              "name": "rating",
+              "label": "Рейтинг",
+              "type": "number"
+            },
+            {
+              "name": "salesCount",
+              "label": "Продаж",
+              "type": "number"
+            },
+            {
+              "name": "purchasesCount",
+              "label": "Покупок",
+              "type": "number"
+            },
+            {
+              "name": "balance",
+              "label": "Баланс",
+              "type": "number"
+            }
+          ]
+        },
+        {
+          "type": "infoSection",
+          "title": "Доставка",
+          "fields": [
+            {
+              "bind": "location",
+              "label": "Город"
+            }
+          ]
+        },
+        {
+          "type": "infoSection",
+          "title": "Характеристики",
+          "fields": [
+            {
+              "bind": "email",
+              "label": "Email"
+            },
+            {
+              "bind": "verified",
+              "label": "Верифицирован"
+            },
+            {
+              "bind": "registeredAt",
+              "label": "На сайте с",
+              "format": "datetime"
+            }
+          ]
+        }
+      ]
+    },
+    "context": [],
+    "fab": [],
+    "overlay": [
+      {
+        "type": "formModal",
+        "key": "overlay_update_profile",
+        "intentId": "update_profile",
+        "title": "Редактировать профиль",
+        "witnessPanel": [
+          {
+            "type": "text",
+            "bind": "user.name"
+          },
+          {
+            "type": "text",
+            "bind": "user.bio"
+          },
+          {
+            "type": "text",
+            "bind": "user.location"
+          }
+        ],
+        "parameters": [
+          {
+            "name": "name",
+            "bind": "user.name",
+            "editable": true,
+            "inferredFrom": "phase-investigation",
+            "control": "text"
+          },
+          {
+            "name": "bio",
+            "bind": "user.bio",
+            "editable": true,
+            "inferredFrom": "phase-investigation",
+            "control": "textarea"
+          },
+          {
+            "name": "location",
+            "bind": "user.location",
+            "editable": true,
+            "inferredFrom": "phase-investigation",
+            "control": "text"
+          }
+        ]
+      },
+      {
+        "type": "confirmDialog",
+        "key": "overlay_suspend_user",
+        "triggerIntentId": "suspend_user",
+        "irreversibility": "high",
+        "message": "Заблокировать пользователя: {user.name}?",
+        "confirmBy": {
+          "type": "typeText",
+          "expected": "user.name"
+        }
+      }
+    ],
+    "sections": [
+      {
+        "title": "Активные лоты",
+        "foreignKey": "sellerId",
+        "itemEntity": "Listing",
+        "itemView": {
+          "type": "text",
+          "bind": "title",
+          "style": {
+            "fontWeight": 600,
+            "fontSize": 14
+          }
+        },
+        "itemIntents": [
+          {
+            "intentId": "edit_listing",
+            "label": "Редактировать лот",
+            "icon": "✎",
+            "conditions": [
+              "listing.status = 'draft'",
+              "listing.sellerId = me.id"
+            ],
+            "createsDiscriminator": null
+          },
+          {
+            "intentId": "publish_listing",
+            "label": "Опубликовать",
+            "icon": "⚡",
+            "conditions": [
+              "listing.status = 'draft'",
+              "listing.sellerId = me.id"
+            ],
+            "createsDiscriminator": null
+          },
+          {
+            "intentId": "cancel_listing",
+            "label": "Снять с продажи",
+            "icon": "🗑",
+            "conditions": [
+              "listing.status = 'active'",
+              "listing.sellerId = me.id",
+              "count(bids, listingId=target.id) = 0"
+            ],
+            "createsDiscriminator": null
+          },
+          {
+            "intentId": "set_buy_now_price",
+            "label": "Установить «Купить сейчас»",
+            "icon": "⚡",
+            "conditions": [
+              "listing.status = 'active'",
+              "listing.sellerId = me.id"
+            ],
+            "createsDiscriminator": null
+          },
+          {
+            "intentId": "set_reserve_price",
+            "label": "Установить резервную цену",
+            "icon": "⚡",
+            "conditions": [
+              "listing.status = 'draft'",
+              "listing.sellerId = me.id"
+            ],
+            "createsDiscriminator": null
+          },
+          {
+            "intentId": "lower_start_price",
+            "label": "Снизить начальную цену",
+            "icon": "⚡",
+            "conditions": [
+              "listing.status = 'active'",
+              "listing.sellerId = me.id",
+              "count(bids, listingId=target.id) = 0"
+            ],
+            "createsDiscriminator": null
+          },
+          {
+            "intentId": "extend_auction",
+            "label": "Продлить аукцион",
+            "icon": "⚡",
+            "conditions": [
+              "listing.status = 'active'",
+              "listing.sellerId = me.id"
+            ],
+            "createsDiscriminator": null
+          },
+          {
+            "intentId": "set_listing_condition",
+            "label": "Указать состояние",
+            "icon": "⚡",
+            "conditions": [
+              "listing.sellerId = me.id"
+            ],
+            "createsDiscriminator": null
+          },
+          {
+            "intentId": "add_listing_image",
+            "label": "Добавить фото",
+            "icon": "➕",
+            "conditions": [
+              "listing.sellerId = me.id"
+            ],
+            "createsDiscriminator": null
+          },
+          {
+            "intentId": "set_shipping_cost",
+            "label": "Указать стоимость доставки",
+            "icon": "⚡",
+            "conditions": [
+              "listing.sellerId = me.id"
+            ],
+            "createsDiscriminator": null
+          },
+          {
+            "intentId": "set_shipping_from",
+            "label": "Указать город отправки",
+            "icon": "⚡",
+            "conditions": [
+              "listing.sellerId = me.id"
+            ],
+            "createsDiscriminator": null
+          },
+          {
+            "intentId": "set_listing_category",
+            "label": "Выбрать категорию",
+            "icon": "⚡",
+            "conditions": [
+              "listing.sellerId = me.id"
+            ],
+            "createsDiscriminator": null
+          },
+          {
+            "intentId": "feature_listing",
+            "label": "В рекомендуемые",
+            "icon": "⚡",
+            "conditions": [
+              "listing.status = 'active'",
+              "listing.moderatorOnly = true"
+            ],
+            "createsDiscriminator": null
+          },
+          {
+            "intentId": "unfeature_listing",
+            "label": "Убрать из рекомендуемых",
+            "icon": "⚡",
+            "conditions": [
+              "listing.featured = true",
+              "listing.moderatorOnly = true"
+            ],
+            "createsDiscriminator": null
+          },
+          {
+            "intentId": "suspend_listing",
+            "label": "Заблокировать лот",
+            "icon": "⚡",
+            "conditions": [
+              "listing.status = 'active'",
+              "listing.moderatorOnly = true"
+            ],
+            "createsDiscriminator": null
+          },
+          {
+            "intentId": "restore_listing",
+            "label": "Восстановить лот",
+            "icon": "⚡",
+            "conditions": [
+              "listing.status = 'suspended'",
+              "listing.moderatorOnly = true"
+            ],
+            "createsDiscriminator": null
+          },
+          {
+            "intentId": "remove_listing",
+            "label": "Удалить лот",
+            "icon": "🗑",
+            "conditions": [],
+            "createsDiscriminator": null
+          },
+          {
+            "intentId": "place_bid",
+            "label": "Сделать ставку",
+            "icon": "⚡",
+            "conditions": [
+              "listing.status = 'active'"
+            ],
+            "createsDiscriminator": null
+          },
+          {
+            "intentId": "block_bidder",
+            "label": "Заблокировать участника",
+            "icon": "🚫",
+            "conditions": [
+              "listing.sellerId = me.id"
+            ],
+            "createsDiscriminator": null
+          },
+          {
+            "intentId": "unblock_bidder",
+            "label": "Разблокировать участника",
+            "icon": "✓",
+            "conditions": [
+              "listing.sellerId = me.id"
+            ],
+            "createsDiscriminator": null
+          },
+          {
+            "intentId": "increase_bid",
+            "label": "Повысить ставку",
+            "icon": "⚡",
+            "conditions": [
+              "bid.bidderId = me.id",
+              "listing.status = 'active'"
+            ],
+            "createsDiscriminator": null
+          },
+          {
+            "intentId": "snipe_protect",
+            "label": "Антиснайпер",
+            "icon": "⚡",
+            "conditions": [
+              "listing.status = 'active'",
+              "listing.sellerId = me.id"
+            ],
+            "createsDiscriminator": null
+          },
+          {
+            "intentId": "make_offer",
+            "label": "Предложить свою цену",
+            "icon": "⚡",
+            "conditions": [
+              "listing.status = 'active'"
+            ],
+            "createsDiscriminator": "Offer"
+          },
+          {
+            "intentId": "add_to_watchlist",
+            "label": "В избранное",
+            "icon": "➕",
+            "conditions": [
+              "listing.status = 'active'"
+            ],
+            "createsDiscriminator": null
+          },
+          {
+            "intentId": "send_listing_question",
+            "label": "Задать вопрос по лоту",
+            "icon": "⚡",
+            "conditions": [
+              "listing.status = 'active'"
+            ],
+            "createsDiscriminator": "Message"
+          },
+          {
+            "intentId": "subscribe_to_listing",
+            "label": "Подписаться на лот",
+            "icon": "⚡",
+            "conditions": [
+              "listing.status = 'active'"
+            ],
+            "createsDiscriminator": null
+          },
+          {
+            "intentId": "unsubscribe_from_listing",
+            "label": "Отписаться от лота",
+            "icon": "⚡",
+            "conditions": [
+              "listing.subscribed = true"
+            ],
+            "createsDiscriminator": null
+          },
+          {
+            "intentId": "report_listing",
+            "label": "Пожаловаться на лот",
+            "icon": "⚡",
+            "conditions": [
+              "listing.status = 'active'"
+            ],
+            "createsDiscriminator": null
+          },
+          {
+            "intentId": "approve_listing",
+            "label": "Одобрить лот (модератор)",
+            "icon": "✓",
+            "conditions": [
+              "listing.status = 'draft'"
+            ],
+            "createsDiscriminator": null
+          },
+          {
+            "intentId": "create_template",
+            "label": "Создать шаблон",
+            "icon": "➕",
+            "conditions": [
+              "listing.sellerId = me.id"
+            ],
+            "createsDiscriminator": "Template"
+          },
+          {
+            "intentId": "apply_template",
+            "label": "Применить шаблон",
+            "icon": "⚡",
+            "conditions": [
+              "listing.status = 'draft'",
+              "listing.sellerId = me.id"
+            ],
+            "createsDiscriminator": null
+          },
+          {
+            "intentId": "edit_template",
+            "label": "Редактировать шаблон",
+            "icon": "✎",
+            "conditions": [],
+            "createsDiscriminator": null
+          },
+          {
+            "intentId": "delete_template",
+            "label": "Удалить шаблон",
+            "icon": "🗑",
+            "conditions": [],
+            "createsDiscriminator": null
+          },
+          {
+            "intentId": "save_as_template",
+            "label": "Сохранить как шаблон",
+            "icon": "⭐",
+            "conditions": [
+              "listing.sellerId = me.id"
+            ],
+            "createsDiscriminator": "Template"
+          },
+          {
+            "intentId": "rename_template",
+            "label": "Переименовать шаблон",
+            "icon": "✎",
+            "conditions": [],
+            "createsDiscriminator": null
+          },
+          {
+            "intentId": "set_template_defaults",
+            "label": "Настроить шаблон",
+            "icon": "⚡",
+            "conditions": [],
+            "createsDiscriminator": null
+          },
+          {
+            "intentId": "promote_listing",
+            "label": "Продвинуть лот",
+            "icon": "⬆",
+            "conditions": [
+              "listing.status = 'active'",
+              "listing.sellerId = me.id"
+            ],
+            "createsDiscriminator": null
+          },
+          {
+            "intentId": "cancel_promotion",
+            "label": "Отменить продвижение",
+            "icon": "🗑",
+            "conditions": [
+              "listing.sellerId = me.id"
+            ],
+            "createsDiscriminator": null
+          },
+          {
+            "intentId": "add_to_bundle",
+            "label": "Добавить в комплект",
+            "icon": "➕",
+            "conditions": [
+              "listing.sellerId = me.id"
+            ],
+            "createsDiscriminator": null
+          },
+          {
+            "intentId": "remove_from_bundle",
+            "label": "Убрать из комплекта",
+            "icon": "🗑",
+            "conditions": [
+              "listing.sellerId = me.id"
+            ],
+            "createsDiscriminator": null
+          },
+          {
+            "intentId": "schedule_listing",
+            "label": "Запланировать публикацию",
+            "icon": "⚡",
+            "conditions": [
+              "listing.status = 'draft'",
+              "listing.sellerId = me.id"
+            ],
+            "createsDiscriminator": null
+          },
+          {
+            "intentId": "set_minimum_bid_increment",
+            "label": "Мин. шаг ставки",
+            "icon": "⚡",
+            "conditions": [
+              "listing.sellerId = me.id"
+            ],
+            "createsDiscriminator": null
+          },
+          {
+            "intentId": "set_international_shipping",
+            "label": "Международная доставка",
+            "icon": "⚡",
+            "conditions": [
+              "listing.sellerId = me.id"
+            ],
+            "createsDiscriminator": null
+          },
+          {
+            "intentId": "disable_international_shipping",
+            "label": "Только внутренняя",
+            "icon": "⚡",
+            "conditions": [
+              "listing.sellerId = me.id"
+            ],
+            "createsDiscriminator": null
+          },
+          {
+            "intentId": "set_free_shipping",
+            "label": "Бесплатная доставка",
+            "icon": "⚡",
+            "conditions": [
+              "listing.sellerId = me.id"
+            ],
+            "createsDiscriminator": null
+          },
+          {
+            "intentId": "add_to_collection",
+            "label": "В подборку",
+            "icon": "➕",
+            "conditions": [
+              "listing.sellerId = me.id"
+            ],
+            "createsDiscriminator": null
+          },
+          {
+            "intentId": "remove_from_collection",
+            "label": "Убрать из подборки",
+            "icon": "🗑",
+            "conditions": [],
+            "createsDiscriminator": null
+          },
+          {
+            "intentId": "like_listing",
+            "label": "Нравится",
+            "icon": "⚡",
+            "conditions": [],
+            "createsDiscriminator": null
+          },
+          {
+            "intentId": "unlike_listing",
+            "label": "Не нравится",
+            "icon": "⚡",
+            "conditions": [],
+            "createsDiscriminator": null
+          },
+          {
+            "intentId": "comment_on_listing",
+            "label": "Комментарий к лоту",
+            "icon": "⚡",
+            "conditions": [
+              "listing.status = 'active'"
+            ],
+            "createsDiscriminator": "Comment"
+          },
+          {
+            "intentId": "request_authenticity_check",
+            "label": "Проверка подлинности",
+            "icon": "⚡",
+            "conditions": [
+              "listing.moderatorOnly = true"
+            ],
+            "createsDiscriminator": null
+          },
+          {
+            "intentId": "certify_listing",
+            "label": "Сертифицировать лот",
+            "icon": "⚡",
+            "conditions": [
+              "listing.moderatorOnly = true"
+            ],
+            "createsDiscriminator": null
+          },
+          {
+            "intentId": "report_counterfeit",
+            "label": "Подделка",
+            "icon": "⚡",
+            "conditions": [
+              "listing.moderatorOnly = true"
+            ],
+            "createsDiscriminator": null
+          },
+          {
+            "intentId": "set_price_alert",
+            "label": "Оповещение о цене",
+            "icon": "⚡",
+            "conditions": [],
+            "createsDiscriminator": "PriceAlert"
+          },
+          {
+            "intentId": "bulk_edit_price",
+            "label": "Массовое изменение цен",
+            "icon": "⚡",
+            "conditions": [],
+            "createsDiscriminator": null
+          },
+          {
+            "intentId": "bulk_delete_listings",
+            "label": "Массовое удаление",
+            "icon": "⚡",
+            "conditions": [
+              "listing.sellerId = me.id"
+            ],
+            "createsDiscriminator": null
+          },
+          {
+            "intentId": "bulk_update_shipping",
+            "label": "Массовая доставка",
+            "icon": "⚡",
+            "conditions": [],
+            "createsDiscriminator": null
+          },
+          {
+            "intentId": "add_tag",
+            "label": "Добавить тег",
+            "icon": "➕",
+            "conditions": [
+              "listing.sellerId = me.id"
+            ],
+            "createsDiscriminator": "Tag"
+          },
+          {
+            "intentId": "remove_tag",
+            "label": "Удалить тег",
+            "icon": "🗑",
+            "conditions": [
+              "listing.sellerId = me.id"
+            ],
+            "createsDiscriminator": null
+          },
+          {
+            "intentId": "move_to_category",
+            "label": "Переместить в категорию",
+            "icon": "✥",
+            "conditions": [
+              "listing.sellerId = me.id"
+            ],
+            "createsDiscriminator": null
+          },
+          {
+            "intentId": "suggest_category",
+            "label": "Предложить категорию",
+            "icon": "⚡",
+            "conditions": [],
+            "createsDiscriminator": "CategorySuggestion"
+          },
+          {
+            "intentId": "set_subcategory",
+            "label": "Указать подкатегорию",
+            "icon": "⚡",
+            "conditions": [
+              "listing.sellerId = me.id"
+            ],
+            "createsDiscriminator": null
+          },
+          {
+            "intentId": "archive_listing",
+            "label": "В архив",
+            "icon": "📦",
+            "conditions": [
+              "listing.sellerId = me.id"
+            ],
+            "createsDiscriminator": null
+          },
+          {
+            "intentId": "unarchive_listing",
+            "label": "Из архива",
+            "icon": "📤",
+            "conditions": [
+              "listing.sellerId = me.id"
+            ],
+            "createsDiscriminator": null
+          },
+          {
+            "intentId": "set_auto_bid",
+            "label": "Автоставка",
+            "icon": "⚡",
+            "conditions": [
+              "listing.status = 'active'"
+            ],
+            "createsDiscriminator": "Bid(active)",
+            "discriminator": "active"
+          },
+          {
+            "type": "voteGroup",
+            "intentGroup": "Order",
+            "conditions": [],
+            "options": [
+              {
+                "intentId": "buy_now",
+                "label": "Купить сейчас",
+                "icon": "⚡",
+                "discriminator": "pending_payment",
+                "style": {
+                  "bg": "#6366f1",
+                  "bgHover": "#4f46e5",
+                  "color": "#fff",
+                  "icon": null
+                },
+                "conditions": [
+                  "listing.status = 'active'",
+                  "listing.buyNowPrice != null"
+                ]
+              },
+              {
+                "intentId": "accept_bid",
+                "label": "Принять ставку досрочно",
+                "icon": "✓",
+                "discriminator": "pending_payment",
+                "style": {
+                  "bg": "#6366f1",
+                  "bgHover": "#4f46e5",
+                  "color": "#fff",
+                  "icon": null
+                },
+                "conditions": [
+                  "listing.status = 'active'",
+                  "listing.sellerId = me.id",
+                  "bid.status = 'active'"
+                ]
+              },
+              {
+                "intentId": "accept_offer",
+                "label": "Принять предложение",
+                "icon": "✓",
+                "discriminator": "pending_payment",
+                "style": {
+                  "bg": "#6366f1",
+                  "bgHover": "#4f46e5",
+                  "color": "#fff",
+                  "icon": null
+                },
+                "conditions": [
+                  "listing.sellerId = me.id"
+                ]
+              }
+            ]
+          }
+        ],
+        "addControl": null,
+        "emptyLabel": "Пока пусто",
+        "editableFields": [
+          "title",
+          "description",
+          "categoryId",
+          "condition",
+          "images",
+          "startPrice",
+          "buyNowPrice",
+          "reservePrice",
+          "auctionEnd",
+          "shippingCost",
+          "shippingFrom",
+          "weight"
+        ]
+      },
+      {
+        "title": "Отзывы",
+        "foreignKey": "targetUserId",
+        "itemEntity": "Review",
+        "itemView": {
+          "type": "text",
+          "bind": "orderId",
+          "style": {
+            "fontWeight": 600,
+            "fontSize": 14
+          }
+        },
+        "itemIntents": [
+          {
+            "intentId": "edit_review",
+            "label": "Редактировать отзыв",
+            "icon": "✎",
+            "conditions": [
+              "review.authorId = me.id"
+            ],
+            "createsDiscriminator": null
+          },
+          {
+            "intentId": "delete_review",
+            "label": "Удалить отзыв",
+            "icon": "🗑",
+            "conditions": [
+              "review.authorId = me.id"
+            ],
+            "createsDiscriminator": null
+          },
+          {
+            "intentId": "respond_to_review",
+            "label": "Ответить на отзыв",
+            "icon": "⚡",
+            "conditions": [],
+            "createsDiscriminator": null
+          },
+          {
+            "intentId": "report_review",
+            "label": "Пожаловаться на отзыв",
+            "icon": "⚡",
+            "conditions": [],
+            "createsDiscriminator": null
+          },
+          {
+            "intentId": "remove_review",
+            "label": "Удалить отзыв (модератор)",
+            "icon": "🗑",
+            "conditions": [],
+            "createsDiscriminator": null
+          },
+          {
+            "intentId": "thank_reviewer",
+            "label": "Поблагодарить за отзыв",
+            "icon": "⚡",
+            "conditions": [],
+            "createsDiscriminator": null
+          },
+          {
+            "intentId": "flag_review_helpful",
+            "label": "Отзыв полезен",
+            "icon": "⚡",
+            "conditions": [],
+            "createsDiscriminator": null
+          }
+        ],
+        "addControl": null,
+        "emptyLabel": "Пока пусто",
+        "editableFields": [
+          "text"
+        ]
+      }
+    ],
+    "primaryCTA": [],
+    "progress": null,
+    "footer": [],
+    "voterSelector": null
+  },
+  "nav": {
+    "outgoing": [
+      {
+        "from": "seller_profile",
+        "to": "seller_profile_edit",
+        "kind": "edit-action",
+        "itemEntity": "User",
+        "params": {
+          "userId": "routeParams.userId"
+        }
+      }
+    ],
+    "incoming": [
+      {
+        "from": "listing_feed",
+        "to": "seller_profile",
+        "kind": "item-click",
+        "itemEntity": "User",
+        "params": {
+          "userId": "item.id"
+        }
+      },
+      {
+        "from": "order_list",
+        "to": "seller_profile",
+        "kind": "item-click",
+        "itemEntity": "User",
+        "params": {
+          "userId": "item.id"
+        }
+      },
+      {
+        "from": "my_listings",
+        "to": "seller_profile",
+        "kind": "item-click",
+        "itemEntity": "Listing",
+        "params": {
+          "userId": "item.id"
+        }
+      }
+    ]
+  },
+  "editProjection": "seller_profile_edit",
+  "sourceProjection": null
+}

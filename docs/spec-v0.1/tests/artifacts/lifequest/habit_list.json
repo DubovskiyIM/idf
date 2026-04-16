@@ -1,0 +1,236 @@
+{
+  "projection": "habit_list",
+  "name": "Привычки",
+  "domain": "lifequest",
+  "layer": "canonical",
+  "archetype": "catalog",
+  "version": 2,
+  "generatedAt": 0,
+  "generatedBy": "rules",
+  "inputsHash": "abandon_goal,add_goal_note,add_sphere_note,add_vision_image,archive_habit,assess_sphere,change_habit_frequency,check_habit,clear_quote,clear_sphere_vision,complete_goal,complete_task,create_goal,create_habit,create_task,delete_account,delete_goal,delete_habit,delete_task,delete_vision_item,earn_badge,earn_xp,edit_goal,edit_habit,edit_quote,edit_task,edit_vision_caption,export_data,level_up,link_task_goal,log_habit_value,move_goal_sphere,move_habit_sphere,move_task_date,move_vision_item,pause_habit,random_quote,reactivate_goal,reassess_all,replace_vision_image,reset_progress,reset_streak,resize_vision_item,resume_habit,set_avatar,set_goal_deadline,set_quote,set_sphere_target,toggle_task_priority,uncheck_habit,uncomplete_task,update_assessment,update_goal_progress,update_profile,update_streak,upload_vision_image|all_time_stats,all_time_stats_edit,badge_list,calendar,dashboard,goal_list,habit_detail,habit_detail_edit,habit_list,point_a,today,vision_board,week_progress|Badge,Goal,Habit,HabitLog,Quote,Sphere,SphereAssessment,Task,User,VisionItem",
+  "slots": {
+    "header": [],
+    "toolbar": [],
+    "hero": [
+      {
+        "type": "heroCreate",
+        "intentId": "create_habit",
+        "paramName": "title",
+        "placeholder": "Название…",
+        "buttonLabel": "Создать привычку",
+        "icon": "➕",
+        "postCreate": {
+          "collection": "habits",
+          "matchField": "status",
+          "matchValue": "active",
+          "navigateTo": "habit_detail_edit",
+          "idParam": "habitId"
+        }
+      }
+    ],
+    "body": {
+      "type": "list",
+      "source": "habits",
+      "gap": 8,
+      "empty": {
+        "type": "text",
+        "content": "Пусто",
+        "style": "muted"
+      },
+      "item": {
+        "type": "card",
+        "children": [
+          {
+            "type": "row",
+            "gap": 10,
+            "children": [
+              {
+                "type": "avatar",
+                "bind": "avatar",
+                "nameBind": "title",
+                "size": 40
+              },
+              {
+                "type": "column",
+                "sx": {
+                  "flex": 1
+                },
+                "children": [
+                  {
+                    "type": "text",
+                    "bind": "title",
+                    "style": "heading"
+                  },
+                  {
+                    "type": "text",
+                    "bind": "status",
+                    "style": "secondary"
+                  }
+                ]
+              }
+            ]
+          }
+        ],
+        "intents": [
+          {
+            "intentId": "edit_habit",
+            "opens": "overlay",
+            "overlayKey": "overlay_edit_habit",
+            "label": "Редактировать привычку",
+            "icon": "✎",
+            "conditions": [
+              "habit.userId = me.id",
+              "habit.userId = me.id"
+            ]
+          },
+          {
+            "intentId": "delete_habit",
+            "opens": "overlay",
+            "overlayKey": "overlay_delete_habit",
+            "label": "Удалить привычку",
+            "icon": "🗑",
+            "conditions": [
+              "habit.userId = me.id"
+            ]
+          },
+          {
+            "intentId": "check_habit",
+            "label": "Отметить привычку",
+            "icon": "⚡",
+            "conditions": [
+              "habit.status = 'active'"
+            ]
+          },
+          {
+            "intentId": "pause_habit",
+            "label": "Приостановить",
+            "icon": "⚡",
+            "conditions": [
+              "habit.status = 'active'",
+              "habit.userId = me.id",
+              "habit.userId = me.id"
+            ]
+          },
+          {
+            "intentId": "resume_habit",
+            "label": "Возобновить",
+            "icon": "⚡",
+            "conditions": [
+              "habit.status = 'paused'",
+              "habit.userId = me.id",
+              "habit.userId = me.id"
+            ]
+          },
+          {
+            "intentId": "reset_streak",
+            "label": "Сбросить серию",
+            "icon": "⚡",
+            "conditions": [
+              "habit.userId = me.id",
+              "habit.userId = me.id"
+            ]
+          },
+          {
+            "intentId": "change_habit_frequency",
+            "label": "Изменить частоту",
+            "icon": "⚡",
+            "conditions": [
+              "habit.userId = me.id",
+              "habit.userId = me.id"
+            ]
+          },
+          {
+            "intentId": "move_habit_sphere",
+            "label": "Перенести в сферу",
+            "icon": "✥",
+            "conditions": [
+              "habit.userId = me.id",
+              "habit.userId = me.id"
+            ]
+          },
+          {
+            "intentId": "archive_habit",
+            "label": "Архивировать",
+            "icon": "📦",
+            "conditions": [
+              "habit.userId = me.id",
+              "habit.userId = me.id"
+            ]
+          }
+        ]
+      },
+      "filter": "userId === viewer.id && status !== 'archived'",
+      "onItemClick": {
+        "action": "navigate",
+        "to": "habit_detail",
+        "params": {
+          "habitId": "item.id"
+        }
+      }
+    },
+    "context": [],
+    "fab": [],
+    "overlay": [
+      {
+        "type": "formModal",
+        "key": "overlay_edit_habit",
+        "intentId": "edit_habit",
+        "title": "Редактировать привычку",
+        "witnessPanel": [
+          {
+            "type": "text",
+            "bind": "habit.title"
+          },
+          {
+            "type": "text",
+            "bind": "habit.targetValue"
+          },
+          {
+            "type": "text",
+            "bind": "habit.unit"
+          },
+          {
+            "type": "text",
+            "bind": "habit.frequency"
+          }
+        ],
+        "parameters": []
+      },
+      {
+        "type": "confirmDialog",
+        "key": "overlay_delete_habit",
+        "triggerIntentId": "delete_habit",
+        "irreversibility": "medium",
+        "message": "Удалить привычку?",
+        "confirmBy": {
+          "type": "button"
+        }
+      }
+    ]
+  },
+  "nav": {
+    "outgoing": [
+      {
+        "from": "habit_list",
+        "to": "habit_detail",
+        "kind": "item-click",
+        "itemEntity": "Habit",
+        "params": {
+          "habitId": "item.id"
+        }
+      },
+      {
+        "from": "habit_list",
+        "to": "all_time_stats",
+        "kind": "item-click",
+        "itemEntity": "Habit",
+        "params": {
+          "userId": "item.id"
+        }
+      }
+    ],
+    "incoming": []
+  },
+  "editProjection": null,
+  "sourceProjection": null
+}

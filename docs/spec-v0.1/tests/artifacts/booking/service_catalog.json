@@ -1,0 +1,165 @@
+{
+  "projection": "service_catalog",
+  "name": "Каталог услуг",
+  "domain": "booking",
+  "layer": "canonical",
+  "archetype": "catalog",
+  "version": 2,
+  "generatedAt": 0,
+  "generatedBy": "rules",
+  "inputsHash": "abandon_draft,add_service,block_slot,bulk_cancel_day,cancel_booking,cancel_client_booking,complete_booking,confirm_booking,create_booking,delete_review,edit_review,leave_review,mark_no_show,remove_service,repeat_booking,reschedule_booking,respond_to_review,select_service,select_slot,studio_test_intent_zzz,unblock_slot,update_service|booking_detail,booking_wizard,my_bookings,service_catalog,service_detail,service_detail_edit,specialist_schedule|Booking,Review,Service,ServiceCategory,Specialist,TimeSlot",
+  "slots": {
+    "header": [],
+    "toolbar": [],
+    "hero": [
+      {
+        "type": "heroCreate",
+        "intentId": "add_service",
+        "paramName": "name",
+        "placeholder": "Название…",
+        "buttonLabel": "Добавить услугу",
+        "icon": "➕",
+        "postCreate": {
+          "collection": "services",
+          "matchField": null,
+          "matchValue": null,
+          "navigateTo": "service_detail_edit",
+          "idParam": "serviceId"
+        }
+      }
+    ],
+    "body": {
+      "type": "list",
+      "source": "services",
+      "gap": 8,
+      "empty": {
+        "type": "text",
+        "content": "Пусто",
+        "style": "muted"
+      },
+      "item": {
+        "type": "card",
+        "children": [
+          {
+            "type": "row",
+            "gap": 10,
+            "children": [
+              {
+                "type": "avatar",
+                "bind": "avatar",
+                "nameBind": "name",
+                "size": 40
+              },
+              {
+                "type": "column",
+                "sx": {
+                  "flex": 1
+                },
+                "children": [
+                  {
+                    "type": "text",
+                    "bind": "name",
+                    "style": "heading"
+                  }
+                ]
+              }
+            ]
+          }
+        ],
+        "intents": [
+          {
+            "intentId": "update_service",
+            "opens": "overlay",
+            "overlayKey": "overlay_update_service",
+            "label": "Изменить услугу",
+            "icon": "✎",
+            "conditions": [
+              "service.specialistId = me.id"
+            ]
+          },
+          {
+            "intentId": "remove_service",
+            "label": "Убрать услугу",
+            "icon": "🗑",
+            "conditions": [
+              "service.active = true",
+              "service.specialistId = me.id"
+            ]
+          }
+        ]
+      },
+      "filter": "active !== false",
+      "sort": "name",
+      "onItemClick": {
+        "action": "navigate",
+        "to": "service_detail",
+        "params": {
+          "serviceId": "item.id"
+        }
+      }
+    },
+    "context": [],
+    "fab": [],
+    "overlay": [
+      {
+        "type": "formModal",
+        "key": "overlay_update_service",
+        "intentId": "update_service",
+        "title": "Изменить услугу",
+        "witnessPanel": [
+          {
+            "type": "text",
+            "bind": "service.name"
+          },
+          {
+            "type": "text",
+            "bind": "service.price"
+          },
+          {
+            "type": "text",
+            "bind": "service.duration"
+          }
+        ],
+        "parameters": [
+          {
+            "name": "name",
+            "bind": "service.name",
+            "editable": true,
+            "inferredFrom": "phase-investigation",
+            "control": "text"
+          },
+          {
+            "name": "price",
+            "bind": "service.price",
+            "editable": true,
+            "inferredFrom": "phase-investigation",
+            "control": "number"
+          },
+          {
+            "name": "duration",
+            "bind": "service.duration",
+            "editable": true,
+            "inferredFrom": "phase-investigation",
+            "control": "number"
+          }
+        ]
+      }
+    ]
+  },
+  "nav": {
+    "outgoing": [
+      {
+        "from": "service_catalog",
+        "to": "service_detail",
+        "kind": "item-click",
+        "itemEntity": "Service",
+        "params": {
+          "serviceId": "item.id"
+        }
+      }
+    ],
+    "incoming": []
+  },
+  "editProjection": null,
+  "sourceProjection": null
+}

@@ -1,0 +1,100 @@
+{
+  "projection": "node_inspector_edit",
+  "name": "Инспектор узла: редактирование",
+  "domain": "workflow",
+  "layer": "canonical",
+  "archetype": "form",
+  "version": 2,
+  "generatedAt": 0,
+  "generatedBy": "rules",
+  "inputsHash": "add_custom_node_type,add_node,configure_node,connect_nodes,create_workflow,delete_workflow,disconnect_nodes,duplicate_workflow,execute_workflow,import_workflow,move_node,remove_node,rename_node,save_workflow,stop_execution|execution_log,node_inspector,node_inspector_edit,workflow_canvas,workflow_list|Edge,Execution,Node,NodeResult,NodeType,Workflow",
+  "slots": {
+    "header": [],
+    "toolbar": [],
+    "body": {
+      "type": "formBody",
+      "mainEntity": "Node",
+      "fields": [
+        {
+          "name": "workflowId",
+          "type": "id",
+          "editable": false,
+          "required": false,
+          "label": "workflowId",
+          "intentId": null,
+          "options": null
+        },
+        {
+          "name": "type",
+          "type": "text",
+          "editable": false,
+          "required": false,
+          "label": "type",
+          "intentId": null,
+          "options": null
+        },
+        {
+          "name": "label",
+          "type": "text",
+          "editable": false,
+          "required": false,
+          "label": "label",
+          "intentId": "rename_node",
+          "options": null
+        },
+        {
+          "name": "x",
+          "type": "text",
+          "editable": false,
+          "required": false,
+          "label": "x",
+          "intentId": "move_node",
+          "options": null
+        },
+        {
+          "name": "y",
+          "type": "text",
+          "editable": false,
+          "required": false,
+          "label": "y",
+          "intentId": "move_node",
+          "options": null
+        },
+        {
+          "name": "config",
+          "type": "text",
+          "editable": false,
+          "required": false,
+          "label": "config",
+          "intentId": "configure_node",
+          "options": null
+        }
+      ],
+      "sections": [],
+      "editIntents": [
+        "move_node",
+        "configure_node",
+        "rename_node"
+      ]
+    },
+    "context": [],
+    "fab": [],
+    "overlay": []
+  },
+  "nav": {
+    "outgoing": [],
+    "incoming": [
+      {
+        "from": "node_inspector",
+        "to": "node_inspector_edit",
+        "kind": "edit-action",
+        "itemEntity": "Node",
+        "params": {
+          "nodeId": "routeParams.nodeId"
+        }
+      }
+    ]
+  },
+  "editProjection": null,
+  "sourceProjection": "node_inspector"
+}

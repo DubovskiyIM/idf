@@ -1,0 +1,373 @@
+{
+  "projection": "poll_overview",
+  "name": "Опрос",
+  "domain": "planning",
+  "layer": "canonical",
+  "archetype": "detail",
+  "version": 2,
+  "generatedAt": 0,
+  "generatedBy": "rules",
+  "inputsHash": "accept_invitation,add_time_option,cancel_meeting,cancel_poll,change_vote,close_poll,create_poll,decline_invitation,invite_participant,open_poll,resolve_poll,send_reminder,set_deadline,suggest_alternative,vote_maybe,vote_no,vote_yes|my_polls,poll_overview,voting_matrix|Meeting,Participant,Poll,TimeOption,Vote",
+  "slots": {
+    "header": [],
+    "toolbar": [
+      {
+        "type": "intentButton",
+        "intentId": "cancel_poll",
+        "label": "Отменить опрос",
+        "icon": "🗑",
+        "opens": "overlay",
+        "overlayKey": "overlay_cancel_poll",
+        "condition": "organizerId === viewer.id"
+      }
+    ],
+    "body": {
+      "type": "column",
+      "gap": 16,
+      "children": [
+        {
+          "type": "heading",
+          "bind": "title",
+          "level": 1
+        },
+        {
+          "type": "text",
+          "bind": "description",
+          "style": "secondary",
+          "hideEmpty": true
+        },
+        {
+          "type": "infoSection",
+          "title": "Характеристики",
+          "fields": [
+            {
+              "bind": "status",
+              "label": "status"
+            },
+            {
+              "bind": "organizerId",
+              "label": "organizerId"
+            },
+            {
+              "bind": "deadline",
+              "label": "deadline"
+            }
+          ]
+        }
+      ]
+    },
+    "context": [],
+    "fab": [],
+    "overlay": [
+      {
+        "type": "confirmDialog",
+        "key": "overlay_cancel_poll",
+        "triggerIntentId": "cancel_poll",
+        "irreversibility": "high",
+        "message": "Отменить опрос: {poll.title}, {participants.count}?",
+        "confirmBy": {
+          "type": "typeText",
+          "expected": "poll.title"
+        }
+      }
+    ],
+    "sections": [
+      {
+        "id": "options",
+        "title": "Варианты времени",
+        "source": "options",
+        "foreignKey": "pollId",
+        "itemEntity": "TimeOption",
+        "itemView": {
+          "type": "text",
+          "template": "{date} {startTime}–{endTime}",
+          "style": {
+            "fontWeight": 600,
+            "fontSize": 14
+          }
+        },
+        "itemIntents": [
+          {
+            "intentId": "resolve_poll",
+            "label": "Выбрать время",
+            "icon": "✓",
+            "conditions": [
+              "poll.status = 'closed'"
+            ],
+            "createsDiscriminator": "Meeting"
+          },
+          {
+            "type": "voteGroup",
+            "intentGroup": "Vote",
+            "conditions": [
+              "poll.status = 'open'"
+            ],
+            "options": [
+              {
+                "intentId": "vote_yes",
+                "label": "Доступен",
+                "icon": "🗳",
+                "discriminator": "yes",
+                "style": {
+                  "bg": "#10b981",
+                  "bgHover": "#059669",
+                  "color": "#fff",
+                  "icon": "✓"
+                },
+                "conditions": null
+              },
+              {
+                "intentId": "vote_no",
+                "label": "Недоступен",
+                "icon": "🗳",
+                "discriminator": "no",
+                "style": {
+                  "bg": "#ef4444",
+                  "bgHover": "#dc2626",
+                  "color": "#fff",
+                  "icon": "✕"
+                },
+                "conditions": null
+              },
+              {
+                "intentId": "vote_maybe",
+                "label": "Возможно",
+                "icon": "🗳",
+                "discriminator": "maybe",
+                "style": {
+                  "bg": "#f59e0b",
+                  "bgHover": "#d97706",
+                  "color": "#fff",
+                  "icon": "?"
+                },
+                "conditions": null
+              }
+            ]
+          }
+        ],
+        "addControl": {
+          "type": "subCollectionAdd",
+          "intentId": "add_time_option",
+          "label": "Добавить вариант",
+          "icon": "➕",
+          "parameters": [
+            {
+              "name": "date",
+              "inferredFrom": "creates-entity",
+              "entity": "TimeOption",
+              "control": "datetime"
+            },
+            {
+              "name": "startTime",
+              "inferredFrom": "creates-entity",
+              "entity": "TimeOption",
+              "control": "datetime"
+            },
+            {
+              "name": "endTime",
+              "inferredFrom": "creates-entity",
+              "entity": "TimeOption",
+              "control": "datetime"
+            }
+          ],
+          "foreignKey": "pollId",
+          "conditions": [
+            "poll.status = 'draft'"
+          ]
+        },
+        "emptyLabel": "Пока пусто"
+      },
+      {
+        "id": "participants",
+        "title": "Участники",
+        "source": "participants",
+        "foreignKey": "pollId",
+        "itemEntity": "Participant",
+        "itemView": {
+          "type": "text",
+          "bind": "name",
+          "style": {
+            "fontWeight": 600,
+            "fontSize": 14
+          }
+        },
+        "itemIntents": [
+          {
+            "intentId": "decline_invitation",
+            "label": "Отклонить приглашение",
+            "icon": "⚡",
+            "conditions": [
+              "participant.status = 'active'"
+            ],
+            "createsDiscriminator": null
+          },
+          {
+            "intentId": "accept_invitation",
+            "label": "Принять приглашение",
+            "icon": "✓",
+            "conditions": [
+              "participant.status = 'invited'"
+            ],
+            "createsDiscriminator": null
+          },
+          {
+            "type": "voteGroup",
+            "intentGroup": "Vote",
+            "conditions": [
+              "poll.status = 'open'"
+            ],
+            "options": [
+              {
+                "intentId": "vote_yes",
+                "label": "Доступен",
+                "icon": "🗳",
+                "discriminator": "yes",
+                "style": {
+                  "bg": "#10b981",
+                  "bgHover": "#059669",
+                  "color": "#fff",
+                  "icon": "✓"
+                },
+                "conditions": null
+              },
+              {
+                "intentId": "vote_no",
+                "label": "Недоступен",
+                "icon": "🗳",
+                "discriminator": "no",
+                "style": {
+                  "bg": "#ef4444",
+                  "bgHover": "#dc2626",
+                  "color": "#fff",
+                  "icon": "✕"
+                },
+                "conditions": null
+              },
+              {
+                "intentId": "vote_maybe",
+                "label": "Возможно",
+                "icon": "🗳",
+                "discriminator": "maybe",
+                "style": {
+                  "bg": "#f59e0b",
+                  "bgHover": "#d97706",
+                  "color": "#fff",
+                  "icon": "?"
+                },
+                "conditions": null
+              }
+            ]
+          }
+        ],
+        "addControl": {
+          "type": "subCollectionAdd",
+          "intentId": "invite_participant",
+          "label": "Пригласить участника",
+          "icon": "✉",
+          "parameters": [
+            {
+              "name": "name",
+              "inferredFrom": "creates-entity",
+              "entity": "Participant",
+              "control": "text"
+            },
+            {
+              "name": "email",
+              "inferredFrom": "creates-entity",
+              "entity": "Participant",
+              "control": "email"
+            }
+          ],
+          "foreignKey": "pollId",
+          "conditions": [
+            "poll.status = 'draft'"
+          ]
+        },
+        "emptyLabel": "Пока пусто"
+      }
+    ],
+    "primaryCTA": [
+      {
+        "intentId": "open_poll",
+        "label": "Открыть голосование",
+        "icon": "▶",
+        "conditions": [
+          "poll.status = 'draft'"
+        ],
+        "parameters": []
+      },
+      {
+        "intentId": "close_poll",
+        "label": "Закрыть голосование",
+        "icon": "⏹",
+        "conditions": [
+          "poll.status = 'open'",
+          "ratio(votes.participantId, participants, pollId=target.id) >= 1.0"
+        ],
+        "parameters": [
+          {
+            "name": "pollId",
+            "type": "entityRef",
+            "entity": "Poll",
+            "required": true,
+            "control": "entityRef"
+          }
+        ]
+      }
+    ],
+    "progress": {
+      "field": "voteRatio",
+      "compute": "ratio(votes.participantId, participants, pollId=target.id)",
+      "display": "progress",
+      "title": "Кворум",
+      "waitingField": "name"
+    },
+    "footer": [
+      {
+        "intentId": "set_deadline",
+        "label": "Установить дедлайн",
+        "icon": "⏰",
+        "conditions": [
+          "poll.status = 'open'"
+        ],
+        "parameters": [
+          {
+            "name": "pollId",
+            "type": "entityRef",
+            "entity": "Poll",
+            "required": true,
+            "control": "entityRef"
+          },
+          {
+            "name": "deadline",
+            "type": "datetime",
+            "required": true,
+            "control": "datetime"
+          }
+        ]
+      }
+    ],
+    "voterSelector": {
+      "source": "participants",
+      "foreignKey": "pollId",
+      "labelField": "name",
+      "stateKey": "voterParticipantId"
+    }
+  },
+  "nav": {
+    "outgoing": [],
+    "incoming": [
+      {
+        "from": "my_polls",
+        "to": "poll_overview",
+        "kind": "item-click",
+        "itemEntity": "Poll",
+        "params": {
+          "pollId": "item.id"
+        }
+      }
+    ]
+  },
+  "editProjection": null,
+  "sourceProjection": null
+}

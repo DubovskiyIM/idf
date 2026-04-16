@@ -1,0 +1,99 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://intent-design.tech/spec/v0.1/conformance.schema.json",
+  "title": "IDF Conformance Declaration",
+  "description": "Формат файла conformance.json, публикуемого conformant implementation. Спецификация v0.1 / §3.8.",
+  "type": "object",
+  "required": ["spec", "class", "tracks"],
+  "properties": {
+    "$schema": {
+      "type": "string",
+      "description": "Ссылка на эту JSON Schema."
+    },
+    "spec": {
+      "type": "string",
+      "description": "URI спецификации, которой соответствует реализация.",
+      "examples": ["https://intent-design.tech/spec/v0.1/"]
+    },
+    "implementation": {
+      "type": "string",
+      "description": "Имя пакета / библиотеки (npm, crate, pip и т.д.).",
+      "examples": ["@intent-driven/renderer", "idf-swift-renderer"]
+    },
+    "version": {
+      "type": "string",
+      "description": "Версия реализации.",
+      "examples": ["0.4.0"]
+    },
+    "class": {
+      "type": "string",
+      "enum": ["L1", "L2", "L3", "L4", "custom"],
+      "description": "Conformance class (§3.6). \"custom\" — если стандартные L1-L4 не подходят."
+    },
+    "archetypes": {
+      "type": "array",
+      "description": "Поддерживаемые архетипы (§3.3).",
+      "items": {
+        "type": "string",
+        "enum": ["feed", "catalog", "detail", "form", "dashboard", "canvas", "wizard"]
+      }
+    },
+    "controls": {
+      "type": "array",
+      "description": "Поддерживаемые control-архетипы (§3.4).",
+      "items": { "type": "string" }
+    },
+    "tracks": {
+      "type": "array",
+      "description": "Поддерживаемые materialization tracks (§3.5).",
+      "items": {
+        "type": "string",
+        "enum": ["pixels", "voice", "agent-api", "document"]
+      },
+      "minItems": 0
+    },
+    "features": {
+      "type": "array",
+      "description": "Дополнительные features (§3.2): parse, validate, capability-surface, irreversibility, invariants, scheduler, ...",
+      "items": { "type": "string" }
+    },
+    "capabilities": {
+      "type": "object",
+      "description": "Capability surface адаптера (§3.7). Публикуется если features включает \"capability-surface\".",
+      "additionalProperties": true
+    },
+    "testSuite": {
+      "type": "object",
+      "description": "Результаты прогона conformance test suite (§4).",
+      "properties": {
+        "passes": {
+          "type": "string",
+          "description": "Формат: \"N/M\" (прошло / всего).",
+          "pattern": "^\\d+/\\d+$"
+        },
+        "reportUrl": {
+          "type": "string",
+          "description": "Публичная ссылка на полный отчёт."
+        },
+        "date": {
+          "type": "string",
+          "description": "Дата прогона (ISO 8601)."
+        }
+      },
+      "additionalProperties": true
+    },
+    "repository": {
+      "type": "string",
+      "description": "URL репозитория."
+    },
+    "license": {
+      "type": "string",
+      "description": "SPDX-идентификатор лицензии."
+    },
+    "contact": {
+      "type": "string",
+      "description": "Email / URL для обратной связи."
+    }
+  },
+  "additionalProperties": true
+}

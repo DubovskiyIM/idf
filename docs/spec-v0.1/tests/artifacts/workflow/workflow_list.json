@@ -1,0 +1,177 @@
+{
+  "projection": "workflow_list",
+  "name": "Workflows",
+  "domain": "workflow",
+  "layer": "canonical",
+  "archetype": "catalog",
+  "version": 2,
+  "generatedAt": 0,
+  "generatedBy": "rules",
+  "inputsHash": "add_custom_node_type,add_node,configure_node,connect_nodes,create_workflow,delete_workflow,disconnect_nodes,duplicate_workflow,execute_workflow,import_workflow,move_node,remove_node,rename_node,save_workflow,stop_execution|execution_log,node_inspector,node_inspector_edit,workflow_canvas,workflow_list|Edge,Execution,Node,NodeResult,NodeType,Workflow",
+  "slots": {
+    "header": [],
+    "toolbar": [],
+    "hero": [
+      {
+        "type": "heroCreate",
+        "intentId": "create_workflow",
+        "paramName": "title",
+        "placeholder": "Название…",
+        "buttonLabel": "Создать workflow",
+        "icon": "➕",
+        "postCreate": {
+          "collection": "workflows",
+          "matchField": "status",
+          "matchValue": "draft"
+        }
+      }
+    ],
+    "body": {
+      "type": "list",
+      "source": "workflows",
+      "gap": 8,
+      "empty": {
+        "type": "text",
+        "content": "Пусто",
+        "style": "muted"
+      },
+      "item": {
+        "type": "card",
+        "children": [
+          {
+            "type": "row",
+            "gap": 10,
+            "children": [
+              {
+                "type": "avatar",
+                "bind": "avatar",
+                "nameBind": "title",
+                "size": 40
+              },
+              {
+                "type": "column",
+                "sx": {
+                  "flex": 1
+                },
+                "children": [
+                  {
+                    "type": "text",
+                    "bind": "title",
+                    "style": "heading"
+                  },
+                  {
+                    "type": "text",
+                    "bind": "status",
+                    "style": "secondary"
+                  }
+                ]
+              }
+            ]
+          }
+        ],
+        "intents": [
+          {
+            "intentId": "save_workflow",
+            "label": "Сохранить",
+            "icon": "⭐",
+            "conditions": [
+              "workflow.status = 'draft'"
+            ]
+          },
+          {
+            "intentId": "execute_workflow",
+            "opens": "overlay",
+            "overlayKey": "overlay_execute_workflow",
+            "label": "Запустить",
+            "icon": "▶",
+            "conditions": [
+              "workflow.status = 'saved'"
+            ]
+          },
+          {
+            "intentId": "delete_workflow",
+            "opens": "overlay",
+            "overlayKey": "overlay_delete_workflow",
+            "label": "Удалить workflow",
+            "icon": "🗑",
+            "conditions": [
+              "workflow.status != 'running'"
+            ]
+          },
+          {
+            "intentId": "duplicate_workflow",
+            "label": "Дублировать workflow",
+            "icon": "⎘",
+            "conditions": []
+          }
+        ]
+      },
+      "sort": "-createdAt"
+    },
+    "context": [],
+    "fab": [
+      {
+        "type": "intentButton",
+        "intentId": "import_workflow",
+        "label": "Импортировать",
+        "icon": "⬆"
+      }
+    ],
+    "overlay": [
+      {
+        "type": "formModal",
+        "key": "overlay_execute_workflow",
+        "intentId": "execute_workflow",
+        "title": "Запустить",
+        "witnessPanel": [
+          {
+            "type": "text",
+            "bind": "nodes.count"
+          }
+        ],
+        "parameters": [
+          {
+            "name": "validation_status",
+            "inferredFrom": "direct-witness",
+            "control": "text"
+          },
+          {
+            "name": "startedAt",
+            "inferredFrom": "creates-entity",
+            "entity": "Execution",
+            "control": "datetime"
+          },
+          {
+            "name": "completedAt",
+            "inferredFrom": "creates-entity",
+            "entity": "Execution",
+            "control": "datetime"
+          },
+          {
+            "name": "results",
+            "inferredFrom": "creates-entity",
+            "entity": "Execution",
+            "control": "text"
+          }
+        ]
+      },
+      {
+        "type": "confirmDialog",
+        "key": "overlay_delete_workflow",
+        "triggerIntentId": "delete_workflow",
+        "irreversibility": "high",
+        "message": "Удалить workflow: {workflow.title}, {nodes.count}?",
+        "confirmBy": {
+          "type": "typeText",
+          "expected": "workflow.title"
+        }
+      }
+    ]
+  },
+  "nav": {
+    "outgoing": [],
+    "incoming": []
+  },
+  "editProjection": null,
+  "sourceProjection": null
+}

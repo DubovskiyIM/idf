@@ -1,0 +1,45 @@
+{
+  "description": "Нормативная таблица алгебры композиции §2.5. Каждая тестовая запись — пара эффектов на одной сущности/таргете и ожидаемый результат их композиции.",
+  "cases": [
+    {
+      "name": "replace-replace-on-same-field",
+      "a": { "alpha": "replace", "target": "bookings.status", "context": { "id": "b1" }, "value": "confirmed" },
+      "b": { "alpha": "replace", "target": "bookings.status", "context": { "id": "b1" }, "value": "cancelled" },
+      "expected": "ok-late-wins"
+    },
+    {
+      "name": "replace-add-on-same-collection",
+      "a": { "alpha": "replace", "target": "bookings.status", "context": { "id": "b1" }, "value": "confirmed" },
+      "b": { "alpha": "add", "target": "bookings", "context": { "id": "b2" }, "value": { "id": "b2" } },
+      "expected": "ok-different-targets",
+      "note": "Target'ы разные (`bookings.status` vs `bookings`), потому пара не считается композиционной."
+    },
+    {
+      "name": "replace-add-on-same-cell",
+      "a": { "alpha": "replace", "target": "users.tags", "context": { "id": "u1" }, "value": ["new"] },
+      "b": { "alpha": "add",     "target": "users.tags", "context": { "id": "u1" }, "value": "old" },
+      "expected": "bottom",
+      "note": "⊥: смешение replace (structural) и add (collection op) на одной ячейке."
+    },
+    {
+      "name": "add-add-on-collection",
+      "a": { "alpha": "add", "target": "messages", "context": { "id": "m1" }, "value": { "id": "m1" } },
+      "b": { "alpha": "add", "target": "messages", "context": { "id": "m2" }, "value": { "id": "m2" } },
+      "expected": "ok-union",
+      "note": "Разные context.id — не композиционная пара, оба применяются."
+    },
+    {
+      "name": "add-remove-on-same-id",
+      "a": { "alpha": "add",    "target": "messages", "context": { "id": "m1" }, "value": { "id": "m1" } },
+      "b": { "alpha": "remove", "target": "messages", "context": { "id": "m1" } },
+      "expected": "ok-order-late-wins",
+      "note": "≺-поздний побеждает. Если b ≺-поздний — запись удаляется; если a — добавляется."
+    },
+    {
+      "name": "batch-with-any",
+      "a": { "alpha": "batch", "target": "any", "value": [] },
+      "b": { "alpha": "replace", "target": "x.y", "context": { "id": "z" }, "value": "v" },
+      "expected": "ok-batch-always-valid"
+    }
+  ]
+}

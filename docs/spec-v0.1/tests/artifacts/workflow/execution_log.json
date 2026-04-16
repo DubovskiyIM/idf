@@ -1,0 +1,73 @@
+{
+  "projection": "execution_log",
+  "name": "Лог исполнения",
+  "domain": "workflow",
+  "layer": "canonical",
+  "archetype": "detail",
+  "version": 2,
+  "generatedAt": 0,
+  "generatedBy": "rules",
+  "inputsHash": "add_custom_node_type,add_node,configure_node,connect_nodes,create_workflow,delete_workflow,disconnect_nodes,duplicate_workflow,execute_workflow,import_workflow,move_node,remove_node,rename_node,save_workflow,stop_execution|execution_log,node_inspector,node_inspector_edit,workflow_canvas,workflow_list|Edge,Execution,Node,NodeResult,NodeType,Workflow",
+  "slots": {
+    "header": [],
+    "toolbar": [],
+    "body": {
+      "type": "column",
+      "gap": 16,
+      "children": [
+        {
+          "type": "infoSection",
+          "title": "Характеристики",
+          "fields": [
+            {
+              "bind": "status",
+              "label": "status"
+            },
+            {
+              "bind": "workflowId",
+              "label": "workflowId"
+            },
+            {
+              "bind": "startedAt",
+              "label": "startedAt",
+              "format": "datetime"
+            },
+            {
+              "bind": "completedAt",
+              "label": "completedAt",
+              "format": "datetime"
+            },
+            {
+              "bind": "results",
+              "label": "results"
+            }
+          ]
+        }
+      ]
+    },
+    "context": [],
+    "fab": [],
+    "overlay": [],
+    "sections": [],
+    "primaryCTA": [
+      {
+        "intentId": "stop_execution",
+        "label": "Остановить",
+        "icon": "⏹",
+        "conditions": [
+          "execution.status = 'running'"
+        ],
+        "parameters": []
+      }
+    ],
+    "progress": null,
+    "footer": [],
+    "voterSelector": null
+  },
+  "nav": {
+    "outgoing": [],
+    "incoming": []
+  },
+  "editProjection": null,
+  "sourceProjection": null
+}

@@ -1,0 +1,281 @@
+{
+  "projection": "risk_questionnaire",
+  "name": "Профиль риска",
+  "domain": "invest",
+  "layer": "canonical",
+  "archetype": "wizard",
+  "version": 2,
+  "generatedAt": 0,
+  "generatedBy": "rules",
+  "inputsHash": "accept_recommendation,acknowledge_alert,add_assignment_note,add_to_watchlist,agent_fetch_market_signal,agent_flag_anomaly,agent_propose_rebalance,archive_portfolio,assign_client,auto_stop_loss,buy_asset,clear_stop_loss,clone_portfolio,close_goal,compute_risk_profile,create_goal,create_portfolio,create_rebalance_rule,create_recommendation_for_client,create_watchlist,delegate_to_agent,delete_rule,delete_watchlist,deposit_to_goal,dismiss_alert,drift_rebalance_proposal,edit_goal,escalate_alert,extend_agent_preapproval,pause_assignment,pause_rule,register,reject_recommendation,remove_from_watchlist,rename_portfolio,rename_watchlist,request_recommendation,resume_assignment,resume_rule,revoke_agent_preapproval,sell_asset,send_client_message,set_portfolio_currency,set_portfolio_profile,set_price_alert,set_risk_goal,set_risk_horizon,set_risk_tolerance,set_stop_loss,set_take_profit,set_target_allocation,snooze_recommendation,start_risk_questionnaire,unassign_client,update_agent_preapproval,update_profile,volatility_spike_alert,weekly_portfolio_report|advisor_client_dashboard,advisor_clients,alert_detail,alerts_feed,allocation_breakdown,asset_detail,assets_catalog,goal_detail,goals_root,market_trends,performance_dashboard,portfolio_detail,portfolio_detail_edit,portfolio_onboarding,portfolios_root,recommendation_detail,recommendations_inbox,regulator_report,risk_questionnaire,rules_list,transaction_detail,transactions_history,watchlist_detail,watchlist_detail_edit,watchlists_root|AgentPreapproval,Alert,Asset,Assignment,Goal,MarketSignal,Portfolio,Position,Recommendation,RiskProfile,Transaction,User,Watchlist",
+  "slots": {
+    "kind": "wizard",
+    "steps": [
+      {
+        "id": "horizon",
+        "label": "Срок инвестирования",
+        "intent": "set_risk_horizon",
+        "pick": [
+          "horizonYears"
+        ],
+        "source": {
+          "collection": "_static_horizon_options",
+          "inline": [
+            {
+              "id": 1,
+              "label": "До 1 года",
+              "horizonYears": 1,
+              "scoreDelta": -20
+            },
+            {
+              "id": 3,
+              "label": "1–3 года",
+              "horizonYears": 3,
+              "scoreDelta": -5
+            },
+            {
+              "id": 7,
+              "label": "3–10 лет",
+              "horizonYears": 7,
+              "scoreDelta": 10
+            },
+            {
+              "id": 15,
+              "label": "10+ лет",
+              "horizonYears": 15,
+              "scoreDelta": 25
+            }
+          ]
+        },
+        "display": [
+          "label"
+        ]
+      },
+      {
+        "id": "tolerance",
+        "label": "Просадка, которую переживу",
+        "intent": "set_risk_tolerance",
+        "pick": [
+          "lossTolerancePct"
+        ],
+        "source": {
+          "collection": "_static_tolerance_options",
+          "inline": [
+            {
+              "id": 5,
+              "label": "До 5%",
+              "lossTolerancePct": 5,
+              "scoreDelta": -20
+            },
+            {
+              "id": 15,
+              "label": "5–15%",
+              "lossTolerancePct": 15,
+              "scoreDelta": 0
+            },
+            {
+              "id": 30,
+              "label": "15–30%",
+              "lossTolerancePct": 30,
+              "scoreDelta": 15
+            },
+            {
+              "id": 50,
+              "label": "Готов к 50%+",
+              "lossTolerancePct": 50,
+              "scoreDelta": 30
+            }
+          ]
+        },
+        "display": [
+          "label"
+        ]
+      },
+      {
+        "id": "goal_type",
+        "label": "Цель инвестирования",
+        "intent": "set_risk_goal",
+        "pick": [
+          "goalType"
+        ],
+        "source": {
+          "collection": "_static_goal_options",
+          "inline": [
+            {
+              "id": "safety",
+              "label": "Сохранить накопления",
+              "goalType": "safety",
+              "scoreDelta": -15
+            },
+            {
+              "id": "income",
+              "label": "Регулярный доход",
+              "goalType": "income",
+              "scoreDelta": 0
+            },
+            {
+              "id": "growth",
+              "label": "Приумножить капитал",
+              "goalType": "growth",
+              "scoreDelta": 15
+            },
+            {
+              "id": "speculative",
+              "label": "Спекулировать / высокая доходность",
+              "goalType": "speculative",
+              "scoreDelta": 30
+            }
+          ]
+        },
+        "display": [
+          "label"
+        ]
+      },
+      {
+        "id": "confirm",
+        "label": "Готово",
+        "intent": "compute_risk_profile",
+        "summary": true
+      }
+    ],
+    "projection": {
+      "name": "Профиль риска",
+      "kind": "wizard",
+      "mainEntity": "RiskProfile",
+      "steps": [
+        {
+          "id": "horizon",
+          "label": "Срок инвестирования",
+          "intent": "set_risk_horizon",
+          "pick": [
+            "horizonYears"
+          ],
+          "source": {
+            "collection": "_static_horizon_options",
+            "inline": [
+              {
+                "id": 1,
+                "label": "До 1 года",
+                "horizonYears": 1,
+                "scoreDelta": -20
+              },
+              {
+                "id": 3,
+                "label": "1–3 года",
+                "horizonYears": 3,
+                "scoreDelta": -5
+              },
+              {
+                "id": 7,
+                "label": "3–10 лет",
+                "horizonYears": 7,
+                "scoreDelta": 10
+              },
+              {
+                "id": 15,
+                "label": "10+ лет",
+                "horizonYears": 15,
+                "scoreDelta": 25
+              }
+            ]
+          },
+          "display": [
+            "label"
+          ]
+        },
+        {
+          "id": "tolerance",
+          "label": "Просадка, которую переживу",
+          "intent": "set_risk_tolerance",
+          "pick": [
+            "lossTolerancePct"
+          ],
+          "source": {
+            "collection": "_static_tolerance_options",
+            "inline": [
+              {
+                "id": 5,
+                "label": "До 5%",
+                "lossTolerancePct": 5,
+                "scoreDelta": -20
+              },
+              {
+                "id": 15,
+                "label": "5–15%",
+                "lossTolerancePct": 15,
+                "scoreDelta": 0
+              },
+              {
+                "id": 30,
+                "label": "15–30%",
+                "lossTolerancePct": 30,
+                "scoreDelta": 15
+              },
+              {
+                "id": 50,
+                "label": "Готов к 50%+",
+                "lossTolerancePct": 50,
+                "scoreDelta": 30
+              }
+            ]
+          },
+          "display": [
+            "label"
+          ]
+        },
+        {
+          "id": "goal_type",
+          "label": "Цель инвестирования",
+          "intent": "set_risk_goal",
+          "pick": [
+            "goalType"
+          ],
+          "source": {
+            "collection": "_static_goal_options",
+            "inline": [
+              {
+                "id": "safety",
+                "label": "Сохранить накопления",
+                "goalType": "safety",
+                "scoreDelta": -15
+              },
+              {
+                "id": "income",
+                "label": "Регулярный доход",
+                "goalType": "income",
+                "scoreDelta": 0
+              },
+              {
+                "id": "growth",
+                "label": "Приумножить капитал",
+                "goalType": "growth",
+                "scoreDelta": 15
+              },
+              {
+                "id": "speculative",
+                "label": "Спекулировать / высокая доходность",
+                "goalType": "speculative",
+                "scoreDelta": 30
+              }
+            ]
+          },
+          "display": [
+            "label"
+          ]
+        },
+        {
+          "id": "confirm",
+          "label": "Готово",
+          "intent": "compute_risk_profile",
+          "summary": true
+        }
+      ]
+    }
+  },
+  "nav": {
+    "outgoing": [],
+    "incoming": []
+  },
+  "editProjection": null,
+  "sourceProjection": null
+}

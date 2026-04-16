@@ -1,0 +1,377 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://intent-design.tech/spec/v0.1/ontology.schema.json",
+  "title": "IDF Ontology",
+  "description": "Форма онтологии — входа кристаллизатора. Спецификация v0.1 / §14 манифеста v1.7. Содержит entities, roles, rules, invariants и справочные части. `entities` — единственное обязательное поле.",
+  "type": "object",
+  "required": ["entities"],
+  "properties": {
+    "entities": {
+      "type": "object",
+      "description": "Доменные сущности. Ключи — имена сущностей (PascalCase), значения — Entity-объекты.",
+      "additionalProperties": { "$ref": "#/$defs/Entity" }
+    },
+    "roles": {
+      "type": "object",
+      "description": "Роли доступа. Ключи — имена ролей, значения — Role-объекты.",
+      "additionalProperties": { "$ref": "#/$defs/Role" }
+    },
+    "rules": {
+      "type": "array",
+      "description": "Правила Reactive Rules Engine.",
+      "items": { "$ref": "#/$defs/Rule" }
+    },
+    "invariants": {
+      "type": "array",
+      "description": "Глобальные инварианты мира, проверяемые после fold.",
+      "items": { "$ref": "#/$defs/Invariant" }
+    },
+    "systemCollections": {
+      "type": "array",
+      "description": "Имена коллекций без доменной сущности (для anchoring gate §2.13): drafts, scheduledTimers, users и т.п.",
+      "items": { "type": "string" }
+    },
+    "predicates": {
+      "type": "object",
+      "description": "Именованные условия (используются в условиях intent'ов).",
+      "additionalProperties": { "type": "string" }
+    },
+    "implications": {
+      "type": "object",
+      "description": "Правила импликации между предикатами. Зарезервировано для v0.2+.",
+      "additionalProperties": true
+    },
+    "assets": {
+      "description": "Декларация asset-boundary источников (tiles, emoji, fonts, media) — §19 v1.7. Форма формализуется в v0.2.",
+      "oneOf": [
+        { "type": "object", "additionalProperties": true },
+        { "type": "array", "items": { "type": "object", "additionalProperties": true } }
+      ]
+    },
+    "domain": {
+      "type": "string",
+      "description": "Идентификатор домена. Используется как self-referential метка; валидаторы MAY сверять с параметром crystallizeV2."
+    }
+  },
+  "additionalProperties": true,
+
+  "$defs": {
+    "Entity": {
+      "description": "Описание одной сущности домена.",
+      "type": "object",
+      "required": ["fields"],
+      "properties": {
+        "fields": {
+          "description": "Поля сущности. Объект (ключ — имя поля, значение — Field-объект) или массив строк (упрощённая форма — только имена полей).",
+          "oneOf": [
+            {
+              "type": "object",
+              "additionalProperties": { "$ref": "#/$defs/Field" }
+            },
+            {
+              "type": "array",
+              "items": { "type": "string" }
+            }
+          ]
+        },
+        "type": {
+          "description": "Тип сущности по отношению к внешнему миру (§19 манифеста).",
+          "type": "string",
+          "enum": ["internal", "mirror", "hybrid"]
+        },
+        "kind": {
+          "description": "Таксономический маркер (§14 v1.6).",
+          "type": "string",
+          "enum": ["internal", "reference", "mirror", "assignment"]
+        },
+        "statuses": {
+          "type": "array",
+          "description": "Допустимые значения для поля status.",
+          "items": { "type": "string" }
+        },
+        "ownerField": {
+          "type": "string",
+          "description": "Поле, хранящее ID владельца (для row-filter single-owner access)."
+        },
+        "searchConfig": {
+          "$ref": "#/$defs/SearchConfig"
+        },
+        "quorum": {
+          "description": "Политика кворума (§22). Применимо к Poll-like сущностям.",
+          "type": "object",
+          "properties": {
+            "closeWhen": {
+              "type": "string",
+              "description": "\"all_voted\" | \"quorum(N)\" | \"manual\""
+            },
+            "absentVote": {
+              "type": "string",
+              "enum": ["abstain", "no", "exclude"]
+            }
+          },
+          "additionalProperties": true
+        },
+        "transitions": {
+          "description": "Допустимые переходы значений полей (в v0.1 обычно переносится в invariants kind:transition).",
+          "oneOf": [
+            { "type": "object", "additionalProperties": true },
+            { "type": "array" }
+          ]
+        }
+      },
+      "additionalProperties": true
+    },
+
+    "Field": {
+      "description": "Описание поля сущности.",
+      "type": "object",
+      "properties": {
+        "type": {
+          "type": "string",
+          "description": "UI-контрол / домен значений. Не whitelist'ится в v0.1 — реализации MAY использовать собственные типы; наиболее употребительные: id, text, textarea, number, datetime, email, url, tel, select, boolean, entityRef, enum, image, multiImage, money, percentage, coordinate, polygon, file, image."
+        },
+        "read": {
+          "description": "Кто может читать. Массив имён ролей, либо [\"*\"] (все), либо [\"self\"] (владелец).",
+          "oneOf": [
+            { "type": "array", "items": { "type": "string" } },
+            { "type": "string" }
+          ]
+        },
+        "write": {
+          "description": "Кто может писать.",
+          "oneOf": [
+            { "type": "array", "items": { "type": "string" } },
+            { "type": "string" }
+          ]
+        },
+        "required": { "type": "boolean" },
+        "label": { "type": "string" },
+        "values": {
+          "type": "array",
+          "description": "Допустимые значения (для select / enum).",
+          "items": { "type": ["string", "number", "boolean"] }
+        },
+        "valueLabels": {
+          "type": "object",
+          "description": "Человеко-читаемые метки для values.",
+          "additionalProperties": { "type": "string" }
+        },
+        "fieldRole": {
+          "type": "string",
+          "description": "Семантическая роль поля для layout-hinting. Канонические значения: title, description, heroImage, price, timer, location, badge, metric, ref, info, money, percentage, trend, ticker, coordinate, address, zone."
+        },
+        "default": {
+          "description": "Значение по умолчанию.",
+          "oneOf": [
+            { "type": "string" },
+            { "type": "number" },
+            { "type": "boolean" },
+            { "type": "null" },
+            { "type": "array" },
+            { "type": "object" }
+          ]
+        },
+        "foreign": { "type": "string", "description": "Маркер mirror-поля с указанием источника." }
+      },
+      "additionalProperties": true
+    },
+
+    "SearchConfig": {
+      "description": "Параметры server-side entity search.",
+      "type": "object",
+      "properties": {
+        "fields":          { "type": "array", "items": { "type": "string" } },
+        "returnFields":    { "type": "array", "items": { "type": "string" } },
+        "minQueryLength":  { "type": "integer", "minimum": 0 },
+        "limit":           { "type": "integer", "minimum": 1 }
+      },
+      "additionalProperties": true
+    },
+
+    "Role": {
+      "description": "Роль доступа. Полностью декларативна.",
+      "type": "object",
+      "properties": {
+        "label": { "type": "string", "description": "Человеко-читаемое имя." },
+        "base": {
+          "type": "string",
+          "enum": ["owner", "viewer", "agent", "observer"],
+          "description": "Таксономический маркер базовой роли (§5 v1.6.1)."
+        },
+        "canExecute": {
+          "type": "array",
+          "description": "Whitelist intent-ID, доступных роли.",
+          "items": { "type": "string" }
+        },
+        "visibleFields": {
+          "type": "object",
+          "description": "Per-entity whitelist полей. Значение — массив имён или строковый шорткод (\"all\" / \"own\" / \"aggregated\").",
+          "additionalProperties": {
+            "oneOf": [
+              { "type": "array", "items": { "type": "string" } },
+              { "type": "string" }
+            ]
+          }
+        },
+        "statusMapping": {
+          "type": "object",
+          "description": "Переобозначение видимых значений поля status. Ключ — реальный статус; значение — отображаемый или null (скрыть).",
+          "additionalProperties": { "type": ["string", "null"] }
+        },
+        "scope": {
+          "type": "object",
+          "description": "M2M ownership через bridge-сущность (§5 v1.6).",
+          "additionalProperties": { "$ref": "#/$defs/RoleScope" }
+        },
+        "preapproval": { "$ref": "#/$defs/Preapproval" }
+      },
+      "additionalProperties": true
+    },
+
+    "RoleScope": {
+      "type": "object",
+      "required": ["via", "viewerField", "joinField", "localField"],
+      "properties": {
+        "via":           { "type": "string", "description": "Имя bridge-коллекции." },
+        "viewerField":   { "type": "string", "description": "Поле в bridge, сопоставляемое с viewer.id." },
+        "joinField":     { "type": "string", "description": "Поле в bridge, сопоставляемое с localField target-коллекции." },
+        "localField":    { "type": "string", "description": "Поле target-сущности, куда матчится joinField." },
+        "statusField":   { "type": "string" },
+        "statusAllowed": { "type": "array", "items": { "type": "string" } }
+      },
+      "additionalProperties": true
+    },
+
+    "Preapproval": {
+      "description": "Декларативные agent-лимиты (§17 v1.6).",
+      "type": "object",
+      "required": ["entity", "requiredFor", "checks"],
+      "properties": {
+        "entity":      { "type": "string" },
+        "ownerField":  { "type": "string" },
+        "requiredFor": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "checks": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/PreapprovalCheck" }
+        }
+      },
+      "additionalProperties": true
+    },
+
+    "PreapprovalCheck": {
+      "type": "object",
+      "required": ["kind"],
+      "properties": {
+        "kind": {
+          "type": "string",
+          "enum": ["active", "notExpired", "maxAmount", "csvInclude", "dailySum"]
+        },
+        "field":             { "type": "string" },
+        "paramField":        { "type": "string" },
+        "limitField":        { "type": "string" },
+        "allowEmpty":        { "type": "boolean" },
+        "sumCollection":     { "type": "string" },
+        "sumField":          { "type": "string" },
+        "sumOwnerField":     { "type": "string" },
+        "sumTimestampField": { "type": "string" },
+        "sumFilter": {
+          "type": "object",
+          "additionalProperties": true
+        }
+      },
+      "additionalProperties": true
+    },
+
+    "Rule": {
+      "description": "Правило Rules Engine (§22).",
+      "type": "object",
+      "required": ["id"],
+      "properties": {
+        "id":      { "type": "string" },
+        "trigger": {
+          "description": "Паттерн имени триггер-intent'а (exact / glob-prefix / wildcard).",
+          "type": "string"
+        },
+        "action":     { "type": ["string", "null"] },
+        "fireIntent": { "type": "string" },
+        "context":    {
+          "type": "object",
+          "description": "Шаблон контекста для создаваемого эффекта. Значения могут быть литералами или \"effect.<field>\"-ссылками.",
+          "additionalProperties": true
+        },
+        "params": {
+          "type": "object",
+          "additionalProperties": true
+        },
+        "after": {
+          "description": "Temporal scheduleV2 extension §4 v1.7: after отложенной fire.",
+          "type": ["string", "integer", "null"]
+        },
+        "at": { "type": "string", "description": "scheduleV2: absolute ISO time." },
+        "revokeOn": {
+          "type": "array",
+          "description": "Паттерны intent'ов, которые отменяют запланированный таймер.",
+          "items": { "type": "string" }
+        },
+        "aggregation": {
+          "type": "object",
+          "required": ["everyN"],
+          "properties": { "everyN": { "type": "integer", "minimum": 1 } },
+          "additionalProperties": true
+        },
+        "threshold": {
+          "type": "object",
+          "required": ["lookback", "condition"],
+          "properties": {
+            "lookback":   { "type": "integer", "minimum": 1 },
+            "field":      { "type": "string" },
+            "condition":  { "type": "string" },
+            "collection": { "type": "string" }
+          },
+          "additionalProperties": true
+        },
+        "schedule": {
+          "type": "string",
+          "description": "Cron-like: \"daily:HH:MM\" | \"weekly:<day>:HH:MM\". v1 синтаксис."
+        },
+        "condition": {
+          "type": "string",
+          "description": "JS-выражение над effect-context (whitelisted Math)."
+        }
+      },
+      "additionalProperties": true
+    },
+
+    "Invariant": {
+      "description": "Глобальный инвариант мира (§14 v1.6.1).",
+      "type": "object",
+      "required": ["kind"],
+      "properties": {
+        "kind": {
+          "type": "string",
+          "enum": ["role-capability", "referential", "transition", "cardinality", "aggregate"]
+        },
+        "name":     { "type": "string" },
+        "severity": { "type": "string", "enum": ["error", "warning", "info"] }
+      },
+      "additionalProperties": true,
+      "allOf": [
+        {
+          "if": { "properties": { "kind": { "const": "role-capability" } } },
+          "then": { "required": ["role"] }
+        },
+        {
+          "if": { "properties": { "kind": { "const": "transition" } } },
+          "then": { "required": ["entity"] }
+        },
+        {
+          "if": { "properties": { "kind": { "const": "cardinality" } } },
+          "then": { "required": ["entity"] }
+        }
+      ]
+    }
+  }
+}

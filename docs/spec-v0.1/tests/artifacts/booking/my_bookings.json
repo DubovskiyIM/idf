@@ -1,0 +1,139 @@
+{
+  "projection": "my_bookings",
+  "name": "Мои записи",
+  "domain": "booking",
+  "layer": "canonical",
+  "archetype": "catalog",
+  "version": 2,
+  "generatedAt": 0,
+  "generatedBy": "rules",
+  "inputsHash": "abandon_draft,add_service,block_slot,bulk_cancel_day,cancel_booking,cancel_client_booking,complete_booking,confirm_booking,create_booking,delete_review,edit_review,leave_review,mark_no_show,remove_service,repeat_booking,reschedule_booking,respond_to_review,select_service,select_slot,studio_test_intent_zzz,unblock_slot,update_service|booking_detail,booking_wizard,my_bookings,service_catalog,service_detail,service_detail_edit,specialist_schedule|Booking,Review,Service,ServiceCategory,Specialist,TimeSlot",
+  "slots": {
+    "header": [],
+    "toolbar": [],
+    "hero": [],
+    "body": {
+      "type": "list",
+      "source": "bookings",
+      "gap": 8,
+      "empty": {
+        "type": "text",
+        "content": "Пусто",
+        "style": "muted"
+      },
+      "item": {
+        "type": "card",
+        "children": [
+          {
+            "type": "row",
+            "gap": 10,
+            "children": [
+              {
+                "type": "avatar",
+                "bind": "avatar",
+                "nameBind": "id",
+                "size": 40
+              },
+              {
+                "type": "column",
+                "sx": {
+                  "flex": 1
+                },
+                "children": [
+                  {
+                    "type": "text",
+                    "bind": "id",
+                    "style": "heading"
+                  },
+                  {
+                    "type": "text",
+                    "bind": "status",
+                    "style": "secondary"
+                  }
+                ]
+              }
+            ]
+          }
+        ],
+        "intents": [
+          {
+            "intentId": "complete_booking",
+            "label": "Завершить приём",
+            "icon": "✓",
+            "conditions": [
+              "booking.status = 'confirmed'",
+              "booking.specialistId = me.id",
+              "booking.clientId = me.id"
+            ]
+          },
+          {
+            "intentId": "mark_no_show",
+            "label": "Отметить неявку",
+            "icon": "⚠",
+            "conditions": [
+              "booking.status = 'confirmed'",
+              "booking.specialistId = me.id",
+              "booking.clientId = me.id"
+            ]
+          },
+          {
+            "intentId": "bulk_cancel_day",
+            "opens": "overlay",
+            "overlayKey": "overlay_bulk_cancel_day",
+            "label": "Отменить все записи на день",
+            "icon": "⚡",
+            "conditions": [
+              "booking.status = 'confirmed'",
+              "booking.clientId = me.id"
+            ]
+          },
+          {
+            "intentId": "repeat_booking",
+            "label": "Повторить запись",
+            "icon": "⚡",
+            "conditions": [
+              "booking.status IN ('completed','cancelled','no_show')"
+            ]
+          }
+        ]
+      },
+      "filter": "clientId === (viewer && viewer.id)",
+      "sort": "-createdAt",
+      "onItemClick": {
+        "action": "navigate",
+        "to": "booking_detail",
+        "params": {
+          "bookingId": "item.id"
+        }
+      }
+    },
+    "context": [],
+    "fab": [],
+    "overlay": [
+      {
+        "type": "bulkWizard",
+        "key": "overlay_bulk_cancel_day",
+        "triggerIntentId": "bulk_cancel_day",
+        "label": "Отменить все записи на день",
+        "source": "bookings",
+        "filter": null
+      }
+    ]
+  },
+  "nav": {
+    "outgoing": [
+      {
+        "from": "my_bookings",
+        "to": "booking_detail",
+        "kind": "item-click",
+        "itemEntity": "Booking",
+        "params": {
+          "bookingId": "item.id"
+        }
+      }
+    ],
+    "incoming": []
+  },
+  "editProjection": null,
+  "sourceProjection": null
+}

@@ -1,0 +1,27 @@
+{
+  "projection": "allocation_breakdown",
+  "name": "Аллокация",
+  "domain": "invest",
+  "layer": "canonical",
+  "archetype": "canvas",
+  "version": 2,
+  "generatedAt": 0,
+  "generatedBy": "rules",
+  "inputsHash": "accept_recommendation,acknowledge_alert,add_assignment_note,add_to_watchlist,agent_fetch_market_signal,agent_flag_anomaly,agent_propose_rebalance,archive_portfolio,assign_client,auto_stop_loss,buy_asset,clear_stop_loss,clone_portfolio,close_goal,compute_risk_profile,create_goal,create_portfolio,create_rebalance_rule,create_recommendation_for_client,create_watchlist,delegate_to_agent,delete_rule,delete_watchlist,deposit_to_goal,dismiss_alert,drift_rebalance_proposal,edit_goal,escalate_alert,extend_agent_preapproval,pause_assignment,pause_rule,register,reject_recommendation,remove_from_watchlist,rename_portfolio,rename_watchlist,request_recommendation,resume_assignment,resume_rule,revoke_agent_preapproval,sell_asset,send_client_message,set_portfolio_currency,set_portfolio_profile,set_price_alert,set_risk_goal,set_risk_horizon,set_risk_tolerance,set_stop_loss,set_take_profit,set_target_allocation,snooze_recommendation,start_risk_questionnaire,unassign_client,update_agent_preapproval,update_profile,volatility_spike_alert,weekly_portfolio_report|advisor_client_dashboard,advisor_clients,alert_detail,alerts_feed,allocation_breakdown,asset_detail,assets_catalog,goal_detail,goals_root,market_trends,performance_dashboard,portfolio_detail,portfolio_detail_edit,portfolio_onboarding,portfolios_root,recommendation_detail,recommendations_inbox,regulator_report,risk_questionnaire,rules_list,transaction_detail,transactions_history,watchlist_detail,watchlist_detail_edit,watchlists_root|AgentPreapproval,Alert,Asset,Assignment,Goal,MarketSignal,Portfolio,Position,Recommendation,RiskProfile,Transaction,User,Watchlist",
+  "slots": {
+    "header": [],
+    "toolbar": [],
+    "body": {
+      "type": "canvas"
+    },
+    "context": [],
+    "fab": [],
+    "overlay": []
+  },
+  "nav": {
+    "outgoing": [],
+    "incoming": []
+  },
+  "editProjection": null,
+  "sourceProjection": null
+}
