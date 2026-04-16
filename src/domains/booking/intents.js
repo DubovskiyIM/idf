@@ -32,7 +32,7 @@ export const INTENTS = {
   },
   cancel_booking: {
     name: "Отменить запись", particles: {
-      entities: ["booking: Booking"],
+      entities: ["booking: Booking", "slot: TimeSlot"],
       conditions: ["booking.status = 'confirmed'"],
       effects: [
         { α: "replace", target: "booking.status", value: "cancelled", σ: "account" },
@@ -162,7 +162,7 @@ export const INTENTS = {
   },
   cancel_client_booking: {
     name: "Отменить запись клиента", particles: {
-      entities: ["booking: Booking"],
+      entities: ["booking: Booking", "slot: TimeSlot"],
       conditions: ["booking.status = 'confirmed'", "booking.specialistId = me.id"],
       effects: [
         { α: "replace", target: "booking.status", value: "cancelled", σ: "account" },
@@ -189,7 +189,7 @@ export const INTENTS = {
         { α: "replace", target: "service.price", σ: "account" },
         { α: "replace", target: "service.duration", σ: "account" }
       ],
-      witnesses: ["service.name", "service.price (текущая)", "service.duration (текущая)"],
+      witnesses: ["service.name", "service.price", "service.duration"],
       confirmation: "click"
     }, antagonist: null, creates: null, phase: "investigation"
   },
@@ -198,7 +198,7 @@ export const INTENTS = {
       entities: ["service: Service"],
       conditions: ["service.active = true", "service.specialistId = me.id"],
       effects: [{ α: "replace", target: "service.active", value: false, σ: "account" }],
-      witnesses: ["service.name", "active_bookings.count"],
+      witnesses: ["service.name"],
       confirmation: "click"
     }, antagonist: null, creates: null
   },

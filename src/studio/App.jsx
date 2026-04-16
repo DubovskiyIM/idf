@@ -39,6 +39,7 @@ export default function App() {
   const [pings, setPings] = useState(() => new Map());
   const prevGraphRef = useRef(null);
   const pingTimerRef = useRef(null);
+  const [flyToken, setFlyToken] = useState(0);
 
   useEffect(() => {
     if (!domain) return;
@@ -119,12 +120,13 @@ export default function App() {
         {domain} · {graph.nodes.length} узлов · ⚠ {graph.warnings.length} ·
         <button onClick={() => setChatOpen(true)} style={{ marginLeft: 8 }}>⌘K chat</button>
       </div>
-      <Graph3D graph={graph} onNodeClick={setSelected} pings={pings} />
+      <Graph3D graph={graph} onNodeClick={setSelected} pings={pings} selectedId={selected?.id} flyToken={flyToken} />
       <Inspector
         node={selected}
         warnings={graph.warnings}
         onClose={() => setSelected(null)}
         onFixWithClaude={onFixWithClaude}
+        onFlyTo={() => setFlyToken((t) => t + 1)}
       />
       <ChatDrawer
         open={chatOpen}
