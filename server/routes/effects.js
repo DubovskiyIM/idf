@@ -65,10 +65,16 @@ router.post("/", (req, res) => {
             db.prepare("UPDATE effects SET status='rejected', resolved_at=? WHERE id=?")
               .run(now, stored.id);
             cascadeReject(stored.id);
+            const violatingKinds = [...new Set(errors.map(v => v.kind || v.name).filter(Boolean))];
             broadcast("effect:rejected", {
               id: stored.id,
               reason: "invariant_violation",
               violations: errors,
+              // §15 v1.9 witness-of-action: reject declares its causal basis.
+              __witness: {
+                basis: `invariant${violatingKinds.length ? ` kind="${violatingKinds.join(",")}"` : ""} violated`,
+                example: errors[0]?.field || errors[0]?.name || null,
+              },
             });
             console.log(`[invariants] Эффект ${stored.id} откачен: ${errors.map(v=>v.name).join(", ")}`);
             return; // не запускаем реактивные правила на rejected
