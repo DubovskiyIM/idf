@@ -46,7 +46,7 @@
     "@intent-driven/adapter-mantine": "^1.1.0",
     "@intent-driven/adapter-shadcn": "^1.1.1",
     "@intent-driven/canvas-kit": "^0.2.0",
-    "@intent-driven/core": "^0.4.0",
+    "@intent-driven/core": "^0.5.0",
     "@intent-driven/renderer": "^0.4.0",
     "@mantine/core": "^9.0.1",
     "@mantine/dates": "^9.0.1",
