@@ -138,27 +138,24 @@ export default function Graph3D({ graph, onNodeClick, pings, selectedId }) {
     if (charge) charge.strength(-60);
   }, []);
 
-  const prevCountRef = useRef(0);
-  useEffect(() => {
-    const count = data.nodes.length;
-    if (count !== prevCountRef.current && fgRef.current) {
-      fgRef.current.d3ReheatSimulation?.();
-    }
-    prevCountRef.current = count;
-  }, [data]);
-
   useEffect(() => {
     if (!fgRef.current || !selectedId) return;
     const node = data.nodes.find((n) => n.id === selectedId);
-    if (node && typeof node.x === "number") {
-      const dist = 110;
-      const r = Math.hypot(node.x, node.y, node.z) || 1;
-      fgRef.current.cameraPosition(
-        { x: node.x * (1 + dist / r), y: node.y * (1 + dist / r), z: node.z * (1 + dist / r) },
-        node,
-        800
-      );
-    }
+    if (!node || typeof node.x !== "number") return;
+    const id = requestAnimationFrame(() => {
+      try {
+        const dist = 110;
+        const r = Math.hypot(node.x, node.y, node.z) || 1;
+        fgRef.current?.cameraPosition?.(
+          { x: node.x * (1 + dist / r), y: node.y * (1 + dist / r), z: node.z * (1 + dist / r) },
+          node,
+          800
+        );
+      } catch (e) {
+        console.warn("[studio] cameraPosition failed", e);
+      }
+    });
+    return () => cancelAnimationFrame(id);
   }, [selectedId]);
 
   return (
