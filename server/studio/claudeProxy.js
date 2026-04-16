@@ -1,5 +1,30 @@
-const { spawn: nodeSpawn } = require("child_process");
+const { spawn: nodeSpawn, spawnSync } = require("child_process");
 const { systemPrompt } = require("./systemPrompt.js");
+
+function resolveClaudeBin() {
+  if (process.env.CLAUDE_BIN) return process.env.CLAUDE_BIN;
+  const candidates = [
+    `${process.env.HOME}/.local/bin/claude`,
+    "/usr/local/bin/claude",
+    "/opt/homebrew/bin/claude",
+  ];
+  for (const p of candidates) {
+    try {
+      const fs = require("fs");
+      if (fs.existsSync(p)) return p;
+    } catch {}
+  }
+  try {
+    const which = spawnSync("which", ["claude"], {
+      env: { ...process.env, PATH: `${process.env.PATH || ""}:${process.env.HOME}/.local/bin:/usr/local/bin:/opt/homebrew/bin` },
+    });
+    const out = (which.stdout || "").toString().trim();
+    if (out && out.startsWith("/")) return out;
+  } catch {}
+  return "claude";
+}
+
+const CLAUDE_BIN = resolveClaudeBin();
 
 function parseAssistantMessage(msg) {
   const events = [];
@@ -51,7 +76,12 @@ function spawnClaude({ domain, message, sessionId, cwd, onEvent, spawn = nodeSpa
   if (sessionId) args.push("--resume", sessionId);
   args.push(message);
 
-  const child = spawn("claude", args, { cwd: cwd || process.cwd() });
+  const env = {
+    ...process.env,
+    PATH: `${process.env.PATH || ""}:${process.env.HOME}/.local/bin:/usr/local/bin:/opt/homebrew/bin`,
+  };
+  const child = spawn(CLAUDE_BIN, args, { cwd: cwd || process.cwd(), env });
+  try { child.stdin?.end(); } catch {}
   let buf = "";
   child.stdout.on("data", (chunk) => {
     buf += chunk.toString("utf8");
@@ -63,10 +93,18 @@ function spawnClaude({ domain, message, sessionId, cwd, onEvent, spawn = nodeSpa
       for (const evt of translate(line)) onEvent(evt);
     }
   });
-  child.stderr.on("data", (chunk) => onEvent({ type: "stderr", text: chunk.toString("utf8") }));
+  child.stderr.on("data", (chunk) => {
+    const text = chunk.toString("utf8");
+    console.error("[studio/claude stderr]", text);
+    onEvent({ type: "stderr", text });
+  });
   const done = new Promise((resolve) => {
     child.on("close", (code) => { onEvent({ type: "close", code }); resolve({ code }); });
-    child.on("error", (err) => { onEvent({ type: "error", message: err.message }); resolve({ error: err }); });
+    child.on("error", (err) => {
+      console.error("[studio/claude spawn error]", err);
+      onEvent({ type: "error", message: `spawn error: ${err.message} (CLAUDE_BIN=${CLAUDE_BIN})` });
+      resolve({ error: err });
+    });
   });
 
   return { child, done, stop: () => child.kill("SIGTERM") };

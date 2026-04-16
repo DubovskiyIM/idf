@@ -1,11 +1,26 @@
 export async function sendChat({ domain, message, sessionId, onEvent, signal }) {
-  const res = await fetch("/api/studio/chat", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ domain, message, sessionId }),
-    signal,
-  });
-  if (!res.ok) throw new Error(`chat: ${res.status}`);
+  let res;
+  try {
+    res = await fetch("/api/studio/chat", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ domain, message, sessionId }),
+      signal,
+    });
+  } catch (e) {
+    console.error("[studio/chat] fetch failed", e);
+    throw e;
+  }
+
+  if (!res.ok) {
+    const text = await res.text().catch(() => "");
+    console.error("[studio/chat] HTTP", res.status, text);
+    throw new Error(`chat HTTP ${res.status}: ${text.slice(0, 200)}`);
+  }
+
+  if (!res.body) {
+    throw new Error("chat: response body is empty (proxy не пропускает stream?)");
+  }
 
   const reader = res.body.getReader();
   const decoder = new TextDecoder();
@@ -18,7 +33,10 @@ export async function sendChat({ domain, message, sessionId, onEvent, signal }) 
     buf = parts.pop();
     for (const part of parts) {
       const ev = parseSse(part);
-      if (ev) onEvent(ev);
+      if (ev) {
+        console.debug("[studio/chat] event", ev.event, ev.data);
+        onEvent(ev);
+      }
     }
   }
 }
