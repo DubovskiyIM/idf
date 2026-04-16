@@ -119,7 +119,7 @@ export default function App() {
         {domain} · {graph.nodes.length} узлов · ⚠ {graph.warnings.length} ·
         <button onClick={() => setChatOpen(true)} style={{ marginLeft: 8 }}>⌘K chat</button>
       </div>
-      <Graph3D graph={graph} onNodeClick={setSelected} pings={pings} />
+      <Graph3D graph={graph} onNodeClick={setSelected} pings={pings} selectedId={selected?.id} />
       <Inspector
         node={selected}
         warnings={graph.warnings}
