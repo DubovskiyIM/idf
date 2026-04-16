@@ -1575,6 +1575,41 @@ Field-test 10 (invest домен) за один цикл закрыл 6 open ite
 
 ---
 
+## 27. Authoring environment
+
+**Authoring environment** — инструментальный layer между автором и доменными определениями. В отличие от материализаций §1 (артефакт → consumer), authoring environment работает на input-стороне: **author → artifact source**.
+
+Формально: §1 четыре материализации описывают, как артефакт *выводится* наружу. §27 описывает, как артефакт *создаётся* внутри. Две стороны одной артефакт-модели.
+
+**Контракт:**
+- **Input:** domain source files (`src/domains/<X>/{intents,ontology,projections}.js`)
+- **Output:** те же файлы, модифицированные через file system writes
+- **Граница с Φ:** authoring environment НЕ эмитит effects в `Φ`; НЕ участвует в runtime fold. Для exec использует стандартные agent/UI routes.
+- **Time horizon:** development-time (не runtime). Не production artifact.
+
+**Отличие от §19 (граница с внешним миром):** §19 про runtime integration (foreign effects, mirror entities, expectations). §27 — development-time authoring. Different time horizons.
+
+**Отличие от §17 (пять слоёв):** §17 output-слои артефакта. §27 — input-source артефакта. Обратное направление data flow.
+
+**Studio v0.1** — первая реализация §27. `src/studio/` (React UI, port :4000) + `server/studio/` (Express routes + file-watcher + Claude proxy subprocess).
+
+Компоненты:
+- **Graph3D** — react-force-graph-3d visualization intent-graph (entities, intents, projections, particle-edges, role-edges)
+- **Anchoring warnings** — visual overlay поверх §15 findings (yellow halo для warnings, red для errors)
+- **Claude proxy** — SSE-стрим `claude --print --output-format stream-json`, LLM-assisted editing через Inspector
+- **New domain flow** — `@intent-driven/cli init <name>` + optional Claude prefill
+- **File-watcher + SSE events** — инвалидация graph при внешних правках
+
+**§27 open items:**
+- Formal write-API contract (сейчас прямые file writes)
+- Source versioning (draft/commit separation для authoring, аналог §8 Δ но на уровне определений)
+- Multi-author collaboration
+- Integration с zazor #3 promotion writer (v1.11+ roadmap) — Studio логичное место для author review UI при promote эвристик в `ontology.fieldPatterns`.
+
+**Почему отдельная секция:** studio существует в коде с v1.7, но классификация откладывалась. Ревизия манифест↔код v1.11 показала: без §27 манифест молчит про значительный кусок кода (>5K LOC). Formalization — часть честности парадигмы (§23).
+
+---
+
 ## Приложение: словарь терминов
 
 **Намерение** — атомарная единица системы. Кортеж `⟨E, C, F, W, P⟩`. Может быть многофазным.
