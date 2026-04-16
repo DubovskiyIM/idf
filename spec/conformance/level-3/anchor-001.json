@@ -2,7 +2,7 @@
   "id": "level-3/anchor-001",
   "level": 3,
   "name": "intent references entity not in ontology",
-  "description": "Intent references entity 'Foo' in its entities list, but 'Foo' is not declared in ontology. Should produce anchoring error.",
+  "description": "Intent references entity 'Foo' in its entities list, but 'Foo' is not declared in ontology. Should produce anchoring error that blocks crystallizeV2.",
   "input": {
     "intents": {
       "do_something": {
@@ -44,9 +44,10 @@
       {
         "rule": "anchoring_entity",
         "intentId": "do_something",
-        "severity": "warning",
+        "severity": "error",
         "message": "Entity 'Foo' is not anchored in ontology"
       }
-    ]
+    ],
+    "blocking": true
   }
 }

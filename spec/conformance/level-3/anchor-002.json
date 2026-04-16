@@ -53,11 +53,12 @@
   "expected": {
     "findings": [
       {
-        "rule": "anchoring_field",
+        "rule": "anchoring_effect_field",
         "intentId": "update_unknown",
-        "severity": "info",
+        "severity": "warning",
         "message": "Field 'unknownField' not declared in Item ontology"
       }
-    ]
+    ],
+    "blocking": false
   }
 }
