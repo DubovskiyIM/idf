@@ -153,7 +153,15 @@ function fireDue(queue, now, deps) {
         value: null,
         scope: "account",
         parent_id: t.id,
-        context: { ...t.fireParams, causedByTimer: t.id },
+        context: {
+          ...t.fireParams,
+          causedByTimer: t.id,
+          __witness: {
+            basis: `timer "${t.id}" fired`,
+            example: `fireIntent: ${t.fireIntent}`,
+            causedByTimer: t.id,
+          },
+        },
         created_at: Date.now(),
       });
     }
@@ -166,7 +174,17 @@ function fireDue(queue, now, deps) {
       value: null,
       scope: "account",
       parent_id: t.id,
-      context: { id: t.id, firedAt: Date.now(), guardEvaluatedTrue: guardOk },
+      context: {
+        id: t.id,
+        firedAt: Date.now(),
+        guardEvaluatedTrue: guardOk,
+        __witness: {
+          basis: `timer "${t.id}" fired, guard=${guardOk}`,
+          example: `fireIntent: ${t.fireIntent}`,
+          firedAt: Date.now(),
+          guardEvaluatedTrue: guardOk,
+        },
+      },
       created_at: Date.now(),
     });
 
