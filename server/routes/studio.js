@@ -2,9 +2,20 @@ const express = require("express");
 const fs = require("fs");
 const path = require("path");
 const { buildGraph } = require("../studio/graphBuilder.js");
+const { createFileWatcher } = require("../studio/fileWatcher.js");
 
 const router = express.Router();
 const DOMAINS_DIR = path.resolve(__dirname, "..", "..", "src", "domains");
+
+const domainWatchers = new Map();
+
+function getOrCreateWatcher(domainName) {
+  if (domainWatchers.has(domainName)) return domainWatchers.get(domainName);
+  const dir = path.join(DOMAINS_DIR, domainName);
+  const w = createFileWatcher(dir);
+  domainWatchers.set(domainName, w);
+  return w;
+}
 
 router.get("/domains", async (_req, res) => {
   try {
@@ -55,6 +66,29 @@ router.post("/domain/:name/validate", async (req, res) => {
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
+});
+
+router.get("/domain/:name/events", (req, res) => {
+  const { name } = req.params;
+  const dir = path.join(DOMAINS_DIR, name);
+  if (!fs.existsSync(dir)) return res.status(404).end();
+
+  res.setHeader("Content-Type", "text/event-stream");
+  res.setHeader("Cache-Control", "no-cache");
+  res.setHeader("Connection", "keep-alive");
+  res.flushHeaders();
+
+  const watcher = getOrCreateWatcher(name);
+  const onChange = (evt) => {
+    res.write(`event: graph_invalidated\ndata: ${JSON.stringify(evt)}\n\n`);
+  };
+  watcher.on("change", onChange);
+
+  const hb = setInterval(() => res.write(": hb\n\n"), 15000);
+  req.on("close", () => {
+    watcher.off("change", onChange);
+    clearInterval(hb);
+  });
 });
 
 module.exports = router;
