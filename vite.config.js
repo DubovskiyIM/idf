@@ -18,10 +18,6 @@ export default defineConfig({
       },
     },
   },
-  build: {
-    // Source maps в production — пока отлаживаем deploy. Снять перед public release.
-    sourcemap: true,
-  },
   // SPA fallback для роутинга
   appType: 'spa',
 });
