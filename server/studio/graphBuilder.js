@@ -1,5 +1,6 @@
 const path = require("path");
 const { pathToFileURL } = require("url");
+const { checkAnchoring } = require("./anchoringCheck.js");
 
 function normalizeFields(fields) {
   if (Array.isArray(fields)) {
@@ -168,7 +169,12 @@ async function buildGraph(domainName) {
     }
   }
 
-  return { domain: domainName, nodes, edges, warnings: [] };
+  const warnings = [];
+  for (const [intentId, intent] of Object.entries(INTENTS)) {
+    warnings.push(...checkAnchoring(intentId, intent, ONTOLOGY));
+  }
+
+  return { domain: domainName, nodes, edges, warnings };
 }
 
 function parseEntityDecls(list) {
