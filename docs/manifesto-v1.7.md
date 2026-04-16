@@ -1144,6 +1144,10 @@ for (const iEf of intentEffects) {
 
 **Болезненность перехода** — парадигма обесценивает часть существующих навыков, подходит для зелёных полей.
 
+**Draft commit vs concurrent invariant violation** — если world изменился между draft-creation и `commitInvestigation` и новый world нарушает invariant targeted эффектом из Δ, текущий rollback (через `cascadeReject`) маркирует только сам effect, но downstream effects в той же коммит-транзакции могут оставаться в incorrect state. Corner case для slow-network + concurrent author. Требует test coverage и явной семантики rollback в v1.12+.
+
+**§4 String-DSL scheduling** — манифест ранее декларировал парсер `evaluateScheduleV2` с синтаксисом `after:5m/at:ISO/revokeOn:[...]`. Реализовано только object-form в `ontology.rules[].schedule`. String-DSL как inline declaration в intent.particles.effects — future enhancement, не current.
+
 ### Открытые (инфраструктурные):
 
 **Навигационное состояние vs каузальное** — route params (`conversationId`, `userId`) это UI-состояние, живёт в стеке `useProjectionRoute`, не участвует в `Φ`. Но filter'ы body читают их через `world.conversationId` (V2UI склеивает params в world). Это pragmatic hack. Формально: либо ввести отдельный поток «навигационных сигналов», либо признать UI state как присутствующий параметр рендерера.
