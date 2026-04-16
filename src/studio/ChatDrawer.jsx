@@ -57,6 +57,12 @@ export default function ChatDrawer({ open, onClose, domain, prefill, onPrefillCo
           } else if (event === "tool_result") {
             current.results[data.tool_use_id] = data;
             setMessages((m) => [...m.slice(0, -1), { ...current }]);
+          } else if (event === "error" || event === "stderr") {
+            current.text += `\n\n**[${event}]** ${data.message || data.text}`;
+            setMessages((m) => [...m.slice(0, -1), { ...current }]);
+          } else if (event === "close" && !current.text && !current.tools.length) {
+            current.text = `**claude завершился без вывода** (code=${data.code}). Проверь PATH к \`claude\` или задай CLAUDE_BIN.`;
+            setMessages((m) => [...m.slice(0, -1), { ...current }]);
           }
         },
       });

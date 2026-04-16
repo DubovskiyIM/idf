@@ -13,6 +13,7 @@ export default function DomainPicker({ onPick, onNewDomain }) {
   if (!domains) return <div style={{ padding: 24 }}>Загрузка…</div>;
 
   return (
+    <div style={{ height: "100vh", overflowY: "auto" }}>
     <div style={{ padding: 32, maxWidth: 720, margin: "0 auto" }}>
       <h1 style={{ fontSize: 22, marginBottom: 16 }}>IDF Studio</h1>
       <p style={{ color: "#94a3b8", marginBottom: 24 }}>Выбери домен для авторства или создай новый.</p>
@@ -33,6 +34,7 @@ export default function DomainPicker({ onPick, onNewDomain }) {
           + Новый домен
         </button>
       </div>
+    </div>
     </div>
   );
 }
