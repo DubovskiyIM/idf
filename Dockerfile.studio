@@ -1,0 +1,19 @@
+FROM node:20-slim
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+      git curl ca-certificates python3 \
+    && rm -rf /var/lib/apt/lists/*
+
+RUN npm install -g @anthropic-ai/claude-code
+
+WORKDIR /app
+COPY package.json package-lock.json ./
+RUN npm ci
+
+COPY . .
+
+ENV NODE_ENV=development
+ENV PORT=3001
+EXPOSE 3001 5173
+
+CMD ["npm", "run", "dev:studio"]

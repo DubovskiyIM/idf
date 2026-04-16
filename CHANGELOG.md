@@ -1,5 +1,17 @@
 # Changelog
 
+## 2026-04-16 — Studio v0.1 (авторская среда)
+
+- Новое: `@intent-driven/studio` — браузерная среда для авторства доменов IDF
+- 3D force-граф (`react-force-graph-3d`): entities + intents + roles + projections + particle-edges, вращаемый/зумируемый
+- Warnings анкеринга визуально (жёлтый halo / красное свечение), коллекция `server/studio/anchoringCheck.js` детектирует unanchored effect/witness
+- Встроенный чат с Claude через subprocess `claude --print --output-format stream-json`, SSE-стрим. Префиллы из Inspector для «fix with Claude»
+- «Новый домен» flow — скелет создаётся через API + опциональный prefill агента для первичной кристаллизации
+- Docker: `./scripts/studio-up.sh` → http://localhost:4000/studio.html + `docker exec idf-studio bash` даёт залогиненный `claude` (через mount `~/.claude:ro`)
+- Spec: `docs/superpowers/specs/2026-04-16-idf-studio-design.md`
+- Plan: `docs/superpowers/plans/2026-04-16-idf-studio.md`
+- Ветка: `feat/studio-v0.1`
+
 ## v1.6.2 — 2026-04-14 (post-release)
 
 **Voice materialization prototype — §1 четыре материализации фактически реализованы**
