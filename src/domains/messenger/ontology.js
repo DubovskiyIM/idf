@@ -42,7 +42,7 @@ export const ONTOLOGY = {
       },
     },
     Participant: {
-      fields: ["id", "conversationId", "userId", "role", "joinedAt", "lastReadAt", "muted", "pinned"],
+      fields: ["id", "conversationId", "userId", "role", "joinedAt", "lastReadAt", "muted", "pinned", "archived"],
       type: "internal"
     },
     Message: {
