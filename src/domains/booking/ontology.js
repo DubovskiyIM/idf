@@ -1,4 +1,5 @@
 export const ONTOLOGY = {
+  systemCollections: ["drafts"],
   entities: {
     ServiceCategory: {
       fields: {
