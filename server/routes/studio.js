@@ -124,8 +124,10 @@ router.post("/chat", express.json(), async (req, res) => {
     onEvent: (evt) => send(evt.type, evt),
   });
 
-  req.on("close", () => {
-    try { proc.stop(); } catch {}
+  res.on("close", () => {
+    if (!res.writableEnded) {
+      try { proc.stop(); } catch {}
+    }
   });
   await proc.done;
   send("end", {});

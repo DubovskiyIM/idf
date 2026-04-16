@@ -143,7 +143,9 @@ describe("evaluateRules", () => {
     expect(result).toHaveLength(1);
     expect(result[0].rule.id).toBe("quorum_autoclose");
     expect(result[0].effect.intent_id).toBe("close_poll");
-    expect(result[0].effect.context).toEqual({ id: "P1" });
+    expect(result[0].effect.context).toMatchObject({ id: "P1" });
+    expect(result[0].effect.context.__witness).toBeDefined();
+    expect(result[0].effect.context.__witness.basis).toContain("quorum_autoclose");
     expect(result[0].effect.alpha).toBe("replace");
   });
 
