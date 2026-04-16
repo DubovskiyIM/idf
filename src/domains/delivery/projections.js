@@ -9,7 +9,7 @@ export const PROJECTIONS = {
 
   customer_home: {
     name: "Рестораны",
-    kind: "feed",
+    kind: "catalog",
     mainEntity: "Merchant",
     entities: ["Merchant"],
     filter: "item.status === 'active'",
@@ -108,7 +108,7 @@ export const PROJECTIONS = {
 
   order_history: {
     name: "История заказов",
-    kind: "feed",
+    kind: "catalog",
     mainEntity: "Order",
     entities: ["Order", "Merchant"],
     filter: "item.customerId === viewer.id && item.status !== 'draft'",
@@ -141,7 +141,7 @@ export const PROJECTIONS = {
 
   courier_lobby: {
     name: "Доступные доставки",
-    kind: "feed",
+    kind: "catalog",
     mainEntity: "Delivery",
     entities: ["Delivery", "Order"],
     filter: "item.status === 'pending' && !item.courierId",
@@ -187,7 +187,7 @@ export const PROJECTIONS = {
 
   delivery_history: {
     name: "История доставок",
-    kind: "feed",
+    kind: "catalog",
     mainEntity: "Delivery",
     entities: ["Delivery"],
     filter: "item.courierId === viewer.id && (item.status === 'delivered' || item.status === 'cancelled')",
@@ -248,7 +248,7 @@ export const PROJECTIONS = {
 
   stop_list: {
     name: "Стоп-лист",
-    kind: "feed",
+    kind: "catalog",
     mainEntity: "MenuItem",
     entities: ["MenuItem"],
     filter: "item.merchantId === viewer.merchantId && !item.available",
@@ -324,7 +324,7 @@ export const PROJECTIONS = {
 
   orders_feed: {
     name: "Все заказы",
-    kind: "feed",
+    kind: "catalog",
     mainEntity: "Order",
     entities: ["Order", "Merchant"],
     filter: "item.status !== 'draft'",
@@ -405,7 +405,7 @@ export const PROJECTIONS = {
 
   preapprovals_list: {
     name: "Пре-апрувы агента",
-    kind: "feed",
+    kind: "catalog",
     mainEntity: "AgentPreapproval",
     entities: ["AgentPreapproval"],
     filter: "item.userId === viewer.id",

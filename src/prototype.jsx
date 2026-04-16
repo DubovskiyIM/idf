@@ -13,6 +13,7 @@ import * as messengerDomain from "./domains/messenger/domain.js";
 import * as salesDomain from "./domains/sales/domain.js";
 import * as lifequestDomain from "./domains/lifequest/domain.js";
 import * as reflectDomain from "./domains/reflect/domain.js";
+import * as investDomain from "./domains/invest/domain.js";
 import * as deliveryDomain from "./domains/delivery/domain.js";
 
 // Manual UI
@@ -25,14 +26,33 @@ import MessengerUI from "./domains/messenger/ManualUI.jsx";
 import V2Shell from "./runtime/renderer/shell/V2Shell.jsx";
 import { useAuth } from "./runtime/renderer/auth/useAuth.js";
 import AuthGate from "./runtime/renderer/auth/AuthGate.jsx";
-import { registerUIAdapter } from "@intent-driven/renderer";
+import { registerUIAdapter, registerCanvas } from "@intent-driven/renderer";
 import { mantineAdapter } from "@intent-driven/adapter-mantine";
 import { shadcnAdapter } from "@intent-driven/adapter-shadcn";
 import { appleAdapter } from "@intent-driven/adapter-apple";
+import { antdAdapter } from "@intent-driven/adapter-antd";
+import { ConfigProvider as AntConfigProvider, theme as antTheme } from "antd";
+import ruRU from "antd/locale/ru_RU";
 import { usePersonalPrefs } from "./runtime/renderer/personal/usePersonalPrefs.js";
 
-const UI_KITS = { mantine: mantineAdapter, shadcn: shadcnAdapter, apple: appleAdapter };
-const DOMAIN_DEFAULT_KITS = { lifequest: shadcnAdapter, reflect: appleAdapter };
+// Invest canvas-компоненты (ключ = projectionId) — нужны для crystallized-режима
+import AllocationPieCanvas from "./domains/invest/canvas/AllocationPieCanvas.jsx";
+import MarketLineCanvas from "./domains/invest/canvas/MarketLineCanvas.jsx";
+import AdvisorReviewCanvas from "./domains/invest/canvas/AdvisorReviewCanvas.jsx";
+import RegulatorReportCanvas from "./domains/invest/canvas/RegulatorReportCanvas.jsx";
+registerCanvas("allocation_breakdown", AllocationPieCanvas);
+registerCanvas("market_trends", MarketLineCanvas);
+registerCanvas("advisor_client_dashboard", AdvisorReviewCanvas);
+registerCanvas("regulator_report", RegulatorReportCanvas);
+
+// Delivery map-canvas (§16a): один generic wrapper на 3 проекции
+import DeliveryMapCanvas from "./domains/delivery/canvas/DeliveryMapCanvas.jsx";
+registerCanvas("order_tracker", DeliveryMapCanvas);
+registerCanvas("active_delivery", DeliveryMapCanvas);
+registerCanvas("dispatcher_map", DeliveryMapCanvas);
+
+const UI_KITS = { mantine: mantineAdapter, shadcn: shadcnAdapter, apple: appleAdapter, antd: antdAdapter };
+const DOMAIN_DEFAULT_KITS = { lifequest: shadcnAdapter, reflect: appleAdapter, invest: antdAdapter };
 
 const DOMAINS = {
   booking: { ...bookingDomain, UI: BookingUI },
@@ -42,6 +62,7 @@ const DOMAINS = {
   sales: salesDomain,
   lifequest: lifequestDomain,
   reflect: reflectDomain,
+  invest: investDomain,
   delivery: deliveryDomain,
 };
 
@@ -92,7 +113,10 @@ export default function App() {
     e.context?.foreign
   );
 
-  // Синхронизировать онтологию + намерения с сервером при смене домена
+  // Синхронизировать онтологию + намерения с сервером при смене домена.
+  // Seed-эффекты подгружаются идемпотентно: если в БД меньше _seed-эффектов,
+  // чем декларирует домен — досидим недостающее (сравниваем по count, т.к.
+  // при каждом вызове getSeedEffects() генерируются свежие UUID).
   useEffect(() => {
     const domainIdForServer = domain.DOMAIN_ID || "unknown";
     fetch(`/api/typemap?domain=${domainIdForServer}`, {
@@ -105,6 +129,28 @@ export default function App() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(domain.INTENTS),
     }).catch(() => {});
+
+    const seed = domain.getSeedEffects?.() || [];
+    if (seed.length > 0) {
+      fetch("/api/effects").then(r => r.json()).then(existing => {
+        // Идемпотентность по стабильному context.id (UUID эффектов разные при
+        // каждом вызове getSeedEffects, но context.id стабилен — "merch_1" и т.п.).
+        // Глобальный count не подходит: в БД могут быть _seed других доменов.
+        const existingIds = new Set(
+          existing.filter(e => e.intent_id === "_seed")
+                  .map(e => e.context?.id)
+                  .filter(Boolean)
+        );
+        const missing = seed.filter(e => e.context?.id && !existingIds.has(e.context.id));
+        if (missing.length > 0) {
+          return fetch("/api/effects/seed", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(missing),
+          });
+        }
+      }).catch(() => {});
+    }
   }, [domain]);
 
   // При смене домена: загрузить seed если нужно, не удалять данные других доменов
@@ -113,22 +159,22 @@ export default function App() {
     // Проверить: есть ли seed-данные этого домена в БД
     const seedEffects = newDomain.getSeedEffects();
     if (seedEffects.length > 0) {
-      // Проверить через API — seed полный? Сравниваем количество seed-эффектов в БД с ожидаемым.
+      // Идемпотентность по стабильному context.id (см. useEffect выше).
       try {
         const res = await fetch("/api/effects");
         const existing = await res.json();
-        const existingSeedCount = existing.filter(e => e.intent_id === "_seed").length;
-        if (existingSeedCount < seedEffects.length) {
-          // Досидим недостающие эффекты (идемпотентно по id)
-          const existingIds = new Set(existing.map(e => e.id));
-          const missing = seedEffects.filter(e => !existingIds.has(e.id));
-          if (missing.length > 0) {
-            await fetch("/api/effects/seed", {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify(missing),
-            });
-          }
+        const existingIds = new Set(
+          existing.filter(e => e.intent_id === "_seed")
+                  .map(e => e.context?.id)
+                  .filter(Boolean)
+        );
+        const missing = seedEffects.filter(e => e.context?.id && !existingIds.has(e.context.id));
+        if (missing.length > 0) {
+          await fetch("/api/effects/seed", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(missing),
+          });
         }
       } catch {}
     }
