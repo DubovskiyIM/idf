@@ -60,7 +60,7 @@ function IntentDetails({ node, warnings, onFixWithClaude }) {
   );
 }
 
-export default function Inspector({ node, warnings, onClose, onFixWithClaude }) {
+export default function Inspector({ node, warnings, onClose, onFixWithClaude, onFlyTo }) {
   return (
     <AnimatePresence>
       {node && (
@@ -70,9 +70,10 @@ export default function Inspector({ node, warnings, onClose, onFixWithClaude }) 
           exit={{ x: 320, opacity: 0 }}
           transition={{ type: "tween", duration: 0.2 }}
           style={{ position: "absolute", top: 0, right: 0, width: 320, height: "100vh", background: "#1e293b", borderLeft: "1px solid #334155", padding: 16, overflowY: "auto", zIndex: 20 }}>
-          <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 12 }}>
-            <h3 style={{ fontSize: 16 }}>{node.name || node.id}</h3>
-            <button onClick={onClose} style={{ background: "none", border: "none", color: "#94a3b8" }}>✕</button>
+          <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 12, alignItems: "center", gap: 8 }}>
+            <h3 style={{ fontSize: 16, flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{node.name || node.id}</h3>
+            <button onClick={onFlyTo} title="Вернуться к узлу" style={{ padding: "3px 8px", fontSize: 12 }}>⌖</button>
+            <button onClick={onClose} style={{ background: "none", border: "none", color: "#94a3b8", padding: 0 }}>✕</button>
           </div>
           <div style={{ fontSize: 11, color: "#64748b", marginBottom: 12 }}>{node.kind}</div>
           {node.kind === "entity" && <EntityDetails node={node} />}

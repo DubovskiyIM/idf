@@ -51,7 +51,18 @@ function makePingMesh(size, color) {
   return mesh;
 }
 
-function nodeThreeObject(node, warningsByNode, pingType) {
+function makeSelectionRing(size) {
+  const geom = new THREE.TorusGeometry(size * 1.6, size * 0.08, 12, 48);
+  const mat = new THREE.MeshBasicMaterial({ color: "#f8fafc", transparent: true, opacity: 0.95 });
+  const ring = new THREE.Mesh(geom, mat);
+  ring.onBeforeRender = () => {
+    ring.rotation.y += 0.02;
+    ring.rotation.x += 0.01;
+  };
+  return ring;
+}
+
+function nodeThreeObject(node, warningsByNode) {
   const size = nodeSize(node);
   const mat = new THREE.MeshLambertMaterial({ color: COLOR[node.kind] || "#94a3b8" });
   const mesh = new THREE.Mesh(makeGeometry(node, size), mat);
@@ -71,15 +82,28 @@ function nodeThreeObject(node, warningsByNode, pingType) {
     mesh.add(glow);
   }
 
-  if (pingType) {
-    mesh.add(makePingMesh(size, PING_COLOR[pingType] || "#60a5fa"));
+  if (node._ping) {
+    mesh.add(makePingMesh(size, PING_COLOR[node._ping] || "#60a5fa"));
+  }
+  if (node._selected) {
+    mesh.add(makeSelectionRing(size));
   }
 
   return mesh;
 }
 
-export default function Graph3D({ graph, onNodeClick, pings }) {
+function nodeSig(n) {
+  if (n.kind === "entity") return JSON.stringify({ fields: n.fields, ownerField: n.ownerField, statuses: n.statuses });
+  if (n.kind === "intent") return JSON.stringify(n.particles);
+  if (n.kind === "role") return JSON.stringify({ base: n.base, canInvoke: n.canInvoke });
+  if (n.kind === "projection") return JSON.stringify({ archetype: n.archetype, source: n.source });
+  return n.id;
+}
+
+export default function Graph3D({ graph, onNodeClick, pings, selectedId, flyToken }) {
   const fgRef = useRef();
+  const nodeCacheRef = useRef(new Map());
+  const extraCacheRef = useRef(new Map());
 
   const warningsByNode = useMemo(() => {
     const map = new Map();
@@ -93,25 +117,55 @@ export default function Graph3D({ graph, onNodeClick, pings }) {
   }, [graph.warnings]);
 
   const data = useMemo(() => {
-    const nodeIds = new Set(graph.nodes.map((n) => n.id));
-    const mapped = graph.nodes.map((n) => ({ ...n, _ping: pings?.get(n.id) || null }));
+    const nodeCache = nodeCacheRef.current;
+    const extraCache = extraCacheRef.current;
+
+    const nodes = graph.nodes.map((n) => {
+      const ping = pings?.get(n.id) || null;
+      const selected = n.id === selectedId;
+      const cached = nodeCache.get(n.id);
+      const sig = nodeSig(n);
+      if (cached && cached.__sig === sig && cached._ping === ping && cached._selected === selected) {
+        return cached;
+      }
+      const next = Object.assign({}, n, { _ping: ping, _selected: selected, __sig: sig });
+      if (cached) {
+        next.x = cached.x; next.y = cached.y; next.z = cached.z;
+        next.vx = cached.vx; next.vy = cached.vy; next.vz = cached.vz;
+      }
+      nodeCache.set(n.id, next);
+      return next;
+    });
+
+    const alive = new Set(graph.nodes.map((n) => n.id));
+    for (const k of [...nodeCache.keys()]) if (!alive.has(k)) nodeCache.delete(k);
+
     const extraNodes = [];
+    const seen = new Set(alive);
     for (const e of graph.edges) {
-      if (!nodeIds.has(e.target)) {
-        extraNodes.push({
-          id: e.target,
-          kind: e.target.startsWith("collection:") ? "collection" : "unresolved",
-          name: e.target,
-          _ephemeral: true,
-        });
-        nodeIds.add(e.target);
+      if (!seen.has(e.target)) {
+        let x = extraCache.get(e.target);
+        if (!x) {
+          x = {
+            id: e.target,
+            kind: e.target.startsWith("collection:") ? "collection" : "unresolved",
+            name: e.target,
+            _ephemeral: true,
+          };
+          extraCache.set(e.target, x);
+        }
+        extraNodes.push(x);
+        seen.add(e.target);
       }
     }
-    return {
-      nodes: [...mapped, ...extraNodes],
-      links: graph.edges.map((e) => ({ source: e.source, target: e.target, kind: e.kind, raw: e })),
-    };
-  }, [graph, pings]);
+    for (const k of [...extraCache.keys()]) if (!seen.has(k)) extraCache.delete(k);
+
+    const links = graph.edges.map((e) => ({
+      id: e.id, source: e.source, target: e.target, kind: e.kind, raw: e,
+    }));
+
+    return { nodes: [...nodes, ...extraNodes], links };
+  }, [graph, pings, selectedId]);
 
   useEffect(() => {
     if (!fgRef.current) return;
@@ -119,12 +173,32 @@ export default function Graph3D({ graph, onNodeClick, pings }) {
     if (charge) charge.strength(-60);
   }, []);
 
+  useEffect(() => {
+    if (!fgRef.current || !selectedId) return;
+    const node = data.nodes.find((n) => n.id === selectedId);
+    if (!node || typeof node.x !== "number") return;
+    const id = requestAnimationFrame(() => {
+      try {
+        const dist = 110;
+        const r = Math.hypot(node.x, node.y, node.z) || 1;
+        fgRef.current?.cameraPosition?.(
+          { x: node.x * (1 + dist / r), y: node.y * (1 + dist / r), z: node.z * (1 + dist / r) },
+          node,
+          800
+        );
+      } catch (e) {
+        console.warn("[studio] cameraPosition failed", e);
+      }
+    });
+    return () => cancelAnimationFrame(id);
+  }, [selectedId, flyToken]);
+
   return (
     <ForceGraph3D
       ref={fgRef}
       graphData={data}
       backgroundColor="#0f172a"
-      nodeThreeObject={(n) => nodeThreeObject(n, warningsByNode, n._ping)}
+      nodeThreeObject={(n) => nodeThreeObject(n, warningsByNode)}
       linkColor={(l) => EDGE_COLOR[l.kind] || "#475569"}
       linkWidth={(l) => (l.kind?.endsWith("-particle") ? 1.2 : 0.8)}
       linkOpacity={0.7}

@@ -24,19 +24,19 @@ export const INTENTS = {
 
   create_goal: intent("Создать цель", ["goal: Goal"],
     [], [ef("add", "goals")],
-    ["title", "description", "sphereId", "deadline"],
+    ["goal.title", "goal.description", "goal.sphereId", "goal.deadline"],
     "form", { creates: "Goal(active)" }),
 
   edit_goal: intent("Редактировать цель", ["goal: Goal"],
     ["goal.userId = me.id"],
     [ef("replace", "goal.title"), ef("replace", "goal.description"), ef("replace", "goal.deadline")],
-    ["title", "description", "deadline"],
+    ["goal.title", "goal.description", "goal.deadline"],
     "form"),
 
   update_goal_progress: intent("Обновить прогресс", ["goal: Goal"],
     ["goal.status = 'active'", "goal.userId = me.id"],
     [ef("replace", "goal.progress")],
-    ["progress"],
+    ["goal.progress"],
     "click"),
 
   complete_goal: intent("Завершить цель", ["goal: Goal"],
@@ -66,32 +66,32 @@ export const INTENTS = {
   move_goal_sphere: intent("Перенести в сферу", ["goal: Goal"],
     ["goal.userId = me.id"],
     [ef("replace", "goal.sphereId")],
-    ["sphereId"],
+    ["goal.sphereId"],
     "click"),
 
   set_goal_deadline: intent("Установить дедлайн", ["goal: Goal"],
     ["goal.userId = me.id"],
     [ef("replace", "goal.deadline")],
-    ["deadline"],
+    ["goal.deadline"],
     "click"),
 
   add_goal_note: intent("Добавить заметку", ["goal: Goal"],
     ["goal.userId = me.id"],
     [ef("replace", "goal.description")],
-    ["description"],
+    ["goal.description"],
     "form"),
 
   // ===== ПРИВЫЧКИ (12) =====
 
   create_habit: intent("Создать привычку", ["habit: Habit"],
     [], [ef("add", "habits")],
-    ["title", "sphereId", "type", "targetValue", "unit", "frequency"],
+    ["habit.title", "habit.sphereId", "habit.type", "habit.targetValue", "habit.unit", "habit.frequency"],
     "form", { creates: "Habit(active)" }),
 
   edit_habit: intent("Редактировать привычку", ["habit: Habit"],
     ["habit.userId = me.id"],
     [ef("replace", "habit.title"), ef("replace", "habit.targetValue"), ef("replace", "habit.unit"), ef("replace", "habit.frequency")],
-    ["title", "targetValue", "unit", "frequency"],
+    ["habit.title", "habit.targetValue", "habit.unit", "habit.frequency"],
     "form"),
 
   delete_habit: intent("Удалить привычку", ["habit: Habit"],
@@ -103,7 +103,7 @@ export const INTENTS = {
   check_habit: intent("Отметить привычку", ["habit: Habit"],
     ["habit.status = 'active'"],
     [ef("add", "habitLogs")],
-    ["habitId"],
+    ["habit.id"],
     "click"),
 
   uncheck_habit: intent("Снять отметку", ["habitLog: HabitLog"],
@@ -112,10 +112,10 @@ export const INTENTS = {
     [],
     "click"),
 
-  log_habit_value: intent("Записать значение", ["habit: Habit"],
+  log_habit_value: intent("Записать значение", ["habit: Habit", "log: HabitLog"],
     ["habit.type = 'quantitative'", "habit.status = 'active'"],
     [ef("add", "habitLogs")],
-    ["value", "habitId"],
+    ["habit.id", "log.value"],
     "click"),
 
   pause_habit: intent("Приостановить", ["habit: Habit"],
@@ -139,13 +139,13 @@ export const INTENTS = {
   change_habit_frequency: intent("Изменить частоту", ["habit: Habit"],
     ["habit.userId = me.id"],
     [ef("replace", "habit.frequency")],
-    ["frequency"],
+    ["habit.frequency"],
     "click"),
 
   move_habit_sphere: intent("Перенести в сферу", ["habit: Habit"],
     ["habit.userId = me.id"],
     [ef("replace", "habit.sphereId")],
-    ["sphereId"],
+    ["habit.sphereId"],
     "click"),
 
   archive_habit: intent("Архивировать", ["habit: Habit"],
@@ -158,7 +158,7 @@ export const INTENTS = {
 
   create_task: intent("Создать задачу", ["task: Task"],
     [], [ef("add", "tasks")],
-    ["title", "date"],
+    ["task.title", "task.date"],
     "enter", { creates: "Task" }),
 
   complete_task: intent("Выполнить задачу", ["task: Task"],
@@ -182,38 +182,38 @@ export const INTENTS = {
   edit_task: intent("Редактировать задачу", ["task: Task"],
     ["task.userId = me.id"],
     [ef("replace", "task.title")],
-    ["title"],
+    ["task.title"],
     "form"),
 
   move_task_date: intent("Перенести на другой день", ["task: Task"],
     ["task.userId = me.id"],
     [ef("replace", "task.date")],
-    ["date"],
+    ["task.date"],
     "click"),
 
   link_task_goal: intent("Привязать к цели", ["task: Task"],
     ["task.userId = me.id"],
     [ef("replace", "task.goalId")],
-    ["goalId"],
+    ["task.goalId"],
     "click"),
 
   toggle_task_priority: intent("Переключить приоритет", ["task: Task"],
     ["task.userId = me.id"],
     [ef("replace", "task.priority")],
-    ["priority"],
+    ["task.priority"],
     "click"),
 
   // ===== ТОЧКА А — ОЦЕНКА СФЕР (5) =====
 
   assess_sphere: intent("Оценить сферу", ["assessment: SphereAssessment"],
     [], [ef("add", "sphereAssessments")],
-    ["sphereId", "score", "description"],
+    ["assessment.sphereId", "assessment.score", "assessment.description"],
     "form", { creates: "SphereAssessment" }),
 
   update_assessment: intent("Обновить оценку", ["assessment: SphereAssessment"],
     ["assessment.userId = me.id"],
     [ef("replace", "assessment.score"), ef("replace", "assessment.description")],
-    ["score", "description"],
+    ["assessment.score", "assessment.description"],
     "form"),
 
   reassess_all: intent("Пересмотреть все сферы", [],
@@ -292,7 +292,7 @@ export const INTENTS = {
   edit_quote: intent("Редактировать цитату", ["quote: Quote"],
     ["quote.userId = me.id"],
     [ef("replace", "quote.text"), ef("replace", "quote.author")],
-    ["text", "author"],
+    ["quote.text", "quote.author"],
     "form"),
 
   random_quote: intent("Случайная цитата", [],
