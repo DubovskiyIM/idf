@@ -100,6 +100,10 @@ app.post("/api/execute/:workflowId", async (req, res) => {
 const authRouter = require("./routes/auth.js");
 app.use("/api/auth", authRouter);
 
+// Studio routes (авторская среда)
+const studioRouter = require("./routes/studio.js");
+app.use("/api/studio", studioRouter);
+
 // Production: раздаём Vite build из dist/
 const path = require("path");
 const fs = require("fs");
