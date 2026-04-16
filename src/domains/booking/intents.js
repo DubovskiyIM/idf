@@ -1,4 +1,5 @@
 export const INTENTS = {
+  studio_test_intent_zzz: { name: "TEST", particles: { entities: [], effects: [], witnesses: [] }, antagonist: null, creates: null },
   select_service: {
     name: "Выбрать услугу", particles: {
       entities: ["service: Service", "specialist: Specialist"],

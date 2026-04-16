@@ -1,5 +1,6 @@
 const path = require("path");
 const { pathToFileURL } = require("url");
+const { spawn } = require("child_process");
 const { checkAnchoring } = require("./anchoringCheck.js");
 
 function normalizeFields(fields) {
@@ -15,10 +16,36 @@ function normalizeFields(fields) {
   }));
 }
 
-async function importDomain(domainName) {
+function importDomain(domainName) {
   const entry = path.resolve(__dirname, "..", "..", "src", "domains", domainName, "domain.js");
-  const url = pathToFileURL(entry).href + `?t=${Date.now()}`;
-  return await import(url);
+  const url = pathToFileURL(entry).href;
+  const script = `
+    import("${url}").then((m) => {
+      const out = {
+        ONTOLOGY: m.ONTOLOGY || null,
+        INTENTS: m.INTENTS || null,
+        PROJECTIONS: m.PROJECTIONS || null,
+      };
+      process.stdout.write(JSON.stringify(out));
+    }).catch((e) => {
+      process.stderr.write(String(e && e.stack || e));
+      process.exit(1);
+    });
+  `;
+  return new Promise((resolve, reject) => {
+    const proc = spawn(process.execPath, ["--input-type=module", "-e", script], {
+      cwd: path.resolve(__dirname, "..", ".."),
+    });
+    let out = "";
+    let err = "";
+    proc.stdout.on("data", (d) => { out += d.toString("utf8"); });
+    proc.stderr.on("data", (d) => { err += d.toString("utf8"); });
+    proc.on("error", reject);
+    proc.on("close", (code) => {
+      if (code !== 0) return reject(new Error(`domain "${domainName}" import failed: ${err}`));
+      try { resolve(JSON.parse(out)); } catch (e) { reject(new Error(`parse domain output: ${e.message}`)); }
+    });
+  });
 }
 
 function findEntityByHead(head, entityTypes) {
