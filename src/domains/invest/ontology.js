@@ -187,6 +187,13 @@ export const ONTOLOGY = {
     // ⚠ Серверный filterWorld пока не поддерживает via-assignment
     //   ownership — это §26.1 open item (see docs/field-test-10.md).
     //   Клиентские projections используют виртуальный фильтр по assignment.
+    Rule: {
+      fields: {
+        id: { type: "id" },
+        active: { type: "boolean", read: ["*"], label: "Активно" },
+      },
+    },
+
     Assignment: {
       ownerField: "advisorId",
       fields: {
