@@ -4,13 +4,18 @@ import ReactMarkdown from "react-markdown";
 import { sendChat } from "./api/chat.js";
 import ToolUseBadge from "./components/ToolUseBadge.jsx";
 
-export default function ChatDrawer({ open, onClose, domain, prefill, onPrefillConsumed }) {
+export default function ChatDrawer({ open, onClose, domain, prefill, onPrefillConsumed, onBusyChange }) {
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState("");
   const [sessionId, setSessionId] = useState(null);
   const [busy, setBusy] = useState(false);
   const abortRef = useRef(null);
   const endRef = useRef(null);
+
+  useEffect(() => {
+    onBusyChange?.(busy);
+    return () => onBusyChange?.(false);
+  }, [busy, onBusyChange]);
 
   useEffect(() => {
     if (prefill) {

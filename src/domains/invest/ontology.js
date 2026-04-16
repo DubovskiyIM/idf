@@ -119,7 +119,7 @@ export const ONTOLOGY = {
         source: { type: "select", options: ["agent", "advisor", "model"] },
         type: { type: "select", options: ["rebalance", "buy", "sell", "hold"] },
         payload: { type: "text" },
-        status: { type: "select", options: ["pending", "accepted", "rejected", "expired"] },
+        status: { type: "select", options: ["pending", "accepted", "rejected", "snoozed", "expired"] },
         confidence: { type: "number", fieldRole: "percentage" },
         rationale: { type: "textarea" },
         createdAt: { type: "datetime" },
@@ -207,12 +207,12 @@ export const ONTOLOGY = {
       canExecute: [
         "register", "login", "update_profile", "set_preferences",
         "start_risk_questionnaire", "compute_risk_profile",
-        "create_goal", "edit_goal", "close_goal",
-        "create_portfolio", "set_target_allocation", "rename_portfolio", "archive_portfolio",
-        "buy_asset", "sell_asset", "set_stop_loss", "set_take_profit",
-        "create_watchlist", "add_to_watchlist", "remove_from_watchlist", "set_price_alert",
-        "accept_recommendation", "reject_recommendation", "snooze_recommendation",
-        "acknowledge_alert", "mute_alert_rule", "delegate_to_agent",
+        "create_goal", "edit_goal", "close_goal", "deposit_to_goal",
+        "create_portfolio", "set_target_allocation", "rename_portfolio", "archive_portfolio", "clone_portfolio",
+        "buy_asset", "sell_asset", "set_stop_loss", "set_take_profit", "clear_stop_loss",
+        "create_watchlist", "add_to_watchlist", "remove_from_watchlist", "rename_watchlist", "delete_watchlist", "set_price_alert",
+        "accept_recommendation", "reject_recommendation", "snooze_recommendation", "request_recommendation",
+        "acknowledge_alert", "dismiss_alert", "escalate_alert", "delegate_to_agent", "extend_agent_preapproval",
         "create_rebalance_rule", "pause_rule", "resume_rule", "delete_rule",
       ],
       visibleFields: {
@@ -228,7 +228,7 @@ export const ONTOLOGY = {
       // §26.1 ЗАКРЫТ: role.scope поддерживается в server/schema/filterWorld.cjs.
       canExecute: [
         "assign_client", "unassign_client", "pause_assignment", "resume_assignment",
-        "create_recommendation_for_client", "send_client_message",
+        "create_recommendation_for_client", "send_client_message", "add_assignment_note",
       ],
       visibleFields: {
         User: ["id", "name", "email"],
