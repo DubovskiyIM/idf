@@ -51,6 +51,7 @@
     }
   },
   "expected": {
-    "findings": []
+    "findings": [],
+    "blocking": false
   }
 }
