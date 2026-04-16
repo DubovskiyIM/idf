@@ -11,10 +11,27 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+
+      # SDK подключён через file:../idf-sdk/packages/* — клонируем и собираем
+      # в соседнюю папку, чтобы пути из package.json резолвились.
+      - name: Checkout idf-sdk monorepo
+        run: git clone --depth=1 https://github.com/DubovskiyIM/idf-sdk.git ../idf-sdk
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
       - uses: actions/setup-node@v4
         with:
           node-version: 20
           cache: npm
+
+      - name: Build SDK packages
+        working-directory: ../idf-sdk
+        run: |
+          pnpm install --frozen-lockfile
+          pnpm -r build
+
       - run: npm ci
       - run: npm test
       - run: npm run build
