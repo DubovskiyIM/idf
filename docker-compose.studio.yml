@@ -1,0 +1,27 @@
+services:
+  studio:
+    build:
+      context: .
+      dockerfile: Dockerfile.studio
+    container_name: idf-studio
+    ports:
+      - "127.0.0.1:4000:3001"
+      - "127.0.0.1:5174:5173"
+    volumes:
+      - ${HOME}/.claude:/root/.claude:ro
+      - ./src:/app/src:rw
+      - ./server:/app/server:rw
+      - ./packages:/app/packages:ro
+      - ./package.json:/app/package.json:ro
+      - ./vite.config.js:/app/vite.config.js:ro
+      - ./studio.html:/app/studio.html:ro
+      - ./index.html:/app/index.html:ro
+      - studio-node-modules:/app/node_modules
+    environment:
+      NODE_ENV: development
+      CLAUDE_CODE_OAUTH_DIR: /root/.claude
+    stdin_open: true
+    tty: true
+
+volumes:
+  studio-node-modules:
