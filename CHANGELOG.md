@@ -1,5 +1,32 @@
 # Changelog
 
+## 2026-04-17 — v1.11 Consolidation release (manifest↔code honesty)
+
+**Consolidation release без field test. Docs-only, нет SDK bump.**
+
+### Added
+
+- **§27 Authoring environment** (новая секция манифеста) — Studio v0.1 формально классифицирована как authoring tooling (не materialization). Контракт: input-side артефакта (author → source files), development-time граница, НЕ эмитит Φ effects. Параллель §19 для runtime-границы.
+- **§4 string-DSL → honest border** — `evaluateScheduleV2` parser перенесён из claimed в §23 future enhancement. Object-form в `ontology.rules[].schedule` документирована как current reality.
+- **§23 два новых пункта:** foldDrafts commit-vs-invariant corner case; §4 DSL deferred.
+- **§26 «Что закрыто в v1.11»** + два новых insights:
+  - Authoring vs materialization asymmetry (§27 first concept-разделение по направлению data flow)
+  - «Subsystem as system-intents» возведено в architectural guideline (scheduler + Rules Engine + irreversibility)
+
+### Changed
+
+- **CLAUDE.md** — §4 описание scheduler, упоминание studio в структуре, 27 разделов.
+
+### Honest borders (deferred)
+
+- Rules Engine aggregation counter не-atomic при batch-effect → v1.12+
+- foldDrafts commit-race test coverage + explicit semantics → v1.12+
+- Studio formal write-API contract + source versioning → v1.12+
+
+### Key insight
+
+v1.11 — пятая consolidation-валидация подряд разного типа: v1.4-1.6 domain-driven (field tests), v1.7 infrastructure-driven (SDK + scheduler + deploy), v1.8-1.10 §15 additive-циклы, v1.11 docs-honesty (manifest ↔ code alignment). Четыре разных вида валидности, парадигма остаётся фальсифицируемой.
+
 ## 2026-04-16 — v1.9 Witness-of-proof filling (§15 zazor #2 закрыт)
 
 **§15 zazor #2 закрыт — witness-of-proof заполняется каждым механизмом анкеринга**
