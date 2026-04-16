@@ -103,7 +103,6 @@ function nodeSig(n) {
 export default function Graph3D({ graph, onNodeClick, pings, selectedId, flyToken }) {
   const fgRef = useRef();
   const nodeCacheRef = useRef(new Map());
-  const linkCacheRef = useRef(new Map());
   const extraCacheRef = useRef(new Map());
 
   const warningsByNode = useMemo(() => {
@@ -119,7 +118,6 @@ export default function Graph3D({ graph, onNodeClick, pings, selectedId, flyToke
 
   const data = useMemo(() => {
     const nodeCache = nodeCacheRef.current;
-    const linkCache = linkCacheRef.current;
     const extraCache = extraCacheRef.current;
 
     const nodes = graph.nodes.map((n) => {
@@ -162,16 +160,9 @@ export default function Graph3D({ graph, onNodeClick, pings, selectedId, flyToke
     }
     for (const k of [...extraCache.keys()]) if (!seen.has(k)) extraCache.delete(k);
 
-    const links = graph.edges.map((e) => {
-      const key = `${e.id}|${e.source}|${e.target}`;
-      const cached = linkCache.get(key);
-      if (cached) return cached;
-      const link = { id: e.id, source: e.source, target: e.target, kind: e.kind, raw: e };
-      linkCache.set(key, link);
-      return link;
-    });
-    const linkKeys = new Set(graph.edges.map((e) => `${e.id}|${e.source}|${e.target}`));
-    for (const k of [...linkCache.keys()]) if (!linkKeys.has(k)) linkCache.delete(k);
+    const links = graph.edges.map((e) => ({
+      id: e.id, source: e.source, target: e.target, kind: e.kind, raw: e,
+    }));
 
     return { nodes: [...nodes, ...extraNodes], links };
   }, [graph, pings, selectedId]);
