@@ -3,6 +3,7 @@ const fs = require("fs");
 const path = require("path");
 const { buildGraph } = require("../studio/graphBuilder.js");
 const { createFileWatcher } = require("../studio/fileWatcher.js");
+const { spawnClaude } = require("../studio/claudeProxy.js");
 
 const router = express.Router();
 const DOMAINS_DIR = path.resolve(__dirname, "..", "..", "src", "domains");
@@ -89,6 +90,34 @@ router.get("/domain/:name/events", (req, res) => {
     watcher.off("change", onChange);
     clearInterval(hb);
   });
+});
+
+router.post("/chat", express.json(), async (req, res) => {
+  const { domain, message, sessionId } = req.body || {};
+  if (!domain || !message) return res.status(400).json({ error: "domain and message are required" });
+
+  res.setHeader("Content-Type", "text/event-stream");
+  res.setHeader("Cache-Control", "no-cache");
+  res.setHeader("Connection", "keep-alive");
+  res.flushHeaders();
+
+  const send = (event, data) => {
+    res.write(`event: ${event}\n`);
+    res.write(`data: ${JSON.stringify(data)}\n\n`);
+  };
+
+  const cwd = path.resolve(__dirname, "..", "..");
+  const proc = spawnClaude({
+    domain, message, sessionId, cwd,
+    onEvent: (evt) => send(evt.type, evt),
+  });
+
+  req.on("close", () => {
+    try { proc.stop(); } catch {}
+  });
+  await proc.done;
+  send("end", {});
+  res.end();
 });
 
 module.exports = router;
