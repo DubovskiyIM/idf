@@ -3,8 +3,26 @@ name: CI
 on:
   push:
     branches: [main]
+    paths-ignore:
+      - 'docs/**'
+      - '**/*.md'
+      - 'LICENSE'
+      - '.gitignore'
+      - 'deploy/**'
   pull_request:
     branches: [main]
+    paths-ignore:
+      - 'docs/**'
+      - '**/*.md'
+      - 'LICENSE'
+      - '.gitignore'
+      - 'deploy/**'
+
+# Старый прогон отменяется при новом push в ту же ветку — не копим очередь
+# на быстрых сериях коммитов.
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   test:
@@ -12,26 +30,13 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      # SDK подключён через file:../idf-sdk/packages/* — клонируем и собираем
-      # в соседнюю папку, чтобы пути из package.json резолвились.
-      - name: Checkout idf-sdk monorepo
-        run: git clone --depth=1 https://github.com/DubovskiyIM/idf-sdk.git ../idf-sdk
-
-      - uses: pnpm/action-setup@v4
-        with:
-          version: 10
-
       - uses: actions/setup-node@v4
         with:
           node-version: 20
           cache: npm
 
-      - name: Build SDK packages
-        working-directory: ../idf-sdk
-        run: |
-          pnpm install --frozen-lockfile
-          pnpm -r build
-
+      # SDK теперь подтягивается из публичного npm (@intent-driven/*),
+      # отдельный clone+build idf-sdk monorepo больше не нужен.
       - run: npm ci
       - run: npm test
       - run: npm run build

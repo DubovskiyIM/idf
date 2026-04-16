@@ -171,9 +171,11 @@ function fireDue(queue, now, deps) {
     });
 
     // Cron self-rescheduling: если timer — cron, эмитим следующий.
-    // Лежит в одном require-файле, не даёт циклического import'а.
+    // Baseline для вычисления следующего слота — запланированный t.firesAt,
+    // не реальный Date.now(): иначе при задержке firing'а получаем drift
+    // (cron daily:09:00, fire'нувшийся в 09:00:01, дал бы next = завтра 09:00:01).
     if (t.cronSchedule) {
-      const nextFiresAt = computeNextCronFiresAt(t.cronSchedule, Date.now());
+      const nextFiresAt = computeNextCronFiresAt(t.cronSchedule, t.firesAt);
       if (nextFiresAt != null) {
         deps.ingestEffect({
           id: makeEffectId("eff"),
