@@ -51,7 +51,18 @@ function makePingMesh(size, color) {
   return mesh;
 }
 
-function nodeThreeObject(node, warningsByNode, pingType) {
+function makeSelectionRing(size) {
+  const geom = new THREE.TorusGeometry(size * 1.6, size * 0.08, 12, 48);
+  const mat = new THREE.MeshBasicMaterial({ color: "#f8fafc", transparent: true, opacity: 0.95 });
+  const ring = new THREE.Mesh(geom, mat);
+  ring.onBeforeRender = () => {
+    ring.rotation.y += 0.02;
+    ring.rotation.x += 0.01;
+  };
+  return ring;
+}
+
+function nodeThreeObject(node, warningsByNode, pingType, isSelected) {
   const size = nodeSize(node);
   const mat = new THREE.MeshLambertMaterial({ color: COLOR[node.kind] || "#94a3b8" });
   const mesh = new THREE.Mesh(makeGeometry(node, size), mat);
@@ -75,10 +86,14 @@ function nodeThreeObject(node, warningsByNode, pingType) {
     mesh.add(makePingMesh(size, PING_COLOR[pingType] || "#60a5fa"));
   }
 
+  if (isSelected) {
+    mesh.add(makeSelectionRing(size));
+  }
+
   return mesh;
 }
 
-export default function Graph3D({ graph, onNodeClick, pings }) {
+export default function Graph3D({ graph, onNodeClick, pings, selectedId }) {
   const fgRef = useRef();
 
   const warningsByNode = useMemo(() => {
@@ -94,7 +109,11 @@ export default function Graph3D({ graph, onNodeClick, pings }) {
 
   const data = useMemo(() => {
     const nodeIds = new Set(graph.nodes.map((n) => n.id));
-    const mapped = graph.nodes.map((n) => ({ ...n, _ping: pings?.get(n.id) || null }));
+    const mapped = graph.nodes.map((n) => ({
+      ...n,
+      _ping: pings?.get(n.id) || null,
+      _selected: n.id === selectedId,
+    }));
     const extraNodes = [];
     for (const e of graph.edges) {
       if (!nodeIds.has(e.target)) {
@@ -111,7 +130,7 @@ export default function Graph3D({ graph, onNodeClick, pings }) {
       nodes: [...mapped, ...extraNodes],
       links: graph.edges.map((e) => ({ source: e.source, target: e.target, kind: e.kind, raw: e })),
     };
-  }, [graph, pings]);
+  }, [graph, pings, selectedId]);
 
   useEffect(() => {
     if (!fgRef.current) return;
@@ -119,12 +138,35 @@ export default function Graph3D({ graph, onNodeClick, pings }) {
     if (charge) charge.strength(-60);
   }, []);
 
+  const prevCountRef = useRef(0);
+  useEffect(() => {
+    const count = data.nodes.length;
+    if (count !== prevCountRef.current && fgRef.current) {
+      fgRef.current.d3ReheatSimulation?.();
+    }
+    prevCountRef.current = count;
+  }, [data]);
+
+  useEffect(() => {
+    if (!fgRef.current || !selectedId) return;
+    const node = data.nodes.find((n) => n.id === selectedId);
+    if (node && typeof node.x === "number") {
+      const dist = 110;
+      const r = Math.hypot(node.x, node.y, node.z) || 1;
+      fgRef.current.cameraPosition(
+        { x: node.x * (1 + dist / r), y: node.y * (1 + dist / r), z: node.z * (1 + dist / r) },
+        node,
+        800
+      );
+    }
+  }, [selectedId]);
+
   return (
     <ForceGraph3D
       ref={fgRef}
       graphData={data}
       backgroundColor="#0f172a"
-      nodeThreeObject={(n) => nodeThreeObject(n, warningsByNode, n._ping)}
+      nodeThreeObject={(n) => nodeThreeObject(n, warningsByNode, n._ping, n._selected)}
       linkColor={(l) => EDGE_COLOR[l.kind] || "#475569"}
       linkWidth={(l) => (l.kind?.endsWith("-particle") ? 1.2 : 0.8)}
       linkOpacity={0.7}
