@@ -1,5 +1,115 @@
 # Changelog
 
+## 2026-04-16 — v1.9 Witness-of-proof filling (§15 zazor #2 закрыт)
+
+**§15 zazor #2 закрыт — witness-of-proof заполняется каждым механизмом анкеринга**
+
+### Added (SDK `@intent-driven/core@0.6.0`)
+
+- **`reliability` taxonomy** — `"structural" | "rule-based" | "heuristic"` заполняется в findings:
+  - `structural` — прямая decidable привязка (direct entity match) или exhaustive exhaustion (MISS с исчерпанными проверками)
+  - `rule-based` — derivation через объявленное правило (computePlural, type-based semantic roles, ontology.invariants)
+  - `heuristic` — name-convention без формального правила
+- **`witness.basis`** — описание механизма вывода: `"direct entity name match"` / `"plural resolution via computePlural"` / `"name substring: 'price'"` / `"explicit ontology declaration"` / `"exhausted: direct lookup, plural rule, systemCollections — no match"`
+- **`checkAnchoring`** — заполняет reliability/witness.basis для всех findings (entity / effect.target / field / witness / condition)
+- **`computeAlgebraWithEvidence`** — добавлен `reliability` alias над существующим `classification` (`structural` → `structural`, `heuristic-lifecycle` → `heuristic`) + `witness.basis`
+- **`inferFieldRole`** — **internal breaking**: возвращает `{role, reliability, basis}` вместо `string`. 4 consumer-site в crystallize_v2 мигрированы (assignToSlotsDetail, formGrouping, assignToSlotsCatalog × 2). External consumers: `const r = inferFieldRole(...)` → `const r = inferFieldRole(...)?.role`.
+
+### Added (prototype runtime)
+
+- **`effect.context.__witness` convention** — runtime «witness-of-action»: каждый derived effect декларирует свою causal basis. Первое применение:
+  - **Scheduler** (`server/timeEngine.js`) — `fireDue` пишет `__witness` в fire- и revoke_timer-effects: `basis: "timer 'X' fired"`, включая `firedAt`/`guardEvaluatedTrue`/`causedByTimer`
+  - **Rules Engine** (`server/ruleEngine.js`) — `buildActionEffect` принимает `ruleId` и пишет `__witness.basis: "rule 'X' fired"`, `example: "action: Y"`
+  - **Invariant checker** (`server/routes/effects.js`) — `effect:rejected` SSE payload содержит `__witness.basis: "invariant kind='X' violated"`
+- **`scripts/audit-anchoring.mjs`** — группировка errors по reliability: structural / rule-based / heuristic / unknown. Показывает witness.basis в выводе
+- **Peer-dep bump:** `@intent-driven/core` 0.5.1 → 0.6.0
+
+### Tests
+
+- **+6 unit-тестов** в SDK (`@intent-driven/core`) на reliability/witness в checkAnchoring + intentAlgebra + inferFieldRole
+- **+1 integration test** в `server/timeEngine.test.js` на `__witness` в fire + revoke_timer
+- **+1 assertion** в `server/ruleEngine.test.js` — `__witness.basis` с ruleId
+- SDK: 288 passed (+6). Прототип: 452 passed.
+
+### Honest borders (v1.10+)
+
+- **`witness.counterexample`** — системный counterexample-search (falsifiability) — поле зарезервировано, не заполняется
+- **Linter-enforcement witness filling** — convention, не enforced. Legacy findings/producers без reliability/basis
+- **Zazor #3 (heuristic-once → implication rule)** — tractable через reliability-labeling, но требует counting storage + author review UI + pattern-synthesis
+
+### Key insight
+
+**Reliability расширяет capability surface family** (§26 v1.6 #2). Четвёртый член: `entity.kind` / `role.scope` / `adapter.capabilities` / **`reliability`**. Эпистемическая capability, complementary к структурной. Heuristic-match перестаёт быть молчаливой адаптацией (§19) — явно маркирован.
+
+**Zazor #2 ↔ zazor #3 bridge**: reliability-labeling делает promotion механизм tractable. `{intent, anchor, basis}` tuple с `reliability: "heuristic"` — счётчик-кандидат для promotion в ontology rules.
+
+### Documentation
+
+- **§15 манифеста** — новый абзац про witness-of-action convention, обновлён witness-of-proof callout (реализовано/остаётся)
+- **§23** — zazor #2 отмечен закрытым
+- **§26** — новая секция «Что закрыто в v1.9» + открытые задачи v1.9
+- Spec: `docs/superpowers/specs/2026-04-16-witness-of-proof-design.md`
+- Plan: `docs/superpowers/plans/2026-04-16-witness-of-proof.md`
+- PR: `feat/witness-of-proof` (merged)
+
+---
+
+## 2026-04-16 — v1.8 Binary anchoring gate (§15 zazor #1 закрыт)
+
+**§15 «Анкеринг либо успешен, либо требует вмешательства» теперь enforceable**
+
+### Added (SDK `@intent-driven/core@0.5.1`)
+
+- **`checkAnchoring(INTENTS, ONTOLOGY)`** — отдельная функция, извлечена из `checkIntegrity` rule #6. Возвращает `{errors, warnings, infos, passed}` с Finding-shape `{rule, level, intent, particle, message, detail, reliability?, witness?}`. Reliability/witness — зарезервированы (заполняются v1.9).
+- **`AnchoringError`** — new error class с `findings` и `domainId`. Выбрасывается `crystallizeV2` в strict-режиме.
+- **Классификация частиц:**
+  - **Конструктивные** (`entities`, `effect.target` base, `creates`) → severity `error` → блок crystallize в strict
+  - **Описательные** (`effect.target.field`, `witnesses`, `conditions`) → `warning` / `info` → не блокируют
+- **Gate в `crystallizeV2`** через `opts.anchoring: "strict" | "soft"`:
+  - Default — **`"soft"`** (не breaking для существующих потребителей)
+  - `"strict"` — throw AnchoringError при `errors > 0`
+- **`ontology.systemCollections: string[]`** — декларация коллекций без доменной сущности (`drafts`, `users`, `scheduledTimers`). Подавляет anchoring errors для этих коллекций. **НЕ** расширение `entity.kind` (системные коллекции не entities).
+- **`computePlural`-зеркало** (fix 0.5.1) — plural-резолюция согласована с `buildTypeMap` в fold.js: `activities → activity` (y→ies), `addresses → address` (s→ses), `items → item`. Найдено полевым аудитом после 0.5.0.
+
+### Added (CLI `@intent-driven/cli@1.0.2`)
+
+- `validate.js` catch-ает `AnchoringError` отдельно, печатает findings с actionable detail в stderr
+
+### Added (prototype)
+
+- **`scripts/audit-anchoring.mjs`** — прогон checkAnchoring на всех 9 доменах, отчёт по группам
+- **`booking.ontology.js`** — добавлен `systemCollections: ["drafts"]` (session-scoped черновики)
+- **Conformance tests** `spec/conformance/level-3/anchor-*.json` — severity=error + blocking flag для anchor-001 (was warning); новый anchor-004 (два structural misses)
+- **Peer-dep bump:** `@intent-driven/core` 0.4.0 → 0.5.1
+
+### Audit results (все 9 доменов после plural-fix)
+
+- **workflow**, **delivery** — 0 errors ✓ (strict-ready)
+- **booking** 10, **planning** 2, **lifequest** 4, **reflect** 2, **invest** 5, **messenger** 31, **sales** 68
+- **Итого: 122 structural misses** — real ontology gaps, где intent'ы эмитят effects на коллекции без соответствующих сущностей. Prototype держит ontology under-declared, полагаясь на Generic Effect Handler (§22 v1.4). Strict-режим это вскрыл.
+
+### Honest borders (после v1.8)
+
+- **Phase 3 (strict default)** — **deferred**. Требует ontology-completion sprint для 122 gap'ов. Переключение `DEFAULT_ANCHORING_MODE = "strict"` — после per-domain миграции.
+- **Witness-of-proof структура (zazor #2)** — finding-shape зарезервирован (`reliability`, `witness`), заполнение — v1.9 (закрыто отдельным циклом)
+- **Heuristic-once → implication rule (zazor #3)** — аспирационно, остаётся open
+
+### Tests
+
+- SDK: 277 passed (+10 новых для checkAnchoring + errors + gate)
+- Прототип: 426 passed
+
+### Documentation
+
+- **§15 манифеста** — переписан: конструктивные/описательные частицы, бинарность конструктивных, мягкость описательных, §14 как runtime-арм §15 (одна модель на двух временах)
+- **§23** — анкеринг gate отмечен как partially closed (witness-of-proof оставлен open)
+- **§26** — секция «Что закрыто в v1.8» + ontology-completion sprint как честная граница
+- Spec: `docs/superpowers/specs/2026-04-16-anchoring-binary-design.md`
+- Plan: `docs/superpowers/plans/2026-04-16-anchoring-binary.md`
+- PR: `feat/binary-anchoring` (merged)
+
+---
+
 ## 2026-04-16 — Studio v0.1 (авторская среда)
 
 - Новое: `@intent-driven/studio` — браузерная среда для авторства доменов IDF
