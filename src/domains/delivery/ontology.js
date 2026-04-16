@@ -96,6 +96,7 @@ export const ONTOLOGY = {
           label: "Статус",
         },
         totalAmount: { type: "number", fieldRole: "money", label: "Сумма" },
+        tip: { type: "number", fieldRole: "money", label: "Чаевые" },
         addressId: { type: "text", required: true },
         zoneId: { type: "text", label: "Зона доставки" },
         createdAt: { type: "datetime" },

@@ -41,7 +41,6 @@ function makePingMesh(size, color) {
   const geom = new THREE.SphereGeometry(size * 2.3, 24, 24);
   const mat = new THREE.MeshBasicMaterial({ color, transparent: true, opacity: 0.5 });
   const mesh = new THREE.Mesh(geom, mat);
-  mesh.userData.isPing = true;
   const born = Date.now();
   mesh.onBeforeRender = () => {
     const t = (Date.now() - born) / 1000;
@@ -56,7 +55,6 @@ function makeSelectionRing(size) {
   const geom = new THREE.TorusGeometry(size * 1.6, size * 0.08, 12, 48);
   const mat = new THREE.MeshBasicMaterial({ color: "#f8fafc", transparent: true, opacity: 0.95 });
   const ring = new THREE.Mesh(geom, mat);
-  ring.userData.isSelection = true;
   ring.onBeforeRender = () => {
     ring.rotation.y += 0.02;
     ring.rotation.x += 0.01;
@@ -84,23 +82,29 @@ function nodeThreeObject(node, warningsByNode) {
     mesh.add(glow);
   }
 
+  if (node._ping) {
+    mesh.add(makePingMesh(size, PING_COLOR[node._ping] || "#60a5fa"));
+  }
+  if (node._selected) {
+    mesh.add(makeSelectionRing(size));
+  }
+
   return mesh;
 }
 
-function attachOverlay(node, mesh) {
-  if (!node?.__threeObj || !mesh) return;
-  node.__threeObj.add(mesh);
+function nodeSig(n) {
+  if (n.kind === "entity") return JSON.stringify({ fields: n.fields, ownerField: n.ownerField, statuses: n.statuses });
+  if (n.kind === "intent") return JSON.stringify(n.particles);
+  if (n.kind === "role") return JSON.stringify({ base: n.base, canInvoke: n.canInvoke });
+  if (n.kind === "projection") return JSON.stringify({ archetype: n.archetype, source: n.source });
+  return n.id;
 }
 
-function removeOverlay(node, predicate) {
-  const obj = node?.__threeObj;
-  if (!obj) return;
-  const toRemove = obj.children.filter(predicate);
-  for (const c of toRemove) obj.remove(c);
-}
-
-export default function Graph3D({ graph, onNodeClick, pings, selectedId }) {
+export default function Graph3D({ graph, onNodeClick, pings, selectedId, flyToken }) {
   const fgRef = useRef();
+  const nodeCacheRef = useRef(new Map());
+  const linkCacheRef = useRef(new Map());
+  const extraCacheRef = useRef(new Map());
 
   const warningsByNode = useMemo(() => {
     const map = new Map();
@@ -114,24 +118,63 @@ export default function Graph3D({ graph, onNodeClick, pings, selectedId }) {
   }, [graph.warnings]);
 
   const data = useMemo(() => {
-    const nodeIds = new Set(graph.nodes.map((n) => n.id));
+    const nodeCache = nodeCacheRef.current;
+    const linkCache = linkCacheRef.current;
+    const extraCache = extraCacheRef.current;
+
+    const nodes = graph.nodes.map((n) => {
+      const ping = pings?.get(n.id) || null;
+      const selected = n.id === selectedId;
+      const cached = nodeCache.get(n.id);
+      const sig = nodeSig(n);
+      if (cached && cached.__sig === sig && cached._ping === ping && cached._selected === selected) {
+        return cached;
+      }
+      const next = Object.assign({}, n, { _ping: ping, _selected: selected, __sig: sig });
+      if (cached) {
+        next.x = cached.x; next.y = cached.y; next.z = cached.z;
+        next.vx = cached.vx; next.vy = cached.vy; next.vz = cached.vz;
+      }
+      nodeCache.set(n.id, next);
+      return next;
+    });
+
+    const alive = new Set(graph.nodes.map((n) => n.id));
+    for (const k of [...nodeCache.keys()]) if (!alive.has(k)) nodeCache.delete(k);
+
     const extraNodes = [];
+    const seen = new Set(alive);
     for (const e of graph.edges) {
-      if (!nodeIds.has(e.target)) {
-        extraNodes.push({
-          id: e.target,
-          kind: e.target.startsWith("collection:") ? "collection" : "unresolved",
-          name: e.target,
-          _ephemeral: true,
-        });
-        nodeIds.add(e.target);
+      if (!seen.has(e.target)) {
+        let x = extraCache.get(e.target);
+        if (!x) {
+          x = {
+            id: e.target,
+            kind: e.target.startsWith("collection:") ? "collection" : "unresolved",
+            name: e.target,
+            _ephemeral: true,
+          };
+          extraCache.set(e.target, x);
+        }
+        extraNodes.push(x);
+        seen.add(e.target);
       }
     }
-    return {
-      nodes: [...graph.nodes, ...extraNodes],
-      links: graph.edges.map((e) => ({ source: e.source, target: e.target, kind: e.kind, raw: e })),
-    };
-  }, [graph]);
+    for (const k of [...extraCache.keys()]) if (!seen.has(k)) extraCache.delete(k);
+
+    const links = graph.edges.map((e) => {
+      const key = `${e.id}|${e.source}|${e.target}`;
+      const cached = linkCache.get(key);
+      if (cached) return cached;
+      const link = { id: e.id, source: e.source, target: e.target, kind: e.kind, raw: e };
+      linkCache.set(key, link);
+      return link;
+    });
+    const linkKeys = new Set(graph.edges.map((e) => `${e.id}|${e.source}|${e.target}`));
+    for (const k of [...linkCache.keys()]) if (!linkKeys.has(k)) linkCache.delete(k);
+
+    return { nodes: [...nodes, ...extraNodes], links };
+  }, [graph, pings, selectedId]);
 
   useEffect(() => {
     if (!fgRef.current) return;
@@ -139,46 +182,6 @@ export default function Graph3D({ graph, onNodeClick, pings, selectedId }) {
     if (charge) charge.strength(-60);
   }, []);
 
-  // Ping overlays: add/remove without re-rendering nodes
-  useEffect(() => {
-    if (!fgRef.current) return;
-    const apply = () => {
-      const gd = fgRef.current?.graphData?.();
-      if (!gd) return;
-      for (const n of gd.nodes) {
-        removeOverlay(n, (c) => c.userData?.isPing);
-      }
-      if (!pings || pings.size === 0) return;
-      for (const n of gd.nodes) {
-        const type = pings.get(n.id);
-        if (!type || !n.__threeObj) continue;
-        attachOverlay(n, makePingMesh(nodeSize(n), PING_COLOR[type] || "#60a5fa"));
-      }
-    };
-    const t1 = requestAnimationFrame(apply);
-    const t2 = setTimeout(apply, 250);
-    return () => { cancelAnimationFrame(t1); clearTimeout(t2); };
-  }, [pings]);
-
-  // Selection ring: imperative
-  useEffect(() => {
-    if (!fgRef.current) return;
-    const apply = () => {
-      const gd = fgRef.current?.graphData?.();
-      if (!gd) return;
-      for (const n of gd.nodes) {
-        removeOverlay(n, (c) => c.userData?.isSelection);
-      }
-      if (!selectedId) return;
-      const n = gd.nodes.find((x) => x.id === selectedId);
-      if (!n?.__threeObj) return;
-      attachOverlay(n, makeSelectionRing(nodeSize(n)));
-    };
-    const t1 = requestAnimationFrame(apply);
-    return () => cancelAnimationFrame(t1);
-  }, [selectedId, data]);
-
-  // Camera fly to selected node
   useEffect(() => {
     if (!fgRef.current || !selectedId) return;
     const node = data.nodes.find((n) => n.id === selectedId);
@@ -197,7 +200,7 @@ export default function Graph3D({ graph, onNodeClick, pings, selectedId }) {
       }
     });
     return () => cancelAnimationFrame(id);
-  }, [selectedId]);
+  }, [selectedId, flyToken]);
 
   return (
     <ForceGraph3D

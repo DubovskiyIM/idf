@@ -32,7 +32,7 @@ export const INTENTS = {
   },
   cancel_booking: {
     name: "Отменить запись", particles: {
-      entities: ["booking: Booking"],
+      entities: ["booking: Booking", "slot: TimeSlot"],
       conditions: ["booking.status = 'confirmed'"],
       effects: [
         { α: "replace", target: "booking.status", value: "cancelled", σ: "account" },
@@ -162,7 +162,7 @@ export const INTENTS = {
   },
   cancel_client_booking: {
     name: "Отменить запись клиента", particles: {
-      entities: ["booking: Booking"],
+      entities: ["booking: Booking", "slot: TimeSlot"],
       conditions: ["booking.status = 'confirmed'", "booking.specialistId = me.id"],
       effects: [
         { α: "replace", target: "booking.status", value: "cancelled", σ: "account" },
