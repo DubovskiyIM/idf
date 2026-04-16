@@ -170,6 +170,24 @@ describe("fireDue", () => {
     expect(q.size()).toBe(0);
   });
 
+  it("__witness в fire + revoke effect context (§15 v1.9)", () => {
+    q.insert({
+      id: "tmr_w",
+      firesAt: 100,
+      fireIntent: "rule_cancel",
+      fireParams: { orderId: "o1" },
+      guard: null,
+    });
+    fireDue(q, 200, deps());
+    const fireEffect = emitted[0];
+    const revokeEffect = emitted[1];
+    expect(fireEffect.context.__witness).toBeDefined();
+    expect(fireEffect.context.__witness.basis).toContain("tmr_w");
+    expect(revokeEffect.context.__witness).toBeDefined();
+    expect(revokeEffect.context.__witness.basis).toContain("tmr_w");
+    expect(revokeEffect.context.__witness.firedAt).toBeDefined();
+  });
+
   it("does not fire if not yet due", () => {
     q.insert({ id: "t", firesAt: 1000, fireIntent: "x", guard: null });
     fireDue(q, 500, deps());
