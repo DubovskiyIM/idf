@@ -125,3 +125,130 @@ export function buildEffects(intentId, ctx, world, drafts) {
       return []; // generic handler применит intent.particles.effects
   }
 }
+
+/**
+ * Seed — realistic demo-мир (~33 эффектов): курьеры, мерчанты, меню, зоны,
+ * диспетчер, демо-заказ в статусе ready. Логика из scripts/delivery-seed.mjs.
+ */
+export function getSeedEffects() {
+  const now = Date.now();
+  const effects = [];
+  const ef = (props) => effects.push({
+    id: uuid(), intent_id: "_seed", alpha: "add", scope: "account",
+    parent_id: null, status: "confirmed", ttl: null,
+    created_at: now, resolved_at: now, ...props,
+  });
+
+  // Couriers (4)
+  ["courier_1", "courier_2", "courier_3", "courier_4"].forEach((id, i) => {
+    ef({ target: "User", context: {
+      id, name: `Курьер ${i + 1}`, email: `${id}@delivery.local`,
+      role: "courier", rating: 4.5 + (i * 0.1), createdAt: now,
+    } });
+  });
+
+  // Merchants (3) + их owner-пользователи
+  const MERCHANTS = [
+    { id: "merch_1", ownerId: "m_user_1", name: "Пицца-бар", type: "restaurant" },
+    { id: "merch_2", ownerId: "m_user_2", name: "Суши-мастер", type: "restaurant" },
+    { id: "merch_3", ownerId: "m_user_3", name: "Бургер-кинг-фуд", type: "restaurant" },
+  ];
+  MERCHANTS.forEach(m => {
+    ef({ target: "User", context: {
+      id: m.ownerId, name: `Владелец ${m.name}`, email: `${m.ownerId}@delivery.local`,
+      role: "merchant", createdAt: now,
+    } });
+    ef({ target: "Merchant", context: {
+      id: m.id, ownerId: m.ownerId, name: m.name, type: m.type,
+      rating: 4.5, status: "active", createdAt: now,
+    } });
+  });
+
+  // MenuItem (10)
+  const MENU = [
+    { merch: "merch_1", name: "Маргарита", price: 590, category: "Пицца" },
+    { merch: "merch_1", name: "Четыре сыра", price: 690, category: "Пицца" },
+    { merch: "merch_1", name: "Пепперони", price: 650, category: "Пицца" },
+    { merch: "merch_2", name: "Сет Филадельфия", price: 1290, category: "Сеты" },
+    { merch: "merch_2", name: "Сет Калифорния", price: 990, category: "Сеты" },
+    { merch: "merch_2", name: "Мисо-суп", price: 290, category: "Супы" },
+    { merch: "merch_3", name: "Чизбургер", price: 390, category: "Бургеры" },
+    { merch: "merch_3", name: "Двойной бургер", price: 590, category: "Бургеры" },
+    { merch: "merch_3", name: "Картофель фри", price: 190, category: "Снеки" },
+    { merch: "merch_3", name: "Милкшейк", price: 290, category: "Напитки" },
+  ];
+  MENU.forEach((item, i) => {
+    ef({ target: "MenuItem", context: {
+      id: `item_${i + 1}`, merchantId: item.merch, name: item.name,
+      price: item.price, category: item.category, available: true,
+    } });
+  });
+
+  // Zones (2)
+  ef({ target: "Zone", context: {
+    id: "zone_center", name: "Центр", city: "Москва",
+    polygon: [
+      { lat: 55.760, lng: 37.600 }, { lat: 55.760, lng: 37.640 },
+      { lat: 55.745, lng: 37.640 }, { lat: 55.745, lng: 37.600 },
+    ],
+  } });
+  ef({ target: "Zone", context: {
+    id: "zone_east", name: "Восток", city: "Москва",
+    polygon: [
+      { lat: 55.760, lng: 37.640 }, { lat: 55.760, lng: 37.680 },
+      { lat: 55.745, lng: 37.680 }, { lat: 55.745, lng: 37.640 },
+    ],
+  } });
+
+  // Dispatcher + 2 assignments
+  ef({ target: "User", context: {
+    id: "disp_1", name: "Диспетчер Иван", email: "disp_1@delivery.local",
+    role: "dispatcher", createdAt: now,
+  } });
+  ef({ target: "DispatcherAssignment", context: {
+    id: "dassign_1", dispatcherId: "disp_1", zoneId: "zone_center",
+    status: "active", shiftStart: now - 3600_000, shiftEnd: now + 18000_000,
+  } });
+  ef({ target: "DispatcherAssignment", context: {
+    id: "dassign_2", dispatcherId: "disp_1", zoneId: "zone_east",
+    status: "active", shiftStart: now - 3600_000, shiftEnd: now + 18000_000,
+  } });
+
+  // Customer + demo Order (ready, ждёт курьера)
+  ef({ target: "User", context: {
+    id: "cust_1", name: "Клиент Анна", email: "anna@delivery.local",
+    role: "customer", createdAt: now,
+  } });
+  ef({ target: "Address", context: {
+    id: "addr_demo", text: "Тверская 10", lat: 55.7648, lng: 37.6053,
+    placeId: "pl_tv10", source: "seed",
+  } });
+  ef({ target: "Order", context: {
+    id: "order_demo", customerId: "cust_1", merchantId: "merch_1",
+    status: "ready", totalAmount: 1240, deliveryAddress: "Тверская 10",
+    addressId: "addr_demo",
+    createdAt: now - 1200_000,
+  } });
+  ef({ target: "OrderItem", context: {
+    id: "oi_1", orderId: "order_demo", menuItemId: "item_1", quantity: 1, price: 590,
+  } });
+  ef({ target: "OrderItem", context: {
+    id: "oi_2", orderId: "order_demo", menuItemId: "item_2", quantity: 1, price: 650,
+  } });
+  ef({ target: "Payment", context: {
+    id: "pay_demo", orderId: "order_demo", customerId: "cust_1",
+    amount: 1240, status: "pending", createdAt: now - 1200_000,
+  } });
+
+  // Courier-локации — для карты dispatcher_map
+  ef({ target: "CourierLocation", context: {
+    id: "cloc_1", courierId: "courier_1", lat: 55.755, lng: 37.620,
+    status: "available", updatedAt: now,
+  } });
+  ef({ target: "CourierLocation", context: {
+    id: "cloc_2", courierId: "courier_2", lat: 55.752, lng: 37.650,
+    status: "busy", updatedAt: now,
+  } });
+
+  return effects;
+}

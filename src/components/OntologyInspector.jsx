@@ -28,10 +28,19 @@ export default function OntologyInspector({ world, domain, dark }) {
   const entityIntents = useMemo(() => {
     const map = {};
     for (const [id, intent] of Object.entries(INTENTS)) {
-      for (const e of intent.particles.entities) {
-        const typeName = e.split(":").pop().trim().replace(/\(.*\)/, "");
+      // Legacy-домены: particles.entities = ["role: TypeName"].
+      // Новые (invest/delivery/sales): декларативный effects[] + creates → роль = "creator".
+      const ents = intent?.particles?.entities;
+      if (Array.isArray(ents) && ents.length > 0) {
+        for (const e of ents) {
+          const typeName = e.split(":").pop().trim().replace(/\(.*\)/, "");
+          if (!map[typeName]) map[typeName] = [];
+          map[typeName].push({ id, name: intent.name, role: e.split(":")[0].trim() });
+        }
+      } else if (intent?.creates) {
+        const typeName = intent.creates;
         if (!map[typeName]) map[typeName] = [];
-        map[typeName].push({ id, name: intent.name, role: e.split(":")[0].trim() });
+        map[typeName].push({ id, name: intent.name, role: "creates" });
       }
     }
     return map;
