@@ -1,4 +1,5 @@
 export const ONTOLOGY = {
+  systemCollections: ["hypotheses"],
   entities: {
     User: {
       fields: {
