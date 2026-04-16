@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import DomainPicker from "./DomainPicker.jsx";
 import Graph3D from "./Graph3D.jsx";
 import Inspector from "./Inspector.jsx";
@@ -7,6 +7,28 @@ import NewDomainModal from "./NewDomainModal.jsx";
 import { fetchGraph } from "./api/graph.js";
 import { subscribeDomain } from "./api/watch.js";
 
+function nodeSignature(n) {
+  if (n.kind === "entity") return JSON.stringify({ fields: n.fields, ownerField: n.ownerField, statuses: n.statuses });
+  if (n.kind === "intent") return JSON.stringify(n.particles);
+  if (n.kind === "role") return JSON.stringify({ base: n.base, canInvoke: n.canInvoke });
+  if (n.kind === "projection") return JSON.stringify({ archetype: n.archetype, source: n.source });
+  return JSON.stringify(n);
+}
+
+function computeDiff(oldGraph, newGraph) {
+  const diff = new Map();
+  const oldMap = new Map(oldGraph.nodes.map((n) => [n.id, n]));
+  for (const n of newGraph.nodes) {
+    const prev = oldMap.get(n.id);
+    if (!prev) {
+      diff.set(n.id, "added");
+    } else if (nodeSignature(prev) !== nodeSignature(n)) {
+      diff.set(n.id, "changed");
+    }
+  }
+  return diff;
+}
+
 export default function App() {
   const [domain, setDomain] = useState(null);
   const [graph, setGraph] = useState(null);
@@ -14,11 +36,16 @@ export default function App() {
   const [chatOpen, setChatOpen] = useState(false);
   const [chatPrefill, setChatPrefill] = useState("");
   const [newModal, setNewModal] = useState(false);
+  const [pings, setPings] = useState(() => new Map());
+  const prevGraphRef = useRef(null);
+  const pingTimerRef = useRef(null);
 
   useEffect(() => {
     if (!domain) return;
     setGraph(null);
     setSelected(null);
+    prevGraphRef.current = null;
+    setPings(new Map());
     fetchGraph(domain).then(setGraph).catch((e) => console.warn(e));
     let debounceTimer;
     const unsub = subscribeDomain(domain, () => {
@@ -29,6 +56,18 @@ export default function App() {
     });
     return () => { unsub(); clearTimeout(debounceTimer); };
   }, [domain]);
+
+  useEffect(() => {
+    if (!graph) return;
+    const prev = prevGraphRef.current;
+    prevGraphRef.current = graph;
+    if (!prev) return;
+    const diff = computeDiff(prev, graph);
+    if (diff.size === 0) return;
+    setPings(diff);
+    clearTimeout(pingTimerRef.current);
+    pingTimerRef.current = setTimeout(() => setPings(new Map()), 3500);
+  }, [graph]);
 
   useEffect(() => {
     if (!domain) return;
@@ -80,7 +119,7 @@ export default function App() {
         {domain} · {graph.nodes.length} узлов · ⚠ {graph.warnings.length} ·
         <button onClick={() => setChatOpen(true)} style={{ marginLeft: 8 }}>⌘K chat</button>
       </div>
-      <Graph3D graph={graph} onNodeClick={setSelected} />
+      <Graph3D graph={graph} onNodeClick={setSelected} pings={pings} />
       <Inspector
         node={selected}
         warnings={graph.warnings}
