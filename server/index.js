@@ -6,7 +6,7 @@ const { router: entitiesRouter, registerOntology } = require("./routes/entities.
 const { registerOntology: registerFullOntology } = require("./ontologyRegistry.cjs");
 
 const app = express();
-const PORT = 3001;
+const PORT = Number(process.env.PORT) || 3001;
 
 app.use(cors());
 // Лимит body 10mb — дефолтные 100kb режут data URL'ы для картинок (аватары).

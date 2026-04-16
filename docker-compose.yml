@@ -1,0 +1,94 @@
+# IDF prototype — multi-service deployment.
+#
+# Один образ (build: .) переиспользуется для main + 8 моков.
+# Моки получают IDF_MAIN_SERVER=http://main:3001 через internal DNS Docker'а.
+# Только main опубликован на хост (127.0.0.1:3001) — nginx-host проксирует
+# https://app.intent-design.tech → 127.0.0.1:3001.
+
+services:
+  main:
+    build: .
+    image: idf:latest
+    container_name: idf-main
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:3001:3001"
+    volumes:
+      - idf-data:/data
+    environment:
+      NODE_ENV: production
+      PORT: "3001"
+      IDF_DB_PATH: /data/idf.db
+
+  external-calendar:
+    image: idf:latest
+    depends_on: [main]
+    container_name: idf-calendar
+    restart: unless-stopped
+    command: ["node", "external-calendar/index.js"]
+
+  invest-ml:
+    image: idf:latest
+    depends_on: [main]
+    container_name: idf-invest-ml
+    restart: unless-stopped
+    command: ["node", "invest-ml/index.js"]
+    environment:
+      IDF_MAIN_SERVER: http://main:3001
+
+  invest-fuzzy:
+    image: idf:latest
+    depends_on: [main]
+    container_name: idf-invest-fuzzy
+    restart: unless-stopped
+    command: ["node", "invest-fuzzy/index.js"]
+    environment:
+      IDF_MAIN_SERVER: http://main:3001
+
+  market-data:
+    image: idf:latest
+    depends_on: [main]
+    container_name: idf-market-data
+    restart: unless-stopped
+    command: ["node", "market-data/index.js"]
+    environment:
+      IDF_MAIN_SERVER: http://main:3001
+
+  courier-feed:
+    image: idf:latest
+    depends_on: [main]
+    container_name: idf-courier-feed
+    restart: unless-stopped
+    command: ["node", "courier-location-feed/index.js"]
+    environment:
+      IDF_MAIN_SERVER: http://main:3001
+
+  geocoder:
+    image: idf:latest
+    depends_on: [main]
+    container_name: idf-geocoder
+    restart: unless-stopped
+    command: ["node", "geocoder/index.js"]
+    environment:
+      IDF_MAIN_SERVER: http://main:3001
+
+  payment-gateway:
+    image: idf:latest
+    depends_on: [main]
+    container_name: idf-payment-gw
+    restart: unless-stopped
+    command: ["node", "payment-gateway/index.js"]
+    environment:
+      IDF_MAIN_SERVER: http://main:3001
+
+  notification-gateway:
+    image: idf:latest
+    depends_on: [main]
+    container_name: idf-notify-gw
+    restart: unless-stopped
+    command: ["node", "notification-gateway/index.js"]
+    environment:
+      IDF_MAIN_SERVER: http://main:3001
+
+volumes:
+  idf-data:
