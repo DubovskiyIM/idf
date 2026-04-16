@@ -36,10 +36,22 @@ function resolveContext(mapping, storedContext) {
   return result;
 }
 
-function buildActionEffect(actionIntentId, intent, resolvedContext) {
+function buildActionEffect(actionIntentId, intent, resolvedContext, ruleId) {
   const effects = intent.particles?.effects || [];
   const id = `rule_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
   const now = Date.now();
+
+  // §15 v1.9 witness-of-action: rule-fired effect декларирует свою causal basis.
+  const contextWithWitness = ruleId
+    ? {
+        ...resolvedContext,
+        __witness: {
+          basis: `rule "${ruleId}" fired`,
+          example: `action: ${actionIntentId}`,
+          ruleId,
+        },
+      }
+    : resolvedContext;
 
   if (effects.length === 1) {
     const ef = effects[0];
@@ -50,7 +62,7 @@ function buildActionEffect(actionIntentId, intent, resolvedContext) {
       target: ef.target,
       value: ef.value,
       scope: ef.σ || "account",
-      context: resolvedContext,
+      context: contextWithWitness,
       created_at: now,
     };
   }
@@ -65,11 +77,11 @@ function buildActionEffect(actionIntentId, intent, resolvedContext) {
       alpha: ef.α,
       target: ef.target,
       value: ef.value,
-      context: resolvedContext,
+      context: contextWithWitness,
       scope: ef.σ || "account",
     })),
     scope: "account",
-    context: resolvedContext,
+    context: contextWithWitness,
     created_at: now,
   };
 }
@@ -255,7 +267,7 @@ function evaluateRules(stored, worldThunk, deps) {
     };
     const validation = validateIntentConditions(mockEffect, world);
     if (validation.valid) {
-      const effect = buildActionEffect(rule.action, intent, resolvedCtx);
+      const effect = buildActionEffect(rule.action, intent, resolvedCtx, rule.id);
       results.push({ rule, effect });
     }
   }
