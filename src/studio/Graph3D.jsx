@@ -41,6 +41,7 @@ function makePingMesh(size, color) {
   const geom = new THREE.SphereGeometry(size * 2.3, 24, 24);
   const mat = new THREE.MeshBasicMaterial({ color, transparent: true, opacity: 0.5 });
   const mesh = new THREE.Mesh(geom, mat);
+  mesh.userData.isPing = true;
   const born = Date.now();
   mesh.onBeforeRender = () => {
     const t = (Date.now() - born) / 1000;
@@ -55,6 +56,7 @@ function makeSelectionRing(size) {
   const geom = new THREE.TorusGeometry(size * 1.6, size * 0.08, 12, 48);
   const mat = new THREE.MeshBasicMaterial({ color: "#f8fafc", transparent: true, opacity: 0.95 });
   const ring = new THREE.Mesh(geom, mat);
+  ring.userData.isSelection = true;
   ring.onBeforeRender = () => {
     ring.rotation.y += 0.02;
     ring.rotation.x += 0.01;
@@ -62,7 +64,7 @@ function makeSelectionRing(size) {
   return ring;
 }
 
-function nodeThreeObject(node, warningsByNode, pingType, isSelected) {
+function nodeThreeObject(node, warningsByNode) {
   const size = nodeSize(node);
   const mat = new THREE.MeshLambertMaterial({ color: COLOR[node.kind] || "#94a3b8" });
   const mesh = new THREE.Mesh(makeGeometry(node, size), mat);
@@ -82,15 +84,19 @@ function nodeThreeObject(node, warningsByNode, pingType, isSelected) {
     mesh.add(glow);
   }
 
-  if (pingType) {
-    mesh.add(makePingMesh(size, PING_COLOR[pingType] || "#60a5fa"));
-  }
-
-  if (isSelected) {
-    mesh.add(makeSelectionRing(size));
-  }
-
   return mesh;
+}
+
+function attachOverlay(node, mesh) {
+  if (!node?.__threeObj || !mesh) return;
+  node.__threeObj.add(mesh);
+}
+
+function removeOverlay(node, predicate) {
+  const obj = node?.__threeObj;
+  if (!obj) return;
+  const toRemove = obj.children.filter(predicate);
+  for (const c of toRemove) obj.remove(c);
 }
 
 export default function Graph3D({ graph, onNodeClick, pings, selectedId }) {
@@ -109,11 +115,6 @@ export default function Graph3D({ graph, onNodeClick, pings, selectedId }) {
 
   const data = useMemo(() => {
     const nodeIds = new Set(graph.nodes.map((n) => n.id));
-    const mapped = graph.nodes.map((n) => ({
-      ...n,
-      _ping: pings?.get(n.id) || null,
-      _selected: n.id === selectedId,
-    }));
     const extraNodes = [];
     for (const e of graph.edges) {
       if (!nodeIds.has(e.target)) {
@@ -127,10 +128,10 @@ export default function Graph3D({ graph, onNodeClick, pings, selectedId }) {
       }
     }
     return {
-      nodes: [...mapped, ...extraNodes],
+      nodes: [...graph.nodes, ...extraNodes],
       links: graph.edges.map((e) => ({ source: e.source, target: e.target, kind: e.kind, raw: e })),
     };
-  }, [graph, pings, selectedId]);
+  }, [graph]);
 
   useEffect(() => {
     if (!fgRef.current) return;
@@ -138,6 +139,46 @@ export default function Graph3D({ graph, onNodeClick, pings, selectedId }) {
     if (charge) charge.strength(-60);
   }, []);
 
+  // Ping overlays: add/remove without re-rendering nodes
+  useEffect(() => {
+    if (!fgRef.current) return;
+    const apply = () => {
+      const gd = fgRef.current?.graphData?.();
+      if (!gd) return;
+      for (const n of gd.nodes) {
+        removeOverlay(n, (c) => c.userData?.isPing);
+      }
+      if (!pings || pings.size === 0) return;
+      for (const n of gd.nodes) {
+        const type = pings.get(n.id);
+        if (!type || !n.__threeObj) continue;
+        attachOverlay(n, makePingMesh(nodeSize(n), PING_COLOR[type] || "#60a5fa"));
+      }
+    };
+    const t1 = requestAnimationFrame(apply);
+    const t2 = setTimeout(apply, 250);
+    return () => { cancelAnimationFrame(t1); clearTimeout(t2); };
+  }, [pings]);
+
+  // Selection ring: imperative
+  useEffect(() => {
+    if (!fgRef.current) return;
+    const apply = () => {
+      const gd = fgRef.current?.graphData?.();
+      if (!gd) return;
+      for (const n of gd.nodes) {
+        removeOverlay(n, (c) => c.userData?.isSelection);
+      }
+      if (!selectedId) return;
+      const n = gd.nodes.find((x) => x.id === selectedId);
+      if (!n?.__threeObj) return;
+      attachOverlay(n, makeSelectionRing(nodeSize(n)));
+    };
+    const t1 = requestAnimationFrame(apply);
+    return () => cancelAnimationFrame(t1);
+  }, [selectedId, data]);
+
+  // Camera fly to selected node
   useEffect(() => {
     if (!fgRef.current || !selectedId) return;
     const node = data.nodes.find((n) => n.id === selectedId);
@@ -163,7 +204,7 @@ export default function Graph3D({ graph, onNodeClick, pings, selectedId }) {
       ref={fgRef}
       graphData={data}
       backgroundColor="#0f172a"
-      nodeThreeObject={(n) => nodeThreeObject(n, warningsByNode, n._ping, n._selected)}
+      nodeThreeObject={(n) => nodeThreeObject(n, warningsByNode)}
       linkColor={(l) => EDGE_COLOR[l.kind] || "#475569"}
       linkWidth={(l) => (l.kind?.endsWith("-particle") ? 1.2 : 0.8)}
       linkOpacity={0.7}
