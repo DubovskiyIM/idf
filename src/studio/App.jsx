@@ -3,6 +3,7 @@ import DomainPicker from "./DomainPicker.jsx";
 import Graph3D from "./Graph3D.jsx";
 import Inspector from "./Inspector.jsx";
 import ChatDrawer from "./ChatDrawer.jsx";
+import NewDomainModal from "./NewDomainModal.jsx";
 import { fetchGraph } from "./api/graph.js";
 import { subscribeDomain } from "./api/watch.js";
 
@@ -12,6 +13,7 @@ export default function App() {
   const [selected, setSelected] = useState(null);
   const [chatOpen, setChatOpen] = useState(false);
   const [chatPrefill, setChatPrefill] = useState("");
+  const [newModal, setNewModal] = useState(false);
 
   useEffect(() => {
     if (!domain) return;
@@ -50,7 +52,24 @@ export default function App() {
   }, []);
 
   if (!domain) {
-    return <DomainPicker onPick={setDomain} onNewDomain={() => alert("Новый домен — Task 4.3")} />;
+    return (
+      <>
+        <DomainPicker onPick={setDomain} onNewDomain={() => setNewModal(true)} />
+        {newModal && (
+          <NewDomainModal
+            onClose={() => setNewModal(false)}
+            onCreated={({ name, prompt }) => {
+              setNewModal(false);
+              setDomain(name);
+              if (prompt) {
+                setChatPrefill(`Создай начальный набор intents/entities/projections для домена "${name}": ${prompt}. Следуй паттерну booking (как простейшего домена). Начни с ontology.entities, потом intents с частицами.`);
+                setChatOpen(true);
+              }
+            }}
+          />
+        )}
+      </>
+    );
   }
   if (!graph) return <div style={{ padding: 24 }}>Загрузка графа…</div>;
 

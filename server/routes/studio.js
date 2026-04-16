@@ -4,6 +4,7 @@ const path = require("path");
 const { buildGraph } = require("../studio/graphBuilder.js");
 const { createFileWatcher } = require("../studio/fileWatcher.js");
 const { spawnClaude } = require("../studio/claudeProxy.js");
+const { createDomainSkeleton } = require("../studio/domainCreator.js");
 
 const router = express.Router();
 const DOMAINS_DIR = path.resolve(__dirname, "..", "..", "src", "domains");
@@ -90,6 +91,17 @@ router.get("/domain/:name/events", (req, res) => {
     watcher.off("change", onChange);
     clearInterval(hb);
   });
+});
+
+router.post("/domain/new", express.json(), (req, res) => {
+  const { name, description } = req.body || {};
+  if (!name) return res.status(400).json({ error: "name required" });
+  try {
+    createDomainSkeleton(name, description);
+    res.json({ ok: true, name });
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
 });
 
 router.post("/chat", express.json(), async (req, res) => {
