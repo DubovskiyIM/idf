@@ -5,6 +5,7 @@ import Inspector from "./Inspector.jsx";
 import ChatDrawer from "./ChatDrawer.jsx";
 import NewDomainModal from "./NewDomainModal.jsx";
 import ThinkingCat from "./ThinkingCat.jsx";
+import PatternsView from "./patterns/PatternsView.jsx";
 import { fetchGraph } from "./api/graph.js";
 import { subscribeDomain } from "./api/watch.js";
 
@@ -30,7 +31,50 @@ function computeDiff(oldGraph, newGraph) {
   return diff;
 }
 
+// Верхний tab-strip: переключатель между Graph (текущая работа с доменом)
+// и Patterns (Pattern Bank catalog / inspector). Высота 44px фиксирована,
+// PatternsView рассчитывает высоту через calc(100vh - 44px).
+function TabStrip({ view, setView }) {
+  const tabStyle = (active) => ({
+    padding: "10px 18px",
+    cursor: "pointer",
+    background: active ? "#1e293b" : "transparent",
+    color: active ? "#e0e7ff" : "#94a3b8",
+    border: "none",
+    borderBottom: active ? "2px solid #60a5fa" : "2px solid transparent",
+    fontSize: 13,
+    fontWeight: active ? 600 : 400,
+    fontFamily: "inherit",
+    outline: "none",
+  });
+  return (
+    <div
+      style={{
+        height: 44,
+        display: "flex",
+        alignItems: "stretch",
+        background: "#0b1220",
+        borderBottom: "1px solid #1e293b",
+      }}
+    >
+      <button
+        onClick={() => setView("graph")}
+        style={tabStyle(view === "graph")}
+      >
+        Graph
+      </button>
+      <button
+        onClick={() => setView("patterns")}
+        style={tabStyle(view === "patterns")}
+      >
+        Patterns
+      </button>
+    </div>
+  );
+}
+
 export default function App() {
+  const [view, setView] = useState("graph");
   const [domain, setDomain] = useState(null);
   const [graph, setGraph] = useState(null);
   const [selected, setSelected] = useState(null);
@@ -93,52 +137,64 @@ export default function App() {
     setChatOpen(true);
   }, []);
 
-  if (!domain) {
+  // Graph-view контент: вынесен в локальную функцию, чтобы tab-strip был
+  // виден всегда (включая экраны picker / loading), а ранние return'ы не
+  // обходили его.
+  const renderGraphView = () => {
+    if (!domain) {
+      return (
+        <>
+          <DomainPicker onPick={setDomain} onNewDomain={() => setNewModal(true)} />
+          {newModal && (
+            <NewDomainModal
+              onClose={() => setNewModal(false)}
+              onCreated={({ name, prompt }) => {
+                setNewModal(false);
+                setDomain(name);
+                if (prompt) {
+                  setChatPrefill(`Создай начальный набор intents/entities/projections для домена "${name}": ${prompt}. Следуй паттерну booking (как простейшего домена). Начни с ontology.entities, потом intents с частицами.`);
+                  setChatOpen(true);
+                }
+              }}
+            />
+          )}
+        </>
+      );
+    }
+    if (!graph) return <div style={{ padding: 24 }}>Загрузка графа…</div>;
+
     return (
-      <>
-        <DomainPicker onPick={setDomain} onNewDomain={() => setNewModal(true)} />
-        {newModal && (
-          <NewDomainModal
-            onClose={() => setNewModal(false)}
-            onCreated={({ name, prompt }) => {
-              setNewModal(false);
-              setDomain(name);
-              if (prompt) {
-                setChatPrefill(`Создай начальный набор intents/entities/projections для домена "${name}": ${prompt}. Следуй паттерну booking (как простейшего домена). Начни с ontology.entities, потом intents с частицами.`);
-                setChatOpen(true);
-              }
-            }}
-          />
-        )}
-      </>
+      <div style={{ height: "calc(100vh - 44px)", position: "relative" }}>
+        <div style={{ position: "absolute", top: 8, left: 8, zIndex: 10, background: "#1e293b", padding: "6px 10px", borderRadius: 4, fontSize: 12 }}>
+          <button onClick={() => setDomain(null)} style={{ marginRight: 8 }}>← domains</button>
+          {domain} · {graph.nodes.length} узлов · ⚠ {graph.warnings.length} ·
+          <button onClick={() => setChatOpen(true)} style={{ marginLeft: 8 }}>⌘K chat</button>
+        </div>
+        <Graph3D graph={graph} onNodeClick={setSelected} pings={pings} selectedId={selected?.id} flyToken={flyToken} />
+        <ThinkingCat visible={chatBusy} />
+        <Inspector
+          node={selected}
+          warnings={graph.warnings}
+          onClose={() => setSelected(null)}
+          onFixWithClaude={onFixWithClaude}
+          onFlyTo={() => setFlyToken((t) => t + 1)}
+        />
+        <ChatDrawer
+          open={chatOpen}
+          onClose={() => setChatOpen(false)}
+          domain={domain}
+          prefill={chatPrefill}
+          onPrefillConsumed={() => setChatPrefill("")}
+          onBusyChange={setChatBusy}
+        />
+      </div>
     );
-  }
-  if (!graph) return <div style={{ padding: 24 }}>Загрузка графа…</div>;
+  };
 
   return (
-    <div style={{ height: "100vh", position: "relative" }}>
-      <div style={{ position: "absolute", top: 8, left: 8, zIndex: 10, background: "#1e293b", padding: "6px 10px", borderRadius: 4, fontSize: 12 }}>
-        <button onClick={() => setDomain(null)} style={{ marginRight: 8 }}>← domains</button>
-        {domain} · {graph.nodes.length} узлов · ⚠ {graph.warnings.length} ·
-        <button onClick={() => setChatOpen(true)} style={{ marginLeft: 8 }}>⌘K chat</button>
-      </div>
-      <Graph3D graph={graph} onNodeClick={setSelected} pings={pings} selectedId={selected?.id} flyToken={flyToken} />
-      <ThinkingCat visible={chatBusy} />
-      <Inspector
-        node={selected}
-        warnings={graph.warnings}
-        onClose={() => setSelected(null)}
-        onFixWithClaude={onFixWithClaude}
-        onFlyTo={() => setFlyToken((t) => t + 1)}
-      />
-      <ChatDrawer
-        open={chatOpen}
-        onClose={() => setChatOpen(false)}
-        domain={domain}
-        prefill={chatPrefill}
-        onPrefillConsumed={() => setChatPrefill("")}
-        onBusyChange={setChatBusy}
-      />
+    <div style={{ height: "100vh", display: "flex", flexDirection: "column" }}>
+      <TabStrip view={view} setView={setView} />
+      {view === "graph" ? renderGraphView() : <PatternsView />}
     </div>
   );
 }
