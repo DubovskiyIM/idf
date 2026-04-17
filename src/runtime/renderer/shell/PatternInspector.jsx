@@ -10,12 +10,15 @@
 // Не покрыт compoment-тестом: в репо нет @testing-library/react + jsdom
 // на момент v1.8 preview. Ручная валидация в браузере.
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 
-export default function PatternInspector({ domain, projectionId, onClose, onPreviewChange }) {
+export default function PatternInspector({ domain, projectionId, onClose, onPreviewChange, initialSelectedPatternId = null }) {
   const [explain, setExplain] = useState(null);
   const [mode, setMode] = useState("off"); // "off" | "preview"
-  const [selectedPatternId, setSelectedPatternId] = useState(null);
+  // initialSelectedPatternId — deep-link seed из ?inspect=<patternId>. Применяется
+  // только при первом mount; последующие смены пропа игнорируются, чтобы не
+  // конкурировать с пользовательским выбором через radio.
+  const [selectedPatternId, setSelectedPatternId] = useState(initialSelectedPatternId);
 
   const load = useCallback(async (preview = null) => {
     if (!domain || !projectionId) return;
@@ -49,8 +52,14 @@ export default function PatternInspector({ domain, projectionId, onClose, onPrev
   }, [mode, selectedPatternId, load]);
 
   // Сбрасываем selection при смене projection — иначе preview зависнет
-  // на id, которого нет в новой projection.
+  // на id, которого нет в новой projection. Первый mount пропускаем, чтобы
+  // не затереть initialSelectedPatternId (deep-link из ?inspect=).
+  const didMountRef = useRef(false);
   useEffect(() => {
+    if (!didMountRef.current) {
+      didMountRef.current = true;
+      return;
+    }
     setSelectedPatternId(null);
     setMode("off");
   }, [domain, projectionId]);

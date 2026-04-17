@@ -112,6 +112,38 @@ export default function V2Shell({
   const { prefs, setPref, resetPrefs } = usePersonalPrefs();
   const [prefsOpen, setPrefsOpen] = useState(false);
 
+  // Deep-link ?inspect=<patternId> — читается один раз при первом mount.
+  // Если параметр присутствует: активируем drawer и seed'им selection
+  // в PatternInspector. Не reactive (URL не слушается на изменения), чтобы
+  // не конкурировать с пользовательским выбором паттерна через UI.
+  const [initialInspectPattern] = useState(() => {
+    if (typeof window === "undefined") return null;
+    try {
+      return new URLSearchParams(window.location.search).get("inspect");
+    } catch {
+      return null;
+    }
+  });
+
+  useEffect(() => {
+    if (initialInspectPattern && !prefs.patternInspector) {
+      setPref("patternInspector", true);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // one-shot
+
+  // Hotkey Cmd+Shift+P / Ctrl+Shift+P — toggle Pattern Inspector drawer.
+  useEffect(() => {
+    const onKey = (e) => {
+      if ((e.metaKey || e.ctrlKey) && e.shiftKey && e.key && e.key.toLowerCase() === "p") {
+        e.preventDefault();
+        setPref("patternInspector", !prefs.patternInspector);
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [prefs.patternInspector, setPref]);
+
   // Pattern Bank live preview (§27 authoring-env): override передаётся
   // в ProjectionRendererV2, заменяя currentArtifact на artifactAfter
   // из /api/patterns/explain?previewPatternId=...
@@ -273,6 +305,7 @@ export default function V2Shell({
               projectionId={current?.projectionId}
               onClose={() => setPref("patternInspector", false)}
               onPreviewChange={setArtifactOverride}
+              initialSelectedPatternId={initialInspectPattern}
             />
           )}
         </div>
