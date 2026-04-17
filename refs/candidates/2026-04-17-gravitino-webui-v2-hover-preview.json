@@ -1,0 +1,65 @@
+{
+  "id": "hover-preview",
+  "version": 1,
+  "status": "candidate",
+  "archetype": null,
+  "trigger": {
+    "requires": [
+      {
+        "kind": "sub-entity-exists",
+        "depth": "≥3"
+      },
+      {
+        "kind": "entity-field",
+        "fields": "[comment, properties, createdAt, createdBy]"
+      }
+    ]
+  },
+  "structure": {
+    "slot": "overlay",
+    "description": "Hover на tree-узле или item в каталоге открывает popover с метаданными (comment, createdAt, ключевые properties) без навигации. Фиксируется по focus/click для чтения."
+  },
+  "rationale": {
+    "hypothesis": "При hierarchical-навигации пользователь часто хочет проверить метаданные узла, не покидая текущий контекст. Hover-preview — low-cost inspection, сокращает number-of-clicks для 'just looking'.",
+    "evidence": [
+      {
+        "source": "gravitino-webui",
+        "description": "Hover на tree-узле показывает popover с comment и ключевыми properties",
+        "reliability": "high"
+      },
+      {
+        "source": "notion",
+        "description": "Hover preview для линков страниц",
+        "reliability": "high"
+      }
+    ],
+    "counterexample": [
+      {
+        "source": "mobile-UIs",
+        "description": "Нет hover на touch-устройствах — pattern ломается",
+        "reliability": "high"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [
+      {
+        "domain": "workflow",
+        "projection": "nodes_tree",
+        "reason": "Node hover может показать last execution result"
+      }
+    ],
+    "shouldNotMatch": [
+      {
+        "domain": "lifequest",
+        "projection": "habits_feed",
+        "reason": "Mobile-first домен, hover неприменим"
+      },
+      {
+        "domain": "delivery",
+        "projection": "active_delivery",
+        "reason": "Mobile courier app"
+      }
+    ]
+  }
+}

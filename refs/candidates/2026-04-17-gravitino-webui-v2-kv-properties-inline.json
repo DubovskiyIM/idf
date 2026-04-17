@@ -1,0 +1,61 @@
+{
+  "id": "kv-properties-inline",
+  "version": 1,
+  "status": "candidate",
+  "archetype": "detail",
+  "trigger": {
+    "requires": [
+      {
+        "kind": "entity-field",
+        "field": "properties",
+        "type": "open-ended-map"
+      },
+      {
+        "kind": "intent-effect",
+        "target": "*.properties",
+        "α": "replace"
+      }
+    ]
+  },
+  "structure": {
+    "slot": "sections",
+    "description": "Секция Properties как двухколоночная таблица key / value с inline-edit для существующих строк и '+ Add property' для новых. Удаление — trash icon на строке. Коммит — после blur/enter, не отдельной save-кнопкой."
+  },
+  "rationale": {
+    "hypothesis": "Open-ended key-value map (без фиксированной schema) — inherent для metadata-систем. Full form для такого поля не работает (схема неизвестна). Table с inline-edit — минимальный UI, matching data model exactly.",
+    "evidence": [
+      {
+        "source": "gravitino-webui",
+        "description": "Catalog/Schema properties — inline KV-таблица в detail",
+        "reliability": "high"
+      },
+      {
+        "source": "kubernetes-annotations",
+        "description": "kubectl edit — KV-редактор",
+        "reliability": "medium"
+      }
+    ],
+    "counterexample": [
+      {
+        "source": "typed-schema",
+        "description": "Когда fields fixed/typed — обычная форма лучше",
+        "reliability": "high"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [],
+    "shouldNotMatch": [
+      {
+        "domain": "invest",
+        "projection": "portfolio_detail",
+        "reason": "Portfolio fields typed, не open-ended map"
+      },
+      {
+        "domain": "booking",
+        "projection": "service_detail",
+        "reason": "Service поля фиксированы"
+      }
+    ]
+  }
+}

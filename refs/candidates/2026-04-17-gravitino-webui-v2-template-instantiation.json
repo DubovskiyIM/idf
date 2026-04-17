@@ -1,0 +1,71 @@
+{
+  "id": "template-instantiation",
+  "version": 1,
+  "status": "candidate",
+  "archetype": "detail",
+  "trigger": {
+    "requires": [
+      {
+        "kind": "entity-field",
+        "fields": "[placeholders|arguments|template]"
+      },
+      {
+        "kind": "intent-creates",
+        "creates": "*Execution|*Job|*Instance",
+        "from": "*Template"
+      }
+    ]
+  },
+  "structure": {
+    "slot": "primaryCTA",
+    "description": "На detail template-сущности — primary CTA 'Run'. Открывает форму только с placeholder-слотами (не все поля template), предзаполненную defaults. Submit создаёт execution-сущность со snapshot'ом подставленных значений."
+  },
+  "rationale": {
+    "hypothesis": "Template + instantiation — частый паттерн в job-schedulers/CI/workflow. Run-form должен показывать ТОЛЬКО placeholder'ы, а не всю template-форму, чтобы сфокусировать пользователя на переменных параметрах конкретного запуска.",
+    "evidence": [
+      {
+        "source": "gravitino-webui",
+        "description": "JobTemplate с placeholders[], run_job substitutes placeholders",
+        "reliability": "high"
+      },
+      {
+        "source": "github-actions",
+        "description": "Workflow dispatch с inputs, заданными в workflow template",
+        "reliability": "high"
+      },
+      {
+        "source": "jenkins",
+        "description": "Parameterized build",
+        "reliability": "high"
+      }
+    ],
+    "counterexample": [
+      {
+        "source": "gravitino-webui",
+        "description": "Catalog — создание без template, не подходит",
+        "reliability": "high"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [
+      {
+        "domain": "workflow",
+        "projection": "workflow_detail",
+        "reason": "Run workflow instantiates Execution с node outputs"
+      }
+    ],
+    "shouldNotMatch": [
+      {
+        "domain": "booking",
+        "projection": "specialist_detail",
+        "reason": "Создание Booking не instantiate-from-template"
+      },
+      {
+        "domain": "sales",
+        "projection": "listing_detail",
+        "reason": "Bid не instantiation шаблона"
+      }
+    ]
+  }
+}

@@ -1,0 +1,69 @@
+{
+  "id": "m2m-attach-dialog",
+  "version": 1,
+  "status": "candidate",
+  "archetype": "detail",
+  "trigger": {
+    "requires": [
+      {
+        "kind": "sub-entity-exists",
+        "entityKind": "assignment"
+      },
+      {
+        "kind": "intent-creates",
+        "creates": "*Assignment"
+      },
+      {
+        "kind": "entity-field",
+        "fields": "[sourceId, targetId|objectFullName]"
+      }
+    ]
+  },
+  "structure": {
+    "slot": "sections",
+    "description": "На detail-экране owner-сущности — секция \"Attached\" со списком привязанных сущностей и кнопкой \"+ Attach\", открывающей multi-select dialog из каталога кандидатов. Выбор коммитится одним batch-intent."
+  },
+  "rationale": {
+    "hypothesis": "M2m-связи требуют выбора из большого множества. Inline-поиск на форме не работает для multi-select. Dedicated dialog с filtering + multi-select — стандартная форма для m2m-attach, минимизирует навигацию (не нужно уходить с detail).",
+    "evidence": [
+      {
+        "source": "gravitino-webui",
+        "description": "Tag / Policy attachment на Catalog detail — диалог с multi-select поверх каталога tags/policies",
+        "reliability": "high"
+      },
+      {
+        "source": "github-labels",
+        "description": "Applying labels to issue — multi-select popover",
+        "reliability": "high"
+      }
+    ],
+    "counterexample": [
+      {
+        "source": "messenger-contacts",
+        "description": "1:1 связь владения — multi-select не нужен",
+        "reliability": "high"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [
+      {
+        "domain": "invest",
+        "projection": "portfolio_detail",
+        "reason": "Attach asset watchlist — m2m User↔Asset"
+      }
+    ],
+    "shouldNotMatch": [
+      {
+        "domain": "planning",
+        "projection": "poll_detail",
+        "reason": "Poll→TimeOption — 1:N composition, не m2m"
+      },
+      {
+        "domain": "delivery",
+        "projection": "order_detail",
+        "reason": "Order→OrderItem — 1:N composition"
+      }
+    ]
+  }
+}

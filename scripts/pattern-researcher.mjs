@@ -75,8 +75,8 @@ export function callClaude(prompt, { images = [], timeoutMs = 120_000 } = {}) {
     proc.on("error", reject);
     proc.stdin.write(prompt);
     proc.stdin.end();
-    const timer = setTimeout(() => { proc.kill(); reject(new Error("Claude timeout")); }, timeoutMs);
-    proc.on("close", () => clearTimeout(timer));
+    const timer = setTimeout(() => { try { proc.kill(); } catch {} reject(new Error("Claude timeout")); }, timeoutMs);
+    proc.on("close", () => { try { clearTimeout(timer); } catch {} });
   });
 }
 

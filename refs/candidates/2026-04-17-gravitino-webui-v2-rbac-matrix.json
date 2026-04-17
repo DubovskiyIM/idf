@@ -1,0 +1,65 @@
+{
+  "id": "rbac-matrix",
+  "version": 1,
+  "status": "candidate",
+  "archetype": "detail",
+  "trigger": {
+    "requires": [
+      {
+        "kind": "entity-field",
+        "fields": "[securableObjects, privileges]"
+      },
+      {
+        "kind": "intent-creates",
+        "creates": "RoleAssignment|Role"
+      }
+    ]
+  },
+  "structure": {
+    "slot": "body",
+    "description": "Detail экран Role отображает матрицу [securableObject × privilege] с чекбоксами. Rows — выбранные из иерархии объекты, columns — гранулярные privileges. Edit коммитит diff matrix одним intent."
+  },
+  "rationale": {
+    "hypothesis": "RBAC — inherently 2D: что разрешено × над чем. List-of-list форма не визуализирует покрытие. Matrix-UI делает gaps (forgotten privilege combinations) видимыми и позволяет bulk-edit по строке/колонке.",
+    "evidence": [
+      {
+        "source": "gravitino-webui",
+        "description": "Role detail: securableObjects × privileges grid",
+        "reliability": "high"
+      },
+      {
+        "source": "aws-iam",
+        "description": "IAM policy editor показывает Action × Resource матрицу",
+        "reliability": "high"
+      }
+    ],
+    "counterexample": [
+      {
+        "source": "simple-role-list",
+        "description": "Когда роль = flat list прав без ресурсной плоскости, матрица избыточна",
+        "reliability": "medium"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [
+      {
+        "domain": "invest",
+        "projection": "advisor_permissions",
+        "reason": "Advisor разрешения по portfolio × action — 2D"
+      }
+    ],
+    "shouldNotMatch": [
+      {
+        "domain": "messenger",
+        "projection": "conversation_detail",
+        "reason": "Participant.role — плоский enum, не матрица"
+      },
+      {
+        "domain": "sales",
+        "projection": "listing_detail",
+        "reason": "Нет 2D permission surface"
+      }
+    ]
+  }
+}

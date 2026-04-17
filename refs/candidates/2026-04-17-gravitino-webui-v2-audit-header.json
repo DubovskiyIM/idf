@@ -1,0 +1,61 @@
+{
+  "id": "audit-header",
+  "version": 1,
+  "status": "candidate",
+  "archetype": "detail",
+  "trigger": {
+    "requires": [
+      {
+        "kind": "entity-field",
+        "fields": "[createdAt, createdBy, updatedAt?, updatedBy?]"
+      }
+    ]
+  },
+  "structure": {
+    "slot": "header",
+    "description": "Audit-метаданные (createdAt, createdBy, lastModified) — read-only строка или tooltip в header detail-экрана, сразу под title. Не редактируемы, визуально приглушены (secondary colour)."
+  },
+  "rationale": {
+    "hypothesis": "Audit-поля технически важны для админов/compliance, но для основной работы — noise. Выделение в secondary-строку header'а даёт доступ без занимания слота в body. Отделение read-only от mutable уменьшает ошибки.",
+    "evidence": [
+      {
+        "source": "gravitino-webui",
+        "description": "createdAt / createdBy — read-only строка в header detail",
+        "reliability": "high"
+      },
+      {
+        "source": "jira",
+        "description": "Issue sidebar 'Created by X on Y'",
+        "reliability": "high"
+      }
+    ],
+    "counterexample": [
+      {
+        "source": "messenger",
+        "description": "Message.createdAt — part of body (timestamp рядом с текстом), не header",
+        "reliability": "high"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [
+      {
+        "domain": "sales",
+        "projection": "listing_detail",
+        "reason": "Listing имеет createdAt, sellerId"
+      },
+      {
+        "domain": "workflow",
+        "projection": "workflow_detail",
+        "reason": "Workflow createdBy"
+      }
+    ],
+    "shouldNotMatch": [
+      {
+        "domain": "messenger",
+        "projection": "message_item",
+        "reason": "Timestamp — first-class content, не audit-метаданные"
+      }
+    ]
+  }
+}

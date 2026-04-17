@@ -1,0 +1,65 @@
+{
+  "id": "hierarchy-tree-nav",
+  "version": 1,
+  "status": "candidate",
+  "archetype": null,
+  "trigger": {
+    "requires": [
+      {
+        "kind": "sub-entity-exists",
+        "depth": "≥3"
+      },
+      {
+        "kind": "entity-kind",
+        "chain": "foreignKey-chain ≥3 levels"
+      }
+    ]
+  },
+  "structure": {
+    "slot": "shell",
+    "description": "Левая панель — древовидная навигация по цепочке foreignKey (entity → child → grand-child). Выбор узла открывает соответствующий detail справа, сохраняя контекст пути."
+  },
+  "rationale": {
+    "hypothesis": "Когда сущности формируют цепочку владения ≥3 уровней, flat-feed теряет контекст пути. Tree-nav визуализирует иерархию и позволяет удерживать focus на текущем узле при исследовании соседей.",
+    "evidence": [
+      {
+        "source": "gravitino-webui",
+        "description": "Metalake → Catalog → Schema → Table/Fileset/Topic — 4 уровня глубины, левая tree-panel — основной способ навигации",
+        "reliability": "high"
+      },
+      {
+        "source": "aws-console",
+        "description": "IAM / S3 / Glue — hierarchical resource browser слева",
+        "reliability": "high"
+      }
+    ],
+    "counterexample": [
+      {
+        "source": "twitter",
+        "description": "Плоский feed — иерархия не нужна, tree бессмысленна",
+        "reliability": "high"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [
+      {
+        "domain": "workflow",
+        "projection": "workflow_detail",
+        "reason": "Workflow → Node → NodeResult — цепочка из 3 уровней"
+      }
+    ],
+    "shouldNotMatch": [
+      {
+        "domain": "messenger",
+        "projection": "conversations_feed",
+        "reason": "Conversation/Message — плоская иерархия, tree избыточна"
+      },
+      {
+        "domain": "reflect",
+        "projection": "entries_feed",
+        "reason": "MoodEntry — flat list, нет владения другими сущностями"
+      }
+    ]
+  }
+}

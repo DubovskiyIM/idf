@@ -1,0 +1,66 @@
+{
+  "id": "discriminator-wizard",
+  "version": 1,
+  "status": "candidate",
+  "archetype": "catalog",
+  "trigger": {
+    "requires": [
+      {
+        "kind": "intent-creates",
+        "hasDiscriminatorField": true
+      },
+      {
+        "kind": "entity-field",
+        "field": "type|provider|kind",
+        "statusValues": "≥2"
+      }
+    ]
+  },
+  "structure": {
+    "slot": "overlay",
+    "description": "Multi-step wizard для создания: шаг 1 — выбор discriminator (type/provider), шаг 2+ — динамическая форма с полями, зависящими от выбранного варианта. Разный набор required полей на разных путях."
+  },
+  "rationale": {
+    "hypothesis": "Когда сущность имеет discriminator, определяющий набор required полей, единая форма перегружает пользователя всеми вариантами сразу. Wizard разделяет решение (какой вариант) от заполнения (что конкретно), сокращая когнитивную нагрузку.",
+    "evidence": [
+      {
+        "source": "gravitino-webui",
+        "description": "Create Catalog: pick type (relational/fileset/messaging) → pick provider (hive/mysql/iceberg/kafka) → provider-specific form",
+        "reliability": "high"
+      },
+      {
+        "source": "stripe-dashboard",
+        "description": "Create payment method: тип → поля под тип",
+        "reliability": "medium"
+      }
+    ],
+    "counterexample": [
+      {
+        "source": "booking-create",
+        "description": "Простые одноуровневые формы без дискриминатора — wizard избыточен",
+        "reliability": "high"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [
+      {
+        "domain": "invest",
+        "projection": "create_assignment",
+        "reason": "Assignment с разными роли-специфичными полями (advisor vs agent)"
+      }
+    ],
+    "shouldNotMatch": [
+      {
+        "domain": "lifequest",
+        "projection": "create_habit",
+        "reason": "Habit — одноступенчатая форма без discriminator"
+      },
+      {
+        "domain": "reflect",
+        "projection": "log_mood",
+        "reason": "MoodEntry — одно уравнение полей без вариантов"
+      }
+    ]
+  }
+}

@@ -1,0 +1,418 @@
+{
+  "source": "gravitino-webui-v2-detail",
+  "entities": [
+    {
+      "name": "Metalake",
+      "fields": [
+        "name",
+        "comment",
+        "properties",
+        "inUse",
+        "createdAt",
+        "createdBy"
+      ],
+      "statusValues": [
+        "in_use",
+        "not_in_use"
+      ]
+    },
+    {
+      "name": "Catalog",
+      "fields": [
+        "name",
+        "type",
+        "provider",
+        "comment",
+        "properties",
+        "inUse",
+        "metalakeId"
+      ],
+      "statusValues": [
+        "in_use",
+        "not_in_use"
+      ],
+      "foreignKey": "metalakeId→Metalake"
+    },
+    {
+      "name": "Schema",
+      "fields": [
+        "name",
+        "comment",
+        "properties",
+        "catalogId"
+      ],
+      "foreignKey": "catalogId→Catalog"
+    },
+    {
+      "name": "Table",
+      "fields": [
+        "name",
+        "columns",
+        "comment",
+        "properties",
+        "schemaId"
+      ],
+      "foreignKey": "schemaId→Schema"
+    },
+    {
+      "name": "Fileset",
+      "fields": [
+        "name",
+        "type",
+        "storageLocation",
+        "comment",
+        "properties",
+        "schemaId"
+      ],
+      "statusValues": [
+        "managed",
+        "external"
+      ],
+      "foreignKey": "schemaId→Schema"
+    },
+    {
+      "name": "Topic",
+      "fields": [
+        "name",
+        "comment",
+        "properties",
+        "schemaId"
+      ],
+      "foreignKey": "schemaId→Schema"
+    },
+    {
+      "name": "Tag",
+      "fields": [
+        "name",
+        "comment",
+        "properties",
+        "metalakeId"
+      ],
+      "foreignKey": "metalakeId→Metalake"
+    },
+    {
+      "name": "Policy",
+      "fields": [
+        "name",
+        "comment",
+        "policyType",
+        "content",
+        "enabled",
+        "metalakeId"
+      ],
+      "foreignKey": "metalakeId→Metalake"
+    },
+    {
+      "name": "TagAssignment",
+      "fields": [
+        "tagId",
+        "objectFullName",
+        "objectType"
+      ],
+      "foreignKey": "tagId→Tag"
+    },
+    {
+      "name": "PolicyAssignment",
+      "fields": [
+        "policyId",
+        "objectFullName",
+        "objectType"
+      ],
+      "foreignKey": "policyId→Policy"
+    },
+    {
+      "name": "Role",
+      "fields": [
+        "name",
+        "securableObjects",
+        "privileges",
+        "properties",
+        "metalakeId"
+      ],
+      "foreignKey": "metalakeId→Metalake"
+    },
+    {
+      "name": "User",
+      "fields": [
+        "name",
+        "roles",
+        "metalakeId"
+      ],
+      "foreignKey": "metalakeId→Metalake"
+    },
+    {
+      "name": "Group",
+      "fields": [
+        "name",
+        "roles",
+        "metalakeId"
+      ],
+      "foreignKey": "metalakeId→Metalake"
+    },
+    {
+      "name": "RoleAssignment",
+      "fields": [
+        "roleId",
+        "principalId",
+        "principalType"
+      ],
+      "foreignKey": "roleId→Role"
+    },
+    {
+      "name": "JobTemplate",
+      "fields": [
+        "name",
+        "executable",
+        "arguments",
+        "environments",
+        "placeholders",
+        "comment",
+        "metalakeId"
+      ],
+      "foreignKey": "metalakeId→Metalake"
+    },
+    {
+      "name": "Job",
+      "fields": [
+        "templateId",
+        "status",
+        "startedAt",
+        "finishedAt",
+        "output"
+      ],
+      "statusValues": [
+        "queued",
+        "started",
+        "succeeded",
+        "failed",
+        "cancelled"
+      ],
+      "foreignKey": "templateId→JobTemplate"
+    }
+  ],
+  "intents": [
+    {
+      "id": "create_metalake",
+      "α": "add",
+      "creates": "Metalake",
+      "confirmation": "form"
+    },
+    {
+      "id": "edit_metalake",
+      "α": "replace",
+      "target": "metalake.properties",
+      "confirmation": "form"
+    },
+    {
+      "id": "toggle_metalake_in_use",
+      "α": "replace",
+      "target": "metalake.inUse",
+      "confirmation": "click"
+    },
+    {
+      "id": "drop_metalake",
+      "α": "remove",
+      "target": "metalakes",
+      "irreversibility": "high",
+      "confirmation": "form"
+    },
+    {
+      "id": "create_catalog",
+      "α": "add",
+      "creates": "Catalog",
+      "confirmation": "form"
+    },
+    {
+      "id": "edit_catalog",
+      "α": "replace",
+      "target": "catalog.properties",
+      "confirmation": "form"
+    },
+    {
+      "id": "toggle_catalog_in_use",
+      "α": "replace",
+      "target": "catalog.inUse",
+      "confirmation": "click"
+    },
+    {
+      "id": "drop_catalog",
+      "α": "remove",
+      "target": "catalogs",
+      "irreversibility": "high",
+      "confirmation": "form"
+    },
+    {
+      "id": "create_schema",
+      "α": "add",
+      "creates": "Schema",
+      "confirmation": "form"
+    },
+    {
+      "id": "drop_schema",
+      "α": "remove",
+      "target": "schemas",
+      "irreversibility": "high",
+      "confirmation": "click"
+    },
+    {
+      "id": "drop_table",
+      "α": "remove",
+      "target": "tables",
+      "irreversibility": "high",
+      "confirmation": "click"
+    },
+    {
+      "id": "drop_fileset",
+      "α": "remove",
+      "target": "filesets",
+      "irreversibility": "high",
+      "confirmation": "click"
+    },
+    {
+      "id": "create_tag",
+      "α": "add",
+      "creates": "Tag",
+      "confirmation": "form"
+    },
+    {
+      "id": "edit_tag",
+      "α": "replace",
+      "target": "tag.properties",
+      "confirmation": "form"
+    },
+    {
+      "id": "delete_tag",
+      "α": "remove",
+      "target": "tags",
+      "irreversibility": "high",
+      "confirmation": "click"
+    },
+    {
+      "id": "attach_tag",
+      "α": "add",
+      "creates": "TagAssignment",
+      "confirmation": "form"
+    },
+    {
+      "id": "detach_tag",
+      "α": "remove",
+      "target": "tagAssignments",
+      "confirmation": "click"
+    },
+    {
+      "id": "create_policy",
+      "α": "add",
+      "creates": "Policy",
+      "confirmation": "form"
+    },
+    {
+      "id": "toggle_policy_enabled",
+      "α": "replace",
+      "target": "policy.enabled",
+      "confirmation": "click"
+    },
+    {
+      "id": "attach_policy",
+      "α": "add",
+      "creates": "PolicyAssignment",
+      "confirmation": "form"
+    },
+    {
+      "id": "detach_policy",
+      "α": "remove",
+      "target": "policyAssignments",
+      "confirmation": "click"
+    },
+    {
+      "id": "create_role",
+      "α": "add",
+      "creates": "Role",
+      "confirmation": "form"
+    },
+    {
+      "id": "delete_role",
+      "α": "remove",
+      "target": "roles",
+      "irreversibility": "high",
+      "confirmation": "click"
+    },
+    {
+      "id": "grant_role",
+      "α": "add",
+      "creates": "RoleAssignment",
+      "confirmation": "form"
+    },
+    {
+      "id": "revoke_role",
+      "α": "remove",
+      "target": "roleAssignments",
+      "confirmation": "click"
+    },
+    {
+      "id": "create_user",
+      "α": "add",
+      "creates": "User",
+      "confirmation": "form"
+    },
+    {
+      "id": "remove_user",
+      "α": "remove",
+      "target": "users",
+      "irreversibility": "high",
+      "confirmation": "click"
+    },
+    {
+      "id": "create_group",
+      "α": "add",
+      "creates": "Group",
+      "confirmation": "form"
+    },
+    {
+      "id": "create_job_template",
+      "α": "add",
+      "creates": "JobTemplate",
+      "confirmation": "form"
+    },
+    {
+      "id": "delete_job_template",
+      "α": "remove",
+      "target": "jobTemplates",
+      "irreversibility": "high",
+      "confirmation": "click"
+    },
+    {
+      "id": "run_job",
+      "α": "add",
+      "creates": "Job",
+      "confirmation": "form"
+    },
+    {
+      "id": "cancel_job",
+      "α": "replace",
+      "target": "job.status",
+      "irreversibility": "high",
+      "confirmation": "click"
+    }
+  ],
+  "roles": [
+    "owner",
+    "viewer",
+    "agent",
+    "observer"
+  ],
+  "observations": [
+    "Hierarchical left-panel tree nav: Metalake → Catalog → Schema → Table/Fileset/Topic/Function",
+    "Detail view shows entity metadata top + properties table + tabs for children/tags/policies/audit",
+    "in-use/not-in-use as prominent toggle switch at entity header, gates child operations",
+    "Catalog creation is multi-step wizard: pick type → pick provider → provider-specific dynamic fields",
+    "Provider-based dynamic forms: selecting Hive vs MySQL vs Iceberg changes required fields",
+    "Tags and policies attached via m2m — multi-select dialog from parent entity detail",
+    "Hover popovers on tree nodes show brief metadata preview without navigation",
+    "Drop operations gated by type-to-confirm dialog for name match (irreversibility high)",
+    "RBAC: Role carries securableObjects[] with granted privileges on hierarchy path",
+    "Job templates hold placeholder slots substituted at run_job invocation",
+    "Properties modelled as open-ended key-value map, edited inline in detail view",
+    "Schema/Table/Fileset/Topic are sibling children of Schema, picked by catalog.type",
+    "Audit fields (createdAt/createdBy) shown read-only in detail header"
+  ]
+}
