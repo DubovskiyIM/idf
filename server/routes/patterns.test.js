@@ -63,3 +63,26 @@ describe("GET /api/patterns/catalog", () => {
     expect(p).toHaveProperty("applySource");
   });
 });
+
+describe("GET /api/patterns/falsification", () => {
+  it("runs falsification for subcollections on live domains", async () => {
+    const res = await request(app).get("/api/patterns/falsification?id=subcollections");
+    expect(res.status).toBe(200);
+    expect(Array.isArray(res.body.shouldMatch)).toBe(true);
+    expect(Array.isArray(res.body.shouldNotMatch)).toBe(true);
+    expect(Array.isArray(res.body.regressions)).toBe(true);
+
+    // planning/poll_overview — задекларированный shouldMatch: TimeOption.pollId + Participant.pollId
+    const pollOverview = res.body.shouldMatch.find(e => e.projection === "poll_overview");
+    expect(pollOverview).toBeDefined();
+    expect(pollOverview.domain).toBe("planning");
+    expect(pollOverview.expected).toBe(true);
+    expect(pollOverview.actual).toBe(true);
+    expect(Array.isArray(pollOverview.requirements)).toBe(true);
+  });
+
+  it("returns 404 for unknown pattern", async () => {
+    const res = await request(app).get("/api/patterns/falsification?id=nonexistent");
+    expect(res.status).toBe(404);
+  });
+});
