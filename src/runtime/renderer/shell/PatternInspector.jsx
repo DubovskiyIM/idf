@@ -13,6 +13,10 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 
 export default function PatternInspector({ domain, projectionId, onClose, onPreviewChange, initialSelectedPatternId = null }) {
+  useEffect(() => {
+    console.log("[PatternInspector] MOUNT");
+    return () => console.log("[PatternInspector] UNMOUNT");
+  }, []);
   const [explain, setExplain] = useState(null);
   const [mode, setMode] = useState("off"); // "off" | "preview"
   // initialSelectedPatternId — deep-link seed из ?inspect=<patternId>. Применяется
@@ -76,19 +80,20 @@ export default function PatternInspector({ domain, projectionId, onClose, onPrev
     lastKeyRef.current = key;
   }, [domain, projectionId]);
 
-  // Пробрасываем artifactAfter в V2Shell → renderer override.
+  // Пробрасываем artifactAfter + patternId в V2Shell → renderer override.
   useEffect(() => {
     if (mode === "preview" && explain?.artifactAfter) {
       console.log("[PatternInspector] onPreviewChange → artifact", {
         slotsKeys: Object.keys(explain.artifactAfter.slots || {}),
         sectionsCount: explain.artifactAfter.slots?.sections?.length,
+        patternId: selectedPatternId,
       });
-      onPreviewChange?.(explain.artifactAfter);
+      onPreviewChange?.(explain.artifactAfter, selectedPatternId);
     } else {
       console.log("[PatternInspector] onPreviewChange → null", { mode, hasArtifactAfter: !!explain?.artifactAfter });
-      onPreviewChange?.(null);
+      onPreviewChange?.(null, null);
     }
-  }, [mode, explain, onPreviewChange]);
+  }, [mode, explain, selectedPatternId, onPreviewChange]);
 
   const commit = useCallback(async (action) => {
     if (!selectedPatternId) return;
@@ -106,6 +111,7 @@ export default function PatternInspector({ domain, projectionId, onClose, onPrev
     } catch {
       /* ignore — surface не критичный */
     }
+    console.log("[PatternInspector] commit → setMode(off)");
     setMode("off");
     await load(null);
   }, [domain, projectionId, selectedPatternId, load]);
@@ -249,7 +255,7 @@ export default function PatternInspector({ domain, projectionId, onClose, onPrev
                 type="radio"
                 name="pi-mode"
                 checked={mode === "off"}
-                onChange={() => setMode("off")}
+                onChange={() => { console.log("[PatternInspector] radio Off click → setMode(off)"); setMode("off"); }}
                 style={{ marginRight: 4 }}
               /> Off
             </label>
@@ -264,7 +270,7 @@ export default function PatternInspector({ domain, projectionId, onClose, onPrev
                 name="pi-mode"
                 checked={mode === "preview"}
                 disabled={!hasApply}
-                onChange={() => setMode("preview")}
+                onChange={() => { console.log("[PatternInspector] radio Preview click → setMode(preview)"); setMode("preview"); }}
                 style={{ marginRight: 4 }}
               /> Preview
             </label>

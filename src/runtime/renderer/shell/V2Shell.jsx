@@ -148,15 +148,22 @@ export default function V2Shell({
   // в ProjectionRendererV2, заменяя currentArtifact на artifactAfter
   // из /api/patterns/explain?previewPatternId=...
   const [artifactOverride, setArtifactOverride] = useState(null);
+  const [previewPatternId, setPreviewPatternId] = useState(null);
   useEffect(() => {
     setArtifactOverride(null);
+    setPreviewPatternId(null);
   }, [current?.projectionId]);
   useEffect(() => {
     console.log("[V2Shell] artifactOverride changed", {
       hasOverride: !!artifactOverride,
       sectionsCount: artifactOverride?.slots?.sections?.length,
+      previewPatternId,
     });
-  }, [artifactOverride]);
+  }, [artifactOverride, previewPatternId]);
+  const handlePreviewChange = useCallback((artifact, patternId) => {
+    setArtifactOverride(artifact);
+    setPreviewPatternId(patternId || null);
+  }, []);
 
   // LLM enrichment state
   const [enrichedArtifacts, setEnrichedArtifacts] = useState({});
@@ -259,6 +266,7 @@ export default function V2Shell({
           <ProjectionRendererV2
             artifact={currentArtifact}
             artifactOverride={artifactOverride}
+            previewPatternId={previewPatternId}
             projection={currentProjectionDef}
             world={worldWithRoute}
             exec={wrappedExec}
@@ -310,7 +318,7 @@ export default function V2Shell({
               domain={domainId}
               projectionId={current?.projectionId}
               onClose={() => setPref("patternInspector", false)}
-              onPreviewChange={setArtifactOverride}
+              onPreviewChange={handlePreviewChange}
               initialSelectedPatternId={initialInspectPattern}
             />
           )}
@@ -363,7 +371,7 @@ export default function V2Shell({
             domain={domainId}
             projectionId={current?.projectionId}
             onClose={() => setPref("patternInspector", false)}
-            onPreviewChange={setArtifactOverride}
+            onPreviewChange={handlePreviewChange}
           />
         )}
       </div>
@@ -421,7 +429,7 @@ export default function V2Shell({
           domain={domainId}
           projectionId={current?.projectionId}
           onClose={() => setPref("patternInspector", false)}
-          onPreviewChange={setArtifactOverride}
+          onPreviewChange={handlePreviewChange}
         />
       )}
     </div>
