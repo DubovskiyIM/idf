@@ -1,0 +1,76 @@
+{
+  "id": "file-picker-attachment",
+  "version": 1,
+  "status": "candidate",
+  "archetype": "detail",
+  "trigger": {
+    "requires": [
+      {
+        "kind": "sub-entity-exists",
+        "foreignKeyTo": "mainEntity"
+      },
+      {
+        "kind": "entity-field",
+        "entity": "<sub-entity>",
+        "field": "mimeType"
+      },
+      {
+        "kind": "intent-creates",
+        "entity": "<sub-entity>",
+        "confirmation": "form"
+      }
+    ]
+  },
+  "structure": {
+    "slot": "sections",
+    "description": "Для sub-entity с полями (filename, url, mimeType, size) рендерит секцию 'Attachments' со списком файлов и кнопкой-триггером native file picker'а (<input type=file>). Не drag-drop-only — explicit button всегда доступен."
+  },
+  "rationale": {
+    "hypothesis": "Drag-drop-only исключает touch/keyboard-пользователей и ситуации где файл уже в clipboard/explorer. Явная кнопка + native picker покрывает 100% сценариев; drag-drop — опциональная надстройка.",
+    "evidence": [
+      {
+        "source": "linear-issue-detail",
+        "description": "Attachments секция с кнопкой 'Attach file' → native picker, drag-drop как дополнительный affordance",
+        "reliability": "high"
+      },
+      {
+        "source": "github-issue-attach",
+        "description": "'Paste, drop, or click' — все три способа явно указаны, click fallback всегда доступен",
+        "reliability": "high"
+      }
+    ],
+    "counterexample": [
+      {
+        "source": "figma-drag-only-import",
+        "description": "Figma полагается на drag-drop в canvas — работает потому что курсор уже в canvas-контексте, неприменимо к form-based detail",
+        "reliability": "medium"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [
+      {
+        "domain": "messenger",
+        "projection": "conversation_detail",
+        "reason": "Message-attachments: та же тройка filename/mimeType/size на sub-entity"
+      },
+      {
+        "domain": "sales",
+        "projection": "listing_edit",
+        "reason": "Listing photos — file-picker pattern"
+      }
+    ],
+    "shouldNotMatch": [
+      {
+        "domain": "invest",
+        "projection": "portfolio_detail",
+        "reason": "Нет файлового контента в invest-домене"
+      },
+      {
+        "domain": "planning",
+        "projection": "poll_detail",
+        "reason": "Poll не работает с файлами"
+      }
+    ]
+  }
+}

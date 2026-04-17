@@ -1,0 +1,82 @@
+{
+  "id": "properties-sidebar-panel",
+  "version": 1,
+  "status": "candidate",
+  "archetype": "detail",
+  "trigger": {
+    "requires": [
+      {
+        "kind": "intent-count",
+        "α": "replace",
+        "targetPrefix": "<entity>.",
+        "min": 3
+      },
+      {
+        "kind": "intent-confirmation",
+        "value": "click"
+      }
+    ]
+  },
+  "structure": {
+    "slot": "sections",
+    "description": "Группирует 3+ single-field replace-интентов (priority, assignee, labels, project, cycle, estimate) в sidebar-панель или properties-section справа от body. Каждое поле — click-to-edit popover/dropdown. Расширение footer-inline-setter на множественные поля."
+  },
+  "rationale": {
+    "hypothesis": "Отдельный footer-inline-setter на каждое из 6 полей захламляет интерфейс. Группировка в одну панель даёт пользователю scan-friendly обзор metadata и единую зону для правок без перепрыгивания по экрану.",
+    "evidence": [
+      {
+        "source": "linear-issue-detail",
+        "description": "Правая колонка со Status/Priority/Assignee/Labels/Project/Cycle/Estimate — каждое поле click-to-edit",
+        "reliability": "high"
+      },
+      {
+        "source": "jira-issue-view",
+        "description": "Details-панель справа с аналогичной группировкой metadata",
+        "reliability": "high"
+      },
+      {
+        "source": "github-issue-sidebar",
+        "description": "Assignees/Labels/Projects/Milestone в правом sidebar с gear-icon для редактирования",
+        "reliability": "high"
+      }
+    ],
+    "counterexample": [
+      {
+        "source": "trello-card",
+        "description": "Card modal прячет все metadata в action-меню справа; работает для card-based паттерна, но слабее в dense-list",
+        "reliability": "medium"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [
+      {
+        "domain": "sales",
+        "projection": "listing_detail",
+        "reason": "Listing с price/category/condition/shipping/visibility — классический кандидат на properties-панель"
+      },
+      {
+        "domain": "lifequest",
+        "projection": "goal_detail",
+        "reason": "Goal с sphere/priority/deadline/visibility/tags"
+      },
+      {
+        "domain": "invest",
+        "projection": "portfolio_detail",
+        "reason": "Portfolio с riskProfile/goal/currency/strategy"
+      }
+    ],
+    "shouldNotMatch": [
+      {
+        "domain": "messenger",
+        "projection": "conversation_detail",
+        "reason": "У Conversation мало editable metadata, panel избыточна"
+      },
+      {
+        "domain": "reflect",
+        "projection": "mood_entry_detail",
+        "reason": "MoodEntry — feed-оriented, metadata inline внутри body"
+      }
+    ]
+  }
+}

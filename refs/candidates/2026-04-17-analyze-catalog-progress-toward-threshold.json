@@ -1,0 +1,86 @@
+{
+  "candidate": {
+    "id": "catalog-progress-toward-threshold",
+    "version": 1,
+    "status": "candidate",
+    "archetype": "catalog",
+    "trigger": {
+      "requires": [
+        {
+          "kind": "entity-field",
+          "role": "count",
+          "source": "aggregate"
+        },
+        {
+          "kind": "entity-field",
+          "role": "threshold"
+        },
+        {
+          "kind": "field-role-present",
+          "roles": [
+            "count",
+            "threshold"
+          ],
+          "sameEntity": true
+        }
+      ]
+    },
+    "structure": {
+      "slot": "card.progress",
+      "description": "В карточке catalog-элемента рендерится progress-bar: currentValue = aggregate-count поле, targetValue = threshold-поле mainEntity. Визуализирует продвижение к пороговому значению (кворум, цель, лимит) без необходимости открывать detail."
+    },
+    "rationale": {
+      "hypothesis": "Когда у mainEntity catalog-проекции одновременно есть aggregate-счётчик (накопленное значение) и threshold-поле (целевой порог), пользователю нужна визуальная метрика прогресса прямо в списке — это универсальный паттерн для доменов с quorum/goal/limit семантикой.",
+      "evidence": [
+        "planning.Poll: votesCount (aggregate) + quorum (threshold) → progress к принятию решения",
+        "lifequest.Goal: progress + target → визуализация достижения цели в списке",
+        "invest.Portfolio.Goal: currentAmount + targetAmount → прогресс к финансовой цели"
+      ],
+      "counterexample": [
+        "messenger.Conversation: unreadCount — счётчик без порога, не progress-семантика",
+        "booking.Booking: нет aggregate+threshold пары, статусы через enum"
+      ]
+    },
+    "falsification": {
+      "shouldMatch": [
+        {
+          "domain": "planning",
+          "projection": "my_polls",
+          "reason": "Poll.votesCount (aggregate) + Poll.quorum (threshold)"
+        },
+        {
+          "domain": "lifequest",
+          "projection": "goals_list",
+          "reason": "Goal.progress + Goal.target"
+        },
+        {
+          "domain": "invest",
+          "projection": "goals_overview",
+          "reason": "Goal.currentAmount + Goal.targetAmount"
+        }
+      ],
+      "shouldNotMatch": [
+        {
+          "domain": "messenger",
+          "projection": "conversations",
+          "reason": "unreadCount — счётчик без threshold, не прогресс"
+        },
+        {
+          "domain": "booking",
+          "projection": "bookings_list",
+          "reason": "нет aggregate/threshold пары на Booking"
+        },
+        {
+          "domain": "sales",
+          "projection": "listings",
+          "reason": "цена/bid — не aggregate-count к threshold"
+        }
+      ]
+    }
+  },
+  "validation": {
+    "formatValid": true,
+    "formatError": null,
+    "overlaps": []
+  }
+}
