@@ -28,5 +28,9 @@ server/idf.db-shm
 CLAUDE.md
 docs/specs/
 docs/superpowers/
+
+# Investor demo — не коммитить
+scripts/investor-demo.mjs
+src/presentation/
 .superpowers.worktrees/
 .superpowers/
