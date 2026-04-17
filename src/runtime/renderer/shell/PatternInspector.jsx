@@ -28,15 +28,25 @@ export default function PatternInspector({ domain, projectionId, onClose, onPrev
       includeNearMiss: "1",
     });
     if (preview) params.set("previewPatternId", preview);
+    console.log("[PatternInspector] load", { domain, projectionId, preview });
     try {
       const r = await fetch(`/api/patterns/explain?${params}`);
       if (!r.ok) {
+        console.warn("[PatternInspector] explain !ok", r.status);
         setExplain(null);
         return;
       }
       const data = await r.json();
+      console.log("[PatternInspector] explain response", {
+        matched: data.structural?.matched?.map(m => m.pattern.id),
+        hasArtifactAfter: !!data.artifactAfter,
+        slotsKeys: data.artifactAfter?.slots ? Object.keys(data.artifactAfter.slots) : null,
+        sectionsCount: data.artifactAfter?.slots?.sections?.length,
+        sectionsSources: data.artifactAfter?.slots?.sections?.map(s => s.source),
+      });
       setExplain(data);
-    } catch {
+    } catch (e) {
+      console.error("[PatternInspector] fetch error", e);
       setExplain(null);
     }
   }, [domain, projectionId]);
@@ -54,21 +64,28 @@ export default function PatternInspector({ domain, projectionId, onClose, onPrev
   // Сбрасываем selection при смене projection — иначе preview зависнет
   // на id, которого нет в новой projection. Первый mount пропускаем, чтобы
   // не затереть initialSelectedPatternId (deep-link из ?inspect=).
-  const didMountRef = useRef(false);
+  const lastKeyRef = useRef(null);
   useEffect(() => {
-    if (!didMountRef.current) {
-      didMountRef.current = true;
-      return;
+    const key = `${domain}|${projectionId}`;
+    console.log("[PatternInspector] projection-key effect", { prev: lastKeyRef.current, next: key });
+    if (lastKeyRef.current !== null && lastKeyRef.current !== key) {
+      console.log("[PatternInspector] RESETTING mode+selection due to key change");
+      setSelectedPatternId(null);
+      setMode("off");
     }
-    setSelectedPatternId(null);
-    setMode("off");
+    lastKeyRef.current = key;
   }, [domain, projectionId]);
 
   // Пробрасываем artifactAfter в V2Shell → renderer override.
   useEffect(() => {
     if (mode === "preview" && explain?.artifactAfter) {
+      console.log("[PatternInspector] onPreviewChange → artifact", {
+        slotsKeys: Object.keys(explain.artifactAfter.slots || {}),
+        sectionsCount: explain.artifactAfter.slots?.sections?.length,
+      });
       onPreviewChange?.(explain.artifactAfter);
     } else {
+      console.log("[PatternInspector] onPreviewChange → null", { mode, hasArtifactAfter: !!explain?.artifactAfter });
       onPreviewChange?.(null);
     }
   }, [mode, explain, onPreviewChange]);

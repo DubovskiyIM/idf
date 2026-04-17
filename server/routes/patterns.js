@@ -238,7 +238,13 @@ function makePatternsRouter() {
       });
     }
 
-    const intents = filterIntentsForProjection(domain.intents, projection);
+    // Передаём ВСЕ intents домена, не только по mainEntity: structure.apply
+    // (напр. subcollections.apply → buildSection) ищет intents для sub-entities
+    // (Position, Transaction, ...), которые отфильтровались бы по mainEntity.
+    // Pattern trigger evaluation при этом работает как раньше — большинство
+    // триггеров проверяют ontology-структуру, а не intent-scope.
+    const intents = Object.entries(domain.intents || {})
+      .map(([id, intent]) => ({ id, ...intent }));
     const includeNearMiss = req.query.includeNearMiss === "1";
     const previewPatternId = req.query.previewPatternId
       ? String(req.query.previewPatternId)

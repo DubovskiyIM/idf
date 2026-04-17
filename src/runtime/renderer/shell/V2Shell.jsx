@@ -151,6 +151,12 @@ export default function V2Shell({
   useEffect(() => {
     setArtifactOverride(null);
   }, [current?.projectionId]);
+  useEffect(() => {
+    console.log("[V2Shell] artifactOverride changed", {
+      hasOverride: !!artifactOverride,
+      sectionsCount: artifactOverride?.slots?.sections?.length,
+    });
+  }, [artifactOverride]);
 
   // LLM enrichment state
   const [enrichedArtifacts, setEnrichedArtifacts] = useState({});
