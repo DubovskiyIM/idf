@@ -259,6 +259,33 @@ function makePatternsRouter() {
   });
 
   /**
+   * GET /projections?domain=X — список id проекций домена.
+   *
+   * Используется UI-компонентом AppliesTo: сканировать все домены на предмет
+   * матча конкретного паттерна требует итерации по проекциям. Прямого способа
+   * получить список проекций у клиента нет (domain.js — ESM на диске), поэтому
+   * сервер отдаёт плоский массив id через тот же loadDomain-кэш, что и другие
+   * pattern-endpoint'ы.
+   *
+   * 400 — если ?domain= не передан; 404 — если домен не найден.
+   */
+  router.get("/projections", async (req, res) => {
+    const domainName = req.query.domain;
+    if (!domainName) {
+      return res.status(400).json({
+        error: "missing_params",
+        message: "query-param ?domain= обязателен",
+      });
+    }
+    const domain = await loadDomain(domainName);
+    if (!domain) {
+      return res.status(404).json({ error: "domain_not_found", domain: domainName });
+    }
+    const projections = Object.keys(domain.projections || {});
+    res.json({ domain: domainName, projections });
+  });
+
+  /**
    * POST /preference — author-decision writer (§3.4, §16).
    *
    * Body: { domain, projection, patternId, action }

@@ -127,6 +127,28 @@ describe("GET /api/patterns/explain", () => {
   });
 });
 
+describe("GET /api/patterns/projections", () => {
+  it("returns projection ids for a known domain", async () => {
+    const res = await request(app).get("/api/patterns/projections?domain=invest");
+    expect(res.status).toBe(200);
+    expect(res.body.domain).toBe("invest");
+    expect(Array.isArray(res.body.projections)).toBe(true);
+    // у invest >1 проекции; portfolio_detail — известная
+    expect(res.body.projections.length).toBeGreaterThan(0);
+    expect(res.body.projections).toContain("portfolio_detail");
+  });
+
+  it("returns 400 when domain missing", async () => {
+    const res = await request(app).get("/api/patterns/projections");
+    expect(res.status).toBe(400);
+  });
+
+  it("returns 404 for unknown domain", async () => {
+    const res = await request(app).get("/api/patterns/projections?domain=nope_not_a_domain");
+    expect(res.status).toBe(404);
+  });
+});
+
 describe("POST /api/patterns/preference", () => {
   it("returns 403 in production", async () => {
     const prev = process.env.NODE_ENV;
