@@ -69,6 +69,22 @@ export default function PrefsPanel({ prefs, setPref, resetPrefs, onClose, onLogo
           />
         </PrefRow>
 
+        <PrefRow label="Отладка">
+          <label style={{
+            display: "flex", alignItems: "center", gap: 8, cursor: "pointer",
+            fontSize: 13, color: "var(--mantine-color-text)",
+          }}>
+            <input
+              type="checkbox"
+              checked={!!prefs.patternInspector}
+              onChange={e => setPref("patternInspector", e.target.checked)}
+              style={{ cursor: "pointer" }}
+            />
+            <span>Pattern inspector</span>
+            <span style={{ fontSize: 10, color: "var(--mantine-color-dimmed)", textTransform: "uppercase", letterSpacing: "0.05em" }}>dev</span>
+          </label>
+        </PrefRow>
+
         <div style={{ display: "flex", gap: 8, marginTop: 16, flexWrap: "wrap" }}>
           <button
             onClick={resetPrefs}
