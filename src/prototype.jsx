@@ -70,8 +70,22 @@ const DOMAINS = {
   delivery: deliveryDomain,
 };
 
+// URL-params: ?domain=X&projection=Y&inspect=<patternId>. Читаются один раз
+// при первом mount'е; initialProjection пробрасывается в V2Shell. Domain из
+// URL имеет приоритет над localStorage.
+const URL_INITIAL = (() => {
+  if (typeof window === "undefined") return { domain: null, projection: null };
+  try {
+    const p = new URLSearchParams(window.location.search);
+    return { domain: p.get("domain"), projection: p.get("projection") };
+  } catch {
+    return { domain: null, projection: null };
+  }
+})();
+
 export default function App() {
-  const [domainId, setDomainId] = useState(() => localStorage.getItem("idf_domain") || "booking");
+  const [domainId, setDomainId] = useState(() => URL_INITIAL.domain || localStorage.getItem("idf_domain") || "booking");
+  const [initialProjection] = useState(() => URL_INITIAL.projection);
 
   // UI-kit адаптер: prefs override → дефолт домена → mantine
   const { prefs: uiPrefs } = usePersonalPrefs();
@@ -456,6 +470,12 @@ export default function App() {
                     execBatch={engine.execBatch}
                     viewer={realViewer || { id: viewer, name: viewer }}
                     onLogout={auth.logout}
+                    initialProjection={
+                      initialProjection && domainId === URL_INITIAL.domain
+                        && domain.PROJECTIONS?.[initialProjection]
+                        ? initialProjection
+                        : undefined
+                    }
                   />
                 </AuthGate>
               </div>
