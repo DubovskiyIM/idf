@@ -187,9 +187,9 @@ export default function V2Shell({
             disabled={enriching}
             title={isEnriched ? "Уже обогащён через LLM" : "Обогатить labels/icons через Claude"}
             style={{
-              padding: "4px 10px", borderRadius: 6, border: "1px solid var(--mantine-color-default-border, #d1d5db)",
-              background: isEnriched ? "var(--mantine-color-violet-light, #ede9fe)" : "transparent",
-              color: "var(--mantine-color-text, #374151)", fontSize: 11, cursor: enriching ? "wait" : "pointer",
+              padding: "4px 10px", borderRadius: 6, border: "1px solid var(--idf-border, #d1d5db)",
+              background: isEnriched ? "var(--idf-accent-light, #ede9fe)" : "transparent",
+              color: "var(--idf-text, #374151)", fontSize: 11, cursor: enriching ? "wait" : "pointer",
               opacity: enriching ? 0.6 : 1, whiteSpace: "nowrap",
             }}
           >
@@ -200,8 +200,8 @@ export default function V2Shell({
           onClick={() => setPrefsOpen(true)}
           title="Настройки UI"
           style={{
-            padding: "4px 10px", borderRadius: 6, border: "1px solid var(--mantine-color-default-border, #d1d5db)",
-            background: "transparent", color: "var(--mantine-color-text, #374151)",
+            padding: "4px 10px", borderRadius: 6, border: "1px solid var(--idf-border, #d1d5db)",
+            background: "transparent", color: "var(--idf-text, #374151)",
             fontSize: 11, cursor: "pointer", whiteSpace: "nowrap",
           }}
         >⚙</button>
@@ -224,7 +224,7 @@ export default function V2Shell({
             allProjections={allProjections}
           />
         ) : (
-          <div style={{ padding: 40, color: "var(--mantine-color-dimmed)", textAlign: "center" }}>
+          <div style={{ padding: 40, color: "var(--idf-text-muted)", textAlign: "center" }}>
             Проекция "{current?.projectionId}" не найдена или не поддерживается архетипом v2
           </div>
         )}
@@ -243,11 +243,11 @@ export default function V2Shell({
       return (
         <div style={{
           display: "flex", flexDirection: "column", height: "100%", minHeight: 0,
-          fontFamily: "var(--font-doodle, system-ui, sans-serif)",
-          fontSize: "var(--idf-font-size, 14px)",
+          fontFamily: "var(--idf-font, system-ui, sans-serif)",
+          fontSize: 14,
           ...personalStyle,
         }}>
-          <div style={{ flex: 1, overflow: "auto", paddingBottom: 100, padding: "var(--spacing-doodle, 16px)" }}>
+          <div style={{ flex: 1, overflow: "auto", paddingBottom: 100, padding: 16 }}>
             {mainContent}
           </div>
           <BottomTabs
@@ -270,9 +270,9 @@ export default function V2Shell({
             style={{
               position: "fixed", top: 8, left: 8, zIndex: 50,
               width: 36, height: 36, borderRadius: 8,
-              border: "1px solid var(--mantine-color-default-border)",
-              background: "var(--mantine-color-body)",
-              color: "var(--mantine-color-text)",
+              border: "1px solid var(--idf-border)",
+              background: "var(--idf-surface)",
+              color: "var(--idf-text)",
               fontSize: 18, cursor: "pointer",
               display: "flex", alignItems: "center", justifyContent: "center",
             }}
@@ -320,7 +320,7 @@ export default function V2Shell({
         ) : (
           <div style={{
             display: "flex", alignItems: "stretch",
-            background: "var(--mantine-color-default)", borderBottom: "1px solid var(--mantine-color-default-border)",
+            background: "var(--idf-card)", borderBottom: "1px solid var(--idf-border)",
           }}>
             <div style={{ display: "flex", flex: 1 }}>
               {rootProjections.map(projId => {
@@ -333,8 +333,8 @@ export default function V2Shell({
                       padding: "10px 18px",
                       background: "transparent",
                       border: "none",
-                      borderBottom: isActive ? "2px solid var(--mantine-color-primary, #6366f1)" : "2px solid transparent",
-                      color: isActive ? "var(--mantine-color-primary, #6366f1)" : "var(--mantine-color-dimmed)",
+                      borderBottom: isActive ? "2px solid var(--idf-primary, #6366f1)" : "2px solid transparent",
+                      color: isActive ? "var(--idf-primary, #6366f1)" : "var(--idf-text-muted)",
                       fontWeight: isActive ? 700 : 500,
                       fontSize: 14,
                       cursor: "pointer",
@@ -362,10 +362,11 @@ function SectionedSidebar({ sections, active, onSelect, projectionNames }) {
   return (
     <div style={{
       width: 240, flexShrink: 0, height: "100%",
-      background: "var(--mantine-color-default)",
-      borderRight: "1px solid var(--mantine-color-default-border)",
+      background: "var(--idf-card)",
+      borderRight: "1px solid var(--idf-border)",
       overflow: "auto",
       display: "flex", flexDirection: "column",
+      fontFamily: "var(--idf-font, inherit)",
     }}>
       {sections.map(sec => (
         <div key={sec.section}>
@@ -374,16 +375,16 @@ function SectionedSidebar({ sections, active, onSelect, projectionNames }) {
             style={{
               display: "flex", alignItems: "center", gap: 8,
               width: "100%", padding: "10px 14px",
-              background: "var(--mantine-color-default-hover)",
-              border: "none", borderBottom: "1px solid var(--mantine-color-default-border)",
+              background: "var(--idf-hover)",
+              border: "none", borderBottom: "1px solid var(--idf-border)",
               cursor: "pointer", fontSize: 13, fontWeight: 700,
-              color: "var(--mantine-color-text)",
+              color: "var(--idf-text)",
               fontFamily: "inherit",
             }}
           >
             {sec.icon && <span>{sec.icon}</span>}
             <span style={{ flex: 1, textAlign: "left" }}>{sec.section}</span>
-            <span style={{ fontSize: 10, color: "var(--mantine-color-dimmed)" }}>
+            <span style={{ fontSize: 10, color: "var(--idf-text-muted)" }}>
               {collapsed[sec.section] ? "▸" : "▾"}
             </span>
           </button>
@@ -398,11 +399,11 @@ function SectionedSidebar({ sections, active, onSelect, projectionNames }) {
                     style={{
                       display: "flex", alignItems: "center", gap: 8,
                       width: "100%", padding: "8px 14px 8px 28px",
-                      background: isActive ? "var(--mantine-color-primary-light, rgba(99,102,241,0.08))" : "transparent",
+                      background: isActive ? "var(--idf-primary-light, rgba(99,102,241,0.08))" : "transparent",
                       border: "none",
-                      borderLeft: isActive ? "3px solid var(--mantine-color-primary, #6366f1)" : "3px solid transparent",
+                      borderLeft: isActive ? "3px solid var(--idf-primary, #6366f1)" : "3px solid transparent",
                       cursor: "pointer", fontSize: 13,
-                      color: isActive ? "var(--mantine-color-primary, #6366f1)" : "var(--mantine-color-text)",
+                      color: isActive ? "var(--idf-primary, #6366f1)" : "var(--idf-text)",
                       fontWeight: isActive ? 600 : 400,
                       fontFamily: "inherit",
                     }}

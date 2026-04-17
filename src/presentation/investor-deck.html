@@ -1,0 +1,580 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>IDF — Investor Demo</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;900&display=swap');
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Inter', system-ui, sans-serif;
+    background: #0a0a0f;
+    color: #e8e8ed;
+    overflow: hidden;
+    height: 100vh;
+    width: 100vw;
+  }
+
+  .slide {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 60px;
+    opacity: 0;
+    transform: translateY(40px);
+    transition: opacity 0.6s ease, transform 0.6s ease;
+    pointer-events: none;
+  }
+
+  .slide.active {
+    opacity: 1;
+    transform: translateY(0);
+    pointer-events: auto;
+  }
+
+  h1 {
+    font-size: 72px;
+    font-weight: 900;
+    letter-spacing: -2px;
+    line-height: 1.1;
+    text-align: center;
+  }
+
+  h2 {
+    font-size: 48px;
+    font-weight: 700;
+    letter-spacing: -1px;
+    text-align: center;
+  }
+
+  .subtitle {
+    font-size: 24px;
+    font-weight: 300;
+    color: #8888a0;
+    margin-top: 16px;
+    text-align: center;
+    max-width: 700px;
+  }
+
+  .accent { color: #6366f1; }
+  .green { color: #22c55e; }
+  .red { color: #ef4444; }
+  .gold { color: #f59e0b; }
+
+  .metric-row {
+    display: flex;
+    gap: 48px;
+    margin-top: 48px;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  .metric { text-align: center; }
+
+  .metric-value {
+    font-size: 64px;
+    font-weight: 900;
+    letter-spacing: -2px;
+  }
+
+  .metric-label {
+    font-size: 16px;
+    font-weight: 400;
+    color: #8888a0;
+    margin-top: 4px;
+  }
+
+  .diagram {
+    display: flex;
+    align-items: center;
+    gap: 40px;
+    margin-top: 48px;
+  }
+
+  .diagram-center {
+    width: 140px;
+    height: 140px;
+    border-radius: 24px;
+    background: linear-gradient(135deg, #6366f1, #8b5cf6);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    font-weight: 700;
+    flex-shrink: 0;
+    box-shadow: 0 0 60px rgba(99,102,241,0.3);
+  }
+
+  .diagram-arrows {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .diagram-target {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    font-size: 22px;
+    font-weight: 600;
+    opacity: 0;
+    transform: translateX(-20px);
+    animation: fadeInRight 0.5s ease forwards;
+  }
+
+  .diagram-target:nth-child(1) { animation-delay: 0.3s; }
+  .diagram-target:nth-child(2) { animation-delay: 0.5s; }
+  .diagram-target:nth-child(3) { animation-delay: 0.7s; }
+  .diagram-target:nth-child(4) { animation-delay: 0.9s; }
+
+  @keyframes fadeInRight {
+    to { opacity: 1; transform: translateX(0); }
+  }
+
+  .diagram-target .arrow {
+    color: #6366f1;
+    font-size: 28px;
+  }
+
+  /* Acts */
+  .acts-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-top: 24px;
+    width: 100%;
+    max-width: 860px;
+  }
+
+  .act-card {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 14px 24px;
+    border-radius: 12px;
+    background: rgba(255,255,255,0.03);
+    border: 1px solid rgba(255,255,255,0.06);
+    opacity: 0.25;
+    transform: translateX(-20px);
+    transition: all 0.5s ease;
+  }
+
+  .act-card.revealed {
+    opacity: 1;
+    transform: translateX(0);
+  }
+
+  .act-card.blocked {
+    border-color: #ef4444;
+    background: rgba(239,68,68,0.08);
+    animation: pulseRed 2s ease-in-out;
+  }
+
+  @keyframes pulseRed {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(239,68,68,0); }
+    50% { box-shadow: 0 0 40px 15px rgba(239,68,68,0.25); }
+  }
+
+  .act-num {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: rgba(99,102,241,0.15);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 14px;
+    flex-shrink: 0;
+  }
+
+  .act-role {
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    color: #8888a0;
+    width: 80px;
+    flex-shrink: 0;
+  }
+
+  .act-desc { flex: 1; font-size: 16px; }
+
+  .act-status {
+    font-size: 20px;
+    flex-shrink: 0;
+    min-width: 28px;
+    text-align: center;
+  }
+
+  /* Three paths */
+  .paths {
+    display: flex;
+    gap: 24px;
+    margin-top: 48px;
+    max-width: 900px;
+  }
+
+  .path-card {
+    flex: 1;
+    padding: 32px 24px;
+    border-radius: 16px;
+    background: rgba(255,255,255,0.03);
+    border: 1px solid rgba(255,255,255,0.06);
+    text-align: center;
+  }
+
+  .path-card.highlight {
+    border-color: rgba(99,102,241,0.5);
+    background: rgba(99,102,241,0.06);
+    box-shadow: 0 0 40px rgba(99,102,241,0.1);
+  }
+
+  .path-card h3 { font-size: 22px; margin-bottom: 8px; }
+  .path-card .provider { font-size: 14px; color: #8888a0; margin-bottom: 16px; }
+  .path-card p { font-size: 15px; line-height: 1.5; }
+  .path-card .verdict { font-size: 15px; margin-top: 16px; font-weight: 600; }
+
+  /* Nav */
+  .slide-nav {
+    position: fixed;
+    bottom: 24px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    gap: 8px;
+    z-index: 100;
+  }
+
+  .slide-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.15);
+    cursor: pointer;
+    transition: all 0.3s;
+  }
+
+  .slide-dot.active {
+    background: #6366f1;
+    width: 24px;
+    border-radius: 4px;
+  }
+
+  .ws-status {
+    position: fixed;
+    top: 16px;
+    right: 16px;
+    font-size: 11px;
+    color: #555;
+    z-index: 100;
+  }
+
+  .ws-status.connected { color: #22c55e; }
+
+  .slide-counter {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    font-size: 12px;
+    color: #555;
+    z-index: 100;
+  }
+</style>
+</head>
+<body>
+
+<!-- Slide 0: Title -->
+<div class="slide active" data-slide="0">
+  <h1>Intent-Driven<br><span class="accent">Frontend</span></h1>
+  <p class="subtitle">One Artifact. Four Worlds. Zero Runtime AI.</p>
+</div>
+
+<!-- Slide 1: Problem -->
+<div class="slide" data-slide="1">
+  <h2>Типичное приложение</h2>
+  <div class="metric-row">
+    <div class="metric">
+      <div class="metric-value red counter" data-target="6">0</div>
+      <div class="metric-label">месяцев разработки</div>
+    </div>
+    <div class="metric">
+      <div class="metric-value red counter" data-target="5">0</div>
+      <div class="metric-label">команд</div>
+    </div>
+    <div class="metric">
+      <div class="metric-value red counter" data-target="500">0</div>
+      <div class="metric-label">тысяч $ бюджета</div>
+    </div>
+  </div>
+  <p class="subtitle">На каждый канал (web, mobile, voice, API) — отдельная команда, отдельный бюджет.</p>
+</div>
+
+<!-- Slide 2: Solution -->
+<div class="slide" data-slide="2">
+  <h2>Один артефакт — четыре мира</h2>
+  <div class="diagram">
+    <div class="diagram-center">JSON<br>Artifact</div>
+    <div class="diagram-arrows">
+      <div class="diagram-target"><span class="arrow">&rarr;</span> <span class="accent">Pixels</span> &mdash; 4 UI-адаптера</div>
+      <div class="diagram-target"><span class="arrow">&rarr;</span> <span class="green">Voice</span> &mdash; Speech-script</div>
+      <div class="diagram-target"><span class="arrow">&rarr;</span> <span class="gold">Document</span> &mdash; HTML / PDF</div>
+      <div class="diagram-target"><span class="arrow">&rarr;</span> <span style="color:#ec4899">Agent API</span> &mdash; Semantic</div>
+    </div>
+  </div>
+  <p class="subtitle">Zero frontend code. Zero runtime AI cost.</p>
+</div>
+
+<!-- Slide 3: Live adapters -->
+<div class="slide" data-slide="3">
+  <h2>Live: <span class="accent">4 UI-адаптера</span></h2>
+  <div class="metric-row" style="margin-top:32px">
+    <div class="metric"><div class="metric-value" style="font-size:32px">AntD</div><div class="metric-label">Enterprise / Fintech</div></div>
+    <div class="metric"><div class="metric-value" style="font-size:32px">Apple</div><div class="metric-label">Premium / Minimal</div></div>
+    <div class="metric"><div class="metric-value" style="font-size:32px">shadcn</div><div class="metric-label">Handcrafted / Sketch</div></div>
+    <div class="metric"><div class="metric-value" style="font-size:32px">Mantine</div><div class="metric-label">Corporate / Data-dense</div></div>
+  </div>
+  <p class="subtitle">Один клик в runtime. Без перезагрузки. Без потери данных.</p>
+</div>
+
+<!-- Slide 4: Three paths -->
+<div class="slide" data-slide="4">
+  <h2>Три пути AI-агента</h2>
+  <div class="paths">
+    <div class="path-card">
+      <h3>Computer Use</h3>
+      <div class="provider">Anthropic</div>
+      <p>Агент тыкает в пиксели скриншота</p>
+      <p class="verdict red">Ненадёжно</p>
+    </div>
+    <div class="path-card">
+      <h3>Function Calling</h3>
+      <div class="provider">OpenAI</div>
+      <p>Агент дёргает произвольные RPC</p>
+      <p class="verdict gold">Нет UI-семантики</p>
+    </div>
+    <div class="path-card highlight">
+      <h3>Semantic API</h3>
+      <div class="provider accent">IDF</div>
+      <p>Агент работает через семантический API формата</p>
+      <p class="verdict green">Guardrails из коробки</p>
+    </div>
+  </div>
+</div>
+
+<!-- Slide 5: Acts -->
+<div class="slide" data-slide="5">
+  <h2 style="font-size:36px">Эксперимент: <span class="accent">Claude как пользователь</span></h2>
+  <div class="acts-grid">
+    <div class="act-card" data-act="1">
+      <div class="act-num">1</div>
+      <div class="act-role">investor</div>
+      <div class="act-desc">Портфели инвестора</div>
+      <div class="act-status"></div>
+    </div>
+    <div class="act-card" data-act="2">
+      <div class="act-num">2</div>
+      <div class="act-role">investor</div>
+      <div class="act-desc">Профиль риска + Preapproval (лимиты агенту)</div>
+      <div class="act-status"></div>
+    </div>
+    <div class="act-card" data-act="3">
+      <div class="act-num">3</div>
+      <div class="act-role">agent</div>
+      <div class="act-desc">Schema — что агент видит и может делать</div>
+      <div class="act-status"></div>
+    </div>
+    <div class="act-card" data-act="4">
+      <div class="act-num">4</div>
+      <div class="act-role">agent</div>
+      <div class="act-desc">Рыночный сигнал + предложение ребалансировки</div>
+      <div class="act-status"></div>
+    </div>
+    <div class="act-card" data-act="5">
+      <div class="act-num">5</div>
+      <div class="act-role">agent</div>
+      <div class="act-desc">Покупка $3,120 (в пределах лимита $50,000)</div>
+      <div class="act-status"></div>
+    </div>
+    <div class="act-card" data-act="6">
+      <div class="act-num" style="background:rgba(239,68,68,0.2)">6</div>
+      <div class="act-role red">agent</div>
+      <div class="act-desc"><strong>Попытка $312,000</strong> (лимит $50,000)</div>
+      <div class="act-status"></div>
+    </div>
+    <div class="act-card" data-act="7">
+      <div class="act-num">7</div>
+      <div class="act-role">observer</div>
+      <div class="act-desc">Compliance-документ одним запросом</div>
+      <div class="act-status"></div>
+    </div>
+  </div>
+</div>
+
+<!-- Slide 6: Evidence -->
+<div class="slide" data-slide="6">
+  <h2>Доказательная база</h2>
+  <div class="metric-row">
+    <div class="metric">
+      <div class="metric-value accent counter" data-target="9">0</div>
+      <div class="metric-label">доменов</div>
+    </div>
+    <div class="metric">
+      <div class="metric-value accent counter" data-target="531">0</div>
+      <div class="metric-label">интентов</div>
+    </div>
+    <div class="metric">
+      <div class="metric-value green counter" data-target="458">0</div>
+      <div class="metric-label">тестов (все green)</div>
+    </div>
+    <div class="metric">
+      <div class="metric-value gold counter" data-target="4">0</div>
+      <div class="metric-label">материализации</div>
+    </div>
+  </div>
+  <div class="metric-row" style="margin-top:24px">
+    <div class="metric">
+      <div class="metric-value" style="font-size:48px">$<span class="green">0</span></div>
+      <div class="metric-label">Runtime AI cost</div>
+    </div>
+    <div class="metric">
+      <div class="metric-value accent" style="font-size:48px">8</div>
+      <div class="metric-label">npm-пакетов (SDK)</div>
+    </div>
+  </div>
+</div>
+
+<!-- Slide 7: Vision -->
+<div class="slide" data-slide="7">
+  <h1><span class="accent">OpenAPI</span><br>для приложений</h1>
+  <p class="subtitle">
+    Формат описания. SDK на npm. Спецификация с conformance levels.<br><br>
+    LLM создаёт приложение — приложение работает без LLM.
+  </p>
+</div>
+
+<!-- Slide 8: Ask -->
+<div class="slide" data-slide="8">
+  <h2>Следующий шаг</h2>
+  <div class="metric-row" style="margin-top:48px">
+    <div class="metric">
+      <div class="metric-value accent" style="font-size:36px">Production</div>
+      <div class="metric-label">invest + sales deploy</div>
+    </div>
+    <div class="metric">
+      <div class="metric-value gold" style="font-size:36px">Launch</div>
+      <div class="metric-label">HackerNews + публикация</div>
+    </div>
+    <div class="metric">
+      <div class="metric-value green" style="font-size:36px">CLI</div>
+      <div class="metric-label">idf init &lt;domain&gt;</div>
+    </div>
+  </div>
+</div>
+
+<!-- Navigation dots -->
+<div class="slide-nav" id="nav"></div>
+<div class="ws-status" id="wsStatus">WS: disconnected</div>
+<div class="slide-counter" id="slideCounter">1 / 9</div>
+
+<script>
+const TOTAL = 9;
+let cur = 0;
+
+const nav = document.getElementById("nav");
+for (let i = 0; i < TOTAL; i++) {
+  const d = document.createElement("div");
+  d.className = "slide-dot" + (i === 0 ? " active" : "");
+  d.onclick = () => goTo(i);
+  nav.appendChild(d);
+}
+
+function goTo(n) {
+  if (n < 0 || n >= TOTAL) return;
+  document.querySelectorAll(".slide").forEach(s => s.classList.remove("active"));
+  document.querySelectorAll(".slide-dot").forEach(d => d.classList.remove("active"));
+  cur = n;
+  document.querySelector(`[data-slide="${n}"]`).classList.add("active");
+  nav.children[n].classList.add("active");
+  document.getElementById("slideCounter").textContent = `${n + 1} / ${TOTAL}`;
+  animateCounters(document.querySelector(`[data-slide="${n}"]`));
+}
+
+function animateCounters(slide) {
+  slide.querySelectorAll(".counter[data-target]").forEach(el => {
+    const target = parseInt(el.dataset.target);
+    if (el.dataset.done) return;
+    el.dataset.done = "1";
+    const dur = 1200;
+    const t0 = performance.now();
+    (function tick(now) {
+      const p = Math.min((now - t0) / dur, 1);
+      el.textContent = Math.round(target * (1 - Math.pow(1 - p, 3)));
+      if (p < 1) requestAnimationFrame(tick);
+    })(t0);
+  });
+}
+
+document.addEventListener("keydown", e => {
+  if (e.key === "ArrowRight" || e.key === " ") { e.preventDefault(); goTo(cur + 1); }
+  if (e.key === "ArrowLeft") { e.preventDefault(); goTo(cur - 1); }
+  if (e.key === "Home") { e.preventDefault(); goTo(0); }
+  if (e.key === "End") { e.preventDefault(); goTo(TOTAL - 1); }
+});
+
+let tx = 0;
+document.addEventListener("touchstart", e => { tx = e.touches[0].clientX; });
+document.addEventListener("touchend", e => {
+  const dx = e.changedTouches[0].clientX - tx;
+  if (Math.abs(dx) > 50) goTo(cur + (dx < 0 ? 1 : -1));
+});
+
+// WebSocket sync
+function connectWS() {
+  const st = document.getElementById("wsStatus");
+  try {
+    const ws = new WebSocket("ws://localhost:3001/ws");
+    ws.onopen = () => { st.textContent = "WS: connected"; st.className = "ws-status connected"; };
+    ws.onclose = () => { st.textContent = "WS: disconnected"; st.className = "ws-status"; setTimeout(connectWS, 3000); };
+    ws.onmessage = e => {
+      try {
+        const m = JSON.parse(e.data);
+        if (m.type === "demo:act") handleAct(m);
+      } catch {}
+    };
+  } catch { setTimeout(connectWS, 3000); }
+}
+
+function handleAct(m) {
+  if (m.act === 1 && cur < 5) goTo(5);
+
+  const card = document.querySelector(`.act-card[data-act="${m.act}"]`);
+  if (!card) {
+    if (m.act === "done") setTimeout(() => goTo(6), 2000);
+    return;
+  }
+
+  card.classList.add("revealed");
+
+  if (m.status === "blocked") {
+    card.classList.add("blocked");
+    card.querySelector(".act-status").innerHTML = "&#x1F6D1;";
+  } else if (m.status === "ok") {
+    card.querySelector(".act-status").innerHTML = "&#x2705;";
+  } else {
+    card.querySelector(".act-status").innerHTML = "&#x274C;";
+  }
+
+  if (m.act === "done") setTimeout(() => goTo(6), 2000);
+}
+
+connectWS();
+</script>
+
+</body>
+</html>

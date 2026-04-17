@@ -36,6 +36,7 @@
     "agent-smoke": "node scripts/agent-smoke.mjs",
     "crystallize-llm": "node scripts/crystallize-llm.mjs",
     "sales-demo": "node scripts/sales-walkthrough.mjs",
+    "investor-demo": "node scripts/investor-demo.mjs",
     "dev:studio": "concurrently -n server,vite \"npm run server\" \"vite --host 0.0.0.0\""
   },
   "dependencies": {

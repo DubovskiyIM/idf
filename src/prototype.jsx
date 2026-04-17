@@ -1,5 +1,5 @@
 import { useState, useCallback, useEffect } from "react";
-import { useMantineColorScheme } from "@mantine/core";
+import { useMantineColorScheme, MantineProvider } from "@mantine/core";
 import { useEngine, PARTICLE_COLORS, ALPHA_LABELS, LINK_COLORS } from "@intent-driven/core";
 import CausalityGraph from "./components/CausalityGraph.jsx";
 import OntologyInspector from "./components/OntologyInspector.jsx";
@@ -75,7 +75,27 @@ export default function App() {
     || DOMAIN_DEFAULT_KITS[domainId]
     || mantineAdapter;
   registerUIAdapter(adapter);
-  const adapterKey = `kit-${uiPrefs?.uiKit || domainId}`;
+
+  const MANTINE_THEMES = {
+    antd: {
+      primaryColor: "blue",
+      colors: { blue: ["#e6f4ff","#bae0ff","#91caff","#69b1ff","#4096ff","#1677ff","#0958d9","#003eb3","#002c8c","#001d66"] },
+      defaultRadius: "sm",
+    },
+    shadcn: {
+      primaryColor: "green",
+      colors: { green: ["#f0fdf4","#dcfce7","#bbf7d0","#86efac","#4ade80","#4a7c59","#3d6b4a","#2d5238","#1e3a28","#0f2117"] },
+      defaultRadius: "lg",
+      fontFamily: "'Caveat', 'Comic Sans MS', cursive",
+    },
+    apple: {
+      primaryColor: "blue",
+      colors: { blue: ["#eff6ff","#dbeafe","#bfdbfe","#93c5fd","#60a5fa","#007aff","#0062cc","#004a99","#003166","#001933"] },
+      defaultRadius: "lg",
+      fontFamily: "-apple-system, 'SF Pro Display', 'Inter', system-ui, sans-serif",
+    },
+  };
+  const mantineThemeOverride = MANTINE_THEMES[adapter.name] || { primaryColor: "indigo" };
 
   const [topView, setTopView] = useState(null); // null | "graph" | "ontology" | "integrity"
   const [tab, setTab] = useState("intents");
@@ -195,8 +215,8 @@ export default function App() {
     setTopView(null);
   }, []);
 
-  return (
-    <div key={adapterKey} style={{ height: "100vh", display: "flex", flexDirection: "column", background: "#0c0e14", color: "#c9cdd4", fontFamily: "ui-monospace, 'SF Mono', 'Cascadia Code', monospace", fontSize: 13, overflow: "hidden" }}>
+  const shell = (
+    <div data-adapter={adapter.name || "mantine"} style={{ height: "100vh", display: "flex", flexDirection: "column", background: "#0c0e14", color: "#c9cdd4", fontFamily: "ui-monospace, 'SF Mono', 'Cascadia Code', monospace", fontSize: 13, overflow: "hidden" }}>
       {/* HEADER */}
       <div style={{ padding: "8px 16px", borderBottom: "1px solid #1e2230", display: "flex", alignItems: "center", gap: 10, flexShrink: 0, position: "relative" }}>
         <span style={{ fontSize: 14, fontWeight: 700, color: "#e2e5eb" }}>IDF</span>
@@ -444,7 +464,7 @@ export default function App() {
                   title={domain.DOMAIN_NAME || domainId}
                 >
                   <V2Shell
-                    key={domainId}
+                    key={`${domainId}-${adapter.name}`}
                     domain={domain}
                     domainId={domainId}
                     world={world}
@@ -509,4 +529,14 @@ export default function App() {
       )}
     </div>
   );
+
+  const themed = (
+    <MantineProvider theme={mantineThemeOverride} inherit>
+      {shell}
+    </MantineProvider>
+  );
+
+  return adapter === antdAdapter
+    ? <AntConfigProvider locale={ruRU} theme={{ algorithm: antTheme.defaultAlgorithm, token: { colorPrimary: "#1677ff", borderRadius: 8 } }}>{themed}</AntConfigProvider>
+    : themed;
 }
