@@ -126,3 +126,23 @@ describe("GET /api/patterns/explain", () => {
     expect(res.body.previewPatternId).toBe("subcollections");
   });
 });
+
+describe("POST /api/patterns/preference", () => {
+  it("returns 403 in production", async () => {
+    const prev = process.env.NODE_ENV;
+    process.env.NODE_ENV = "production";
+    try {
+      const res = await request(app)
+        .post("/api/patterns/preference")
+        .send({ domain: "x", projection: "y", patternId: "z", action: "enable" });
+      expect(res.status).toBe(403);
+    } finally {
+      process.env.NODE_ENV = prev;
+    }
+  });
+
+  it("returns 400 when fields missing", async () => {
+    const res = await request(app).post("/api/patterns/preference").send({});
+    expect(res.status).toBe(400);
+  });
+});

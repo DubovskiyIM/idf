@@ -20,7 +20,8 @@
  * кэшируются в in-memory Map на время жизни процесса.
  */
 
-const { Router } = require("express");
+const express = require("express");
+const { Router } = express;
 const path = require("node:path");
 const { pathToFileURL } = require("node:url");
 const {
@@ -29,6 +30,7 @@ const {
   evaluateTriggerExplained,
   explainMatch,
 } = require("@intent-driven/core");
+const { writePatternPreference } = require("../patternPreferenceWriter.js");
 
 // Кэш загруженных доменов: { [domainName]: { ontology, intents, projections } | null }
 const DOMAIN_CACHE = new Map();
@@ -253,6 +255,40 @@ function makePatternsRouter() {
     } catch (err) {
       console.warn(`[patterns] explainMatch(${domainName}/${projectionId}) failed:`, err.message);
       res.status(500).json({ error: "explain_failed", reason: err.message });
+    }
+  });
+
+  /**
+   * POST /preference — author-decision writer (§3.4, §16).
+   *
+   * Body: { domain, projection, patternId, action }
+   *   action ∈ "enable" | "disable" | "clear"
+   *
+   * Пишет решение автора в `src/domains/<domain>/projections.js` через
+   * AST-safe codemod (recast). Это preference, а не snapshot:
+   * сохраняется комбинация `patterns.{enabled,disabled}`, из которой
+   * кристаллизатор собирает эффективный набор паттернов для проекции.
+   *
+   * Dev-only: в production отдаёт 403 — писать на live-код с UI-кнопки
+   * нельзя, это инструмент авторской среды (Studio).
+   */
+  router.post("/preference", express.json(), (req, res) => {
+    if (process.env.NODE_ENV === "production") {
+      return res.status(403).json({ error: "dev-only" });
+    }
+    const { domain, projection, patternId, action } = req.body || {};
+    if (!domain || !projection || !patternId || !action) {
+      return res.status(400).json({ error: "missing fields" });
+    }
+    const filePath = path.resolve(
+      process.cwd(),
+      `src/domains/${domain}/projections.js`,
+    );
+    try {
+      writePatternPreference(filePath, projection, patternId, action);
+      res.json({ ok: true });
+    } catch (e) {
+      res.status(400).json({ error: e.message });
     }
   });
 
