@@ -1,0 +1,65 @@
+import { describe, it, expect, beforeAll } from "vitest";
+const express = require("express");
+const request = require("supertest");
+const { makePatternsRouter } = require("./patterns.js");
+
+let app;
+beforeAll(() => {
+  app = express();
+  app.use(express.json());
+  app.use("/api/patterns", makePatternsRouter());
+});
+
+describe("GET /api/patterns/catalog", () => {
+  it("returns all stable patterns with hasApply flag", async () => {
+    const res = await request(app).get("/api/patterns/catalog");
+    expect(res.status).toBe(200);
+
+    expect(Array.isArray(res.body.stable)).toBe(true);
+    expect(Array.isArray(res.body.candidate)).toBe(true);
+    expect(Array.isArray(res.body.anti)).toBe(true);
+
+    // v1.8: минимум 13 stable паттернов
+    expect(res.body.stable.length).toBeGreaterThanOrEqual(13);
+
+    const byId = Object.fromEntries(res.body.stable.map((p) => [p.id, p]));
+
+    // subcollections — один из немногих, где structure.apply реализован
+    expect(byId.subcollections).toBeDefined();
+    expect(byId.subcollections.hasApply).toBe(true);
+
+    // hero-create — apply ещё не написан
+    expect(byId["hero-create"]).toBeDefined();
+    expect(byId["hero-create"].hasApply).toBe(false);
+  });
+
+  it("includes trigger, structure, rationale, falsification fields", async () => {
+    const res = await request(app).get("/api/patterns/catalog");
+    expect(res.status).toBe(200);
+
+    const p = res.body.stable[0];
+    expect(p.id).toBeDefined();
+    expect(p.version).toBeDefined();
+    expect(p.status).toBe("stable");
+    expect(p.archetype).toBeDefined();
+
+    expect(p.trigger).toBeDefined();
+    expect(Array.isArray(p.trigger.requires)).toBe(true);
+    // match сериализуется как строка (function.toString) либо null
+    expect(p.trigger).toHaveProperty("matchSource");
+
+    expect(p.structure).toBeDefined();
+    expect(p.structure.slot).toBeDefined();
+    expect(p.structure).toHaveProperty("description");
+
+    expect(p.rationale).toBeDefined();
+    expect(p.rationale.hypothesis).toBeDefined();
+
+    expect(p.falsification).toBeDefined();
+    expect(Array.isArray(p.falsification.shouldMatch)).toBe(true);
+    expect(Array.isArray(p.falsification.shouldNotMatch)).toBe(true);
+
+    expect(typeof p.hasApply).toBe("boolean");
+    expect(p).toHaveProperty("applySource");
+  });
+});
