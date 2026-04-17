@@ -4,6 +4,7 @@ import PrefsPanel from "../personal/PrefsPanel.jsx";
 import { ProjectionRendererV2, useProjectionRoute, Breadcrumbs, getAdaptedComponent } from "@intent-driven/renderer";
 import { crystallizeV2, generateEditProjections } from "@intent-driven/core";
 import BottomTabs from "./BottomTabs.jsx";
+import PatternInspector from "./PatternInspector.jsx";
 
 /**
  * V2Shell — доменонезависимый рендерер проекций через кристаллизатор v2.
@@ -111,6 +112,14 @@ export default function V2Shell({
   const { prefs, setPref, resetPrefs } = usePersonalPrefs();
   const [prefsOpen, setPrefsOpen] = useState(false);
 
+  // Pattern Bank live preview (§27 authoring-env): override передаётся
+  // в ProjectionRendererV2, заменяя currentArtifact на artifactAfter
+  // из /api/patterns/explain?previewPatternId=...
+  const [artifactOverride, setArtifactOverride] = useState(null);
+  useEffect(() => {
+    setArtifactOverride(null);
+  }, [current?.projectionId]);
+
   // LLM enrichment state
   const [enrichedArtifacts, setEnrichedArtifacts] = useState({});
   const [enriching, setEnriching] = useState(false);
@@ -211,6 +220,7 @@ export default function V2Shell({
         {currentArtifact ? (
           <ProjectionRendererV2
             artifact={currentArtifact}
+            artifactOverride={artifactOverride}
             projection={currentProjectionDef}
             world={worldWithRoute}
             exec={wrappedExec}
@@ -257,6 +267,14 @@ export default function V2Shell({
             projectionNames={projectionNames}
           />
           {prefsOpen && <PrefsPanel prefs={prefs} setPref={setPref} resetPrefs={resetPrefs} onClose={() => setPrefsOpen(false)} onLogout={onLogout} viewer={viewer} />}
+          {prefs.patternInspector && (
+            <PatternInspector
+              domain={domainId}
+              projectionId={current?.projectionId}
+              onClose={() => setPref("patternInspector", false)}
+              onPreviewChange={setArtifactOverride}
+            />
+          )}
         </div>
       );
     }
@@ -301,6 +319,14 @@ export default function V2Shell({
           {mainContent}
         </div>
         {prefsOpen && <PrefsPanel prefs={prefs} setPref={setPref} resetPrefs={resetPrefs} onClose={() => setPrefsOpen(false)} onLogout={onLogout} viewer={viewer} />}
+        {prefs.patternInspector && (
+          <PatternInspector
+            domain={domainId}
+            projectionId={current?.projectionId}
+            onClose={() => setPref("patternInspector", false)}
+            onPreviewChange={setArtifactOverride}
+          />
+        )}
       </div>
     );
   }
@@ -351,6 +377,14 @@ export default function V2Shell({
       )}
       {mainContent}
       {prefsOpen && <PrefsPanel prefs={prefs} setPref={setPref} resetPrefs={resetPrefs} onClose={() => setPrefsOpen(false)} onLogout={onLogout} viewer={viewer} />}
+      {prefs.patternInspector && (
+        <PatternInspector
+          domain={domainId}
+          projectionId={current?.projectionId}
+          onClose={() => setPref("patternInspector", false)}
+          onPreviewChange={setArtifactOverride}
+        />
+      )}
     </div>
   );
 }
