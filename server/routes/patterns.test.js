@@ -86,3 +86,43 @@ describe("GET /api/patterns/falsification", () => {
     expect(res.status).toBe(404);
   });
 });
+
+describe("GET /api/patterns/explain", () => {
+  it("returns explainMatch result for domain+projection", async () => {
+    const res = await request(app).get(
+      "/api/patterns/explain?domain=invest&projection=portfolio_detail",
+    );
+    expect(res.status).toBe(200);
+
+    expect(res.body.archetype).toBe("detail");
+
+    // subcollections должен быть в matched — Portfolio с Position.portfolioId + Transaction.portfolioId
+    expect(res.body.structural).toBeDefined();
+    expect(Array.isArray(res.body.structural.matched)).toBe(true);
+    const matchedIds = res.body.structural.matched.map(m => m.pattern.id);
+    expect(matchedIds).toContain("subcollections");
+
+    // witnesses непустые — matched порождают записи witnesses
+    expect(Array.isArray(res.body.witnesses)).toBe(true);
+    expect(res.body.witnesses.length).toBeGreaterThan(0);
+  });
+
+  it("includes nearMiss when includeNearMiss=1", async () => {
+    const res = await request(app).get(
+      "/api/patterns/explain?domain=invest&projection=portfolio_detail&includeNearMiss=1",
+    );
+    expect(res.status).toBe(200);
+    expect(res.body.structural).toBeDefined();
+    expect(Array.isArray(res.body.structural.nearMiss)).toBe(true);
+  });
+
+  it("returns artifactAfter when previewPatternId set", async () => {
+    const res = await request(app).get(
+      "/api/patterns/explain?domain=invest&projection=portfolio_detail&previewPatternId=subcollections",
+    );
+    expect(res.status).toBe(200);
+    expect(res.body.artifactAfter).toBeDefined();
+    expect(res.body.artifactAfter).not.toBeNull();
+    expect(res.body.previewPatternId).toBe("subcollections");
+  });
+});

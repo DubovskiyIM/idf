@@ -27,6 +27,7 @@ const {
   getDefaultRegistry,
   loadStablePatterns,
   evaluateTriggerExplained,
+  explainMatch,
 } = require("@intent-driven/core");
 
 // Кэш загруженных доменов: { [domainName]: { ontology, intents, projections } | null }
@@ -193,6 +194,66 @@ function makePatternsRouter() {
     ];
 
     res.json({ shouldMatch, shouldNotMatch, regressions });
+  });
+
+  /**
+   * GET /explain?domain=X&projection=Y — inspector-surface: полный результат
+   *   SDK explainMatch для конкретной (domain, projection) пары.
+   *
+   * Query:
+   *   - domain, projection — обязательные; 400 без них, 404 если домен или
+   *     проекция не найдены.
+   *   - includeNearMiss=1 — добавляет structural.nearMiss.
+   *   - previewPatternId=<id> — если у паттерна есть structure.apply,
+   *     возвращает artifactAfter (обогащённые слоты).
+   *
+   * Зачем endpoint: UI Pattern Inspector (таск B3 плана) показывает, какие
+   *   паттерны матчатся на реальной проекции, какие witnesses строятся,
+   *   и позволяет preview-нуть structure.apply без модификации domain-кода.
+   */
+  router.get("/explain", async (req, res) => {
+    const domainName = req.query.domain;
+    const projectionId = req.query.projection;
+
+    if (!domainName || !projectionId) {
+      return res.status(400).json({
+        error: "missing_params",
+        message: "query-params ?domain= и ?projection= обязательны",
+      });
+    }
+
+    const domain = await loadDomain(domainName);
+    if (!domain) {
+      return res.status(404).json({ error: "domain_not_found", domain: domainName });
+    }
+
+    const projection = domain.projections?.[projectionId];
+    if (!projection) {
+      return res.status(404).json({
+        error: "projection_not_found",
+        domain: domainName,
+        projection: projectionId,
+      });
+    }
+
+    const intents = filterIntentsForProjection(domain.intents, projection);
+    const includeNearMiss = req.query.includeNearMiss === "1";
+    const previewPatternId = req.query.previewPatternId
+      ? String(req.query.previewPatternId)
+      : undefined;
+
+    try {
+      const result = explainMatch(
+        intents,
+        domain.ontology,
+        { ...projection, id: projectionId },
+        { includeNearMiss, previewPatternId },
+      );
+      res.json(result);
+    } catch (err) {
+      console.warn(`[patterns] explainMatch(${domainName}/${projectionId}) failed:`, err.message);
+      res.status(500).json({ error: "explain_failed", reason: err.message });
+    }
   });
 
   return router;
