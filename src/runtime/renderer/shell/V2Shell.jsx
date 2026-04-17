@@ -4,6 +4,7 @@ import PrefsPanel from "../personal/PrefsPanel.jsx";
 import { ProjectionRendererV2, useProjectionRoute, Breadcrumbs, getAdaptedComponent } from "@intent-driven/renderer";
 import { crystallizeV2, generateEditProjections } from "@intent-driven/core";
 import BottomTabs from "./BottomTabs.jsx";
+import PatternInspector from "./PatternInspector.jsx";
 
 /**
  * V2Shell — доменонезависимый рендерер проекций через кристаллизатор v2.
@@ -111,6 +112,52 @@ export default function V2Shell({
   const { prefs, setPref, resetPrefs } = usePersonalPrefs();
   const [prefsOpen, setPrefsOpen] = useState(false);
 
+  // Deep-link ?inspect=<patternId> — читается один раз при первом mount.
+  // Если параметр присутствует: активируем drawer и seed'им selection
+  // в PatternInspector. Не reactive (URL не слушается на изменения), чтобы
+  // не конкурировать с пользовательским выбором паттерна через UI.
+  const [initialInspectPattern] = useState(() => {
+    if (typeof window === "undefined") return null;
+    try {
+      return new URLSearchParams(window.location.search).get("inspect");
+    } catch {
+      return null;
+    }
+  });
+
+  useEffect(() => {
+    if (initialInspectPattern && !prefs.patternInspector) {
+      setPref("patternInspector", true);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // one-shot
+
+  // Hotkey Cmd+Shift+P / Ctrl+Shift+P — toggle Pattern Inspector drawer.
+  useEffect(() => {
+    const onKey = (e) => {
+      if ((e.metaKey || e.ctrlKey) && e.shiftKey && e.key && e.key.toLowerCase() === "p") {
+        e.preventDefault();
+        setPref("patternInspector", !prefs.patternInspector);
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [prefs.patternInspector, setPref]);
+
+  // Pattern Bank live preview (§27 authoring-env): override передаётся
+  // в ProjectionRendererV2, заменяя currentArtifact на artifactAfter
+  // из /api/patterns/explain?previewPatternId=...
+  const [artifactOverride, setArtifactOverride] = useState(null);
+  const [previewPatternId, setPreviewPatternId] = useState(null);
+  useEffect(() => {
+    setArtifactOverride(null);
+    setPreviewPatternId(null);
+  }, [current?.projectionId]);
+  const handlePreviewChange = useCallback((artifact, patternId) => {
+    setArtifactOverride(artifact);
+    setPreviewPatternId(patternId || null);
+  }, []);
+
   // LLM enrichment state
   const [enrichedArtifacts, setEnrichedArtifacts] = useState({});
   const [enriching, setEnriching] = useState(false);
@@ -211,6 +258,8 @@ export default function V2Shell({
         {currentArtifact ? (
           <ProjectionRendererV2
             artifact={currentArtifact}
+            artifactOverride={artifactOverride}
+            previewPatternId={previewPatternId}
             projection={currentProjectionDef}
             world={worldWithRoute}
             exec={wrappedExec}
@@ -257,6 +306,15 @@ export default function V2Shell({
             projectionNames={projectionNames}
           />
           {prefsOpen && <PrefsPanel prefs={prefs} setPref={setPref} resetPrefs={resetPrefs} onClose={() => setPrefsOpen(false)} onLogout={onLogout} viewer={viewer} />}
+          {prefs.patternInspector && (
+            <PatternInspector
+              domain={domainId}
+              projectionId={current?.projectionId}
+              onClose={() => setPref("patternInspector", false)}
+              onPreviewChange={handlePreviewChange}
+              initialSelectedPatternId={initialInspectPattern}
+            />
+          )}
         </div>
       );
     }
@@ -301,6 +359,14 @@ export default function V2Shell({
           {mainContent}
         </div>
         {prefsOpen && <PrefsPanel prefs={prefs} setPref={setPref} resetPrefs={resetPrefs} onClose={() => setPrefsOpen(false)} onLogout={onLogout} viewer={viewer} />}
+        {prefs.patternInspector && (
+          <PatternInspector
+            domain={domainId}
+            projectionId={current?.projectionId}
+            onClose={() => setPref("patternInspector", false)}
+            onPreviewChange={handlePreviewChange}
+          />
+        )}
       </div>
     );
   }
@@ -351,6 +417,14 @@ export default function V2Shell({
       )}
       {mainContent}
       {prefsOpen && <PrefsPanel prefs={prefs} setPref={setPref} resetPrefs={resetPrefs} onClose={() => setPrefsOpen(false)} onLogout={onLogout} viewer={viewer} />}
+      {prefs.patternInspector && (
+        <PatternInspector
+          domain={domainId}
+          projectionId={current?.projectionId}
+          onClose={() => setPref("patternInspector", false)}
+          onPreviewChange={handlePreviewChange}
+        />
+      )}
     </div>
   );
 }

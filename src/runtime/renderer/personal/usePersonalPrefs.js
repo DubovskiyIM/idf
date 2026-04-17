@@ -5,6 +5,7 @@
  *   - density: "compact" | "comfortable" | "spacious"
  *   - iconMode: "emoji" | "lucide" | "none"
  *   - fontSize: "sm" | "md" | "lg"
+ *   - patternInspector: boolean (dev-only, overlay деривации паттернов)
  *
  * Возвращает { prefs, setPref, resetPrefs, PrefsPanel }.
  */
@@ -18,6 +19,7 @@ const DEFAULTS = {
   iconMode: "lucide",
   fontSize: "md",
   uiKit: null, // null = использовать дефолт домена; "mantine" | "shadcn" — override
+  patternInspector: false, // dev-only: оверлей инспектора паттернов (Pattern Bank)
 };
 
 function loadPrefs() {
