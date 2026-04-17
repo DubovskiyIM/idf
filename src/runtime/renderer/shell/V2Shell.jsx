@@ -153,13 +153,6 @@ export default function V2Shell({
     setArtifactOverride(null);
     setPreviewPatternId(null);
   }, [current?.projectionId]);
-  useEffect(() => {
-    console.log("[V2Shell] artifactOverride changed", {
-      hasOverride: !!artifactOverride,
-      sectionsCount: artifactOverride?.slots?.sections?.length,
-      previewPatternId,
-    });
-  }, [artifactOverride, previewPatternId]);
   const handlePreviewChange = useCallback((artifact, patternId) => {
     setArtifactOverride(artifact);
     setPreviewPatternId(patternId || null);
