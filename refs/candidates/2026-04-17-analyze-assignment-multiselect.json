@@ -1,0 +1,87 @@
+{
+  "candidate": {
+    "id": "assignment-multiselect",
+    "version": 1,
+    "status": "candidate",
+    "archetype": "detail",
+    "trigger": {
+      "requires": [
+        {
+          "kind": "entity-kind",
+          "value": "assignment"
+        },
+        {
+          "kind": "intent-creates",
+          "entityKind": "assignment"
+        },
+        {
+          "kind": "field-role-present",
+          "role": "reference",
+          "cardinality": "many"
+        },
+        {
+          "kind": "intent-confirmation",
+          "value": "click"
+        }
+      ]
+    },
+    "structure": {
+      "slot": "composer",
+      "description": "Multi-select control для выбора referenced entities при создании assignment-сущности (m2m bridge) — участники голосования, назначенные адвайзеры, курьеры в dispatcher-pool."
+    },
+    "rationale": {
+      "hypothesis": "Когда intent создаёт assignment-сущность с FK на две referenced entities и batch-семантикой (несколько за один вызов), UI нуждается в multi-select control'е, так как single-pick form не отражает m2m-природу.",
+      "evidence": [
+        "planning: Participant (assignment, FK → Poll + User) создаётся через add_participants — batch нескольких user_id одновременно",
+        "invest: Assignment (assignment, FK → Advisor + Portfolio) — advisor берёт на себя набор портфелей",
+        "delivery: DispatcherAssignment (assignment, FK → Dispatcher + Courier) — диспетчер назначает пул курьеров на зону"
+      ],
+      "counterexample": [
+        "entity.kind='internal' с single FK (owner) — footer-inline-setter или form подходят лучше",
+        "reference 1:N без bridge-entity (conversation.participantIds inline array) — не требует assignment-multiselect",
+        "assignment с single-pair семантикой (один advisor = один клиент) — обычный select, не multi"
+      ]
+    },
+    "falsification": {
+      "shouldMatch": [
+        {
+          "domain": "planning",
+          "projection": "my_polls",
+          "reason": "voterSelector override — Participant как assignment, add_participants создаёт batch"
+        },
+        {
+          "domain": "invest",
+          "projection": "advisor_dashboard",
+          "reason": "Assignment m2m между Advisor и Portfolio"
+        },
+        {
+          "domain": "delivery",
+          "projection": "dispatcher_map",
+          "reason": "DispatcherAssignment batch-назначение курьеров"
+        }
+      ],
+      "shouldNotMatch": [
+        {
+          "domain": "messenger",
+          "projection": "conversation_detail",
+          "reason": "Participant inline в Conversation, не отдельная assignment-bridge"
+        },
+        {
+          "domain": "sales",
+          "projection": "listing_detail",
+          "reason": "Listing — internal entity с single owner, нет m2m assignment"
+        },
+        {
+          "domain": "lifequest",
+          "projection": "sphere_detail",
+          "reason": "Sphere/Goal — hierarchy 1:N, не m2m через bridge"
+        }
+      ]
+    }
+  },
+  "validation": {
+    "formatValid": true,
+    "formatError": null,
+    "overlaps": []
+  }
+}

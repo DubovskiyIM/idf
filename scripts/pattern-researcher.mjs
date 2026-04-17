@@ -12,7 +12,7 @@
  *   node scripts/pattern-researcher.mjs --source "test" --description "Todo list" --dry-run
  */
 
-import { execFile } from "node:child_process";
+import { execFile, spawn } from "node:child_process";
 import { readFileSync, writeFileSync, mkdirSync, existsSync, readdirSync } from "node:fs";
 import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -56,10 +56,15 @@ export function parseArgs(argv) {
 
 export function callClaude(prompt, { images = [], timeoutMs = 120_000 } = {}) {
   return new Promise((resolve, reject) => {
-    const args = ["-p", prompt, "--output-format", "json"];
+    const args = ["-p", "-", "--output-format", "json"];
     for (const img of images) args.push("--image", img);
-    execFile("claude", args, { maxBuffer: 2 * 1024 * 1024, timeout: timeoutMs }, (err, stdout) => {
-      if (err) return reject(err);
+    const proc = spawn("claude", args, { stdio: ["pipe", "pipe", "pipe"] });
+    let stdout = "";
+    let stderr = "";
+    proc.stdout.on("data", d => { stdout += d; });
+    proc.stderr.on("data", d => { stderr += d; });
+    proc.on("close", code => {
+      if (code !== 0) return reject(new Error(`Claude exited ${code}: ${stderr.slice(0, 500)}`));
       try {
         const parsed = JSON.parse(stdout);
         resolve(parsed.result || parsed.content || stdout);
@@ -67,6 +72,11 @@ export function callClaude(prompt, { images = [], timeoutMs = 120_000 } = {}) {
         resolve(stdout);
       }
     });
+    proc.on("error", reject);
+    proc.stdin.write(prompt);
+    proc.stdin.end();
+    const timer = setTimeout(() => { proc.kill(); reject(new Error("Claude timeout")); }, timeoutMs);
+    proc.on("close", () => clearTimeout(timer));
   });
 }
 

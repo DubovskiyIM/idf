@@ -1,0 +1,76 @@
+{
+  "id": "reusable-reference-multiselect",
+  "version": 1,
+  "status": "candidate",
+  "archetype": "detail",
+  "trigger": {
+    "requires": [
+      {
+        "kind": "entity-kind",
+        "value": "reference"
+      },
+      {
+        "kind": "intent-effect",
+        "α": "replace",
+        "target": "<entity>.<m2m-field>"
+      },
+      {
+        "kind": "entity-field",
+        "entity": "<reference>",
+        "field": "color"
+      }
+    ]
+  },
+  "structure": {
+    "slot": "sections",
+    "description": "Для m2m reference-сущности (Label с color) рендерит цветные чипы в properties-панели; click открывает search-able multiselect popover со списком существующих + inline-creation нового. Отличается от footer-inline-setter тем, что работает с reusable reference-entity, а не с enum."
+  },
+  "rationale": {
+    "hypothesis": "Labels/Tags переиспользуются между instance'ами mainEntity, поэтому dropdown enum не подходит (список растёт, нужен search). Цвет — семантический anchor, без него labels сливаются в текстовую кашу.",
+    "evidence": [
+      {
+        "source": "linear-issue-detail",
+        "description": "Labels — цветные чипы, picker с search и 'Create new label' inline",
+        "reliability": "high"
+      },
+      {
+        "source": "github-issues-labels",
+        "description": "Тот же паттерн: список existing с search, inline-create через 'Edit labels'",
+        "reliability": "high"
+      }
+    ],
+    "counterexample": [
+      {
+        "source": "notion-multi-select-no-color",
+        "description": "Notion multi-select без color — работает только когда пул мал (<5 значений); при росте теряется scan-ability",
+        "reliability": "medium"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [
+      {
+        "domain": "sales",
+        "projection": "listing_detail",
+        "reason": "Category/tags как reusable reference с поиском"
+      },
+      {
+        "domain": "lifequest",
+        "projection": "task_detail",
+        "reason": "Sphere-теги на Task — m2m reusable reference"
+      }
+    ],
+    "shouldNotMatch": [
+      {
+        "domain": "delivery",
+        "projection": "order_detail",
+        "reason": "Order не имеет reusable user-tags"
+      },
+      {
+        "domain": "invest",
+        "projection": "portfolio_detail",
+        "reason": "Portfolio не тегируется"
+      }
+    ]
+  }
+}

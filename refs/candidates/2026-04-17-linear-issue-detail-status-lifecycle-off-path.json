@@ -1,0 +1,81 @@
+{
+  "id": "status-lifecycle-off-path",
+  "version": 1,
+  "status": "candidate",
+  "archetype": "detail",
+  "trigger": {
+    "requires": [
+      {
+        "kind": "entity-field",
+        "field": "status",
+        "fieldRole": "status"
+      },
+      {
+        "kind": "intent-effect",
+        "α": "replace",
+        "target": "<entity>.status"
+      },
+      {
+        "kind": "field-role-present",
+        "role": "status-ordered-with-terminal"
+      }
+    ]
+  },
+  "structure": {
+    "slot": "primaryCTA",
+    "description": "Рендерит ordered lifecycle (backlog→todo→in_progress→in_review→done) как прогрессирующую цепочку CTA, а off-path terminal (cancelled) — как отдельную secondary-кнопку вне цепочки. Расширение phase-aware-primary-cta: различает forward-flow и escape-hatch."
+  },
+  "rationale": {
+    "hypothesis": "Plain enum select скрывает направление workflow. Chain-CTA делает 'следующий шаг' одним кликом, а off-path terminal отделён визуально — пользователь не случайно кликает cancel вместо done.",
+    "evidence": [
+      {
+        "source": "linear-issue-detail",
+        "description": "Status bar внизу показывает forward-flow как линейную цепочку, Cancelled отделён в kebab-меню/dropdown",
+        "reliability": "high"
+      },
+      {
+        "source": "github-issues",
+        "description": "Open/Closed + 'Close as not planned' — аналогичная бифуркация forward/off-path",
+        "reliability": "medium"
+      }
+    ],
+    "counterexample": [
+      {
+        "source": "trello",
+        "description": "Все колонки равноправны, нет seman­ticа forward vs terminal — паттерн не применим к kanban без жёсткого lifecycle",
+        "reliability": "medium"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [
+      {
+        "domain": "workflow",
+        "projection": "execution_detail",
+        "reason": "Execution имеет pending→running→succeeded с failed/cancelled как off-path"
+      },
+      {
+        "domain": "delivery",
+        "projection": "order_detail",
+        "reason": "Order: created→accepted→preparing→delivering→delivered, cancelled off-path"
+      },
+      {
+        "domain": "sales",
+        "projection": "order_detail",
+        "reason": "Order lifecycle с disputed/refunded как off-path terminal"
+      }
+    ],
+    "shouldNotMatch": [
+      {
+        "domain": "messenger",
+        "projection": "conversation_detail",
+        "reason": "У Conversation нет lifecycle-статуса"
+      },
+      {
+        "domain": "reflect",
+        "projection": "mood_entry_detail",
+        "reason": "MoodEntry не имеет workflow states"
+      }
+    ]
+  }
+}

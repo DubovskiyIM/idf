@@ -1,0 +1,76 @@
+{
+  "id": "inline-subcollection-create",
+  "version": 1,
+  "status": "candidate",
+  "archetype": "detail",
+  "trigger": {
+    "requires": [
+      {
+        "kind": "sub-entity-exists",
+        "foreignKeyTo": "mainEntity"
+      },
+      {
+        "kind": "intent-creates",
+        "entity": "<sub-entity>",
+        "confirmation": "enter"
+      }
+    ]
+  },
+  "structure": {
+    "slot": "sections",
+    "description": "В секции subcollection показывает inline-строку ввода прямо под списком (без модалки), confirm=Enter. Отличается от composer-entry тем, что не фиксирован внизу детали, а встроен в секцию sub-entity."
+  },
+  "rationale": {
+    "hypothesis": "Модалка для создания лёгкого sub-элемента (sub-issue, sub-task) — overkill: контекст parent'а теряется, user делает 1-2 клика впустую. Inline-ввод сохраняет контекст и поощряет быструю декомпозицию.",
+    "evidence": [
+      {
+        "source": "linear-issue-detail",
+        "description": "Кнопка '+ Add sub-issue' разворачивается в inline-input в той же секции, Enter создаёт, Esc отменяет",
+        "reliability": "high"
+      },
+      {
+        "source": "notion-nested-pages",
+        "description": "Вложенные страницы создаются inline через '/' без модалки",
+        "reliability": "medium"
+      }
+    ],
+    "counterexample": [
+      {
+        "source": "jira-sub-task",
+        "description": "Jira открывает полную форму — ощущается тяжёлым для decomposition, но оправдано когда sub-task требует обязательных полей (estimate, reporter)",
+        "reliability": "medium"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [
+      {
+        "domain": "planning",
+        "projection": "poll_detail",
+        "reason": "TimeOption в Poll — быстрая ad-hoc декомпозиция вариантов"
+      },
+      {
+        "domain": "workflow",
+        "projection": "workflow_detail",
+        "reason": "Node внутри Workflow — inline-add в списке узлов (альтернатива canvas)"
+      },
+      {
+        "domain": "lifequest",
+        "projection": "goal_detail",
+        "reason": "Task под Goal — lightweight sub-task creation"
+      }
+    ],
+    "shouldNotMatch": [
+      {
+        "domain": "invest",
+        "projection": "portfolio_detail",
+        "reason": "Position создаётся через формальную buy-транзакцию, inline-create неадекватен риск-профилю"
+      },
+      {
+        "domain": "delivery",
+        "projection": "order_detail",
+        "reason": "OrderItem добавляется до confirm, не inline из detail"
+      }
+    ]
+  }
+}

@@ -1,0 +1,90 @@
+{
+  "candidate": {
+    "id": "catalog-aggregate-header-strip",
+    "version": 1,
+    "status": "candidate",
+    "archetype": "catalog",
+    "trigger": {
+      "requires": [
+        {
+          "kind": "entity-kind",
+          "entity": "$mainEntity",
+          "value": "internal"
+        },
+        {
+          "kind": "field-role-present",
+          "entity": "$mainEntity",
+          "roles": [
+            "money",
+            "percentage",
+            "trend"
+          ],
+          "min": 2
+        },
+        {
+          "kind": "intent-count",
+          "archetype": "catalog",
+          "creates": "$mainEntity",
+          "min": 1
+        }
+      ]
+    },
+    "structure": {
+      "slot": "header",
+      "description": "Embedded aggregate-summary strip над списком: суммарные money/percentage/trend показатели по коллекции mainEntity (например, Statistic/Sparkline группа). Рендерится как embedded-проекция внутри catalog-хедера, до фильтров и грид-карточек."
+    },
+    "rationale": {
+      "hypothesis": "Когда catalog перечисляет экземпляры сущности с ≥2 money/percentage/trend полями, пользователю почти всегда нужна агрегированная сводка по коллекции (итог, средний YTD и т.п.) — это повторяющийся паттерн dashboards поверх catalog. Кристаллизатор v2 не деривирует такой header без явного embedded override, потому что aggregation — это операция над коллекцией, а не поле сущности.",
+      "evidence": [
+        "invest/portfolios_root (catalog, Portfolio): embedded header — total value / daily P&L / YTD return",
+        "sales/orders catalog: сумма продаж за период поверх списка ордеров",
+        "lifequest/goals catalog: общий прогресс по spheres поверх списка целей"
+      ],
+      "counterexample": [
+        "messenger/conversations catalog: нет money/percentage полей — embedded summary не деривируется",
+        "booking/specialists catalog: 1 rating-поле не даёт ≥2 трендовых полей"
+      ]
+    },
+    "falsification": {
+      "shouldMatch": [
+        {
+          "domain": "invest",
+          "projection": "portfolios_root",
+          "reason": "Portfolio имеет totalValue(money) + dailyPnL(money/trend) + ytdReturn(percentage) → ≥2 роли"
+        },
+        {
+          "domain": "sales",
+          "projection": "orders",
+          "reason": "Order.total(money) + ordersAggregate по периоду — кандидат на aggregate header"
+        },
+        {
+          "domain": "delivery",
+          "projection": "orders_list",
+          "reason": "Order.amount(money) + tips(money) + deliveryTime(trend) → aggregate-strip"
+        }
+      ],
+      "shouldNotMatch": [
+        {
+          "domain": "messenger",
+          "projection": "conversations",
+          "reason": "нет money/percentage/trend полей — trigger не срабатывает, false-positive исключён"
+        },
+        {
+          "domain": "planning",
+          "projection": "polls",
+          "reason": "Poll оперирует голосами/кворумом, не финансовыми/трендовыми метриками — агрегаты другого класса (count), embedded summary не нужен"
+        },
+        {
+          "domain": "workflow",
+          "projection": "workflows",
+          "reason": "Workflow — процессная сущность без money/percentage — catalog без aggregate header"
+        }
+      ]
+    }
+  },
+  "validation": {
+    "formatValid": true,
+    "formatError": null,
+    "overlaps": []
+  }
+}

@@ -1,0 +1,201 @@
+{
+  "source": "linear-issue-detail",
+  "entities": [
+    {
+      "name": "Issue",
+      "fields": [
+        "title",
+        "description",
+        "status",
+        "priority",
+        "assignee",
+        "labels",
+        "project",
+        "cycle",
+        "estimate",
+        "createdAt",
+        "updatedAt"
+      ],
+      "statusValues": [
+        "backlog",
+        "todo",
+        "in_progress",
+        "in_review",
+        "done",
+        "cancelled"
+      ]
+    },
+    {
+      "name": "SubIssue",
+      "fields": [
+        "title",
+        "status",
+        "assignee",
+        "parentId"
+      ],
+      "foreignKey": "parentId→Issue",
+      "statusValues": [
+        "backlog",
+        "todo",
+        "in_progress",
+        "in_review",
+        "done",
+        "cancelled"
+      ]
+    },
+    {
+      "name": "Comment",
+      "fields": [
+        "content",
+        "author",
+        "createdAt"
+      ],
+      "foreignKey": "issueId→Issue"
+    },
+    {
+      "name": "Attachment",
+      "fields": [
+        "filename",
+        "url",
+        "mimeType",
+        "size",
+        "uploadedBy",
+        "createdAt"
+      ],
+      "foreignKey": "issueId→Issue"
+    },
+    {
+      "name": "Label",
+      "fields": [
+        "name",
+        "color"
+      ]
+    },
+    {
+      "name": "User",
+      "fields": [
+        "name",
+        "avatar",
+        "email"
+      ]
+    },
+    {
+      "name": "Project",
+      "fields": [
+        "name",
+        "status"
+      ]
+    },
+    {
+      "name": "Cycle",
+      "fields": [
+        "name",
+        "startDate",
+        "endDate"
+      ]
+    }
+  ],
+  "intents": [
+    {
+      "id": "change_status",
+      "α": "replace",
+      "target": "issue.status",
+      "confirmation": "click"
+    },
+    {
+      "id": "assign_issue",
+      "α": "replace",
+      "target": "issue.assignee",
+      "confirmation": "click"
+    },
+    {
+      "id": "set_priority",
+      "α": "replace",
+      "target": "issue.priority",
+      "confirmation": "click"
+    },
+    {
+      "id": "add_label",
+      "α": "replace",
+      "target": "issue.labels",
+      "confirmation": "click"
+    },
+    {
+      "id": "set_project",
+      "α": "replace",
+      "target": "issue.project",
+      "confirmation": "click"
+    },
+    {
+      "id": "set_cycle",
+      "α": "replace",
+      "target": "issue.cycle",
+      "confirmation": "click"
+    },
+    {
+      "id": "set_estimate",
+      "α": "replace",
+      "target": "issue.estimate",
+      "confirmation": "click"
+    },
+    {
+      "id": "edit_title",
+      "α": "replace",
+      "target": "issue.title",
+      "confirmation": "enter"
+    },
+    {
+      "id": "edit_description",
+      "α": "replace",
+      "target": "issue.description",
+      "confirmation": "enter"
+    },
+    {
+      "id": "create_sub_issue",
+      "α": "add",
+      "creates": "SubIssue",
+      "confirmation": "enter"
+    },
+    {
+      "id": "add_comment",
+      "α": "add",
+      "creates": "Comment",
+      "confirmation": "enter"
+    },
+    {
+      "id": "add_attachment",
+      "α": "add",
+      "creates": "Attachment",
+      "confirmation": "form"
+    },
+    {
+      "id": "duplicate_issue",
+      "α": "add",
+      "creates": "Issue",
+      "confirmation": "click"
+    },
+    {
+      "id": "archive_issue",
+      "α": "remove",
+      "target": "issues",
+      "irreversibility": "high",
+      "confirmation": "click"
+    }
+  ],
+  "roles": [
+    "owner",
+    "viewer"
+  ],
+  "observations": [
+    "Status transitions as primary CTA buttons at bottom of detail view, not hidden in dropdown",
+    "Status values form a workflow lifecycle (backlog→todo→in_progress→in_review→done), with cancelled as terminal off-path",
+    "Sub-issues rendered as collapsible inline list within parent detail, not as separate page",
+    "Inline create for sub-issue (no modal) — suggests lightweight ad-hoc decomposition",
+    "Comments as chronological feed with persistent composer at bottom — messenger-like pattern",
+    "Metadata fields (priority, assignee, labels, project, cycle, estimate) grouped in sidebar/properties panel with click-to-edit",
+    "Archive is destructive with confirmation dialog; duplicate is non-destructive single click",
+    "Labels are many-to-many reference entity (reusable across issues)",
+    "Project and Cycle are higher-level grouping entities (planning scope)",
+    "Attachment via native file picker, not drag-drop-only"
+  ]
+}
