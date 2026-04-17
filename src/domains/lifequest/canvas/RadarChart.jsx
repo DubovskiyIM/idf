@@ -1,4 +1,5 @@
 import React, { useMemo } from "react";
+import { abbreviate } from "../utils.js";
 
 /**
  * RadarChart — SVG-радар (паутинка) для 12 сфер жизни.
@@ -69,19 +70,17 @@ function guideCirclePath(cx, cy, radius, segments = 72) {
     .join(" ");
 }
 
-/** Сокращение имени сферы до ~8 символов */
-function abbreviate(name) {
-  if (!name) return "";
-  if (name.length <= 9) return name;
-  return name.slice(0, 8) + "...";
-}
+/* abbreviate imported from ../utils.js */
 
 /* ---------- компонент ---------- */
 
-export default function RadarChart({ spheres = [], assessments = [], size = 300 }) {
-  const cx = size / 2;
-  const cy = size / 2;
-  const radius = size / 2 - 40;
+export default function RadarChart({ spheres = [], assessments = [], size = 300, overlayAssessments = null }) {
+  // Увеличенный viewBox с запасом для labels
+  const padding = 60;
+  const totalSize = size + padding * 2;
+  const cx = totalSize / 2;
+  const cy = totalSize / 2;
+  const radius = size / 2 - 20;
 
   /** Карта sphereId → assessment */
   const assessMap = useMemo(() => {
@@ -121,14 +120,26 @@ export default function RadarChart({ spheres = [], assessments = [], size = 300 
     (_, i) => assessMap[sorted[i]?.id]?.targetScore != null
   );
 
+  /** Точки overlay-оценок (для сравнения) */
+  const overlayPoints = useMemo(() => {
+    if (!overlayAssessments) return null;
+    const oMap = {};
+    for (const a of overlayAssessments) oMap[a.sphereId] = a;
+    return sorted.map((sp, i) => {
+      const a = oMap[sp.id];
+      const score = a ? Math.min(Math.max(a.score ?? 0, 0), MAX_SCORE) : 0;
+      return scorePoint(cx, cy, radius, i, score);
+    });
+  }, [sorted, overlayAssessments, cx, cy, radius]);
+
   return (
     <svg
-      viewBox={`0 0 ${size} ${size}`}
+      viewBox={`0 0 ${totalSize} ${totalSize}`}
       width="100%"
-      style={{ maxWidth: size, fontFamily: "var(--font-doodle, 'Patrick Hand', cursive)" }}
+      style={{ maxWidth: totalSize, fontFamily: "var(--font-apple, 'SF Pro Display', -apple-system, system-ui)" }}
     >
       {/* Фон */}
-      <rect width={size} height={size} fill="var(--color-doodle-bg, #fffef5)" rx={8} />
+      <rect width={totalSize} height={totalSize} fill="transparent" rx={12} />
 
       {/* Направляющие круги */}
       {GUIDE_LEVELS.map((level) => {
@@ -138,7 +149,7 @@ export default function RadarChart({ spheres = [], assessments = [], size = 300 
             key={`guide-${level}`}
             d={guideCirclePath(cx, cy, r)}
             fill="none"
-            stroke="var(--color-doodle-border, #d0c9b0)"
+            stroke="var(--color-apple-text-tertiary, #c7c7cc)"
             strokeWidth={0.7}
             strokeDasharray="4 3"
             opacity={0.5}
@@ -156,7 +167,7 @@ export default function RadarChart({ spheres = [], assessments = [], size = 300 
             y1={cy}
             x2={end.x}
             y2={end.y}
-            stroke="var(--color-doodle-border, #d0c9b0)"
+            stroke="var(--color-apple-text-tertiary, #c7c7cc)"
             strokeWidth={0.7}
             opacity={0.4}
           />
@@ -168,7 +179,7 @@ export default function RadarChart({ spheres = [], assessments = [], size = 300 
         <path
           d={polygonPath(targetPoints)}
           fill="none"
-          stroke="var(--color-doodle-gold, #e6a817)"
+          stroke="var(--color-apple-warn, #ff9500)"
           strokeWidth={2}
           strokeDasharray="6 4"
           strokeLinejoin="round"
@@ -176,12 +187,25 @@ export default function RadarChart({ spheres = [], assessments = [], size = 300 
         />
       )}
 
+      {/* Полигон overlay-оценок (для сравнения) */}
+      {overlayPoints && (
+        <path
+          d={polygonPath(overlayPoints)}
+          fill="var(--color-doodle-warn, #e07b4c)"
+          fillOpacity={0.15}
+          stroke="var(--color-doodle-warn, #e07b4c)"
+          strokeWidth={2}
+          strokeLinejoin="round"
+          strokeDasharray="4 3"
+        />
+      )}
+
       {/* Полигон текущих оценок (заливка) */}
       <path
         d={polygonPath(currentPoints)}
-        fill="var(--color-doodle-accent, #6ba3be)"
+        fill="var(--color-apple-accent, #007aff)"
         fillOpacity={0.25}
-        stroke="var(--color-doodle-accent, #6ba3be)"
+        stroke="var(--color-apple-accent, #007aff)"
         strokeWidth={2}
         strokeLinejoin="round"
       />
@@ -196,8 +220,8 @@ export default function RadarChart({ spheres = [], assessments = [], size = 300 
             cx={p.x}
             cy={p.y}
             r={3}
-            fill="var(--color-doodle-accent, #6ba3be)"
-            stroke="var(--color-doodle-bg, #fffef5)"
+            fill="var(--color-apple-accent, #007aff)"
+            stroke="white"
             strokeWidth={1.5}
           />
         );
@@ -205,25 +229,15 @@ export default function RadarChart({ spheres = [], assessments = [], size = 300 
 
       {/* Метки осей: иконка + имя */}
       {sorted.map((sp, i) => {
-        const labelR = radius + 22;
+        const labelR = radius + 28;
         const pt = axisPoint(cx, cy, labelR, i);
         const angle = axisAngle(i);
-        const angleDeg = (angle * 180) / Math.PI;
 
         // Выравнивание текста в зависимости от позиции
-        let anchor = "middle";
-        if (angleDeg > 10 && angleDeg < 170) anchor = "start";
-        if (angleDeg < -10 && angleDeg > -170) anchor = "end";
-        // Левая половина
-        if (Math.abs(angleDeg) > 100) {
-          anchor = angleDeg > 0 ? "end" : "end";
-        }
-
-        // Точнее: правая половина → start, левая → end, верх/низ → middle
         const cos = Math.cos(angle);
+        let anchor = "middle";
         if (cos > 0.15) anchor = "start";
         else if (cos < -0.15) anchor = "end";
-        else anchor = "middle";
 
         const dy = Math.sin(angle) > 0.15 ? "0.9em" : Math.sin(angle) < -0.15 ? "-0.2em" : "0.35em";
 
@@ -234,8 +248,9 @@ export default function RadarChart({ spheres = [], assessments = [], size = 300 
             y={pt.y}
             textAnchor={anchor}
             dy={dy}
-            fontSize={size <= 250 ? 8 : 10}
-            fill="var(--color-doodle-ink, #3a3530)"
+            fontSize={12}
+            fontWeight={500}
+            fill="var(--color-apple-text, #1c1c1e)"
           >
             {sp.icon ? `${sp.icon} ` : ""}
             {abbreviate(sp.name)}
@@ -252,7 +267,7 @@ export default function RadarChart({ spheres = [], assessments = [], size = 300 
             x={cx + 3}
             y={cy - r - 2}
             fontSize={7}
-            fill="var(--color-doodle-border, #d0c9b0)"
+            fill="var(--color-apple-text-tertiary, #c7c7cc)"
             opacity={0.7}
           >
             {level}

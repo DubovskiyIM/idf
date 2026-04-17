@@ -243,11 +243,11 @@ export default function V2Shell({
       return (
         <div style={{
           display: "flex", flexDirection: "column", height: "100%", minHeight: 0,
-          fontFamily: "var(--font-doodle, system-ui, sans-serif)",
+          fontFamily: "var(--idf-font, -apple-system, system-ui, sans-serif)",
           fontSize: "var(--idf-font-size, 14px)",
           ...personalStyle,
         }}>
-          <div style={{ flex: 1, overflow: "auto", paddingBottom: 100, padding: "var(--spacing-doodle, 16px)" }}>
+          <div style={{ flex: 1, overflow: "auto", padding: 0, paddingBottom: 120 }}>
             {mainContent}
           </div>
           <BottomTabs

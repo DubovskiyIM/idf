@@ -149,7 +149,7 @@ export const INTENTS = {
     "click"),
 
   archive_habit: intent("Архивировать", ["habit: Habit"],
-    ["habit.userId = me.id"],
+    ["habit.userId = me.id", "habit.status != 'archived'"],
     [ef("replace", "habit.status", "account", { value: "archived" })],
     [],
     "click"),

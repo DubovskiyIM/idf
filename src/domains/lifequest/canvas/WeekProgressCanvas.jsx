@@ -9,14 +9,7 @@
  *   - XP заработанный за неделю
  */
 import { useMemo } from "react";
-
-function startOfWeek(d) {
-  const date = new Date(d);
-  const day = date.getDay() || 7; // Вс=0 → 7
-  if (day !== 1) date.setDate(date.getDate() - (day - 1));
-  date.setHours(0, 0, 0, 0);
-  return date;
-}
+import { normDate, startOfWeek, apple, appleCard, appleSectionHead } from "../utils.js";
 
 function fmtDate(d) {
   return d.toISOString().slice(0, 10);
@@ -44,14 +37,14 @@ export default function WeekProgressCanvas({ world, viewer, exec }) {
   }, [world, viewer]);
 
   // Logs за текущую неделю
-  const weekLogs = habitLogs.filter(l => weekDays.includes(l.date));
-  const weekTasks = tasks.filter(t => weekDays.includes(t.date));
+  const weekLogs = habitLogs.filter(l => weekDays.includes(normDate(l.date)));
+  const weekTasks = tasks.filter(t => weekDays.includes(normDate(t.date)));
   const weekTasksDone = weekTasks.filter(t => t.done).length;
 
   // Heatmap matrix [habit][day] = log
   const heatmap = habits.map(h => ({
     habit: h,
-    days: weekDays.map(d => weekLogs.find(l => l.habitId === h.id && l.date === d)),
+    days: weekDays.map(d => weekLogs.find(l => l.habitId === h.id && normDate(l.date) === d)),
   }));
 
   // Общий процент: возможные слоты = habits × 7 + tasks. Done = выполненные.
@@ -86,55 +79,44 @@ export default function WeekProgressCanvas({ world, viewer, exec }) {
     habitsBySphere[g.sphereId]++;
   });
 
-  // Стили (CSS variables)
-  const ink = "var(--color-doodle-ink, #5c4033)";
-  const inkLight = "var(--color-doodle-ink-light, #8b7355)";
-  const accent = "var(--color-doodle-accent, #4a7c59)";
-  const warn = "var(--color-doodle-warn, #d4764e)";
-  const gold = "var(--color-doodle-gold, #d4a76a)";
-  const border = "var(--color-doodle-border, #c4a77d)";
-  const highlight = "var(--color-doodle-highlight, #fff3cd)";
-  const bg = "var(--color-doodle-bg, #fdf6e3)";
-  const font = "var(--font-doodle, system-ui)";
-  const pad = "var(--spacing-doodle, 16px)";
-  const radius = "var(--radius-doodle, 12px)";
-
-  const wavyHead = {
-    margin: 0, fontSize: 16, fontWeight: 700, color: ink,
-    textDecoration: "underline", textDecorationStyle: "wavy",
-    textDecorationColor: border, textUnderlineOffset: 4, marginBottom: 12,
-  };
-  const card = {
-    padding: pad, borderRadius: radius,
-    border: `2px dashed ${border}`, background: bg,
-    boxShadow: `2px 2px 0 ${border}`,
-    marginBottom: pad,
-  };
+  // Apple HIG tokens
+  const ink = apple.text;
+  const inkLight = apple.textSecondary;
+  const accent = apple.accent;
+  const warn = apple.warn;
+  const gold = apple.warn;
+  const border = apple.divider;
+  const highlight = apple.fill;
+  const success = apple.success;
+  const font = apple.font;
+  const sectionHead = { ...appleSectionHead, fontSize: 17, letterSpacing: "-0.41px" };
+  const card = appleCard;
 
   return (
-    <div style={{ padding: pad, fontFamily: font, color: ink }}>
-      <h2 style={{ ...wavyHead, fontSize: 22, marginBottom: 16 }}>
-        📊 Прогресс недели
+    <div style={{ padding: 16, fontFamily: font, color: ink }}>
+      <h2 style={{ fontSize: 22, fontWeight: 700, letterSpacing: "0.35px", margin: 0, marginBottom: 16, color: ink }}>
+        Прогресс недели
       </h2>
 
       {/* Большая цифра процента */}
       <div style={{ ...card, textAlign: "center", padding: 24 }}>
-        <div style={{ fontSize: 64, fontWeight: 700, color: accent, lineHeight: 1 }}>
+        <div style={{ fontSize: 56, fontWeight: 700, color: accent, lineHeight: 1, fontFamily: "var(--font-apple-rounded, system-ui)" }}>
           {weekPct}%
         </div>
-        <div style={{ fontSize: 14, color: inkLight, marginTop: 4 }}>
-          {doneSlots} из {totalSlots} {totalSlots === 1 ? "пункт" : "пунктов"} выполнено
+        <div style={{ fontSize: 15, color: inkLight, marginTop: 8, letterSpacing: "-0.24px" }}>
+          {doneSlots} из {totalSlots} выполнено
         </div>
-        <div style={{ marginTop: 12, height: 14, background: highlight, borderRadius: 7, border: `1.5px solid ${border}`, overflow: "hidden" }}>
+        <div style={{ marginTop: 12, height: 6, background: highlight, borderRadius: 3, overflow: "hidden" }}>
           <div style={{
-            width: `${weekPct}%`, height: "100%", borderRadius: 6,
-            background: `repeating-linear-gradient(45deg, ${accent}, ${accent} 4px, #5a8c69 4px, #5a8c69 8px)`,
+            width: `${weekPct}%`, height: "100%", borderRadius: 3,
+            background: weekPct === 100 ? success : accent,
+            transition: "width 0.4s cubic-bezier(0.25, 0.1, 0.25, 1)",
           }} />
         </div>
       </div>
 
       {/* Статистика недели */}
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginBottom: pad }}>
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginBottom: 16 }}>
         <div style={{ ...card, marginBottom: 0, textAlign: "center", padding: 12 }}>
           <div style={{ fontSize: 28, fontWeight: 700, color: gold }}>{weekXp}</div>
           <div style={{ fontSize: 11, color: inkLight }}>✨ XP за неделю</div>
@@ -156,7 +138,7 @@ export default function WeekProgressCanvas({ world, viewer, exec }) {
       {/* Heatmap привычек × дней */}
       {habits.length > 0 && (
         <div style={card}>
-          <h3 style={wavyHead}>Тепловая карта</h3>
+          <h3 style={sectionHead}>Тепловая карта</h3>
           <div style={{ overflowX: "auto" }}>
             <table style={{ borderCollapse: "collapse", width: "100%", fontSize: 12 }}>
               <thead>
@@ -208,7 +190,7 @@ export default function WeekProgressCanvas({ world, viewer, exec }) {
       {/* Топ streak'и */}
       {topStreaks.length > 0 && topStreaks[0].streakCurrent > 0 && (
         <div style={card}>
-          <h3 style={wavyHead}>🔥 Топ серии</h3>
+          <h3 style={sectionHead}>🔥 Топ серии</h3>
           {topStreaks.map(h => (
             <div key={h.id} style={{ display: "flex", alignItems: "center", gap: 8, padding: "6px 0", borderBottom: `1px dotted ${border}` }}>
               <span style={{ flex: 1 }}>{h.title}</span>
@@ -222,7 +204,7 @@ export default function WeekProgressCanvas({ world, viewer, exec }) {
       {/* Прогресс целей */}
       {activeGoals.length > 0 && (
         <div style={card}>
-          <h3 style={wavyHead}>🎯 Активные цели</h3>
+          <h3 style={sectionHead}>🎯 Активные цели</h3>
           {activeGoals.slice(0, 5).map(g => {
             const sphere = spheresMap[g.sphereId];
             return (
@@ -244,7 +226,7 @@ export default function WeekProgressCanvas({ world, viewer, exec }) {
       {/* Распределение по сферам */}
       {Object.keys(habitsBySphere).length > 0 && (
         <div style={card}>
-          <h3 style={wavyHead}>🧭 По сферам жизни</h3>
+          <h3 style={sectionHead}>🧭 По сферам жизни</h3>
           {Object.entries(habitsBySphere)
             .sort((a, b) => b[1] - a[1])
             .slice(0, 6)
@@ -270,7 +252,7 @@ export default function WeekProgressCanvas({ world, viewer, exec }) {
       {/* Задачи недели */}
       {weekTasks.length > 0 && (
         <div style={card}>
-          <h3 style={wavyHead}>📋 Задачи недели</h3>
+          <h3 style={sectionHead}>📋 Задачи недели</h3>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
             <span style={{ color: inkLight }}>
               {weekTasksDone} из {weekTasks.length}
