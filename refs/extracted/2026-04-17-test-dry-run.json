@@ -1,0 +1,29 @@
+{
+  "source": "test-dry-run",
+  "entities": [
+    {
+      "name": "Task",
+      "fields": [
+        "title",
+        "status"
+      ],
+      "statusValues": [
+        "todo",
+        "done"
+      ]
+    }
+  ],
+  "intents": [
+    {
+      "id": "create_task",
+      "α": "add",
+      "creates": "Task"
+    }
+  ],
+  "roles": [
+    "owner"
+  ],
+  "observations": [
+    "Simple CRUD list"
+  ]
+}

@@ -1,0 +1,44 @@
+{
+  "id": "test-dry-run-candidate",
+  "version": 1,
+  "status": "candidate",
+  "archetype": "catalog",
+  "trigger": {
+    "requires": [
+      {
+        "kind": "intent-creates",
+        "entity": "$mainEntity"
+      }
+    ]
+  },
+  "structure": {
+    "slot": "hero",
+    "description": "Auto-generated candidate"
+  },
+  "rationale": {
+    "hypothesis": "Dry run",
+    "evidence": [
+      {
+        "source": "test-dry-run",
+        "description": "mock",
+        "reliability": "low"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [
+      {
+        "domain": "test",
+        "projection": "list",
+        "reason": "mock"
+      }
+    ],
+    "shouldNotMatch": [
+      {
+        "domain": "test",
+        "projection": "detail",
+        "reason": "mock"
+      }
+    ]
+  }
+}
