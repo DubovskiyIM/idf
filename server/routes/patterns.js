@@ -251,6 +251,20 @@ function makePatternsRouter() {
         { ...projection, id: projectionId },
         { includeNearMiss, previewPatternId },
       );
+
+      // Аннотируем matched/nearMiss флагом hasApply: JSON.stringify роняет
+      // function-ключи, поэтому structure.apply теряется при сериализации.
+      // UI использует этот флаг, чтобы показать apply-badge и заблокировать
+      // Preview radio для паттернов без apply-функции.
+      const registry = getDefaultRegistry();
+      const annotateHasApply = (entry) => {
+        if (!entry?.pattern?.id) return;
+        const full = registry.getPattern(entry.pattern.id);
+        entry.pattern.hasApply = typeof full?.structure?.apply === "function";
+      };
+      (result?.structural?.matched || []).forEach(annotateHasApply);
+      (result?.structural?.nearMiss || []).forEach(annotateHasApply);
+
       res.json(result);
     } catch (err) {
       console.warn(`[patterns] explainMatch(${domainName}/${projectionId}) failed:`, err.message);

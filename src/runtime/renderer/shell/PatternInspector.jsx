@@ -171,6 +171,9 @@ export default function PatternInspector({ domain, projectionId, onClose, onPrev
                 <span style={{ fontSize: 10, color: "#888", marginLeft: 6 }}>
                   ✓ {passed}/{total}
                 </span>
+                {pattern.hasApply === true && (
+                  <span style={{ fontSize: 10, color: "#fd8", marginLeft: 4 }}>apply</span>
+                )}
               </label>
             );
           })
@@ -208,7 +211,16 @@ export default function PatternInspector({ domain, projectionId, onClose, onPrev
         )}
       </section>
 
-      {selectedPatternId && (
+      {selectedPatternId && (() => {
+        // hasApply берём из matched/nearMiss — сервер аннотирует флаг на каждой
+        // записи. Если паттерн выбран через deep-link и его нет ни в matched,
+        // ни в nearMiss (редко, но возможно при смене проекции), считаем apply
+        // недоступным — безопаснее заблокировать Preview, чем молча пустить.
+        const entry =
+          matched.find(m => m.pattern.id === selectedPatternId) ||
+          nearMiss.find(m => m.pattern.id === selectedPatternId);
+        const hasApply = entry?.pattern?.hasApply === true;
+        return (
         <section style={{ ...sectionStyle, borderTop: "1px solid #333", paddingTop: 12 }}>
           <h4 style={h4Style}>Apply preview</h4>
           <div style={{ fontSize: 12 }}>
@@ -224,16 +236,28 @@ export default function PatternInspector({ domain, projectionId, onClose, onPrev
                 style={{ marginRight: 4 }}
               /> Off
             </label>
-            <label style={{ cursor: "pointer" }}>
+            <label
+              style={{
+                cursor: hasApply ? "pointer" : "not-allowed",
+                opacity: hasApply ? 1 : 0.5,
+              }}
+            >
               <input
                 type="radio"
                 name="pi-mode"
                 checked={mode === "preview"}
+                disabled={!hasApply}
                 onChange={() => setMode("preview")}
                 style={{ marginRight: 4 }}
               /> Preview
             </label>
           </div>
+          {!hasApply && (
+            <div style={{ fontSize: 11, color: "#aaa", marginTop: 6, lineHeight: 1.4 }}>
+              У паттерна нет <code>structure.apply</code> — preview недоступен,
+              доступны только Commit enable/disable/clear.
+            </div>
+          )}
           <div style={{ marginTop: 10, display: "flex", gap: 6, flexWrap: "wrap" }}>
             <button onClick={() => commit("enable")} style={btnStyle}>Commit enable</button>
             <button onClick={() => commit("disable")} style={btnStyle}>Disable</button>
@@ -250,7 +274,8 @@ export default function PatternInspector({ domain, projectionId, onClose, onPrev
             </a>
           </div>
         </section>
-      )}
+        );
+      })()}
     </aside>
   );
 }

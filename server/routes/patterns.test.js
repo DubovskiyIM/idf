@@ -102,6 +102,15 @@ describe("GET /api/patterns/explain", () => {
     const matchedIds = res.body.structural.matched.map(m => m.pattern.id);
     expect(matchedIds).toContain("subcollections");
 
+    // hasApply annotation: сервер аннотирует каждую matched-запись,
+    // потому что JSON.stringify роняет function-ключи (structure.apply).
+    // subcollections — единственный stable-паттерн с реализованным apply.
+    const sub = res.body.structural.matched.find(m => m.pattern.id === "subcollections");
+    expect(sub.pattern.hasApply).toBe(true);
+    for (const m of res.body.structural.matched) {
+      expect(typeof m.pattern.hasApply).toBe("boolean");
+    }
+
     // witnesses непустые — matched порождают записи witnesses
     expect(Array.isArray(res.body.witnesses)).toBe(true);
     expect(res.body.witnesses.length).toBeGreaterThan(0);
