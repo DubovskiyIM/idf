@@ -165,11 +165,12 @@ export function buildEffects(intentId, ctx, world, drafts) {
     case "complete_goal": {
       const goalId = ctx.id || ctx.goalId;
       if (!goalId) return null;
+      const uid = ctx.userId || ctx.clientId;
       ef({ alpha: "replace", target: "goal.status", scope: "account",
-        value: "completed", context: { id: goalId },
+        value: "completed", context: { id: goalId, userId: uid },
         desc: "Статус: завершена" });
       ef({ alpha: "replace", target: "goal.progress", scope: "account",
-        value: 100, context: { id: goalId },
+        value: 100, context: { id: goalId, userId: uid },
         desc: "Прогресс: 100%" });
       return effects;
     }
@@ -179,7 +180,7 @@ export function buildEffects(intentId, ctx, world, drafts) {
       const taskId = ctx.id || ctx.taskId;
       if (!taskId) return null;
       ef({ alpha: "replace", target: "task.done", scope: "account",
-        value: true, context: { id: taskId },
+        value: true, context: { id: taskId, userId: ctx.userId || ctx.clientId },
         desc: describeEffect(intentId, "replace", ctx) });
       return effects;
     }
@@ -381,30 +382,31 @@ export function getSeedEffects() {
   });
 
   // ===== Тестовые задачи =====
+  const todayStr = new Date().toISOString().slice(0, 10);
   add("tasks", {
     id: "task_1", userId: "user_hero", goalId: "goal_1",
     title: "Купить беговые кроссовки", done: true,
-    dueDate: now - 20 * 86400000, createdAt: now - 25 * 86400000,
+    date: todayStr, createdAt: now - 25 * 86400000,
   });
   add("tasks", {
     id: "task_2", userId: "user_hero", goalId: "goal_1",
     title: "Пробежать 10 км без остановки", done: true,
-    dueDate: now - 5 * 86400000, createdAt: now - 20 * 86400000,
+    date: todayStr, createdAt: now - 20 * 86400000,
   });
   add("tasks", {
     id: "task_3", userId: "user_hero", goalId: "goal_1",
     title: "Зарегистрироваться на забег", done: false,
-    dueDate: now + 30 * 86400000, createdAt: now - 10 * 86400000,
+    date: todayStr, createdAt: now - 10 * 86400000,
   });
   add("tasks", {
     id: "task_4", userId: "user_hero", goalId: "goal_2",
     title: "Пройти раздел Generics", done: false,
-    dueDate: now + 7 * 86400000, createdAt: now - 7 * 86400000,
+    date: todayStr, createdAt: now - 7 * 86400000,
   });
   add("tasks", {
     id: "task_5", userId: "user_hero", goalId: null,
     title: "Записаться к стоматологу", done: false,
-    dueDate: now + 3 * 86400000, createdAt: now - 2 * 86400000,
+    date: todayStr, createdAt: now - 2 * 86400000,
   });
 
   // ===== Тестовая цитата =====

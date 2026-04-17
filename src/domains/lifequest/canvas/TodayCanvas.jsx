@@ -11,7 +11,8 @@
  */
 import { useState, useMemo } from "react";
 
-const TODAY = () => new Date().toISOString().slice(0, 10);
+import { normDate, todayStr as TODAY, apple, appleCard, appleSectionHead } from "../utils.js";
+
 
 const MONTHS_RU = [
   "января", "февраля", "марта", "апреля", "мая", "июня",
@@ -23,36 +24,67 @@ function fmtFullDate(d = new Date()) {
   return `${DAYS_RU[d.getDay()]}, ${d.getDate()} ${MONTHS_RU[d.getMonth()]}`;
 }
 
-const HOUR = new Date().getHours();
-const GREETINGS = HOUR < 12 ? "Доброе утро" : HOUR < 18 ? "Добрый день" : HOUR < 22 ? "Добрый вечер" : "Доброй ночи";
+function getGreeting() {
+  const h = new Date().getHours();
+  return h < 12 ? "Доброе утро" : h < 18 ? "Добрый день" : h < 22 ? "Добрый вечер" : "Доброй ночи";
+}
 
-const MOTIVATION = [
-  "Маленькие шаги ведут к большим переменам ✨",
-  "Сегодня — твой день. Сделай его легендарным 🚀",
-  "Дисциплина — мост между целями и достижениями 🌉",
-  "Каждая привычка строит твоё будущее 🏗",
-  "Ты ближе, чем думаешь 🎯",
-  "Прогресс важнее совершенства 📈",
-  "Один день — один шаг 👣",
+/** Парсинг строки "2026-04-17" в Date */
+function parseDate(str) {
+  const [y, m, d] = str.split("-").map(Number);
+  return new Date(y, m - 1, d);
+}
+
+const MOTIVATION_DEFAULTS = [
+  "Маленькие шаги ведут к большим переменам",
+  "Сегодня — твой день. Сделай его легендарным",
+  "Дисциплина — мост между целями и достижениями",
+  "Каждая привычка строит твоё будущее",
+  "Ты ближе, чем думаешь",
+  "Прогресс важнее совершенства",
+  "Один день — один шаг",
 ];
-const todayMotivation = MOTIVATION[new Date().getDate() % MOTIVATION.length];
 
 export default function TodayCanvas({ world, viewer, exec, ctx }) {
-  const today = TODAY();
+  // Дата из навигации (клик по дню в календаре) или сегодня
+  const routeDate = ctx?.routeParams?.date;
+  const today = routeDate || TODAY();
+  const isToday = today === TODAY();
+  const displayDate = parseDate(today);
   const [newTaskTitle, setNewTaskTitle] = useState("");
   const [habitValueDrafts, setHabitValueDrafts] = useState({});
+  const [editingQuote, setEditingQuote] = useState(false);
+  const [quoteDraft, setQuoteDraft] = useState("");
 
-  const { habits, todayTasks, todayLogs, spheres, user } = useMemo(() => {
+  const { habits, todayTasks, todayLogs, spheres, user, activeQuote } = useMemo(() => {
     const allTasks = (world.tasks || []).filter(t => t.userId === viewer?.id);
     const allLogs = (world.habitLogs || []).filter(l => l.userId === viewer?.id);
+    // Последняя цитата пользователя или дефолтная
+    const userQuotes = (world.quotes || []).filter(q => q.userId === viewer?.id);
+    const latestQuote = userQuotes.length > 0
+      ? userQuotes.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0))[0]
+      : null;
     return {
-      habits: (world.habits || []).filter(h => h.userId === viewer?.id && h.status === "active"),
-      todayTasks: allTasks.filter(t => t.date === today),
-      todayLogs: allLogs.filter(l => l.date === today),
+      habits: (world.habits || []).filter(h => h.userId === viewer?.id && (h.status === "active" || !h.status)),
+      todayTasks: allTasks.filter(t => normDate(t.date) === today || t.date === today),
+      todayLogs: allLogs.filter(l => normDate(l.date) === today || l.date === today),
       spheres: world.spheres || [],
       user: (world.users || []).find(u => u.id === viewer?.id),
+      activeQuote: latestQuote,
     };
   }, [world, viewer, today]);
+
+  const todayMotivation = activeQuote
+    ? (activeQuote.author ? `${activeQuote.text} — ${activeQuote.author}` : activeQuote.text)
+    : MOTIVATION_DEFAULTS[new Date().getDate() % MOTIVATION_DEFAULTS.length];
+
+  const saveQuote = () => {
+    const text = quoteDraft.trim();
+    if (!text) return;
+    exec("set_quote", { text, author: "" });
+    setEditingQuote(false);
+    setQuoteDraft("");
+  };
 
   const spheresMap = Object.fromEntries(spheres.map(s => [s.id, s]));
 
@@ -74,36 +106,24 @@ export default function TodayCanvas({ world, viewer, exec, ctx }) {
   });
   const sphereOrder = spheres.sort((a, b) => (a.sortOrder || 0) - (b.sortOrder || 0));
 
-  // Стили
-  const ink = "var(--color-doodle-ink, #5c4033)";
-  const inkLight = "var(--color-doodle-ink-light, #8b7355)";
-  const accent = "var(--color-doodle-accent, #4a7c59)";
-  const warn = "var(--color-doodle-warn, #d4764e)";
-  const gold = "var(--color-doodle-gold, #d4a76a)";
-  const border = "var(--color-doodle-border, #c4a77d)";
-  const highlight = "var(--color-doodle-highlight, #fff3cd)";
-  const bg = "var(--color-doodle-bg, #fdf6e3)";
-  const font = "var(--font-doodle, system-ui)";
-  const pad = "var(--spacing-doodle, 16px)";
-  const radius = "var(--radius-doodle, 12px)";
-
-  const wavyHead = {
-    margin: 0, fontSize: 16, fontWeight: 700, color: ink,
-    textDecoration: "underline", textDecorationStyle: "wavy",
-    textDecorationColor: border, textUnderlineOffset: 4, marginBottom: 12,
-  };
-  const card = {
-    padding: pad, borderRadius: radius,
-    border: `2px dashed ${border}`, background: bg,
-    boxShadow: `2px 2px 0 ${border}`,
-    marginBottom: pad,
-  };
+  // Apple HIG tokens
+  const ink = apple.text;
+  const inkLight = apple.textSecondary;
+  const accent = apple.accent;
+  const warn = apple.warn;
+  const gold = apple.warn;
+  const border = apple.divider;
+  const highlight = apple.fill;
+  const font = apple.font;
+  const success = apple.success;
+  const sectionHead = appleSectionHead;
+  const card = appleCard;
 
   // Handlers
   const addTask = () => {
     const title = newTaskTitle.trim();
     if (!title) return;
-    exec("create_task", { title, date: today });
+    exec("create_task", { title, date: today, done: false, status: "active" });
     setNewTaskTitle("");
   };
 
@@ -150,18 +170,59 @@ export default function TodayCanvas({ world, viewer, exec, ctx }) {
   });
 
   return (
-    <div style={{ padding: pad, fontFamily: font, color: ink, paddingBottom: 80 }}>
+    <div style={{ padding: 16, fontFamily: font, color: ink, paddingBottom: 80 }}>
       {/* Hero */}
-      <div style={{ marginBottom: pad }}>
+      <div style={{ marginBottom: 16 }}>
+        {!isToday && ctx?.back && (
+          <button
+            onClick={() => ctx.back()}
+            style={{
+              background: "none", border: "none", color: accent, cursor: "pointer",
+              fontSize: 15, fontWeight: 400, padding: 0, marginBottom: 8,
+              fontFamily: font, letterSpacing: "-0.24px",
+            }}
+          >‹ Назад к сегодня</button>
+        )}
         <div style={{ fontSize: 13, color: inkLight, textTransform: "lowercase" }}>
-          {fmtFullDate()}
+          {fmtFullDate(displayDate)}
         </div>
         <div style={{ fontSize: 22, fontWeight: 700, marginTop: 2, marginBottom: 8 }}>
-          {GREETINGS}{user?.name ? `, ${user.name.split(" ")[0]}` : ""} 👋
+          {isToday
+            ? <>{getGreeting()}{user?.name ? `, ${user.name.split(" ")[0]}` : ""} 👋</>
+            : <>{displayDate.getDate()} {MONTHS_RU[displayDate.getMonth()]}</>
+          }
         </div>
-        <div style={{ fontSize: 13, color: inkLight, fontStyle: "italic" }}>
-          {todayMotivation}
-        </div>
+        {editingQuote ? (
+          <div style={{ display: "flex", gap: 6, marginTop: 4 }}>
+            <input
+              type="text"
+              autoFocus
+              placeholder="Моя строчка дня..."
+              value={quoteDraft}
+              onChange={e => setQuoteDraft(e.target.value)}
+              onKeyDown={e => { if (e.key === "Enter") saveQuote(); if (e.key === "Escape") setEditingQuote(false); }}
+              style={{
+                flex: 1, padding: "6px 10px", borderRadius: 8,
+                border: `1.5px solid ${border}`, background: highlight,
+                fontFamily: font, fontSize: 13, color: ink, outline: "none",
+                fontStyle: "italic",
+              }}
+            />
+            <button onClick={saveQuote} style={{
+              padding: "6px 12px", borderRadius: 8, border: `1.5px solid ${accent}`,
+              background: accent, color: "white", fontFamily: font, fontSize: 12,
+              fontWeight: 700, cursor: "pointer",
+            }}>OK</button>
+          </div>
+        ) : (
+          <div
+            onClick={() => { setEditingQuote(true); setQuoteDraft(activeQuote?.text || ""); }}
+            style={{ fontSize: 13, color: inkLight, fontStyle: "italic", cursor: "pointer" }}
+            title="Нажмите, чтобы изменить строчку дня"
+          >
+            {todayMotivation}
+          </div>
+        )}
       </div>
 
       {/* Прогресс дня */}
@@ -172,13 +233,11 @@ export default function TodayCanvas({ world, viewer, exec, ctx }) {
             {pct}%
           </span>
         </div>
-        <div style={{ height: 12, background: highlight, borderRadius: 6, border: `1.5px solid ${border}`, overflow: "hidden" }}>
+        <div style={{ height: 6, background: highlight, borderRadius: 3, overflow: "hidden" }}>
           <div style={{
-            width: `${pct}%`, height: "100%", borderRadius: 5,
-            background: pct === 100
-              ? `repeating-linear-gradient(45deg, ${gold}, ${gold} 4px, #c49960 4px, #c49960 8px)`
-              : `repeating-linear-gradient(45deg, ${accent}, ${accent} 4px, #5a8c69 4px, #5a8c69 8px)`,
-            transition: "width 0.3s ease",
+            width: `${pct}%`, height: "100%", borderRadius: 3,
+            background: pct === 100 ? success : accent,
+            transition: "width 0.4s cubic-bezier(0.25, 0.1, 0.25, 1)",
           }} />
         </div>
         <div style={{ marginTop: 8, display: "flex", gap: 14, fontSize: 12, color: inkLight }}>
@@ -190,7 +249,7 @@ export default function TodayCanvas({ world, viewer, exec, ctx }) {
 
       {/* Привычки дня */}
       <div style={card}>
-        <h3 style={wavyHead}>🔄 Привычки дня</h3>
+        <h3 style={sectionHead}>🔄 Привычки дня</h3>
         {habits.length === 0 ? (
           <EmptyState
             text="Нет активных привычек"
@@ -219,24 +278,24 @@ export default function TodayCanvas({ world, viewer, exec, ctx }) {
                     const isQuant = h.type === "quantitative";
                     return (
                       <div key={h.id} style={{
-                        display: "flex", alignItems: "center", gap: 8,
-                        padding: "8px 10px", marginBottom: 4,
-                        borderRadius: 8,
-                        background: done ? `${accent}15` : "transparent",
-                        border: `1.5px ${done ? "solid" : "dashed"} ${done ? accent : border}`,
-                        borderLeft: `4px solid ${sphere.color || border}`,
-                        transition: "all 0.2s",
+                        display: "flex", alignItems: "center", gap: 10,
+                        padding: "10px 12px", marginBottom: 4,
+                        borderRadius: 10,
+                        background: done ? "rgba(52, 199, 89, 0.06)" : "transparent",
+                        border: `0.5px solid ${done ? "rgba(52,199,89,0.2)" : border}`,
+                        transition: "all 0.3s cubic-bezier(0.25, 0.1, 0.25, 1)",
                       }}>
                         <button
                           onClick={() => checkHabit(h)}
                           style={{
                             width: 24, height: 24, borderRadius: "50%",
-                            border: `2px solid ${done ? accent : border}`,
-                            background: done ? accent : "transparent",
+                            border: `2px solid ${done ? success : "var(--color-apple-text-tertiary, #aeaeb2)"}`,
+                            background: done ? success : "transparent",
                             color: "white", cursor: "pointer",
                             display: "flex", alignItems: "center", justifyContent: "center",
-                            fontSize: 14, fontWeight: 700, fontFamily: font,
+                            fontSize: 12, fontWeight: 700, fontFamily: font,
                             flexShrink: 0,
+                            transition: "all 0.2s",
                           }}
                         >
                           {done ? "✓" : ""}
@@ -257,7 +316,7 @@ export default function TodayCanvas({ world, viewer, exec, ctx }) {
                             onKeyDown={e => { if (e.key === "Enter") checkHabit(h); }}
                             style={{
                               width: 54, padding: "4px 6px", borderRadius: 6,
-                              border: `1px dashed ${border}`, background: bg,
+                              border: `1px solid ${border}`, background: "rgba(255,255,255,0.9)",
                               fontFamily: font, fontSize: 13, color: ink,
                               outline: "none", textAlign: "center",
                             }}
@@ -290,7 +349,7 @@ export default function TodayCanvas({ world, viewer, exec, ctx }) {
 
       {/* Задачи дня */}
       <div style={card}>
-        <h3 style={wavyHead}>📝 Задачи дня</h3>
+        <h3 style={sectionHead}>📝 Задачи дня</h3>
         {/* Quick add */}
         <div style={{ display: "flex", gap: 6, marginBottom: 12 }}>
           <input
@@ -300,21 +359,23 @@ export default function TodayCanvas({ world, viewer, exec, ctx }) {
             onChange={e => setNewTaskTitle(e.target.value)}
             onKeyDown={e => { if (e.key === "Enter") addTask(); }}
             style={{
-              flex: 1, padding: "8px 12px", borderRadius: 8,
-              border: `2px dashed ${border}`, background: highlight,
-              fontFamily: font, fontSize: 14, color: ink, outline: "none",
+              flex: 1, padding: "11px 16px", borderRadius: 10,
+              border: `0.5px solid ${border}`,
+              background: "rgba(120, 120, 128, 0.08)",
+              fontFamily: font, fontSize: 17, color: ink, outline: "none",
+              letterSpacing: "-0.41px",
             }}
           />
           <button
             onClick={addTask}
             disabled={!newTaskTitle.trim()}
             style={{
-              padding: "8px 16px", borderRadius: 8,
-              border: `2px solid ${accent}`,
-              background: newTaskTitle.trim() ? accent : "transparent",
+              padding: "11px 18px", borderRadius: 10, border: "none",
+              background: newTaskTitle.trim() ? accent : "rgba(120, 120, 128, 0.12)",
               color: newTaskTitle.trim() ? "white" : inkLight,
-              fontFamily: font, fontSize: 14, fontWeight: 700,
+              fontFamily: font, fontSize: 17, fontWeight: 600,
               cursor: newTaskTitle.trim() ? "pointer" : "not-allowed",
+              transition: "all 0.2s",
             }}
           >
             +
@@ -331,23 +392,24 @@ export default function TodayCanvas({ world, viewer, exec, ctx }) {
           <div>
             {sortedTasks.map(t => (
               <div key={t.id} style={{
-                display: "flex", alignItems: "center", gap: 8,
-                padding: "8px 10px", marginBottom: 4,
-                borderRadius: 8,
-                background: t.done ? `${accent}15` : t.priority ? `${gold}15` : "transparent",
-                border: `1.5px ${t.done ? "solid" : "dashed"} ${t.done ? accent : t.priority ? gold : border}`,
-                transition: "all 0.2s",
+                display: "flex", alignItems: "center", gap: 10,
+                padding: "10px 12px", marginBottom: 4,
+                borderRadius: 10,
+                background: t.done ? "rgba(52,199,89,0.06)" : t.priority ? "rgba(255,149,0,0.06)" : "transparent",
+                border: `0.5px solid ${t.done ? "rgba(52,199,89,0.2)" : border}`,
+                transition: "all 0.3s cubic-bezier(0.25, 0.1, 0.25, 1)",
               }}>
                 <button
                   onClick={() => toggleTask(t)}
                   style={{
                     width: 22, height: 22, borderRadius: 6,
-                    border: `2px solid ${t.done ? accent : border}`,
-                    background: t.done ? accent : "transparent",
+                    border: `2px solid ${t.done ? success : "var(--color-apple-text-tertiary, #aeaeb2)"}`,
+                    background: t.done ? success : "transparent",
                     color: "white", cursor: "pointer",
                     display: "flex", alignItems: "center", justifyContent: "center",
-                    fontSize: 12, fontWeight: 700, fontFamily: font,
+                    fontSize: 11, fontWeight: 700, fontFamily: font,
                     flexShrink: 0,
+                    transition: "all 0.2s",
                   }}
                 >
                   {t.done ? "✓" : ""}
@@ -389,16 +451,16 @@ export default function TodayCanvas({ world, viewer, exec, ctx }) {
       {pct === 100 && totalSlots > 0 && (
         <div style={{
           ...card,
-          background: `linear-gradient(135deg, ${gold}30, ${accent}30)`,
+          background: "rgba(52, 199, 89, 0.08)",
           textAlign: "center",
-          border: `2px solid ${gold}`,
+          border: "0.5px solid rgba(52, 199, 89, 0.2)",
         }}>
           <div style={{ fontSize: 32 }}>🎉</div>
-          <div style={{ fontSize: 16, fontWeight: 700, marginTop: 4 }}>
+          <div style={{ fontSize: 20, fontWeight: 600, marginTop: 4, letterSpacing: "0.38px" }}>
             Идеальный день!
           </div>
-          <div style={{ fontSize: 12, color: inkLight, marginTop: 4 }}>
-            Все задачи и привычки выполнены — ты молодец!
+          <div style={{ fontSize: 15, color: inkLight, marginTop: 4, letterSpacing: "-0.24px" }}>
+            Все задачи и привычки выполнены
           </div>
         </div>
       )}

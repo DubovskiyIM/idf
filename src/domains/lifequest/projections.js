@@ -43,9 +43,6 @@ export const PROJECTIONS = {
     mainEntity: "Habit",
     idParam: "habitId",
     witnesses: ["title", "sphereId", "type", "targetValue", "unit", "frequency", "streakCurrent", "streakBest", "status"],
-    subCollections: [
-      { collection: "habitLogs", entity: "HabitLog", foreignKey: "habitId", title: "История", addable: false },
-    ],
   },
 
   goal_list: {
@@ -77,6 +74,19 @@ export const PROJECTIONS = {
     kind: "canvas",
     query: "визуальная карта желаний по сферам",
     entities: ["VisionItem", "Sphere"],
+  },
+
+  goal_detail: {
+    name: "Цель",
+    kind: "detail",
+    query: "детали цели с задачами",
+    entities: ["Goal", "Task", "Sphere"],
+    mainEntity: "Goal",
+    idParam: "goalId",
+    witnesses: ["title", "description", "sphereId", "deadline", "status", "progress"],
+    subCollections: [
+      { collection: "tasks", entity: "Task", foreignKey: "goalId", title: "Задачи", addable: true },
+    ],
   },
 
   all_time_stats: {

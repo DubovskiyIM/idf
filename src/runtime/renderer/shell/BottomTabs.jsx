@@ -1,8 +1,16 @@
 /**
- * BottomTabs — mobile bottom navigation для секционированных доменов.
- * Каждая секция = один tab. Активная секция с >1 item показывает sub-tabs.
+ * BottomTabs — iOS-style bottom tab bar с Lucide иконками.
  */
 import React from "react";
+import { Home, CheckSquare, Calendar, Compass, Trophy } from "lucide-react";
+
+const SECTION_ICONS = {
+  "Главная": Home,
+  "Трекер": CheckSquare,
+  "Календарь": Calendar,
+  "Карта жизни": Compass,
+  "Достижения": Trophy,
+};
 
 export default function BottomTabs({ sections, active, onSelect, projectionNames }) {
   const activeSection = sections.find(s => s.items.includes(active));
@@ -10,83 +18,97 @@ export default function BottomTabs({ sections, active, onSelect, projectionNames
   return (
     <div style={{
       position: "fixed", bottom: 0, left: 0, right: 0, zIndex: 50,
-      fontFamily: "var(--font-doodle, system-ui)",
+      fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif",
     }}>
-      {/* Sub-tabs для активной секции с >1 item */}
+      {/* Sub-tabs */}
       {activeSection && activeSection.items.length > 1 && (
         <div style={{
           display: "flex",
-          borderTop: "1px dashed var(--color-doodle-border, #c4a77d)",
-          background: "rgba(253, 250, 243, 0.92)",
-          backdropFilter: "blur(8px)",
-          WebkitBackdropFilter: "blur(8px)",
+          background: "rgba(249, 249, 249, 0.94)",
+          backdropFilter: "blur(20px) saturate(180%)",
+          WebkitBackdropFilter: "blur(20px) saturate(180%)",
+          borderTop: "0.5px solid rgba(60, 60, 67, 0.12)",
           overflowX: "auto",
-          padding: "0 var(--spacing-doodle, 16px)",
+          padding: "0 16px",
+          gap: 4,
         }}>
-          {activeSection.items.map(projId => (
-            <button
-              key={projId}
-              onClick={() => onSelect(projId)}
-              style={{
-                flex: "0 0 auto",
-                padding: "6px 12px",
-                border: "none",
-                background: "transparent",
-                fontFamily: "inherit",
-                fontSize: 12,
-                cursor: "pointer",
-                whiteSpace: "nowrap",
-                color: projId === active
-                  ? "var(--color-doodle-accent, #4a7c59)"
-                  : "var(--color-doodle-ink-light, #8b7355)",
-                fontWeight: projId === active ? "bold" : "normal",
-                borderBottom: projId === active
-                  ? "2px solid var(--color-doodle-accent, #4a7c59)"
-                  : "2px solid transparent",
-              }}
-            >
-              {projectionNames?.[projId] || projId.replace(/_/g, " ")}
-            </button>
-          ))}
+          {activeSection.items.map(projId => {
+            const isActive = projId === active;
+            return (
+              <button
+                key={projId}
+                onClick={() => onSelect(projId)}
+                style={{
+                  flex: "0 0 auto",
+                  padding: "8px 14px",
+                  border: "none",
+                  background: isActive ? "rgba(0, 122, 255, 0.08)" : "transparent",
+                  borderRadius: 8,
+                  fontFamily: "inherit",
+                  fontSize: 13,
+                  fontWeight: isActive ? 600 : 400,
+                  letterSpacing: "-0.08px",
+                  cursor: "pointer",
+                  whiteSpace: "nowrap",
+                  color: isActive ? "#007aff" : "#8e8e93",
+                  transition: "all 0.2s",
+                  margin: "4px 0",
+                  WebkitTapHighlightColor: "transparent",
+                }}
+              >
+                {projectionNames?.[projId] || projId.replace(/_/g, " ")}
+              </button>
+            );
+          })}
         </div>
       )}
-      {/* Main tabs */}
+
+      {/* Main tab bar */}
       <div style={{
         display: "flex",
-        borderTop: "1.5px solid var(--color-doodle-ink, #2c2420)",
-        background: "rgba(253, 250, 243, 0.92)",
-        backdropFilter: "blur(8px)",
-        WebkitBackdropFilter: "blur(8px)",
+        borderTop: "0.5px solid rgba(60, 60, 67, 0.29)",
+        background: "rgba(249, 249, 249, 0.94)",
+        backdropFilter: "blur(20px) saturate(180%)",
+        WebkitBackdropFilter: "blur(20px) saturate(180%)",
+        paddingBottom: "env(safe-area-inset-bottom, 0px)",
       }}>
-        {sections.map((sec, i) => {
+        {sections.map((sec) => {
           const isActive = sec === activeSection;
+          const LucideIcon = SECTION_ICONS[sec.section];
           return (
             <button
               key={sec.section}
               onClick={() => onSelect(sec.items[0])}
               style={{
                 flex: 1,
-                padding: "8px 4px",
+                padding: "8px 4px 4px",
                 border: "none",
-                background: isActive ? "rgba(92,64,51,0.1)" : "transparent",
+                background: "transparent",
                 display: "flex",
                 flexDirection: "column",
                 alignItems: "center",
                 gap: 2,
                 cursor: "pointer",
                 fontFamily: "inherit",
-                borderRight: i < sections.length - 1
-                  ? "1px solid var(--color-doodle-border, #c4a77d)"
-                  : "none",
+                WebkitTapHighlightColor: "transparent",
               }}
             >
-              <span style={{ fontSize: 18 }}>{sec.icon}</span>
+              {LucideIcon ? (
+                <LucideIcon
+                  size={28}
+                  strokeWidth={isActive ? 2 : 1.5}
+                  color={isActive ? "#007aff" : "#8e8e93"}
+                  style={{ transition: "color 0.2s" }}
+                />
+              ) : (
+                <span style={{ fontSize: 24, opacity: isActive ? 1 : 0.5 }}>{sec.icon}</span>
+              )}
               <span style={{
-                fontSize: 9,
-                color: isActive
-                  ? "var(--color-doodle-ink, #5c4033)"
-                  : "var(--color-doodle-ink-light, #8b7355)",
-                fontWeight: isActive ? "bold" : "normal",
+                fontSize: 10,
+                fontWeight: isActive ? 600 : 400,
+                letterSpacing: "0.07px",
+                color: isActive ? "#007aff" : "#8e8e93",
+                lineHeight: "13px",
               }}>
                 {sec.section}
               </span>

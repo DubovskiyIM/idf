@@ -45,6 +45,10 @@ registerCanvas("market_trends", MarketLineCanvas);
 registerCanvas("advisor_client_dashboard", AdvisorReviewCanvas);
 registerCanvas("regulator_report", RegulatorReportCanvas);
 
+// Lifequest canvas-компоненты
+import { registerLifequestCanvases } from "./domains/lifequest/registerCanvases.jsx";
+registerLifequestCanvases();
+
 // Delivery map-canvas (§16a): один generic wrapper на 3 проекции
 import DeliveryMapCanvas from "./domains/delivery/canvas/DeliveryMapCanvas.jsx";
 registerCanvas("order_tracker", DeliveryMapCanvas);
@@ -52,7 +56,7 @@ registerCanvas("active_delivery", DeliveryMapCanvas);
 registerCanvas("dispatcher_map", DeliveryMapCanvas);
 
 const UI_KITS = { mantine: mantineAdapter, shadcn: shadcnAdapter, apple: appleAdapter, antd: antdAdapter };
-const DOMAIN_DEFAULT_KITS = { lifequest: shadcnAdapter, reflect: appleAdapter, invest: antdAdapter };
+const DOMAIN_DEFAULT_KITS = { lifequest: appleAdapter, reflect: appleAdapter, invest: antdAdapter };
 
 const DOMAINS = {
   booking: { ...bookingDomain, UI: BookingUI },
