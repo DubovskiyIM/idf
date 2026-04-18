@@ -30,3 +30,4 @@ docs/specs/
 docs/superpowers/
 .superpowers.worktrees/
 .superpowers/
+.npm-cache/

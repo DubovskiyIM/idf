@@ -106,14 +106,14 @@ export function getSeedEffects() {
 
   // Tasks (10)
   const TASKS = [
-    { id: "task_1", customerId: "u_customer_1", title: "Лендинг на React", categoryId: "cat_dev", budget: 80000, deadline: now + 7 * 86400_000, city: "Москва", type: "remote", status: "published" },
+    { id: "task_1", customerId: "u_customer_1", title: "Лендинг на React", categoryId: "cat_dev", budget: 80000, deadline: now + 7 * 86400_000, city: "Москва", type: "remote", status: "closed" },
     { id: "task_2", customerId: "u_customer_1", title: "Редизайн мобильного приложения", categoryId: "cat_design", budget: 120000, deadline: now + 14 * 86400_000, city: "Москва", type: "remote", status: "published" },
     { id: "task_3", customerId: "u_customer_2", title: "API для интернет-магазина", categoryId: "cat_dev", budget: 200000, deadline: now + 21 * 86400_000, city: "Санкт-Петербург", type: "remote", status: "published" },
-    { id: "task_4", customerId: "u_customer_2", title: "Логотип для кофейни", categoryId: "cat_design", budget: 25000, deadline: now + 5 * 86400_000, city: "Санкт-Петербург", type: "remote", status: "published" },
+    { id: "task_4", customerId: "u_customer_2", title: "Логотип для кофейни", categoryId: "cat_design", budget: 25000, deadline: now + 5 * 86400_000, city: "Санкт-Петербург", type: "remote", status: "closed" },
     { id: "task_5", customerId: "u_universal", title: "Тексты для сайта школы", categoryId: "cat_copy", budget: 15000, deadline: now + 10 * 86400_000, city: "Екатеринбург", type: "remote", status: "published" },
     { id: "task_6", customerId: "u_customer_1", title: "Telegram-бот для уведомлений", categoryId: "cat_dev", budget: 45000, deadline: now + 12 * 86400_000, city: "Москва", type: "remote", status: "published" },
     { id: "task_7", customerId: "u_customer_2", title: "Иконки для SaaS", categoryId: "cat_design", budget: 35000, deadline: now + 8 * 86400_000, city: "Санкт-Петербург", type: "remote", status: "published" },
-    { id: "task_8", customerId: "u_customer_1", title: "SEO-статьи про недвижимость (пакет 10 шт)", categoryId: "cat_copy", budget: 30000, deadline: now + 15 * 86400_000, city: "Москва", type: "remote", status: "published" },
+    { id: "task_8", customerId: "u_customer_1", title: "SEO-статьи про недвижимость (пакет 10 шт)", categoryId: "cat_copy", budget: 30000, deadline: now + 15 * 86400_000, city: "Москва", type: "remote", status: "closed" },
     { id: "task_9", customerId: "u_customer_2", title: "Monte Carlo simulator", categoryId: "cat_dev", budget: 150000, deadline: now + 30 * 86400_000, city: "Санкт-Петербург", type: "remote", status: "moderation" },
     { id: "task_10", customerId: "u_universal", title: "Обложка для YouTube-канала", categoryId: "cat_design", budget: 8000, deadline: now + 3 * 86400_000, city: "Екатеринбург", type: "remote", status: "draft" },
   ];
@@ -156,6 +156,70 @@ export function getSeedEffects() {
       },
     });
   });
+
+  // Wallets — по одному для каждого user'а
+  const WALLETS = USERS.map(u => ({
+    id: `wallet_${u.id}`,
+    userId: u.id,
+    balance: u.customerVerified ? 150000 : 5000,
+    reserved: 0,
+    currency: "RUB",
+  }));
+  WALLETS.forEach(w => ef({ target: "Wallet", context: { ...w, createdAt: now } }));
+
+  // Deals — 3 в разных фазах жизненного цикла
+  const DEALS = [
+    {
+      id: "deal_1",
+      customerId: "u_customer_1", executorId: "u_executor_1", taskId: "task_1", responseId: "r_1",
+      amount: 75000, commission: 7500, status: "in_progress",
+      deadline: now + 5 * 86400_000,
+    },
+    {
+      id: "deal_2",
+      customerId: "u_customer_2", executorId: "u_executor_2", taskId: "task_4", responseId: "r_6",
+      amount: 25000, commission: 2500, status: "on_review",
+      deadline: now + 2 * 86400_000,
+    },
+    {
+      id: "deal_3",
+      customerId: "u_customer_1", executorId: "u_universal", taskId: "task_8", responseId: "r_11",
+      amount: 28000, commission: 2800, status: "completed",
+      deadline: now - 3 * 86400_000,
+      completedAt: now - 2 * 86400_000,
+    },
+  ];
+  DEALS.forEach(d => ef({ target: "Deal", context: { ...d, createdAt: now - 7 * 86400_000 } }));
+
+  // Transactions — escrow-hold + commission для каждой сделки, release для completed
+  const TRANSACTIONS = [
+    // deal_1 escrow-hold (active)
+    { id: "tx_1", walletId: "wallet_u_customer_1", dealId: "deal_1", amount: 75000, kind: "escrow-hold", status: "posted", note: "Резерв по deal_1" },
+    // deal_2 escrow-hold (on review)
+    { id: "tx_2", walletId: "wallet_u_customer_2", dealId: "deal_2", amount: 25000, kind: "escrow-hold", status: "posted", note: "Резерв по deal_2" },
+    // deal_3 completed: release executor'у + commission
+    { id: "tx_3", walletId: "wallet_u_customer_1", dealId: "deal_3", amount: 28000, kind: "release", status: "posted", note: "Перевод по deal_3" },
+    { id: "tx_4", walletId: "wallet_u_universal", dealId: "deal_3", amount: 25200, kind: "topup", status: "posted", note: "Получение за deal_3" },
+    { id: "tx_5", walletId: "wallet_u_customer_1", dealId: "deal_3", amount: 2800, kind: "commission", status: "posted", note: "Комиссия платформы" },
+  ];
+  TRANSACTIONS.forEach(t => ef({ target: "Transaction", context: { ...t, createdAt: now - 2 * 86400_000 } }));
+
+  // Reviews — 3 Review по completed deal_3
+  const REVIEWS = [
+    {
+      id: "rev_1", authorId: "u_customer_1", dealId: "deal_3", targetUserId: "u_universal",
+      role: "customer", rating: 5, comment: "Отличная работа, в срок",
+    },
+    {
+      id: "rev_2", authorId: "u_universal", dealId: "deal_3", targetUserId: "u_customer_1",
+      role: "executor", rating: 5, comment: "Адекватный заказчик, чёткое ТЗ",
+    },
+    {
+      id: "rev_3", authorId: "u_customer_2", dealId: "deal_3", targetUserId: "u_executor_2",
+      role: "customer", rating: 4, comment: "Хорошо, но были правки",
+    },
+  ];
+  REVIEWS.forEach(r => ef({ target: "Review", context: { ...r, createdAt: now - 86400_000 } }));
 
   return effects;
 }

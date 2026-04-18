@@ -9,6 +9,7 @@ export { INTENTS } from "./intents.js";
 export { PROJECTIONS, ROOT_PROJECTIONS } from "./projections.js";
 export { ONTOLOGY } from "./ontology.js";
 export { getSeedEffects } from "./seed.js";
+export { RULES } from "./rules.js";
 import { INTENTS } from "./intents.js";
 
 export const DOMAIN_ID = "freelance";

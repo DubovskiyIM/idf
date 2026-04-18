@@ -5,9 +5,10 @@ describe("freelance ontology — entities", () => {
   const EXPECTED = [
     "User", "CustomerProfile", "ExecutorProfile",
     "Skill", "ExecutorSkill", "Category", "Task", "Response",
+    "Deal", "Wallet", "Transaction", "Review",
   ];
 
-  it("содержит 8 базовых сущностей", () => {
+  it("содержит 12 сущностей в Cycle 2 (8 Cycle 1 + 4 escrow)", () => {
     for (const e of EXPECTED) {
       expect(ONTOLOGY.entities[e], `entity ${e}`).toBeDefined();
     }
@@ -52,6 +53,43 @@ describe("freelance ontology — entities", () => {
     expect(ONTOLOGY.entities.Response.ownerField).toBe("executorId");
     expect(ONTOLOGY.entities.Response.fields.taskId).toBeDefined();
   });
+
+  it("Deal.ownerField === 'customerId', имеет executorId, taskId, amount, status", () => {
+    const d = ONTOLOGY.entities.Deal;
+    expect(d.ownerField).toBe("customerId");
+    expect(d.fields.executorId).toBeDefined();
+    expect(d.fields.taskId).toBeDefined();
+    expect(d.fields.amount).toBeDefined();
+    expect(d.fields.status.options).toEqual(expect.arrayContaining([
+      "new", "awaiting_payment", "in_progress", "on_review", "completed", "cancelled",
+    ]));
+  });
+
+  it("Wallet.ownerField === 'userId', имеет balance + reserved (fieldRole=money)", () => {
+    const w = ONTOLOGY.entities.Wallet;
+    expect(w.ownerField).toBe("userId");
+    expect(w.fields.balance.fieldRole).toBe("money");
+    expect(w.fields.reserved.fieldRole).toBe("money");
+  });
+
+  it("Transaction.ownerField === 'walletId', kind options покрывают 4 типа", () => {
+    const t = ONTOLOGY.entities.Transaction;
+    expect(t.ownerField).toBe("walletId");
+    expect(t.fields.kind.options).toEqual(expect.arrayContaining([
+      "topup", "escrow-hold", "release", "commission",
+    ]));
+    expect(t.fields.status.options).toEqual(expect.arrayContaining([
+      "pending", "posted", "reverted",
+    ]));
+  });
+
+  it("Review.ownerField === 'authorId', role — customer|executor", () => {
+    const r = ONTOLOGY.entities.Review;
+    expect(r.ownerField).toBe("authorId");
+    expect(r.fields.dealId).toBeDefined();
+    expect(r.fields.role.options).toEqual(["customer", "executor"]);
+    expect(r.fields.rating).toBeDefined();
+  });
 });
 
 describe("freelance ontology — roles", () => {
@@ -94,8 +132,8 @@ describe("freelance ontology — roles", () => {
 describe("freelance ontology — invariants", () => {
   const byName = (n) => ONTOLOGY.invariants.find(i => i.name === n);
 
-  it("содержит ровно 3 invariants в Cycle 1", () => {
-    expect(ONTOLOGY.invariants).toHaveLength(3);
+  it("содержит 6 invariants в Cycle 2 (3 Cycle 1 + 3 escrow)", () => {
+    expect(ONTOLOGY.invariants).toHaveLength(6);
   });
 
   it("task_status_transition — transition с 4 allowed переходами", () => {
@@ -129,5 +167,37 @@ describe("freelance ontology — invariants", () => {
     expect(inv.groupBy).toBe("taskId");
     expect(inv.max).toBe(1);
     expect(inv.where).toEqual({ status: "selected" });
+  });
+
+  it("deal_status_transition — transition с legal переходами и без skip", () => {
+    const inv = byName("deal_status_transition");
+    expect(inv).toBeDefined();
+    expect(inv.kind).toBe("transition");
+    expect(inv.entity).toBe("Deal");
+    expect(inv.field).toBe("status");
+    expect(inv.allowed).toEqual(expect.arrayContaining([
+      ["new", "awaiting_payment"],
+      ["awaiting_payment", "in_progress"],
+      ["in_progress", "on_review"],
+      ["on_review", "completed"],
+      ["on_review", "in_progress"],
+      ["new", "cancelled"],
+    ]));
+  });
+
+  it("wallet_reserved_equals_escrow_sum — aggregate", () => {
+    const inv = byName("wallet_reserved_equals_escrow_sum");
+    expect(inv).toBeDefined();
+    expect(inv.kind).toBe("aggregate");
+    expect(inv.entity).toBe("Wallet");
+    expect(inv.field).toBe("reserved");
+    expect(inv.formula).toBeDefined();
+  });
+
+  it("deal_customer_differs_from_executor — referential", () => {
+    const inv = byName("deal_customer_differs_from_executor");
+    expect(inv).toBeDefined();
+    expect(inv.kind).toBe("referential");
+    expect(inv.entity).toBe("Deal");
   });
 });

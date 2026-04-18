@@ -131,6 +131,86 @@ export const ONTOLOGY = {
         createdAt: { type: "datetime" },
       },
     },
+
+    Deal: {
+      ownerField: "customerId",
+      fields: {
+        id: { type: "text" },
+        customerId: { type: "text", required: true },
+        executorId: { type: "text", required: true },
+        taskId: { type: "text", required: true },
+        responseId: { type: "text" },
+        amount: { type: "number", fieldRole: "money", required: true, label: "Сумма сделки" },
+        commission: { type: "number", fieldRole: "money", label: "Комиссия" },
+        status: {
+          type: "select",
+          options: [
+            "new", "awaiting_payment", "in_progress", "on_review",
+            "completed", "cancelled",
+          ],
+          required: true,
+          label: "Статус",
+        },
+        deadline: { type: "datetime", label: "Срок" },
+        completedAt: { type: "datetime", label: "Завершено" },
+        createdAt: { type: "datetime" },
+      },
+    },
+
+    Wallet: {
+      ownerField: "userId",
+      fields: {
+        id: { type: "text" },
+        userId: { type: "text", required: true },
+        balance: { type: "number", fieldRole: "money", label: "Баланс" },
+        reserved: { type: "number", fieldRole: "money", label: "В резерве" },
+        currency: { type: "text", label: "Валюта" },
+        createdAt: { type: "datetime" },
+      },
+    },
+
+    Transaction: {
+      ownerField: "walletId",
+      fields: {
+        id: { type: "text" },
+        walletId: { type: "text", required: true },
+        dealId: { type: "text", label: "Сделка" },
+        amount: { type: "number", fieldRole: "money", required: true, label: "Сумма" },
+        kind: {
+          type: "select",
+          options: ["topup", "escrow-hold", "release", "commission", "refund", "withdrawal"],
+          required: true,
+          label: "Тип операции",
+        },
+        status: {
+          type: "select",
+          options: ["pending", "posted", "reverted"],
+          required: true,
+          label: "Статус",
+        },
+        note: { type: "text", label: "Комментарий" },
+        createdAt: { type: "datetime" },
+      },
+    },
+
+    Review: {
+      ownerField: "authorId",
+      fields: {
+        id: { type: "text" },
+        authorId: { type: "text", required: true },
+        dealId: { type: "text", required: true },
+        targetUserId: { type: "text", required: true },
+        role: {
+          type: "select",
+          options: ["customer", "executor"],
+          required: true,
+          label: "Сторона",
+        },
+        rating: { type: "number", required: true, label: "Оценка" },
+        comment: { type: "text", label: "Комментарий" },
+        createdAt: { type: "datetime" },
+      },
+    },
   },
 
   roles: {
@@ -248,6 +328,50 @@ export const ONTOLOGY = {
       groupBy: "taskId",
       max: 1,
       where: { status: "selected" },
+      severity: "error",
+    },
+
+    // 4. Конечный автомат статусов сделки (escrow lifecycle).
+    {
+      name: "deal_status_transition",
+      kind: "transition",
+      entity: "Deal",
+      field: "status",
+      allowed: [
+        ["new", "awaiting_payment"],
+        ["awaiting_payment", "in_progress"],
+        ["awaiting_payment", "cancelled"],
+        ["in_progress", "on_review"],
+        ["in_progress", "cancelled"],
+        ["on_review", "completed"],
+        ["on_review", "in_progress"],
+        ["new", "cancelled"],
+      ],
+      severity: "error",
+    },
+
+    // 5. Wallet.reserved = Σ Transaction[kind=escrow-hold, status=posted] по одному кошельку.
+    //    Проверка bookkeeping: реальная сумма в escrow-hold всегда совпадает с reserved-полем.
+    {
+      name: "wallet_reserved_equals_escrow_sum",
+      kind: "aggregate",
+      entity: "Wallet",
+      field: "reserved",
+      formula: {
+        op: "sum",
+        of: "Transaction.amount",
+        where: { kind: "escrow-hold", status: "posted" },
+        groupBy: "walletId",
+      },
+      severity: "error",
+    },
+
+    // 6. Заказчик не может взять в работу собственную задачу.
+    {
+      name: "deal_customer_differs_from_executor",
+      kind: "referential",
+      entity: "Deal",
+      check: "customerId !== executorId",
       severity: "error",
     },
   ],

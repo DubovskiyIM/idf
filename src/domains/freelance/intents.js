@@ -511,4 +511,338 @@ export const INTENTS = {
     },
     confirmation: "auto",
   },
+
+  // ─── Review (3) ──────────────────────────────────────────────────────────
+
+  leave_review: {
+    name: "Оставить отзыв",
+    description: "После Deal.completed одна сторона оставляет Review о другой",
+    α: "add",
+    irreversibility: "medium",
+    particles: {
+      parameters: [
+        { name: "authorId", type: "id", required: true },
+        { name: "dealId", type: "id", required: true },
+        { name: "targetUserId", type: "id", required: true },
+        { name: "role", type: "select", options: ["customer", "executor"], required: true },
+        { name: "rating", type: "number", required: true },
+        { name: "comment", type: "text" },
+      ],
+      effects: [
+        { α: "add", target: "reviews", σ: "account" },
+      ],
+    },
+    creates: "Review",
+    confirmation: "auto",
+  },
+
+  reply_to_review: {
+    name: "Ответить на отзыв",
+    description: "Адресат Review может оставить один reply",
+    α: "replace",
+    irreversibility: "medium",
+    particles: {
+      parameters: [
+        { name: "id", type: "id", required: true },
+        { name: "reply", type: "text", required: true },
+      ],
+      effects: [
+        { α: "replace", target: "review.reply" },
+      ],
+    },
+    confirmation: "auto",
+  },
+
+  view_reviews_for_user: {
+    name: "Посмотреть отзывы",
+    description: "Read-only — публичные Review о targetUserId",
+    α: "replace",
+    irreversibility: "low",
+    particles: {
+      parameters: [
+        { name: "targetUserId", type: "id", required: true },
+      ],
+      effects: [],
+    },
+    confirmation: "auto",
+  },
+
+  // ─── Wallet (7) ───────────────────────────────────────────────────────────
+
+  top_up_wallet_by_card: {
+    name: "Пополнить баланс картой",
+    description: "Mock-gateway — создаёт Transaction.kind=topup, увеличивает Wallet.balance",
+    α: "add",
+    irreversibility: "medium",
+    particles: {
+      parameters: [
+        { name: "walletId", type: "id", required: true },
+        { name: "amount", type: "number", required: true },
+        { name: "cardLastFour", type: "text" },
+      ],
+      effects: [
+        { α: "add", target: "transactions", σ: "account" },
+        { α: "replace", target: "wallet.balance" },
+      ],
+    },
+    creates: "Transaction",
+    confirmation: "auto",
+  },
+
+  view_transaction_history: {
+    name: "История операций",
+    description: "Read-only выборка Transaction по walletId",
+    α: "replace",
+    irreversibility: "low",
+    particles: {
+      parameters: [
+        { name: "walletId", type: "id", required: true },
+      ],
+      effects: [],
+    },
+    confirmation: "auto",
+  },
+
+  charge_commission: {
+    name: "Списать комиссию",
+    description: "Internal — при accept_result платформенная комиссия (%)",
+    α: "add",
+    irreversibility: "low",
+    particles: {
+      parameters: [
+        { name: "dealId", type: "id", required: true },
+        { name: "walletId", type: "id", required: true },
+        { name: "amount", type: "number", required: true },
+      ],
+      effects: [
+        { α: "add", target: "transactions", σ: "account" },
+      ],
+    },
+    creates: "Transaction",
+    confirmation: "auto",
+  },
+
+  reserve_escrow: {
+    name: "Резервировать escrow",
+    description: "Internal — при confirm_deal: создаёт Transaction.kind=escrow-hold",
+    α: "add",
+    irreversibility: "low",
+    particles: {
+      parameters: [
+        { name: "dealId", type: "id", required: true },
+        { name: "walletId", type: "id", required: true },
+        { name: "amount", type: "number", required: true },
+      ],
+      effects: [
+        { α: "add", target: "transactions", σ: "account" },
+        { α: "replace", target: "wallet.reserved" },
+      ],
+    },
+    creates: "Transaction",
+    confirmation: "auto",
+  },
+
+  release_escrow: {
+    name: "Высвободить escrow",
+    description: "Internal — при accept_result: Transaction.kind=release + перевод исполнителю",
+    α: "add",
+    irreversibility: "low",
+    particles: {
+      parameters: [
+        { name: "dealId", type: "id", required: true },
+        { name: "walletId", type: "id", required: true },
+        { name: "amount", type: "number", required: true },
+      ],
+      effects: [
+        { α: "add", target: "transactions", σ: "account" },
+        { α: "replace", target: "wallet.reserved" },
+        { α: "replace", target: "wallet.balance" },
+      ],
+    },
+    creates: "Transaction",
+    confirmation: "auto",
+  },
+
+  refund_escrow: {
+    name: "Вернуть escrow",
+    description: "Internal — при cancel_deal_mutual: Transaction.kind=refund",
+    α: "add",
+    irreversibility: "low",
+    particles: {
+      parameters: [
+        { name: "dealId", type: "id", required: true },
+        { name: "walletId", type: "id", required: true },
+        { name: "amount", type: "number", required: true },
+      ],
+      effects: [
+        { α: "add", target: "transactions", σ: "account" },
+        { α: "replace", target: "wallet.reserved" },
+      ],
+    },
+    creates: "Transaction",
+    confirmation: "auto",
+  },
+
+  view_wallet_balance: {
+    name: "Посмотреть баланс",
+    description: "Read-only — возвращает Wallet balance + reserved",
+    α: "replace",
+    irreversibility: "low",
+    particles: {
+      parameters: [
+        { name: "userId", type: "id", required: true },
+      ],
+      effects: [],
+    },
+    confirmation: "auto",
+  },
+
+  // ─── Deal (7) ─────────────────────────────────────────────────────────────
+
+  confirm_deal: {
+    name: "Подтвердить сделку",
+    description: "Customer выбирает исполнителя и резервирует escrow — деньги замораживаются",
+    α: "add",
+    irreversibility: "high",
+    __irr: {
+      point: "high",
+      reason: "Сумма резервируется в escrow — отмена возможна только через спор или mutual-cancel",
+    },
+    particles: {
+      entities: ["deal: Deal", "task: Task", "response: Response"],
+      parameters: [
+        { name: "customerId", type: "id", required: true },
+        { name: "executorId", type: "id", required: true },
+        { name: "taskId", type: "id", required: true },
+        { name: "responseId", type: "id", required: true },
+        { name: "amount", type: "number", required: true },
+        { name: "deadline", type: "datetime" },
+      ],
+      effects: [
+        { α: "add", target: "deals", σ: "account" },
+        { α: "add", target: "transactions", σ: "account" },
+        { α: "replace", target: "wallet.reserved" },
+      ],
+    },
+    creates: "Deal",
+    confirmation: "auto",
+  },
+
+  submit_work_result: {
+    name: "Сдать работу",
+    description: "Executor передаёт результат — Deal.status переходит в on_review",
+    α: "replace",
+    irreversibility: "low",
+    particles: {
+      entities: ["deal: Deal"],
+      parameters: [
+        { name: "id", type: "id", required: true },
+        { name: "result", type: "text", required: true },
+        { name: "links", type: "text" },
+      ],
+      effects: [
+        { α: "replace", target: "deal.status", value: "on_review" },
+      ],
+    },
+    confirmation: "auto",
+  },
+
+  accept_result: {
+    name: "Принять работу",
+    description: "Customer принимает результат — escrow-перевод исполнителю",
+    α: "replace",
+    irreversibility: "high",
+    __irr: {
+      point: "high",
+      reason: "Escrow-перевод исполнителю — откат только через chargeback поддержки",
+    },
+    particles: {
+      entities: ["deal: Deal"],
+      parameters: [
+        { name: "id", type: "id", required: true },
+      ],
+      effects: [
+        { α: "replace", target: "deal.status", value: "completed" },
+        { α: "add", target: "transactions", σ: "account" },
+      ],
+    },
+    confirmation: "auto",
+  },
+
+  auto_accept_result: {
+    name: "Авто-приёмка (72h)",
+    description: "Scheduler-fired: если customer не принял за 72h, результат auto-accept с теми же последствиями",
+    α: "replace",
+    irreversibility: "high",
+    __irr: {
+      point: "high",
+      reason: "Автоматическая приёмка через 72h после on_review — та же finality что и ручная",
+    },
+    particles: {
+      entities: ["deal: Deal"],
+      parameters: [
+        { name: "id", type: "id", required: true },
+      ],
+      effects: [
+        { α: "replace", target: "deal.status", value: "completed" },
+        { α: "add", target: "transactions", σ: "account" },
+      ],
+    },
+    confirmation: "auto",
+  },
+
+  request_revision: {
+    name: "Запросить доработку",
+    description: "Customer возвращает deal из on_review в in_progress с комментарием",
+    α: "replace",
+    irreversibility: "low",
+    particles: {
+      entities: ["deal: Deal"],
+      parameters: [
+        { name: "id", type: "id", required: true },
+        { name: "comment", type: "text", required: true },
+      ],
+      effects: [
+        { α: "replace", target: "deal.status", value: "in_progress" },
+      ],
+    },
+    confirmation: "auto",
+  },
+
+  submit_revision: {
+    name: "Сдать правки",
+    description: "Executor сдаёт версию после revision — Deal возвращается в on_review",
+    α: "replace",
+    irreversibility: "low",
+    particles: {
+      entities: ["deal: Deal"],
+      parameters: [
+        { name: "id", type: "id", required: true },
+        { name: "result", type: "text", required: true },
+      ],
+      effects: [
+        { α: "replace", target: "deal.status", value: "on_review" },
+      ],
+    },
+    confirmation: "auto",
+  },
+
+  cancel_deal_mutual: {
+    name: "Отменить сделку (обоюдно)",
+    description: "Обе стороны согласны — escrow refund customer'у",
+    α: "replace",
+    irreversibility: "medium",
+    particles: {
+      entities: ["deal: Deal"],
+      parameters: [
+        { name: "id", type: "id", required: true },
+        { name: "reason", type: "text", required: true },
+      ],
+      effects: [
+        { α: "replace", target: "deal.status", value: "cancelled" },
+        { α: "add", target: "transactions", σ: "account" },
+      ],
+    },
+    confirmation: "auto",
+  },
 };

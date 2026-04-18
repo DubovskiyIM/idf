@@ -18,6 +18,16 @@ const GROUPS = {
     "submit_response", "edit_response", "withdraw_response",
     "select_executor", "view_responses",
   ],
+  deal: [
+    "confirm_deal", "submit_work_result", "accept_result",
+    "auto_accept_result", "request_revision", "submit_revision",
+    "cancel_deal_mutual",
+  ],
+  wallet: [
+    "top_up_wallet_by_card", "view_transaction_history", "charge_commission",
+    "reserve_escrow", "release_escrow", "refund_escrow", "view_wallet_balance",
+  ],
+  review: ["leave_review", "reply_to_review", "view_reviews_for_user"],
 };
 
 describe("freelance intents — auth + system", () => {
@@ -104,8 +114,57 @@ describe("freelance intents — response details", () => {
   });
 });
 
+describe("freelance intents — deal details + __irr декларация", () => {
+  const IRR_INTENTS = ["confirm_deal", "accept_result", "auto_accept_result"];
+
+  for (const id of IRR_INTENTS) {
+    it(`${id} имеет irreversibility: "high"`, () => {
+      expect(INTENTS[id].irreversibility).toBe("high");
+    });
+
+    it(`${id} имеет декларативный __irr с point и reason`, () => {
+      const irr = INTENTS[id].__irr;
+      expect(irr).toBeDefined();
+      expect(irr.point).toBe("high");
+      expect(typeof irr.reason).toBe("string");
+      expect(irr.reason.length).toBeGreaterThan(0);
+    });
+  }
+
+  it("confirm_deal создаёт Deal + reserve_escrow в effects", () => {
+    expect(INTENTS.confirm_deal.creates).toBe("Deal");
+    const effs = INTENTS.confirm_deal.particles.effects;
+    expect(effs.some(e => e.α === "add" && e.target === "deals")).toBe(true);
+  });
+
+  it("accept_result → replace deal.status на completed", () => {
+    const effs = INTENTS.accept_result.particles.effects;
+    expect(effs.some(e => e.α === "replace" && e.target === "deal.status" && e.value === "completed")).toBe(true);
+  });
+
+  it("cancel_deal_mutual не имеет irreversibility high (no __irr)", () => {
+    expect(INTENTS.cancel_deal_mutual.__irr).toBeUndefined();
+    expect(INTENTS.cancel_deal_mutual.irreversibility).not.toBe("high");
+  });
+});
+
+describe("freelance intents — review details", () => {
+  it("leave_review создаёт Review", () => {
+    expect(INTENTS.leave_review.creates).toBe("Review");
+  });
+
+  it("leave_review требует dealId + rating + role", () => {
+    const params = INTENTS.leave_review.particles.parameters.map(p => p.name);
+    expect(params).toEqual(expect.arrayContaining(["dealId", "rating", "role"]));
+  });
+
+  it("view_reviews_for_user read-only", () => {
+    expect(INTENTS.view_reviews_for_user.particles.effects).toEqual([]);
+  });
+});
+
 describe("freelance intents — общий счёт", () => {
-  it("ровно 29 intents в Cycle 1", () => {
-    expect(Object.keys(INTENTS)).toHaveLength(29);
+  it("46 intents в Cycle 2 (29 Cycle 1 + 17 escrow)", () => {
+    expect(Object.keys(INTENTS)).toHaveLength(46);
   });
 });
