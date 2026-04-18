@@ -1,0 +1,101 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "witness.schema.json",
+  "title": "IDF Witness Record",
+  "description": "A witness record documenting a structural decision made during crystallization. See Part 2 §5.",
+  "type": "object",
+  "required": ["basis", "reliability"],
+  "properties": {
+    "basis": {
+      "type": "string",
+      "description": "Kind of structural decision. Normative values are listed; implementations MAY use namespaced custom values (e.g., 'vendor:feature-x').",
+      "examples": [
+        "anchoring",
+        "pattern-bank",
+        "polymorphic-variant",
+        "temporal-section",
+        "alphabetical-fallback"
+      ]
+    },
+    "reliability": {
+      "type": "string",
+      "description": "Degree of assertion the witness makes. Normative values are listed; unrecognized values MUST be treated as 'heuristic'.",
+      "enum": ["rule-based", "constructive", "heuristic"]
+    },
+    "pattern": {
+      "type": "string",
+      "description": "Identifier of the rule or pattern that produced this witness. Semantics is basis-specific."
+    },
+    "slot": {
+      "type": "string",
+      "description": "Canonical slot name the decision applies to, if any."
+    },
+    "projection": {
+      "type": "string",
+      "description": "Identifier of the projection whose artifact contains this witness, if applicable."
+    },
+    "requirements": {
+      "type": "array",
+      "description": "Per-requirement breakdown for rule-based or constructive witnesses.",
+      "items": {
+        "type": "object",
+        "required": ["kind", "ok"],
+        "properties": {
+          "kind": { "type": "string" },
+          "ok": { "type": "boolean" },
+          "spec": { "description": "Requirement-specific context." }
+        },
+        "additionalProperties": true
+      }
+    },
+    "salience": {
+      "type": "number",
+      "description": "Salience value shared by the tied group. Required for basis='alphabetical-fallback'."
+    },
+    "chosen": {
+      "type": "string",
+      "description": "Intent identifier selected from the tied group. Required for basis='alphabetical-fallback'."
+    },
+    "peers": {
+      "type": "array",
+      "description": "Other tied intent identifiers (lexicographic order), not chosen. Required for basis='alphabetical-fallback'.",
+      "items": { "type": "string" }
+    },
+    "recommendation": {
+      "type": "string",
+      "description": "Human-readable hint for the author. Typically present for basis='alphabetical-fallback'."
+    }
+  },
+  "additionalProperties": true,
+  "allOf": [
+    {
+      "if": { "properties": { "basis": { "const": "alphabetical-fallback" } }, "required": ["basis"] },
+      "then": {
+        "required": ["basis", "reliability", "slot", "projection", "salience", "chosen", "peers"],
+        "properties": {
+          "reliability": { "const": "heuristic" }
+        }
+      }
+    },
+    {
+      "if": { "properties": { "basis": { "const": "polymorphic-variant" } }, "required": ["basis"] },
+      "then": {
+        "required": ["basis", "reliability", "pattern", "requirements"],
+        "properties": {
+          "reliability": { "const": "rule-based" },
+          "pattern": { "const": "polymorphic:variant-resolution" }
+        }
+      }
+    },
+    {
+      "if": { "properties": { "basis": { "const": "temporal-section" } }, "required": ["basis"] },
+      "then": {
+        "required": ["basis", "reliability", "pattern", "requirements"],
+        "properties": {
+          "reliability": { "const": "rule-based" },
+          "pattern": { "const": "temporal:event-timeline" }
+        }
+      }
+    }
+  ]
+}

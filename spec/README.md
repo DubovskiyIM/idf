@@ -6,9 +6,10 @@ Formal specification of the Intent-Driven Framework (IDF): a paradigm for buildi
 
 This repository contains:
 
-- **[`idf-v1.0-part1-core.md`](./idf-v1.0-part1-core.md)** — the normative specification document (~920 lines, RFC 2119 style).
-- **[`conformance/`](./conformance/)** — 54 language-agnostic JSON conformance tests across 3 levels.
-- **[`schemas/`](./schemas/)** — JSON Schema Draft-07 definitions for `intent`, `effect`, `ontology`, `world`, `domain`.
+- **[`idf-v1.0-part1-core.md`](./idf-v1.0-part1-core.md)** — Part 1, Core Model: ontology, intent, effect, world computation, intent algebra, integrity, determinism (~1000 lines, RFC 2119).
+- **[`idf-v1.1-part2-crystallize.md`](./idf-v1.1-part2-crystallize.md)** — Part 2, Projections, Crystallization, Witnesses (skeleton + normative §5 Witness Protocol).
+- **[`conformance/`](./conformance/)** — 55 language-agnostic JSON conformance tests across 3 levels.
+- **[`schemas/`](./schemas/)** — JSON Schema definitions for `intent`, `effect`, `ontology`, `world`, `domain`, `witness`.
 
 ---
 
