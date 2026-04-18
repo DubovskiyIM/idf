@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useRef } from "react";
+import React, { useState, useEffect, useCallback, useRef, useMemo } from "react";
 import DomainPicker from "./DomainPicker.jsx";
 import Graph3D from "./Graph3D.jsx";
 import Inspector from "./Inspector.jsx";
@@ -8,6 +8,7 @@ import ThinkingCat from "./ThinkingCat.jsx";
 import ProgressOverlay from "./ProgressOverlay.jsx";
 import PrototypeReadyCTA from "./PrototypeReadyCTA.jsx";
 import PatternsView from "./patterns/PatternsView.jsx";
+import PhiDrawer from "./PhiDrawer.jsx";
 import DomainRuntime from "../runtime/DomainRuntime.jsx";
 import { fetchGraph } from "./api/graph.js";
 import { subscribeDomain } from "./api/watch.js";
@@ -37,7 +38,7 @@ function computeDiff(oldGraph, newGraph) {
 // Верхний tab-strip: переключатель между Graph (структура) / Прототип
 // (runtime-UI того же домена) / Patterns (Pattern Bank). Высота 44px
 // фиксирована, вложенные view рассчитывают через calc(100vh - 44px).
-function TabStrip({ view, setView, domainName }) {
+function TabStrip({ view, setView, domainName, onTogglePhi, phiOpen, onToggleChat, chatOpen }) {
   const tabStyle = (active) => ({
     padding: "10px 20px",
     cursor: "pointer",
@@ -49,6 +50,13 @@ function TabStrip({ view, setView, domainName }) {
     fontWeight: active ? 600 : 400,
     fontFamily: "inherit",
     outline: "none",
+  });
+  const actionStyle = (active) => ({
+    padding: "5px 12px", fontSize: 12, borderRadius: 4, cursor: "pointer",
+    background: active ? "#1e293b" : "transparent",
+    color: active ? "#e0e7ff" : "#94a3b8",
+    border: "1px solid #1e293b",
+    fontFamily: "inherit",
   });
   return (
     <div
@@ -68,9 +76,15 @@ function TabStrip({ view, setView, domainName }) {
       </div>
       <div style={{ flex: 1 }} />
       {domainName && (
-        <div style={{ fontSize: 12, color: "#64748b", fontFamily: "ui-monospace, 'SF Mono', monospace" }}>
-          {domainName}
-        </div>
+        <>
+          <div style={{ fontSize: 12, color: "#64748b", fontFamily: "ui-monospace, 'SF Mono', monospace", marginRight: 14 }}>
+            {domainName}
+          </div>
+          <div style={{ display: "flex", gap: 6 }}>
+            <button onClick={onToggleChat} style={actionStyle(chatOpen)} title="Chat с Claude · ⌘K">⌘K Chat</button>
+            <button onClick={onTogglePhi} style={actionStyle(phiOpen)} title="Φ-журнал · ⌘J">⌘J Φ</button>
+          </div>
+        </>
       )}
     </div>
   );
@@ -104,6 +118,7 @@ export default function App() {
   const [chatBusy, setChatBusy] = useState(false);
   const [progress, setProgress] = useState({ lastTool: null, toolCount: 0 });
   const [readyDomain, setReadyDomain] = useState(null);
+  const [phiOpen, setPhiOpen] = useState(false);
 
   useEffect(() => { setReadyDomain(null); setProgress({ lastTool: null, toolCount: 0 }); }, [domain]);
   useEffect(() => { if (chatBusy) { setReadyDomain(null); setProgress({ lastTool: null, toolCount: 0 }); } }, [chatBusy]);
@@ -144,9 +159,14 @@ export default function App() {
         e.preventDefault();
         setChatOpen((v) => !v);
       }
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "j") {
+        e.preventDefault();
+        setPhiOpen((v) => !v);
+      }
       if (e.key === "Escape") {
         setSelected(null);
         setChatOpen(false);
+        setPhiOpen(false);
       }
     };
     window.addEventListener("keydown", onKey);
@@ -248,25 +268,48 @@ export default function App() {
     );
   };
 
+  const intentIdsSet = useMemo(() => {
+    if (!graph) return null;
+    return new Set(graph.nodes.filter((n) => n.kind === "intent").map((n) => n.intentId));
+  }, [graph]);
+
   return (
     <div style={{ height: "100vh", display: "flex", flexDirection: "column", background: "#0b1220", color: "#e2e8f0", fontFamily: "Inter, -apple-system, system-ui, sans-serif" }}>
-      <TabStrip view={view} setView={setView} domainName={domain} />
-      {view === "graph" ? renderGraphView()
-        : view === "prototype" ? renderPrototypeView()
-        : <PatternsView />}
-      {/* Chat доступен всегда когда выбран домен — не привязан к Graph-tab */}
-      {domain && (
-        <ChatDrawer
-          open={chatOpen}
-          onClose={() => setChatOpen(false)}
-          domain={domain}
-          prefill={chatPrefill}
-          onPrefillConsumed={() => setChatPrefill("")}
-          onBusyChange={setChatBusy}
-          onProgress={setProgress}
-          onDone={() => setReadyDomain(domain)}
-        />
-      )}
+      <TabStrip
+        view={view}
+        setView={setView}
+        domainName={domain}
+        onTogglePhi={() => setPhiOpen((v) => !v)}
+        phiOpen={phiOpen}
+        onToggleChat={() => setChatOpen((v) => !v)}
+        chatOpen={chatOpen}
+      />
+      <div style={{ flex: 1, position: "relative", minHeight: 0 }}>
+        {view === "graph" ? renderGraphView()
+          : view === "prototype" ? renderPrototypeView()
+          : <PatternsView />}
+        {/* Drawers (Chat, Φ) рендерятся в общем контейнере — доступны во всех табах */}
+        {domain && (
+          <PhiDrawer
+            open={phiOpen}
+            onClose={() => setPhiOpen(false)}
+            domain={domain}
+            intentIds={intentIdsSet}
+          />
+        )}
+        {domain && (
+          <ChatDrawer
+            open={chatOpen}
+            onClose={() => setChatOpen(false)}
+            domain={domain}
+            prefill={chatPrefill}
+            onPrefillConsumed={() => setChatPrefill("")}
+            onBusyChange={setChatBusy}
+            onProgress={setProgress}
+            onDone={() => setReadyDomain(domain)}
+          />
+        )}
+      </div>
     </div>
   );
 }

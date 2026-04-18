@@ -94,6 +94,12 @@ export default function ChatDrawer({ open, onClose, domain, prefill, onPrefillCo
     setMessages([]);
   };
 
+  const btnStyle = {
+    background: "transparent", border: "1px solid #334155", color: "#94a3b8",
+    fontSize: 12, padding: "4px 10px", borderRadius: 4, cursor: "pointer",
+    fontFamily: "inherit",
+  };
+
   return (
     <AnimatePresence>
       {open && (
@@ -101,20 +107,40 @@ export default function ChatDrawer({ open, onClose, domain, prefill, onPrefillCo
           initial={{ y: "100%" }}
           animate={{ y: 0 }}
           exit={{ y: "100%" }}
-          transition={{ type: "tween", duration: 0.2 }}
-          style={{ position: "absolute", bottom: 0, left: 0, right: 0, height: "40vh", background: "#1e293b", borderTop: "1px solid #334155", display: "flex", flexDirection: "column", zIndex: 30 }}>
-          <div style={{ display: "flex", justifyContent: "space-between", padding: "8px 16px", borderBottom: "1px solid #334155", fontSize: 12 }}>
-            <span>{domain} · session {sessionId?.slice(0, 6) || "—"}</span>
-            <span style={{ display: "flex", gap: 6 }}>
-              <button onClick={newSession}>🔄 new</button>
-              <button onClick={() => abortRef.current?.abort()} disabled={!busy}>⏹ stop</button>
-              <button onClick={onClose}>✕</button>
-            </span>
+          transition={{ type: "tween", duration: 0.22 }}
+          style={{
+            position: "absolute", bottom: 0, left: 0, right: 0, height: "42vh",
+            background: "#0f172a", borderTop: "1px solid #1e293b",
+            display: "flex", flexDirection: "column", zIndex: 30,
+            fontFamily: "Inter, -apple-system, system-ui, sans-serif",
+          }}
+        >
+          <div style={{ display: "flex", alignItems: "center", gap: 12, padding: "12px 20px", borderBottom: "1px solid #1e293b" }}>
+            <div style={{ fontSize: 13, color: "#cbd5e1", fontWeight: 500 }}>Chat · {domain}</div>
+            <div style={{ fontSize: 11, color: "#64748b", fontFamily: "ui-monospace, monospace" }}>
+              {sessionId ? `session ${sessionId.slice(0, 8)}` : "new session"}
+            </div>
+            <div style={{ flex: 1 }} />
+            <button onClick={newSession} style={btnStyle}>новый чат</button>
+            <button onClick={() => abortRef.current?.abort()} disabled={!busy} style={{ ...btnStyle, opacity: busy ? 1 : 0.4 }}>
+              стоп
+            </button>
+            <button onClick={onClose} title="Скрыть" style={{ background: "transparent", border: "none", color: "#64748b", fontSize: 16, cursor: "pointer", padding: 0 }}>✕</button>
           </div>
-          <div style={{ flex: 1, overflowY: "auto", padding: 12 }}>
+          <div style={{ flex: 1, overflowY: "auto", padding: "16px 20px" }}>
+            {messages.length === 0 && !busy && (
+              <div style={{ color: "#64748b", fontSize: 13, textAlign: "center", padding: "30px 16px", lineHeight: 1.6 }}>
+                Опиши что изменить в домене — Claude правит ontology/intents/projections.<br/>
+                <span style={{ fontSize: 11 }}>⌘⏎ — отправить · Esc — закрыть</span>
+              </div>
+            )}
             {messages.map((m, i) => (
-              <div key={i} style={{ display: "flex", justifyContent: m.role === "user" ? "flex-end" : "flex-start", marginBottom: 10 }}>
-                <div style={{ maxWidth: "80%", padding: 10, background: m.role === "user" ? "#334155" : "transparent", borderRadius: 6, fontSize: 13 }}>
+              <div key={i} style={{ display: "flex", justifyContent: m.role === "user" ? "flex-end" : "flex-start", marginBottom: 14 }}>
+                <div style={{
+                  maxWidth: "78%", padding: "10px 14px",
+                  background: m.role === "user" ? "#1e293b" : "transparent",
+                  borderRadius: 10, fontSize: 13, lineHeight: 1.55, color: "#e2e8f0",
+                }}>
                   <ReactMarkdown>{m.text || (busy && i === messages.length - 1 ? "…" : "")}</ReactMarkdown>
                   {m.tools?.map((t) => (
                     <ToolUseBadge key={t.id} use={t} result={m.results?.[t.id]} />
@@ -124,16 +150,30 @@ export default function ChatDrawer({ open, onClose, domain, prefill, onPrefillCo
             ))}
             <div ref={endRef} />
           </div>
-          <div style={{ padding: 10, borderTop: "1px solid #334155", display: "flex", gap: 8 }}>
+          <div style={{ padding: "12px 20px", borderTop: "1px solid #1e293b", display: "flex", gap: 10 }}>
             <textarea
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={(e) => { if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) send(); }}
-              placeholder="⌘⏎ — отправить"
+              placeholder="Опиши правку или задай вопрос · ⌘⏎"
               rows={2}
-              style={{ flex: 1, background: "#0f172a", border: "1px solid #334155", borderRadius: 4, color: "#e2e8f0", padding: 8, fontFamily: "inherit", fontSize: 13, resize: "none" }}
+              style={{
+                flex: 1, background: "#1e293b", border: "1px solid #334155", borderRadius: 6,
+                color: "#e2e8f0", padding: "10px 12px", fontFamily: "inherit", fontSize: 13,
+                resize: "none", outline: "none", lineHeight: 1.5,
+              }}
             />
-            <button onClick={send} disabled={busy} style={{ padding: "0 16px", background: "#1e40af", border: "none", borderRadius: 4, color: "white" }}>Send</button>
+            <button
+              onClick={send}
+              disabled={busy || !input.trim()}
+              style={{
+                padding: "0 20px", background: busy || !input.trim() ? "#334155" : "#4338ca",
+                border: "none", borderRadius: 6, color: "white", fontWeight: 500, fontSize: 13,
+                cursor: busy || !input.trim() ? "not-allowed" : "pointer", fontFamily: "inherit",
+              }}
+            >
+              Отправить
+            </button>
           </div>
         </motion.div>
       )}
