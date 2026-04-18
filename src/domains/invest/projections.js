@@ -7,6 +7,11 @@ export const PROJECTIONS = {
     witnesses: ["name", "baseCurrency", "totalValue", "pnl", "riskProfile"],
     filter: "userId === viewer.id || !userId",
     layout: "grid",
+    views: [
+      { id: "grid", name: "Плитка", layout: "grid" },
+      { id: "table", name: "Таблица", layout: "table" },
+    ],
+    defaultView: "grid",
   },
 
   goals_root: {
