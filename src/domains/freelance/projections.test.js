@@ -98,3 +98,43 @@ describe("freelance projections — create_task_wizard", () => {
     ]));
   });
 });
+
+describe("freelance seed", () => {
+  const getSeed = () => import("./seed.js").then(m => m.getSeedEffects());
+
+  it("возвращает ≥ 35 эффектов (5 users + 10 tasks + 20 responses)", async () => {
+    const seed = await getSeed();
+    expect(seed.length).toBeGreaterThanOrEqual(35);
+  });
+
+  it("все эффекты confirmed (не proposed)", async () => {
+    const seed = await getSeed();
+    expect(seed.every(e => e.status === "confirmed")).toBe(true);
+  });
+
+  it("хотя бы один User имеет customerVerified && executorVerified (универсал)", async () => {
+    const seed = await getSeed();
+    const users = seed.filter(e => e.target === "User");
+    expect(users.some(u => u.context.customerVerified && u.context.executorVerified)).toBe(true);
+  });
+
+  it("все Task имеют customerId, ссылающийся на существующего User", async () => {
+    const seed = await getSeed();
+    const userIds = new Set(seed.filter(e => e.target === "User").map(e => e.context.id));
+    const tasks = seed.filter(e => e.target === "Task");
+    expect(tasks.length).toBeGreaterThanOrEqual(10);
+    for (const t of tasks) {
+      expect(userIds.has(t.context.customerId)).toBe(true);
+    }
+  });
+
+  it("все Response.taskId → Task.id референтны", async () => {
+    const seed = await getSeed();
+    const taskIds = new Set(seed.filter(e => e.target === "Task").map(e => e.context.id));
+    const responses = seed.filter(e => e.target === "Response");
+    expect(responses.length).toBeGreaterThanOrEqual(20);
+    for (const r of responses) {
+      expect(taskIds.has(r.context.taskId)).toBe(true);
+    }
+  });
+});
