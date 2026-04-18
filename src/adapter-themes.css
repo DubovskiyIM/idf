@@ -3,7 +3,7 @@
  * Некоторые published npm-пакеты адаптеров не экспортируют theme.css
  * (mantine, antd в v1.1.0), поэтому проксируем содержимое из idf-sdk
  * локально. Когда SDK перепубликует theme.css, можно будет убрать эти
- * блоки и восстановить `import '@intent-driven/adapter-*/styles.css'`
+ * блоки и восстановить import "@intent-driven/adapter-.../styles.css"
  * в main.jsx.
  */
 
