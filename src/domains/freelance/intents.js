@@ -512,6 +512,61 @@ export const INTENTS = {
     confirmation: "auto",
   },
 
+  // ─── Review (3) ──────────────────────────────────────────────────────────
+
+  leave_review: {
+    name: "Оставить отзыв",
+    description: "После Deal.completed одна сторона оставляет Review о другой",
+    α: "add",
+    irreversibility: "medium",
+    particles: {
+      parameters: [
+        { name: "authorId", type: "id", required: true },
+        { name: "dealId", type: "id", required: true },
+        { name: "targetUserId", type: "id", required: true },
+        { name: "role", type: "select", options: ["customer", "executor"], required: true },
+        { name: "rating", type: "number", required: true },
+        { name: "comment", type: "text" },
+      ],
+      effects: [
+        { α: "add", target: "reviews", σ: "account" },
+      ],
+    },
+    creates: "Review",
+    confirmation: "auto",
+  },
+
+  reply_to_review: {
+    name: "Ответить на отзыв",
+    description: "Адресат Review может оставить один reply",
+    α: "replace",
+    irreversibility: "medium",
+    particles: {
+      parameters: [
+        { name: "id", type: "id", required: true },
+        { name: "reply", type: "text", required: true },
+      ],
+      effects: [
+        { α: "replace", target: "review.reply" },
+      ],
+    },
+    confirmation: "auto",
+  },
+
+  view_reviews_for_user: {
+    name: "Посмотреть отзывы",
+    description: "Read-only — публичные Review о targetUserId",
+    α: "replace",
+    irreversibility: "low",
+    particles: {
+      parameters: [
+        { name: "targetUserId", type: "id", required: true },
+      ],
+      effects: [],
+    },
+    confirmation: "auto",
+  },
+
   // ─── Wallet (7) ───────────────────────────────────────────────────────────
 
   top_up_wallet_by_card: {

@@ -27,6 +27,7 @@ const GROUPS = {
     "top_up_wallet_by_card", "view_transaction_history", "charge_commission",
     "reserve_escrow", "release_escrow", "refund_escrow", "view_wallet_balance",
   ],
+  review: ["leave_review", "reply_to_review", "view_reviews_for_user"],
 };
 
 describe("freelance intents — auth + system", () => {
@@ -144,6 +145,21 @@ describe("freelance intents — deal details + __irr декларация", () =
   it("cancel_deal_mutual не имеет irreversibility high (no __irr)", () => {
     expect(INTENTS.cancel_deal_mutual.__irr).toBeUndefined();
     expect(INTENTS.cancel_deal_mutual.irreversibility).not.toBe("high");
+  });
+});
+
+describe("freelance intents — review details", () => {
+  it("leave_review создаёт Review", () => {
+    expect(INTENTS.leave_review.creates).toBe("Review");
+  });
+
+  it("leave_review требует dealId + rating + role", () => {
+    const params = INTENTS.leave_review.particles.parameters.map(p => p.name);
+    expect(params).toEqual(expect.arrayContaining(["dealId", "rating", "role"]));
+  });
+
+  it("view_reviews_for_user read-only", () => {
+    expect(INTENTS.view_reviews_for_user.particles.effects).toEqual([]);
   });
 });
 
