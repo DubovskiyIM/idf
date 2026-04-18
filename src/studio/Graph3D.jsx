@@ -1,6 +1,24 @@
-import React, { useMemo, useRef, useEffect } from "react";
+import React, { useMemo, useRef, useEffect, useState } from "react";
 import ForceGraph3D from "react-force-graph-3d";
 import * as THREE from "three";
+
+// ForceGraph3D по умолчанию читает window.innerWidth/innerHeight и canvas
+// занимает весь viewport — перекрывает TabStrip над Graph. Считаем размеры
+// от wrapper'а через ResizeObserver и передаём явно.
+function useContainerSize(ref) {
+  const [size, setSize] = useState({ width: 0, height: 0 });
+  useEffect(() => {
+    if (!ref.current) return;
+    const el = ref.current;
+    const update = () => setSize({ width: el.clientWidth, height: el.clientHeight });
+    update();
+    const ro = new ResizeObserver(update);
+    ro.observe(el);
+    window.addEventListener("resize", update);
+    return () => { ro.disconnect(); window.removeEventListener("resize", update); };
+  }, [ref]);
+  return size;
+}
 
 const COLOR = {
   entity: "#3b82f6",
@@ -102,6 +120,8 @@ function nodeSig(n) {
 
 export default function Graph3D({ graph, onNodeClick, pings, selectedId, flyToken }) {
   const fgRef = useRef();
+  const wrapperRef = useRef(null);
+  const { width, height } = useContainerSize(wrapperRef);
   const nodeCacheRef = useRef(new Map());
   const extraCacheRef = useRef(new Map());
 
@@ -194,16 +214,22 @@ export default function Graph3D({ graph, onNodeClick, pings, selectedId, flyToke
   }, [selectedId, flyToken]);
 
   return (
-    <ForceGraph3D
-      ref={fgRef}
-      graphData={data}
-      backgroundColor="#0f172a"
-      nodeThreeObject={(n) => nodeThreeObject(n, warningsByNode)}
-      linkColor={(l) => EDGE_COLOR[l.kind] || "#475569"}
-      linkWidth={(l) => (l.kind?.endsWith("-particle") ? 1.2 : 0.8)}
-      linkOpacity={0.7}
-      onNodeClick={(n) => onNodeClick?.(n)}
-      nodeLabel={(n) => `${n.kind}: ${n.name || n.id}`}
-    />
+    <div ref={wrapperRef} style={{ width: "100%", height: "100%", overflow: "hidden" }}>
+      {width > 0 && height > 0 && (
+        <ForceGraph3D
+          ref={fgRef}
+          width={width}
+          height={height}
+          graphData={data}
+          backgroundColor="#0f172a"
+          nodeThreeObject={(n) => nodeThreeObject(n, warningsByNode)}
+          linkColor={(l) => EDGE_COLOR[l.kind] || "#475569"}
+          linkWidth={(l) => (l.kind?.endsWith("-particle") ? 1.2 : 0.8)}
+          linkOpacity={0.7}
+          onNodeClick={(n) => onNodeClick?.(n)}
+          nodeLabel={(n) => `${n.kind}: ${n.name || n.id}`}
+        />
+      )}
+    </div>
   );
 }

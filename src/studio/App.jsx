@@ -4,7 +4,6 @@ import Graph3D from "./Graph3D.jsx";
 import Inspector from "./Inspector.jsx";
 import ChatDrawer from "./ChatDrawer.jsx";
 import NewDomainModal from "./NewDomainModal.jsx";
-import ThinkingCat from "./ThinkingCat.jsx";
 import ProgressOverlay from "./ProgressOverlay.jsx";
 import PrototypeReadyCTA from "./PrototypeReadyCTA.jsx";
 import PatternsView from "./patterns/PatternsView.jsx";
@@ -79,11 +78,14 @@ function TabStrip({ view, setView, domainName, onTogglePhi, phiOpen, onToggleCha
     <div
       style={{
         height: 44,
+        flexShrink: 0,
         display: "flex",
         alignItems: "center",
         background: "#0b1220",
         borderBottom: "1px solid #1e293b",
         paddingRight: 16,
+        position: "relative",
+        zIndex: 40,
       }}
     >
       <div style={{ display: "flex" }}>
@@ -321,7 +323,6 @@ export default function App() {
           )}
         </div>
         <Graph3D graph={graph} onNodeClick={setSelected} pings={pings} selectedId={selected?.id} flyToken={flyToken} />
-        <ThinkingCat visible={chatBusy} />
         <ProgressOverlay
           busy={chatBusy}
           toolCount={progress.toolCount}
