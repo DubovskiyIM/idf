@@ -73,22 +73,40 @@ Catalog (`assignToSlotsCatalog`), hero, fab, primaryCTA — пока не зат
 
 ## Открытые вопросы
 
-### Witness «alphabetical-fallback» (roadmap)
+### ✓ Witness «alphabetical-fallback» (реализован)
 
-Если выбор в collapseToolbar сделан при tied salience (формально — в пределах одного равного класса), это явный сигнал неполноты спеки. Roadmap: добавить запись в `artifact.witnesses[]`:
+Tied salience → запись в `artifact.witnesses[]`:
 
 ```js
 {
   basis: "alphabetical-fallback",
   reliability: "heuristic",    // не rule-based!
   slot: "toolbar",
-  chosen: "apply_template",
-  peers: ["block_bidder", "edit_listing"],
-  suggestion: "Добавить intent.salience чтобы сделать выбор явным."
+  projection: "listing_detail",
+  salience: 60,
+  chosen: "add_listing_image",
+  peers: ["add_to_bundle", "apply_template", ...],
+  recommendation: "Проставьте intent.salience одному из [...] чтобы зафиксировать порядок явно."
 }
 ```
 
-Studio может подсвечивать такие witnesses как «spec smell».
+Studio может подсвечивать такие witnesses как «spec smell». Spec-debt измеряется `scripts/functoriality-spec-debt.mjs`:
+
+```
+# По 9 доменам после базовых аннотаций:
+Грандтотал: 16 alphabetical-fallback witnesses
+  sales:     7  (listing_detail ×2, listing_feed ×1, my_listings ×1, ...)
+  lifequest: 4  (habit_detail ×2, goal_detail ×1, all_time_stats ×1)
+  workflow:  2
+  booking:   1
+  messenger: 1
+  reflect:   1
+  planning:  0  ✓
+  invest:    0  ✓
+  delivery:  0  ✓
+```
+
+Цель — 0: все ties разрешены explicit `intent.salience`.
 
 ### Salience для catalog (roadmap)
 
