@@ -35,6 +35,11 @@ app.use("/api/document/:domain", makeDocumentRouter());
 const { makeVoiceRouter } = require("./routes/voice.js");
 app.use("/api/voice/:domain", makeVoiceRouter());
 
+// UX Pattern Layer (v1.8): Pattern Bank surface.
+// /api/patterns/catalog → stable/candidate/anti паттерны с trigger/structure/rationale/falsification.
+const { makePatternsRouter } = require("./routes/patterns.js");
+app.use("/api/patterns", makePatternsRouter());
+
 // LLM enrichment — кристаллизация через Claude API
 const crystallizeRouter = require("./routes/crystallize.js");
 app.use("/api/crystallize", crystallizeRouter);

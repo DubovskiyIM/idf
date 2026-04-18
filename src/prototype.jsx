@@ -45,6 +45,10 @@ registerCanvas("market_trends", MarketLineCanvas);
 registerCanvas("advisor_client_dashboard", AdvisorReviewCanvas);
 registerCanvas("regulator_report", RegulatorReportCanvas);
 
+// Lifequest canvas-компоненты
+import { registerLifequestCanvases } from "./domains/lifequest/registerCanvases.jsx";
+registerLifequestCanvases();
+
 // Delivery map-canvas (§16a): один generic wrapper на 3 проекции
 import DeliveryMapCanvas from "./domains/delivery/canvas/DeliveryMapCanvas.jsx";
 registerCanvas("order_tracker", DeliveryMapCanvas);
@@ -52,7 +56,7 @@ registerCanvas("active_delivery", DeliveryMapCanvas);
 registerCanvas("dispatcher_map", DeliveryMapCanvas);
 
 const UI_KITS = { mantine: mantineAdapter, shadcn: shadcnAdapter, apple: appleAdapter, antd: antdAdapter };
-const DOMAIN_DEFAULT_KITS = { lifequest: shadcnAdapter, reflect: appleAdapter, invest: antdAdapter };
+const DOMAIN_DEFAULT_KITS = { lifequest: appleAdapter, reflect: appleAdapter, invest: antdAdapter };
 
 const DOMAINS = {
   booking: { ...bookingDomain, UI: BookingUI },
@@ -66,8 +70,22 @@ const DOMAINS = {
   delivery: deliveryDomain,
 };
 
+// URL-params: ?domain=X&projection=Y&inspect=<patternId>. Читаются один раз
+// при первом mount'е; initialProjection пробрасывается в V2Shell. Domain из
+// URL имеет приоритет над localStorage.
+const URL_INITIAL = (() => {
+  if (typeof window === "undefined") return { domain: null, projection: null };
+  try {
+    const p = new URLSearchParams(window.location.search);
+    return { domain: p.get("domain"), projection: p.get("projection") };
+  } catch {
+    return { domain: null, projection: null };
+  }
+})();
+
 export default function App() {
-  const [domainId, setDomainId] = useState(() => localStorage.getItem("idf_domain") || "booking");
+  const [domainId, setDomainId] = useState(() => URL_INITIAL.domain || localStorage.getItem("idf_domain") || "booking");
+  const [initialProjection] = useState(() => URL_INITIAL.projection);
 
   // UI-kit адаптер: prefs override → дефолт домена → mantine
   const { prefs: uiPrefs } = usePersonalPrefs();
@@ -472,6 +490,12 @@ export default function App() {
                     execBatch={engine.execBatch}
                     viewer={realViewer || { id: viewer, name: viewer }}
                     onLogout={auth.logout}
+                    initialProjection={
+                      initialProjection && domainId === URL_INITIAL.domain
+                        && domain.PROJECTIONS?.[initialProjection]
+                        ? initialProjection
+                        : undefined
+                    }
                   />
                 </AuthGate>
               </div>

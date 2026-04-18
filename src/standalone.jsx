@@ -37,23 +37,8 @@ import { usePersonalPrefs } from "./runtime/renderer/personal/usePersonalPrefs.j
 
 const UI_KITS = { mantine: mantineAdapter, shadcn: shadcnAdapter, apple: appleAdapter, antd: antdAdapter };
 import { registerCanvas } from "@intent-driven/renderer";
-import CalendarCanvas from "./domains/lifequest/canvas/CalendarCanvas.jsx";
-import VisionBoardCanvas from "./domains/lifequest/canvas/VisionBoardCanvas.jsx";
-import PointACanvas from "./domains/lifequest/canvas/PointACanvas.jsx";
-import WeekProgressCanvas from "./domains/lifequest/canvas/WeekProgressCanvas.jsx";
-import TodayCanvas from "./domains/lifequest/canvas/TodayCanvas.jsx";
-
-// Регистрация domain-specific canvas-компонентов
-registerCanvas("calendar", ({ world, exec, viewer, ctx }) => (
-  <CalendarCanvas world={world} viewer={viewer} exec={exec}
-    onDayClick={(date) => ctx.navigate?.("today", { userId: viewer?.id, date })} />
-));
-registerCanvas("vision_board", ({ world, exec, viewer }) => (
-  <VisionBoardCanvas world={world} viewer={viewer} exec={exec} />
-));
-registerCanvas("point_a", PointACanvas);
-registerCanvas("week_progress", WeekProgressCanvas);
-registerCanvas("today", (props) => <TodayCanvas {...props} ctx={props.ctx} />);
+import { registerLifequestCanvases } from "./domains/lifequest/registerCanvases.jsx";
+registerLifequestCanvases();
 
 // Reflect canvas-компоненты
 import MoodMeterCanvas from "./domains/reflect/canvas/MoodMeterCanvas.jsx";
@@ -82,7 +67,7 @@ registerCanvas("regulator_report", RegulatorReportCanvas);
 
 // Домены с переключением адаптера
 const DOMAIN_ADAPTERS = {
-  lifequest: shadcnAdapter,
+  lifequest: appleAdapter,
   reflect: appleAdapter,
   invest: antdAdapter,
 };
