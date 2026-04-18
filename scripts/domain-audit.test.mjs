@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { checkFieldsTyped, checkEnumValues, checkEntityKind, checkRoleBase, checkOwnerField, checkEmptyConditions, checkEmptyWitnesses } from "./domain-audit.mjs";
+import { checkFieldsTyped, checkEnumValues, checkEntityKind, checkRoleBase, checkOwnerField, checkEmptyConditions, checkEmptyWitnesses, checkAntagonistSymmetry, checkIrreversibility, checkCreatesConfirmation } from "./domain-audit.mjs";
 
 describe("checkFieldsTyped", () => {
   it("entity с fields-массивом даёт gap", () => {
@@ -142,5 +142,72 @@ describe("checkEmptyWitnesses", () => {
       edit_goal: { particles: { witnesses: ["goal.title"], confirmation: "form", effects: [], entities: [] } },
     };
     expect(checkEmptyWitnesses(intents)).toEqual([]);
+  });
+});
+
+describe("checkAntagonistSymmetry", () => {
+  it("односторонний antagonist даёт gap", () => {
+    const intents = {
+      pin: { antagonist: "unpin", particles: {} },
+      unpin: { antagonist: null, particles: {} },
+    };
+    expect(checkAntagonistSymmetry(intents)).toEqual([
+      { kind: "antagonist-asymmetry", intent: "unpin", expected: "pin" },
+    ]);
+  });
+  it("взаимный antagonist проходит", () => {
+    const intents = {
+      pin: { antagonist: "unpin", particles: {} },
+      unpin: { antagonist: "pin", particles: {} },
+    };
+    expect(checkAntagonistSymmetry(intents)).toEqual([]);
+  });
+  it("antagonist на несуществующий интент даёт gap", () => {
+    const intents = { pin: { antagonist: "ghost", particles: {} } };
+    expect(checkAntagonistSymmetry(intents)).toEqual([
+      { kind: "antagonist-missing-target", intent: "pin", target: "ghost" },
+    ]);
+  });
+});
+
+describe("checkIrreversibility", () => {
+  it("α=remove без irreversibility даёт gap", () => {
+    const intents = {
+      delete_x: { particles: { effects: [{ α: "remove", target: "xs" }] } },
+    };
+    expect(checkIrreversibility(intents)).toEqual([
+      { kind: "irreversibility-missing", intent: "delete_x" },
+    ]);
+  });
+  it("α=remove с irreversibility проходит", () => {
+    const intents = {
+      delete_x: { irreversibility: "medium", particles: { effects: [{ α: "remove", target: "xs" }] } },
+    };
+    expect(checkIrreversibility(intents)).toEqual([]);
+  });
+  it("status→archived без irreversibility даёт gap", () => {
+    const intents = {
+      archive_x: { particles: { effects: [{ α: "replace", target: "x.status", value: "archived" }] } },
+    };
+    expect(checkIrreversibility(intents)).toEqual([
+      { kind: "irreversibility-missing", intent: "archive_x" },
+    ]);
+  });
+});
+
+describe("checkCreatesConfirmation", () => {
+  it("creates с confirmation=click даёт gap", () => {
+    const intents = {
+      new_x: { creates: "X", particles: { confirmation: "click" } },
+    };
+    expect(checkCreatesConfirmation(intents)).toEqual([
+      { kind: "creates-needs-form", intent: "new_x" },
+    ]);
+  });
+  it("creates с confirmation=form проходит", () => {
+    const intents = {
+      new_x: { creates: "X", particles: { confirmation: "form" } },
+    };
+    expect(checkCreatesConfirmation(intents)).toEqual([]);
   });
 });

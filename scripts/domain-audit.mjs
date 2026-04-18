@@ -53,6 +53,56 @@ export function checkOwnerField(ontology) {
   return gaps;
 }
 
+const DESTRUCTIVE_STATUSES = new Set(["archived", "deleted", "cancelled", "blocked", "closed", "abandoned", "rejected"]);
+const FORM_CONFIRMATIONS = new Set(["form", "composerEntry", "formModal", "file", "enter", "clickForm", "bulkWizard", "customCapture", "filePicker", "inlineSearch"]);
+
+export function checkAntagonistSymmetry(intents) {
+  const gaps = [];
+  const names = new Set(Object.keys(intents || {}));
+  for (const [name, intent] of Object.entries(intents || {})) {
+    const a = intent.antagonist;
+    if (!a) continue;
+    if (!names.has(a)) {
+      gaps.push({ kind: "antagonist-missing-target", intent: name, target: a });
+      continue;
+    }
+    const other = intents[a];
+    if (other.antagonist !== name) {
+      gaps.push({ kind: "antagonist-asymmetry", intent: a, expected: name });
+    }
+  }
+  return gaps;
+}
+
+export function checkIrreversibility(intents) {
+  const gaps = [];
+  for (const [name, intent] of Object.entries(intents || {})) {
+    if (intent.irreversibility) continue;
+    const effects = intent.particles?.effects || [];
+    const hasRemove = effects.some((e) => e.α === "remove");
+    const hasStatusKill = effects.some(
+      (e) => e.α === "replace" && /\.status$/.test(e.target || "") && DESTRUCTIVE_STATUSES.has(e.value),
+    );
+    if (hasRemove || hasStatusKill) {
+      gaps.push({ kind: "irreversibility-missing", intent: name });
+    }
+  }
+  return gaps;
+}
+
+export function checkCreatesConfirmation(intents) {
+  const gaps = [];
+  for (const [name, intent] of Object.entries(intents || {})) {
+    if (!intent.creates) continue;
+    const c = intent.particles?.confirmation;
+    if (!c) continue;
+    if (!FORM_CONFIRMATIONS.has(c)) {
+      gaps.push({ kind: "creates-needs-form", intent: name });
+    }
+  }
+  return gaps;
+}
+
 export function checkEmptyConditions(intents) {
   const gaps = [];
   for (const [name, intent] of Object.entries(intents || {})) {
