@@ -48,7 +48,7 @@ export const INTENTS = {
     ["listing.sellerId = me.id"],
     [ef("add", "listings")],
     ["listing.title", "listing.startPrice"],
-    "click", { creates: "Listing(draft)" }),
+    "form", { creates: "Listing(draft)" }),
 
   set_buy_now_price: intent("Установить «Купить сейчас»", ["listing: Listing"],
     ["listing.status = 'active'", "listing.sellerId = me.id"],
@@ -125,15 +125,15 @@ export const INTENTS = {
     [], "click"),
 
   remove_listing: intent("Удалить лот", ["listing: Listing"],
-    [],
+    ["me.role = 'moderator'"],
     [ef("remove", "listings")],
-    [], "click", { irreversibility: "high" }),
+    ["listing.title"], "click", { irreversibility: "high" }),
 
   duplicate_listing: intent("Дублировать лот", ["listing: Listing"],
     ["listing.sellerId = me.id"],
     [ef("add", "listings")],
     ["listing.title", "listing.startPrice"],
-    "click", { creates: "Listing(draft)" }),
+    "form", { creates: "Listing(draft)" }),
 
 
   // ===== СТАВКИ / АУКЦИОН (12) =====
@@ -163,22 +163,22 @@ export const INTENTS = {
     ["listing.status = 'active'", "listing.buyNowPrice != null"],
     [ef("replace", "listing.status", "account", { value: "sold" }), ef("add", "orders")],
     ["listing.title", "listing.buyNowPrice"],
-    "click", { creates: "Order(pending_payment)" }),
+    "clickForm", { creates: "Order(pending_payment)" }),
 
   accept_bid: intent("Принять ставку досрочно", ["bid: Bid", "listing: Listing"],
     ["listing.status = 'active'", "listing.sellerId = me.id", "bid.status = 'active'"],
     [ef("replace", "listing.status", "account", { value: "sold" }), ef("replace", "bid.status", "account", { value: "won" }), ef("add", "orders")],
-    ["bid.amount"], "click", { creates: "Order(pending_payment)" }),
+    ["bid.amount"], "clickForm", { creates: "Order(pending_payment)" }),
 
   block_bidder: intent("Заблокировать участника", ["listing: Listing", "user: User"],
     ["listing.sellerId = me.id"],
     [ef("add", "blockedBidders")],
-    ["user.name"], "click"),
+    ["user.name"], "click", { antagonist: "unblock_bidder" }),
 
   unblock_bidder: intent("Разблокировать участника", ["listing: Listing", "user: User"],
     ["listing.sellerId = me.id"],
     [ef("remove", "blockedBidders")],
-    ["user.name"], "click", { antagonist: "block_bidder" }),
+    ["user.name"], "click", { antagonist: "block_bidder", irreversibility: "low" }),
 
   increase_bid: intent("Повысить ставку", ["bid: Bid", "listing: Listing"],
     ["bid.bidderId = me.id", "listing.status = 'active'"],
@@ -206,7 +206,7 @@ export const INTENTS = {
   accept_offer: intent("Принять предложение", ["listing: Listing"],
     ["listing.sellerId = me.id"],
     [ef("replace", "listing.status", "account", { value: "sold" }), ef("add", "orders")],
-    [], "click", { creates: "Order(pending_payment)", antagonist: "reject_offer" }),
+    ["listing.title"], "clickForm", { creates: "Order(pending_payment)", antagonist: "reject_offer" }),
 
 
   // ===== ЗАКАЗЫ / ОПЛАТА (15) =====
@@ -274,7 +274,7 @@ export const INTENTS = {
     [], "click"),
 
   add_order_note: intent("Добавить примечание", ["order: Order"],
-    [],
+    ["order.sellerId = me.id OR order.buyerId = me.id"],
     [ef("replace", "order.note")],
     ["note"],
     "click"),
@@ -318,7 +318,7 @@ export const INTENTS = {
     [], "click", { irreversibility: "medium" }),
 
   respond_to_review: intent("Ответить на отзыв", ["review: Review"],
-    [],
+    ["review.targetUserId = me.id"],
     [ef("replace", "review.response")],
     ["response", "review.text", "review.rating"],
     "click"),
@@ -330,17 +330,17 @@ export const INTENTS = {
     "click"),
 
   remove_review: intent("Удалить отзыв (модератор)", ["review: Review"],
-    [],
+    ["me.role = 'moderator'"],
     [ef("remove", "reviews")],
-    [], "click", { irreversibility: "medium" }),
+    ["review.text"], "click", { irreversibility: "medium" }),
 
   thank_reviewer: intent("Поблагодарить за отзыв", ["review: Review"],
-    [],
+    ["review.targetUserId = me.id"],
     [ef("replace", "review.thanked", "account", { value: true })],
     [], "click"),
 
   flag_review_helpful: intent("Отзыв полезен", ["review: Review"],
-    [],
+    ["review.authorId != me.id"],
     [ef("replace", "review.helpfulCount")],
     [], "click"),
 
@@ -371,9 +371,9 @@ export const INTENTS = {
     [], "click"),
 
   close_dispute: intent("Закрыть спор", ["dispute: Dispute"],
-    [],
+    ["dispute.openedBy = me.id OR dispute.status = 'resolved'"],
     [ef("replace", "dispute.status", "account", { value: "closed" })],
-    [], "click"),
+    ["dispute.reason"], "click", { irreversibility: "high" }),
 
   add_dispute_evidence: intent("Добавить доказательство", ["dispute: Dispute"],
     ["dispute.status != 'closed'"],
@@ -384,7 +384,7 @@ export const INTENTS = {
   accept_resolution: intent("Принять решение", ["dispute: Dispute"],
     ["dispute.status = 'resolved'"],
     [ef("replace", "dispute.status", "account", { value: "closed" })],
-    [], "click"),
+    ["dispute.resolution"], "click", { irreversibility: "high" }),
 
 
   // ===== ИЗБРАННОЕ / НАБЛЮДЕНИЕ (5) =====
@@ -398,7 +398,7 @@ export const INTENTS = {
   remove_from_watchlist: intent("Убрать из избранного", ["watchlist: Watchlist"],
     ["watchlist.userId = me.id"],
     [ef("remove", "watchlists")],
-    [], "click", { antagonist: "add_to_watchlist", parameters: [] }),
+    [], "click", { antagonist: "add_to_watchlist", parameters: [], irreversibility: "low" }),
 
   save_search: intent("Сохранить поиск", ["savedSearch: SavedSearch"],
     [],
@@ -409,7 +409,7 @@ export const INTENTS = {
   delete_saved_search: intent("Удалить сохранённый поиск", ["savedSearch: SavedSearch"],
     ["savedSearch.userId = me.id"],
     [ef("remove", "savedSearches")],
-    [], "click"),
+    [], "click", { irreversibility: "medium" }),
 
   toggle_search_notifications: intent("Уведомления по поиску", ["savedSearch: SavedSearch"],
     ["savedSearch.userId = me.id"],
@@ -446,7 +446,7 @@ export const INTENTS = {
   delete_message: intent("Удалить сообщение", ["message: Message"],
     ["message.senderId = me.id"],
     [ef("remove", "messages")],
-    [], "click"),
+    [], "click", { irreversibility: "medium" }),
 
   report_message: intent("Пожаловаться", ["message: Message"],
     [],
@@ -455,7 +455,7 @@ export const INTENTS = {
     "click"),
 
   mark_all_read: intent("Всё прочитано", ["message: Message"],
-    [],
+    ["message.recipientId = me.id"],
     [ef("replace", "message.read", "account", { value: true })],
     [], "click", { extended: true }),
 
@@ -488,7 +488,7 @@ export const INTENTS = {
   add_shipping_address: intent("Добавить адрес", ["user: User"],
     ["user.id = me.id"],
     [ef("add", "addresses")],
-    [],
+    ["address_text"],
     "enter"),
 
   warn_user: intent("Предупредить пользователя", ["user: User"],
@@ -504,7 +504,7 @@ export const INTENTS = {
     "click", { irreversibility: "high", antagonist: "unban_user" }),
 
   ban_user: intent("Забанить пользователя", ["user: User"],
-    [],
+    ["me.role = 'moderator'"],
     [ef("replace", "user.status", "account", { value: "banned" })],
     ["user.name"],
     "click", { irreversibility: "high" }),
@@ -522,10 +522,10 @@ export const INTENTS = {
     "click", { antagonist: "unfollow_seller", parameters: [] }),
 
   unfollow_seller: intent("Отписаться от продавца", ["user: User"],
-    [],
+    ["follow.userId = me.id"],
     [ef("remove", "follows")],
     ["user.name"],
-    "click", { antagonist: "follow_seller", parameters: [] }),
+    "click", { antagonist: "follow_seller", parameters: [], irreversibility: "low" }),
 
 
   // ===== ПОИСК / НАВИГАЦИЯ (8) =====
@@ -587,9 +587,9 @@ export const INTENTS = {
     [], "click", { parameters: [] }),
 
   clear_all_notifications: intent("Очистить уведомления", ["notification: Notification"],
-    [],
+    ["notification.userId = me.id"],
     [ef("remove", "notifications")],
-    [], "click", { extended: true }),
+    [], "click", { extended: true, irreversibility: "medium" }),
 
   set_notification_preferences: intent("Настройки уведомлений", [],
     [],
@@ -600,13 +600,12 @@ export const INTENTS = {
   subscribe_to_listing: intent("Подписаться на лот", ["listing: Listing"],
     ["listing.status = 'active'"],
     [ef("add", "subscriptions")],
-    ["listing.title"],
-    "click", { parameters: [] }),
+    ["listing.title"], "click", { antagonist: "unsubscribe_from_listing", parameters: [] }),
 
   unsubscribe_from_listing: intent("Отписаться от лота", ["listing: Listing"],
     ["listing.subscribed = true"],
     [ef("remove", "subscriptions")],
-    [], "click", { antagonist: "subscribe_to_listing", parameters: [] }),
+    [], "click", { antagonist: "subscribe_to_listing", parameters: [], irreversibility: "low" }),
 
 
   // ===== ЖАЛОБЫ / МОДЕРАЦИЯ (7) =====
@@ -626,7 +625,7 @@ export const INTENTS = {
   reject_offer: intent("Отклонить предложение", ["listing: Listing"],
     ["listing.sellerId = me.id"],
     [],
-    [], "click", { antagonist: "accept_offer" }),
+    ["listing.title"], "click", { antagonist: "accept_offer" }),
 
   approve_listing: intent("Одобрить лот (модератор)", ["listing: Listing"],
     ["listing.status = 'draft'"],
@@ -634,9 +633,9 @@ export const INTENTS = {
     [], "click"),
 
   bulk_relist: intent("Массовое перевыставление", ["listing: Listing"],
-    [],
+    ["listing.sellerId = me.id"],
     [ef("add", "listings")],
-    [], "click", { extended: true, creates: "Listing(draft)" }),
+    ["selected_count"], "bulkWizard", { extended: true, creates: "Listing(draft)" }),
 
   export_listings: intent("Экспорт лотов", [],
     [],
@@ -670,30 +669,30 @@ export const INTENTS = {
     "click"),
 
   edit_template: intent("Редактировать шаблон", ["listing: Listing"],
-    [],
+    ["listing.sellerId = me.id"],
     [ef("replace", "listing.title"), ef("replace", "listing.description")],
     ["title", "description"],
     "click", { phase: "investigation" }),
 
   delete_template: intent("Удалить шаблон", ["listing: Listing"],
-    [],
+    ["listing.sellerId = me.id"],
     [ef("remove", "templates")],
-    [], "click", { irreversibility: "medium" }),
+    ["listing.title"], "click", { irreversibility: "medium" }),
 
   save_as_template: intent("Сохранить как шаблон", ["listing: Listing"],
     ["listing.sellerId = me.id"],
     [ef("add", "templates")],
     ["listing.title"],
-    "click", { creates: "Template" }),
+    "form", { creates: "Template" }),
 
   rename_template: intent("Переименовать шаблон", ["listing: Listing"],
-    [],
+    ["listing.sellerId = me.id"],
     [ef("replace", "listing.title")],
     ["title"],
     "click"),
 
   set_template_defaults: intent("Настроить шаблон", ["listing: Listing"],
-    [],
+    ["listing.sellerId = me.id"],
     [ef("replace", "listing.shippingCost"), ef("replace", "listing.condition")],
     ["shippingCost", "condition"],
     "click"),
@@ -701,8 +700,8 @@ export const INTENTS = {
   import_template: intent("Импорт шаблонов", [],
     [],
     [ef("add", "templates")],
-    [],
-    "click", { creates: "Template" }),
+    ["file_name"],
+    "file", { creates: "Template" }),
 
 
   // ===== ПРОМО И ПРОДВИЖЕНИЕ (10) =====
@@ -710,7 +709,7 @@ export const INTENTS = {
   promote_listing: intent("Продвинуть лот", ["listing: Listing"],
     ["listing.status = 'active'", "listing.sellerId = me.id"],
     [ef("replace", "listing.promoted", "account", { value: true })],
-    ["listing.title"], "click"),
+    ["listing.title"], "click", { antagonist: "cancel_promotion" }),
 
   cancel_promotion: intent("Отменить продвижение", ["listing: Listing"],
     ["listing.sellerId = me.id"],
@@ -723,10 +722,10 @@ export const INTENTS = {
     ["code", "discountPercent", "expiresAt"],
     "enter", { creates: "Coupon" }),
 
-  deactivate_coupon: intent("Деактивировать купон", [],
-    [],
+  deactivate_coupon: intent("Деактивировать купон", ["coupon: Coupon"],
+    ["coupon.sellerId = me.id"],
     [ef("replace", "coupon.active", "account", { value: false })],
-    [], "click"),
+    ["coupon.code"], "click"),
 
   apply_coupon: intent("Применить купон", ["order: Order"],
     ["order.status = 'pending_payment'", "order.buyerId = me.id"],
@@ -778,15 +777,15 @@ export const INTENTS = {
     ["name", "cost", "estimatedDays"],
     "click", { phase: "investigation" }),
 
-  delete_shipping_profile: intent("Удалить профиль доставки", [],
-    [],
+  delete_shipping_profile: intent("Удалить профиль доставки", ["profile: ShippingProfile"],
+    ["profile.userId = me.id"],
     [ef("remove", "shippingProfiles")],
-    [], "click", { irreversibility: "medium" }),
+    ["profile.name"], "click", { irreversibility: "medium" }),
 
   set_international_shipping: intent("Международная доставка", ["listing: Listing"],
     ["listing.sellerId = me.id"],
     [ef("replace", "listing.internationalShipping", "account", { value: true })],
-    [], "click"),
+    [], "click", { antagonist: "disable_international_shipping" }),
 
   disable_international_shipping: intent("Только внутренняя", ["listing: Listing"],
     ["listing.sellerId = me.id"],
@@ -830,15 +829,15 @@ export const INTENTS = {
     ["type", "cardLastFour"],
     "enter", { creates: "PaymentMethod" }),
 
-  remove_payment_method: intent("Удалить способ оплаты", [],
-    [],
+  remove_payment_method: intent("Удалить способ оплаты", ["method: PaymentMethod"],
+    ["method.userId = me.id"],
     [ef("remove", "paymentMethods")],
-    [], "click", { irreversibility: "medium" }),
+    ["method.last4"], "click", { irreversibility: "medium" }),
 
-  set_default_payment: intent("Основной способ", [],
-    [],
+  set_default_payment: intent("Основной способ", ["method: PaymentMethod"],
+    ["method.userId = me.id"],
     [ef("replace", "paymentMethod.isDefault", "account", { value: true })],
-    [], "click"),
+    ["method.last4"], "click"),
 
   request_payout: intent("Вывести средства", [],
     [],
@@ -852,15 +851,15 @@ export const INTENTS = {
     ["results"],
     "click", { parameters: [] }),
 
-  set_auto_payout: intent("Автовыплата", [],
-    [],
+  set_auto_payout: intent("Автовыплата", ["user: User"],
+    ["user.id = me.id"],
     [ef("replace", "user.autoPayoutEnabled", "account", { value: true })],
-    [], "click"),
+    ["user.name"], "click", { antagonist: "disable_auto_payout" }),
 
-  disable_auto_payout: intent("Отключить автовыплату", [],
-    [],
+  disable_auto_payout: intent("Отключить автовыплату", ["user: User"],
+    ["user.id = me.id"],
     [ef("replace", "user.autoPayoutEnabled", "account", { value: false })],
-    [], "click", { antagonist: "set_auto_payout" }),
+    ["user.name"], "click", { antagonist: "set_auto_payout" }),
 
   issue_partial_refund: intent("Частичный возврат", ["order: Order"],
     ["order.sellerId = me.id"],
@@ -902,22 +901,22 @@ export const INTENTS = {
     "click"),
 
   remove_from_collection: intent("Убрать из подборки", ["listing: Listing"],
-    [],
+    ["collection.ownerId = me.id"],
     [ef("remove", "collectionItems")],
-    [], "click"),
+    ["listing.title"], "click", { irreversibility: "low" }),
 
-  publish_collection: intent("Опубликовать подборку", [],
-    [],
+  publish_collection: intent("Опубликовать подборку", ["collection: Collection"],
+    ["collection.ownerId = me.id"],
     [ef("replace", "collection.public", "account", { value: true })],
-    [], "click"),
+    ["collection.title"], "click"),
 
   like_listing: intent("Нравится", ["listing: Listing"],
-    [],
+    ["listing.status = 'active'"],
     [ef("replace", "listing.likeCount")],
     [], "click", { antagonist: "unlike_listing", parameters: [] }),
 
   unlike_listing: intent("Не нравится", ["listing: Listing"],
-    [],
+    ["listing.likedByMe = true"],
     [ef("replace", "listing.likeCount")],
     [], "click", { antagonist: "like_listing", parameters: [] }),
 
@@ -927,10 +926,10 @@ export const INTENTS = {
     ["content"],
     "enter", { creates: "Comment" }),
 
-  delete_comment: intent("Удалить комментарий", [],
-    [],
+  delete_comment: intent("Удалить комментарий", ["comment: Comment"],
+    ["comment.authorId = me.id"],
     [ef("remove", "comments")],
-    [], "click"),
+    ["comment.text"], "click", { irreversibility: "medium" }),
 
 
   // ===== ВЕРИФИКАЦИЯ И ДОВЕРИЕ (9) =====
@@ -942,14 +941,14 @@ export const INTENTS = {
     "enter", { creates: "VerificationRequest" }),
 
   approve_verification: intent("Одобрить верификацию", ["user: User"],
-    [],
+    ["me.role = 'moderator'"],
     [ef("replace", "user.verified", "account", { value: true })],
-    [], "click"),
+    ["user.name"], "click", { antagonist: "reject_verification" }),
 
   reject_verification: intent("Отклонить верификацию", ["user: User"],
-    [],
+    ["me.role = 'moderator'"],
     [ef("replace", "user.verified", "account", { value: false })],
-    [], "click", { antagonist: "approve_verification" }),
+    ["user.name"], "click", { antagonist: "approve_verification" }),
 
   request_authenticity_check: intent("Проверка подлинности", ["listing: Listing"],
     ["listing.moderatorOnly = true"],
@@ -994,40 +993,40 @@ export const INTENTS = {
     ["targetPrice"],
     "enter", { creates: "PriceAlert" }),
 
-  remove_price_alert: intent("Убрать оповещение", [],
-    [],
+  remove_price_alert: intent("Убрать оповещение", ["alert: PriceAlert"],
+    ["alert.userId = me.id"],
     [ef("remove", "priceAlerts")],
-    [], "click"),
+    ["alert.listingId"], "click", { irreversibility: "low" }),
 
   subscribe_to_category: intent("Подписка на категорию", ["category: Category"],
     [],
     [ef("add", "categorySubscriptions")],
-    [], "click", { parameters: [] }),
+    ["category.name"], "click", { parameters: [], antagonist: "unsubscribe_from_category" }),
 
   unsubscribe_from_category: intent("Отписка от категории", ["category: Category"],
-    [],
+    ["subscription.userId = me.id"],
     [ef("remove", "categorySubscriptions")],
-    [], "click", { antagonist: "subscribe_to_category", parameters: [] }),
+    ["category.name"], "click", { antagonist: "subscribe_to_category", parameters: [], irreversibility: "low" }),
 
   subscribe_to_seller: intent("Подписка на продавца", ["user: User"],
     [],
     [ef("add", "sellerSubscriptions")],
-    [], "click", { parameters: [] }),
+    ["user.name"], "click", { parameters: [], antagonist: "unsubscribe_from_seller" }),
 
   unsubscribe_from_seller: intent("Отписка от продавца", ["user: User"],
-    [],
+    ["subscription.userId = me.id"],
     [ef("remove", "sellerSubscriptions")],
-    [], "click", { antagonist: "subscribe_to_seller", parameters: [] }),
+    ["user.name"], "click", { antagonist: "subscribe_to_seller", parameters: [], irreversibility: "low" }),
 
-  mute_notifications: intent("Не беспокоить", [],
-    [],
+  mute_notifications: intent("Не беспокоить", ["user: User"],
+    ["user.id = me.id"],
     [ef("replace", "user.notificationsMuted", "account", { value: true })],
-    [], "click", { antagonist: "unmute_notifications" }),
+    ["user.name"], "click", { antagonist: "unmute_notifications" }),
 
-  unmute_notifications: intent("Включить уведомления", [],
-    [],
+  unmute_notifications: intent("Включить уведомления", ["user: User"],
+    ["user.id = me.id"],
     [ef("replace", "user.notificationsMuted", "account", { value: false })],
-    [], "click", { antagonist: "mute_notifications" }),
+    ["user.name"], "click", { antagonist: "mute_notifications" }),
 
 
   // ===== НАСТРОЙКИ МАГАЗИНА (10) =====
@@ -1062,15 +1061,15 @@ export const INTENTS = {
     ["policies"],
     "click"),
 
-  set_vacation_mode: intent("Режим отпуска", [],
-    [],
+  set_vacation_mode: intent("Режим отпуска", ["user: User"],
+    ["user.id = me.id"],
     [ef("replace", "user.vacationMode", "account", { value: true })],
-    [], "click", { antagonist: "disable_vacation_mode" }),
+    ["user.name"], "click", { antagonist: "disable_vacation_mode" }),
 
-  disable_vacation_mode: intent("Выйти из отпуска", [],
-    [],
+  disable_vacation_mode: intent("Выйти из отпуска", ["user: User"],
+    ["user.id = me.id"],
     [ef("replace", "user.vacationMode", "account", { value: false })],
-    [], "click", { antagonist: "set_vacation_mode" }),
+    ["user.name"], "click", { antagonist: "set_vacation_mode" }),
 
   set_auto_reply: intent("Автоответ", [],
     [],
@@ -1094,14 +1093,14 @@ export const INTENTS = {
   // ===== МАССОВЫЕ ОПЕРАЦИИ (8) =====
 
   bulk_edit_price: intent("Массовое изменение цен", ["listing: Listing"],
-    [],
+    ["listing.sellerId = me.id"],
     [ef("replace", "listing.startPrice")],
     [], "click", { extended: true }),
 
   bulk_relist_expired: intent("Перевыставить истёкшие", ["listing: Listing"],
-    [],
+    ["listing.sellerId = me.id", "listing.status = 'expired'"],
     [ef("add", "listings")],
-    [], "click", { extended: true, creates: "Listing(draft)" }),
+    ["selected_count"], "bulkWizard", { extended: true, creates: "Listing(draft)" }),
 
   bulk_delete_listings: intent("Массовое удаление", ["listing: Listing"],
     ["listing.sellerId = me.id"],
@@ -1109,29 +1108,29 @@ export const INTENTS = {
     [], "click", { extended: true, irreversibility: "high" }),
 
   bulk_update_shipping: intent("Массовая доставка", ["listing: Listing"],
-    [],
+    ["listing.sellerId = me.id"],
     [ef("replace", "listing.shippingCost")],
     [], "click", { extended: true }),
 
   bulk_mark_shipped: intent("Отметить отправленными", ["order: Order"],
-    [],
+    ["order.sellerId = me.id"],
     [ef("replace", "order.status", "account", { value: "shipped" })],
     [], "click", { extended: true }),
 
   bulk_print_labels: intent("Печать наклеек", ["order: Order"],
+    ["order.sellerId = me.id"],
     [],
-    [],
-    [], "click", { extended: true, parameters: [] }),
+    ["selected_count"], "click", { extended: true, parameters: [] }),
 
   bulk_export_orders: intent("Экспорт заказов", ["order: Order"],
+    ["order.sellerId = me.id OR order.buyerId = me.id"],
     [],
-    [],
-    [], "click", { extended: true, parameters: [] }),
+    ["selected_count"], "click", { extended: true, parameters: [] }),
 
   bulk_send_invoices: intent("Отправить счета", ["order: Order"],
-    [],
+    ["order.sellerId = me.id"],
     [ef("add", "invoices")],
-    [], "click", { extended: true }),
+    ["selected_count"], "click", { extended: true }),
 
 
   // ===== АНАЛИТИКА ПРОДАВЦА (9) =====
@@ -1202,7 +1201,7 @@ export const INTENTS = {
   remove_tag: intent("Удалить тег", ["listing: Listing"],
     ["listing.sellerId = me.id"],
     [ef("remove", "tags")],
-    [], "click"),
+    [], "click", { irreversibility: "low" }),
 
   create_category: intent("Создать категорию", ["category: Category"],
     [],
@@ -1211,15 +1210,15 @@ export const INTENTS = {
     "enter", { creates: "Category" }),
 
   edit_category: intent("Редактировать категорию", ["category: Category"],
-    [],
+    ["me.role = 'moderator'"],
     [ef("replace", "category.name"), ef("replace", "category.icon")],
     ["name", "icon"],
     "click", { phase: "investigation" }),
 
   delete_category: intent("Удалить категорию", ["category: Category"],
-    [],
+    ["me.role = 'moderator'"],
     [ef("remove", "categories")],
-    [], "click", { irreversibility: "high" }),
+    ["category.name"], "click", { irreversibility: "high" }),
 
   move_to_category: intent("Переместить в категорию", ["listing: Listing", "category: Category"],
     ["listing.sellerId = me.id"],
@@ -1260,10 +1259,10 @@ export const INTENTS = {
     ["phoneNumber"],
     "click", { antagonist: "disable_2fa" }),
 
-  disable_2fa: intent("Отключить 2FA", [],
-    [],
+  disable_2fa: intent("Отключить 2FA", ["user: User"],
+    ["user.id = me.id"],
     [ef("replace", "user.twoFactorEnabled", "account", { value: false })],
-    [], "click", { antagonist: "enable_2fa", irreversibility: "medium" }),
+    ["user.name"], "click", { antagonist: "enable_2fa", irreversibility: "medium" }),
 
   view_login_history: intent("История входов", [],
     [],
@@ -1271,10 +1270,10 @@ export const INTENTS = {
     ["results"],
     "click", { parameters: [] }),
 
-  revoke_session: intent("Завершить сессию", [],
-    [],
+  revoke_session: intent("Завершить сессию", ["session: Session"],
+    ["session.userId = me.id"],
     [ef("remove", "sessions")],
-    [], "click"),
+    ["session.device"], "click", { irreversibility: "medium" }),
 
   set_privacy_settings: intent("Настройки приватности", [],
     [],
@@ -1287,10 +1286,10 @@ export const INTENTS = {
     [],
     [], "click", { parameters: [] }),
 
-  delete_account: intent("Удалить аккаунт", [],
-    [],
+  delete_account: intent("Удалить аккаунт", ["user: User"],
+    ["user.id = me.id"],
     [ef("replace", "user.status", "account", { value: "deleted" })],
-    [], "click", { irreversibility: "high" }),
+    ["user.name", "user.email"], "click", { irreversibility: "high" }),
 
   block_user: intent("Заблокировать пользователя", ["user: User"],
     [],
@@ -1302,10 +1301,10 @@ export const INTENTS = {
   // ===== ПРОЧЕЕ (10) =====
 
   unblock_user: intent("Разблокировать", ["user: User"],
-    [],
+    ["block.userId = me.id"],
     [ef("remove", "blockedUsers")],
     ["user.name"],
-    "click", { antagonist: "block_user" }),
+    "click", { antagonist: "block_user", irreversibility: "low" }),
 
   submit_feedback: intent("Обратная связь", [],
     [],
@@ -1337,15 +1336,15 @@ export const INTENTS = {
     ["currency"],
     "click"),
 
-  toggle_dark_mode: intent("Тёмная тема", [],
-    [],
+  toggle_dark_mode: intent("Тёмная тема", ["user: User"],
+    ["user.id = me.id"],
     [ef("replace", "user.darkMode", "account", { value: true })],
-    [], "click", { antagonist: "toggle_light_mode" }),
+    ["user.name"], "click", { antagonist: "toggle_light_mode" }),
 
-  toggle_light_mode: intent("Светлая тема", [],
-    [],
+  toggle_light_mode: intent("Светлая тема", ["user: User"],
+    ["user.id = me.id"],
     [ef("replace", "user.darkMode", "account", { value: false })],
-    [], "click", { antagonist: "toggle_dark_mode" }),
+    ["user.name"], "click", { antagonist: "toggle_dark_mode" }),
 
   reject_return: intent("Отклонить возврат", ["order: Order"],
     ["order.sellerId = me.id"],
