@@ -84,7 +84,16 @@ const URL_INITIAL = (() => {
 })();
 
 export default function App() {
-  const [domainId, setDomainId] = useState(() => URL_INITIAL.domain || localStorage.getItem("idf_domain") || "booking");
+  // Если URL-param ?domain=X указывает на незарегистрированный в prototype
+  // домен (например, сгенерированный через Studio) — fallback к booking
+  // и запоминаем что был redirect, чтобы показать баннер.
+  const [domainId, setDomainId] = useState(() => {
+    const candidate = URL_INITIAL.domain || localStorage.getItem("idf_domain") || "booking";
+    return DOMAINS[candidate] ? candidate : "booking";
+  });
+  const [unknownDomainFallback] = useState(() =>
+    URL_INITIAL.domain && !DOMAINS[URL_INITIAL.domain] ? URL_INITIAL.domain : null
+  );
   const [initialProjection] = useState(() => URL_INITIAL.projection);
 
   // UI-kit адаптер: prefs override → дефолт домена → mantine
@@ -235,6 +244,17 @@ export default function App() {
 
   const shell = (
     <div data-adapter={adapter.name || "mantine"} style={{ height: "100vh", display: "flex", flexDirection: "column", background: "#0c0e14", color: "#c9cdd4", fontFamily: "ui-monospace, 'SF Mono', 'Cascadia Code', monospace", fontSize: 13, overflow: "hidden" }}>
+      {unknownDomainFallback && (
+        <div style={{ background: "#78350f", borderBottom: "1px solid #b45309", padding: "8px 16px", fontSize: 12, color: "#fef3c7", display: "flex", alignItems: "center", gap: 12, flexShrink: 0 }}>
+          <span>⚠</span>
+          <span style={{ flex: 1 }}>
+            Домен <code style={{ background: "#451a03", padding: "1px 6px", borderRadius: 3 }}>{unknownDomainFallback}</code> не зарегистрирован в prototype runtime — показан <code>booking</code>. Studio граф можно открыть там.
+          </span>
+          <a href={`/studio/?domain=${encodeURIComponent(unknownDomainFallback)}`} style={{ color: "#fde68a", textDecoration: "underline" }}>
+            Открыть в Studio →
+          </a>
+        </div>
+      )}
       {/* HEADER */}
       <div style={{ padding: "8px 16px", borderBottom: "1px solid #1e2230", display: "flex", alignItems: "center", gap: 10, flexShrink: 0, position: "relative" }}>
         <span style={{ fontSize: 14, fontWeight: 700, color: "#e2e5eb" }}>IDF</span>

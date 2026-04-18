@@ -10,8 +10,6 @@ export default function PrototypeReadyCTA({ visible, domain, intentsCount, entit
   const isEmpty = (intentsCount || 0) === 0 && (entitiesCount || 0) === 0;
   const show = visible && domain && !isEmpty;
 
-  const prototypeUrl = domain ? `/?domain=${encodeURIComponent(domain)}` : "";
-
   return (
     <AnimatePresence>
       {show && (
@@ -42,16 +40,14 @@ export default function PrototypeReadyCTA({ visible, domain, intentsCount, entit
           <div style={{ fontSize: 22 }}>✨</div>
           <div style={{ flex: 1 }}>
             <div style={{ fontWeight: 600, marginBottom: 2 }}>
-              Прототип «{domain}» готов
+              Домен «{domain}» сгенерирован
             </div>
             <div style={{ fontSize: 11, color: "#a7f3d0" }}>
-              {intentsCount} intents · {entitiesCount} entities · сгенерировано Claude'ом
+              {intentsCount} intents · {entitiesCount} entities · клик по узлу графа — инспектор. Runtime-интеграция в prototype — roadmap.
             </div>
           </div>
-          <a
-            href={prototypeUrl}
-            target="_blank"
-            rel="noreferrer"
+          <button
+            onClick={onDismiss}
             style={{
               padding: "8px 16px",
               background: "#ecfdf5",
@@ -59,12 +55,13 @@ export default function PrototypeReadyCTA({ visible, domain, intentsCount, entit
               borderRadius: 6,
               fontWeight: 600,
               fontSize: 12,
-              textDecoration: "none",
+              border: "none",
+              cursor: "pointer",
               whiteSpace: "nowrap",
             }}
           >
-            Открыть →
-          </a>
+            Исследовать граф
+          </button>
           <button
             onClick={onDismiss}
             title="Скрыть"
