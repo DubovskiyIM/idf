@@ -40,6 +40,41 @@ export const PROJECTIONS = {
     ],
   },
 
+  create_task_wizard: {
+    name: "Опубликовать задачу",
+    kind: "wizard",
+    mainEntity: "Task",
+    steps: [
+      {
+        id: "category",
+        label: "Категория",
+        intent: "filter_by_category",
+        pick: ["categoryId"],
+      },
+      {
+        id: "details",
+        label: "Описание",
+        intent: "create_task_draft",
+        pick: ["title", "description", "type", "city"],
+      },
+      {
+        id: "budget",
+        label: "Бюджет и срок",
+        intent: "create_task_draft",
+        pick: ["budget", "deadline"],
+      },
+      {
+        id: "confirm",
+        label: "Подтверждение",
+        intent: "create_task_draft",
+        summary: true,
+      },
+    ],
+  },
+
 };
 
-export const ROOT_PROJECTIONS = ["task_catalog_public"];
+export const ROOT_PROJECTIONS = [
+  "task_catalog_public",
+  "create_task_wizard",
+];

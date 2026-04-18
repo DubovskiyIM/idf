@@ -64,3 +64,37 @@ describe("freelance projections — task_detail_public", () => {
     expect(artifacts.task_detail_public.archetype).toBe("detail");
   });
 });
+
+describe("freelance projections — create_task_wizard", () => {
+  it("зарегистрирована как wizard", () => {
+    const p = PROJECTIONS.create_task_wizard;
+    expect(p).toBeDefined();
+    expect(p.kind).toBe("wizard");
+    expect(p.mainEntity).toBe("Task");
+  });
+
+  it("steps описывают 3 шага минимум (категория / детали / подтверждение)", () => {
+    const steps = PROJECTIONS.create_task_wizard.steps;
+    expect(steps.length).toBeGreaterThanOrEqual(3);
+    const ids = steps.map(s => s.id);
+    expect(ids).toContain("category");
+    expect(ids).toContain("details");
+    expect(ids).toContain("confirm");
+  });
+
+  it("финальный шаг вызывает create_task_draft", () => {
+    const confirm = PROJECTIONS.create_task_wizard.steps.find(s => s.id === "confirm");
+    expect(confirm.intent).toBe("create_task_draft");
+  });
+
+  it("кристаллизуется как wizard", () => {
+    const artifacts = crystallizeV2(INTENTS, PROJECTIONS, ONTOLOGY, "freelance");
+    expect(artifacts.create_task_wizard.archetype).toBe("wizard");
+  });
+
+  it("ROOT_PROJECTIONS включает catalog и wizard", () => {
+    expect(ROOT_PROJECTIONS).toEqual(expect.arrayContaining([
+      "task_catalog_public", "create_task_wizard",
+    ]));
+  });
+});
