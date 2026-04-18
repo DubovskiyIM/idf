@@ -75,9 +75,18 @@ function TabStrip({ view, setView }) {
   );
 }
 
+// URL-param ?domain=X — при первом mount сразу открываем Graph для этого
+// домена (deep-link из prototype баннера или CTA). Не reactive — URL не
+// слушается дальше, состоянием управляет setDomain.
+function initialDomainFromUrl() {
+  if (typeof window === "undefined") return null;
+  try { return new URLSearchParams(window.location.search).get("domain"); }
+  catch { return null; }
+}
+
 export default function App() {
   const [view, setView] = useState("graph");
-  const [domain, setDomain] = useState(null);
+  const [domain, setDomain] = useState(() => initialDomainFromUrl());
   const [graph, setGraph] = useState(null);
   const [selected, setSelected] = useState(null);
   const [chatOpen, setChatOpen] = useState(false);

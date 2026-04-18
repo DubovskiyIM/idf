@@ -250,7 +250,7 @@ export default function App() {
           <span style={{ flex: 1 }}>
             Домен <code style={{ background: "#451a03", padding: "1px 6px", borderRadius: 3 }}>{unknownDomainFallback}</code> не зарегистрирован в prototype runtime — показан <code>booking</code>. Studio граф можно открыть там.
           </span>
-          <a href={`/studio/?domain=${encodeURIComponent(unknownDomainFallback)}`} style={{ color: "#fde68a", textDecoration: "underline" }}>
+          <a href={`/studio.html?domain=${encodeURIComponent(unknownDomainFallback)}`} style={{ color: "#fde68a", textDecoration: "underline" }}>
             Открыть в Studio →
           </a>
         </div>
