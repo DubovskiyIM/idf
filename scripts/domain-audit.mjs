@@ -107,7 +107,11 @@ export function checkEmptyConditions(intents) {
   const gaps = [];
   for (const [name, intent] of Object.entries(intents || {})) {
     if (intent.creates) continue;
+    if (intent.system) continue;
     const p = intent.particles || {};
+    if (p.confirmation === "auto") continue;
+    const entities = p.entities || [];
+    if (entities.length === 0) continue;
     const conditions = p.conditions || [];
     const effects = p.effects || [];
     const hasTransition = effects.some((e) => e.α === "replace" || e.α === "remove");
@@ -118,9 +122,22 @@ export function checkEmptyConditions(intents) {
   return gaps;
 }
 
+// click-подтверждение на известной сущности с чистой status-replace
+// не требует явного witness — UI покажет detail сам.
+function isContextualStatusReplace(particles) {
+  const confirmation = particles.confirmation;
+  if (confirmation !== "click") return false;
+  const entities = particles.entities || [];
+  if (entities.length === 0) return false;
+  const effects = particles.effects || [];
+  if (effects.length === 0) return false;
+  return effects.every((e) => e.α === "replace" || e.α === "remove");
+}
+
 export function checkEmptyWitnesses(intents) {
   const gaps = [];
   for (const [name, intent] of Object.entries(intents || {})) {
+    if (intent.system) continue;
     const p = intent.particles || {};
     const witnesses = p.witnesses || [];
     const confirmation = p.confirmation;
@@ -129,6 +146,7 @@ export function checkEmptyWitnesses(intents) {
     const effects = p.effects || [];
     const entities = p.entities || [];
     if (effects.length === 0 && entities.length === 0) continue;
+    if (isContextualStatusReplace(p)) continue;
     gaps.push({ kind: "empty-witnesses", intent: name });
   }
   return gaps;

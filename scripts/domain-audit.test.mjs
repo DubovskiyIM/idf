@@ -117,7 +117,24 @@ describe("checkEmptyConditions", () => {
   it("интент с conditions проходит", () => {
     const intents = {
       edit_goal: {
-        particles: { entities: [], conditions: ["goal.userId = me.id"], effects: [{ α: "replace", target: "goal.title" }], witnesses: [] },
+        particles: { entities: ["goal: Goal"], conditions: ["goal.userId = me.id"], effects: [{ α: "replace", target: "goal.title" }], witnesses: [] },
+      },
+    };
+    expect(checkEmptyConditions(intents)).toEqual([]);
+  });
+  it("системный интент без entities пропускается", () => {
+    const intents = {
+      earn_xp: {
+        particles: { entities: [], conditions: [], effects: [{ α: "replace", target: "user.xp" }], witnesses: [] },
+      },
+    };
+    expect(checkEmptyConditions(intents)).toEqual([]);
+  });
+  it("интент с system: true пропускается", () => {
+    const intents = {
+      level_up: {
+        system: true,
+        particles: { entities: ["user: User"], conditions: [], effects: [{ α: "replace", target: "user.level" }] },
       },
     };
     expect(checkEmptyConditions(intents)).toEqual([]);
@@ -142,6 +159,30 @@ describe("checkEmptyWitnesses", () => {
       edit_goal: { particles: { witnesses: ["goal.title"], confirmation: "form", effects: [], entities: [] } },
     };
     expect(checkEmptyWitnesses(intents)).toEqual([]);
+  });
+  it("click + чистая status-replace на entity в контексте пропускается", () => {
+    const intents = {
+      complete_goal: {
+        particles: {
+          entities: ["goal: Goal"],
+          effects: [{ α: "replace", target: "goal.status", value: "completed" }],
+          witnesses: [], confirmation: "click",
+        },
+      },
+    };
+    expect(checkEmptyWitnesses(intents)).toEqual([]);
+  });
+  it("click с add-effect (не status-replace) всё равно требует witness", () => {
+    const intents = {
+      send_sticker: {
+        particles: {
+          entities: ["message: Message"],
+          effects: [{ α: "add", target: "messages" }],
+          witnesses: [], confirmation: "click",
+        },
+      },
+    };
+    expect(checkEmptyWitnesses(intents)).toEqual([{ kind: "empty-witnesses", intent: "send_sticker" }]);
   });
 });
 
@@ -217,7 +258,7 @@ describe("auditDomain", () => {
     const ontology = { entities: { Foo: { fields: ["id", "name"] } } };
     const intents = {
       close_foo: {
-        particles: { entities: [], conditions: [], effects: [{ α: "replace", target: "foo.status", value: "closed" }], witnesses: [], confirmation: "click" },
+        particles: { entities: ["foo: Foo"], conditions: [], effects: [{ α: "replace", target: "foo.status", value: "closed" }], witnesses: [], confirmation: "click" },
       },
     };
     const report = auditDomain("test", ontology, intents);
