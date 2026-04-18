@@ -57,7 +57,7 @@ export const INTENTS = {
 
   // ─── Recommendations ───
   accept_recommendation: { name: "Принять", variant: "primary", particles: { effects: [{ α: "replace", target: "recommendation.status", value: "accepted" }] } },
-  reject_recommendation: { name: "Отклонить", particles: { effects: [{ α: "replace", target: "recommendation.status", value: "rejected" }] } },
+  reject_recommendation: { name: "Отклонить", particles: { effects: [{ α: "replace", target: "recommendation.status", value: "rejected" }] }, irreversibility: "medium" },
   snooze_recommendation: { name: "Отложить", particles: { effects: [{ α: "replace", target: "recommendation.status", value: "snoozed" }] } },
   request_recommendation: { name: "Запросить совет", particles: { effects: [{ α: "add", target: "recommendations", σ: "account" }] } },
 
@@ -68,7 +68,7 @@ export const INTENTS = {
 
   // ─── Alerts ───
   acknowledge_alert: { name: "Прочитано", particles: { effects: [{ α: "replace", target: "alert.acknowledged", value: true }] } },
-  dismiss_alert: { name: "Скрыть", particles: { effects: [{ α: "remove", target: "alerts" }] } },
+  dismiss_alert: { name: "Скрыть", particles: { effects: [{ α: "remove", target: "alerts" }] }, irreversibility: "low" },
   escalate_alert: { name: "Эскалировать", particles: { effects: [{ α: "replace", target: "alert.severity", value: "critical" }] } },
 
   // ─── Rules ───

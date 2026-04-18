@@ -9,6 +9,7 @@ export const ONTOLOGY = {
   domain: "invest",
   entities: {
     User: {
+      kind: "internal",
       ownerField: "id",
       fields: {
         id: { type: "text" },
@@ -20,6 +21,7 @@ export const ONTOLOGY = {
     },
 
     Portfolio: {
+      kind: "internal",
       ownerField: "userId",
       fields: {
         id: { type: "text" },
@@ -38,6 +40,7 @@ export const ONTOLOGY = {
     },
 
     Position: {
+      kind: "internal",
       ownerField: "userId",
       fields: {
         id: { type: "text" },
@@ -66,6 +69,7 @@ export const ONTOLOGY = {
     },
 
     Transaction: {
+      kind: "internal",
       ownerField: "userId",
       fields: {
         id: { type: "text" },
@@ -84,6 +88,7 @@ export const ONTOLOGY = {
     },
 
     Goal: {
+      kind: "internal",
       ownerField: "userId",
       fields: {
         id: { type: "text" },
@@ -99,6 +104,7 @@ export const ONTOLOGY = {
     },
 
     RiskProfile: {
+      kind: "internal",
       ownerField: "userId",
       fields: {
         id: { type: "text" },
@@ -112,6 +118,7 @@ export const ONTOLOGY = {
     },
 
     Recommendation: {
+      kind: "internal",
       ownerField: "userId",
       fields: {
         id: { type: "text" },
@@ -127,6 +134,7 @@ export const ONTOLOGY = {
     },
 
     Alert: {
+      kind: "internal",
       ownerField: "userId",
       fields: {
         id: { type: "text" },
@@ -140,6 +148,7 @@ export const ONTOLOGY = {
     },
 
     Watchlist: {
+      kind: "internal",
       ownerField: "userId",
       fields: {
         id: { type: "text" },
@@ -165,6 +174,7 @@ export const ONTOLOGY = {
     // Поверх JWT: JWT отвечает «кто это», preapproval — «что этому агенту
     // можно делать и с какими лимитами». Читается preapprovalGuard.cjs.
     AgentPreapproval: {
+      kind: "internal",
       ownerField: "userId",
       fields: {
         id: { type: "text" },
@@ -188,6 +198,7 @@ export const ONTOLOGY = {
     //   ownership — это §26.1 open item (see docs/field-test-10.md).
     //   Клиентские projections используют виртуальный фильтр по assignment.
     Rule: {
+      kind: "internal",
       fields: {
         id: { type: "id" },
         active: { type: "boolean", read: ["*"], label: "Активно" },
@@ -195,6 +206,7 @@ export const ONTOLOGY = {
     },
 
     Assignment: {
+      kind: "assignment",
       ownerField: "advisorId",
       fields: {
         id: { type: "text" },

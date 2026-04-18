@@ -149,6 +149,9 @@ export function checkEmptyWitnesses(intents) {
     const p = intent.particles || {};
     const witnesses = p.witnesses || [];
     const confirmation = getConfirmation(intent);
+    // confirmation не задан — декларативный (API / Generic Effect Handler) интент,
+    // UI-диалог не требуется → witness не обязателен.
+    if (confirmation == null) continue;
     if (confirmation === "auto" || confirmation === "drag-end" || confirmation === "drag" || confirmation === "none") continue;
     if (witnesses.length > 0) continue;
     const effects = p.effects || [];
