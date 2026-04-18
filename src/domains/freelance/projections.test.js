@@ -21,8 +21,11 @@ describe("freelance projections — task_catalog_public", () => {
     expect(PROJECTIONS.task_catalog_public.filter).toContain("published");
   });
 
-  it("clickNavigate → task_detail_public", () => {
-    expect(PROJECTIONS.task_catalog_public.clickNavigate).toBe("task_detail_public");
+  it("onItemClick navigates → task_detail_public", () => {
+    expect(PROJECTIONS.task_catalog_public.onItemClick).toMatchObject({
+      action: "navigate",
+      to: "task_detail_public",
+    });
   });
 
   it("кристаллизуется через crystallizeV2 без exceptions", () => {
@@ -65,37 +68,23 @@ describe("freelance projections — task_detail_public", () => {
   });
 });
 
-describe("freelance projections — create_task_wizard", () => {
-  it("зарегистрирована как wizard", () => {
-    const p = PROJECTIONS.create_task_wizard;
-    expect(p).toBeDefined();
-    expect(p.kind).toBe("wizard");
-    expect(p.mainEntity).toBe("Task");
+describe("freelance create_task_draft — formModal archetype (вместо wizard)", () => {
+  it("create_task_draft.confirmation === 'form'", () => {
+    expect(INTENTS.create_task_draft.confirmation).toBe("form");
   });
 
-  it("steps описывают 3 шага минимум (категория / детали / подтверждение)", () => {
-    const steps = PROJECTIONS.create_task_wizard.steps;
-    expect(steps.length).toBeGreaterThanOrEqual(3);
-    const ids = steps.map(s => s.id);
-    expect(ids).toContain("category");
-    expect(ids).toContain("details");
-    expect(ids).toContain("confirm");
-  });
-
-  it("финальный шаг вызывает create_task_draft", () => {
-    const confirm = PROJECTIONS.create_task_wizard.steps.find(s => s.id === "confirm");
-    expect(confirm.intent).toBe("create_task_draft");
-  });
-
-  it("кристаллизуется как wizard", () => {
-    const artifacts = crystallizeV2(INTENTS, PROJECTIONS, ONTOLOGY, "freelance");
-    expect(artifacts.create_task_wizard.archetype).toBe("wizard");
-  });
-
-  it("ROOT_PROJECTIONS включает catalog и wizard", () => {
-    expect(ROOT_PROJECTIONS).toEqual(expect.arrayContaining([
-      "task_catalog_public", "create_task_wizard",
+  it("customerId НЕ в UI-параметрах (auto-injected через buildEffects)", () => {
+    const params = INTENTS.create_task_draft.particles.parameters.map(p => p.name);
+    expect(params).not.toContain("customerId");
+    expect(params).toEqual(expect.arrayContaining([
+      "title", "categoryId", "budget", "type",
     ]));
+  });
+
+  it("categoryId — entityRef на Category (для picker dropdown в form modal)", () => {
+    const catParam = INTENTS.create_task_draft.particles.parameters.find(p => p.name === "categoryId");
+    expect(catParam.type).toBe("entityRef");
+    expect(catParam.entity).toBe("Category");
   });
 });
 
@@ -206,14 +195,14 @@ describe("freelance seed", () => {
 
   it("хотя бы один User имеет customerVerified && executorVerified (универсал)", async () => {
     const seed = await getSeed();
-    const users = seed.filter(e => e.target === "User");
+    const users = seed.filter(e => e.target === "users");
     expect(users.some(u => u.context.customerVerified && u.context.executorVerified)).toBe(true);
   });
 
   it("все Task имеют customerId, ссылающийся на существующего User", async () => {
     const seed = await getSeed();
-    const userIds = new Set(seed.filter(e => e.target === "User").map(e => e.context.id));
-    const tasks = seed.filter(e => e.target === "Task");
+    const userIds = new Set(seed.filter(e => e.target === "users").map(e => e.context.id));
+    const tasks = seed.filter(e => e.target === "tasks");
     expect(tasks.length).toBeGreaterThanOrEqual(10);
     for (const t of tasks) {
       expect(userIds.has(t.context.customerId)).toBe(true);
@@ -222,8 +211,8 @@ describe("freelance seed", () => {
 
   it("все Response.taskId → Task.id референтны", async () => {
     const seed = await getSeed();
-    const taskIds = new Set(seed.filter(e => e.target === "Task").map(e => e.context.id));
-    const responses = seed.filter(e => e.target === "Response");
+    const taskIds = new Set(seed.filter(e => e.target === "tasks").map(e => e.context.id));
+    const responses = seed.filter(e => e.target === "responses");
     expect(responses.length).toBeGreaterThanOrEqual(20);
     for (const r of responses) {
       expect(taskIds.has(r.context.taskId)).toBe(true);
@@ -232,16 +221,16 @@ describe("freelance seed", () => {
 
   it("содержит ≥3 Deal (Cycle 2)", async () => {
     const seed = await getSeed();
-    const deals = seed.filter(e => e.target === "Deal");
+    const deals = seed.filter(e => e.target === "deals");
     expect(deals.length).toBeGreaterThanOrEqual(3);
   });
 
   it("все Deal.customerId ссылаются на User.customerVerified=true", async () => {
     const seed = await getSeed();
     const users = Object.fromEntries(
-      seed.filter(e => e.target === "User").map(e => [e.context.id, e.context])
+      seed.filter(e => e.target === "users").map(e => [e.context.id, e.context])
     );
-    const deals = seed.filter(e => e.target === "Deal");
+    const deals = seed.filter(e => e.target === "deals");
     for (const d of deals) {
       expect(users[d.context.customerId]?.customerVerified).toBe(true);
     }
@@ -250,9 +239,9 @@ describe("freelance seed", () => {
   it("все Deal.executorId ссылаются на User.executorVerified=true", async () => {
     const seed = await getSeed();
     const users = Object.fromEntries(
-      seed.filter(e => e.target === "User").map(e => [e.context.id, e.context])
+      seed.filter(e => e.target === "users").map(e => [e.context.id, e.context])
     );
-    const deals = seed.filter(e => e.target === "Deal");
+    const deals = seed.filter(e => e.target === "deals");
     for (const d of deals) {
       expect(users[d.context.executorId]?.executorVerified).toBe(true);
     }
@@ -260,19 +249,19 @@ describe("freelance seed", () => {
 
   it("содержит ≥3 Wallet (один на customer + один на executor + один на универсала)", async () => {
     const seed = await getSeed();
-    const wallets = seed.filter(e => e.target === "Wallet");
+    const wallets = seed.filter(e => e.target === "wallets");
     expect(wallets.length).toBeGreaterThanOrEqual(3);
   });
 
   it("содержит ≥5 Transaction", async () => {
     const seed = await getSeed();
-    const txs = seed.filter(e => e.target === "Transaction");
+    const txs = seed.filter(e => e.target === "transactions");
     expect(txs.length).toBeGreaterThanOrEqual(5);
   });
 
   it("содержит ≥3 Review со стороны customer", async () => {
     const seed = await getSeed();
-    const reviews = seed.filter(e => e.target === "Review");
+    const reviews = seed.filter(e => e.target === "reviews");
     expect(reviews.length).toBeGreaterThanOrEqual(3);
   });
 });

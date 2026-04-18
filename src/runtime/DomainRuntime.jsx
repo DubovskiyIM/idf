@@ -352,8 +352,8 @@ export default function DomainRuntime({ domainId, embedded = false, initialProje
         style={{
           height: "100%", width: "100%",
           display: "flex", flexDirection: "column",
-          background: embedded ? "var(--mantine-color-body, #0f172a)" : "#0f172a",
-          color: "#e2e8f0",
+          background: "var(--idf-surface, #ffffff)",
+          color: "var(--idf-text, #1f2937)",
           fontFamily: "Inter, -apple-system, system-ui, sans-serif",
         }}
       >

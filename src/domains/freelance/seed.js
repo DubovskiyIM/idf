@@ -21,7 +21,7 @@ export function getSeedEffects() {
     { id: "cat_design", name: "Дизайн", slug: "design", icon: "🎨" },
     { id: "cat_copy", name: "Копирайтинг", slug: "copy", icon: "✍️" },
   ];
-  CATEGORIES.forEach(c => ef({ target: "Category", context: c }));
+  CATEGORIES.forEach(c => ef({ target: "categories", context: c }));
 
   // Skills
   const SKILLS = [
@@ -32,7 +32,7 @@ export function getSeedEffects() {
     { id: "skill_illustrator", name: "Illustrator", categoryId: "cat_design" },
     { id: "skill_seo", name: "SEO-тексты", categoryId: "cat_copy" },
   ];
-  SKILLS.forEach(s => ef({ target: "Skill", context: s }));
+  SKILLS.forEach(s => ef({ target: "skills", context: s }));
 
   // Users
   const USERS = [
@@ -57,12 +57,12 @@ export function getSeedEffects() {
       city: "Екатеринбург", customerVerified: true, executorVerified: true,
     },
   ];
-  USERS.forEach(u => ef({ target: "User", context: { ...u, createdAt: now } }));
+  USERS.forEach(u => ef({ target: "users", context: { ...u, createdAt: now } }));
 
   // CustomerProfile для всех customer-флагнутых
   USERS.filter(u => u.customerVerified).forEach(u => {
     ef({
-      target: "CustomerProfile",
+      target: "customerprofiles",
       context: {
         id: `cust_${u.id}`, userId: u.id, displayName: u.name, city: u.city, createdAt: now,
       },
@@ -77,7 +77,7 @@ export function getSeedEffects() {
   ];
   EXEC_PROFILES.forEach(p => {
     ef({
-      target: "ExecutorProfile",
+      target: "executorprofiles",
       context: {
         id: `exec_${p.userId}`,
         ...p,
@@ -99,7 +99,7 @@ export function getSeedEffects() {
   ];
   EXEC_SKILLS.forEach((s, i) => {
     ef({
-      target: "ExecutorSkill",
+      target: "executorskills",
       context: { id: `es_${i}`, ...s, createdAt: now },
     });
   });
@@ -119,7 +119,7 @@ export function getSeedEffects() {
   ];
   TASKS.forEach(t => {
     ef({
-      target: "Task",
+      target: "tasks",
       context: { ...t, description: `Подробное описание: ${t.title}`, responsesCount: 0, createdAt: now - Math.random() * 3 * 86400_000 },
     });
   });
@@ -149,7 +149,7 @@ export function getSeedEffects() {
   ];
   RESPONSES.forEach((r, i) => {
     ef({
-      target: "Response",
+      target: "responses",
       context: {
         id: `r_${i + 1}`, ...r, status: "pending",
         createdAt: now - Math.random() * 2 * 86400_000,
@@ -165,7 +165,7 @@ export function getSeedEffects() {
     reserved: 0,
     currency: "RUB",
   }));
-  WALLETS.forEach(w => ef({ target: "Wallet", context: { ...w, createdAt: now } }));
+  WALLETS.forEach(w => ef({ target: "wallets", context: { ...w, createdAt: now } }));
 
   // Deals — 3 в разных фазах жизненного цикла
   const DEALS = [
@@ -189,7 +189,7 @@ export function getSeedEffects() {
       completedAt: now - 2 * 86400_000,
     },
   ];
-  DEALS.forEach(d => ef({ target: "Deal", context: { ...d, createdAt: now - 7 * 86400_000 } }));
+  DEALS.forEach(d => ef({ target: "deals", context: { ...d, createdAt: now - 7 * 86400_000 } }));
 
   // Transactions — escrow-hold + commission для каждой сделки, release для completed
   const TRANSACTIONS = [
@@ -202,7 +202,7 @@ export function getSeedEffects() {
     { id: "tx_4", walletId: "wallet_u_universal", dealId: "deal_3", amount: 25200, kind: "topup", status: "posted", note: "Получение за deal_3" },
     { id: "tx_5", walletId: "wallet_u_customer_1", dealId: "deal_3", amount: 2800, kind: "commission", status: "posted", note: "Комиссия платформы" },
   ];
-  TRANSACTIONS.forEach(t => ef({ target: "Transaction", context: { ...t, createdAt: now - 2 * 86400_000 } }));
+  TRANSACTIONS.forEach(t => ef({ target: "transactions", context: { ...t, createdAt: now - 2 * 86400_000 } }));
 
   // Reviews — 3 Review по completed deal_3
   const REVIEWS = [
@@ -219,7 +219,7 @@ export function getSeedEffects() {
       role: "customer", rating: 4, comment: "Хорошо, но были правки",
     },
   ];
-  REVIEWS.forEach(r => ef({ target: "Review", context: { ...r, createdAt: now - 86400_000 } }));
+  REVIEWS.forEach(r => ef({ target: "reviews", context: { ...r, createdAt: now - 86400_000 } }));
 
   return effects;
 }

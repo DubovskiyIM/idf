@@ -174,27 +174,27 @@ export const INTENTS = {
   // ─── Task (8) ─────────────────────────────────────────────────────────────
 
   create_task_draft: {
-    name: "Создать черновик задачи",
-    description: "Customer создаёт Task в статусе draft",
+    name: "Опубликовать задачу",
+    description: "Customer создаёт Task в статусе draft через form modal (customerId auto-injected из viewer)",
     α: "add",
     irreversibility: "low",
+    confirmation: "form",
     particles: {
+      entities: ["task: Task"],
       parameters: [
-        { name: "customerId", type: "id", required: true },
-        { name: "title", type: "text", required: true },
-        { name: "description", type: "text" },
-        { name: "categoryId", type: "id", required: true },
-        { name: "budget", type: "number", required: true },
-        { name: "deadline", type: "datetime" },
-        { name: "type", type: "select", options: ["remote", "on-site"], required: true },
-        { name: "city", type: "text" },
+        { name: "title", type: "text", required: true, label: "Заголовок" },
+        { name: "description", type: "textarea", label: "Описание" },
+        { name: "categoryId", type: "entityRef", required: true, label: "Категория", entity: "Category" },
+        { name: "budget", type: "number", required: true, label: "Бюджет, ₽" },
+        { name: "deadline", type: "datetime", label: "Срок" },
+        { name: "type", type: "select", options: ["remote", "on-site"], required: true, label: "Формат" },
+        { name: "city", type: "text", label: "Город" },
       ],
       effects: [
         { α: "add", target: "tasks", σ: "account" },
       ],
     },
     creates: "Task",
-    confirmation: "auto",
   },
 
   submit_task_for_moderation: {
@@ -709,7 +709,7 @@ export const INTENTS = {
       reason: "Сумма резервируется в escrow — отмена возможна только через спор или mutual-cancel",
     },
     particles: {
-      entities: ["deal: Deal", "task: Task", "response: Response"],
+      entities: ["deal: Deal"],
       parameters: [
         { name: "customerId", type: "id", required: true },
         { name: "executorId", type: "id", required: true },
