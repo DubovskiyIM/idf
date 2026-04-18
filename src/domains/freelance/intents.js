@@ -709,7 +709,7 @@ export const INTENTS = {
       reason: "Сумма резервируется в escrow — отмена возможна только через спор или mutual-cancel",
     },
     particles: {
-      entities: ["deal: Deal", "task: Task", "response: Response"],
+      entities: ["deal: Deal"],
       parameters: [
         { name: "customerId", type: "id", required: true },
         { name: "executorId", type: "id", required: true },
