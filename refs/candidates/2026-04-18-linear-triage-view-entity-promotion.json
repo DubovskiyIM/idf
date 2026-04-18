@@ -1,0 +1,71 @@
+{
+  "id": "entity-promotion",
+  "version": 1,
+  "status": "candidate",
+  "archetype": "feed",
+  "trigger": {
+    "requires": [
+      {
+        "kind": "intent-creates",
+        "entity": "!mainEntity",
+        "description": "intent создаёт entity отличную от feed-entity"
+      },
+      {
+        "kind": "intent-confirmation",
+        "value": "form"
+      }
+    ]
+  },
+  "structure": {
+    "slot": "primaryCTA",
+    "description": "Dedicated CTA на item-level (или в detail-контексте) escalates одиночный item в higher-order entity. Форма предзаполняется из current item; исходный item linked/transitioned, не удаляется."
+  },
+  "rationale": {
+    "hypothesis": "Промоция (issue→project, lead→deal, story→epic) — универсальный lifecycle в продуктах с иерархией сущностей. Это не create-from-scratch (hero-create), а conversion: UX должен отражать continuity (pre-filled form, link back), а не открывать пустую форму.",
+    "evidence": [
+      {
+        "source": "linear-triage",
+        "description": "convert_to_project создаёт Project из Issue-контекста",
+        "reliability": "high"
+      },
+      {
+        "source": "salesforce-lead-convert",
+        "description": "Lead→Opportunity conversion flow с предзаполнением",
+        "reliability": "medium"
+      },
+      {
+        "source": "jira-epic-link",
+        "description": "Story→Epic escalation",
+        "reliability": "medium"
+      }
+    ],
+    "counterexample": [
+      {
+        "source": "flat-entity-model",
+        "description": "Если entity-hierarchy нет — promotion не применим",
+        "reliability": "high"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [
+      {
+        "domain": "sales",
+        "projection": "listing_feed",
+        "reason": "потенциально Listing→Auction promotion"
+      }
+    ],
+    "shouldNotMatch": [
+      {
+        "domain": "booking",
+        "projection": "booking_list",
+        "reason": "нет higher-order entity выше Booking"
+      },
+      {
+        "domain": "reflect",
+        "projection": "mood_stream",
+        "reason": "flat entity-model, escalation path отсутствует"
+      }
+    ]
+  }
+}

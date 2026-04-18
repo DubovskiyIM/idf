@@ -1,0 +1,68 @@
+{
+  "id": "hotkey-namespace-shift-modifier",
+  "version": 1,
+  "status": "candidate",
+  "archetype": "detail",
+  "trigger": {
+    "requires": [
+      {
+        "kind": "intent-count",
+        "effect": "replace",
+        "min": 6,
+        "targetPrefix": "mainEntity"
+      },
+      {
+        "kind": "intent-confirmation",
+        "value": "click",
+        "min": 6
+      }
+    ]
+  },
+  "structure": {
+    "slot": "sections",
+    "description": "При ≥6 property-setters single-letter namespace переполняется (collisions по starting letter); shift-modifier резервируется для вторичных setters (shift-P=project при занятом P=priority, shift-M=parent при M=move). Primary hotkey достаётся наиболее частому property."
+  },
+  "rationale": {
+    "hypothesis": "Hotkey-namespace — conflict-prone shared resource. Без систематических правил назначения collisions создают memorability-долг и убивают keyboard-mastery; shift-modifier — canonical convention для «secondary namespace» (capital letters как shifted primary).",
+    "evidence": [
+      {
+        "source": "linear",
+        "description": "P=priority, Shift+P=project; M=move, Shift+M=parent — systematic disambiguation",
+        "reliability": "high"
+      },
+      {
+        "source": "gmail",
+        "description": "E=archive, Shift+U=mark unread — shift для secondary actions",
+        "reliability": "medium"
+      }
+    ],
+    "counterexample": [
+      {
+        "source": "simple-todo-apps",
+        "description": "Приложения с 3-4 hotkeys не нуждаются в shift-namespace — over-engineering",
+        "reliability": "high"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [
+      {
+        "domain": "sales",
+        "projection": "listing-admin",
+        "reason": "Множество property-setters с collision-риском по начальным буквам"
+      }
+    ],
+    "shouldNotMatch": [
+      {
+        "domain": "booking",
+        "projection": "slot-book",
+        "reason": "Мало intents, single-letter достаточно"
+      },
+      {
+        "domain": "planning",
+        "projection": "poll-vote",
+        "reason": "Один главный action, hotkey-namespace не напряжён"
+      }
+    ]
+  }
+}

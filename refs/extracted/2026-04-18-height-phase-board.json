@@ -1,0 +1,234 @@
+{
+  "source": "height-kanban-board",
+  "entities": [
+    {
+      "name": "Task",
+      "fields": [
+        "title",
+        "status",
+        "assignees",
+        "labels",
+        "dueDate",
+        "progress",
+        "timeInPhase",
+        "projectId"
+      ],
+      "statusValues": [
+        "backlog",
+        "up_next",
+        "in_progress",
+        "blocked",
+        "in_review",
+        "done"
+      ],
+      "foreignKey": "projectId→Project"
+    },
+    {
+      "name": "SubTask",
+      "fields": [
+        "title",
+        "status",
+        "parentId",
+        "assignee"
+      ],
+      "foreignKey": "parentId→Task",
+      "statusValues": [
+        "backlog",
+        "in_progress",
+        "done"
+      ]
+    },
+    {
+      "name": "Project",
+      "fields": [
+        "name",
+        "description",
+        "workflow"
+      ]
+    },
+    {
+      "name": "Workflow",
+      "fields": [
+        "phases",
+        "transitions"
+      ]
+    },
+    {
+      "name": "Phase",
+      "fields": [
+        "name",
+        "order",
+        "allowedNextPhases",
+        "workflowId"
+      ],
+      "foreignKey": "workflowId→Workflow"
+    },
+    {
+      "name": "Label",
+      "fields": [
+        "name",
+        "color"
+      ]
+    },
+    {
+      "name": "User",
+      "fields": [
+        "name",
+        "avatar",
+        "email"
+      ]
+    },
+    {
+      "name": "Assignment",
+      "fields": [
+        "taskId",
+        "userId"
+      ],
+      "foreignKey": "taskId→Task"
+    }
+  ],
+  "intents": [
+    {
+      "id": "change_task_status",
+      "α": "replace",
+      "target": "task.status",
+      "confirmation": "click"
+    },
+    {
+      "id": "start_task",
+      "α": "replace",
+      "target": "task.status",
+      "confirmation": "click"
+    },
+    {
+      "id": "mark_task_done",
+      "α": "replace",
+      "target": "task.status",
+      "confirmation": "click"
+    },
+    {
+      "id": "reopen_task",
+      "α": "replace",
+      "target": "task.status",
+      "confirmation": "click"
+    },
+    {
+      "id": "block_task",
+      "α": "replace",
+      "target": "task.status",
+      "confirmation": "click"
+    },
+    {
+      "id": "send_to_review",
+      "α": "replace",
+      "target": "task.status",
+      "confirmation": "click"
+    },
+    {
+      "id": "create_task",
+      "α": "add",
+      "creates": "Task",
+      "confirmation": "enter"
+    },
+    {
+      "id": "edit_task_title",
+      "α": "replace",
+      "target": "task.title",
+      "confirmation": "enter"
+    },
+    {
+      "id": "assign_user",
+      "α": "add",
+      "creates": "Assignment",
+      "confirmation": "click"
+    },
+    {
+      "id": "unassign_user",
+      "α": "remove",
+      "confirmation": "click"
+    },
+    {
+      "id": "add_label",
+      "α": "replace",
+      "target": "task.labels",
+      "confirmation": "click"
+    },
+    {
+      "id": "remove_label",
+      "α": "replace",
+      "target": "task.labels",
+      "confirmation": "click"
+    },
+    {
+      "id": "set_due_date",
+      "α": "replace",
+      "target": "task.dueDate",
+      "confirmation": "click"
+    },
+    {
+      "id": "add_subtask",
+      "α": "add",
+      "creates": "SubTask",
+      "confirmation": "enter"
+    },
+    {
+      "id": "bulk_move_to_phase",
+      "α": "replace",
+      "target": "task.status",
+      "confirmation": "click"
+    },
+    {
+      "id": "bulk_assign",
+      "α": "add",
+      "creates": "Assignment",
+      "confirmation": "click"
+    },
+    {
+      "id": "delete_task",
+      "α": "remove",
+      "irreversibility": "high",
+      "confirmation": "form"
+    },
+    {
+      "id": "archive_task",
+      "α": "remove",
+      "irreversibility": "high",
+      "confirmation": "click"
+    },
+    {
+      "id": "group_by_assignee",
+      "α": "replace",
+      "target": "view.swimlane",
+      "confirmation": "click"
+    },
+    {
+      "id": "group_by_label",
+      "α": "replace",
+      "target": "view.swimlane",
+      "confirmation": "click"
+    },
+    {
+      "id": "open_command_palette",
+      "α": "replace",
+      "target": "ui.palette",
+      "confirmation": "click"
+    }
+  ],
+  "roles": [
+    "owner",
+    "viewer"
+  ],
+  "observations": [
+    "Kanban columns = workflow phases; drag-drop between columns performs replace on task.status",
+    "Phase-aware primary CTA in detail view: button label and action derived from current status (Start / Mark done / Reopen)",
+    "Only valid next-phase transitions rendered as buttons — workflow is directed graph, not all→all",
+    "Task card composite: title + assignee avatars + label pills + progress bar + due-date chip (red if overdue)",
+    "Time-in-phase badge on card signals stagnation — derivable metric, not stored field",
+    "Bulk selection via checkboxes opens action bar with Move to Phase / Assign to User",
+    "Swimlanes = horizontal grouping by assignee or label — view-level grouping, orthogonal to column-phase",
+    "Command palette (⌘K) as universal intent entry point; J/K for card navigation",
+    "Sub-task progress shown as inline progress indicator on parent card",
+    "Workflow phases declared per-project; phase count and transitions are configurable",
+    "Overdue state is derived from dueDate vs now, rendered as color-signal on chip"
+  ]
+}

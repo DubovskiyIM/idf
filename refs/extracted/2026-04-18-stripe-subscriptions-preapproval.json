@@ -1,0 +1,200 @@
+{
+  "source": "stripe-billing-create-subscription",
+  "entities": [
+    {
+      "name": "Customer",
+      "fields": [
+        "email",
+        "name",
+        "defaultPaymentMethodId",
+        "billingAddress"
+      ]
+    },
+    {
+      "name": "Product",
+      "fields": [
+        "name",
+        "description",
+        "active"
+      ]
+    },
+    {
+      "name": "Price",
+      "fields": [
+        "productId",
+        "unitAmount",
+        "currency",
+        "recurringInterval",
+        "intervalCount",
+        "active"
+      ],
+      "foreignKey": "productId→Product",
+      "statusValues": [
+        "day",
+        "week",
+        "month",
+        "year"
+      ]
+    },
+    {
+      "name": "Subscription",
+      "fields": [
+        "customerId",
+        "priceId",
+        "status",
+        "trialEnd",
+        "collectionMethod",
+        "maxAmountPerPeriod",
+        "endDate",
+        "allowedPaymentMethods",
+        "metadata",
+        "createdAt"
+      ],
+      "statusValues": [
+        "draft",
+        "trialing",
+        "active",
+        "past_due",
+        "paused",
+        "canceled",
+        "incomplete"
+      ],
+      "foreignKey": "customerId→Customer"
+    },
+    {
+      "name": "Coupon",
+      "fields": [
+        "code",
+        "percentOff",
+        "amountOff",
+        "duration",
+        "maxRedemptions"
+      ]
+    },
+    {
+      "name": "Invoice",
+      "fields": [
+        "subscriptionId",
+        "amountDue",
+        "status",
+        "periodStart",
+        "periodEnd",
+        "dueDate"
+      ],
+      "statusValues": [
+        "draft",
+        "open",
+        "paid",
+        "uncollectible",
+        "void"
+      ],
+      "foreignKey": "subscriptionId→Subscription"
+    },
+    {
+      "name": "SubscriptionPreapproval",
+      "fields": [
+        "subscriptionId",
+        "maxAmountPerCycle",
+        "maxCycles",
+        "expiresAt",
+        "allowedPaymentMethodIds"
+      ],
+      "foreignKey": "subscriptionId→Subscription"
+    },
+    {
+      "name": "AuditLogEntry",
+      "fields": [
+        "subscriptionId",
+        "actor",
+        "action",
+        "before",
+        "after",
+        "timestamp"
+      ],
+      "foreignKey": "subscriptionId→Subscription"
+    }
+  ],
+  "intents": [
+    {
+      "id": "select_customer",
+      "α": "replace",
+      "target": "subscriptionDraft.customerId",
+      "confirmation": "click"
+    },
+    {
+      "id": "select_price",
+      "α": "replace",
+      "target": "subscriptionDraft.priceId",
+      "confirmation": "click"
+    },
+    {
+      "id": "set_trial_period",
+      "α": "replace",
+      "target": "subscriptionDraft.trialEnd",
+      "confirmation": "click"
+    },
+    {
+      "id": "set_collection_method",
+      "α": "replace",
+      "target": "subscriptionDraft.collectionMethod",
+      "confirmation": "click"
+    },
+    {
+      "id": "attach_coupon",
+      "α": "replace",
+      "target": "subscriptionDraft.couponId",
+      "confirmation": "click"
+    },
+    {
+      "id": "set_metadata",
+      "α": "replace",
+      "target": "subscriptionDraft.metadata",
+      "confirmation": "form"
+    },
+    {
+      "id": "save_draft_subscription",
+      "α": "add",
+      "creates": "Subscription",
+      "confirmation": "click"
+    },
+    {
+      "id": "create_subscription",
+      "α": "add",
+      "creates": "Subscription",
+      "confirmation": "form",
+      "irreversibility": "high"
+    },
+    {
+      "id": "schedule_cancel_at_period_end",
+      "α": "replace",
+      "target": "subscription.cancelAtPeriodEnd",
+      "confirmation": "click"
+    },
+    {
+      "id": "cancel_subscription_immediate",
+      "α": "remove",
+      "irreversibility": "high",
+      "confirmation": "form"
+    }
+  ],
+  "roles": [
+    "owner",
+    "viewer",
+    "agent",
+    "observer"
+  ],
+  "observations": [
+    "Linear multi-step wizard with back-navigation and save-as-draft",
+    "Customer picker uses live email search with typeahead results",
+    "Price picker groups prices under parent Product with recurring interval badge",
+    "Trial period is optional dropdown (days) with visible computed trialEnd date",
+    "Collection method surfaced as radio: automatic (requires saved card) vs send_invoice",
+    "Preapproval parameters (maxAmountPerCycle, maxCycles, endDate, allowedPaymentMethods) captured at creation and become immutable after activation",
+    "Metadata step uses JSON editor with schema validation before continue",
+    "Review step renders read-only summary before irreversible Create button",
+    "Billing cycle charge is gated by preapproval check — failure leaves invoice open and emails customer rather than retrying silently",
+    "Cancellation is two-branch: schedule at period end (soft) vs immediate (irreversible high)",
+    "All subscription mutations write AuditLogEntry with before/after diff for compliance",
+    "Post-activation edits require separate update_subscription intent rather than inline field edits"
+  ]
+}

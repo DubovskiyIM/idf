@@ -1,0 +1,76 @@
+{
+  "id": "optimistic-replace-with-undo",
+  "version": 1,
+  "status": "candidate",
+  "archetype": null,
+  "trigger": {
+    "requires": [
+      {
+        "kind": "intent-effect",
+        "alpha": "replace",
+        "target": "*.status"
+      },
+      {
+        "kind": "intent-confirmation",
+        "value": "click"
+      }
+    ]
+  },
+  "structure": {
+    "slot": "overlay",
+    "description": "Деструктивный/статус-меняющий replace применяется оптимистично и показывает transient undo-toast (3–5с) вместо модального подтверждения; Cmd+Z/U откатывает."
+  },
+  "rationale": {
+    "hypothesis": "Для частых status-мутаций (archive, mark-read) модальное подтверждение ломает поток; toast с окном отмены даёт ту же защиту от ошибки при меньшем трении. Применим, когда irreversibility=high достигается не за счёт необратимости state, а за счёт объёма (inbox zero за минуты).",
+    "evidence": [
+      {
+        "source": "superhuman-inbox",
+        "description": "Archive/snooze/read-later — все через hotkey + undo-toast; modal не появляется.",
+        "reliability": "high"
+      },
+      {
+        "source": "gmail-web",
+        "description": "Identical pattern: archive shows 'Conversation archived — Undo' toast.",
+        "reliability": "high"
+      },
+      {
+        "source": "linear-issues",
+        "description": "Delete / complete show undo toast, не confirm dialog.",
+        "reliability": "high"
+      }
+    ],
+    "counterexample": [
+      {
+        "source": "invest-capture-payment",
+        "description": "Истинно необратимый эффект (внешний транзакционный commit) требует явного подтверждения, не undo-toast.",
+        "reliability": "high"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [
+      {
+        "domain": "messenger",
+        "projection": "conversation_thread",
+        "reason": "archive/delete Conversation — status-replace, высокочастотный."
+      },
+      {
+        "domain": "lifequest",
+        "projection": "tasks_feed",
+        "reason": "complete/archive задачи — status-replace с возможностью отмены."
+      }
+    ],
+    "shouldNotMatch": [
+      {
+        "domain": "delivery",
+        "projection": "order_payment",
+        "reason": "capture_payment имеет __irr=high:at — откат в Φ запрещён integrity-правилом."
+      },
+      {
+        "domain": "invest",
+        "projection": "place_order",
+        "reason": "Отправка заявки на биржу — внешний side-effect, undo-окно не защищает."
+      }
+    ]
+  }
+}

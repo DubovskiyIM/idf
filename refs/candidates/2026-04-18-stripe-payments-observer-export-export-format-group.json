@@ -1,0 +1,72 @@
+{
+  "id": "export-format-group",
+  "version": 1,
+  "status": "candidate",
+  "archetype": "detail",
+  "trigger": {
+    "requires": [
+      {
+        "kind": "intent-count",
+        "predicate": "creates-same-entity",
+        "min": 2
+      },
+      {
+        "kind": "entity-field",
+        "entity": "<created>",
+        "field": "format"
+      },
+      {
+        "kind": "entity-field",
+        "entity": "<created>",
+        "field": "expiresAt"
+      }
+    ]
+  },
+  "structure": {
+    "slot": "toolbar",
+    "description": "Множественные intent'ы `creates:SameEntity` с варьирующимся параметром `format` группируются в single dropdown-control в toolbar (header-right). Каждый format — subaction, не отдельная кнопка."
+  },
+  "rationale": {
+    "hypothesis": "Когда 3+ intent'а отличаются только форматом результата, рендер каждого как top-level CTA перегружает visual hierarchy. Группировка в dropdown сохраняет discoverability при низкой визуальной стоимости. Наличие `expiresAt` на created entity — сигнал что это materialization-токен (не transactional side-effect).",
+    "evidence": [
+      {
+        "source": "stripe-dashboard",
+        "description": "Export dropdown top-right: PDF receipt, CSV, audit log PDF, compliance report — все создают ExportToken с разным format",
+        "reliability": "high"
+      },
+      {
+        "source": "notion",
+        "description": "Export-as: PDF / Markdown / HTML сгруппированы в single submenu",
+        "reliability": "high"
+      }
+    ],
+    "counterexample": [
+      {
+        "source": "google-docs",
+        "description": "File → Download — 6 форматов без expiresAt (прямой download, не share-link). Триггер expiresAt защищает от false-positive",
+        "reliability": "medium"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [
+      {
+        "domain": "invest",
+        "projection": "portfolio_detail_owner",
+        "reason": "Multiple export/report intents создают ExportToken с format-param"
+      }
+    ],
+    "shouldNotMatch": [
+      {
+        "domain": "sales",
+        "projection": "listing_detail",
+        "reason": "Множественные CTA ≠ export — share/edit/delete не format-variants"
+      },
+      {
+        "domain": "planning",
+        "projection": "poll_detail",
+        "reason": "Нет ExportToken-like entity с expiresAt"
+      }
+    ]
+  }
+}

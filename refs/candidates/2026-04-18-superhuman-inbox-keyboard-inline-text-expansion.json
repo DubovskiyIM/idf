@@ -1,0 +1,77 @@
+{
+  "id": "inline-text-expansion",
+  "version": 1,
+  "status": "candidate",
+  "archetype": null,
+  "trigger": {
+    "requires": [
+      {
+        "kind": "entity-field",
+        "entity": "*",
+        "field": "trigger"
+      },
+      {
+        "kind": "intent-effect",
+        "alpha": "replace",
+        "target": "*.body"
+      }
+    ]
+  },
+  "structure": {
+    "slot": "composer",
+    "description": "Composer наблюдает за ввводом и при матче паттерна (';abc', ':mycode') атомарно заменяет trigger-строку на associated body; без явной команды/модала — запуск = сам паттерн."
+  },
+  "rationale": {
+    "hypothesis": "Частый reusable-текст (шаблоны ответов, подписи) — низкоэнтропийный ввод. Template-picker требует сменить поле, выбрать, подтвердить — 3 действия. Pattern-typing делает expansion нулевым по стоимости переключения: пользователь не 'выбирает шаблон', он 'пишет быстрее'.",
+    "evidence": [
+      {
+        "source": "superhuman-inbox",
+        "description": "Snippets: ';ty' → 'Thank you for reaching out...'; замена происходит при пробеле/enter.",
+        "reliability": "high"
+      },
+      {
+        "source": "text-expander",
+        "description": "Отдельный продукт построен вокруг этого pattern — доказал утилитарность на 10y+ рынке.",
+        "reliability": "high"
+      },
+      {
+        "source": "slack-emoji",
+        "description": ":smile: → 😄 — тот же механизм pattern→replacement без UI-overlay.",
+        "reliability": "medium"
+      }
+    ],
+    "counterexample": [
+      {
+        "source": "legal-document-drafting",
+        "description": "Для редкоиспользуемых, длинных шаблонов поиск в picker'е лучше — пользователь не помнит триггер.",
+        "reliability": "medium"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [
+      {
+        "domain": "messenger",
+        "projection": "composer_thread",
+        "reason": "Snippet + Draft.body — прямая реализация."
+      },
+      {
+        "domain": "sales",
+        "projection": "seller_message_compose",
+        "reason": "Частые шаблонные ответы покупателям — снимает боль копи-паста."
+      }
+    ],
+    "shouldNotMatch": [
+      {
+        "domain": "invest",
+        "projection": "place_order",
+        "reason": "Числовые поля — нет текстового тела для expansion."
+      },
+      {
+        "domain": "reflect",
+        "projection": "mood_entry",
+        "reason": "Mood — slider, не свободный текст; expansion нерелевантен."
+      }
+    ]
+  }
+}

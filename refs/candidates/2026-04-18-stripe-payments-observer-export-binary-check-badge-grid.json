@@ -1,0 +1,79 @@
+{
+  "id": "binary-check-badge-grid",
+  "version": 1,
+  "status": "candidate",
+  "archetype": "detail",
+  "trigger": {
+    "requires": [
+      {
+        "kind": "sub-entity-exists",
+        "foreignKey": "mainEntity"
+      },
+      {
+        "kind": "entity-field",
+        "entity": "<sub>",
+        "field": "kind"
+      },
+      {
+        "kind": "entity-field",
+        "entity": "<sub>",
+        "field": "result"
+      },
+      {
+        "kind": "entity-kind",
+        "entity": "<sub>",
+        "statusValuesBinary": [
+          "pass",
+          "fail"
+        ]
+      }
+    ]
+  },
+  "structure": {
+    "slot": "sections",
+    "description": "Sub-entity с бинарным статусом (pass/fail) и полем `kind` рендерится как compact badge-grid (иконка + метка kind + цвет по result), а не как text-list или table. Позволяет сканировать десятки проверок одним взглядом."
+  },
+  "rationale": {
+    "hypothesis": "Binary-статус + discriminator (`kind`) — максимально плотный информационный формат. Badge-grid использует pre-attentive processing (цвет+иконка), освобождая когнитивный bandwidth для аномалий. Text-list теряет scan-ability при n > 5.",
+    "evidence": [
+      {
+        "source": "stripe-dashboard",
+        "description": "ComplianceCheck grid: AVS pass / CVC pass / 3DS pass / radar-score fail — rendered как coloured badge-grid",
+        "reliability": "high"
+      },
+      {
+        "source": "github-pr-checks",
+        "description": "CI checks как vertical badge-list с green/red иконками",
+        "reliability": "high"
+      }
+    ],
+    "counterexample": [
+      {
+        "source": "jenkins",
+        "description": "Build steps с pass/fail, но с nested logs — требуется expandable list, не badge-grid",
+        "reliability": "medium"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [
+      {
+        "domain": "delivery",
+        "projection": "order_detail",
+        "reason": "Если добавить DeliveryChecks (address-validated/payment-captured/zone-covered) — подходящий grid"
+      }
+    ],
+    "shouldNotMatch": [
+      {
+        "domain": "planning",
+        "projection": "poll_detail",
+        "reason": "Vote статусы не binary pass/fail"
+      },
+      {
+        "domain": "messenger",
+        "projection": "message_detail",
+        "reason": "Нет check-like sub-entity"
+      }
+    ]
+  }
+}

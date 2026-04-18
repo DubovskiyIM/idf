@@ -1,0 +1,76 @@
+{
+  "id": "grouped-reference-picker",
+  "version": 1,
+  "status": "candidate",
+  "archetype": "detail",
+  "trigger": {
+    "requires": [
+      {
+        "kind": "intent-effect",
+        "α": "replace",
+        "targetMatches": ".*\\.[a-z]+Id$"
+      },
+      {
+        "kind": "reference",
+        "entity": "targetReference"
+      },
+      {
+        "kind": "sub-entity-exists",
+        "childOf": "targetReference",
+        "viaForeignKey": true
+      }
+    ]
+  },
+  "structure": {
+    "slot": "body",
+    "description": "Picker для reference-поля группирует кандидатов по их parent-entity (через foreignKey), отображая parent как заголовок секции и child как выбираемые элементы с distinguishing-полями (recurringInterval, currency)."
+  },
+  "rationale": {
+    "hypothesis": "Когда выбираемая сущность имеет FK на parent (Price→Product, Variant→Product, Option→Poll), плоский список теряет контекст; группировка по parent даёт семантическую иерархию и ускоряет поиск.",
+    "evidence": [
+      {
+        "source": "stripe-subscriptions",
+        "description": "Price picker показывает цены сгруппированными под Product-name, с badge интервала",
+        "reliability": "high"
+      },
+      {
+        "source": "shopify-variant-picker",
+        "description": "Variant выбирается в рамках Product header'а",
+        "reliability": "medium"
+      }
+    ],
+    "counterexample": [
+      {
+        "source": "linear-assignee-picker",
+        "description": "User picker плоский, без группировки по Team — имена уникальны и достаточны",
+        "reliability": "high"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [
+      {
+        "domain": "invest",
+        "projection": "asset_picker",
+        "reason": "Asset имеет ticker+exchange иерархию — естественная группировка"
+      },
+      {
+        "domain": "delivery",
+        "projection": "menu_item_picker",
+        "reason": "MenuItem сгруппирован по Merchant"
+      }
+    ],
+    "shouldNotMatch": [
+      {
+        "domain": "messenger",
+        "projection": "contact_picker",
+        "reason": "Contact — плоский список без parent-иерархии"
+      },
+      {
+        "domain": "booking",
+        "projection": "time_slot_picker",
+        "reason": "TimeSlot группируется по дню, не по reference-entity"
+      }
+    ]
+  }
+}

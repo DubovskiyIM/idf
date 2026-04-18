@@ -1,0 +1,79 @@
+{
+  "id": "master-detail-split-pane",
+  "version": 1,
+  "status": "candidate",
+  "archetype": "feed",
+  "trigger": {
+    "requires": [
+      {
+        "kind": "sub-entity-exists",
+        "parent": "mainEntity",
+        "foreignKey": "required"
+      },
+      {
+        "kind": "intent-effect",
+        "alpha": "replace",
+        "target": "feed.selection"
+      },
+      {
+        "kind": "intent-count",
+        "filter": {
+          "target": "feed.selection"
+        },
+        "minimum": 2
+      }
+    ]
+  },
+  "structure": {
+    "slot": "body",
+    "description": "Feed рендерится двухпанельно: список mainEntity слева, детальный pane (детали + sub-entity) справа; навигация next/prev изменяет feed.selection, не открывая отдельную страницу."
+  },
+  "rationale": {
+    "hypothesis": "Когда mainEntity имеет плотный sub-entity граф (Message, комментарии), разделённая панель сохраняет контекст списка и снижает стоимость быстрой навигации — в отличие от drill-in, где каждая сущность — отдельная страница.",
+    "evidence": [
+      {
+        "source": "superhuman-inbox",
+        "description": "Left pane — conversation list; right pane — thread с inline композером. J/K циклирует selection без перерисовки списка.",
+        "reliability": "high"
+      },
+      {
+        "source": "linear-issues",
+        "description": "Аналогичный two-pane: список задач + детальный pane с комментариями.",
+        "reliability": "high"
+      }
+    ],
+    "counterexample": [
+      {
+        "source": "sales-listing-catalog",
+        "description": "Для карточных каталогов с visual-heavy товарами split-pane съедает пространство превью.",
+        "reliability": "medium"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [
+      {
+        "domain": "messenger",
+        "projection": "conversations_feed",
+        "reason": "Conversation → Message сущностная пара, keyboard-friendly selection."
+      },
+      {
+        "domain": "reflect",
+        "projection": "entries_feed",
+        "reason": "Entry → EntryActivity/EntryTag sub-entities, удобно держать детальный разрез рядом."
+      }
+    ],
+    "shouldNotMatch": [
+      {
+        "domain": "sales",
+        "projection": "listings_catalog",
+        "reason": "Catalog-архетип оптимизирован под карточный grid, не split-pane."
+      },
+      {
+        "domain": "invest",
+        "projection": "portfolio_dashboard",
+        "reason": "Dashboard-архетип, нет линейного списка с детальным поведением."
+      }
+    ]
+  }
+}

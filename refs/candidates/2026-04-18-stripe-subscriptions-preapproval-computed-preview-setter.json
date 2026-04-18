@@ -1,0 +1,85 @@
+{
+  "id": "computed-preview-setter",
+  "version": 1,
+  "status": "candidate",
+  "archetype": "detail",
+  "trigger": {
+    "requires": [
+      {
+        "kind": "intent-effect",
+        "α": "replace",
+        "target": "mainEntity.durationField"
+      },
+      {
+        "kind": "field-role-present",
+        "roles": [
+          "duration",
+          "date"
+        ],
+        "minCount": 2
+      },
+      {
+        "kind": "entity-field",
+        "entity": "mainEntity",
+        "fields": [
+          "trialEnd",
+          "endDate",
+          "expiresAt"
+        ],
+        "anyOf": true
+      }
+    ]
+  },
+  "structure": {
+    "slot": "body",
+    "description": "Setter для поля-длительности (days, intervalCount) рендерится рядом с live-preview вычисленной абсолютной даты (trialEnd = now + N days), давая пользователю подтверждение semantic-контракта."
+  },
+  "rationale": {
+    "hypothesis": "Relative-input (количество дней) скрывает concrete outcome; показывая computed absolute date рядом с вводом, UI превращает implicit temporal contract в explicit.",
+    "evidence": [
+      {
+        "source": "stripe-subscriptions",
+        "description": "При выборе 14 days trial показывается «trialEnd: May 2, 2026»",
+        "reliability": "high"
+      },
+      {
+        "source": "github-pr-auto-merge",
+        "description": "Scheduled merge показывает вычисленное время merge",
+        "reliability": "medium"
+      }
+    ],
+    "counterexample": [
+      {
+        "source": "slack-snooze",
+        "description": "Snooze показывает только duration-button без computed time — пользователь доверяет коротким intervals",
+        "reliability": "medium"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [
+      {
+        "domain": "booking",
+        "projection": "booking_create",
+        "reason": "Duration slot → computed endTime"
+      },
+      {
+        "domain": "lifequest",
+        "projection": "goal_detail",
+        "reason": "Goal с deadline offset от now"
+      }
+    ],
+    "shouldNotMatch": [
+      {
+        "domain": "messenger",
+        "projection": "conversation_detail",
+        "reason": "Duration-полей нет"
+      },
+      {
+        "domain": "sales",
+        "projection": "listing_detail",
+        "reason": "Price-поля не имеют temporal preview"
+      }
+    ]
+  }
+}

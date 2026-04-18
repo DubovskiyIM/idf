@@ -1,0 +1,82 @@
+{
+  "id": "multi-facet-catalog-card",
+  "version": 1,
+  "status": "candidate",
+  "archetype": "catalog",
+  "trigger": {
+    "requires": [
+      {
+        "kind": "entity-kind",
+        "value": "mainEntity"
+      },
+      {
+        "kind": "field-role-present",
+        "anyOf": [
+          "person-reference",
+          "label",
+          "progress",
+          "date",
+          "tag"
+        ],
+        "minDistinctRoles": 3
+      }
+    ]
+  },
+  "structure": {
+    "slot": "body",
+    "description": "Альтернативный card-spec рядом с grid-card-layout: когда у mainEntity нет image/money, но есть ≥3 разнородных semantic-ролей (people + labels + progress + date), рендерится композитная карточка с зональной разметкой — avatar-stack + tag-pills + progress-bar + date-chip — а не generic list-row."
+  },
+  "rationale": {
+    "hypothesis": "grid-card-layout сегодня требует image или money/percentage; task-like entity без картинок, но с богатым набором fieldRole выпадает в плоский list-row и теряет scannability. Card с зонами под семантику (people/progress/time) — natural fit для операционных сущностей (tasks, issues, tickets).",
+    "evidence": [
+      {
+        "source": "height-phase-board",
+        "description": "Card: title + avatar-stack + label-pills + progress-bar + due-chip",
+        "reliability": "high"
+      },
+      {
+        "source": "linear-issues",
+        "description": "Issue card: title + assignee avatar + priority icon + labels",
+        "reliability": "high"
+      },
+      {
+        "source": "asana",
+        "description": "Task card с assignee avatars и due date",
+        "reliability": "medium"
+      }
+    ],
+    "counterexample": [
+      {
+        "source": "messenger",
+        "description": "Conversation-list нуждается в preview-тексте и timestamp'е, не в multi-facet card",
+        "reliability": "medium"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [
+      {
+        "domain": "lifequest",
+        "projection": "tasks",
+        "reason": "Task: title + assignee + progress + dueDate — ≥3 ролей"
+      },
+      {
+        "domain": "workflow",
+        "projection": "workflows",
+        "reason": "Workflow имеет name + author + nodes-count + lastRunAt"
+      }
+    ],
+    "shouldNotMatch": [
+      {
+        "domain": "reflect",
+        "projection": "mood-entries",
+        "reason": "MoodEntry = value + timestamp, одна роль"
+      },
+      {
+        "domain": "invest",
+        "projection": "positions",
+        "reason": "Уже покрыт grid-card-layout через money-fields"
+      }
+    ]
+  }
+}

@@ -1,0 +1,77 @@
+{
+  "id": "sub-entity-progress-rollup",
+  "version": 1,
+  "status": "candidate",
+  "archetype": "catalog",
+  "trigger": {
+    "requires": [
+      {
+        "kind": "sub-entity-exists",
+        "withField": "status"
+      },
+      {
+        "kind": "entity-field",
+        "entity": "<subEntity>",
+        "field": "status",
+        "hasValue": "done"
+      }
+    ]
+  },
+  "structure": {
+    "slot": "body",
+    "description": "На card'е catalog'а parent-сущности рендерится inline-индикатор прогресса sub-entity (N/M done или progress-bar), derived из child-entities. Это не detail-section (subcollections) — это derived-метрика на карточке."
+  },
+  "rationale": {
+    "hypothesis": "subcollections даёт expanded-список child'ов в detail-view — но в catalog'е разворачивать весь child-list на каждой карточке бесмысленно. Aggregated progress bar — compact compression: parent-card показывает статус своих детей одним визуальным символом. Паттерн читабелен только если у sub-entity есть терминальный status (done/complete), из которого можно посчитать ratio.",
+    "evidence": [
+      {
+        "source": "height-phase-board",
+        "description": "Parent task card показывает 3/5 subtasks done inline",
+        "reliability": "high"
+      },
+      {
+        "source": "linear-issues",
+        "description": "Parent issue отображает counter sub-issues completed",
+        "reliability": "high"
+      },
+      {
+        "source": "github-issues",
+        "description": "Task-list в body ишью рендерится как progress-bar на card'е",
+        "reliability": "medium"
+      }
+    ],
+    "counterexample": [
+      {
+        "source": "messenger",
+        "description": "Message не агрегирует child-entities с terminal-status",
+        "reliability": "high"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [
+      {
+        "domain": "lifequest",
+        "projection": "goals",
+        "reason": "Goal имеет Habit'ы и Task'и с terminal-status — rollup читаем"
+      },
+      {
+        "domain": "workflow",
+        "projection": "workflows",
+        "reason": "Workflow → Nodes с execution-status, aggregated pass-rate"
+      }
+    ],
+    "shouldNotMatch": [
+      {
+        "domain": "messenger",
+        "projection": "conversations",
+        "reason": "Message — continuous, нет terminal-статуса для rollup"
+      },
+      {
+        "domain": "reflect",
+        "projection": "hypotheses",
+        "reason": "Evidence-sub-entities без done/complete — просто коллекция"
+      }
+    ]
+  }
+}

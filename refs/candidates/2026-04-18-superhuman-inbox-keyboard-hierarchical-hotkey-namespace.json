@@ -1,0 +1,71 @@
+{
+  "id": "hierarchical-hotkey-namespace",
+  "version": 1,
+  "status": "candidate",
+  "archetype": null,
+  "trigger": {
+    "requires": [
+      {
+        "kind": "intent-count",
+        "minimum": 20
+      },
+      {
+        "kind": "intent-confirmation",
+        "value": "click",
+        "minimum": 5
+      }
+    ]
+  },
+  "structure": {
+    "slot": "overlay",
+    "description": "Hotkey-пространство организовано как префиксные комбо ('G' → go, затем I/D/S для folder), не плоский список одиночных клавиш; chord inspector показывает доступные вторые клавиши после первой."
+  },
+  "rationale": {
+    "hypothesis": "Плоский hotkey-space ограничен ~26 буквами и Modifier'ами, быстро достигает коллизий. Иерархические chord'ы (G→I) дают экспоненциальное пространство (26² = 676) при сохранении однозначного mnemonics через семантическую группировку ('G для Go').",
+    "evidence": [
+      {
+        "source": "superhuman-inbox",
+        "description": "G I — Go Inbox, G D — Go Done, G S — Go Snoozed, G T — Go Sent. Семантическая префиксация стабильна across категорий.",
+        "reliability": "high"
+      },
+      {
+        "source": "vim-editor",
+        "description": "Десятилетиями доказанная модель chord-композиции (d i w — delete inner word).",
+        "reliability": "high"
+      }
+    ],
+    "counterexample": [
+      {
+        "source": "casual-webapp",
+        "description": "Для редких пользователей chord'ы неоткрываемы без явной UI-подсказки; одиночные клавиши проще.",
+        "reliability": "medium"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [
+      {
+        "domain": "sales",
+        "projection": "seller_workspace",
+        "reason": "225 интентов требуют иерархической группировки (G для navigate, C для create, B для bids)."
+      },
+      {
+        "domain": "messenger",
+        "projection": "conversations_feed",
+        "reason": "100 интентов, естественные группы (navigate / mutate / compose)."
+      }
+    ],
+    "shouldNotMatch": [
+      {
+        "domain": "booking",
+        "projection": "booking_flow",
+        "reason": "22 интента умещаются в плоский hotkey-space без коллизий."
+      },
+      {
+        "domain": "planning",
+        "projection": "poll_vote",
+        "reason": "Точечная задача голосования, chord-overhead неоправдан."
+      }
+    ]
+  }
+}

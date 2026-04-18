@@ -1,0 +1,77 @@
+{
+  "id": "calendar-drag-reschedule",
+  "version": 1,
+  "status": "candidate",
+  "archetype": "catalog",
+  "trigger": {
+    "requires": [
+      {
+        "kind": "field-role-present",
+        "entity": "Entry",
+        "role": "date"
+      },
+      {
+        "kind": "intent-effect",
+        "α": "replace",
+        "target": "entry.dueDate"
+      }
+    ]
+  },
+  "structure": {
+    "slot": "body",
+    "description": "Calendar-archetype: позиционирует entries на day/week/month grid по date-field. Drag в другой день = replace date. Требует mutable date-role field и intent на его замену."
+  },
+  "rationale": {
+    "hypothesis": "Календарь единственный архетип, где геометрия ячейки прямо кодирует целевое значение. Drag вместо modal'а сворачивает rescheduling в один жест, альтернатива (open → date-picker → save) требует ≥3 кликов.",
+    "evidence": [
+      {
+        "source": "notion",
+        "description": "Calendar view + drag = replace entry.dueDate",
+        "reliability": "high"
+      },
+      {
+        "source": "google-calendar",
+        "description": "Канонический drag-to-reschedule",
+        "reliability": "high"
+      },
+      {
+        "source": "airtable",
+        "description": "Calendar view с drag support",
+        "reliability": "high"
+      }
+    ],
+    "counterexample": [
+      {
+        "source": "immutable-events",
+        "description": "Transaction.executedAt — исторический факт, не переносится",
+        "reliability": "high"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [
+      {
+        "domain": "booking",
+        "projection": "bookings_catalog",
+        "reason": "Booking.startAt — mutable date, rescheduling = core use-case"
+      },
+      {
+        "domain": "lifequest",
+        "projection": "tasks_catalog",
+        "reason": "Task.dueDate drag между днями"
+      }
+    ],
+    "shouldNotMatch": [
+      {
+        "domain": "invest",
+        "projection": "transactions_catalog",
+        "reason": "Transaction.executedAt immutable"
+      },
+      {
+        "domain": "messenger",
+        "projection": "messages_feed",
+        "reason": "Message.sentAt immutable"
+      }
+    ]
+  }
+}

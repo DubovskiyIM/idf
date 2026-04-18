@@ -1,0 +1,148 @@
+{
+  "source": "stripe-dashboard-payment-detail-observer",
+  "entities": [
+    {
+      "name": "Payment",
+      "fields": [
+        "amount",
+        "currency",
+        "status",
+        "createdAt",
+        "customerId",
+        "metadata"
+      ],
+      "statusValues": [
+        "succeeded",
+        "pending",
+        "refunded",
+        "disputed"
+      ],
+      "foreignKey": "customerId→Customer"
+    },
+    {
+      "name": "PaymentEvent",
+      "fields": [
+        "type",
+        "timestamp",
+        "actor",
+        "reason",
+        "causedById",
+        "paymentId",
+        "payload"
+      ],
+      "statusValues": [
+        "created",
+        "authorized",
+        "captured",
+        "refunded",
+        "disputed"
+      ],
+      "foreignKey": "paymentId→Payment"
+    },
+    {
+      "name": "ComplianceCheck",
+      "fields": [
+        "kind",
+        "result",
+        "score",
+        "paymentId"
+      ],
+      "statusValues": [
+        "pass",
+        "fail"
+      ],
+      "foreignKey": "paymentId→Payment"
+    },
+    {
+      "name": "CustomerSnapshot",
+      "fields": [
+        "name",
+        "email",
+        "country",
+        "capturedAt",
+        "paymentId"
+      ],
+      "foreignKey": "paymentId→Payment"
+    },
+    {
+      "name": "Dispute",
+      "fields": [
+        "reason",
+        "evidence",
+        "status",
+        "createdAt",
+        "paymentId"
+      ],
+      "statusValues": [
+        "pending",
+        "submitted",
+        "won",
+        "lost"
+      ],
+      "foreignKey": "paymentId→Payment"
+    },
+    {
+      "name": "ExportToken",
+      "fields": [
+        "format",
+        "scope",
+        "expiresAt",
+        "paymentId"
+      ],
+      "statusValues": [
+        "active",
+        "expired"
+      ],
+      "foreignKey": "paymentId→Payment"
+    }
+  ],
+  "intents": [
+    {
+      "id": "export_pdf_receipt",
+      "α": "add",
+      "creates": "ExportToken",
+      "confirmation": "click"
+    },
+    {
+      "id": "export_csv",
+      "α": "add",
+      "creates": "ExportToken",
+      "confirmation": "click"
+    },
+    {
+      "id": "export_audit_log_pdf",
+      "α": "add",
+      "creates": "ExportToken",
+      "confirmation": "click"
+    },
+    {
+      "id": "export_compliance_report",
+      "α": "add",
+      "creates": "ExportToken",
+      "confirmation": "click"
+    },
+    {
+      "id": "open_dispute",
+      "α": "add",
+      "creates": "Dispute",
+      "irreversibility": "high",
+      "confirmation": "form"
+    }
+  ],
+  "roles": [
+    "observer",
+    "owner",
+    "agent"
+  ],
+  "observations": [
+    "Observer-scoped detail view — read-only surface with a single high-irreversibility escape (Dispute)",
+    "Export dropdown top-right generates server-rendered artifacts via document-materialization, viewer-scope",
+    "Share-link export uses limited-time token, not JWT session — ExportToken as first-class entity with expiresAt",
+    "Timeline as causal chain (PaymentEvent.causedById) shown chronologically, not just flat list",
+    "Automated ComplianceCheck rendered as pass/fail badge grid, not free text",
+    "CustomerSnapshot is immutable point-in-time capture, distinct from current Customer state",
+    "Metadata shown as read-only JSON key-value block",
+    "Raw Events section as devs-oriented API payload list, separate from human timeline",
+    "Dispute CTA at bottom as irreversible primary action with type-to-confirm (type 'DISPUTE')"
+  ]
+}

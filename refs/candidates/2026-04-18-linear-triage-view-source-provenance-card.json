@@ -1,0 +1,77 @@
+{
+  "id": "source-provenance-card",
+  "version": 1,
+  "status": "candidate",
+  "archetype": "feed",
+  "trigger": {
+    "requires": [
+      {
+        "kind": "entity-field",
+        "entity": "mainEntity",
+        "field": "source"
+      },
+      {
+        "kind": "sub-entity-exists",
+        "entity": "Source",
+        "withDiscriminator": "kind"
+      },
+      {
+        "kind": "field-role-present",
+        "role": "icon",
+        "onEntity": "Source"
+      }
+    ]
+  },
+  "structure": {
+    "slot": "body",
+    "description": "Card-layout: source-icon leading + submitter avatar + title + excerpt. Icon — first-class визуальный маркер (размер ≥ avatar), не мелкий tag в metadata-строке."
+  },
+  "rationale": {
+    "hypothesis": "Когда items приходят из разных каналов (email/Slack/widget/API), source — ключевой сигнал для triage-решения (доверие, приоритет, контекст). Прятать его в metadata-строку — терять cognitive-load benefit.",
+    "evidence": [
+      {
+        "source": "linear-triage",
+        "description": "Icon канала (email/slack/feedback) слева от title каждого issue",
+        "reliability": "high"
+      },
+      {
+        "source": "front-app",
+        "description": "Shared inbox с channel-icon как primary visual",
+        "reliability": "high"
+      },
+      {
+        "source": "intercom-inbox",
+        "description": "Source badge в списке conversations",
+        "reliability": "medium"
+      }
+    ],
+    "counterexample": [
+      {
+        "source": "homogeneous-source",
+        "description": "Если все items идут из одного канала — icon избыточен, тратит слот",
+        "reliability": "high"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [
+      {
+        "domain": "reflect",
+        "projection": "mood_stream",
+        "reason": "если MoodEntry приобретёт source (manual/prompt/reminder) с icon"
+      }
+    ],
+    "shouldNotMatch": [
+      {
+        "domain": "invest",
+        "projection": "portfolio_dashboard",
+        "reason": "Position не имеет polymorphic source-channel"
+      },
+      {
+        "domain": "planning",
+        "projection": "poll_feed",
+        "reason": "Poll создаётся в одном канале, provenance неинформативен"
+      }
+    ]
+  }
+}

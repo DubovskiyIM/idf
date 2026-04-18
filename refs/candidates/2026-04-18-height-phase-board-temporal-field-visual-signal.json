@@ -1,0 +1,82 @@
+{
+  "id": "temporal-field-visual-signal",
+  "version": 1,
+  "status": "candidate",
+  "archetype": null,
+  "trigger": {
+    "requires": [
+      {
+        "kind": "field-role-present",
+        "role": "date",
+        "semanticHint": [
+          "due",
+          "deadline",
+          "scheduledAt",
+          "phaseEnteredAt"
+        ]
+      }
+    ]
+  },
+  "structure": {
+    "slot": "body",
+    "description": "Рендер-трансформация (не контейнерная): temporal-поле превращается в чип/бейдж с цветовым сигналом, производным от now: overdue (past due) → red; near-due → amber; time-in-phase > threshold → stagnation-badge. Сигнал derivable — не хранится в Φ."
+  },
+  "rationale": {
+    "hypothesis": "Abs-timestamp ('2026-04-18 17:00') требует ментальной арифметики — пользователь должен вычитать now. Relative-color-signal делает операционно важное свойство (просрочено / зависло) константно-видимым. Правило decidable: стандартные семантические роли (due/scheduledAt) → canonical-трансформация, адаптеру передаётся только tone.",
+    "evidence": [
+      {
+        "source": "height-phase-board",
+        "description": "Due-chip красный если overdue; time-in-phase badge сигнализирует стагнацию",
+        "reliability": "high"
+      },
+      {
+        "source": "linear-issues",
+        "description": "Priority + due date окрашиваются при приближении deadline",
+        "reliability": "high"
+      },
+      {
+        "source": "github-issues",
+        "description": "'opened N days ago' — derived relative-time",
+        "reliability": "medium"
+      }
+    ],
+    "counterexample": [
+      {
+        "source": "reflect",
+        "description": "MoodEntry.createdAt — не дедлайн, цвет-сигнал неуместен",
+        "reliability": "high"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [
+      {
+        "domain": "booking",
+        "projection": "bookings",
+        "reason": "Booking.startAt — scheduled-time, подсветка near/past начала"
+      },
+      {
+        "domain": "delivery",
+        "projection": "orders-active",
+        "reason": "promisedAt → overdue-signal критичен для диспатчера"
+      },
+      {
+        "domain": "lifequest",
+        "projection": "tasks",
+        "reason": "Task.dueDate — классический overdue"
+      }
+    ],
+    "shouldNotMatch": [
+      {
+        "domain": "sales",
+        "projection": "listings",
+        "reason": "Listing.createdAt — информационный, не actionable"
+      },
+      {
+        "domain": "messenger",
+        "projection": "messages",
+        "reason": "Message.sentAt — нет deadline-семантики"
+      }
+    ]
+  }
+}

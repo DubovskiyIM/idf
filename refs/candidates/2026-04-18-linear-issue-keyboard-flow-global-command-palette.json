@@ -1,0 +1,80 @@
+{
+  "id": "global-command-palette",
+  "version": 1,
+  "status": "candidate",
+  "archetype": null,
+  "trigger": {
+    "requires": [
+      {
+        "kind": "intent-count",
+        "min": 15
+      },
+      {
+        "kind": "has-role",
+        "value": "owner"
+      }
+    ]
+  },
+  "structure": {
+    "slot": "overlay",
+    "description": "Cross-cutting overlay (⌘K / Ctrl+K) открывает fuzzy-search по всем intents и navigation-targets. Surface не привязан к архетипу; доступен из любого view и становится primary navigation для power-users."
+  },
+  "rationale": {
+    "hypothesis": "Когда intent-поверхность разрастается (≥15 intents, множество projections), navigation через menu-trees становится O(depth) и теряет discoverability; palette даёт O(1) доступ через name-matching, снимает cognitive load по запоминанию иерархии.",
+    "evidence": [
+      {
+        "source": "linear",
+        "description": "⌘K объединяет 20+ actions + navigation commands + issue-search",
+        "reliability": "high"
+      },
+      {
+        "source": "vscode",
+        "description": "⌘Shift+P — command palette для 500+ commands, primary path для power-users",
+        "reliability": "high"
+      },
+      {
+        "source": "slack",
+        "description": "⌘K switcher объединяет navigation и actions",
+        "reliability": "high"
+      },
+      {
+        "source": "raycast",
+        "description": "Весь UX строится вокруг palette-first paradigm",
+        "reliability": "medium"
+      }
+    ],
+    "counterexample": [
+      {
+        "source": "instagram",
+        "description": "Consumer visual-first app с малой intent-поверхностью — palette избыточен",
+        "reliability": "medium"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [
+      {
+        "domain": "sales",
+        "projection": "marketplace",
+        "reason": "225 intents, power-user админ — палитра окупается"
+      },
+      {
+        "domain": "messenger",
+        "projection": "app-shell",
+        "reason": "100 intents, множественные поверхности"
+      }
+    ],
+    "shouldNotMatch": [
+      {
+        "domain": "booking",
+        "projection": "specialist-list",
+        "reason": "22 intents, casual consumer — palette overkill"
+      },
+      {
+        "domain": "planning",
+        "projection": "poll-vote",
+        "reason": "17 intents, линейный single-task flow"
+      }
+    ]
+  }
+}

@@ -1,0 +1,79 @@
+{
+  "id": "keyboard-hotkey-triage",
+  "version": 1,
+  "status": "candidate",
+  "archetype": "feed",
+  "trigger": {
+    "requires": [
+      {
+        "kind": "intent-count",
+        "min": 3,
+        "where": {
+          "confirmation": "click",
+          "target": "mainEntity"
+        }
+      },
+      {
+        "kind": "has-role",
+        "base": "owner"
+      }
+    ]
+  },
+  "structure": {
+    "slot": "toolbar",
+    "description": "Bind каждый click-confirmation intent к single-key hotkey; render contextual cheatsheet в footer при focus/selection. Снижает triage-cost до одной клавиши на item."
+  },
+  "rationale": {
+    "hypothesis": "Когда пользователь обрабатывает десятки items за сессию, keyboard >> mouse. Hotkeys окупаются только при ≥3 click-intentов на item-тип и повторяющемся use-case (inbox/triage).",
+    "evidence": [
+      {
+        "source": "linear-triage",
+        "description": "T/P/D/X для take/priority/decline/discard без модалки, cheatsheet в bottom bar",
+        "reliability": "high"
+      },
+      {
+        "source": "superhuman",
+        "description": "Email-triage на single-key hotkeys как ключевой value prop",
+        "reliability": "high"
+      },
+      {
+        "source": "gmail-shortcuts",
+        "description": "J/K navigation + E/# для archive/delete у power users",
+        "reliability": "medium"
+      }
+    ],
+    "counterexample": [
+      {
+        "source": "consumer-feed",
+        "description": "В Instagram/TikTok hotkeys не работают — нет power-use-case и touch-first контекст",
+        "reliability": "high"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [
+      {
+        "domain": "messenger",
+        "projection": "conversation_list",
+        "reason": "≥3 click-intentов (archive/mute/pin) на Conversation, feed archetype"
+      },
+      {
+        "domain": "reflect",
+        "projection": "mood_stream",
+        "reason": "множество быстрых click-intentов на MoodEntry в daily log"
+      }
+    ],
+    "shouldNotMatch": [
+      {
+        "domain": "invest",
+        "projection": "portfolio_dashboard",
+        "reason": "dashboard, не feed; intents form-heavy"
+      },
+      {
+        "domain": "booking",
+        "projection": "booking_form",
+        "reason": "form-driven flow, single-key hotkeys неприменимы"
+      }
+    ]
+  }
+}

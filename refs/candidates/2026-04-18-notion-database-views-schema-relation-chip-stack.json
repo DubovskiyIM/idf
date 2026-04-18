@@ -1,0 +1,82 @@
+{
+  "id": "relation-chip-stack",
+  "version": 1,
+  "status": "candidate",
+  "archetype": null,
+  "trigger": {
+    "requires": [
+      {
+        "kind": "sub-entity-exists",
+        "entity": "Relation",
+        "foreignKey": "fromEntryId"
+      },
+      {
+        "kind": "entity-field",
+        "entity": "Entry",
+        "field": "relations",
+        "multivalue": true
+      },
+      {
+        "kind": "intent-creates",
+        "creates": "Relation"
+      }
+    ]
+  },
+  "structure": {
+    "slot": "body",
+    "description": "Multi-value relation рендерится как chip-stack: каждая связь = chip с title связанной сущности + inline remove-x. '+ Add' открывает inline-search с type-ahead для add-link; click-x коммитит unlink. Масштабируется от 0 до ~20 wrapping rows."
+  },
+  "rationale": {
+    "hypothesis": "Показать title связанной сущности в месте ссылки — zero-navigation context. Chip-stack компактен, поддерживает direct-manipulation remove, деградирует gracefully при количестве. Альтернатива (список-таблица relations) избыточна для small-cardinality.",
+    "evidence": [
+      {
+        "source": "notion",
+        "description": "Relation property → chip-stack с linked page titles + remove-x",
+        "reliability": "high"
+      },
+      {
+        "source": "airtable",
+        "description": "Linked record field = chip-stack pattern",
+        "reliability": "high"
+      },
+      {
+        "source": "linear",
+        "description": "Labels / dependencies — chip-stack",
+        "reliability": "high"
+      }
+    ],
+    "counterexample": [
+      {
+        "source": "single-fk",
+        "description": "Position.asset — single FK, chip-stack избыточен (просто link + edit)",
+        "reliability": "high"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [
+      {
+        "domain": "lifequest",
+        "projection": "goal_detail",
+        "reason": "Goal.habits — multi-relation"
+      },
+      {
+        "domain": "sales",
+        "projection": "listing_detail",
+        "reason": "Listing.tags / categories — multi-select labels"
+      }
+    ],
+    "shouldNotMatch": [
+      {
+        "domain": "invest",
+        "projection": "position_detail",
+        "reason": "Position→Asset single FK, chip-stack избыточен"
+      },
+      {
+        "domain": "messenger",
+        "projection": "conversation_detail",
+        "reason": "Participants — assignment-entity, требует ролевой UX"
+      }
+    ]
+  }
+}

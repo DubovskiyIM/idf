@@ -1,0 +1,81 @@
+{
+  "id": "inline-editable-hero",
+  "version": 1,
+  "status": "candidate",
+  "archetype": "detail",
+  "trigger": {
+    "requires": [
+      {
+        "kind": "intent-effect",
+        "value": "replace",
+        "target": "mainEntity.title"
+      },
+      {
+        "kind": "intent-effect",
+        "value": "replace",
+        "target": "mainEntity.description"
+      },
+      {
+        "kind": "intent-confirmation",
+        "value": "enter"
+      }
+    ]
+  },
+  "structure": {
+    "slot": "hero",
+    "description": "Title и description mainEntity рендерятся как inline-editable atoms в hero-слоте: click-to-edit без modal. Title — single-line, description — rich-text inline с preview. Enter или blur коммитит; Escape отменяет."
+  },
+  "rationale": {
+    "hypothesis": "Edit-modal для hero-полей скрывает context (siblings, sub-entities, siblings' state), а inline-edit сохраняет его и сокращает путь «open modal → edit → save → close». Для identity-defining fields (title/body) контекст ценнее изоляции edit-поверхности.",
+    "evidence": [
+      {
+        "source": "linear",
+        "description": "Title и description Issue редактируются кликом in-place без modal",
+        "reliability": "high"
+      },
+      {
+        "source": "notion",
+        "description": "Весь page-content inline-editable — modal считается антипаттерном",
+        "reliability": "high"
+      },
+      {
+        "source": "github-issues",
+        "description": "Title inline-edit, description — markdown-area с preview",
+        "reliability": "high"
+      }
+    ],
+    "counterexample": [
+      {
+        "source": "jira",
+        "description": "Title/description за edit-modal — critiqued за friction",
+        "reliability": "medium"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [
+      {
+        "domain": "lifequest",
+        "projection": "goal-detail",
+        "reason": "Goal.title + Goal.description — user-authored identity fields"
+      },
+      {
+        "domain": "workflow",
+        "projection": "workflow-editor",
+        "reason": "Workflow.name inline-edit как identity"
+      }
+    ],
+    "shouldNotMatch": [
+      {
+        "domain": "invest",
+        "projection": "position-detail",
+        "reason": "Position без user-authored title/description — system-generated"
+      },
+      {
+        "domain": "delivery",
+        "projection": "order-tracker",
+        "reason": "Order имеет системные поля, не user-content"
+      }
+    ]
+  }
+}

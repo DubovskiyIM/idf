@@ -1,0 +1,75 @@
+{
+  "id": "immutable-snapshot-sidecar",
+  "version": 1,
+  "status": "candidate",
+  "archetype": "detail",
+  "trigger": {
+    "requires": [
+      {
+        "kind": "sub-entity-exists",
+        "foreignKey": "mainEntity"
+      },
+      {
+        "kind": "entity-field",
+        "entity": "<sub>",
+        "field": "capturedAt"
+      },
+      {
+        "kind": "mirror",
+        "entity": "<sub>"
+      }
+    ]
+  },
+  "structure": {
+    "slot": "sections",
+    "description": "Immutable point-in-time снимок связанной сущности (CustomerSnapshot, AddressSnapshot) рендерится как отдельный read-only card с явным timestamp-label «as of <capturedAt>», визуально отличающийся от live-entity (badge «snapshot», muted border)."
+  },
+  "rationale": {
+    "hypothesis": "Snapshot vs live-Customer — принципиально разные сущности (правовой статус платежа привязан к state on capture, не current). Рендер как просто ещё один section теряет эту семантику и провоцирует ошибки («customer сменил email, почему в receipt старый?»). Визуальное отличие snapshot-card — компенсация семантики в UI.",
+    "evidence": [
+      {
+        "source": "stripe-dashboard",
+        "description": "Customer section в payment detail — snapshot с меткой «Customer at time of payment», отдельно от live-Customer link",
+        "reliability": "high"
+      },
+      {
+        "source": "shopify-admin",
+        "description": "Order customer info с явным «Billing at order time» card",
+        "reliability": "high"
+      }
+    ],
+    "counterexample": [
+      {
+        "source": "generic-crm",
+        "description": "Contact в deal-detail — live-link, не snapshot (обновляется). Паттерн требует `capturedAt` как явный маркер immutability",
+        "reliability": "medium"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [
+      {
+        "domain": "delivery",
+        "projection": "order_detail",
+        "reason": "Address snapshot на момент оформления — immutable, отличается от current address пользователя"
+      },
+      {
+        "domain": "sales",
+        "projection": "order_detail",
+        "reason": "BuyerSnapshot на момент покупки — immutable legal record"
+      }
+    ],
+    "shouldNotMatch": [
+      {
+        "domain": "booking",
+        "projection": "booking_detail",
+        "reason": "Specialist info — live-reference, не snapshot"
+      },
+      {
+        "domain": "lifequest",
+        "projection": "goal_detail",
+        "reason": "Нет mirror-sub-entity"
+      }
+    ]
+  }
+}

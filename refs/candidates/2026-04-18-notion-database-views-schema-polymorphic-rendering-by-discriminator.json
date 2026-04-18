@@ -1,0 +1,78 @@
+{
+  "id": "polymorphic-rendering-by-discriminator",
+  "version": 1,
+  "status": "candidate",
+  "archetype": "detail",
+  "trigger": {
+    "requires": [
+      {
+        "kind": "entity-field",
+        "entity": "Entry",
+        "field": "type",
+        "fieldType": "select"
+      },
+      {
+        "kind": "intent-count",
+        "predicate": "α:add creates:Entry",
+        "min": 2
+      }
+    ]
+  },
+  "structure": {
+    "slot": "body",
+    "description": "Entity с discriminator-field (type / kind) порождает per-type рендер-вариант в detail и catalog-card. Base-fields общие; specialized-fields условные per type. Create-flow разветвляется на choose-type → type-specific form."
+  },
+  "rationale": {
+    "hypothesis": "Родственные сущности делят storage + queries + views, но отличаются в одном-двух полях. Discriminator избегает schema-fork'а при сохранении per-type specialization. Union-like polymorphism без type-explosion.",
+    "evidence": [
+      {
+        "source": "notion",
+        "description": "Task / Milestone / Doc в одной database, detail-render branches по type",
+        "reliability": "high"
+      },
+      {
+        "source": "jira",
+        "description": "Issue types (Bug/Story/Epic) с per-type required fields",
+        "reliability": "high"
+      },
+      {
+        "source": "linear",
+        "description": "Issue vs Project vs Milestone — discriminator-like",
+        "reliability": "medium"
+      }
+    ],
+    "counterexample": [
+      {
+        "source": "pure-homogeneous",
+        "description": "Если все entries одной формы — discriminator усложняет ontology без value",
+        "reliability": "high"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [
+      {
+        "domain": "invest",
+        "projection": "assets_catalog",
+        "reason": "Asset.type (stock/etf/crypto/bond) — разный рендер per-type"
+      },
+      {
+        "domain": "planning",
+        "projection": "polls_catalog",
+        "reason": "Poll.kind (date/option) — две формы голосования"
+      }
+    ],
+    "shouldNotMatch": [
+      {
+        "domain": "messenger",
+        "projection": "conversation_feed",
+        "reason": "Conversation.kind (direct/group) — тонкое различие, не polymorphic render"
+      },
+      {
+        "domain": "booking",
+        "projection": "specialists_catalog",
+        "reason": "Specialist — одна форма, discriminator отсутствует"
+      }
+    ]
+  }
+}

@@ -1,0 +1,72 @@
+{
+  "id": "raw-payload-developer-section",
+  "version": 1,
+  "status": "candidate",
+  "archetype": "detail",
+  "trigger": {
+    "requires": [
+      {
+        "kind": "sub-entity-exists",
+        "foreignKey": "mainEntity"
+      },
+      {
+        "kind": "entity-field",
+        "entity": "<sub>",
+        "field": "payload",
+        "semanticType": "json"
+      },
+      {
+        "kind": "entity-field",
+        "entity": "<sub>",
+        "field": "type"
+      }
+    ]
+  },
+  "structure": {
+    "slot": "sections",
+    "description": "Sub-entity с полем `payload` (raw API object) рендерится в двух параллельных проекциях: human-readable timeline (type+actor+reason) сверху, collapsed «Raw events» с pretty-printed JSON снизу. Developer-toggle, не primary view."
+  },
+  "rationale": {
+    "hypothesis": "Observer'у с dev-background нужен raw payload для debug / webhook-reconciliation, но human-user не должен тонуть в JSON. Дублирование проекций одного dataset'а закрывает оба запроса без context-switching в другой tool (Postman / API explorer).",
+    "evidence": [
+      {
+        "source": "stripe-dashboard",
+        "description": "Payment detail: «Timeline» (human) + «Events» (raw JSON payload, collapsed) — две проекции PaymentEvent",
+        "reliability": "high"
+      },
+      {
+        "source": "github-webhook-deliveries",
+        "description": "Request/response payload как раскрываемый JSON-блок рядом с human summary",
+        "reliability": "high"
+      }
+    ],
+    "counterexample": [
+      {
+        "source": "slack-message",
+        "description": "Message.blocks — JSON есть, но developer-view через API, не inline в UI. Паттерн требует что raw-view — часть detail-projection, не deep-link",
+        "reliability": "medium"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [
+      {
+        "domain": "workflow",
+        "projection": "execution_detail",
+        "reason": "NodeResult.payload — human log + raw-view нужны developer-пользователю"
+      }
+    ],
+    "shouldNotMatch": [
+      {
+        "domain": "lifequest",
+        "projection": "habit_detail",
+        "reason": "HabitLog — human-only, нет developer-audience"
+      },
+      {
+        "domain": "booking",
+        "projection": "booking_detail",
+        "reason": "Нет event-sub-entity с payload-полем"
+      }
+    ]
+  }
+}

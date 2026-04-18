@@ -1,0 +1,87 @@
+{
+  "id": "board-group-drag-write",
+  "version": 1,
+  "status": "candidate",
+  "archetype": "catalog",
+  "trigger": {
+    "requires": [
+      {
+        "kind": "entity-field",
+        "entity": "Entry",
+        "field": "status",
+        "fieldType": "select"
+      },
+      {
+        "kind": "intent-effect",
+        "α": "replace",
+        "target": "entry.status"
+      },
+      {
+        "kind": "intent-confirmation",
+        "confirmation": "click"
+      }
+    ]
+  },
+  "structure": {
+    "slot": "body",
+    "description": "Board-archetype: группирует entries по select-property (status/priority) в колонки. Drag карточки между колонками = replace целевого поля. GroupBy target совпадает с target replace-intent'а."
+  },
+  "rationale": {
+    "hypothesis": "Kanban сводит status-transition к single-gesture (drag) вместо two-step (open → field-select → save). Визуальное 'где' автоматически несёт семантическое 'какой статус' — zero extra UI.",
+    "evidence": [
+      {
+        "source": "notion",
+        "description": "Board view drag между колонками коммитит status",
+        "reliability": "high"
+      },
+      {
+        "source": "trello",
+        "description": "Канбан-prototype: drag card между lists",
+        "reliability": "high"
+      },
+      {
+        "source": "linear",
+        "description": "Board issues drag по status-columns",
+        "reliability": "high"
+      },
+      {
+        "source": "jira",
+        "description": "Scrum/Kanban boards drag = status transition",
+        "reliability": "high"
+      }
+    ],
+    "counterexample": [
+      {
+        "source": "free-form-text-status",
+        "description": "Если status — свободный текст, group-by не стабилен, колонки фрагментируются",
+        "reliability": "medium"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [
+      {
+        "domain": "lifequest",
+        "projection": "tasks_catalog",
+        "reason": "Task.status — 4 discrete phases, board даёт progression-view"
+      },
+      {
+        "domain": "workflow",
+        "projection": "executions_catalog",
+        "reason": "Execution.status как pipeline phase"
+      }
+    ],
+    "shouldNotMatch": [
+      {
+        "domain": "messenger",
+        "projection": "messages_feed",
+        "reason": "Message без enum-status, group-by бессмысленен"
+      },
+      {
+        "domain": "invest",
+        "projection": "positions_dashboard",
+        "reason": "Position — continuous numeric, не discrete phases"
+      }
+    ]
+  }
+}

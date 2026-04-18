@@ -1,0 +1,232 @@
+{
+  "source": "linear-issue-detail",
+  "entities": [
+    {
+      "name": "Issue",
+      "fields": [
+        "title",
+        "description",
+        "status",
+        "priority",
+        "assignee",
+        "labels",
+        "estimate",
+        "dueDate",
+        "cycle",
+        "project",
+        "parent",
+        "createdAt",
+        "updatedAt"
+      ],
+      "statusValues": [
+        "backlog",
+        "todo",
+        "in_progress",
+        "in_review",
+        "done",
+        "cancelled",
+        "duplicate"
+      ]
+    },
+    {
+      "name": "SubIssue",
+      "fields": [
+        "title",
+        "status",
+        "assignee",
+        "parentId"
+      ],
+      "foreignKey": "parentId→Issue"
+    },
+    {
+      "name": "Comment",
+      "fields": [
+        "content",
+        "author",
+        "createdAt",
+        "parentCommentId",
+        "issueId"
+      ],
+      "foreignKey": "issueId→Issue"
+    },
+    {
+      "name": "Label",
+      "fields": [
+        "name",
+        "color"
+      ]
+    },
+    {
+      "name": "Cycle",
+      "fields": [
+        "name",
+        "startDate",
+        "endDate",
+        "status"
+      ]
+    },
+    {
+      "name": "Project",
+      "fields": [
+        "name",
+        "status",
+        "lead"
+      ]
+    },
+    {
+      "name": "User",
+      "fields": [
+        "name",
+        "avatar",
+        "email"
+      ]
+    }
+  ],
+  "intents": [
+    {
+      "id": "edit_title",
+      "α": "replace",
+      "target": "issue.title",
+      "confirmation": "enter"
+    },
+    {
+      "id": "edit_description",
+      "α": "replace",
+      "target": "issue.description",
+      "confirmation": "enter"
+    },
+    {
+      "id": "change_status",
+      "α": "replace",
+      "target": "issue.status",
+      "confirmation": "click"
+    },
+    {
+      "id": "change_priority",
+      "α": "replace",
+      "target": "issue.priority",
+      "confirmation": "click"
+    },
+    {
+      "id": "assign_user",
+      "α": "replace",
+      "target": "issue.assignee",
+      "confirmation": "click"
+    },
+    {
+      "id": "set_labels",
+      "α": "replace",
+      "target": "issue.labels",
+      "confirmation": "click"
+    },
+    {
+      "id": "set_estimate",
+      "α": "replace",
+      "target": "issue.estimate",
+      "confirmation": "click"
+    },
+    {
+      "id": "set_due_date",
+      "α": "replace",
+      "target": "issue.dueDate",
+      "confirmation": "click"
+    },
+    {
+      "id": "set_cycle",
+      "α": "replace",
+      "target": "issue.cycle",
+      "confirmation": "click"
+    },
+    {
+      "id": "set_project",
+      "α": "replace",
+      "target": "issue.project",
+      "confirmation": "click"
+    },
+    {
+      "id": "set_parent",
+      "α": "replace",
+      "target": "issue.parent",
+      "confirmation": "click"
+    },
+    {
+      "id": "create_label",
+      "α": "add",
+      "creates": "Label",
+      "confirmation": "enter"
+    },
+    {
+      "id": "add_subissue",
+      "α": "add",
+      "creates": "SubIssue",
+      "confirmation": "enter"
+    },
+    {
+      "id": "add_comment",
+      "α": "add",
+      "creates": "Comment",
+      "confirmation": "enter"
+    },
+    {
+      "id": "reply_to_comment",
+      "α": "add",
+      "creates": "Comment",
+      "confirmation": "enter"
+    },
+    {
+      "id": "edit_comment",
+      "α": "replace",
+      "target": "comment.content",
+      "confirmation": "enter"
+    },
+    {
+      "id": "delete_comment",
+      "α": "remove",
+      "target": "comments",
+      "irreversibility": "high",
+      "confirmation": "click"
+    },
+    {
+      "id": "archive_issue",
+      "α": "remove",
+      "target": "issues",
+      "irreversibility": "high",
+      "confirmation": "click"
+    },
+    {
+      "id": "delete_issue",
+      "α": "remove",
+      "target": "issues",
+      "irreversibility": "high",
+      "confirmation": "form"
+    },
+    {
+      "id": "duplicate_issue",
+      "α": "add",
+      "creates": "Issue",
+      "confirmation": "click"
+    },
+    {
+      "id": "open_command_palette",
+      "α": "replace",
+      "target": "ui.paletteOpen",
+      "confirmation": "click"
+    }
+  ],
+  "roles": [
+    "owner",
+    "viewer"
+  ],
+  "observations": [
+    "Every sidebar property has single-letter hotkey opening inline popover with fuzzy-searchable options",
+    "Property pickers are type-specific: calendar for date, ordered workflow list for status, multi-select with create-new for labels",
+    "Property changes use optimistic update — select → Enter applies immediately, no confirmation step, undo toast available",
+    "Command palette (⌘K) exposes every action globally — keyboard is primary navigation, mouse is optional",
+    "Comments render inline as sub-stream under description; R replies in-thread, C creates new top-level comment",
+    "Sub-issues created inline via Ctrl+T, hierarchy visible as nested collapsible section within detail",
+    "Sidebar property rows are dual-modal: clickable AND keyboard-addressable through identical popover mechanism",
+    "Shift-modifier hotkeys (shift-P project, shift-M parent) disambiguate namespace collisions with single-letter primaries",
+    "Rich-text description edits inline in place rather than via modal — title and body are editable atoms of the detail view",
+    "Destructive actions (archive, delete issue) confirmed via separate modal/dialog, while reversible mutations skip confirmation entirely"
+  ]
+}

@@ -1,0 +1,71 @@
+{
+  "id": "temporal-preset-picker",
+  "version": 1,
+  "status": "candidate",
+  "archetype": null,
+  "trigger": {
+    "requires": [
+      {
+        "kind": "intent-effect",
+        "alpha": "replace",
+        "target": "*.<temporal-field>"
+      },
+      {
+        "kind": "field-role-present",
+        "role": "timestamp-future"
+      }
+    ]
+  },
+  "structure": {
+    "slot": "primaryCTA",
+    "description": "Setter temporal-поля показывает короткий список пресетов ('1h', 'tomorrow', 'next week') + escape-hatch 'custom date'; datepicker не первичный путь."
+  },
+  "rationale": {
+    "hypothesis": "Распределение значений для будущих временных полей сильно скошено к 3–5 типовым сценариям ('через час', 'завтра утром'). Пресеты экономят 2–3 клика в 80% случаев, datepicker остаётся для хвоста.",
+    "evidence": [
+      {
+        "source": "superhuman-inbox",
+        "description": "Snooze: Later today / Tomorrow / This weekend / Next week / Pick a date.",
+        "reliability": "high"
+      },
+      {
+        "source": "todoist-quick-add",
+        "description": "Due-date: Today / Tomorrow / Next week / Custom; natural-language добавляет 4-й режим.",
+        "reliability": "high"
+      }
+    ],
+    "counterexample": [
+      {
+        "source": "calendar-scheduling",
+        "description": "Выбор конкретной встречи — пресеты нерелевантны, нужен свободный datepicker.",
+        "reliability": "medium"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [
+      {
+        "domain": "booking",
+        "projection": "booking_reschedule",
+        "reason": "Reschedule TimeSlot — типовые сдвиги ('next week, same time')."
+      },
+      {
+        "domain": "lifequest",
+        "projection": "habit_snooze",
+        "reason": "Отложить привычку — 'tomorrow / next week' покрывает большинство."
+      }
+    ],
+    "shouldNotMatch": [
+      {
+        "domain": "planning",
+        "projection": "poll_time_options",
+        "reason": "Голосование по конкретным слотам — пресеты не подходят, нужен точный выбор."
+      },
+      {
+        "domain": "invest",
+        "projection": "asset_price_update",
+        "reason": "Поле не временное."
+      }
+    ]
+  }
+}

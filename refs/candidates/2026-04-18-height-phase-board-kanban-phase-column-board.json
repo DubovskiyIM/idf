@@ -1,0 +1,88 @@
+{
+  "id": "kanban-phase-column-board",
+  "version": 1,
+  "status": "candidate",
+  "archetype": "catalog",
+  "trigger": {
+    "requires": [
+      {
+        "kind": "entity-kind",
+        "value": "mainEntity"
+      },
+      {
+        "kind": "entity-field",
+        "field": "status",
+        "enumMinValues": 3
+      },
+      {
+        "kind": "intent-effect",
+        "α": "replace",
+        "target": "<mainEntity>.status",
+        "confirmation": "click",
+        "minCount": 1
+      }
+    ]
+  },
+  "structure": {
+    "slot": "body",
+    "description": "Catalog корневой layout превращается из grid в column-per-phase доску: по колонке на каждое значение status; основной способ исполнения replace-.status — drag-drop карточки между колонками (confirmation=click сводится к drop-gesture)."
+  },
+  "rationale": {
+    "hypothesis": "Когда entity фактически живёт на state-machine с одним dominantным полем статуса и главное намерение — двигать сущность по фазам, пространственное расположение колонок кодирует сам workflow: позиция карточки = её фаза. Это устраняет необходимость открывать detail для смены статуса и делает загрузку каждой фазы визуально считываемой (количество, стагнации, балансы).",
+    "evidence": [
+      {
+        "source": "height-phase-board",
+        "description": "Колонки Backlog / Up next / In progress / In review / Done; drag-drop = replace task.status",
+        "reliability": "high"
+      },
+      {
+        "source": "linear-triage",
+        "description": "Board layout по status как equal-citizen с list view",
+        "reliability": "high"
+      },
+      {
+        "source": "notion-database-views",
+        "description": "Board view — native projection для select-поля",
+        "reliability": "high"
+      }
+    ],
+    "counterexample": [
+      {
+        "source": "messenger",
+        "description": "Conversation.status бинарно (open/archived), колонки дают 2 пустых бака — grid уместнее",
+        "reliability": "medium"
+      },
+      {
+        "source": "invest",
+        "description": "Position.status (open/closed) — тоже 2 значения, column-layout избыточен; инвесторам важнее численные метрики, не spatial phase",
+        "reliability": "high"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [
+      {
+        "domain": "workflow",
+        "projection": "executions",
+        "reason": "Execution.status ∈ {queued, running, failed, succeeded} + replace на status — идеальный kanban-кандидат"
+      },
+      {
+        "domain": "lifequest",
+        "projection": "tasks-board",
+        "reason": "Task.status ∈ {todo, doing, done} при наличии replace — board оправдан"
+      }
+    ],
+    "shouldNotMatch": [
+      {
+        "domain": "messenger",
+        "projection": "conversations",
+        "reason": "Всего 2 статуса — колонки вырождены"
+      },
+      {
+        "domain": "reflect",
+        "projection": "mood-entries",
+        "reason": "Нет фаз; дискриминатор mood не workflow-phase"
+      }
+    ]
+  }
+}
