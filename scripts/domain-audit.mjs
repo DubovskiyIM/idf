@@ -149,3 +149,59 @@ export function checkEnumValues(ontology) {
   }
   return gaps;
 }
+
+export function auditDomain(domain, ontology, intents) {
+  const gaps = [
+    ...checkFieldsTyped(ontology),
+    ...checkEnumValues(ontology),
+    ...checkEntityKind(ontology),
+    ...checkRoleBase(ontology),
+    ...checkOwnerField(ontology),
+    ...checkEmptyConditions(intents),
+    ...checkEmptyWitnesses(intents),
+    ...checkAntagonistSymmetry(intents),
+    ...checkIrreversibility(intents),
+    ...checkCreatesConfirmation(intents),
+  ];
+  const summary = gaps.reduce(
+    (acc, g) => ({ ...acc, [g.kind]: (acc[g.kind] || 0) + 1 }),
+    { total: gaps.length },
+  );
+  return { domain, gaps, summary };
+}
+
+const ALL_DOMAINS = [
+  "workflow", "planning", "messenger", "booking",
+  "sales", "invest", "delivery", "lifequest", "reflect", "prilozhenie_otslezhivani",
+];
+
+const isMain = import.meta.url === `file://${process.argv[1]}`;
+if (isMain) {
+  const args = process.argv.slice(2);
+  const domainArg = args.indexOf("--domain");
+  const all = args.includes("--all");
+  const domains = all
+    ? ALL_DOMAINS
+    : domainArg >= 0 ? [args[domainArg + 1]] : [];
+  if (domains.length === 0) {
+    console.error("usage: node scripts/domain-audit.mjs [--all | --domain <name>]");
+    process.exit(2);
+  }
+  const reports = [];
+  for (const d of domains) {
+    try {
+      const ontoMod = await import(`../src/domains/${d}/ontology.js`);
+      const intentsMod = await import(`../src/domains/${d}/intents.js`);
+      reports.push(auditDomain(d, ontoMod.ONTOLOGY, intentsMod.INTENTS));
+    } catch (err) {
+      console.error(`[${d}] import error: ${err.message}`);
+    }
+  }
+  for (const r of reports) {
+    console.error(`\n=== ${r.domain} === ${r.summary.total} gaps`);
+    for (const [k, v] of Object.entries(r.summary)) {
+      if (k !== "total") console.error(`  ${k}: ${v}`);
+    }
+  }
+  console.log(JSON.stringify(reports, null, 2));
+}

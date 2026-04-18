@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { checkFieldsTyped, checkEnumValues, checkEntityKind, checkRoleBase, checkOwnerField, checkEmptyConditions, checkEmptyWitnesses, checkAntagonistSymmetry, checkIrreversibility, checkCreatesConfirmation } from "./domain-audit.mjs";
+import { checkFieldsTyped, checkEnumValues, checkEntityKind, checkRoleBase, checkOwnerField, checkEmptyConditions, checkEmptyWitnesses, checkAntagonistSymmetry, checkIrreversibility, checkCreatesConfirmation, auditDomain } from "./domain-audit.mjs";
 
 describe("checkFieldsTyped", () => {
   it("entity с fields-массивом даёт gap", () => {
@@ -209,5 +209,22 @@ describe("checkCreatesConfirmation", () => {
       new_x: { creates: "X", particles: { confirmation: "form" } },
     };
     expect(checkCreatesConfirmation(intents)).toEqual([]);
+  });
+});
+
+describe("auditDomain", () => {
+  it("собирает все gaps из онтологии и интентов", () => {
+    const ontology = { entities: { Foo: { fields: ["id", "name"] } } };
+    const intents = {
+      close_foo: {
+        particles: { entities: [], conditions: [], effects: [{ α: "replace", target: "foo.status", value: "closed" }], witnesses: [], confirmation: "click" },
+      },
+    };
+    const report = auditDomain("test", ontology, intents);
+    expect(report.domain).toBe("test");
+    expect(report.gaps.some((g) => g.kind === "fields-array-form")).toBe(true);
+    expect(report.gaps.some((g) => g.kind === "empty-conditions")).toBe(true);
+    expect(report.gaps.some((g) => g.kind === "irreversibility-missing")).toBe(true);
+    expect(typeof report.summary.total).toBe("number");
   });
 });
