@@ -1,5 +1,44 @@
 # IDF Specification Changelog
 
+## 1.1.1 — 2026-04-19 (Part 2 skeleton + Witness Protocol)
+
+Patch release introducing Part 2 (`idf-v1.1-part2-crystallize.md`) as a skeleton document with one normative section. Backward-compatible — existing v1.0 and v1.1 conformance unchanged.
+
+### Added
+
+- **Part 2 document** (`idf-v1.1-part2-crystallize.md`) — skeleton for the derivation layer spec. Table of contents covers Projections, Slot Taxonomy, Crystallization Contract, Witness Protocol, Pattern Bank, Control Archetypes, Adapter Capability Surface, and Conformance.
+- **§5 Witness Protocol** (normative) — resolves the forward reference in Part 1 §9.2:
+  - `artifact.witnesses[]` is always present (MAY be empty).
+  - Normative basis values: `"anchoring"`, `"pattern-bank"`, `"polymorphic-variant"`, `"temporal-section"`, `"alphabetical-fallback"`.
+  - Normative reliability values: `"rule-based"`, `"constructive"`, `"heuristic"`.
+  - Per-basis required fields and reliability constraints.
+  - Deterministic ordering of witnesses (by `basis`, `slot`, `projection`, `chosen`) for artifact stability under permutation (Part 1 §9.1).
+  - Explicit record requirement for `"alphabetical-fallback"` — the SHOULD from Part 1 §9.2 is now MUST-per-tied-group for Part 2 P2-L1 conformance.
+- **`schemas/witness.schema.json`** — JSON Schema Draft-2020-12 definition. Uses `if`/`then` for basis-conditional required fields.
+- **§9 Part 2 Conformance Levels** — `P2-L1` through `P2-L4`, with `P2-L1` (Witness Emission) fully defined.
+
+### Still placeholder (v1.2)
+
+- §2 Projection format (will add `schemas/projection.schema.json`)
+- §3 Slot Taxonomy
+- §4 Crystallization Contract (artifact schema)
+- §6 Pattern Bank (trigger/structure/rationale + falsification)
+- §7 Control Archetypes
+- §8 Adapter Capability Surface
+
+### Impact on impl claims
+
+An implementation claiming v1.1 conformance that exposes Part 2 P2-L1 MUST:
+
+1. Emit `artifact.witnesses[]` for every crystallized artifact.
+2. Include a witness with `basis:"alphabetical-fallback"` for every tied salience group encountered.
+3. Use only the normative `reliability` values, or namespaced custom values.
+4. Sort witnesses per §5.5.
+
+The `@intent-driven/core` reference implementation satisfies P2-L1 as of the version released with idf-sdk#45.
+
+---
+
 ## 1.1.0 — 2026-04-19 (Determinism + Salience)
 
 Minor release introducing two normative additions to the core format. Backward-compatible — existing v1.0 conformance tests continue to pass.
