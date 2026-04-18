@@ -17,6 +17,42 @@ export function checkFieldsTyped(ontology) {
   return gaps;
 }
 
+const ALLOWED_BASE = new Set(["owner", "viewer", "agent", "observer"]);
+const OWNER_CANDIDATES = ["userId", "ownerId", "authorId", "createdBy"];
+
+export function checkEntityKind(ontology) {
+  const gaps = [];
+  for (const [name, entity] of Object.entries(ontology.entities || {})) {
+    if (!entity.type) gaps.push({ kind: "entity-no-type", entity: name });
+  }
+  return gaps;
+}
+
+export function checkRoleBase(ontology) {
+  const gaps = [];
+  for (const [name, role] of Object.entries(ontology.roles || {})) {
+    if (!role.base) gaps.push({ kind: "role-no-base", role: name });
+    else if (!ALLOWED_BASE.has(role.base)) gaps.push({ kind: "role-bad-base", role: name, value: role.base });
+  }
+  return gaps;
+}
+
+export function checkOwnerField(ontology) {
+  const gaps = [];
+  for (const [entityName, entity] of Object.entries(ontology.entities || {})) {
+    if (entity.type && entity.type !== "internal") continue;
+    if (entity.ownerField) continue;
+    if (Array.isArray(entity.fields)) {
+      const found = entity.fields.find((f) => OWNER_CANDIDATES.includes(f));
+      if (found) gaps.push({ kind: "owner-field-missing", entity: entityName, candidate: found });
+      continue;
+    }
+    const found = OWNER_CANDIDATES.find((c) => entity.fields && entity.fields[c]);
+    if (found) gaps.push({ kind: "owner-field-missing", entity: entityName, candidate: found });
+  }
+  return gaps;
+}
+
 export function checkEnumValues(ontology) {
   const gaps = [];
   for (const [entityName, entity] of Object.entries(ontology.entities || {})) {
