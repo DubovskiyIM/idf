@@ -10,6 +10,7 @@ import PatternsView from "./patterns/PatternsView.jsx";
 import OntologyView from "./OntologyView.jsx";
 import IntegrityView from "./IntegrityView.jsx";
 import AlgebraView from "./AlgebraView.jsx";
+import PrototypeHealth from "./PrototypeHealth.jsx";
 import PhiDrawer from "./PhiDrawer.jsx";
 import StudioPrefsPanel from "./StudioPrefsPanel.jsx";
 import DomainRuntime from "../runtime/DomainRuntime.jsx";
@@ -348,10 +349,35 @@ export default function App() {
     );
   };
 
+  // Вызывается из PrototypeHealth banner'а с конкретным списком issues
+  // (detected через crystallize_v2 + validateArtifact). Формируем prompt
+  // с реальными ошибками, не generic-текстом.
+  const onFixPrototype = useCallback((issues = []) => {
+    setChatPhase("Claude чинит прототип");
+    const issuesText = issues.length
+      ? issues.map((i) =>
+          `- \`${i.projection}\`${i.archetype ? ` (${i.archetype})` : ""}: ${i.errors.join("; ")}`
+        ).join("\n")
+      : "валидация артефактов падает, но detail не собран — проверь crystallize_v2 на всех projections";
+    setChatPrefill(
+      `Прототип домена \`${domain}\` рендерится некорректно. ` +
+      `Detected problems:\n${issuesText}\n\n` +
+      `Прочитай src/domains/${domain}/projections.js и src/domains/${domain}/intents.js. ` +
+      `Для каждой проблемной projection:\n` +
+      `- feed/catalog требуют create-intent (\`creates: "<MainEntity>"\` или через particles) → композитор\n` +
+      `- detail требует idParam + mainEntity\n` +
+      `- wizard требует steps\n` +
+      `- canvas — canvasType зарегистрированный в registerCanvas\n` +
+      `- «виджет X не найден» — control в intent.parameters[].widget не существует; используй кастомные widget'ы только если они зарегистрированы\n\n` +
+      `Почини названные выше projections. Не меняй уже работающие. Кратко отчитайся.`
+    );
+    setChatOpen(true);
+  }, [domain]);
+
   const renderPrototypeView = () => {
     if (!domain) {
       return (
-        <div style={{ height: "calc(100vh - 44px)", display: "flex", alignItems: "center", justifyContent: "center", background: "#0f172a", color: "#94a3b8", fontFamily: "Inter, system-ui, sans-serif" }}>
+        <div style={{ height: "100%", display: "flex", alignItems: "center", justifyContent: "center", background: "#0f172a", color: "#94a3b8", fontFamily: "Inter, system-ui, sans-serif" }}>
           <div style={{ textAlign: "center", maxWidth: 420 }}>
             <div style={{ fontSize: 40, marginBottom: 14 }}>▢</div>
             <div style={{ fontSize: 16, fontWeight: 500, marginBottom: 8, color: "#e2e8f0" }}>Сначала выбери домен</div>
@@ -363,8 +389,11 @@ export default function App() {
       );
     }
     return (
-      <div style={{ height: "calc(100vh - 44px)", background: "#0f172a" }}>
-        <DomainRuntime domainId={domain} embedded />
+      <div style={{ height: "100%", background: "#0f172a", display: "flex", flexDirection: "column" }}>
+        {!readonly && <PrototypeHealth domainId={domain} onFix={onFixPrototype} />}
+        <div style={{ flex: 1, minHeight: 0 }}>
+          <DomainRuntime domainId={domain} embedded />
+        </div>
       </div>
     );
   };
