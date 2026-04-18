@@ -158,18 +158,8 @@ export const PROJECTIONS = {
         label: "Категория",
         intent: "filter_by_category",
         pick: ["categoryId"],
-      },
-      {
-        id: "details",
-        label: "Описание",
-        intent: "create_task_draft",
-        pick: ["title", "description", "type", "city"],
-      },
-      {
-        id: "budget",
-        label: "Бюджет и срок",
-        intent: "create_task_draft",
-        pick: ["budget", "deadline"],
+        source: { collection: "categories" },
+        display: ["name", "slug"],
       },
       {
         id: "confirm",

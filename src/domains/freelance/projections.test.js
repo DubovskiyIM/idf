@@ -76,13 +76,14 @@ describe("freelance projections — create_task_wizard", () => {
     expect(p.mainEntity).toBe("Task");
   });
 
-  it("steps описывают 3 шага минимум (категория / детали / подтверждение)", () => {
+  it("steps: category (picker с source.collection) + confirm (summary)", () => {
     const steps = PROJECTIONS.create_task_wizard.steps;
-    expect(steps.length).toBeGreaterThanOrEqual(3);
+    expect(steps.length).toBeGreaterThanOrEqual(2);
     const ids = steps.map(s => s.id);
     expect(ids).toContain("category");
-    expect(ids).toContain("details");
     expect(ids).toContain("confirm");
+    const cat = steps.find(s => s.id === "category");
+    expect(cat.source).toEqual({ collection: "categories" });
   });
 
   it("финальный шаг вызывает create_task_draft", () => {
