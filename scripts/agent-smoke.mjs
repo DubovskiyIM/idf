@@ -160,12 +160,17 @@ async function main() {
   const slot = freeSlots[0];
   const service = (world.body.world.services || [])[0];
   if (!service) fail("5", "в world нет services — нужен seed");
-  const createResp = await post("/api/agent/booking/exec/create_booking", {
+  const bookingParams = {
     serviceId: service.id,
+    serviceName: service.name,
     specialistId: service.specialistId,
     slotId: slot.id,
+    slotIds: slot.id,
+    date: slot.date,
+    startTime: slot.startTime,
     price: service.price
-  }, jwt);
+  };
+  const createResp = await post("/api/agent/booking/exec/create_booking", bookingParams, jwt);
   assert(createResp.status === 200, "5", "status 200 confirmed", createResp);
   assert(createResp.body.status === "confirmed", "5", "status === confirmed");
   assert(!!createResp.body.createdEntity, "5", "createdEntity присутствует");
@@ -180,12 +185,7 @@ async function main() {
 
   // Step 7: POST /exec/create_booking на тот же slot → 409
   log("7", "POST /exec/create_booking повторно (ожидаем 409)");
-  const createResp2 = await post("/api/agent/booking/exec/create_booking", {
-    serviceId: service.id,
-    specialistId: service.specialistId,
-    slotId: slot.id,
-    price: service.price
-  }, jwt);
+  const createResp2 = await post("/api/agent/booking/exec/create_booking", bookingParams, jwt);
   assert(createResp2.status === 409, "7", "status 409 rejected", createResp2);
   assert(createResp2.body.status === "rejected", "7", "status === rejected");
   assert(!!createResp2.body.reason, "7", "reason присутствует");
@@ -196,7 +196,8 @@ async function main() {
   // Step 8: POST /exec/cancel_booking
   log("8", "POST /exec/cancel_booking");
   const cancelResp = await post("/api/agent/booking/exec/cancel_booking", {
-    bookingId: newBookingId
+    bookingId: newBookingId,
+    slotId: slot.id,
   }, jwt);
   assert(cancelResp.status === 200, "8", "cancel 200", cancelResp);
   assert(cancelResp.body.status === "confirmed", "8", "cancel confirmed");
@@ -287,7 +288,8 @@ async function main() {
   });
 
   const ownershipResp = await post("/api/agent/booking/exec/cancel_booking", {
-    bookingId: foreignBookingId
+    bookingId: foreignBookingId,
+    slotId: slot.id,
   }, jwt);
   assert(ownershipResp.status === 403, "13", "status 403 ownership_denied", ownershipResp);
   assert(ownershipResp.body.error === "ownership_denied", "13", "error === ownership_denied");
