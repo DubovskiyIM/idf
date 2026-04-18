@@ -70,6 +70,27 @@ const DOMAINS = {
   delivery: deliveryDomain,
 };
 
+// Vite glob: lazy-loaders для всех src/domains/*/domain.js. Нужно для
+// Studio-сгенерированных доменов — они не в hardcoded DOMAINS, но лежат
+// на диске. Rendering через V2Shell (crystallize_v2 + ProjectionRendererV2),
+// без domain.UI.jsx.
+const DYNAMIC_DOMAIN_LOADERS = import.meta.glob("./domains/*/domain.js");
+
+// Placeholder-домен с пустой онтологией: используется пока async-импорт в
+// процессе, чтобы useEngine не падал. Все поля доменного API — no-op.
+const EMPTY_DOMAIN = {
+  ONTOLOGY: { entities: {}, roles: {} },
+  INTENTS: {},
+  PROJECTIONS: {},
+  ROOT_PROJECTIONS: [],
+  DOMAIN_ID: "__loading__",
+  DOMAIN_NAME: "Загрузка…",
+  getSeedEffects: () => [],
+  buildEffects: () => null,
+  describeEffect: () => "",
+  signalForIntent: () => null,
+};
+
 // URL-params: ?domain=X&projection=Y&inspect=<patternId>. Читаются один раз
 // при первом mount'е; initialProjection пробрасывается в V2Shell. Domain из
 // URL имеет приоритет над localStorage.
@@ -84,17 +105,43 @@ const URL_INITIAL = (() => {
 })();
 
 export default function App() {
-  // Если URL-param ?domain=X указывает на незарегистрированный в prototype
-  // домен (например, сгенерированный через Studio) — fallback к booking
-  // и запоминаем что был redirect, чтобы показать баннер.
-  const [domainId, setDomainId] = useState(() => {
-    const candidate = URL_INITIAL.domain || localStorage.getItem("idf_domain") || "booking";
-    return DOMAINS[candidate] ? candidate : "booking";
-  });
-  const [unknownDomainFallback] = useState(() =>
-    URL_INITIAL.domain && !DOMAINS[URL_INITIAL.domain] ? URL_INITIAL.domain : null
+  const [domainId, setDomainId] = useState(() =>
+    URL_INITIAL.domain || localStorage.getItem("idf_domain") || "booking"
   );
   const [initialProjection] = useState(() => URL_INITIAL.projection);
+  // Dynamic domain (Studio-сгенерированный): async-loaded через import.meta.glob.
+  const [dynamicDomain, setDynamicDomain] = useState(null);
+  const [dynamicError, setDynamicError] = useState(null);
+  const isDynamic = !DOMAINS[domainId];
+
+  useEffect(() => {
+    if (!isDynamic) { setDynamicDomain(null); setDynamicError(null); return; }
+    const key = `./domains/${domainId}/domain.js`;
+    const loader = DYNAMIC_DOMAIN_LOADERS[key];
+    if (!loader) {
+      setDynamicError(`Домен «${domainId}» не найден. Доступно: ${[...Object.keys(DOMAINS), ...Object.keys(DYNAMIC_DOMAIN_LOADERS).map((k) => k.match(/domains\/([^/]+)/)?.[1]).filter(Boolean)].filter((v, i, a) => a.indexOf(v) === i).join(", ")}`);
+      setDynamicDomain(null);
+      return;
+    }
+    setDynamicError(null);
+    let cancelled = false;
+    loader().then((mod) => {
+      if (cancelled) return;
+      // Studio-generated домены: без .UI (manual renderer), V2Shell возьмёт из
+      // PROJECTIONS. Нормализуем ROOT_PROJECTIONS по дефолту из ключей PROJECTIONS.
+      const projections = mod.PROJECTIONS || {};
+      setDynamicDomain({
+        ...mod,
+        UI: null,
+        ROOT_PROJECTIONS: mod.ROOT_PROJECTIONS || Object.keys(projections),
+        DOMAIN_ID: mod.DOMAIN_ID || domainId,
+        DOMAIN_NAME: mod.DOMAIN_NAME || domainId,
+      });
+    }).catch((e) => {
+      if (!cancelled) setDynamicError(e.message);
+    });
+    return () => { cancelled = true; };
+  }, [domainId, isDynamic]);
 
   // UI-kit адаптер: prefs override → дефолт домена → mantine
   const { prefs: uiPrefs } = usePersonalPrefs();
@@ -144,7 +191,8 @@ export default function App() {
   const setAndSaveViewer = (v) => { setViewer(v); localStorage.setItem("idf_viewer", v); };
   const setAndSaveLayer = (v) => { setLayer(v); localStorage.setItem("idf_layer", v); };
 
-  const domain = DOMAINS[domainId];
+  const domain = DOMAINS[domainId] || dynamicDomain || EMPTY_DOMAIN;
+  const isLoadingDomain = isDynamic && !dynamicDomain && !dynamicError;
   const realViewer = auth.currentUser ? { id: auth.currentUser.id, name: auth.currentUser.name, email: auth.currentUser.email } : null;
   const engine = useEngine(domain);
   const { world, worldForIntent, drafts, effects, signals, algebra, exec,
@@ -244,14 +292,14 @@ export default function App() {
 
   const shell = (
     <div data-adapter={adapter.name || "mantine"} style={{ height: "100vh", display: "flex", flexDirection: "column", background: "#0c0e14", color: "#c9cdd4", fontFamily: "ui-monospace, 'SF Mono', 'Cascadia Code', monospace", fontSize: 13, overflow: "hidden" }}>
-      {unknownDomainFallback && (
-        <div style={{ background: "#78350f", borderBottom: "1px solid #b45309", padding: "8px 16px", fontSize: 12, color: "#fef3c7", display: "flex", alignItems: "center", gap: 12, flexShrink: 0 }}>
-          <span>⚠</span>
+      {isDynamic && (
+        <div style={{ background: "#1e293b", borderBottom: "1px solid #6366f1", padding: "6px 16px", fontSize: 11, color: "#c7d2fe", display: "flex", alignItems: "center", gap: 10, flexShrink: 0 }}>
+          <span>✨</span>
           <span style={{ flex: 1 }}>
-            Домен <code style={{ background: "#451a03", padding: "1px 6px", borderRadius: 3 }}>{unknownDomainFallback}</code> не зарегистрирован в prototype runtime — показан <code>booking</code>. Studio граф можно открыть там.
+            Runtime: динамически загруженный домен <code style={{ background: "#0f172a", padding: "1px 6px", borderRadius: 3 }}>{domainId}</code>. UI деривируется из projections через crystallize_v2 (без manual UI.jsx).
           </span>
-          <a href={`/studio.html?domain=${encodeURIComponent(unknownDomainFallback)}`} style={{ color: "#fde68a", textDecoration: "underline" }}>
-            Открыть в Studio →
+          <a href={`/studio.html?domain=${encodeURIComponent(domainId)}`} style={{ color: "#a5b4fc", textDecoration: "underline" }}>
+            Studio →
           </a>
         </div>
       )}
@@ -576,7 +624,26 @@ export default function App() {
 
   const themed = (
     <MantineProvider theme={mantineThemeOverride} inherit>
-      {shell}
+      {isLoadingDomain ? (
+        <div style={{ height: "100vh", display: "flex", alignItems: "center", justifyContent: "center", background: "#0c0e14", color: "#94a3b8", fontFamily: "Inter, system-ui, sans-serif" }}>
+          <div style={{ textAlign: "center" }}>
+            <div style={{ fontSize: 32, marginBottom: 12 }}>⏳</div>
+            <div style={{ fontSize: 14 }}>Загружаю домен «{domainId}»…</div>
+          </div>
+        </div>
+      ) : dynamicError ? (
+        <div style={{ height: "100vh", display: "flex", alignItems: "center", justifyContent: "center", background: "#0c0e14", color: "#e2e8f0", fontFamily: "Inter, system-ui, sans-serif", padding: 32 }}>
+          <div style={{ maxWidth: 540, textAlign: "center" }}>
+            <div style={{ fontSize: 48, marginBottom: 16 }}>📐</div>
+            <h1 style={{ fontSize: 22, fontWeight: 700, marginBottom: 10 }}>Домен «{domainId}» не найден</h1>
+            <p style={{ fontSize: 13, lineHeight: 1.6, color: "#94a3b8", marginBottom: 20 }}>{dynamicError}</p>
+            <div style={{ display: "flex", gap: 10, justifyContent: "center" }}>
+              <a href="/studio.html" style={{ padding: "9px 16px", background: "#6366f1", color: "white", borderRadius: 6, textDecoration: "none", fontSize: 13, fontWeight: 600 }}>Открыть Studio →</a>
+              <a href="/?domain=booking" style={{ padding: "9px 16px", background: "#334155", color: "#e2e8f0", borderRadius: 6, textDecoration: "none", fontSize: 13 }}>Booking prototype</a>
+            </div>
+          </div>
+        </div>
+      ) : shell}
     </MantineProvider>
   );
 

@@ -40,14 +40,16 @@ export default function PrototypeReadyCTA({ visible, domain, intentsCount, entit
           <div style={{ fontSize: 22 }}>✨</div>
           <div style={{ flex: 1 }}>
             <div style={{ fontWeight: 600, marginBottom: 2 }}>
-              Домен «{domain}» сгенерирован
+              Прототип «{domain}» готов
             </div>
             <div style={{ fontSize: 11, color: "#a7f3d0" }}>
-              {intentsCount} intents · {entitiesCount} entities · клик по узлу графа — инспектор. Runtime-интеграция в prototype — roadmap.
+              {intentsCount} intents · {entitiesCount} entities · UI деривирован из projections
             </div>
           </div>
-          <button
-            onClick={onDismiss}
+          <a
+            href={`/?domain=${encodeURIComponent(domain)}`}
+            target="_blank"
+            rel="noreferrer"
             style={{
               padding: "8px 16px",
               background: "#ecfdf5",
@@ -55,13 +57,12 @@ export default function PrototypeReadyCTA({ visible, domain, intentsCount, entit
               borderRadius: 6,
               fontWeight: 600,
               fontSize: 12,
-              border: "none",
-              cursor: "pointer",
+              textDecoration: "none",
               whiteSpace: "nowrap",
             }}
           >
-            Исследовать граф
-          </button>
+            Открыть прототип →
+          </a>
           <button
             onClick={onDismiss}
             title="Скрыть"
