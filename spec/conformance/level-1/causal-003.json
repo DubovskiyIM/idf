@@ -8,6 +8,7 @@
       {
         "id": "e3",
         "intent_id": "e3",
+        "parent_id": "e2",
         "alpha": "replace",
         "target": "listing.status",
         "context": {
@@ -35,6 +36,7 @@
       {
         "id": "e2",
         "intent_id": "e2",
+        "parent_id": "e1",
         "alpha": "replace",
         "target": "listing.status",
         "context": {

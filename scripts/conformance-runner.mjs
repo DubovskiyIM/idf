@@ -156,31 +156,36 @@ function hydrateExpectedShape(actual, expected) {
   return out;
 }
 
+/**
+ * Level-2 tests specify expected relations per intent. Per spec/conformance/README.md:
+ * «for Level 2, only the relations listed in expected.relations are checked
+ * (other relations MAY be present)». Runner checks every declared relation kind
+ * (antagonists, sequentialIn, sequentialOut, excluding, parallel) as a set —
+ * actual MUST equal expected, additional intents outside expected are ignored.
+ */
 function runLevel2(test) {
   const { intents, ontology } = test.input;
   const expected = test.expected;
 
-  // SDK computeAlgebra возвращает adjacency-map { intentId: { antagonists, enabling, exclusive, parallel } }
   const actual = computeAlgebra(intents, ontology);
 
-  // Level-2 тесты проверяют антагонистов и их классификацию.
-  // Сопоставим actual.antagonists с expected.relations.{id}.antagonists.
   if (expected.relations) {
     for (const [intentId, rel] of Object.entries(expected.relations)) {
-      const expectedAnt = [...(rel.antagonists || [])].sort();
-      const actualAnt = [...(actual[intentId]?.antagonists || [])].sort();
-      if (!deepEq(expectedAnt, actualAnt)) {
-        return {
-          passed: false,
-          actual: { [intentId]: { antagonists: actualAnt } },
-          expected: { [intentId]: { antagonists: expectedAnt } },
-        };
+      const actualRel = actual[intentId] || {};
+      for (const kind of Object.keys(rel)) {
+        const expSet = [...(rel[kind] || [])].sort();
+        const actSet = [...(actualRel[kind] || [])].sort();
+        if (!deepEq(expSet, actSet)) {
+          return {
+            passed: false,
+            actual: { [intentId]: { [kind]: actSet } },
+            expected: { [intentId]: { [kind]: expSet } },
+          };
+        }
       }
     }
   }
 
-  // Classification тоже проверяется (structural vs semantic vs hint).
-  // SDK не возвращает её в computeAlgebra — поддержка частичная.
   return { passed: true, actual, expected };
 }
 
