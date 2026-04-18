@@ -34,22 +34,29 @@ export default function V2Shell({
   onLogout,
   useBottomTabs = false,
 }) {
+  const artifacts = useMemo(
+    () => crystallizeV2(domain.INTENTS, domain.PROJECTIONS, domain.ONTOLOGY, domainId),
+    [domain, domainId]
+  );
+
+  // R8 (core ≥ 0.11.0): projection.absorbedBy !== null → катал абсорбирован
+  // в hub-detail. Шелл убирает его из root-tabs; попасть туда можно только
+  // навигацией из hub.
+  const isAbsorbed = (id) => Boolean(artifacts[id]?.absorbedBy);
+
   const rawRootProjections = domain.ROOT_PROJECTIONS || [];
   const isSectioned = rawRootProjections.length > 0 && typeof rawRootProjections[0] === "object" && rawRootProjections[0].section;
   const rootProjections = isSectioned
-    ? rawRootProjections.flatMap(s => s.items)
-    : rawRootProjections;
-  const sections = isSectioned ? rawRootProjections : null;
+    ? rawRootProjections.flatMap(s => s.items).filter(id => !isAbsorbed(id))
+    : rawRootProjections.filter(id => !isAbsorbed(id));
+  const sections = isSectioned
+    ? rawRootProjections.map(s => ({ ...s, items: s.items.filter(id => !isAbsorbed(id)) })).filter(s => s.items.length > 0)
+    : null;
   const initial = initialProjection || rootProjections[0] || Object.keys(domain.PROJECTIONS)[0];
 
   const {
     current, history, navigate, back, reset, canGoBack,
   } = useProjectionRoute(initial, {});
-
-  const artifacts = useMemo(
-    () => crystallizeV2(domain.INTENTS, domain.PROJECTIONS, domain.ONTOLOGY, domainId),
-    [domain, domainId]
-  );
 
   const allProjections = useMemo(() => {
     const edits = generateEditProjections(domain.INTENTS, domain.PROJECTIONS, domain.ONTOLOGY);

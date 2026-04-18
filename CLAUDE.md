@@ -100,6 +100,10 @@ scripts/    # agent-login, agent-smoke (75 шагов)
 
 **Кристаллизатор v2** — 7 архетипов (feed/catalog/detail/form/canvas/dashboard/wizard), 6 слотов + composer. Control-архетипы: auto, composerEntry, formModal, confirmDialog, clickForm, filePicker, inlineSearch, customCapture, bulkWizard.
 
+**R8 Hub-absorption (v1.13, core@0.11.0)** — `crystallize_v2/absorbHubChildren.js`. Child-каталоги с FK на entity с detail-проекцией автоматически помечаются `absorbedBy: "<parent>_detail"` и прокидываются как `hubSections: [{ projectionId, foreignKey, entity }]` на hub-detail (и в `slots.hubSections` для рендера). Threshold: ≥2 child'а. Author-override: `projection.absorbed: false`. Шелл (`V2Shell`) фильтрует absorbed из `ROOT_PROJECTIONS`. Снимает монотонность «много flat tabs» в CRUD-доменах (pet-домен: 8 табов → 2).
+
+**Shape-layer (v1.13, core@0.11.0)** — `crystallize_v2/deriveShape.js`. Три shape'а поверх catalog/feed: `timeline` (date-witness + descending sort), `directory` (contact-поля phone/email/address, без date-sort), `default`. Hero-create guard блокирует hero-слот для timeline/directory — creator уходит в toolbar. Результат в `artifact.shape` + `artifact.shapeSignals` + `slots.body.shape` (non-default). Author-override: `projection.shape`. Renderer-layouts (visual timeline, tabbed hub) — roadmap v0.2.
+
 **UI-адаптер (§17, v1.6 — 4 реализации)** — `adapters/registry.js` → `getAdaptedComponent(kind, type)`. Категории: parameter / button / shell / primitive (+ chart/sparkline/statistic) / icon. **Capability surface** (v1.6): `adapter.capabilities` + `getCapability`/`supportsVariant` для graceful fallback. Runtime-компоненты **не импортируют UI-kit напрямую**.
 
 **Онтология (§14, v1.6)** — типизированные поля с read/write matrix. `entity.kind` таксономия: `internal` / `reference` (v1.6) / `mirror` / `assignment`. `ownerField` для single-owner, `role.scope` для m2m (v1.6). `inferFieldRole` → семантические роли (v1.6: +money/percentage/trend/ticker).
