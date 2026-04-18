@@ -8,6 +8,8 @@ import ThinkingCat from "./ThinkingCat.jsx";
 import ProgressOverlay from "./ProgressOverlay.jsx";
 import PrototypeReadyCTA from "./PrototypeReadyCTA.jsx";
 import PatternsView from "./patterns/PatternsView.jsx";
+import OntologyView from "./OntologyView.jsx";
+import IntegrityView from "./IntegrityView.jsx";
 import PhiDrawer from "./PhiDrawer.jsx";
 import StudioPrefsPanel from "./StudioPrefsPanel.jsx";
 import DomainRuntime from "../runtime/DomainRuntime.jsx";
@@ -76,6 +78,8 @@ function TabStrip({ view, setView, domainName, onTogglePhi, phiOpen, onToggleCha
       <div style={{ display: "flex" }}>
         <button onClick={() => setView("graph")} style={tabStyle(view === "graph")}>Граф</button>
         <button onClick={() => setView("prototype")} style={tabStyle(view === "prototype")}>Прототип</button>
+        <button onClick={() => setView("ontology")} style={tabStyle(view === "ontology")}>Онтология</button>
+        <button onClick={() => setView("integrity")} style={tabStyle(view === "integrity")}>Целостность</button>
         <button onClick={() => setView("patterns")} style={tabStyle(view === "patterns")}>Паттерны</button>
       </div>
       <div style={{ flex: 1 }} />
@@ -124,7 +128,7 @@ function initialViewFromUrl() {
   if (typeof window === "undefined") return "graph";
   try {
     const v = new URLSearchParams(window.location.search).get("view");
-    return ["graph", "prototype", "patterns"].includes(v) ? v : "graph";
+    return ["graph", "prototype", "ontology", "integrity", "patterns"].includes(v) ? v : "graph";
   } catch { return "graph"; }
 }
 
@@ -334,6 +338,8 @@ export default function App() {
       <div style={{ flex: 1, position: "relative", minHeight: 0 }}>
         {view === "graph" ? renderGraphView()
           : view === "prototype" ? renderPrototypeView()
+          : view === "ontology" ? <OntologyView domainId={domain} />
+          : view === "integrity" ? <IntegrityView domainId={domain} />
           : <PatternsView />}
         {/* Drawers (Chat, Φ) рендерятся в общем контейнере — доступны во всех табах */}
         {domain && (
