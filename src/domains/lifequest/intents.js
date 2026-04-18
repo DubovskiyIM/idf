@@ -15,6 +15,7 @@ function intent(name, entities, conditions, effects, witnesses, confirmation = "
     ...(extra.irreversibility ? { irreversibility: extra.irreversibility } : {}),
     ...(extra.extended ? { extended: true } : {}),
     ...(extra.phase ? { phase: extra.phase } : {}),
+    ...(extra.salience !== undefined ? { salience: extra.salience } : {}),
   };
 }
 
@@ -31,7 +32,7 @@ export const INTENTS = {
     ["goal.userId = me.id"],
     [ef("replace", "goal.title"), ef("replace", "goal.description"), ef("replace", "goal.deadline")],
     ["goal.title", "goal.description", "goal.deadline"],
-    "form"),
+    "form", { salience: "primary" }),
 
   update_goal_progress: intent("Обновить прогресс", ["goal: Goal"],
     ["goal.status = 'active'", "goal.userId = me.id"],

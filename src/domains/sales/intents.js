@@ -26,7 +26,7 @@ export const INTENTS = {
   create_listing: intent("Создать лот", ["listing: Listing"],
     [], [ef("add", "listings")],
     ["title", "description", "startPrice"],
-    "enter", { creates: "Listing(draft)" }),
+    "enter", { creates: "Listing(draft)", salience: "primary" }),
 
   edit_listing: intent("Редактировать лот", ["listing: Listing"],
     ["listing.status = 'draft'", "listing.sellerId = me.id"],
