@@ -21,8 +21,11 @@ describe("freelance projections — task_catalog_public", () => {
     expect(PROJECTIONS.task_catalog_public.filter).toContain("published");
   });
 
-  it("clickNavigate → task_detail_public", () => {
-    expect(PROJECTIONS.task_catalog_public.clickNavigate).toBe("task_detail_public");
+  it("onItemClick navigates → task_detail_public", () => {
+    expect(PROJECTIONS.task_catalog_public.onItemClick).toMatchObject({
+      action: "navigate",
+      to: "task_detail_public",
+    });
   });
 
   it("кристаллизуется через crystallizeV2 без exceptions", () => {
