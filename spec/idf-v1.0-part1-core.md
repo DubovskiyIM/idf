@@ -1,8 +1,9 @@
-# IDF Specification v1.0 — Part 1: Core Model
+# IDF Specification v1.1 — Part 1: Core Model
 
 **Status:** Draft  
-**Version:** 1.0  
-**Date:** 2026-04-13  
+**Version:** 1.1  
+**Date:** 2026-04-19  
+**Changes since v1.0:** §3.5 Salience (new), §9 Determinism (new). See `CHANGELOG.md`.  
 
 ---
 
@@ -320,6 +321,54 @@ An intention MAY declare an `irreversibility` property with one of three values:
 Irreversibility governs confirmation proportionality (§7.4): high-irreversibility intentions SHOULD require more deliberate confirmation (e.g., a confirmation dialog rather than a single click). However, irreversibility has no effect on core fold semantics — it is metadata for consumers.
 
 > **Conformance:** `level-1/intent-001` through `level-1/intent-008`
+
+### 3.5 Salience
+
+An intention MAY declare a `salience` property expressing its priority relative to other intentions when multiple intentions compete for a slot of bounded capacity in a downstream rendering layer (e.g., a toolbar with only three visible buttons).
+
+**Two forms are defined:**
+
+- **Ordinal label (recommended):** one of `"primary"`, `"secondary"`, `"tertiary"`, `"utility"`.
+- **Numeric override (escape hatch):** any finite number. Larger values indicate higher priority.
+
+**Label-to-numeric mapping** (normative for comparison purposes):
+
+| Label | Numeric value |
+|-------|---------------|
+| `"primary"` | 100 |
+| `"secondary"` | 50 |
+| `"tertiary"` | 20 |
+| `"utility"` | 5 |
+
+**Semantics:**
+
+Salience is a declarative priority on the intention. It has no effect on fold (§5), intent algebra (§6), or integrity (§7) — it is metadata consumed by downstream rendering layers (crystallization, voice, document, agent API) when resolving contention for bounded slots.
+
+An implementation of core semantics MAY ignore salience entirely. An implementation that derives a presentation MUST, when two or more intentions are candidates for the same bounded slot:
+
+1. Rank candidates by salience (descending numeric value).
+2. Break ties by lexicographic comparison of intention identifiers.
+
+**Computed default:**
+
+When an intention does not declare `salience`, an implementation that uses salience for ranking SHOULD derive a default from the intention's particles:
+
+| Condition | Default |
+|-----------|---------|
+| `creates` equals the mainEntity of the contending projection | 80 |
+| An effect is `replace` on `<mainEntity>.status` | 70 |
+| An effect is `replace` on any `<mainEntity>.*` field | 60 |
+| At least one effect is declared, not matching above | 40 |
+| An effect is `remove` on `<mainEntity>` | 30 |
+| No effects declared | 10 |
+
+The computed default is normative only when an implementation exposes a `salience` field in witness records (§3 below does not mandate witnesses — see Part 2 for crystallization).
+
+**Rationale:**
+
+Without a declarative priority, any deterministic ranking of tied candidates is semantically arbitrary (e.g., alphabetical by identifier). Salience promotes ranking to a first-class property of the specification so authoring is explicit, not incidental.
+
+> **Schema:** `schemas/intent.schema.json` (v1.1)
 
 ---
 
@@ -917,6 +966,49 @@ This specification follows semantic versioning:
 - **MAJOR** increment: changes to normative requirements that may break existing conformant implementations.
 
 An implementation SHOULD declare both its conformance level and the specification version: e.g., "IDF v1.0 Level 2 conformant".
+
+---
+
+## 9. Determinism (Added in v1.1)
+
+Any algorithm that derives an output from an intent set, an ontology, and a projection set (hereafter the **input triple**) — whether for world computation (§5), intent algebra (§6), integrity checking (§7), or downstream rendering (covered in Part 2) — MUST be **deterministic as a function of the semantic content of the input triple, not of its syntactic presentation**.
+
+Concretely, an implementation MUST satisfy the following properties:
+
+### 9.1 Key-Permutation Invariance
+
+Let `INTENTS` and `PROJECTIONS` be JSON objects (maps from identifiers to declarations). For any permutation π of the keys of `INTENTS` or `PROJECTIONS`, the implementation MUST produce bit-identical output (modulo wall-clock fields such as `generatedAt`).
+
+```
+∀ π ∈ Permutations(keys(INTENTS)):
+    derive(π(INTENTS), PROJECTIONS, ONTOLOGY) ≡ derive(INTENTS, PROJECTIONS, ONTOLOGY)
+```
+
+**Rationale.** The input is a semantic description, not a program. Authoring order carries no meaning. Implementations that iterate `Object.entries` (or equivalent ordered map traversal) without first normalizing keys will violate this property silently.
+
+**Recommended implementation:** sort keys lexicographically at input normalization, then propagate the normalized map through all iteration.
+
+### 9.2 Explicit Tie-Break Only
+
+When an implementation ranks candidates during derivation (e.g., to choose among several intentions for a bounded slot), the ranking function MUST be total and explicit. Permissible ranking criteria:
+
+1. **Declared priority** (e.g., `intent.salience` per §3.5).
+2. **Computed priority** derived from declared particles (e.g., the default salience table in §3.5).
+3. **Lexicographic identifier comparison** — only as a final tie-break.
+
+An implementation MUST NOT use implicit criteria (iteration order, hash-map bucket order, input file order) as a tie-break. A derivation that reaches step 3 above is producing a semantically arbitrary choice; the implementation SHOULD record this fact in any derivation trace it emits (see Part 2 for the witness record protocol).
+
+### 9.3 Conformance
+
+An implementation claiming conformance to v1.1 or later MUST pass all v1.0 conformance tests **twice**: once on the input as authored, once on the input with keys reversed (or otherwise permuted). The two runs MUST produce identical output.
+
+> **Conformance note:** Conformance tests for §9 are provided in `conformance/level-1/determinism-*.json` (to be added in a v1.1 test release).
+
+### 9.4 Rationale
+
+IDF positions itself as a **format**, not a framework (see `README.md`). The claim is meaningful only if two conformant implementations, given identical semantic input in different syntactic presentations, produce identical output. Without §9, an author could write the same domain two ways and get two different artifacts — the format would be a convention tied to a single implementation's iteration order, not a portable specification.
+
+§9 promotes the functoriality requirement from an implementation detail to a normative property of the format.
 
 ---
 

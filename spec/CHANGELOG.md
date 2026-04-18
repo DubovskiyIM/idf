@@ -1,5 +1,35 @@
 # IDF Specification Changelog
 
+## 1.1.0 — 2026-04-19 (Determinism + Salience)
+
+Minor release introducing two normative additions to the core format. Backward-compatible — existing v1.0 conformance tests continue to pass.
+
+### Added
+
+- **§3.5 Salience** — intent-level priority for bounded-slot contention.
+  - Ordinal labels (`"primary" | "secondary" | "tertiary" | "utility"`) with normative numeric mapping (100/50/20/5) and a numeric escape hatch.
+  - Computed default table derived from particles (creator → 80, phase-transition → 70, edit-main → 60, default → 40, destructive → 30, read-only → 10).
+  - Mandatory ordering: declared salience descending, then lexicographic id as final tie-break.
+- **§9 Determinism** — normative format-level property.
+  - §9.1 Key-Permutation Invariance: `derive(π(INTENTS), ...) ≡ derive(INTENTS, ...)` for any permutation π.
+  - §9.2 Explicit Tie-Break Only: implementations MUST NOT use iteration order / hash bucket order as an implicit tie-break.
+  - §9.3 Conformance via input permutation (tests MUST pass under reverse-ordered input).
+  - §9.4 Rationale: `format ≠ convention` requires this property.
+- **`intent.schema.json`** updated with `salience` property (string enum or number).
+
+### Motivated by
+
+Empirical probe on 9 reference domains (`idf/scripts/functoriality-probe.mjs`) showed that 0/9 were strictly key-permutation invariant before this release: 16 of 121 projections produced semantically different artifacts under permutation. After implementing §9 in the reference implementation, all 121 projections are identical under permutation.
+
+See `@intent-driven/core@0.16.0` release notes for the implementation-side change, including `intent.salience` support and the `alphabetical-fallback` witness that is emitted when a v1.1 implementation cannot resolve a tie by §3.5 means and falls through to lexicographic id comparison.
+
+### Not yet in the spec
+
+- **Part 2: Projections & Crystallization** still roadmap. The crystallizer's use of §3.5 salience and its emission of `alphabetical-fallback` witnesses are implementation-level concerns that will be formalized in Part 2.
+- **v1.1 conformance tests** for §9 (`conformance/level-1/determinism-*.json`) are not yet in this release; the reference implementation verifies functoriality via `scripts/functoriality-probe.mjs` in the host repository.
+
+---
+
 ## 1.0.0 — 2026-04-13 (Initial public release)
 
 First publicly available version of the Intent-Driven Framework specification.
