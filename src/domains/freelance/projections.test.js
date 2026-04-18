@@ -172,6 +172,25 @@ describe("freelance projections — wallet", () => {
   });
 });
 
+describe("freelance crystallize — irreversible-confirm matching (__irr intents)", () => {
+  it("confirm_deal/accept_result/auto_accept_result имеют irreversibility=high — матчатся patternом", () => {
+    const irrHigh = Object.values(INTENTS).filter(i => i.irreversibility === "high");
+    expect(irrHigh.length).toBeGreaterThanOrEqual(3);
+    const ids = irrHigh.map(i => i.id || Object.keys(INTENTS).find(k => INTENTS[k] === i));
+    expect(ids).toEqual(expect.arrayContaining(["confirm_deal", "accept_result", "auto_accept_result"]));
+  });
+
+  it("task_detail_customer имеет toolbar с accept_result — overlay автоматически через confirmDialog archetype", () => {
+    const arts = crystallizeV2(INTENTS, PROJECTIONS, ONTOLOGY, "freelance");
+    const dealArt = arts.deal_detail_customer;
+    expect(dealArt).toBeDefined();
+    const overlayItems = dealArt.slots?.overlay || [];
+    const acceptOverlay = overlayItems.find(o => o?.triggerIntentId === "accept_result");
+    expect(acceptOverlay).toBeDefined();
+    expect(acceptOverlay.type).toBe("confirmDialog");
+  });
+});
+
 describe("freelance seed", () => {
   const getSeed = () => import("./seed.js").then(m => m.getSeedEffects());
 

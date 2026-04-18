@@ -709,6 +709,7 @@ export const INTENTS = {
       reason: "Сумма резервируется в escrow — отмена возможна только через спор или mutual-cancel",
     },
     particles: {
+      entities: ["deal: Deal", "task: Task", "response: Response"],
       parameters: [
         { name: "customerId", type: "id", required: true },
         { name: "executorId", type: "id", required: true },
@@ -733,6 +734,7 @@ export const INTENTS = {
     α: "replace",
     irreversibility: "low",
     particles: {
+      entities: ["deal: Deal"],
       parameters: [
         { name: "id", type: "id", required: true },
         { name: "result", type: "text", required: true },
@@ -755,6 +757,7 @@ export const INTENTS = {
       reason: "Escrow-перевод исполнителю — откат только через chargeback поддержки",
     },
     particles: {
+      entities: ["deal: Deal"],
       parameters: [
         { name: "id", type: "id", required: true },
       ],
@@ -776,6 +779,7 @@ export const INTENTS = {
       reason: "Автоматическая приёмка через 72h после on_review — та же finality что и ручная",
     },
     particles: {
+      entities: ["deal: Deal"],
       parameters: [
         { name: "id", type: "id", required: true },
       ],
@@ -793,6 +797,7 @@ export const INTENTS = {
     α: "replace",
     irreversibility: "low",
     particles: {
+      entities: ["deal: Deal"],
       parameters: [
         { name: "id", type: "id", required: true },
         { name: "comment", type: "text", required: true },
@@ -810,6 +815,7 @@ export const INTENTS = {
     α: "replace",
     irreversibility: "low",
     particles: {
+      entities: ["deal: Deal"],
       parameters: [
         { name: "id", type: "id", required: true },
         { name: "result", type: "text", required: true },
@@ -827,6 +833,7 @@ export const INTENTS = {
     α: "replace",
     irreversibility: "medium",
     particles: {
+      entities: ["deal: Deal"],
       parameters: [
         { name: "id", type: "id", required: true },
         { name: "reason", type: "text", required: true },
