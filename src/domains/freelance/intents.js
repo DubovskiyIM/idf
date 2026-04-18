@@ -83,6 +83,152 @@ export const INTENTS = {
     confirmation: "auto",
   },
 
+  // ─── Profile (8) ──────────────────────────────────────────────────────────
+
+  update_profile: {
+    name: "Обновить профиль",
+    description: "Имя / телефон / город в User",
+    α: "replace",
+    irreversibility: "low",
+    particles: {
+      parameters: [
+        { name: "id", type: "id", required: true },
+        { name: "name", type: "text" },
+        { name: "phone", type: "text" },
+        { name: "city", type: "text" },
+      ],
+      effects: [
+        { α: "replace", target: "user" },
+      ],
+    },
+    confirmation: "auto",
+  },
+
+  update_bio: {
+    name: "Изменить bio",
+    description: "Описание исполнителя в ExecutorProfile",
+    α: "replace",
+    irreversibility: "low",
+    particles: {
+      parameters: [
+        { name: "id", type: "id", required: true },
+        { name: "bio", type: "text", required: true },
+      ],
+      effects: [
+        { α: "replace", target: "executorProfile.bio" },
+      ],
+    },
+    confirmation: "auto",
+  },
+
+  add_skill: {
+    name: "Добавить навык",
+    description: "m2m ExecutorSkill: исполнитель ↔ справочник навыков",
+    α: "add",
+    irreversibility: "low",
+    particles: {
+      parameters: [
+        { name: "executorId", type: "id", required: true },
+        { name: "skillId", type: "id", required: true },
+      ],
+      effects: [
+        { α: "add", target: "executorSkills", σ: "account" },
+      ],
+    },
+    creates: "ExecutorSkill",
+    confirmation: "auto",
+  },
+
+  remove_skill: {
+    name: "Убрать навык",
+    description: "Удалить запись ExecutorSkill",
+    α: "remove",
+    irreversibility: "low",
+    particles: {
+      parameters: [
+        { name: "id", type: "id", required: true },
+      ],
+      effects: [
+        { α: "remove", target: "executorSkills" },
+      ],
+    },
+    confirmation: "auto",
+  },
+
+  add_portfolio_item: {
+    name: "Добавить работу в портфолио",
+    description: "Запись портфолио будет полноценной сущностью в Cycle 3; в Cycle 1 — no-op placeholder для UI-polish",
+    α: "add",
+    irreversibility: "low",
+    particles: {
+      parameters: [
+        { name: "executorId", type: "id", required: true },
+        { name: "title", type: "text", required: true },
+        { name: "url", type: "url" },
+      ],
+      effects: [],
+    },
+    confirmation: "auto",
+  },
+
+  update_rates: {
+    name: "Обновить ставки",
+    description: "Минимальная цена и средний срок у исполнителя",
+    α: "replace",
+    irreversibility: "low",
+    particles: {
+      parameters: [
+        { name: "id", type: "id", required: true },
+        { name: "minPrice", type: "number" },
+        { name: "avgDeliveryHours", type: "number" },
+      ],
+      effects: [
+        { α: "replace", target: "executorProfile" },
+      ],
+    },
+    confirmation: "auto",
+  },
+
+  toggle_availability: {
+    name: "Сменить доступность",
+    description: "available / busy / unavailable",
+    α: "replace",
+    irreversibility: "low",
+    particles: {
+      parameters: [
+        { name: "id", type: "id", required: true },
+        {
+          name: "availability",
+          type: "select",
+          options: ["available", "busy", "unavailable"],
+          required: true,
+        },
+      ],
+      effects: [
+        { α: "replace", target: "executorProfile.availability" },
+      ],
+    },
+    confirmation: "auto",
+  },
+
+  activate_executor_profile: {
+    name: "Активировать профиль исполнителя",
+    description: "Создать ExecutorProfile + выставить User.executorVerified=true",
+    α: "add",
+    irreversibility: "low",
+    particles: {
+      parameters: [
+        { name: "userId", type: "id", required: true },
+        { name: "bio", type: "text" },
+      ],
+      effects: [
+        { α: "add", target: "executorProfiles", σ: "account" },
+      ],
+    },
+    creates: "ExecutorProfile",
+    confirmation: "auto",
+  },
+
   // ─── System (3) ───────────────────────────────────────────────────────────
 
   schedule_timer: {
