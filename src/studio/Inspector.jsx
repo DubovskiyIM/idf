@@ -72,12 +72,14 @@ function IntentDetails({ node, warnings, onFixWithClaude }) {
                 <div style={{ color: "#fca5a5", marginBottom: 6 }}>
                   {w.severity === "error" ? "✗" : "⚠"} {w.message}
                 </div>
-                <button onClick={() => onFixWithClaude(node, w)} style={{
-                  padding: "5px 10px", background: "#4338ca", border: "none", borderRadius: 4, color: "white",
-                  fontSize: 11, fontWeight: 500, cursor: "pointer",
-                }}>
-                  Починить через Claude
-                </button>
+                {onFixWithClaude && (
+                  <button onClick={() => onFixWithClaude(node, w)} style={{
+                    padding: "5px 10px", background: "#4338ca", border: "none", borderRadius: 4, color: "white",
+                    fontSize: 11, fontWeight: 500, cursor: "pointer",
+                  }}>
+                    Починить через Claude
+                  </button>
+                )}
               </div>
             ))}
           </div>

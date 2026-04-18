@@ -15,6 +15,7 @@ import { usePersonalPrefs } from "../runtime/renderer/personal/usePersonalPrefs.
 import { useAuth } from "../runtime/renderer/auth/useAuth.js";
 import { fetchGraph } from "./api/graph.js";
 import { subscribeDomain } from "./api/watch.js";
+import { fetchStudioStatus } from "./api/status.js";
 
 function nodeSignature(n) {
   if (n.kind === "entity") return JSON.stringify({ fields: n.fields, ownerField: n.ownerField, statuses: n.statuses });
@@ -41,7 +42,7 @@ function computeDiff(oldGraph, newGraph) {
 // Верхний tab-strip: переключатель между Graph (структура) / Прототип
 // (runtime-UI того же домена) / Patterns (Pattern Bank). Высота 44px
 // фиксирована, вложенные view рассчитывают через calc(100vh - 44px).
-function TabStrip({ view, setView, domainName, onTogglePhi, phiOpen, onToggleChat, chatOpen, onOpenPrefs }) {
+function TabStrip({ view, setView, domainName, onTogglePhi, phiOpen, onToggleChat, chatOpen, onOpenPrefs, readonly }) {
   const tabStyle = (active) => ({
     padding: "10px 20px",
     cursor: "pointer",
@@ -84,7 +85,19 @@ function TabStrip({ view, setView, domainName, onTogglePhi, phiOpen, onToggleCha
             {domainName}
           </div>
           <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
-            <button onClick={onToggleChat} style={actionStyle(chatOpen)} title="Chat с Claude · ⌘K">⌘K Chat</button>
+            {readonly && (
+              <span title="Studio в read-only режиме: Claude CLI недоступен на сервере" style={{
+                fontSize: 10, padding: "3px 8px", borderRadius: 4,
+                background: "rgba(100, 116, 139, 0.2)", color: "#94a3b8",
+                border: "1px solid #334155", textTransform: "uppercase", letterSpacing: "0.05em",
+              }}>read-only</span>
+            )}
+            <button
+              onClick={onToggleChat}
+              disabled={readonly}
+              style={{ ...actionStyle(chatOpen), opacity: readonly ? 0.4 : 1, cursor: readonly ? "not-allowed" : "pointer" }}
+              title={readonly ? "Chat недоступен — Claude CLI не установлен" : "Chat с Claude · ⌘K"}
+            >⌘K Chat</button>
             <button onClick={onTogglePhi} style={actionStyle(phiOpen)} title="Φ-журнал · ⌘J">⌘J Φ</button>
             <button
               onClick={onOpenPrefs}
@@ -132,6 +145,14 @@ export default function App() {
   const [readyDomain, setReadyDomain] = useState(null);
   const [phiOpen, setPhiOpen] = useState(false);
   const [prefsOpen, setPrefsOpen] = useState(false);
+  // Studio status: claudeAvailable = можно генерировать и править через chat.
+  // Если false (нет claude CLI или IDF_READONLY=1) — write-actions disabled.
+  const [studioStatus, setStudioStatus] = useState({ claudeAvailable: true, readonly: false, mode: "authoring" });
+  const readonly = studioStatus.readonly;
+
+  useEffect(() => {
+    fetchStudioStatus().then(setStudioStatus).catch(() => {});
+  }, []);
   // Personal layer §17: глобальные UI-prefs + auth. Одни и те же hooks
   // используются внутри V2Shell (где есть своя кнопка ⚙), но благодаря
   // localStorage-persistance состояние синхронизируется. Делаем prefs
@@ -176,7 +197,7 @@ export default function App() {
     const onKey = (e) => {
       if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") {
         e.preventDefault();
-        setChatOpen((v) => !v);
+        if (!readonly) setChatOpen((v) => !v);
       }
       if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "j") {
         e.preventDefault();
@@ -190,7 +211,7 @@ export default function App() {
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [domain]);
+  }, [domain, readonly]);
 
   const onFixWithClaude = useCallback((node, warning) => {
     setChatPrefill(`В \`${node.intentId}\` ошибка анкеринга: "${warning.message}". Найди частицу и привяжи к правильному полю или удали. Перед Edit — Read файл и Grep похожие паттерны.`);
@@ -204,6 +225,7 @@ export default function App() {
           <DomainPicker
             onPick={setDomain}
             onNewDomain={() => setNewModal(true)}
+            readonly={readonly}
             onGenerateFromDescription={({ slug, name, description }) => {
               setDomain(slug);
               setChatPrefill(`Создай начальный набор intents/entities/projections для домена "${name}". Описание процесса: ${description}. Следуй паттерну booking (как простейшего домена). Начни с ontology.entities, потом intents с частицами, в конце projections (feed/catalog/detail/form под archetype). Кратко отчитайся какие intents/entities созданы.`);
@@ -236,8 +258,12 @@ export default function App() {
           <span>{graph.nodes.length} узлов</span>
           <span style={{ color: "#475569" }}>·</span>
           <span style={{ color: graph.warnings.length > 0 ? "#eab308" : "#94a3b8" }}>⚠ {graph.warnings.length}</span>
-          <span style={{ color: "#475569" }}>·</span>
-          <button onClick={() => setChatOpen(true)} style={{ background: "transparent", border: "none", color: "#60a5fa", cursor: "pointer", fontSize: 12, padding: 0 }}>⌘K chat</button>
+          {!readonly && (
+            <>
+              <span style={{ color: "#475569" }}>·</span>
+              <button onClick={() => setChatOpen(true)} style={{ background: "transparent", border: "none", color: "#60a5fa", cursor: "pointer", fontSize: 12, padding: 0 }}>⌘K chat</button>
+            </>
+          )}
         </div>
         <Graph3D graph={graph} onNodeClick={setSelected} pings={pings} selectedId={selected?.id} flyToken={flyToken} />
         <ThinkingCat visible={chatBusy} />
@@ -259,7 +285,7 @@ export default function App() {
           node={selected}
           warnings={graph.warnings}
           onClose={() => setSelected(null)}
-          onFixWithClaude={onFixWithClaude}
+          onFixWithClaude={readonly ? undefined : onFixWithClaude}
           onFlyTo={() => setFlyToken((t) => t + 1)}
         />
       </div>
@@ -303,6 +329,7 @@ export default function App() {
         onToggleChat={() => setChatOpen((v) => !v)}
         chatOpen={chatOpen}
         onOpenPrefs={() => setPrefsOpen(true)}
+        readonly={readonly}
       />
       <div style={{ flex: 1, position: "relative", minHeight: 0 }}>
         {view === "graph" ? renderGraphView()
@@ -317,7 +344,7 @@ export default function App() {
             intentIds={intentIdsSet}
           />
         )}
-        {domain && (
+        {domain && !readonly && (
           <ChatDrawer
             open={chatOpen}
             onClose={() => setChatOpen(false)}
