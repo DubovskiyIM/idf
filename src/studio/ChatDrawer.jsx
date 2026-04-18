@@ -4,10 +4,25 @@ import ReactMarkdown from "react-markdown";
 import { sendChat } from "./api/chat.js";
 import ToolUseBadge from "./components/ToolUseBadge.jsx";
 
+const MESSAGES_KEY = (d) => `studio.messages.${d}`;
+const SESSION_KEY = (d) => `studio.session.${d}`;
+
+function loadMessages(domain) {
+  try {
+    const raw = sessionStorage.getItem(MESSAGES_KEY(domain));
+    return raw ? JSON.parse(raw) : [];
+  } catch { return []; }
+}
+
 export default function ChatDrawer({ open, onClose, domain, prefill, onPrefillConsumed, onBusyChange, onProgress, onDone }) {
-  const [messages, setMessages] = useState([]);
+  // Per-domain persistence: messages + sessionId живут в sessionStorage,
+  // чтобы переключение между табами / закрытие drawer'а не теряли
+  // историю чата.
+  const [messages, setMessages] = useState(() => loadMessages(domain));
   const [input, setInput] = useState("");
-  const [sessionId, setSessionId] = useState(null);
+  const [sessionId, setSessionId] = useState(() => {
+    try { return sessionStorage.getItem(SESSION_KEY(domain)); } catch { return null; }
+  });
   const [busy, setBusy] = useState(false);
   const abortRef = useRef(null);
   const endRef = useRef(null);
@@ -26,9 +41,21 @@ export default function ChatDrawer({ open, onClose, domain, prefill, onPrefillCo
 
   useEffect(() => { endRef.current?.scrollIntoView({ behavior: "smooth" }); }, [messages]);
 
+  // Persist messages при каждом обновлении (простой debounce не нужен —
+  // пишем в sessionStorage, это fast).
   useEffect(() => {
-    const stored = sessionStorage.getItem(`studio.session.${domain}`);
-    if (stored) setSessionId(stored);
+    if (!domain) return;
+    try {
+      if (messages.length === 0) sessionStorage.removeItem(MESSAGES_KEY(domain));
+      else sessionStorage.setItem(MESSAGES_KEY(domain), JSON.stringify(messages));
+    } catch {}
+  }, [messages, domain]);
+
+  // При смене домена — перезагрузить messages + sessionId из storage.
+  useEffect(() => {
+    setMessages(loadMessages(domain));
+    try { setSessionId(sessionStorage.getItem(SESSION_KEY(domain))); }
+    catch { setSessionId(null); }
   }, [domain]);
 
   const send = async () => {

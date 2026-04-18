@@ -10,6 +10,7 @@ import PrototypeReadyCTA from "./PrototypeReadyCTA.jsx";
 import PatternsView from "./patterns/PatternsView.jsx";
 import OntologyView from "./OntologyView.jsx";
 import IntegrityView from "./IntegrityView.jsx";
+import AlgebraView from "./AlgebraView.jsx";
 import PhiDrawer from "./PhiDrawer.jsx";
 import StudioPrefsPanel from "./StudioPrefsPanel.jsx";
 import DomainRuntime from "../runtime/DomainRuntime.jsx";
@@ -89,6 +90,7 @@ function TabStrip({ view, setView, domainName, onTogglePhi, phiOpen, onToggleCha
         <button onClick={() => setView("graph")} style={tabStyle(view === "graph")}>Граф</button>
         {domainOnly("prototype", "Прототип")}
         {domainOnly("ontology", "Онтология")}
+        {domainOnly("algebra", "Алгебра")}
         {domainOnly("integrity", "Целостность")}
         <button onClick={() => setView("patterns")} style={tabStyle(view === "patterns")}>Паттерны</button>
       </div>
@@ -138,7 +140,7 @@ function initialViewFromUrl() {
   if (typeof window === "undefined") return "graph";
   try {
     const v = new URLSearchParams(window.location.search).get("view");
-    return ["graph", "prototype", "ontology", "integrity", "patterns"].includes(v) ? v : "graph";
+    return ["graph", "prototype", "ontology", "algebra", "integrity", "patterns"].includes(v) ? v : "graph";
   } catch { return "graph"; }
 }
 
@@ -157,6 +159,9 @@ export default function App() {
   const [chatBusy, setChatBusy] = useState(false);
   const [progress, setProgress] = useState({ lastTool: null, toolCount: 0 });
   const [readyDomain, setReadyDomain] = useState(null);
+  // Phase-label для ProgressOverlay — меняется в зависимости от откуда
+  // Claude был запущен (генерация / починка / произвольный prompt).
+  const [chatPhase, setChatPhase] = useState("Claude работает");
   const [phiOpen, setPhiOpen] = useState(false);
   const [prefsOpen, setPrefsOpen] = useState(false);
   // Studio status: claudeAvailable = можно генерировать и править через chat.
@@ -179,7 +184,7 @@ export default function App() {
   // domain-specific tabs (Прототип/Онтология/Целостность) не остались в
   // «disabled but current» состоянии.
   useEffect(() => {
-    if (!domain && ["prototype", "ontology", "integrity"].includes(view)) {
+    if (!domain && ["prototype", "ontology", "algebra", "integrity"].includes(view)) {
       setView("graph");
     }
   }, [domain, view]);
@@ -236,6 +241,7 @@ export default function App() {
   }, [domain, readonly]);
 
   const onFixWithClaude = useCallback((node, warning) => {
+    setChatPhase("Claude чинит анкеринг");
     setChatPrefill(`В \`${node.intentId}\` ошибка анкеринга: "${warning.message}". Найди частицу и привяжи к правильному полю или удали. Перед Edit — Read файл и Grep похожие паттерны.`);
     setChatOpen(true);
   }, []);
@@ -253,6 +259,7 @@ export default function App() {
       : node.type === "entity"
         ? `src/domains/${domain}/ontology.js`
         : `src/domains/${domain}/intents.js`;
+    setChatPhase("Claude чинит целостность");
     setChatPrefill(
       `Целостность домена \`${domain}\`: проблема \`${rule}\` на \`${subject}\`.\n` +
       `Detail: ${detail}\n\n` +
@@ -274,6 +281,7 @@ export default function App() {
             readonly={readonly}
             onGenerateFromDescription={({ slug, name, description }) => {
               setDomain(slug);
+              setChatPhase("Claude генерирует домен");
               setChatPrefill(`Создай начальный набор intents/entities/projections для домена "${name}". Описание процесса: ${description}. Следуй паттерну booking (как простейшего домена). Начни с ontology.entities, потом intents с частицами, в конце projections (feed/catalog/detail/form под archetype). Кратко отчитайся какие intents/entities созданы.`);
               setChatOpen(true);
             }}
@@ -285,6 +293,7 @@ export default function App() {
                 setNewModal(false);
                 setDomain(name);
                 if (prompt) {
+                  setChatPhase("Claude генерирует домен");
                   setChatPrefill(`Создай начальный набор intents/entities/projections для домена "${name}": ${prompt}. Следуй паттерну booking (как простейшего домена). Начни с ontology.entities, потом intents с частицами.`);
                   setChatOpen(true);
                 }
@@ -317,7 +326,7 @@ export default function App() {
           busy={chatBusy}
           toolCount={progress.toolCount}
           lastTool={progress.lastTool}
-          phase="Claude генерирует домен"
+          phase={chatPhase}
         />
         <PrototypeReadyCTA
           visible={!!readyDomain && !chatBusy}
@@ -381,6 +390,7 @@ export default function App() {
         {view === "graph" ? renderGraphView()
           : view === "prototype" ? renderPrototypeView()
           : view === "ontology" ? <OntologyView domainId={domain} />
+          : view === "algebra" ? <AlgebraView domainId={domain} />
           : view === "integrity" ? <IntegrityView domainId={domain} onFixWithClaude={readonly ? undefined : onFixIntegrityIssue} />
           : <PatternsView />}
         {/* Drawers (Chat, Φ) рендерятся в общем контейнере — доступны во всех табах */}
