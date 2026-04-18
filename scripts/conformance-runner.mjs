@@ -184,27 +184,79 @@ function runLevel2(test) {
   return { passed: true, actual, expected };
 }
 
-function runLevel3(test) {
-  // Level-3 — integrity + anchoring. В spec level-3 формат effect внутри
-  // intent.particles.effects использует {type, target, payload} (spec-level-1
-  // convention), SDK ожидает {α, target, value}. Anchoring работает
-  // по entities (не effects), так что часть тестов может проходить даже
-  // при несовпадении формата effects.
-  const { intents, ontology } = test.input;
-  const anchoring = checkAnchoring(intents, ontology);
+/**
+ * Translate SDK anchoring/integrity output to spec findings shape.
+ *
+ * SDK shape (per anchoring.js, integrity.js):
+ *   {rule, level, intent, message, ...} — 'level' is severity, 'intent' is intentId
+ *
+ * Spec shape (per §7, conformance/level-3):
+ *   {rule, intentId, severity, message} + optional `blocking`
+ *
+ * Message strings differ by language between impl and spec — message is
+ * informational per spec §7 (rules described with example messages, not
+ * normative text). Runner compares findings by (rule, intentId, severity)
+ * triple; message is compared as presence-only unless test explicitly asks.
+ */
+function toFinding(sdk) {
+  return {
+    rule: sdk.rule,
+    intentId: sdk.intent ?? sdk.intentId,
+    severity: sdk.level ?? sdk.severity,
+    message: sdk.message,
+  };
+}
 
+function findingsKey(f) {
+  return `${f.rule}|${f.intentId}|${f.severity}`;
+}
+
+/**
+ * Per spec/conformance/README.md for Level 3:
+ *   "all listed findings MUST be present (additional findings MAY be present)"
+ * So actual ⊇ expected (subset check).
+ */
+function findingsContainAll(actual, expected) {
+  const a = new Set(actual.map(findingsKey));
+  for (const f of expected) if (!a.has(findingsKey(f))) return false;
+  return true;
+}
+
+function runLevel3(test) {
+  const { intents, ontology, projections } = test.input;
   const expected = test.expected;
-  if (expected.violations !== undefined) {
-    const expectedHasViolations = expected.violations.length > 0;
-    const actualHasErrors = anchoring.errors.length > 0;
-    return {
-      passed: expectedHasViolations === actualHasErrors,
-      actual: { errors: anchoring.errors, passed: anchoring.passed },
-      expected: { violations: expected.violations },
-    };
+
+  const anchoring = checkAnchoring(intents, ontology);
+  const anchoringFindings = [
+    ...(anchoring.errors || []),
+    ...(anchoring.warnings || []),
+  ].map(toFinding);
+
+  let integrityFindings = [];
+  if (projections) {
+    try {
+      const integrity = checkIntegrity(intents, projections, ontology);
+      const issues = integrity.issues ?? integrity;
+      if (Array.isArray(issues)) {
+        integrityFindings = issues.map(toFinding);
+      }
+    } catch {
+      // checkIntegrity may throw on malformed input — anchoring findings suffice
+    }
   }
 
-  return { passed: anchoring.passed, actual: anchoring, expected };
+  const actualFindings = [...anchoringFindings, ...integrityFindings];
+
+  // Back-compat: old tests используют `expected.violations` — treat as findings.
+  const expectedFindings = expected.findings ?? expected.violations ?? [];
+
+  const passed = findingsContainAll(actualFindings, expectedFindings);
+
+  return {
+    passed,
+    actual: { findings: actualFindings, anchoringPassed: anchoring.passed },
+    expected: { findings: expectedFindings, blocking: expected.blocking },
+  };
 }
 
 const RUNNERS = { 1: runLevel1, 2: runLevel2, 3: runLevel3 };

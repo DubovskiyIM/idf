@@ -32,6 +32,7 @@
     "delivery-seed": "node scripts/delivery-seed.mjs",
     "test": "vitest run --config vitest.config.js",
     "test:watch": "vitest --config vitest.config.js",
+    "conformance": "node scripts/conformance-runner.mjs",
     "test:core": "cd packages/core && npx vitest run",
     "agent-smoke": "node scripts/agent-smoke.mjs",
     "audit-domains": "node scripts/domain-audit.mjs --all",
