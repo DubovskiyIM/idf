@@ -1,29 +1,45 @@
 export const INTENTS = {
   create_poll: {
-    name: "Создать опрос", particles: {
+    name: "Создать опрос",
+    parameters: [
+      { name: "title", type: "text", required: true, placeholder: "Название опроса" },
+      { name: "description", type: "textarea", required: false, placeholder: "Описание" },
+    ],
+    particles: {
       entities: ["poll: Poll"],
       conditions: [],
       effects: [{ α: "add", target: "polls", σ: "account" }],
-      witnesses: [],
-      confirmation: "click"
+      witnesses: ["poll.title"],
+      confirmation: "form"
     }, antagonist: null, creates: "Poll(draft)"
   },
   add_time_option: {
-    name: "Добавить вариант", particles: {
+    name: "Добавить вариант",
+    parameters: [
+      { name: "date", type: "text", required: true, placeholder: "Дата" },
+      { name: "startTime", type: "text", required: true, placeholder: "Начало" },
+      { name: "endTime", type: "text", required: false, placeholder: "Конец" },
+    ],
+    particles: {
       entities: ["poll: Poll", "option: TimeOption"],
       conditions: ["poll.status = 'draft'"],
       effects: [{ α: "add", target: "options", σ: "account" }],
-      witnesses: ["poll.title", "options.count"],
-      confirmation: "click"
+      witnesses: ["poll.title"],
+      confirmation: "form"
     }, antagonist: null, creates: "TimeOption"
   },
   invite_participant: {
-    name: "Пригласить участника", particles: {
+    name: "Пригласить участника",
+    parameters: [
+      { name: "name", type: "text", required: true, placeholder: "Имя" },
+      { name: "email", type: "email", required: false, placeholder: "Email" },
+    ],
+    particles: {
       entities: ["poll: Poll", "participant: Participant"],
       conditions: ["poll.status = 'draft'"],
       effects: [{ α: "add", target: "participants", σ: "account" }],
-      witnesses: ["poll.title", "participants.count"],
-      confirmation: "click"
+      witnesses: ["poll.title"],
+      confirmation: "form"
     }, antagonist: null, creates: "Participant"
   },
   open_poll: {
@@ -43,11 +59,11 @@ export const INTENTS = {
     ],
     particles: {
       entities: ["option: TimeOption", "participant: Participant"],
-      conditions: ["poll.status = 'open'"],
+      conditions: ["poll.status = 'open'", "participant.userId = me.id"],
       effects: [{ α: "add", target: "votes", σ: "account" }],
       witnesses: ["option.date", "option.startTime"],
       confirmation: "click"
-    }, antagonist: null, creates: "Vote(yes)"
+    }, antagonist: null, creates: null
   },
   vote_no: {
     name: "Недоступен",
@@ -57,11 +73,11 @@ export const INTENTS = {
     ],
     particles: {
       entities: ["option: TimeOption", "participant: Participant"],
-      conditions: ["poll.status = 'open'"],
+      conditions: ["poll.status = 'open'", "participant.userId = me.id"],
       effects: [{ α: "add", target: "votes", σ: "account" }],
       witnesses: ["option.date", "option.startTime"],
       confirmation: "click"
-    }, antagonist: null, creates: "Vote(no)"
+    }, antagonist: null, creates: null
   },
   close_poll: {
     name: "Закрыть голосование",
@@ -72,9 +88,9 @@ export const INTENTS = {
       entities: ["poll: Poll"],
       conditions: ["poll.status = 'open'", "ratio(votes.participantId, participants, pollId=target.id) >= 1.0"],
       effects: [{ α: "replace", target: "poll.status", value: "closed", σ: "account" }],
-      witnesses: ["votes.count", "participation_rate"],
+      witnesses: ["poll.title"],
       confirmation: "click"
-    }, antagonist: null, creates: null
+    }, antagonist: null, creates: null, irreversibility: "medium"
   },
   resolve_poll: {
     name: "Выбрать время",
@@ -89,9 +105,9 @@ export const INTENTS = {
         { α: "replace", target: "poll.status", value: "resolved", σ: "account" },
         { α: "add", target: "meetings", σ: "account" }
       ],
-      witnesses: ["winning_option.date", "votes_yes.count", "votes_no.count"],
-      confirmation: "click"
-    }, antagonist: null, creates: "Meeting"
+      witnesses: ["option.date", "option.startTime"],
+      confirmation: "form"
+    }, antagonist: "cancel_meeting", creates: "Meeting"
   },
   cancel_poll: {
     name: "Отменить опрос", particles: {
@@ -107,18 +123,18 @@ export const INTENTS = {
       entities: ["meeting: Meeting"],
       conditions: ["meeting.status = 'confirmed'"],
       effects: [{ α: "replace", target: "meeting.status", value: "cancelled", σ: "account" }],
-      witnesses: ["meeting.title", "meeting.date", "participants.count"],
+      witnesses: ["meeting.title", "meeting.date"],
       confirmation: "click"
     }, antagonist: "resolve_poll", creates: null, irreversibility: "high"
   },
   decline_invitation: {
     name: "Отклонить приглашение", particles: {
       entities: ["participant: Participant"],
-      conditions: ["participant.status = 'active'"],
+      conditions: ["participant.status = 'active'", "participant.userId = me.id"],
       effects: [{ α: "replace", target: "participant.status", value: "declined", σ: "account" }],
       witnesses: ["poll.title"],
       confirmation: "click"
-    }, antagonist: null, creates: null
+    }, antagonist: "accept_invitation", creates: null
   },
   vote_maybe: {
     name: "Возможно",
@@ -128,11 +144,11 @@ export const INTENTS = {
     ],
     particles: {
       entities: ["option: TimeOption", "participant: Participant"],
-      conditions: ["poll.status = 'open'"],
+      conditions: ["poll.status = 'open'", "participant.userId = me.id"],
       effects: [{ α: "add", target: "votes", σ: "account" }],
       witnesses: ["option.date", "option.startTime"],
       confirmation: "click"
-    }, antagonist: null, creates: "Vote(maybe)"
+    }, antagonist: null, creates: null
   },
   suggest_alternative: {
     name: "Предложить время",
@@ -146,8 +162,8 @@ export const INTENTS = {
       entities: ["poll: Poll", "option: TimeOption"],
       conditions: ["poll.status = 'open'"],
       effects: [{ α: "add", target: "options", σ: "account" }],
-      witnesses: ["poll.title", "existing_options"],
-      confirmation: "click"
+      witnesses: ["poll.title"],
+      confirmation: "form"
     }, antagonist: null, creates: "TimeOption"
   },
   set_deadline: {

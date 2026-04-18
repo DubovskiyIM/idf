@@ -12,7 +12,13 @@ export const ONTOLOGY = {
       type: "internal"
     },
     Specialist: {
-      fields: ["id", "name", "specialization"],
+      fields: {
+        id: { type: "id" },
+        userId: { type: "entityRef", read: ["*"], label: "Пользователь" },
+        name: { type: "text", read: ["*"], required: true, label: "Имя" },
+        specialization: { type: "text", read: ["*"], label: "Специализация" },
+      },
+      ownerField: "userId",
       type: "internal"
     },
     Service: {
@@ -28,7 +34,18 @@ export const ONTOLOGY = {
       type: "internal"
     },
     TimeSlot: {
-      fields: ["id", "specialistId", "date", "startTime", "endTime", "status"],
+      fields: {
+        id: { type: "id" },
+        specialistId: { type: "entityRef", read: ["*"], label: "Специалист" },
+        date: { type: "text", read: ["*"], label: "Дата" },
+        startTime: { type: "text", read: ["*"], label: "Начало" },
+        endTime: { type: "text", read: ["*"], label: "Конец" },
+        status: {
+          type: "enum", read: ["*"], label: "Статус",
+          values: ["free", "held", "booked", "blocked"],
+          valueLabels: { free: "Свободно", held: "Занят (draft)", booked: "Забронирован", blocked: "Недоступен" },
+        },
+      },
       statuses: ["free", "held", "booked", "blocked"],
       type: "mirror"
     },
@@ -41,7 +58,11 @@ export const ONTOLOGY = {
         serviceName: { type: "text", read: ["*"], label: "Услуга" },
         slotId: { type: "entityRef" },
         slotIds: { type: "text" },
-        status: { type: "enum", read: ["*"], label: "Статус" },
+        status: {
+          type: "enum", read: ["*"], label: "Статус",
+          values: ["draft", "confirmed", "completed", "cancelled", "no_show"],
+          valueLabels: { draft: "Черновик", confirmed: "Подтверждена", completed: "Завершена", cancelled: "Отменена", no_show: "Не явился" },
+        },
         price: { type: "number", read: ["*"], label: "Цена" },
         date: { type: "text", read: ["*"], label: "Дата" },
         startTime: { type: "text", read: ["*"], label: "Начало" },
@@ -52,7 +73,17 @@ export const ONTOLOGY = {
       type: "internal"
     },
     Review: {
-      fields: ["id", "bookingId", "specialistId", "serviceName", "authorId", "rating", "text", "response", "createdAt"],
+      fields: {
+        id: { type: "id" },
+        bookingId: { type: "entityRef", read: ["*"], label: "Запись" },
+        specialistId: { type: "entityRef", read: ["*"], label: "Специалист" },
+        serviceName: { type: "text", read: ["*"], label: "Услуга" },
+        authorId: { type: "entityRef", read: ["*"], label: "Автор" },
+        rating: { type: "number", read: ["*"], write: ["self"], required: true, label: "Оценка", min: 1, max: 5 },
+        text: { type: "textarea", read: ["*"], write: ["self"], label: "Отзыв" },
+        response: { type: "textarea", read: ["*"], label: "Ответ специалиста" },
+        createdAt: { type: "datetime", read: ["*"], label: "Создан" },
+      },
       ownerField: "authorId",
       type: "internal"
     }

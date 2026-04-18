@@ -4,17 +4,18 @@ export const INTENTS = {
       entities: ["workflow: Workflow"],
       conditions: [],
       effects: [{ α: "add", target: "workflows", σ: "account" }],
-      witnesses: [],
-      confirmation: "click"
-    }, antagonist: null, creates: "Workflow(draft)"
+      witnesses: ["workflow.title"],
+      confirmation: "form"
+    }, antagonist: null, creates: "Workflow(draft)",
+    parameters: [{ name: "title", type: "text", required: true, placeholder: "Название workflow" }],
   },
   add_node: {
     name: "Добавить узел", particles: {
       entities: ["workflow: Workflow", "node: Node"],
       conditions: ["workflow.status IN ('draft','saved')"],
       effects: [{ α: "add", target: "nodes", σ: "account" }],
-      witnesses: ["node.type", "canvas_position"],
-      confirmation: "click"
+      witnesses: ["node.type", "node.x", "node.y"],
+      confirmation: "drag"
     }, antagonist: null, creates: "Node"
   },
   remove_node: {
@@ -32,7 +33,7 @@ export const INTENTS = {
   move_node: {
     name: "Переместить узел", particles: {
       entities: ["node: Node"],
-      conditions: [],
+      conditions: ["workflow.status IN ('draft','saved')"],
       effects: [
         { α: "replace", target: "node.x", σ: "account" },
         { α: "replace", target: "node.y", σ: "account" }
@@ -57,7 +58,7 @@ export const INTENTS = {
       effects: [{ α: "remove", target: "edges", σ: "account" }],
       witnesses: ["source.label", "target.label"],
       confirmation: "click"
-    }, antagonist: "connect_nodes", creates: null
+    }, antagonist: "connect_nodes", creates: null, irreversibility: "low"
   },
   configure_node: {
     name: "Настроить узел", particles: {
@@ -85,9 +86,9 @@ export const INTENTS = {
         { α: "replace", target: "workflow.status", value: "running", σ: "account" },
         { α: "add", target: "executions", σ: "account" }
       ],
-      witnesses: ["nodes.count", "validation_status"],
+      witnesses: ["workflow.title"],
       confirmation: "click"
-    }, antagonist: null, creates: "Execution"
+    }, antagonist: null, creates: null
   },
   stop_execution: {
     name: "Остановить", particles: {
@@ -104,11 +105,11 @@ export const INTENTS = {
   rename_node: {
     name: "Переименовать узел", particles: {
       entities: ["node: Node"],
-      conditions: [],
+      conditions: ["workflow.status IN ('draft','saved')"],
       effects: [{ α: "replace", target: "node.label", σ: "account" }],
-      witnesses: ["node.label (текущий)"],
-      confirmation: "click"
-    }, antagonist: null, creates: null
+      witnesses: ["node.label"],
+      confirmation: "form"
+    }, antagonist: null, creates: null, phase: "investigation"
   },
   delete_workflow: {
     name: "Удалить workflow", particles: {
@@ -132,9 +133,9 @@ export const INTENTS = {
         { α: "add", target: "nodes", σ: "account" },
         { α: "add", target: "edges", σ: "account" }
       ],
-      witnesses: ["workflow.title", "nodes.count", "edges.count"],
+      witnesses: ["workflow.title"],
       confirmation: "click"
-    }, antagonist: null, creates: "Workflow", extended: true
+    }, antagonist: null, creates: null, extended: true
   },
   add_custom_node_type: {
     name: "Создать тип узла", particles: {

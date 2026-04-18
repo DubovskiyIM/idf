@@ -34,6 +34,7 @@
     "test:watch": "vitest --config vitest.config.js",
     "test:core": "cd packages/core && npx vitest run",
     "agent-smoke": "node scripts/agent-smoke.mjs",
+    "audit-domains": "node scripts/domain-audit.mjs --all",
     "crystallize-llm": "node scripts/crystallize-llm.mjs",
     "sales-demo": "node scripts/sales-walkthrough.mjs",
     "dev:studio": "concurrently -n server,vite \"npm run server\" \"vite --host 0.0.0.0\""
