@@ -14,28 +14,32 @@ const ALPHA_COLORS = {
   batch: "#a78bfa",
 };
 
+// Максимум строк в DOM — защита от тяжёлого domain (13k+ эффектов).
+// Новые SSE-event'ы обрезают старые.
+const MAX_ROWS = 500;
+// Дефолтный initial-load (последние N по времени).
+const INITIAL_LIMIT = 200;
+
 function formatTime(ts) {
-  if (!ts) return "";
-  const d = new Date(Number(ts));
+  const n = Number(ts);
+  if (!Number.isFinite(n) || n <= 0) return "—";
+  const d = new Date(n);
+  if (isNaN(d.getTime())) return "—";
   return d.toLocaleTimeString("ru", { hour: "2-digit", minute: "2-digit", second: "2-digit" });
 }
 
-function EffectRow({ eff, onClick }) {
+function EffectRow({ eff }) {
   const alpha = eff.alpha || "—";
   const target = eff.target || "—";
   const status = eff.status || "proposed";
-  const id = eff.id;
   return (
-    <button
-      onClick={() => onClick?.(eff)}
+    <div
       style={{
-        display: "block", width: "100%", textAlign: "left",
         padding: "10px 12px", marginBottom: 6,
         background: status === "rejected" ? "rgba(239, 68, 68, 0.04)" : "#1e293b",
         border: `1px solid ${status === "rejected" ? "rgba(239, 68, 68, 0.3)" : "#334155"}`,
-        borderRadius: 6, cursor: "pointer",
-        opacity: status === "rejected" ? 0.7 : 1,
-        fontFamily: "inherit",
+        borderRadius: 6,
+        opacity: status === "rejected" ? 0.75 : 1,
       }}
     >
       <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
@@ -51,40 +55,87 @@ function EffectRow({ eff, onClick }) {
         <span style={{ fontFamily: "ui-monospace, monospace" }}>{eff.intent_id}</span>
         <span>{formatTime(eff.created_at)}</span>
       </div>
-    </button>
+    </div>
   );
 }
 
 /**
  * PhiDrawer — правая панель с real-time лентой эффектов Φ-журнала.
- * Фильтрует по intentIds текущего домена (+ служебные _seed/_sync).
- * Подключается к SSE /api/effects/stream для апдейтов.
+ *
+ * Оптимизации для тяжёлых доменов (13k+):
+ *   - Server-side фильтр: GET /api/effects?intents=csv&limit=N&includeSeed
+ *   - Initial load limit=200 (последние по времени)
+ *   - DOM cap MAX_ROWS=500: новые SSE-event'ы обрезают старые
+ *   - Default skipSeed=true: _seed/_sync обычно шум, toggle для debug
+ *   - «Показать ещё» — расширяет limit до 1000, потом 5000
  */
 export default function PhiDrawer({ open, onClose, domain, intentIds }) {
   const [effects, setEffects] = useState([]);
   const [filter, setFilter] = useState("all"); // all | proposed | confirmed | rejected
+  const [skipSeed, setSkipSeed] = useState(true);
+  const [limit, setLimit] = useState(INITIAL_LIMIT);
+  const [totalCount, setTotalCount] = useState(null);
+  const [loading, setLoading] = useState(false);
   const esRef = useRef(null);
 
-  // Initial load + SSE subscribe.
+  const intentsCsv = useMemo(() => {
+    if (!intentIds || intentIds.size === 0) return null;
+    return [...intentIds].join(",");
+  }, [intentIds]);
+
+  // Initial load + SSE subscribe. Перезагружается если меняются фильтры
+  // требующие server-side refetch (intents, skipSeed, limit, status).
   useEffect(() => {
     if (!open) return;
     let cancelled = false;
-    fetch("/api/effects")
+    const params = new URLSearchParams();
+    if (intentsCsv) params.set("intents", intentsCsv);
+    params.set("limit", String(limit));
+    params.set("includeSeed", skipSeed ? "0" : "1");
+    if (filter !== "all") params.set("status", filter);
+
+    setLoading(true);
+    fetch(`/api/effects?${params.toString()}`)
       .then((r) => r.json())
       .then((list) => {
-        if (!cancelled) setEffects(list || []);
+        if (cancelled) return;
+        setEffects(Array.isArray(list) ? list.slice(-MAX_ROWS) : []);
+        setLoading(false);
       })
-      .catch(() => {});
+      .catch(() => setLoading(false));
 
+    return () => { cancelled = true; };
+  }, [open, intentsCsv, limit, skipSeed, filter]);
+
+  // SSE stream: apply события поверх загруженной базы. Фильтруем на
+  // клиенте по тем же критериям — SSE отдаёт всё, а мы только релевант.
+  useEffect(() => {
+    if (!open) return;
     const es = new EventSource("/api/effects/stream");
     esRef.current = es;
+
+    const passesFilter = (e) => {
+      if (!e) return false;
+      if (intentIds && intentIds.size > 0) {
+        const isSystem = e.intent_id === "_seed" || e.intent_id === "_sync";
+        if (!intentIds.has(e.intent_id) && !(isSystem && !skipSeed)) return false;
+      } else if (skipSeed && (e.intent_id === "_seed" || e.intent_id === "_sync")) {
+        return false;
+      }
+      if (filter !== "all" && e.status !== filter) return false;
+      return true;
+    };
+
     es.addEventListener("effect", (evt) => {
       try {
         const e = JSON.parse(evt.data);
+        if (!passesFilter(e)) return;
         setEffects((prev) => {
           const idx = prev.findIndex((p) => p.id === e.id);
-          if (idx >= 0) { const next = [...prev]; next[idx] = e; return next; }
-          return [...prev, e];
+          let next;
+          if (idx >= 0) { next = [...prev]; next[idx] = e; }
+          else next = [...prev, e];
+          return next.length > MAX_ROWS ? next.slice(-MAX_ROWS) : next;
         });
       } catch {}
     });
@@ -94,35 +145,36 @@ export default function PhiDrawer({ open, onClose, domain, intentIds }) {
         setEffects((prev) => prev.map((p) => (p.id === id ? { ...p, status: "rejected" } : p)));
       } catch {}
     });
-    es.addEventListener("effects:reset", () => {
-      fetch("/api/effects").then((r) => r.json()).then((l) => setEffects(l || [])).catch(() => {});
-    });
-    return () => {
-      cancelled = true;
-      es.close();
-      esRef.current = null;
+    return () => { es.close(); esRef.current = null; };
+  }, [open, intentIds, skipSeed, filter]);
+
+  // Периодический total count (не ломает главный поток, агрегат).
+  useEffect(() => {
+    if (!open) return;
+    let cancelled = false;
+    const fetchCount = () => {
+      const params = new URLSearchParams();
+      if (intentsCsv) params.set("intents", intentsCsv);
+      params.set("includeSeed", skipSeed ? "0" : "1");
+      fetch(`/api/effects?${params.toString()}`)
+        .then((r) => r.json())
+        .then((list) => {
+          if (!cancelled && Array.isArray(list)) setTotalCount(list.length);
+        })
+        .catch(() => {});
     };
-  }, [open]);
+    fetchCount();
+    const t = setInterval(fetchCount, 8000);
+    return () => { cancelled = true; clearInterval(t); };
+  }, [open, intentsCsv, skipSeed]);
 
-  // Фильтр по intent_ids домена + служебные.
-  const domainEffects = useMemo(() => {
-    if (!intentIds || intentIds.size === 0) return effects;
-    return effects.filter((e) =>
-      intentIds.has(e.intent_id) ||
-      e.intent_id === "_seed" || e.intent_id === "_sync" || e.intent_id?.startsWith("_")
-    );
-  }, [effects, intentIds]);
-
-  const visible = useMemo(() => {
-    const base = filter === "all" ? domainEffects : domainEffects.filter((e) => e.status === filter);
-    return [...base].reverse();
-  }, [domainEffects, filter]);
+  const visible = useMemo(() => [...effects].reverse(), [effects]);
 
   const stats = useMemo(() => {
     const byStatus = { proposed: 0, confirmed: 0, rejected: 0 };
-    for (const e of domainEffects) byStatus[e.status] = (byStatus[e.status] || 0) + 1;
+    for (const e of effects) byStatus[e.status] = (byStatus[e.status] || 0) + 1;
     return byStatus;
-  }, [domainEffects]);
+  }, [effects]);
 
   const pillStyle = (active) => ({
     padding: "3px 10px", fontSize: 11, borderRadius: 12, cursor: "pointer",
@@ -131,6 +183,8 @@ export default function PhiDrawer({ open, onClose, domain, intentIds }) {
     border: `1px solid ${active ? "#4338ca" : "#334155"}`,
     fontFamily: "inherit",
   });
+
+  const canLoadMore = totalCount !== null && effects.length < totalCount && limit < 5000;
 
   return (
     <AnimatePresence>
@@ -150,31 +204,69 @@ export default function PhiDrawer({ open, onClose, domain, intentIds }) {
         >
           <div style={{ padding: "16px 20px", borderBottom: "1px solid #1e293b" }}>
             <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 12 }}>
-              <div style={{ fontSize: 14, fontWeight: 600, flex: 1 }}>Φ · {domain}</div>
+              <div style={{ fontSize: 14, fontWeight: 600, flex: 1 }}>
+                Φ · {domain}
+                {totalCount !== null && (
+                  <span style={{ fontSize: 11, color: "#64748b", fontWeight: 400, marginLeft: 8 }}>
+                    {effects.length} / {totalCount}
+                  </span>
+                )}
+              </div>
               <button onClick={onClose} style={{ background: "transparent", border: "none", color: "#64748b", fontSize: 16, cursor: "pointer", padding: 0 }}>✕</button>
             </div>
-            <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+            <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 10 }}>
               <button onClick={() => setFilter("all")} style={pillStyle(filter === "all")}>
-                Все · {domainEffects.length}
+                Все
               </button>
               <button onClick={() => setFilter("confirmed")} style={pillStyle(filter === "confirmed")}>
-                ● confirmed · {stats.confirmed || 0}
+                ● confirmed{filter === "all" ? ` · ${stats.confirmed}` : ""}
               </button>
               <button onClick={() => setFilter("proposed")} style={pillStyle(filter === "proposed")}>
-                ● proposed · {stats.proposed || 0}
+                ● proposed{filter === "all" ? ` · ${stats.proposed}` : ""}
               </button>
               <button onClick={() => setFilter("rejected")} style={pillStyle(filter === "rejected")}>
-                ● rejected · {stats.rejected || 0}
+                ● rejected{filter === "all" ? ` · ${stats.rejected}` : ""}
               </button>
             </div>
+            <label style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 11, color: "#94a3b8", cursor: "pointer" }}>
+              <input
+                type="checkbox"
+                checked={!skipSeed}
+                onChange={(e) => setSkipSeed(!e.target.checked)}
+                style={{ cursor: "pointer", accentColor: "#6366f1" }}
+              />
+              <span>Показывать _seed / _sync</span>
+            </label>
           </div>
           <div style={{ flex: 1, overflowY: "auto", padding: "12px 20px" }}>
-            {visible.length === 0 ? (
+            {loading && effects.length === 0 ? (
+              <div style={{ color: "#64748b", fontSize: 13, textAlign: "center", padding: 32 }}>Загрузка…</div>
+            ) : visible.length === 0 ? (
               <div style={{ color: "#64748b", fontSize: 13, textAlign: "center", padding: 32, lineHeight: 1.6 }}>
                 {filter === "all" ? "Пока эффектов нет" : `Нет эффектов со статусом «${filter}»`}
               </div>
             ) : (
-              visible.map((eff) => <EffectRow key={eff.id} eff={eff} />)
+              <>
+                {visible.map((eff) => <EffectRow key={eff.id} eff={eff} />)}
+                {canLoadMore && (
+                  <button
+                    onClick={() => setLimit(limit < 1000 ? 1000 : 5000)}
+                    style={{
+                      width: "100%", padding: "10px 12px", marginTop: 6,
+                      background: "transparent", border: "1px dashed #334155",
+                      borderRadius: 6, color: "#94a3b8", fontSize: 12, cursor: "pointer",
+                      fontFamily: "inherit",
+                    }}
+                  >
+                    Показать ещё (до {limit < 1000 ? "1000" : "5000"})
+                  </button>
+                )}
+                {!canLoadMore && totalCount !== null && effects.length >= totalCount && effects.length >= 500 && (
+                  <div style={{ color: "#64748b", fontSize: 11, textAlign: "center", padding: "10px 0" }}>
+                    Все {totalCount} эффектов загружены
+                  </div>
+                )}
+              </>
             )}
           </div>
         </motion.div>

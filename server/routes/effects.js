@@ -19,9 +19,44 @@ function broadcast(event, data) {
   }
 }
 
-// GET /api/effects — все эффекты
+// GET /api/effects — все эффекты + опциональные фильтры.
+// Query:
+//   ?intents=a,b,c  — только с intent_id в csv-списке (+ _seed/_sync если includeSeed=1)
+//   ?limit=N        — последние N строк (ORDER BY created_at DESC LIMIT N, вернёт в ASC)
+//   ?includeSeed=1  — добавить _seed/_sync к фильтру intents (по умолчанию skip)
+//   ?status=s       — фильтр по status (confirmed|proposed|rejected)
+// Без параметров — весь поток как раньше (legacy behaviour).
 router.get("/", (req, res) => {
-  const effects = db.prepare("SELECT * FROM effects ORDER BY created_at ASC").all();
+  const { intents, limit, includeSeed, status } = req.query;
+  const whereParts = [];
+  const params = [];
+
+  if (intents && typeof intents === "string") {
+    const list = intents.split(",").map(s => s.trim()).filter(Boolean);
+    const wantSeed = includeSeed === "1" || includeSeed === "true";
+    const intentIds = wantSeed ? [...list, "_seed", "_sync"] : list;
+    if (intentIds.length > 0) {
+      const placeholders = intentIds.map(() => "?").join(",");
+      whereParts.push(`intent_id IN (${placeholders})`);
+      params.push(...intentIds);
+    }
+  }
+
+  if (status && ["confirmed", "proposed", "rejected"].includes(status)) {
+    whereParts.push("status = ?");
+    params.push(status);
+  }
+
+  const where = whereParts.length > 0 ? `WHERE ${whereParts.join(" AND ")}` : "";
+  const parsedLimit = Math.min(Math.max(parseInt(limit) || 0, 0), 5000);
+
+  // При limit — берём последние N по времени, возвращаем в хронологическом
+  // порядке (чтобы клиент мог append'ить event-stream в конец).
+  const sql = parsedLimit > 0
+    ? `SELECT * FROM (SELECT * FROM effects ${where} ORDER BY created_at DESC LIMIT ${parsedLimit}) ORDER BY created_at ASC`
+    : `SELECT * FROM effects ${where} ORDER BY created_at ASC`;
+
+  const effects = db.prepare(sql).all(...params);
   res.json(effects.map(e => ({
     ...e,
     value: e.value ? JSON.parse(e.value) : null,
