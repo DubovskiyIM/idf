@@ -44,7 +44,7 @@ export const INTENTS = {
     ["goal.status = 'active'", "goal.userId = me.id"],
     [ef("replace", "goal.status", "account", { value: "completed" })],
     [],
-    "click", { antagonist: "reactivate_goal" }),
+    "click"),
 
   abandon_goal: intent("Отказаться от цели", ["goal: Goal"],
     ["goal.status = 'active'", "goal.userId = me.id"],
@@ -153,7 +153,7 @@ export const INTENTS = {
     ["habit.userId = me.id", "habit.status != 'archived'"],
     [ef("replace", "habit.status", "account", { value: "archived" })],
     [],
-    "click"),
+    "click", { irreversibility: "medium" }),
 
   // ===== ЗАДАЧИ (8) =====
 
@@ -178,7 +178,7 @@ export const INTENTS = {
     ["task.userId = me.id"],
     [ef("remove", "tasks")],
     [],
-    "click"),
+    "click", { irreversibility: "medium" }),
 
   edit_task: intent("Редактировать задачу", ["task: Task"],
     ["task.userId = me.id"],
@@ -220,7 +220,7 @@ export const INTENTS = {
   reassess_all: intent("Пересмотреть все сферы", [],
     [], [ef("add", "sphereAssessments")],
     [],
-    "click", { extended: true }),
+    "click", { extended: true, system: true }),
 
   set_sphere_target: intent("Установить цель сферы", ["assessment: SphereAssessment"],
     ["assessment.userId = me.id"],
@@ -263,7 +263,7 @@ export const INTENTS = {
     ["visionItem.userId = me.id"],
     [ef("remove", "visionItems")],
     [],
-    "click"),
+    "click", { irreversibility: "medium" }),
 
   upload_vision_image: intent("Загрузить картинку", ["visionItem: VisionItem"],
     ["visionItem.userId = me.id"],
@@ -299,13 +299,13 @@ export const INTENTS = {
   random_quote: intent("Случайная цитата", [],
     [], [ef("add", "quotes")],
     [],
-    "click"),
+    "click", { system: true }),
 
   clear_quote: intent("Убрать цитату", ["quote: Quote"],
     ["quote.userId = me.id"],
     [ef("remove", "quotes")],
     [],
-    "click"),
+    "click", { irreversibility: "low" }),
 
   // ===== ГЕЙМИФИКАЦИЯ (4, auto) =====
 

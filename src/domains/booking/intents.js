@@ -21,35 +21,35 @@ export const INTENTS = {
   confirm_booking: {
     name: "Подтвердить запись", particles: {
       entities: ["draft: Booking(draft)"],
-      conditions: ["draft.slotId != null", "draft.serviceId != null"],
+      conditions: ["draft.slotId != null", "draft.serviceId != null", "draft.clientId = me.id"],
       effects: [
         { α: "add", target: "bookings", σ: "account" },
         { α: "replace", target: "slot.status", value: "booked", σ: "shared" }
       ],
       witnesses: ["service.name", "service.price", "slot.date", "slot.startTime", "specialist.name"],
-      confirmation: "click"
+      confirmation: "form"
     }, antagonist: "cancel_booking", creates: "Booking(confirmed)"
   },
   cancel_booking: {
     name: "Отменить запись", particles: {
       entities: ["booking: Booking", "slot: TimeSlot"],
-      conditions: ["booking.status = 'confirmed'"],
+      conditions: ["booking.status = 'confirmed'", "booking.clientId = me.id"],
       effects: [
         { α: "replace", target: "booking.status", value: "cancelled", σ: "account" },
         { α: "replace", target: "slot.status", value: "free", σ: "shared" }
       ],
       witnesses: ["booking.serviceName", "booking.date", "booking.startTime"],
       confirmation: "click"
-    }, antagonist: "confirm_booking", creates: null
+    }, antagonist: "confirm_booking", creates: null, irreversibility: "high"
   },
   abandon_draft: {
     name: "Отменить черновик", particles: {
       entities: ["draft: Booking(draft)"],
-      conditions: [],
+      conditions: ["draft.clientId = me.id"],
       effects: [{ α: "remove", target: "drafts", σ: "session" }],
       witnesses: ["draft.serviceName"],
       confirmation: "click"
-    }, antagonist: null, creates: null
+    }, antagonist: null, creates: null, irreversibility: "low"
   },
   complete_booking: {
     name: "Завершить приём", particles: {
@@ -61,12 +61,18 @@ export const INTENTS = {
     }, antagonist: null, creates: null
   },
   add_service: {
-    name: "Добавить услугу", particles: {
+    name: "Добавить услугу",
+    parameters: [
+      { name: "name", type: "text", required: true, placeholder: "Название" },
+      { name: "duration", type: "number", required: true, placeholder: "Длительность, мин" },
+      { name: "price", type: "number", required: true, placeholder: "Цена" },
+    ],
+    particles: {
       entities: ["service: Service"],
       conditions: ["service.specialistOnly = true"],
       effects: [{ α: "add", target: "services", σ: "account" }],
-      witnesses: ["specialist.services.count"],
-      confirmation: "click"
+      witnesses: ["service.name"],
+      confirmation: "form"
     }, antagonist: null, creates: "Service"
   },
   block_slot: {
@@ -76,7 +82,7 @@ export const INTENTS = {
       effects: [{ α: "replace", target: "slot.status", value: "blocked", σ: "shared" }],
       witnesses: ["slot.date", "slot.startTime"],
       confirmation: "click"
-    }, antagonist: null, creates: null
+    }, antagonist: "unblock_slot", creates: null, irreversibility: "low"
   },
   unblock_slot: {
     name: "Разблокировать слот", particles: {
@@ -110,18 +116,23 @@ export const INTENTS = {
     }, antagonist: null, creates: null
   },
   leave_review: {
-    name: "Оставить отзыв", particles: {
+    name: "Оставить отзыв",
+    parameters: [
+      { name: "rating", type: "number", required: true, placeholder: "Оценка 1-5" },
+      { name: "text", type: "textarea", required: false, placeholder: "Комментарий" },
+    ],
+    particles: {
       entities: ["booking: Booking", "review: Review"],
-      conditions: ["booking.status = 'completed'"],
+      conditions: ["booking.status = 'completed'", "booking.clientId = me.id"],
       effects: [{ α: "add", target: "reviews", σ: "account" }],
       witnesses: ["booking.serviceName", "booking.date"],
-      confirmation: "click"
+      confirmation: "form"
     }, antagonist: null, creates: "Review"
   },
   delete_review: {
     name: "Удалить отзыв", particles: {
       entities: ["review: Review"],
-      conditions: [],
+      conditions: ["review.authorId = me.id"],
       effects: [{ α: "remove", target: "reviews", σ: "account" }],
       witnesses: ["review.text"],
       confirmation: "click"
@@ -137,7 +148,7 @@ export const INTENTS = {
       ],
       witnesses: ["target_date", "bookings.count", "affected_clients"],
       confirmation: "click"
-    }, antagonist: null, creates: null, extended: true
+    }, antagonist: null, creates: null, extended: true, irreversibility: "high"
   },
   repeat_booking: {
     name: "Повторить запись", particles: {
@@ -151,13 +162,13 @@ export const INTENTS = {
   edit_review: {
     name: "Редактировать отзыв", particles: {
       entities: ["review: Review"],
-      conditions: [],
+      conditions: ["review.authorId = me.id"],
       effects: [
         { α: "replace", target: "review.rating", σ: "account" },
         { α: "replace", target: "review.text", σ: "account" }
       ],
-      witnesses: ["review.rating (текущий)", "review.text (текущий)"],
-      confirmation: "click"
+      witnesses: ["review.rating", "review.text"],
+      confirmation: "form"
     }, antagonist: null, creates: null, phase: "investigation"
   },
   cancel_client_booking: {
@@ -213,9 +224,9 @@ export const INTENTS = {
         { α: "replace", target: "slot.status", value: "booked", σ: "shared" }
       ],
       witnesses: ["service.name", "specialist.name", "slot.date", "slot.startTime"],
-      confirmation: "click"
+      confirmation: "form"
     },
-    antagonist: "cancel_booking",
+    antagonist: null,
     creates: "Booking"
   }
 };
