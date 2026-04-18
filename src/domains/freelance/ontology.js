@@ -330,5 +330,49 @@ export const ONTOLOGY = {
       where: { status: "selected" },
       severity: "error",
     },
+
+    // 4. Конечный автомат статусов сделки (escrow lifecycle).
+    {
+      name: "deal_status_transition",
+      kind: "transition",
+      entity: "Deal",
+      field: "status",
+      allowed: [
+        ["new", "awaiting_payment"],
+        ["awaiting_payment", "in_progress"],
+        ["awaiting_payment", "cancelled"],
+        ["in_progress", "on_review"],
+        ["in_progress", "cancelled"],
+        ["on_review", "completed"],
+        ["on_review", "in_progress"],
+        ["new", "cancelled"],
+      ],
+      severity: "error",
+    },
+
+    // 5. Wallet.reserved = Σ Transaction[kind=escrow-hold, status=posted] по одному кошельку.
+    //    Проверка bookkeeping: реальная сумма в escrow-hold всегда совпадает с reserved-полем.
+    {
+      name: "wallet_reserved_equals_escrow_sum",
+      kind: "aggregate",
+      entity: "Wallet",
+      field: "reserved",
+      formula: {
+        op: "sum",
+        of: "Transaction.amount",
+        where: { kind: "escrow-hold", status: "posted" },
+        groupBy: "walletId",
+      },
+      severity: "error",
+    },
+
+    // 6. Заказчик не может взять в работу собственную задачу.
+    {
+      name: "deal_customer_differs_from_executor",
+      kind: "referential",
+      entity: "Deal",
+      check: "customerId !== executorId",
+      severity: "error",
+    },
   ],
 };

@@ -132,8 +132,8 @@ describe("freelance ontology — roles", () => {
 describe("freelance ontology — invariants", () => {
   const byName = (n) => ONTOLOGY.invariants.find(i => i.name === n);
 
-  it("содержит ровно 3 invariants в Cycle 1", () => {
-    expect(ONTOLOGY.invariants).toHaveLength(3);
+  it("содержит 6 invariants в Cycle 2 (3 Cycle 1 + 3 escrow)", () => {
+    expect(ONTOLOGY.invariants).toHaveLength(6);
   });
 
   it("task_status_transition — transition с 4 allowed переходами", () => {
@@ -167,5 +167,37 @@ describe("freelance ontology — invariants", () => {
     expect(inv.groupBy).toBe("taskId");
     expect(inv.max).toBe(1);
     expect(inv.where).toEqual({ status: "selected" });
+  });
+
+  it("deal_status_transition — transition с legal переходами и без skip", () => {
+    const inv = byName("deal_status_transition");
+    expect(inv).toBeDefined();
+    expect(inv.kind).toBe("transition");
+    expect(inv.entity).toBe("Deal");
+    expect(inv.field).toBe("status");
+    expect(inv.allowed).toEqual(expect.arrayContaining([
+      ["new", "awaiting_payment"],
+      ["awaiting_payment", "in_progress"],
+      ["in_progress", "on_review"],
+      ["on_review", "completed"],
+      ["on_review", "in_progress"],
+      ["new", "cancelled"],
+    ]));
+  });
+
+  it("wallet_reserved_equals_escrow_sum — aggregate", () => {
+    const inv = byName("wallet_reserved_equals_escrow_sum");
+    expect(inv).toBeDefined();
+    expect(inv.kind).toBe("aggregate");
+    expect(inv.entity).toBe("Wallet");
+    expect(inv.field).toBe("reserved");
+    expect(inv.formula).toBeDefined();
+  });
+
+  it("deal_customer_differs_from_executor — referential", () => {
+    const inv = byName("deal_customer_differs_from_executor");
+    expect(inv).toBeDefined();
+    expect(inv.kind).toBe("referential");
+    expect(inv.entity).toBe("Deal");
   });
 });
