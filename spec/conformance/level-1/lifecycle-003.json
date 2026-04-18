@@ -7,48 +7,80 @@
     "effects": [
       {
         "id": "e1",
-        "type": "add",
-        "target": "User",
-        "payload": { "id": "u1", "name": "Alice" },
+        "intent_id": "e1",
+        "target": "users",
+        "scope": "account",
         "status": "confirmed",
-        "created_at": 1000
+        "created_at": 1000,
+        "alpha": "add",
+        "context": {
+          "id": "u1",
+          "name": "Alice"
+        }
       },
       {
         "id": "e2",
-        "type": "add",
-        "target": "User",
-        "payload": { "id": "u2", "name": "Bob" },
+        "intent_id": "e2",
+        "target": "users",
+        "scope": "account",
         "status": "proposed",
-        "created_at": 2000
+        "created_at": 2000,
+        "alpha": "add",
+        "context": {
+          "id": "u2",
+          "name": "Bob"
+        }
       },
       {
         "id": "e3",
-        "type": "add",
-        "target": "User",
-        "payload": { "id": "u3", "name": "Charlie" },
+        "intent_id": "e3",
+        "target": "users",
+        "scope": "account",
         "status": "rejected",
-        "created_at": 3000
+        "created_at": 3000,
+        "alpha": "add",
+        "context": {
+          "id": "u3",
+          "name": "Charlie"
+        }
       },
       {
         "id": "e4",
-        "type": "add",
-        "target": "User",
-        "payload": { "id": "u4", "name": "Diana" },
+        "intent_id": "e4",
+        "target": "users",
+        "scope": "account",
         "status": "confirmed",
-        "created_at": 4000
+        "created_at": 4000,
+        "alpha": "add",
+        "context": {
+          "id": "u4",
+          "name": "Diana"
+        }
       }
     ],
     "ontology": {
       "entities": {
-        "User": { "fields": { "name": { "type": "string" } } }
+        "User": {
+          "fields": {
+            "name": {
+              "type": "string"
+            }
+          }
+        }
       }
     }
   },
   "expected": {
     "world": {
       "users": [
-        { "id": "u1", "name": "Alice" },
-        { "id": "u4", "name": "Diana" }
+        {
+          "id": "u1",
+          "name": "Alice"
+        },
+        {
+          "id": "u4",
+          "name": "Diana"
+        }
       ]
     }
   }

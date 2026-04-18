@@ -9,10 +9,19 @@
         "id": "do_something",
         "name": "Сделать что-то с Foo",
         "particles": {
-          "entities": ["Foo"],
+          "entities": [
+            "Foo"
+          ],
           "conditions": [],
-          "effects": [{ "type": "add", "target": "foos", "payload": { "name": "test" } }],
-          "witnesses": ["foo.name"]
+          "effects": [
+            {
+              "α": "add",
+              "target": "foos"
+            }
+          ],
+          "witnesses": [
+            "foo.name"
+          ]
         }
       }
     },
@@ -20,23 +29,42 @@
       "entities": {
         "Item": {
           "fields": {
-            "id": { "type": "string" },
-            "title": { "type": "string" },
-            "status": { "type": "string" },
-            "ownerId": { "type": "entityRef", "ref": "User" }
+            "id": {
+              "type": "string"
+            },
+            "title": {
+              "type": "string"
+            },
+            "status": {
+              "type": "string"
+            },
+            "ownerId": {
+              "type": "entityRef",
+              "ref": "User"
+            }
           },
           "ownerField": "ownerId"
         },
         "User": {
           "fields": {
-            "id": { "type": "string" },
-            "name": { "type": "string" }
+            "id": {
+              "type": "string"
+            },
+            "name": {
+              "type": "string"
+            }
           }
         }
       }
     },
     "projections": {
-      "item_list": { "kind": "catalog", "entities": ["Item"], "mainEntity": "Item" }
+      "item_list": {
+        "kind": "catalog",
+        "entities": [
+          "Item"
+        ],
+        "mainEntity": "Item"
+      }
     }
   },
   "expected": {

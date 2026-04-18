@@ -10,10 +10,22 @@
         "name": "Удалить товар",
         "irreversibility": "high",
         "particles": {
-          "entities": ["Item"],
-          "conditions": ["item.status = 'active'"],
-          "effects": [{ "type": "remove", "target": "items" }],
-          "witnesses": ["item.title", "item.status"],
+          "entities": [
+            "Item"
+          ],
+          "conditions": [
+            "item.status = 'active'"
+          ],
+          "effects": [
+            {
+              "α": "remove",
+              "target": "items"
+            }
+          ],
+          "witnesses": [
+            "item.title",
+            "item.status"
+          ],
           "confirmation": "form"
         }
       },
@@ -22,10 +34,19 @@
         "name": "Создать товар",
         "creates": "Item",
         "particles": {
-          "entities": ["Item"],
+          "entities": [
+            "Item"
+          ],
           "conditions": [],
-          "effects": [{ "type": "add", "target": "items", "payload": { "status": "active" } }],
-          "witnesses": ["item.title"]
+          "effects": [
+            {
+              "α": "add",
+              "target": "items"
+            }
+          ],
+          "witnesses": [
+            "item.title"
+          ]
         }
       }
     },
@@ -33,23 +54,42 @@
       "entities": {
         "Item": {
           "fields": {
-            "id": { "type": "string" },
-            "title": { "type": "string" },
-            "status": { "type": "string" },
-            "ownerId": { "type": "entityRef", "ref": "User" }
+            "id": {
+              "type": "string"
+            },
+            "title": {
+              "type": "string"
+            },
+            "status": {
+              "type": "string"
+            },
+            "ownerId": {
+              "type": "entityRef",
+              "ref": "User"
+            }
           },
           "ownerField": "ownerId"
         },
         "User": {
           "fields": {
-            "id": { "type": "string" },
-            "name": { "type": "string" }
+            "id": {
+              "type": "string"
+            },
+            "name": {
+              "type": "string"
+            }
           }
         }
       }
     },
     "projections": {
-      "item_list": { "kind": "catalog", "entities": ["Item"], "mainEntity": "Item" }
+      "item_list": {
+        "kind": "catalog",
+        "entities": [
+          "Item"
+        ],
+        "mainEntity": "Item"
+      }
     }
   },
   "expected": {

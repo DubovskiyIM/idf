@@ -7,33 +7,55 @@
     "effects": [
       {
         "id": "e1",
-        "type": "add",
-        "target": "Listing",
-        "payload": { "id": "l1", "title": "Created", "price": 100 },
+        "intent_id": "e1",
+        "target": "listings",
+        "scope": "account",
         "status": "confirmed",
         "created_at": 3000,
-        "parent_id": null
+        "alpha": "add",
+        "context": {
+          "id": "l1",
+          "title": "Created",
+          "price": 100
+        }
       },
       {
         "id": "e2",
-        "type": "replace",
-        "target": "Listing",
-        "payload": { "id": "l1", "price": 999 },
+        "intent_id": "e2",
+        "alpha": "replace",
+        "target": "listing.price",
+        "context": {
+          "id": "l1"
+        },
+        "value": 999,
+        "scope": "account",
         "status": "confirmed",
-        "created_at": 1000,
-        "parent_id": "e1"
+        "created_at": 1000
       }
     ],
     "ontology": {
       "entities": {
-        "Listing": { "fields": { "title": { "type": "string" }, "price": { "type": "number" } } }
+        "Listing": {
+          "fields": {
+            "title": {
+              "type": "string"
+            },
+            "price": {
+              "type": "number"
+            }
+          }
+        }
       }
     }
   },
   "expected": {
     "world": {
       "listings": [
-        { "id": "l1", "title": "Created", "price": 999 }
+        {
+          "id": "l1",
+          "title": "Created",
+          "price": 999
+        }
       ]
     }
   }

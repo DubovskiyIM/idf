@@ -7,32 +7,53 @@
     "effects": [
       {
         "id": "e1",
-        "type": "add",
-        "target": "User",
-        "payload": { "id": "u1", "name": "Alice" },
+        "intent_id": "e1",
+        "target": "users",
+        "scope": "account",
         "status": "confirmed",
-        "created_at": 1000
+        "created_at": 1000,
+        "alpha": "add",
+        "context": {
+          "id": "u1",
+          "name": "Alice"
+        }
       },
       {
         "id": "e2",
-        "type": "replace",
-        "target": "User",
-        "payload": { "id": "u1", "highlighted": true },
+        "intent_id": "e2",
+        "alpha": "replace",
+        "target": "user.highlighted",
+        "context": {
+          "id": "u1"
+        },
+        "value": true,
+        "scope": "presentation",
         "status": "confirmed",
-        "created_at": 2000,
-        "scope": "presentation"
+        "created_at": 2000
       }
     ],
     "ontology": {
       "entities": {
-        "User": { "fields": { "name": { "type": "string" }, "highlighted": { "type": "boolean" } } }
+        "User": {
+          "fields": {
+            "name": {
+              "type": "string"
+            },
+            "highlighted": {
+              "type": "boolean"
+            }
+          }
+        }
       }
     }
   },
   "expected": {
     "world": {
       "users": [
-        { "id": "u1", "name": "Alice" }
+        {
+          "id": "u1",
+          "name": "Alice"
+        }
       ]
     }
   }
