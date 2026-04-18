@@ -1,0 +1,40 @@
+{
+  "id": "category-tree-with-counter",
+  "version": 1,
+  "status": "candidate",
+  "archetype": "catalog",
+  "trigger": {
+    "requires": [
+      { "kind": "sub-entity-exists", "foreignKeyTo": "Category" },
+      { "kind": "entity-field", "entity": "Category", "field": "parentId" },
+      { "kind": "intent-effect", "α": "replace", "targetSuffix": ".categoryId" }
+    ]
+  },
+  "structure": {
+    "slot": "shell",
+    "description": "В левой колонке каталога (или sticky filter-panel) рендерится древовидная навигация по self-referential Category (parentId — FK на саму себя). Каждый узел показывает count дочерних элементов главной коллекции mainEntity, матчащих этот categoryId (включая все nested descendants). Клик по узлу — replace filter.categoryId, не navigation. Активный узел раскрыт, siblings свёрнуты."
+  },
+  "rationale": {
+    "hypothesis": "Когда коллекция размечена иерархической таксономией (Avito: Услуги → Ремонт → Сантехника → Установка смесителей), flat category-picker теряет контекст уровня. Древовидная навигация со счётчиками позволяет: (а) видеть распределение предложения по веткам перед кликом; (б) опускаться/подниматься без потери родительского контекста; (в) избежать перегруженной formы с 500+ опциями в dropdown.",
+    "evidence": [
+      { "source": "avito-services", "description": "Дерево «Услуги → Ремонт → Сантехника (1243)» со счётчиками, иерархическая система 250 моделей классификации", "reliability": "high" },
+      { "source": "ozon", "description": "Категорийное дерево с счётчиком товаров per-node в левой колонке каталога", "reliability": "high" },
+      { "source": "ebay", "description": "Left-sidebar category refinement со счётчиками", "reliability": "high" }
+    ],
+    "counterexample": [
+      { "source": "twitter", "description": "Feed без таксономии — категорийное дерево бессмысленно", "reliability": "high" },
+      { "source": "gmail", "description": "Labels — flat, не self-ref tree; counter есть, но tree-nav нет", "reliability": "medium" }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [
+      { "domain": "sales", "projection": "listings_catalog", "reason": "Listing имеет categoryId FK на Category; Category — self-ref с parentId" },
+      { "domain": "delivery", "projection": "menu_catalog", "reason": "MenuItem → MenuCategory с подкатегориями (напитки → кофе → эспрессо)" }
+    ],
+    "shouldNotMatch": [
+      { "domain": "messenger", "projection": "conversations", "reason": "Conversation не категоризирован self-ref таксономией" },
+      { "domain": "lifequest", "projection": "spheres_root", "reason": "Sphere — flat top-level список, parentId нет" },
+      { "domain": "invest", "projection": "portfolios_root", "reason": "Portfolio не имеет иерархической Category-FK" }
+    ]
+  }
+}

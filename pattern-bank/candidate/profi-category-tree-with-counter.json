@@ -1,0 +1,90 @@
+{
+  "id": "category-tree-with-counter",
+  "version": 1,
+  "status": "candidate",
+  "archetype": "catalog",
+  "trigger": {
+    "requires": [
+      {
+        "kind": "entity-kind",
+        "value": "mainEntity"
+      },
+      {
+        "kind": "sub-entity-exists",
+        "foreignKeyTo": "$mainEntity"
+      }
+    ]
+  },
+  "structure": {
+    "slot": "sidebar",
+    "description": "Иерархический навигатор категорий в левом sidebar: дерево узлов с раскрытием/свёртыванием и счётчиком кол-ва ресурсов (специалистов/услуг/товаров) на каждом листе и агрегированно на каждом поддереве. Применяется когда mainEntity имеет self-reference (parentId) ИЛИ когда есть отдельная Category-сущность с FK с mainEntity. Pattern обогащает sidebar: вставляет контрол kind='hierarchy-tree-nav' с count-badge на каждом узле (count берётся из агрегата по FK связи). Выбор узла фильтрует body-feed по связанной категории."
+  },
+  "rationale": {
+    "hypothesis": "Маркетплейсы с широким ассортиментом услуг/товаров (сотни категорий, тысячи листьев) требуют навигации, которая одновременно даёт (а) обзор общей структуры предметной области и (б) экономию на поиске — счётчик показывает, стоит ли раскрывать узел. Плоские dropdown-селекты не масштабируются на 500+ категорий; категориальная иерархия без счётчиков не помогает пользователю отличить 'густонаселённую' ветку от пустой.",
+    "evidence": [
+      {
+        "source": "profi.ru",
+        "description": "Sidebar с деревом 'Репетиторы → Математика (12 430)', работает как primary-navigation фильтр",
+        "reliability": "high"
+      },
+      {
+        "source": "avito",
+        "description": "Категории товаров с счётчиками на главной",
+        "reliability": "high"
+      },
+      {
+        "source": "yandex-market",
+        "description": "Hierarchical facet-sidebar в каталогах с количеством предложений",
+        "reliability": "high"
+      },
+      {
+        "source": "ebay",
+        "description": "Left-rail category tree with item counts",
+        "reliability": "high"
+      }
+    ],
+    "counterexample": [
+      {
+        "source": "generic-feed",
+        "description": "Когда категорий <10, дерево проигрывает chip-row'у — избыточная вертикальная площадь",
+        "reliability": "medium"
+      },
+      {
+        "source": "timeline-feed",
+        "description": "Shape=timeline (messages, events) не имеет категориальной оси — счётчик по категориям теряет смысл",
+        "reliability": "medium"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [
+      {
+        "domain": "sales",
+        "projection": "listing_feed",
+        "reason": "Category — отдельная сущность с parentId на себя, Listing.categoryId → catalog-wide tree с счётчиком предложений"
+      },
+      {
+        "domain": "booking",
+        "projection": "specialists_catalog",
+        "reason": "ServiceCategory дерево + Specialist.categoryId для маркетплейса услуг"
+      }
+    ],
+    "shouldNotMatch": [
+      {
+        "domain": "messenger",
+        "projection": "chats_list",
+        "reason": "Conversations не имеют категориального дерева, shape=timeline"
+      },
+      {
+        "domain": "invest",
+        "projection": "portfolios_root",
+        "reason": "Portfolios — плоский catalog без категориальной иерархии над ними"
+      },
+      {
+        "domain": "reflect",
+        "projection": "mood-entries",
+        "reason": "MoodEntry — одномерный data-point без категоризации"
+      }
+    ]
+  }
+}

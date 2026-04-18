@@ -1,0 +1,40 @@
+{
+  "id": "direct-invite-sidebar",
+  "version": 1,
+  "status": "candidate",
+  "archetype": "detail",
+  "trigger": {
+    "requires": [
+      { "kind": "entity-kind", "entityKind": "assignment" },
+      { "kind": "intent-creates", "entity": "$mainEntity" },
+      { "kind": "has-role", "roleBase": "owner" }
+    ]
+  },
+  "structure": {
+    "slot": "body",
+    "description": "Внутри detail-view некоторой entity E (например, Specialist) появляется CTA «Пригласить», открывающий side-drawer (не модал full-screen). Drawer содержит форму создания assignment-bridge A с двумя FK: один pre-filled и locked = id текущей E (form-context-inheritance), другой picker по списку owner-сущностей текущего пользователя (мои Tasks, мои Portfolios, мои Orders). После confirm — inline toast + CTA превращается в antagonist-toggle (отправлено ↔ отозвать). Drawer не перекрывает detail-контекст полностью, чтобы пользователь видел, кого он приглашает."
+  },
+  "rationale": {
+    "hypothesis": "Когда пользователь инициирует m2m-связь из detail-view одной из сторон, (а) сохранение detail-контекста критично — он только что изучил профиль, не хочет переключаться; (б) одна сторона assignment'а уже известна — её нельзя и не нужно выбирать заново; (в) вторая сторона требует контролируемого выбора из owned-коллекции. Полный modal без контекста или переход на отдельный экран «Создать приглашение» с обоими пустыми FK — регрессия UX.",
+    "evidence": [
+      { "source": "avito-services", "description": "С карточки исполнителя — кнопка «Пригласить», drawer с dropdown «Выберите вашу задачу», specialistId pre-filled", "reliability": "high" },
+      { "source": "linkedin", "description": "Profile view — «Send InMail» side-drawer, recipient pre-filled", "reliability": "high" },
+      { "source": "github", "description": "Profile → «Invite to organization» dropdown, target user pre-filled", "reliability": "medium" }
+    ],
+    "counterexample": [
+      { "source": "planning/add-participants", "description": "Batch-добавление нескольких user'ов в Poll — assignment-multiselect, не direct-invite; нет контекста одной стороны", "reliability": "high" },
+      { "source": "messenger/create-chat", "description": "Создание conversation не из detail-view, а из каталога контактов", "reliability": "medium" }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [
+      { "domain": "booking", "projection": "specialist_detail", "reason": "С detail-view Specialist создаётся Booking (assignment specialist+customer)" },
+      { "domain": "invest", "projection": "advisor_detail", "reason": "С detail-view Advisor создаётся Assignment на portfolio, advisorId pre-filled" }
+    ],
+    "shouldNotMatch": [
+      { "domain": "planning", "projection": "my_polls", "reason": "Participant создаётся batch из catalog-архетипа, не direct-invite из detail" },
+      { "domain": "messenger", "projection": "conversation_detail", "reason": "Conversation.Participant — не assignment в этом смысле, детейл конверсации сам и есть результат" },
+      { "domain": "delivery", "projection": "dispatcher_map", "reason": "DispatcherAssignment — bulk назначение через canvas-map, а не direct-invite из detail курьера" }
+    ]
+  }
+}
