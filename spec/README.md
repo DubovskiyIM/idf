@@ -1,6 +1,6 @@
 # Intent-Driven Framework — Specification
 
-> **Status:** Draft · **Version:** 1.0 · **Language:** English (normative) · **License:** Apache 2.0
+> **Status:** Draft · **Version:** 1.1 · **Language:** English (normative) · **License:** Apache 2.0
 
 Formal specification of the Intent-Driven Framework (IDF): a paradigm for building applications from declarations of intent and projection, with rendering derived rather than authored.
 

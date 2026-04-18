@@ -50,6 +50,18 @@
         "$ref": "#/$defs/Parameter"
       },
       "description": "Explicit parameter definitions (overrides inference)."
+    },
+    "salience": {
+      "oneOf": [
+        {
+          "type": "string",
+          "enum": ["primary", "secondary", "tertiary", "utility"]
+        },
+        {
+          "type": "number"
+        }
+      ],
+      "description": "Priority of this intent relative to others competing for bounded slots in downstream rendering. Labels map to numeric values (primary=100, secondary=50, tertiary=20, utility=5). Higher numeric values indicate higher priority. See specification §3.5."
     }
   },
   "additionalProperties": false,
