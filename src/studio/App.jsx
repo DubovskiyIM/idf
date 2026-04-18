@@ -1,13 +1,24 @@
-import React, { useState, useEffect, useCallback, useRef } from "react";
+import React, { useState, useEffect, useCallback, useRef, useMemo } from "react";
 import DomainPicker from "./DomainPicker.jsx";
 import Graph3D from "./Graph3D.jsx";
 import Inspector from "./Inspector.jsx";
 import ChatDrawer from "./ChatDrawer.jsx";
 import NewDomainModal from "./NewDomainModal.jsx";
-import ThinkingCat from "./ThinkingCat.jsx";
+import ProgressOverlay from "./ProgressOverlay.jsx";
+import PrototypeReadyCTA from "./PrototypeReadyCTA.jsx";
 import PatternsView from "./patterns/PatternsView.jsx";
+import OntologyView from "./OntologyView.jsx";
+import IntegrityView from "./IntegrityView.jsx";
+import AlgebraView from "./AlgebraView.jsx";
+import PrototypeHealth from "./PrototypeHealth.jsx";
+import PhiDrawer from "./PhiDrawer.jsx";
+import StudioPrefsPanel from "./StudioPrefsPanel.jsx";
+import DomainRuntime from "../runtime/DomainRuntime.jsx";
+import { usePersonalPrefs } from "../runtime/renderer/personal/usePersonalPrefs.js";
+import { useAuth } from "../runtime/renderer/auth/useAuth.js";
 import { fetchGraph } from "./api/graph.js";
 import { subscribeDomain } from "./api/watch.js";
+import { fetchStudioStatus } from "./api/status.js";
 
 function nodeSignature(n) {
   if (n.kind === "entity") return JSON.stringify({ fields: n.fields, ownerField: n.ownerField, statuses: n.statuses });
@@ -31,51 +42,114 @@ function computeDiff(oldGraph, newGraph) {
   return diff;
 }
 
-// Верхний tab-strip: переключатель между Graph (текущая работа с доменом)
-// и Patterns (Pattern Bank catalog / inspector). Высота 44px фиксирована,
-// PatternsView рассчитывает высоту через calc(100vh - 44px).
-function TabStrip({ view, setView }) {
-  const tabStyle = (active) => ({
-    padding: "10px 18px",
-    cursor: "pointer",
+// Верхний tab-strip: переключатель между Graph (структура) / Прототип
+// (runtime-UI того же домена) / Patterns (Pattern Bank). Высота 44px
+// фиксирована, вложенные view рассчитывают через calc(100vh - 44px).
+function TabStrip({ view, setView, domainName, onTogglePhi, phiOpen, onToggleChat, chatOpen, onOpenPrefs, readonly }) {
+  const hasDomain = !!domainName;
+  const tabStyle = (active, disabled = false) => ({
+    padding: "10px 20px",
+    cursor: disabled ? "not-allowed" : "pointer",
     background: active ? "#1e293b" : "transparent",
-    color: active ? "#e0e7ff" : "#94a3b8",
+    color: disabled ? "#475569" : active ? "#e0e7ff" : "#94a3b8",
     border: "none",
     borderBottom: active ? "2px solid #60a5fa" : "2px solid transparent",
     fontSize: 13,
     fontWeight: active ? 600 : 400,
     fontFamily: "inherit",
     outline: "none",
+    opacity: disabled ? 0.5 : 1,
+  });
+  const domainOnly = (target, label) => (
+    <button
+      onClick={() => hasDomain && setView(target)}
+      disabled={!hasDomain}
+      style={tabStyle(view === target, !hasDomain)}
+      title={hasDomain ? undefined : "Выбери домен во вкладке «Граф»"}
+    >{label}</button>
+  );
+  const actionStyle = (active) => ({
+    padding: "5px 12px", fontSize: 12, borderRadius: 4, cursor: "pointer",
+    background: active ? "#1e293b" : "transparent",
+    color: active ? "#e0e7ff" : "#94a3b8",
+    border: "1px solid #1e293b",
+    fontFamily: "inherit",
   });
   return (
     <div
       style={{
         height: 44,
+        flexShrink: 0,
         display: "flex",
-        alignItems: "stretch",
+        alignItems: "center",
         background: "#0b1220",
         borderBottom: "1px solid #1e293b",
+        paddingRight: 16,
+        position: "relative",
+        zIndex: 40,
       }}
     >
-      <button
-        onClick={() => setView("graph")}
-        style={tabStyle(view === "graph")}
-      >
-        Graph
-      </button>
-      <button
-        onClick={() => setView("patterns")}
-        style={tabStyle(view === "patterns")}
-      >
-        Patterns
-      </button>
+      <div style={{ display: "flex" }}>
+        <button onClick={() => setView("graph")} style={tabStyle(view === "graph")}>Граф</button>
+        {domainOnly("prototype", "Прототип")}
+        {domainOnly("ontology", "Онтология")}
+        {domainOnly("algebra", "Алгебра")}
+        {domainOnly("integrity", "Целостность")}
+        <button onClick={() => setView("patterns")} style={tabStyle(view === "patterns")}>Паттерны</button>
+      </div>
+      <div style={{ flex: 1 }} />
+      {domainName && (
+        <>
+          <div style={{ fontSize: 12, color: "#64748b", fontFamily: "ui-monospace, 'SF Mono', monospace", marginRight: 14 }}>
+            {domainName}
+          </div>
+          <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
+            {readonly && (
+              <span title="Studio в read-only режиме: Claude CLI недоступен на сервере" style={{
+                fontSize: 10, padding: "3px 8px", borderRadius: 4,
+                background: "rgba(100, 116, 139, 0.2)", color: "#94a3b8",
+                border: "1px solid #334155", textTransform: "uppercase", letterSpacing: "0.05em",
+              }}>read-only</span>
+            )}
+            <button
+              onClick={onToggleChat}
+              disabled={readonly}
+              style={{ ...actionStyle(chatOpen), opacity: readonly ? 0.4 : 1, cursor: readonly ? "not-allowed" : "pointer" }}
+              title={readonly ? "Chat недоступен — Claude CLI не установлен" : "Chat с Claude · ⌘K"}
+            >⌘K Chat</button>
+            <button onClick={onTogglePhi} style={actionStyle(phiOpen)} title="Φ-журнал · ⌘J">⌘J Φ</button>
+            <button
+              onClick={onOpenPrefs}
+              title="Настройки UI"
+              style={{
+                padding: "5px 10px", fontSize: 14, borderRadius: 4, cursor: "pointer",
+                background: "transparent", color: "#94a3b8", border: "1px solid #1e293b",
+                fontFamily: "inherit",
+              }}
+            >⚙</button>
+          </div>
+        </>
+      )}
     </div>
   );
 }
 
+function initialDomainFromUrl() {
+  if (typeof window === "undefined") return null;
+  try { return new URLSearchParams(window.location.search).get("domain"); }
+  catch { return null; }
+}
+function initialViewFromUrl() {
+  if (typeof window === "undefined") return "graph";
+  try {
+    const v = new URLSearchParams(window.location.search).get("view");
+    return ["graph", "prototype", "ontology", "algebra", "integrity", "patterns"].includes(v) ? v : "graph";
+  } catch { return "graph"; }
+}
+
 export default function App() {
-  const [view, setView] = useState("graph");
-  const [domain, setDomain] = useState(null);
+  const [view, setView] = useState(() => initialViewFromUrl());
+  const [domain, setDomain] = useState(() => initialDomainFromUrl());
   const [graph, setGraph] = useState(null);
   const [selected, setSelected] = useState(null);
   const [chatOpen, setChatOpen] = useState(false);
@@ -86,6 +160,38 @@ export default function App() {
   const pingTimerRef = useRef(null);
   const [flyToken, setFlyToken] = useState(0);
   const [chatBusy, setChatBusy] = useState(false);
+  const [progress, setProgress] = useState({ lastTool: null, toolCount: 0 });
+  const [readyDomain, setReadyDomain] = useState(null);
+  // Phase-label для ProgressOverlay — меняется в зависимости от откуда
+  // Claude был запущен (генерация / починка / произвольный prompt).
+  const [chatPhase, setChatPhase] = useState("Claude работает");
+  const [phiOpen, setPhiOpen] = useState(false);
+  const [prefsOpen, setPrefsOpen] = useState(false);
+  // Studio status: claudeAvailable = можно генерировать и править через chat.
+  // Если false (нет claude CLI или IDF_READONLY=1) — write-actions disabled.
+  const [studioStatus, setStudioStatus] = useState({ claudeAvailable: true, readonly: false, mode: "authoring" });
+  const readonly = studioStatus.readonly;
+
+  useEffect(() => {
+    fetchStudioStatus().then(setStudioStatus).catch(() => {});
+  }, []);
+  // Personal layer §17: глобальные UI-prefs + auth. Одни и те же hooks
+  // используются внутри V2Shell (где есть своя кнопка ⚙), но благодаря
+  // localStorage-persistance состояние синхронизируется. Делаем prefs
+  // доступными и на уровне Studio TabStrip.
+  const { prefs, setPref, resetPrefs } = usePersonalPrefs();
+  const auth = useAuth();
+
+  useEffect(() => { setReadyDomain(null); setProgress({ lastTool: null, toolCount: 0 }); }, [domain]);
+  // Если домен сброшен (вернулись к picker) — сбросить view на Graph, чтобы
+  // domain-specific tabs (Прототип/Онтология/Целостность) не остались в
+  // «disabled but current» состоянии.
+  useEffect(() => {
+    if (!domain && ["prototype", "ontology", "algebra", "integrity"].includes(view)) {
+      setView("graph");
+    }
+  }, [domain, view]);
+  useEffect(() => { if (chatBusy) { setReadyDomain(null); setProgress({ lastTool: null, toolCount: 0 }); } }, [chatBusy]);
 
   useEffect(() => {
     if (!domain) return;
@@ -121,30 +227,68 @@ export default function App() {
     const onKey = (e) => {
       if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") {
         e.preventDefault();
-        setChatOpen((v) => !v);
+        if (!readonly) setChatOpen((v) => !v);
+      }
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "j") {
+        e.preventDefault();
+        setPhiOpen((v) => !v);
       }
       if (e.key === "Escape") {
         setSelected(null);
         setChatOpen(false);
+        setPhiOpen(false);
       }
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [domain]);
+  }, [domain, readonly]);
 
   const onFixWithClaude = useCallback((node, warning) => {
+    setChatPhase("Claude чинит анкеринг");
     setChatPrefill(`В \`${node.intentId}\` ошибка анкеринга: "${warning.message}". Найди частицу и привяжи к правильному полю или удали. Перед Edit — Read файл и Grep похожие паттерны.`);
     setChatOpen(true);
   }, []);
 
-  // Graph-view контент: вынесен в локальную функцию, чтобы tab-strip был
-  // виден всегда (включая экраны picker / loading), а ранние return'ы не
-  // обходили его.
+  // IntegrityGraph issue → Claude. node.type === "issue" | "intent" | "projection" | "entity".
+  // Формируем контекстный prompt с rule + detail, чтобы Claude начал с Read файла.
+  const onFixIntegrityIssue = useCallback((node) => {
+    const issues = node.issues || [];
+    const primary = issues[0] || node.data || {};
+    const rule = primary.rule || "integrity";
+    const detail = primary.detail || primary.message || node.name || "";
+    const subject = primary.intent || (node.type === "intent" ? node.id?.replace(/^intent:/, "") : node.name);
+    const fileHint = node.type === "projection"
+      ? `src/domains/${domain}/projections.js`
+      : node.type === "entity"
+        ? `src/domains/${domain}/ontology.js`
+        : `src/domains/${domain}/intents.js`;
+    setChatPhase("Claude чинит целостность");
+    setChatPrefill(
+      `Целостность домена \`${domain}\`: проблема \`${rule}\` на \`${subject}\`.\n` +
+      `Detail: ${detail}\n\n` +
+      `Прочитай ${fileHint}, найди соответствующий intent/projection/entity и почини согласно правилу. ` +
+      `Если проблема algebra_composition (⊗ двух intents) — проверь particles.effects обоих на пересечение targets и разведи через conditions или antagonists. ` +
+      `Если witness_completeness / anchoring — сверь witnesses с fields в ontology.entities. ` +
+      `Не добавляй фасадного кода, только формальные определения. Кратко отчитайся что починил.`
+    );
+    setChatOpen(true);
+  }, [domain]);
+
   const renderGraphView = () => {
     if (!domain) {
       return (
         <>
-          <DomainPicker onPick={setDomain} onNewDomain={() => setNewModal(true)} />
+          <DomainPicker
+            onPick={setDomain}
+            onNewDomain={() => setNewModal(true)}
+            readonly={readonly}
+            onGenerateFromDescription={({ slug, name, description }) => {
+              setDomain(slug);
+              setChatPhase("Claude генерирует домен");
+              setChatPrefill(`Создай начальный набор intents/entities/projections для домена "${name}". Описание процесса: ${description}. Следуй паттерну booking (как простейшего домена). Начни с ontology.entities, потом intents с частицами, в конце projections (feed/catalog/detail/form под archetype). Кратко отчитайся какие intents/entities созданы.`);
+              setChatOpen(true);
+            }}
+          />
           {newModal && (
             <NewDomainModal
               onClose={() => setNewModal(false)}
@@ -152,6 +296,7 @@ export default function App() {
                 setNewModal(false);
                 setDomain(name);
                 if (prompt) {
+                  setChatPhase("Claude генерирует домен");
                   setChatPrefill(`Создай начальный набор intents/entities/projections для домена "${name}": ${prompt}. Следуй паттерну booking (как простейшего домена). Начни с ontology.entities, потом intents с частицами.`);
                   setChatOpen(true);
                 }
@@ -161,40 +306,154 @@ export default function App() {
         </>
       );
     }
-    if (!graph) return <div style={{ padding: 24 }}>Загрузка графа…</div>;
+    if (!graph) return <div style={{ padding: 24, color: "#94a3b8" }}>Загрузка графа…</div>;
 
     return (
-      <div style={{ height: "calc(100vh - 44px)", position: "relative" }}>
-        <div style={{ position: "absolute", top: 8, left: 8, zIndex: 10, background: "#1e293b", padding: "6px 10px", borderRadius: 4, fontSize: 12 }}>
-          <button onClick={() => setDomain(null)} style={{ marginRight: 8 }}>← domains</button>
-          {domain} · {graph.nodes.length} узлов · ⚠ {graph.warnings.length} ·
-          <button onClick={() => setChatOpen(true)} style={{ marginLeft: 8 }}>⌘K chat</button>
+      <div style={{ height: "calc(100vh - 44px)", position: "relative", background: "#0b1220" }}>
+        <div style={{ position: "absolute", top: 12, left: 12, zIndex: 10, background: "#1e293b", padding: "6px 12px", borderRadius: 6, fontSize: 12, display: "flex", alignItems: "center", gap: 10, color: "#cbd5e1" }}>
+          <button onClick={() => setDomain(null)} style={{ background: "transparent", border: "none", color: "#94a3b8", cursor: "pointer", fontSize: 12, padding: 0 }}>← домены</button>
+          <span style={{ color: "#475569" }}>·</span>
+          <span>{graph.nodes.length} узлов</span>
+          <span style={{ color: "#475569" }}>·</span>
+          <span style={{ color: graph.warnings.length > 0 ? "#eab308" : "#94a3b8" }}>⚠ {graph.warnings.length}</span>
+          {!readonly && (
+            <>
+              <span style={{ color: "#475569" }}>·</span>
+              <button onClick={() => setChatOpen(true)} style={{ background: "transparent", border: "none", color: "#60a5fa", cursor: "pointer", fontSize: 12, padding: 0 }}>⌘K chat</button>
+            </>
+          )}
         </div>
         <Graph3D graph={graph} onNodeClick={setSelected} pings={pings} selectedId={selected?.id} flyToken={flyToken} />
-        <ThinkingCat visible={chatBusy} />
+        <ProgressOverlay
+          busy={chatBusy}
+          toolCount={progress.toolCount}
+          lastTool={progress.lastTool}
+          phase={chatPhase}
+        />
+        <PrototypeReadyCTA
+          visible={!!readyDomain && !chatBusy}
+          domain={readyDomain}
+          intentsCount={graph.nodes.filter((n) => n.kind === "intent").length}
+          entitiesCount={graph.nodes.filter((n) => n.kind === "entity").length}
+          onDismiss={() => setReadyDomain(null)}
+          onOpenPrototype={() => { setReadyDomain(null); setView("prototype"); }}
+        />
         <Inspector
           node={selected}
           warnings={graph.warnings}
           onClose={() => setSelected(null)}
-          onFixWithClaude={onFixWithClaude}
+          onFixWithClaude={readonly ? undefined : onFixWithClaude}
           onFlyTo={() => setFlyToken((t) => t + 1)}
-        />
-        <ChatDrawer
-          open={chatOpen}
-          onClose={() => setChatOpen(false)}
-          domain={domain}
-          prefill={chatPrefill}
-          onPrefillConsumed={() => setChatPrefill("")}
-          onBusyChange={setChatBusy}
         />
       </div>
     );
   };
 
+  // Вызывается из PrototypeHealth banner'а с конкретным списком issues
+  // (detected через crystallize_v2 + validateArtifact). Формируем prompt
+  // с реальными ошибками, не generic-текстом.
+  const onFixPrototype = useCallback((issues = []) => {
+    setChatPhase("Claude чинит прототип");
+    const issuesText = issues.length
+      ? issues.map((i) =>
+          `- \`${i.projection}\`${i.archetype ? ` (${i.archetype})` : ""}: ${i.errors.join("; ")}`
+        ).join("\n")
+      : "валидация артефактов падает, но detail не собран — проверь crystallize_v2 на всех projections";
+    setChatPrefill(
+      `Прототип домена \`${domain}\` рендерится некорректно. ` +
+      `Detected problems:\n${issuesText}\n\n` +
+      `Прочитай src/domains/${domain}/projections.js и src/domains/${domain}/intents.js. ` +
+      `Для каждой проблемной projection:\n` +
+      `- feed/catalog требуют create-intent (\`creates: "<MainEntity>"\` или через particles) → композитор\n` +
+      `- detail требует idParam + mainEntity\n` +
+      `- wizard требует steps\n` +
+      `- canvas — canvasType зарегистрированный в registerCanvas\n` +
+      `- «виджет X не найден» — control в intent.parameters[].widget не существует; используй кастомные widget'ы только если они зарегистрированы\n\n` +
+      `Почини названные выше projections. Не меняй уже работающие. Кратко отчитайся.`
+    );
+    setChatOpen(true);
+  }, [domain]);
+
+  const renderPrototypeView = () => {
+    if (!domain) {
+      return (
+        <div style={{ height: "100%", display: "flex", alignItems: "center", justifyContent: "center", background: "#0f172a", color: "#94a3b8", fontFamily: "Inter, system-ui, sans-serif" }}>
+          <div style={{ textAlign: "center", maxWidth: 420 }}>
+            <div style={{ fontSize: 40, marginBottom: 14 }}>▢</div>
+            <div style={{ fontSize: 16, fontWeight: 500, marginBottom: 8, color: "#e2e8f0" }}>Сначала выбери домен</div>
+            <div style={{ fontSize: 13, lineHeight: 1.6, marginBottom: 18 }}>
+              Во вкладке <button onClick={() => setView("graph")} style={{ background: "transparent", border: "none", color: "#60a5fa", cursor: "pointer", fontSize: 13, padding: 0, textDecoration: "underline" }}>Граф</button> открой или создай домен — runtime-UI появится здесь.
+            </div>
+          </div>
+        </div>
+      );
+    }
+    return (
+      <div style={{ height: "100%", background: "#0f172a", display: "flex", flexDirection: "column" }}>
+        {!readonly && <PrototypeHealth domainId={domain} onFix={onFixPrototype} />}
+        <div style={{ flex: 1, minHeight: 0 }}>
+          <DomainRuntime domainId={domain} embedded />
+        </div>
+      </div>
+    );
+  };
+
+  const intentIdsSet = useMemo(() => {
+    if (!graph) return null;
+    return new Set(graph.nodes.filter((n) => n.kind === "intent").map((n) => n.intentId));
+  }, [graph]);
+
   return (
-    <div style={{ height: "100vh", display: "flex", flexDirection: "column" }}>
-      <TabStrip view={view} setView={setView} />
-      {view === "graph" ? renderGraphView() : <PatternsView />}
+    <div style={{ height: "100vh", display: "flex", flexDirection: "column", background: "#0b1220", color: "#e2e8f0", fontFamily: "Inter, -apple-system, system-ui, sans-serif" }}>
+      <TabStrip
+        view={view}
+        setView={setView}
+        domainName={domain}
+        onTogglePhi={() => setPhiOpen((v) => !v)}
+        phiOpen={phiOpen}
+        onToggleChat={() => setChatOpen((v) => !v)}
+        chatOpen={chatOpen}
+        onOpenPrefs={() => setPrefsOpen(true)}
+        readonly={readonly}
+      />
+      <div style={{ flex: 1, position: "relative", minHeight: 0 }}>
+        {view === "graph" ? renderGraphView()
+          : view === "prototype" ? renderPrototypeView()
+          : view === "ontology" ? <OntologyView domainId={domain} />
+          : view === "algebra" ? <AlgebraView domainId={domain} />
+          : view === "integrity" ? <IntegrityView domainId={domain} onFixWithClaude={readonly ? undefined : onFixIntegrityIssue} />
+          : <PatternsView />}
+        {/* Drawers (Chat, Φ) рендерятся в общем контейнере — доступны во всех табах */}
+        {domain && (
+          <PhiDrawer
+            open={phiOpen}
+            onClose={() => setPhiOpen(false)}
+            domain={domain}
+            intentIds={intentIdsSet}
+          />
+        )}
+        {domain && !readonly && (
+          <ChatDrawer
+            open={chatOpen}
+            onClose={() => setChatOpen(false)}
+            domain={domain}
+            prefill={chatPrefill}
+            onPrefillConsumed={() => setChatPrefill("")}
+            onBusyChange={setChatBusy}
+            onProgress={setProgress}
+            onDone={() => setReadyDomain(domain)}
+          />
+        )}
+      </div>
+      <StudioPrefsPanel
+        open={prefsOpen}
+        prefs={prefs}
+        setPref={setPref}
+        resetPrefs={resetPrefs}
+        onClose={() => setPrefsOpen(false)}
+        onLogout={auth.currentUser ? auth.logout : undefined}
+        viewer={auth.currentUser}
+      />
     </div>
   );
 }

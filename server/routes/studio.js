@@ -3,11 +3,24 @@ const fs = require("fs");
 const path = require("path");
 const { buildGraph } = require("../studio/graphBuilder.js");
 const { createFileWatcher } = require("../studio/fileWatcher.js");
-const { spawnClaude } = require("../studio/claudeProxy.js");
+const { spawnClaude, isClaudeAvailable } = require("../studio/claudeProxy.js");
 const { createDomainSkeleton } = require("../studio/domainCreator.js");
+const { sluggify, existsInDomainsDir } = require("../studio/sluggify.js");
 
 const router = express.Router();
 const DOMAINS_DIR = path.resolve(__dirname, "..", "..", "src", "domains");
+
+// Статус studio-возможностей. Клиент запрашивает при старте, чтобы понять
+// доступен ли Claude (для hero-генерации и chat) и работает ли instance
+// в read-only режиме (публичное демо без CLI).
+router.get("/status", (_req, res) => {
+  const claudeAvailable = isClaudeAvailable();
+  res.json({
+    claudeAvailable,
+    readonly: !claudeAvailable,
+    mode: claudeAvailable ? "authoring" : "readonly",
+  });
+});
 
 const domainWatchers = new Map();
 
@@ -94,6 +107,9 @@ router.get("/domain/:name/events", (req, res) => {
 });
 
 router.post("/domain/new", express.json(), (req, res) => {
+  if (!isClaudeAvailable()) {
+    return res.status(403).json({ error: "readonly_mode", message: "Studio в read-only режиме: создание доменов недоступно." });
+  }
   const { name, description } = req.body || {};
   if (!name) return res.status(400).json({ error: "name required" });
   try {
@@ -104,7 +120,22 @@ router.post("/domain/new", express.json(), (req, res) => {
   }
 });
 
+// Hero onboarding: POST /api/studio/slug {description} →
+// {slug, name, description}. Slug collision-free относительно src/domains/*.
+// Фронт затем POST /domain/new c этим slug'ом.
+router.post("/slug", express.json(), (req, res) => {
+  const { description } = req.body || {};
+  if (!description || typeof description !== "string") {
+    return res.status(400).json({ error: "description required" });
+  }
+  const result = sluggify(description, { existsCheck: existsInDomainsDir(DOMAINS_DIR) });
+  res.json({ slug: result.slug, name: result.name, description });
+});
+
 router.post("/chat", express.json(), async (req, res) => {
+  if (!isClaudeAvailable()) {
+    return res.status(403).json({ error: "readonly_mode", message: "Claude CLI недоступен: chat отключён в read-only режиме." });
+  }
   const { domain, message, sessionId } = req.body || {};
   if (!domain || !message) return res.status(400).json({ error: "domain and message are required" });
 

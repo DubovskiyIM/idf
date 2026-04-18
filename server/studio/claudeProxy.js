@@ -26,6 +26,28 @@ function resolveClaudeBin() {
 
 const CLAUDE_BIN = resolveClaudeBin();
 
+function isClaudeAvailable() {
+  // Environment kill-switch для деплоя: IDF_READONLY=1 принудительно отключает
+  // все write-операции (генерация/правки), даже если claude CLI есть в PATH.
+  if (process.env.IDF_READONLY === "1" || process.env.IDF_READONLY === "true") return false;
+  try {
+    const fs = require("fs");
+    if (process.env.CLAUDE_BIN && fs.existsSync(process.env.CLAUDE_BIN)) return true;
+    const fixed = [
+      `${process.env.HOME || ""}/.local/bin/claude`,
+      "/usr/local/bin/claude",
+      "/opt/homebrew/bin/claude",
+    ];
+    for (const p of fixed) { if (fs.existsSync(p)) return true; }
+    const which = spawnSync("which", ["claude"], {
+      env: { ...process.env, PATH: `${process.env.PATH || ""}:${process.env.HOME}/.local/bin:/usr/local/bin:/opt/homebrew/bin` },
+    });
+    return (which.stdout || "").toString().trim().startsWith("/");
+  } catch {
+    return false;
+  }
+}
+
 function parseAssistantMessage(msg) {
   const events = [];
   for (const part of msg?.content || []) {
@@ -110,4 +132,4 @@ function spawnClaude({ domain, message, sessionId, cwd, onEvent, spawn = nodeSpa
   return { child, done, stop: () => child.kill("SIGTERM") };
 }
 
-module.exports = { spawnClaude, translate };
+module.exports = { spawnClaude, translate, isClaudeAvailable };
