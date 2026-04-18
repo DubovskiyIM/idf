@@ -11,6 +11,7 @@ function spaFallback() {
     '/lifequest', '/reflect', '/invest', '/sales',
     '/booking', '/booking-v2', '/planning', '/planning-v2',
     '/workflow', '/messenger', '/messenger-v2',
+    '/freelance',
   ];
   return {
     name: 'spa-fallback',
@@ -32,11 +33,11 @@ export default defineConfig({
     host: '0.0.0.0',
     proxy: {
       '/api': {
-        target: 'http://localhost:3001',
+        target: process.env.PROXY_TARGET || 'http://localhost:3001',
         changeOrigin: true,
       },
       '/ws': {
-        target: 'ws://localhost:3001',
+        target: (process.env.PROXY_TARGET || 'http://localhost:3001').replace(/^http/, 'ws'),
         ws: true,
       },
     },
