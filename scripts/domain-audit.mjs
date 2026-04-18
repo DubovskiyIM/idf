@@ -23,7 +23,7 @@ const OWNER_CANDIDATES = ["userId", "ownerId", "authorId", "createdBy"];
 export function checkEntityKind(ontology) {
   const gaps = [];
   for (const [name, entity] of Object.entries(ontology.entities || {})) {
-    if (!entity.type) gaps.push({ kind: "entity-no-type", entity: name });
+    if (!entity.type && !entity.kind) gaps.push({ kind: "entity-no-type", entity: name });
   }
   return gaps;
 }
@@ -40,7 +40,8 @@ export function checkRoleBase(ontology) {
 export function checkOwnerField(ontology) {
   const gaps = [];
   for (const [entityName, entity] of Object.entries(ontology.entities || {})) {
-    if (entity.type && entity.type !== "internal") continue;
+    const k = entity.type || entity.kind;
+    if (k && k !== "internal") continue;
     if (entity.ownerField) continue;
     if (Array.isArray(entity.fields)) {
       const found = entity.fields.find((f) => OWNER_CANDIDATES.includes(f));
@@ -54,7 +55,7 @@ export function checkOwnerField(ontology) {
 }
 
 const DESTRUCTIVE_STATUSES = new Set(["archived", "deleted", "cancelled", "blocked", "closed", "abandoned", "rejected"]);
-const FORM_CONFIRMATIONS = new Set(["form", "composerEntry", "formModal", "file", "enter", "clickForm", "bulkWizard", "customCapture", "filePicker", "inlineSearch", "drag", "drag-end", "auto"]);
+const FORM_CONFIRMATIONS = new Set(["form", "composerEntry", "formModal", "file", "enter", "clickForm", "bulkWizard", "customCapture", "filePicker", "inlineSearch", "drag", "drag-end", "auto", "none"]);
 
 export function checkAntagonistSymmetry(intents) {
   const gaps = [];
@@ -78,6 +79,7 @@ export function checkIrreversibility(intents) {
   const gaps = [];
   for (const [name, intent] of Object.entries(intents || {})) {
     if (intent.irreversibility) continue;
+    if (intent.category === "system") continue;
     const effects = intent.particles?.effects || [];
     const hasRemove = effects.some((e) => e.α === "remove");
     const hasStatusKill = effects.some(
@@ -94,7 +96,7 @@ export function checkCreatesConfirmation(intents) {
   const gaps = [];
   for (const [name, intent] of Object.entries(intents || {})) {
     if (!intent.creates) continue;
-    const c = intent.particles?.confirmation;
+    const c = getConfirmation(intent);
     if (!c) continue;
     if (!FORM_CONFIRMATIONS.has(c)) {
       gaps.push({ kind: "creates-needs-form", intent: name });
@@ -103,13 +105,17 @@ export function checkCreatesConfirmation(intents) {
   return gaps;
 }
 
+function getConfirmation(intent) {
+  return intent.particles?.confirmation ?? intent.confirmation;
+}
+
 export function checkEmptyConditions(intents) {
   const gaps = [];
   for (const [name, intent] of Object.entries(intents || {})) {
     if (intent.creates) continue;
     if (intent.system) continue;
+    if (getConfirmation(intent) === "auto") continue;
     const p = intent.particles || {};
-    if (p.confirmation === "auto") continue;
     const entities = p.entities || [];
     if (entities.length === 0) continue;
     const conditions = p.conditions || [];
@@ -124,12 +130,13 @@ export function checkEmptyConditions(intents) {
 
 // click-подтверждение на известной сущности с чистой status-replace
 // не требует явного witness — UI покажет detail сам.
-function isContextualStatusReplace(particles) {
-  const confirmation = particles.confirmation;
+function isContextualStatusReplace(intent) {
+  const confirmation = getConfirmation(intent);
   if (confirmation !== "click") return false;
-  const entities = particles.entities || [];
+  const p = intent.particles || {};
+  const entities = p.entities || [];
   if (entities.length === 0) return false;
-  const effects = particles.effects || [];
+  const effects = p.effects || [];
   if (effects.length === 0) return false;
   return effects.every((e) => e.α === "replace" || e.α === "remove");
 }
@@ -138,15 +145,16 @@ export function checkEmptyWitnesses(intents) {
   const gaps = [];
   for (const [name, intent] of Object.entries(intents || {})) {
     if (intent.system) continue;
+    if (intent.category === "system") continue;
     const p = intent.particles || {};
     const witnesses = p.witnesses || [];
-    const confirmation = p.confirmation;
-    if (confirmation === "auto" || confirmation === "drag-end" || confirmation === "drag") continue;
+    const confirmation = getConfirmation(intent);
+    if (confirmation === "auto" || confirmation === "drag-end" || confirmation === "drag" || confirmation === "none") continue;
     if (witnesses.length > 0) continue;
     const effects = p.effects || [];
     const entities = p.entities || [];
     if (effects.length === 0 && entities.length === 0) continue;
-    if (isContextualStatusReplace(p)) continue;
+    if (isContextualStatusReplace(intent)) continue;
     gaps.push({ kind: "empty-witnesses", intent: name });
   }
   return gaps;

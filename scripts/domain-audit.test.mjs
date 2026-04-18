@@ -61,6 +61,10 @@ describe("checkEntityKind", () => {
     const onto = { entities: { Foo: { fields: {}, type: "internal" } } };
     expect(checkEntityKind(onto)).toEqual([]);
   });
+  it("entity с kind=reference (delivery-стиль) проходит", () => {
+    const onto = { entities: { Foo: { fields: {}, kind: "reference" } } };
+    expect(checkEntityKind(onto)).toEqual([]);
+  });
 });
 
 describe("checkRoleBase", () => {

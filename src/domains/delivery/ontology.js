@@ -15,6 +15,7 @@ export const ONTOLOGY = {
     // 1. Пользователь системы — dual-write от auth_users, ownerField не нужен
     //    (id совпадает с auth userId). Все роли наследуются из JWT.
     User: {
+      kind: "internal",
       ownerField: "id",
       fields: {
         id: { type: "text" },
@@ -28,6 +29,7 @@ export const ONTOLOGY = {
 
     // 2. Ресторан / магазин — принадлежит merchant-пользователю
     Merchant: {
+      kind: "internal",
       ownerField: "ownerId",
       fields: {
         id: { type: "text" },
@@ -42,6 +44,7 @@ export const ONTOLOGY = {
 
     // 3. Позиция меню — принадлежит ресторану через merchantId
     MenuItem: {
+      kind: "internal",
       ownerField: "merchantId",
       fields: {
         id: { type: "text" },
@@ -56,6 +59,7 @@ export const ONTOLOGY = {
 
     // 4. Зона доставки — общий справочник, без owner
     Zone: {
+      kind: "reference",
       fields: {
         id: { type: "text" },
         name: { type: "text", required: true, label: "Зона" },
@@ -80,6 +84,7 @@ export const ONTOLOGY = {
 
     // 6. Заказ — ключевая агрегирующая сущность
     Order: {
+      kind: "internal",
       ownerField: "customerId",
       fields: {
         id: { type: "text" },
@@ -107,6 +112,7 @@ export const ONTOLOGY = {
 
     // 7. Позиция заказа — принадлежит заказу через orderId
     OrderItem: {
+      kind: "internal",
       ownerField: "orderId",
       fields: {
         id: { type: "text" },
@@ -119,6 +125,7 @@ export const ONTOLOGY = {
 
     // 8. Доставка — факт вручения. Scope через order.customerId
     Delivery: {
+      kind: "internal",
       ownerField: "courierId",
       fields: {
         id: { type: "text" },
@@ -148,6 +155,7 @@ export const ONTOLOGY = {
 
     // 10. Геопозиция курьера — real-time поток
     CourierLocation: {
+      kind: "mirror",
       ownerField: "courierId",
       fields: {
         id: { type: "text" },
@@ -162,6 +170,7 @@ export const ONTOLOGY = {
 
     // 11. Платёж — принадлежит покупателю
     Payment: {
+      kind: "internal",
       ownerField: "customerId",
       fields: {
         id: { type: "text" },
@@ -180,6 +189,7 @@ export const ONTOLOGY = {
 
     // 12. Нотификация — принадлежит получателю
     Notification: {
+      kind: "internal",
       ownerField: "recipientUserId",
       fields: {
         id: { type: "text" },
@@ -193,6 +203,7 @@ export const ONTOLOGY = {
 
     // 13. Отзыв — покупатель оставляет после доставки
     Review: {
+      kind: "internal",
       ownerField: "customerId",
       fields: {
         id: { type: "text" },
@@ -206,6 +217,7 @@ export const ONTOLOGY = {
 
     // 14. Preapproval агента — декларативные лимиты для автоназначения (§26.2)
     AgentPreapproval: {
+      kind: "internal",
       ownerField: "userId",
       fields: {
         id: { type: "text" },

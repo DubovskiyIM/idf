@@ -110,6 +110,7 @@ export const INTENTS = {
         { name: "id", type: "id", required: true },
         { name: "totalAmount", type: "number", required: true },
       ],
+      witnesses: ["order.totalAmount", "order.merchantId"],
       effects: [
         { α: "replace", target: "order.status", value: "placed" },
         { α: "add", target: "payments", σ: "account" },
@@ -129,6 +130,7 @@ export const INTENTS = {
       parameters: [
         { name: "id", type: "id", required: true },
       ],
+      witnesses: ["order.totalAmount", "order.merchantId"],
       effects: [
         { α: "replace", target: "order.status", value: "cancelled" },
       ],
@@ -165,6 +167,7 @@ export const INTENTS = {
         { name: "id", type: "id", required: true },
         { name: "amount", type: "number", required: true },
       ],
+      witnesses: ["order.totalAmount", "order.tip"],
       effects: [
         { α: "replace", target: "order.tip" },
       ],
@@ -184,6 +187,7 @@ export const INTENTS = {
         { name: "id", type: "id", required: true },
         { name: "reason", type: "text", required: false },
       ],
+      witnesses: ["payment.amount", "order.totalAmount"],
       effects: [
         { α: "replace", target: "payment.status", value: "refunded" },
       ],
@@ -221,6 +225,7 @@ export const INTENTS = {
         { name: "reason", type: "text", required: false },
       ],
       conditions: ["order.status = 'placed'"],
+      witnesses: ["order.totalAmount", "order.customerId"],
       effects: [
         { α: "replace", target: "order.status", value: "cancelled" },
       ],
@@ -308,6 +313,7 @@ export const INTENTS = {
       parameters: [
         { name: "id", type: "id", required: true },
       ],
+      witnesses: ["merchant.name", "merchant.status"],
       effects: [
         { α: "replace", target: "merchant.status", value: "paused" },
       ],
@@ -361,6 +367,7 @@ export const INTENTS = {
         { name: "reason", type: "text", required: false },
       ],
       conditions: ["delivery.status = 'assigned'"],
+      witnesses: ["delivery.orderId"],
       effects: [
         { α: "replace", target: "delivery.status", value: "rejected" },
       ],
@@ -379,6 +386,7 @@ export const INTENTS = {
         { name: "id", type: "id", required: true },
       ],
       conditions: ["order.status = 'ready'"],
+      witnesses: ["order.merchantId", "order.totalAmount"],
       effects: [
         { α: "replace", target: "order.status", value: "picked_up" },
         { α: "replace", target: "delivery.pickupAt" },
@@ -417,6 +425,7 @@ export const INTENTS = {
         { name: "id", type: "id", required: true },
       ],
       conditions: ["delivery.status = 'delivering'"],
+      witnesses: ["order.addressId", "order.totalAmount"],
       effects: [
         { α: "replace", target: "order.status", value: "delivered" },
         { α: "replace", target: "delivery.status", value: "delivered" },
@@ -491,6 +500,7 @@ export const INTENTS = {
         { name: "id", type: "id", required: true },
         { name: "courierId", type: "id", required: true },
       ],
+      witnesses: ["delivery.orderId", "delivery.courierId"],
       effects: [
         { α: "replace", target: "delivery.courierId" },
         { α: "replace", target: "delivery.status", value: "assigned" },
@@ -543,6 +553,7 @@ export const INTENTS = {
         { name: "id", type: "id", required: true },
         { name: "reason", type: "text", required: false },
       ],
+      witnesses: ["zone.name", "zone.city"],
       effects: [
         { α: "replace", target: "zone.active", value: false },
       ],
