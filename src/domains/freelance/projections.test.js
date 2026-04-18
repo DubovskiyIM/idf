@@ -172,7 +172,7 @@ describe("freelance projections — wallet", () => {
   });
 });
 
-describe("freelance crystallize — irreversible-confirm matching (__irr intents)", () => {
+describe("freelance crystallize — irreversible-confirm apply (E2E на core@0.16+)", () => {
   it("confirm_deal/accept_result/auto_accept_result имеют irreversibility=high — матчатся patternом", () => {
     const irrHigh = Object.values(INTENTS).filter(i => i.irreversibility === "high");
     expect(irrHigh.length).toBeGreaterThanOrEqual(3);
@@ -180,14 +180,25 @@ describe("freelance crystallize — irreversible-confirm matching (__irr intents
     expect(ids).toEqual(expect.arrayContaining(["confirm_deal", "accept_result", "auto_accept_result"]));
   });
 
-  it("task_detail_customer имеет toolbar с accept_result — overlay автоматически через confirmDialog archetype", () => {
+  it("deal_detail_customer: accept_result overlay содержит warning из __irr.reason", () => {
     const arts = crystallizeV2(INTENTS, PROJECTIONS, ONTOLOGY, "freelance");
     const dealArt = arts.deal_detail_customer;
     expect(dealArt).toBeDefined();
-    const overlayItems = dealArt.slots?.overlay || [];
-    const acceptOverlay = overlayItems.find(o => o?.triggerIntentId === "accept_result");
+    const overlays = dealArt.slots?.overlay || [];
+    const acceptOverlay = overlays.find(o => o?.triggerIntentId === "accept_result");
     expect(acceptOverlay).toBeDefined();
     expect(acceptOverlay.type).toBe("confirmDialog");
+    expect(acceptOverlay.warning).toBe("Escrow-перевод исполнителю — откат только через chargeback поддержки");
+  });
+
+  it("deal_detail_customer: cancel_deal_mutual overlay БЕЗ warning (intent не помечен __irr)", () => {
+    const arts = crystallizeV2(INTENTS, PROJECTIONS, ONTOLOGY, "freelance");
+    const dealArt = arts.deal_detail_customer;
+    const overlays = dealArt.slots?.overlay || [];
+    const cancelOverlay = overlays.find(o => o?.triggerIntentId === "cancel_deal_mutual");
+    if (cancelOverlay) {
+      expect(cancelOverlay.warning).toBeUndefined();
+    }
   });
 });
 
