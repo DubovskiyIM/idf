@@ -131,6 +131,86 @@ export const ONTOLOGY = {
         createdAt: { type: "datetime" },
       },
     },
+
+    Deal: {
+      ownerField: "customerId",
+      fields: {
+        id: { type: "text" },
+        customerId: { type: "text", required: true },
+        executorId: { type: "text", required: true },
+        taskId: { type: "text", required: true },
+        responseId: { type: "text" },
+        amount: { type: "number", fieldRole: "money", required: true, label: "Сумма сделки" },
+        commission: { type: "number", fieldRole: "money", label: "Комиссия" },
+        status: {
+          type: "select",
+          options: [
+            "new", "awaiting_payment", "in_progress", "on_review",
+            "completed", "cancelled",
+          ],
+          required: true,
+          label: "Статус",
+        },
+        deadline: { type: "datetime", label: "Срок" },
+        completedAt: { type: "datetime", label: "Завершено" },
+        createdAt: { type: "datetime" },
+      },
+    },
+
+    Wallet: {
+      ownerField: "userId",
+      fields: {
+        id: { type: "text" },
+        userId: { type: "text", required: true },
+        balance: { type: "number", fieldRole: "money", label: "Баланс" },
+        reserved: { type: "number", fieldRole: "money", label: "В резерве" },
+        currency: { type: "text", label: "Валюта" },
+        createdAt: { type: "datetime" },
+      },
+    },
+
+    Transaction: {
+      ownerField: "walletId",
+      fields: {
+        id: { type: "text" },
+        walletId: { type: "text", required: true },
+        dealId: { type: "text", label: "Сделка" },
+        amount: { type: "number", fieldRole: "money", required: true, label: "Сумма" },
+        kind: {
+          type: "select",
+          options: ["topup", "escrow-hold", "release", "commission", "refund", "withdrawal"],
+          required: true,
+          label: "Тип операции",
+        },
+        status: {
+          type: "select",
+          options: ["pending", "posted", "reverted"],
+          required: true,
+          label: "Статус",
+        },
+        note: { type: "text", label: "Комментарий" },
+        createdAt: { type: "datetime" },
+      },
+    },
+
+    Review: {
+      ownerField: "authorId",
+      fields: {
+        id: { type: "text" },
+        authorId: { type: "text", required: true },
+        dealId: { type: "text", required: true },
+        targetUserId: { type: "text", required: true },
+        role: {
+          type: "select",
+          options: ["customer", "executor"],
+          required: true,
+          label: "Сторона",
+        },
+        rating: { type: "number", required: true, label: "Оценка" },
+        comment: { type: "text", label: "Комментарий" },
+        createdAt: { type: "datetime" },
+      },
+    },
   },
 
   roles: {

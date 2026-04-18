@@ -5,9 +5,10 @@ describe("freelance ontology — entities", () => {
   const EXPECTED = [
     "User", "CustomerProfile", "ExecutorProfile",
     "Skill", "ExecutorSkill", "Category", "Task", "Response",
+    "Deal", "Wallet", "Transaction", "Review",
   ];
 
-  it("содержит 8 базовых сущностей", () => {
+  it("содержит 12 сущностей в Cycle 2 (8 Cycle 1 + 4 escrow)", () => {
     for (const e of EXPECTED) {
       expect(ONTOLOGY.entities[e], `entity ${e}`).toBeDefined();
     }
@@ -51,6 +52,43 @@ describe("freelance ontology — entities", () => {
   it("Response.ownerField === 'executorId' и имеет taskId с FK", () => {
     expect(ONTOLOGY.entities.Response.ownerField).toBe("executorId");
     expect(ONTOLOGY.entities.Response.fields.taskId).toBeDefined();
+  });
+
+  it("Deal.ownerField === 'customerId', имеет executorId, taskId, amount, status", () => {
+    const d = ONTOLOGY.entities.Deal;
+    expect(d.ownerField).toBe("customerId");
+    expect(d.fields.executorId).toBeDefined();
+    expect(d.fields.taskId).toBeDefined();
+    expect(d.fields.amount).toBeDefined();
+    expect(d.fields.status.options).toEqual(expect.arrayContaining([
+      "new", "awaiting_payment", "in_progress", "on_review", "completed", "cancelled",
+    ]));
+  });
+
+  it("Wallet.ownerField === 'userId', имеет balance + reserved (fieldRole=money)", () => {
+    const w = ONTOLOGY.entities.Wallet;
+    expect(w.ownerField).toBe("userId");
+    expect(w.fields.balance.fieldRole).toBe("money");
+    expect(w.fields.reserved.fieldRole).toBe("money");
+  });
+
+  it("Transaction.ownerField === 'walletId', kind options покрывают 4 типа", () => {
+    const t = ONTOLOGY.entities.Transaction;
+    expect(t.ownerField).toBe("walletId");
+    expect(t.fields.kind.options).toEqual(expect.arrayContaining([
+      "topup", "escrow-hold", "release", "commission",
+    ]));
+    expect(t.fields.status.options).toEqual(expect.arrayContaining([
+      "pending", "posted", "reverted",
+    ]));
+  });
+
+  it("Review.ownerField === 'authorId', role — customer|executor", () => {
+    const r = ONTOLOGY.entities.Review;
+    expect(r.ownerField).toBe("authorId");
+    expect(r.fields.dealId).toBeDefined();
+    expect(r.fields.role.options).toEqual(["customer", "executor"]);
+    expect(r.fields.rating).toBeDefined();
   });
 });
 
