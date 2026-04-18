@@ -511,4 +511,146 @@ export const INTENTS = {
     },
     confirmation: "auto",
   },
+
+  // ─── Deal (7) ─────────────────────────────────────────────────────────────
+
+  confirm_deal: {
+    name: "Подтвердить сделку",
+    description: "Customer выбирает исполнителя и резервирует escrow — деньги замораживаются",
+    α: "add",
+    irreversibility: "high",
+    __irr: {
+      point: "high",
+      reason: "Сумма резервируется в escrow — отмена возможна только через спор или mutual-cancel",
+    },
+    particles: {
+      parameters: [
+        { name: "customerId", type: "id", required: true },
+        { name: "executorId", type: "id", required: true },
+        { name: "taskId", type: "id", required: true },
+        { name: "responseId", type: "id", required: true },
+        { name: "amount", type: "number", required: true },
+        { name: "deadline", type: "datetime" },
+      ],
+      effects: [
+        { α: "add", target: "deals", σ: "account" },
+        { α: "add", target: "transactions", σ: "account" },
+        { α: "replace", target: "wallet.reserved" },
+      ],
+    },
+    creates: "Deal",
+    confirmation: "auto",
+  },
+
+  submit_work_result: {
+    name: "Сдать работу",
+    description: "Executor передаёт результат — Deal.status переходит в on_review",
+    α: "replace",
+    irreversibility: "low",
+    particles: {
+      parameters: [
+        { name: "id", type: "id", required: true },
+        { name: "result", type: "text", required: true },
+        { name: "links", type: "text" },
+      ],
+      effects: [
+        { α: "replace", target: "deal.status", value: "on_review" },
+      ],
+    },
+    confirmation: "auto",
+  },
+
+  accept_result: {
+    name: "Принять работу",
+    description: "Customer принимает результат — escrow-перевод исполнителю",
+    α: "replace",
+    irreversibility: "high",
+    __irr: {
+      point: "high",
+      reason: "Escrow-перевод исполнителю — откат только через chargeback поддержки",
+    },
+    particles: {
+      parameters: [
+        { name: "id", type: "id", required: true },
+      ],
+      effects: [
+        { α: "replace", target: "deal.status", value: "completed" },
+        { α: "add", target: "transactions", σ: "account" },
+      ],
+    },
+    confirmation: "auto",
+  },
+
+  auto_accept_result: {
+    name: "Авто-приёмка (72h)",
+    description: "Scheduler-fired: если customer не принял за 72h, результат auto-accept с теми же последствиями",
+    α: "replace",
+    irreversibility: "high",
+    __irr: {
+      point: "high",
+      reason: "Автоматическая приёмка через 72h после on_review — та же finality что и ручная",
+    },
+    particles: {
+      parameters: [
+        { name: "id", type: "id", required: true },
+      ],
+      effects: [
+        { α: "replace", target: "deal.status", value: "completed" },
+        { α: "add", target: "transactions", σ: "account" },
+      ],
+    },
+    confirmation: "auto",
+  },
+
+  request_revision: {
+    name: "Запросить доработку",
+    description: "Customer возвращает deal из on_review в in_progress с комментарием",
+    α: "replace",
+    irreversibility: "low",
+    particles: {
+      parameters: [
+        { name: "id", type: "id", required: true },
+        { name: "comment", type: "text", required: true },
+      ],
+      effects: [
+        { α: "replace", target: "deal.status", value: "in_progress" },
+      ],
+    },
+    confirmation: "auto",
+  },
+
+  submit_revision: {
+    name: "Сдать правки",
+    description: "Executor сдаёт версию после revision — Deal возвращается в on_review",
+    α: "replace",
+    irreversibility: "low",
+    particles: {
+      parameters: [
+        { name: "id", type: "id", required: true },
+        { name: "result", type: "text", required: true },
+      ],
+      effects: [
+        { α: "replace", target: "deal.status", value: "on_review" },
+      ],
+    },
+    confirmation: "auto",
+  },
+
+  cancel_deal_mutual: {
+    name: "Отменить сделку (обоюдно)",
+    description: "Обе стороны согласны — escrow refund customer'у",
+    α: "replace",
+    irreversibility: "medium",
+    particles: {
+      parameters: [
+        { name: "id", type: "id", required: true },
+        { name: "reason", type: "text", required: true },
+      ],
+      effects: [
+        { α: "replace", target: "deal.status", value: "cancelled" },
+        { α: "add", target: "transactions", σ: "account" },
+      ],
+    },
+    confirmation: "auto",
+  },
 };
