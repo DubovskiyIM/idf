@@ -39,9 +39,9 @@ export default function MarketLineCanvas({ world }) {
             style={{
               padding: "6px 14px", borderRadius: 6, fontSize: 13, cursor: "pointer",
               border: "1px solid",
-              borderColor: kind === k ? "var(--mantine-color-indigo-6, #6366f1)" : "var(--mantine-color-default-border, #d1d5db)",
-              background: kind === k ? "var(--mantine-color-indigo-6, #6366f1)" : "transparent",
-              color: kind === k ? "#fff" : "var(--mantine-color-text, #111)",
+              borderColor: kind === k ? "var(--idf-accent, #6366f1)" : "var(--idf-border, #d1d5db)",
+              background: kind === k ? "var(--idf-accent, #6366f1)" : "transparent",
+              color: kind === k ? "#fff" : "var(--idf-text, #111)",
             }}
           >
             {k}

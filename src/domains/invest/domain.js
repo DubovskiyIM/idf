@@ -305,6 +305,8 @@ export function getSeedEffects() {
   });
 
   // ─── MarketSignals — из внешних ML/sentiment-сервисов ───
+  // Живой сигнальный поток + time-series seed (30 точек × 4 kind) — чтобы
+  // market_trends canvas показывал real-looking линию на демо.
   const signals = [
     { id: "sig_1", source: "invest-ml", assetId: "ast_nvda", kind: "price", value: 890, timestamp: now - 60 * 1000 },
     { id: "sig_2", source: "invest-fuzzy", assetId: "ast_art_monet", kind: "fuzzy_risk", value: 0.68, timestamp: now - 10 * 60 * 1000 },
@@ -312,6 +314,45 @@ export function getSeedEffects() {
     { id: "sig_4", source: "invest-ml", assetId: "ast_btc", kind: "volume", value: 28_400_000_000, timestamp: now - 30 * 60 * 1000 },
     { id: "sig_5", source: "invest-news", assetId: "ast_sber", kind: "sentiment", value: 0.52, timestamp: now - 4 * 60 * 60 * 1000 },
   ];
+  // Генерируем 30 точек sentiment для AAPL за последние 30 дней — volatile но trending up
+  for (let i = 30; i >= 0; i--) {
+    const base = 0.52 + (30 - i) * 0.008;       // +0.008/day trend
+    const noise = (Math.sin(i * 1.3) + Math.cos(i * 0.7)) * 0.08;
+    signals.push({
+      id: `sig_sent_aapl_${i}`, source: "invest-news", assetId: "ast_aapl",
+      kind: "sentiment", value: Math.max(0, Math.min(1, base + noise)),
+      timestamp: now - i * day,
+    });
+  }
+  // Генерируем 30 точек price для NVDA — рост с волатильностью
+  for (let i = 30; i >= 0; i--) {
+    const base = 620 + (30 - i) * 9;             // 620 → 890 за 30 дней
+    const noise = Math.sin(i * 0.9) * 25;
+    signals.push({
+      id: `sig_price_nvda_${i}`, source: "invest-ml", assetId: "ast_nvda",
+      kind: "price", value: Math.round(base + noise),
+      timestamp: now - i * day,
+    });
+  }
+  // Volume BTC: периодические всплески
+  for (let i = 30; i >= 0; i--) {
+    const base = 22_000_000_000 + Math.abs(Math.sin(i * 0.5)) * 10_000_000_000;
+    signals.push({
+      id: `sig_vol_btc_${i}`, source: "invest-ml", assetId: "ast_btc",
+      kind: "volume", value: Math.round(base),
+      timestamp: now - i * day,
+    });
+  }
+  // Fuzzy risk для art/wine: медленно нарастающий риск
+  for (let i = 30; i >= 0; i--) {
+    const base = 0.42 + (30 - i) * 0.009;
+    const noise = Math.cos(i * 0.4) * 0.04;
+    signals.push({
+      id: `sig_risk_art_${i}`, source: "invest-fuzzy", assetId: "ast_art_monet",
+      kind: "fuzzy_risk", value: Math.max(0, Math.min(1, base + noise)),
+      timestamp: now - i * day,
+    });
+  }
   for (const s of signals) add("marketSignals", s);
 
   // ─── Demo-клиенты для advisor-режима ───

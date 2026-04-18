@@ -7,7 +7,10 @@ import StandaloneApp from './standalone.jsx';
 // Tailwind 4 entry — должен быть в src/, не в node_modules,
 // чтобы @tailwindcss/vite plugin его подхватил.
 import './tailwind.css';
-// CSS-темы адаптеров: @theme-блоки внутри обрабатываются глобально.
+// IDF Token Bridge — адаптер-specific overrides через [data-adapter="..."].
+// shadcn/apple экспортируют theme.css из npm, mantine/antd — ещё не,
+// поэтому inline-fallback для них в src/adapter-themes.css.
+import './adapter-themes.css';
 import '@intent-driven/adapter-shadcn/styles.css';
 import '@intent-driven/adapter-apple/styles.css';
 

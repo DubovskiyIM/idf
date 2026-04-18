@@ -78,9 +78,61 @@ export const INTENTS = {
   delete_rule: { name: "Удалить", particles: { effects: [{ α: "remove", target: "rules" }] }, irreversibility: "high" },
 
   // ─── Agent-intents ───
-  agent_propose_rebalance: { name: "Агент: ребаланс", particles: { effects: [{ α: "add", target: "recommendations", σ: "account" }] } },
-  agent_flag_anomaly: { name: "Агент: аномалия", particles: { effects: [{ α: "add", target: "alerts", σ: "account" }] } },
-  agent_fetch_market_signal: { name: "Сигнал рынка", particles: { effects: [{ α: "add", target: "marketSignals", σ: "global" }] } },
+  agent_propose_rebalance: {
+    name: "Агент: ребаланс",
+    parameters: [
+      { name: "portfolioId", type: "entityRef", entity: "Portfolio", required: true },
+      { name: "confidence", type: "number", required: true },
+      { name: "rationale", type: "text", required: false },
+    ],
+    particles: { effects: [{ α: "add", target: "recommendations", σ: "account" }] },
+  },
+  agent_flag_anomaly: {
+    name: "Агент: аномалия",
+    parameters: [
+      { name: "severity", type: "select", required: true },
+      { name: "message", type: "text", required: true },
+    ],
+    particles: { effects: [{ α: "add", target: "alerts", σ: "account" }] },
+  },
+  agent_fetch_market_signal: {
+    name: "Сигнал рынка",
+    parameters: [
+      { name: "assetId", type: "entityRef", entity: "Asset", required: true },
+      { name: "kind", type: "select", required: true },
+      { name: "value", type: "number", required: true },
+      { name: "source", type: "text", required: false },
+    ],
+    particles: { effects: [{ α: "add", target: "marketSignals", σ: "global" }] },
+  },
+  agent_execute_preapproved_order: {
+    name: "Агент: сделка (preapproved)",
+    parameters: [
+      { name: "portfolioId", type: "entityRef", entity: "Portfolio", required: true },
+      { name: "assetId", type: "entityRef", entity: "Asset", required: true },
+      { name: "α", type: "select", required: true },
+      { name: "quantity", type: "number", required: true },
+      { name: "price", type: "number", required: true },
+      { name: "total", type: "number", required: true },
+      { name: "assetType", type: "select", required: true },
+    ],
+    particles: { effects: [{ α: "add", target: "transactions", σ: "account" }] },
+  },
+  agent_recompute_risk_score: {
+    name: "Агент: пересчёт риска",
+    parameters: [
+      { name: "portfolioId", type: "entityRef", entity: "Portfolio", required: false },
+    ],
+    particles: { effects: [{ α: "replace", target: "riskProfiles", σ: "account" }] },
+  },
+  agent_generate_report: {
+    name: "Агент: отчёт",
+    parameters: [
+      { name: "portfolioId", type: "entityRef", entity: "Portfolio", required: false },
+      { name: "reportType", type: "select", required: false },
+    ],
+    particles: { effects: [{ α: "add", target: "recommendations", σ: "account" }] },
+  },
 
   // ─── Advisor intents ───
   assign_client: { name: "Взять клиента", particles: { effects: [{ α: "add", target: "assignments", σ: "account" }] }, creates: "Assignment", heroCreate: true },
