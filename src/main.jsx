@@ -1,7 +1,7 @@
+import { useEffect } from 'react';
 import { createRoot } from 'react-dom/client';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { MantineAdapterProvider } from '@intent-driven/adapter-mantine';
-import App from './prototype.jsx';
 import StandaloneApp from './standalone.jsx';
 
 // Tailwind 4 entry — должен быть в src/, не в node_modules,
@@ -13,6 +13,33 @@ import './tailwind.css';
 import './adapter-themes.css';
 import '@intent-driven/adapter-shadcn/styles.css';
 import '@intent-driven/adapter-apple/styles.css';
+
+// Корень `/` был prototype v1.2 (src/prototype.jsx). После миграции в Studio
+// (tabs Граф / Прототип / Паттерны) prototype удалён как самостоятельный
+// entry — перенаправляем на /studio.html с сохранением query-params. Прямые
+// domain-routes (/booking-v2, /invest и т.п. через StandaloneApp) остаются.
+function StudioRedirect() {
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const target = new URL("/studio.html", window.location.origin);
+    for (const [k, v] of new URLSearchParams(window.location.search)) {
+      target.searchParams.set(k, v);
+    }
+    if (!target.searchParams.has("view") && target.searchParams.has("domain")) {
+      target.searchParams.set("view", "prototype");
+    }
+    window.location.replace(target.toString());
+  }, []);
+  return (
+    <div style={{
+      minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center",
+      background: "#0b1220", color: "#94a3b8",
+      fontFamily: "Inter, -apple-system, system-ui, sans-serif", fontSize: 13,
+    }}>
+      Открываю Studio…
+    </div>
+  );
+}
 
 function Root() {
   return (
@@ -30,7 +57,7 @@ function Root() {
           <Route path="/lifequest" element={<StandaloneApp domainId="lifequest" />} />
           <Route path="/reflect" element={<StandaloneApp domainId="reflect" />} />
           <Route path="/invest" element={<StandaloneApp domainId="invest" />} />
-          <Route path="/*" element={<App />} />
+          <Route path="/*" element={<StudioRedirect />} />
         </Routes>
       </BrowserRouter>
     </MantineAdapterProvider>
