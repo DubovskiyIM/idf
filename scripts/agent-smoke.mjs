@@ -149,10 +149,10 @@ async function main() {
   const world = await get("/api/agent/booking/world", jwt);
   assert(world.status === 200, "4", "status 200");
   assert(Array.isArray(world.body.world.specialists), "4", "specialists — массив");
-  assert(Array.isArray(world.body.world.timeslots), "4", "timeslots — массив");
-  const freeSlots = (world.body.world.timeslots || []).filter(s => s.status === "free");
+  assert(Array.isArray(world.body.world.timeSlots), "4", "timeSlots — массив");
+  const freeSlots = (world.body.world.timeSlots || []).filter(s => s.status === "free");
   assert(freeSlots.length > 0, "4", `есть свободные slots (${freeSlots.length})`, {
-    timeslots: world.body.world.timeslots
+    timeslots: world.body.world.timeSlots
   });
 
   // Step 5: POST /exec/create_booking

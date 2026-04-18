@@ -46,7 +46,7 @@ function makeVoiceRouter() {
       });
     }
 
-    const user = getUser(req);
+    const user = getUser(req.userId);
     const viewer = { id: user.id, name: user.name, email: user.email };
 
     let scopedWorld;

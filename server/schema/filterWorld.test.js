@@ -82,9 +82,9 @@ describe("filterWorldForRole", () => {
     expect(result.reviews[0].bookingId).toBe("book_mine");
   });
 
-  it("применяет statusMapping к timeslots", () => {
+  it("применяет statusMapping к timeSlots (camelCase output)", () => {
     const result = filterWorldForRole(rawWorld, ontology, "agent", viewer);
-    const byId = Object.fromEntries(result.timeslots.map(s => [s.id, s]));
+    const byId = Object.fromEntries(result.timeSlots.map(s => [s.id, s]));
     expect(byId.slot_1.status).toBe("free");        // без изменений
     expect(byId.slot_2.status).toBe("booked");      // held → booked
     expect(byId.slot_3.status).toBe("unavailable"); // blocked → unavailable

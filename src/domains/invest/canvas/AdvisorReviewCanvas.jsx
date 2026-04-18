@@ -75,10 +75,10 @@ export default function AdvisorReviewCanvas({ world, viewer, exec }) {
                   style={{
                     padding: "10px 14px", borderRadius: 8,
                     border: "1px solid",
-                    borderColor: active ? "var(--mantine-color-indigo-6, #6366f1)" : "var(--mantine-color-default-border, #e5e7eb)",
+                    borderColor: active ? "var(--idf-accent, #6366f1)" : "var(--idf-border, #e5e7eb)",
                     background: active ? "rgba(99, 102, 241, 0.08)" : "transparent",
                     cursor: "pointer", textAlign: "left",
-                    color: "var(--mantine-color-text, #111)",
+                    color: "var(--idf-text, #111)",
                   }}
                 >
                   <div style={{ fontWeight: 600, fontSize: 13 }}>{client?.name || a.clientId}</div>
@@ -231,8 +231,8 @@ function btn(primary) {
   return {
     padding: "8px 14px", borderRadius: 6, fontSize: 13, cursor: "pointer",
     border: "1px solid",
-    borderColor: primary ? "var(--mantine-color-indigo-6, #6366f1)" : "var(--mantine-color-default-border, #d1d5db)",
-    background: primary ? "var(--mantine-color-indigo-6, #6366f1)" : "transparent",
-    color: primary ? "#fff" : "var(--mantine-color-text, #111)",
+    borderColor: primary ? "var(--idf-accent, #6366f1)" : "var(--idf-border, #d1d5db)",
+    background: primary ? "var(--idf-accent, #6366f1)" : "transparent",
+    color: primary ? "#fff" : "var(--idf-text, #111)",
   };
 }

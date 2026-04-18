@@ -23,23 +23,29 @@ const { foldWorld } = require("../validator.js");
 function makeDocumentRouter() {
   const router = Router({ mergeParams: true });
 
-  router.use(authMiddleware);
+  // Auth опциональный для document-материализации: если JWT есть — используем,
+  // если нет — anonymous observer (для демо и публичных отчётов).
+  router.use((req, res, next) => {
+    const authHeader = req.headers.authorization;
+    if (authHeader && authHeader.startsWith("Bearer ")) {
+      return authMiddleware(req, res, next);
+    }
+    req.userId = null;
+    next();
+  });
 
   router.get("/:projection", (req, res) => {
     const domain = req.params.domain;
     const projectionId = req.params.projection;
     const format = (req.query.format || "").toLowerCase()
       || (req.accepts(["html", "json"]) === "json" ? "json" : "html");
-    const role = (req.query.as || "investor").toLowerCase();
+    const role = (req.query.as || "observer").toLowerCase();
 
     const ontology = getOntology(domain);
     if (!ontology) {
       return res.status(503).json({ error: "ontology_unavailable", domain });
     }
 
-    // Projections — не в ontology, а в domain.projections. Клиент должен
-    // POST-нуть их отдельно. Для v1 — принимаем projection-spec по
-    // имени из projections registry (ниже).
     const projections = ontology.projections || {};
     const projection = projections[projectionId];
     if (!projection) {
@@ -51,14 +57,21 @@ function makeDocumentRouter() {
       });
     }
 
-    const user = getUser(req);
-    const viewer = { id: user.id, name: user.name, email: user.email };
+    const user = req.userId ? getUser(req.userId) : null;
+    const viewer = user
+      ? { id: user.id, name: user.name, email: user.email }
+      : { id: "anonymous", name: "Observer", email: "" };
 
-    // Собираем scoped world через filterWorldForRole (reuses m2m/scope logic).
+    // Собираем scoped world: observer без auth видит всё (compliance),
+    // остальные роли — через filterWorldForRole.
     let scopedWorld;
     try {
       const fullWorld = foldWorld();
-      scopedWorld = filterWorldForRole(fullWorld, ontology, role, viewer);
+      if (role === "observer" && !req.userId) {
+        scopedWorld = fullWorld;
+      } else {
+        scopedWorld = filterWorldForRole(fullWorld, ontology, role, viewer);
+      }
     } catch (err) {
       return res.status(400).json({ error: "filter_failed", reason: err.message });
     }
