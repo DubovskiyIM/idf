@@ -9,6 +9,11 @@ const GROUPS = {
     "add_portfolio_item", "update_rates", "toggle_availability",
     "activate_executor_profile",
   ],
+  task: [
+    "create_task_draft", "submit_task_for_moderation", "edit_task",
+    "publish_task", "cancel_task_before_deal",
+    "search_tasks", "filter_by_category", "sort_tasks",
+  ],
 };
 
 describe("freelance intents — auth + system", () => {
@@ -46,5 +51,31 @@ describe("freelance intents — profile details", () => {
     expect(INTENTS.toggle_availability.α).toBe("replace");
     const target = INTENTS.toggle_availability.particles.effects[0].target;
     expect(target).toMatch(/availability/);
+  });
+});
+
+describe("freelance intents — task details", () => {
+  it("create_task_draft создаёт Task", () => {
+    expect(INTENTS.create_task_draft.creates).toBe("Task");
+  });
+
+  it("submit_task_for_moderation — replace task.status на moderation", () => {
+    const e = INTENTS.submit_task_for_moderation.particles.effects[0];
+    expect(e.α).toBe("replace");
+    expect(e.target).toBe("task.status");
+    expect(e.value).toBe("moderation");
+  });
+
+  it("publish_task — replace task.status на published", () => {
+    const e = INTENTS.publish_task.particles.effects[0];
+    expect(e.α).toBe("replace");
+    expect(e.target).toBe("task.status");
+    expect(e.value).toBe("published");
+  });
+
+  it("search_tasks / filter_by_category / sort_tasks — read-only, effects пустые", () => {
+    expect(INTENTS.search_tasks.particles.effects).toEqual([]);
+    expect(INTENTS.filter_by_category.particles.effects).toEqual([]);
+    expect(INTENTS.sort_tasks.particles.effects).toEqual([]);
   });
 });

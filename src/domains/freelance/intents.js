@@ -83,6 +83,146 @@ export const INTENTS = {
     confirmation: "auto",
   },
 
+  // ─── Task (8) ─────────────────────────────────────────────────────────────
+
+  create_task_draft: {
+    name: "Создать черновик задачи",
+    description: "Customer создаёт Task в статусе draft",
+    α: "add",
+    irreversibility: "low",
+    particles: {
+      parameters: [
+        { name: "customerId", type: "id", required: true },
+        { name: "title", type: "text", required: true },
+        { name: "description", type: "text" },
+        { name: "categoryId", type: "id", required: true },
+        { name: "budget", type: "number", required: true },
+        { name: "deadline", type: "datetime" },
+        { name: "type", type: "select", options: ["remote", "on-site"], required: true },
+        { name: "city", type: "text" },
+      ],
+      effects: [
+        { α: "add", target: "tasks", σ: "account" },
+      ],
+    },
+    creates: "Task",
+    confirmation: "auto",
+  },
+
+  submit_task_for_moderation: {
+    name: "Отправить на модерацию",
+    description: "Перевод Task.status draft → moderation",
+    α: "replace",
+    irreversibility: "low",
+    particles: {
+      parameters: [
+        { name: "id", type: "id", required: true },
+      ],
+      effects: [
+        { α: "replace", target: "task.status", value: "moderation" },
+      ],
+    },
+    confirmation: "auto",
+  },
+
+  edit_task: {
+    name: "Редактировать задачу",
+    description: "Правка полей Task (только в draft / moderation)",
+    α: "replace",
+    irreversibility: "low",
+    particles: {
+      parameters: [
+        { name: "id", type: "id", required: true },
+        { name: "title", type: "text" },
+        { name: "description", type: "text" },
+        { name: "budget", type: "number" },
+        { name: "deadline", type: "datetime" },
+      ],
+      effects: [
+        { α: "replace", target: "task" },
+      ],
+    },
+    confirmation: "auto",
+  },
+
+  publish_task: {
+    name: "Опубликовать задачу",
+    description: "Переход Task.status moderation → published (выполняется модератором в Cycle 3; в Cycle 1 — placeholder для customer-flow)",
+    α: "replace",
+    irreversibility: "low",
+    particles: {
+      parameters: [
+        { name: "id", type: "id", required: true },
+      ],
+      effects: [
+        { α: "replace", target: "task.status", value: "published" },
+      ],
+    },
+    confirmation: "auto",
+  },
+
+  cancel_task_before_deal: {
+    name: "Отменить задачу",
+    description: "Закрыть Task (status → closed) до выбора исполнителя",
+    α: "replace",
+    irreversibility: "low",
+    particles: {
+      parameters: [
+        { name: "id", type: "id", required: true },
+      ],
+      effects: [
+        { α: "replace", target: "task.status", value: "closed" },
+      ],
+    },
+    confirmation: "auto",
+  },
+
+  search_tasks: {
+    name: "Поиск задач",
+    description: "Полнотекстовый поиск по Task (read-only, session-scope)",
+    α: "replace",
+    irreversibility: "low",
+    particles: {
+      parameters: [
+        { name: "query", type: "text" },
+      ],
+      effects: [],
+    },
+    confirmation: "auto",
+  },
+
+  filter_by_category: {
+    name: "Фильтр по категории",
+    description: "UI-фильтр (session-scope)",
+    α: "replace",
+    irreversibility: "low",
+    particles: {
+      parameters: [
+        { name: "categoryId", type: "id" },
+      ],
+      effects: [],
+    },
+    confirmation: "auto",
+  },
+
+  sort_tasks: {
+    name: "Сортировка задач",
+    description: "UI-сортировка (session-scope)",
+    α: "replace",
+    irreversibility: "low",
+    particles: {
+      parameters: [
+        {
+          name: "sortBy",
+          type: "select",
+          options: ["newest", "budget_desc", "budget_asc", "deadline"],
+        },
+      ],
+      effects: [],
+    },
+    confirmation: "auto",
+  },
+
   // ─── Profile (8) ──────────────────────────────────────────────────────────
 
   update_profile: {
