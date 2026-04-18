@@ -15,6 +15,7 @@ function intent(name, entities, conditions, effects, witnesses, confirmation = "
     ...(extra.irreversibility ? { irreversibility: extra.irreversibility } : {}),
     ...(extra.extended ? { extended: true } : {}),
     ...(extra.phase ? { phase: extra.phase } : {}),
+    ...(extra.salience !== undefined ? { salience: extra.salience } : {}),
   };
 }
 
@@ -31,7 +32,7 @@ export const INTENTS = {
     ["listing.status = 'draft'", "listing.sellerId = me.id"],
     [ef("replace", "listing.title"), ef("replace", "listing.description"), ef("replace", "listing.startPrice")],
     ["title", "description", "startPrice", "condition"],
-    "click", { phase: "investigation" }),
+    "click", { phase: "investigation", salience: "primary" }),
 
   publish_listing: intent("Опубликовать", ["listing: Listing"],
     ["listing.status = 'draft'", "listing.sellerId = me.id"],
