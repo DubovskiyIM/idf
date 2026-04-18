@@ -20,6 +20,13 @@ export function describeEffect(intentId, alpha, ctx, target) {
   return `${intent?.name || intentId}: ${alpha} ${target || ""}`;
 }
 
+// Инструментальный signal (κ-символ + описание) для SSE-стрима useEngine.
+// Пока no-op — все escrow-эффекты описаны через describeEffect.
+// Cycle 3+ может вернуть { κ: "💰", desc: "Escrow резервирование" } для важных.
+export function signalForIntent(_intentId) {
+  return null;
+}
+
 // Ownership-field auto-injection для creator intents: UI-формы не спрашивают
 // customerId/authorId/executorId (ownership детали), viewer.id подставляется
 // из ctx.userId перед применением effects.
