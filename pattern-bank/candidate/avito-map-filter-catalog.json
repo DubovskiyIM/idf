@@ -1,0 +1,39 @@
+{
+  "id": "map-filter-catalog",
+  "version": 1,
+  "status": "candidate",
+  "archetype": "catalog",
+  "trigger": {
+    "requires": [
+      { "kind": "field-role-present", "fieldRole": "coordinate" },
+      { "kind": "intent-effect", "α": "replace", "targetSuffix": ".bbox" }
+    ]
+  },
+  "structure": {
+    "slot": "body",
+    "description": "Catalog рендерится как dual-pane: слева вертикальный список карточек, справа интерактивная карта с пинами и кластерами. Viewport карты (bbox) — это filter-параметр: любое pan/zoom переписывает filter и перезагружает список. Hover/select синхронизированы между пином и карточкой. Map реализуется через map-primitive §16a (marker layer + optional cluster), а не как отдельный canvas-архетип."
+  },
+  "rationale": {
+    "hypothesis": "Когда сущности каталога имеют fieldRole coordinate и пользователь ищет «рядом со мной», spatial-контекст становится таким же важным предикатом фильтра, как цена или категория. Отдельный map-canvas разрывает скан-поток; map-as-filter сохраняет scan-semantic каталога, добавляя geographic-read.",
+    "evidence": [
+      { "source": "avito-services", "description": "Каталог исполнителей: переключатель Список/На карте, viewport ≡ filter, hover-пин подсвечивает карточку", "reliability": "high" },
+      { "source": "airbnb", "description": "Search + map split-pane: пан карты перезагружает результаты", "reliability": "high" },
+      { "source": "yandex-uslugi", "description": "Карта мастеров с radius-фильтром рядом с метро", "reliability": "high" }
+    ],
+    "counterexample": [
+      { "source": "linear", "description": "Issue catalog — нет coordinate-поля, map-filter бессмыслен", "reliability": "high" },
+      { "source": "notion-database", "description": "Collection без spatial fieldRole — table/board/gallery, не map", "reliability": "high" }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [
+      { "domain": "delivery", "projection": "orders_list", "reason": "Order имеет deliveryAddress (coordinate/address role), есть fitler.bbox для dispatcher" },
+      { "domain": "booking", "projection": "specialists_catalog", "reason": "Specialist имеет location(coordinate) — каталог с map-filter естественен" }
+    ],
+    "shouldNotMatch": [
+      { "domain": "messenger", "projection": "conversations", "reason": "Conversation — нет coordinate fieldRole" },
+      { "domain": "invest", "projection": "portfolios_root", "reason": "Portfolio — financial entity, spatial-контекста нет" },
+      { "domain": "planning", "projection": "my_polls", "reason": "Poll не имеет географической семантики" }
+    ]
+  }
+}

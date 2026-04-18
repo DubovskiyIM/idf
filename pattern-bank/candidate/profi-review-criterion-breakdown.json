@@ -1,0 +1,90 @@
+{
+  "id": "review-criterion-breakdown",
+  "version": 1,
+  "status": "candidate",
+  "archetype": "detail",
+  "trigger": {
+    "requires": [
+      {
+        "kind": "sub-entity-exists",
+        "foreignKeyTo": "$mainEntity"
+      },
+      {
+        "kind": "field-role-present",
+        "fieldRole": "rating"
+      }
+    ]
+  },
+  "structure": {
+    "slot": "sections",
+    "description": "Над секцией отзывов в detail-проекции mainEntity (Specialist/Product/Merchant) вставляется summary-блок 'Оценка по критериям': агрегированные средние значения по каждому подкритерию (quality, punctuality, politeness, price, cleanliness) с bar-chart визуализацией. Каждая полоска кликабельна — фильтрует список отзывов только по тем, где автор выставил <max за этот критерий. Применяется когда sub-entity Review имеет (а) поле criteria:object с множественными rating-ключами, ЛИБО (б) ≥3 number-полей с naming-pattern '*_rating'/'*_score' в диапазоне 0..5/0..10. Pattern обогащает sections: добавляет section kind='criterion-summary' перед section-списком отзывов."
+  },
+  "rationale": {
+    "hypothesis": "Один общий рейтинг (4.8) теряет signal — пользователь не знает, за что именно исполнитель получил низкий балл. Разбивка по подкритериям (punctuality 4.2, quality 4.9) позволяет читателю выбрать специалиста по своим приоритетам: одному важнее качество, другому — пунктуальность. Плюс даёт исполнителю actionable feedback: 'работай над пунктуальностью'. Без breakdown'а отзывы превращаются в эхо-камеру numeric-ratings без контента.",
+    "evidence": [
+      {
+        "source": "profi.ru",
+        "description": "Specialist-страница: distribution 5*/4*/3*/2*/1* + подкритерии 'Качество работы 4.9', 'Пунктуальность 4.8', 'Вежливость 5.0'",
+        "reliability": "high"
+      },
+      {
+        "source": "booking.com",
+        "description": "Hotel review breakdown: Cleanliness / Comfort / Location / Staff / Value — каждый с собственным рейтингом",
+        "reliability": "high"
+      },
+      {
+        "source": "airbnb",
+        "description": "Listing rating breakdown: Accuracy / Communication / Cleanliness / Location / Check-in / Value",
+        "reliability": "high"
+      },
+      {
+        "source": "yandex-taxi",
+        "description": "Driver rating breakdown в приложении после поездки",
+        "reliability": "medium"
+      }
+    ],
+    "counterexample": [
+      {
+        "source": "amazon-product-reviews",
+        "description": "Амазон использует только overall rating — breakdown по criterion не применим к товарам (нет универсальных критериев)",
+        "reliability": "medium"
+      },
+      {
+        "source": "app-store",
+        "description": "5-звёздный рейтинг без подкритериев работает для приложений — UX не многомерен настолько",
+        "reliability": "medium"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [
+      {
+        "domain": "booking",
+        "projection": "specialist_profile",
+        "reason": "Specialist detail + Review как sub-entity с полями quality/punctuality/communication"
+      },
+      {
+        "domain": "delivery",
+        "projection": "courier_profile",
+        "reason": "Courier detail + Review sub-entity с criteria по доставке (speed/politeness/packaging)"
+      }
+    ],
+    "shouldNotMatch": [
+      {
+        "domain": "sales",
+        "projection": "listing_detail",
+        "reason": "Listing имеет только overall rating без подкритериев — триггер не сработает"
+      },
+      {
+        "domain": "lifequest",
+        "projection": "habit_detail",
+        "reason": "Habit не имеет Review sub-entity"
+      },
+      {
+        "domain": "messenger",
+        "projection": "chat_view",
+        "reason": "Conversation не имеет рейтинговых sub-entity"
+      }
+    ]
+  }
+}

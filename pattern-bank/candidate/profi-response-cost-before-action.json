@@ -1,0 +1,110 @@
+{
+  "id": "response-cost-before-action",
+  "version": 1,
+  "status": "candidate",
+  "archetype": "feed",
+  "trigger": {
+    "requires": [
+      {
+        "kind": "intent-effect",
+        "α": "add"
+      },
+      {
+        "kind": "intent-confirmation",
+        "confirmation": "modal"
+      }
+    ]
+  },
+  "structure": {
+    "slot": "primaryAction",
+    "description": "Когда intent имеет ненулевую денежную стоимость для самого актора (не для получателя услуги — отклик на задачу стоит 80 ₽ за сам факт отправки, ставка на аукционе требует комиссию 1%, boost-платёж за featured placement), primary-CTA должна содержать явную цену до клика, а подтверждение — modal с summary. Обогащение: label кнопки становится '{action} · {cost} ₽' вместо просто '{action}'; forced confirmation='modal' (не inline) с текстом 'С вашего баланса будет списано X ₽. Продолжить?'. Пара label + modal работает как anti-footgun: пользователь всегда осведомлён о списании до действия, а не после. Детекция cost: в intent.particles или intent.meta поле __cost или costHint (число + валюта) ИЛИ intent создаёт сущность типа Transaction с actorId===currentUser и amount>0."
+  },
+  "rationale": {
+    "hypothesis": "Денежная стоимость действия для актора — это скрытый фриктионный сигнал, который ломает ожидания пользователя, если не обнажён до клика. Пользователи привыкли, что кнопка 'Откликнуться' — бесплатна, но на маркетплейсах-биржах (Profi, Workzilla) за отклик платит сам исполнитель. Не показать цену в label — значит превратить UI в trap. Показать цену — значит получить доверие и уменьшить поддержку-тикеты 'почему с меня списали?'. Паттерн сильнее irreversible-confirm: там риск — разрушить данные, здесь — потратить деньги, что пользователи психологически воспринимают острее.",
+    "evidence": [
+      {
+        "source": "profi.ru",
+        "description": "Кнопка 'Откликнуться · 80 ₽' и модальное окно 'Списать 80 ₽ с баланса?'",
+        "reliability": "high"
+      },
+      {
+        "source": "workzilla",
+        "description": "Комиссия за отклик на задание отображается в кнопке",
+        "reliability": "high"
+      },
+      {
+        "source": "youdo",
+        "description": "Плата за размещение отклика показана в CTA",
+        "reliability": "high"
+      },
+      {
+        "source": "ebay-bidding",
+        "description": "Placing a bid с комиссией — summary в confirm-dialog перед bid'ом",
+        "reliability": "high"
+      },
+      {
+        "source": "fiverr-boost",
+        "description": "Paid profile promotion с явной ценой на кнопке",
+        "reliability": "medium"
+      }
+    ],
+    "counterexample": [
+      {
+        "source": "free-marketplaces",
+        "description": "Маркетплейсы без комиссии за отклик (HH.ru, LinkedIn) — паттерн не применим, нет стоимости",
+        "reliability": "high"
+      },
+      {
+        "source": "payment-for-service",
+        "description": "Оплата услуги исполнителю — не self-cost, это обычный escrow flow, покрыт escrow/irreversible-confirm",
+        "reliability": "high"
+      },
+      {
+        "source": "crud-intents",
+        "description": "Обычные create/update/delete без комиссии — generic confirm, не response-cost",
+        "reliability": "high"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [
+      {
+        "domain": "sales",
+        "projection": "listing_detail",
+        "reason": "intent place_bid с комиссией — showBid + fee в label до confirm"
+      },
+      {
+        "domain": "booking",
+        "projection": "tasks_feed",
+        "reason": "intent respond_to_task с отклик-стоимостью 80 ₽ (hypothetical extension)"
+      },
+      {
+        "domain": "delivery",
+        "projection": "orders_feed",
+        "reason": "intent claim_order для courier'а с fee за принятие заказа"
+      }
+    ],
+    "shouldNotMatch": [
+      {
+        "domain": "messenger",
+        "projection": "chat_view",
+        "reason": "send_message — бесплатное действие"
+      },
+      {
+        "domain": "lifequest",
+        "projection": "habits_list",
+        "reason": "check_habit — нет монетизации, личный tracker"
+      },
+      {
+        "domain": "planning",
+        "projection": "my_polls",
+        "reason": "vote_on_poll — бесплатное"
+      },
+      {
+        "domain": "reflect",
+        "projection": "mood-entries",
+        "reason": "log_mood — personal, бесплатное"
+      }
+    ]
+  }
+}

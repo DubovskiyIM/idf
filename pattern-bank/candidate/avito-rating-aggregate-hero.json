@@ -1,0 +1,40 @@
+{
+  "id": "rating-aggregate-hero",
+  "version": 1,
+  "status": "candidate",
+  "archetype": "detail",
+  "trigger": {
+    "requires": [
+      { "kind": "sub-entity-exists", "foreignKeyTo": "$mainEntity" },
+      { "kind": "field-role-present", "fieldRole": "rating" }
+    ]
+  },
+  "structure": {
+    "slot": "hero",
+    "description": "Поверх sub-коллекции C (например, Review) с FK на mainEntity E и fieldRole rating в C, в hero-слоте detail-view E рендерятся два aggregate-значения: avg(C.rating) с иконкой-звёздами и count(C). Формат: «4.9 · 128 отзывов». Clickable — скроллит к секции-подколлекции / открывает tab. Это обогащает hero, а не заменяет основной title/name entity'и."
+  },
+  "rationale": {
+    "hypothesis": "Rating не принадлежит E напрямую — это derived-поле над подколлекцией. Crystalize_v2 не генерирует aggregation-слоты без явного витнесса. Hero без rating-сводки для entities с отзывами/рейтингами заставляет пользователя скроллить до tab'а Reviews, чтобы понять «стоит ли вообще читать карточку» — это top-of-funnel trust signal, он должен быть виден сразу.",
+    "evidence": [
+      { "source": "avito-services", "description": "Карточка исполнителя: под именем сразу «4.9 · 128 отзывов», кликабельно до секции Reviews", "reliability": "high" },
+      { "source": "airbnb", "description": "Listing detail hero: «★ 4.87 · 243 reviews» рядом с title", "reliability": "high" },
+      { "source": "google-maps", "description": "Place detail: rating + review count в hero", "reliability": "high" }
+    ],
+    "counterexample": [
+      { "source": "linear", "description": "Issue detail — Reviews-подколлекции нет, aggregate не применим", "reliability": "high" },
+      { "source": "stripe-payment", "description": "Payment detail — rating-семантика отсутствует", "reliability": "high" }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [
+      { "domain": "booking", "projection": "specialist_detail", "reason": "Specialist — Review sub-entity с rating-полем" },
+      { "domain": "sales", "projection": "listing_detail", "reason": "Listing имеет Review-подколлекцию с rating" },
+      { "domain": "delivery", "projection": "merchant_detail", "reason": "Merchant — Review с rating" }
+    ],
+    "shouldNotMatch": [
+      { "domain": "messenger", "projection": "conversation_detail", "reason": "Conversation не имеет rating-подколлекции" },
+      { "domain": "invest", "projection": "portfolio_detail", "reason": "Portfolio имеет sub-entities (Position, Transaction), но ни одна не содержит rating fieldRole" },
+      { "domain": "planning", "projection": "poll_detail", "reason": "Poll имеет Vote-подколлекцию, но не rating — это discrete choice, не continuous score" }
+    ]
+  }
+}

@@ -1,0 +1,41 @@
+{
+  "id": "paid-promotion-slot",
+  "version": 1,
+  "status": "candidate",
+  "archetype": "form",
+  "trigger": {
+    "requires": [
+      { "kind": "intent-creates", "entity": "Promotion" },
+      { "kind": "entity-field", "entity": "Promotion", "field": "tier", "type": "enum", "minOptions": 3 },
+      { "kind": "field-role-present", "fieldRole": "money" },
+      { "kind": "intent-effect", "α": "create", "irreversibility": ["high"] }
+    ]
+  },
+  "structure": {
+    "slot": "body",
+    "description": "Вместо стандартного enum-radio / select — grid из N карточек (по количеству tier-опций): каждая содержит название тарифа, цену (money-поле), expected-effect hint (sparkline или badge-текст «до ×5 просмотров»), иконку/иллюстрацию. Ровно одна активна в момент времени. Sticky footer с итоговой ценой + CTA «Оплатить», disabled пока tier не выбран. CTA оборачивается в IrreversibleBadge (§23) за счёт irreversibility: high на создающем intent'е."
+  },
+  "rationale": {
+    "hypothesis": "Когда выбор enum-опции связан с существенным необратимым платежом, пользователю нужно (а) сравнить опции параллельно — grid, не dropdown; (б) увидеть value proposition каждой — forecast-hint; (в) явное подтверждение финального шага — sticky confirm с IrreversibleBadge. Plain radio без forecast превращает выбор в угадывание, а модалка «Оплатить 1500₽?» без сравнения tier'ов — в frustration.",
+    "evidence": [
+      { "source": "avito-services", "description": "Продвижение объявления: карточки Бесплатно / Выделить / Премиум / XL с ценой и ожидаемым эффектом просмотров; sticky footer c итогом", "reliability": "high" },
+      { "source": "stripe-billing", "description": "Plan-picker: grid тарифов с feature-list и price, single radio-card selection", "reliability": "high" },
+      { "source": "notion-upgrade", "description": "Plan comparison: cards с feature badges", "reliability": "medium" }
+    ],
+    "counterexample": [
+      { "source": "gmail-settings", "description": "Тема оформления — enum без money-поля и без irreversibility → обычный radio-list достаточен", "reliability": "high" },
+      { "source": "github-pr-draft", "description": "Draft/Ready — bool toggle, не tier c forecast", "reliability": "medium" }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [
+      { "domain": "sales", "projection": "listing_promote", "reason": "Promotion entity с tier: enum(basic/highlighted/premium/vip), price money, create intent с high irreversibility" },
+      { "domain": "invest", "projection": "subscription_upgrade", "reason": "Plan enum (если появится) с ценой и irreversible billing commit" }
+    ],
+    "shouldNotMatch": [
+      { "domain": "lifequest", "projection": "goal_create", "reason": "Goal не имеет tier-платежа, intent бесплатный" },
+      { "domain": "messenger", "projection": "chat_view", "reason": "Message нет tier / money / irreversibility" },
+      { "domain": "booking", "projection": "booking_create", "reason": "Booking имеет price, но tier — не enum (свободный выбор слота)" }
+    ]
+  }
+}

@@ -1,0 +1,97 @@
+{
+  "id": "reputation-level-badge",
+  "version": 1,
+  "status": "candidate",
+  "archetype": "catalog",
+  "trigger": {
+    "requires": [
+      {
+        "kind": "entity-field",
+        "field": "level",
+        "minOptions": 3
+      }
+    ]
+  },
+  "structure": {
+    "slot": "body",
+    "description": "В catalog-карточке (и также в detail-hero) рядом с основным именем сущности рендерится визуальный tier-badge: 4–5 discrete уровней ('Новичок', 'Проверен', 'Профессионал', 'Топ-мастер') представлены не как простой chip с текстом, а как упорядоченный glyph с цветовой и размерной иерархией (серый→синий→золотой→platinum, галка→щит→звезда→корона). На hover/click — tooltip с критериями достижения уровня ('Топ-мастер: >200 выполненных заказов, рейтинг ≥4.8'). Pattern обогащает cardSpec.badge или hero.badge новым элементом kind='tier-badge' с маппингом value→visual. Альтернативный триггер: поле с fieldRole='tier' или enum-поле с явно упорядоченными значениями (orderedOptions:true). Pattern не применяется, если enum-значения равноправны (статусы new/active/closed) — нужна иерархическая семантика."
+  },
+  "rationale": {
+    "hypothesis": "Уровень доверия/репутации — многомерная конструкция (число заказов × рейтинг × стаж × верификация), но пользователь не хочет считать её сам. Tier-badge — сжатый signal, который мгновенно ранжирует соседей в feed. Простой rating 4.8 не отличает 'топового ветерана' (200 отзывов) от 'новичка с удачным стартом' (3 отзыва по 5★). Discrete tier с визуальной иерархией решает это за O(1) глазного времени. Плюс tier создаёт incentive-систему: пользователь (исполнитель) видит target next-level и работает над ним.",
+    "evidence": [
+      {
+        "source": "profi.ru",
+        "description": "Бейдж 'Топ-мастер' / 'Профессионал' / 'Проверен' на карточке специалиста, визуально различим по цвету и иконке",
+        "reliability": "high"
+      },
+      {
+        "source": "stackoverflow",
+        "description": "User reputation-tier (bronze/silver/gold badges) с визуальной иерархией на каждом постe и профиле",
+        "reliability": "high"
+      },
+      {
+        "source": "airbnb",
+        "description": "Superhost badge — discrete tier (host / superhost) с visual emphasis",
+        "reliability": "high"
+      },
+      {
+        "source": "uber",
+        "description": "Driver Diamond/Platinum/Gold tiers с разными privileges",
+        "reliability": "high"
+      },
+      {
+        "source": "ebay",
+        "description": "Top-rated seller / Power seller badges на листингах",
+        "reliability": "high"
+      }
+    ],
+    "counterexample": [
+      {
+        "source": "plain-rating-sites",
+        "description": "Когда единственный signal — 1..5 звёзд, добавление искусственного 'уровня' избыточно (нет множественных factors для композиции)",
+        "reliability": "high"
+      },
+      {
+        "source": "messenger",
+        "description": "Conversation не имеет tier'а — применение сюда было бы ошибкой",
+        "reliability": "high"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [
+      {
+        "domain": "booking",
+        "projection": "specialists_catalog",
+        "reason": "Specialist.level: 'novice' | 'verified' | 'pro' | 'top' — discrete tier с иерархией"
+      },
+      {
+        "domain": "sales",
+        "projection": "listing_feed",
+        "reason": "User.sellerTier на авторе листинга как badge на карточке"
+      },
+      {
+        "domain": "delivery",
+        "projection": "couriers_roster",
+        "reason": "Courier.level с discrete tiers для dispatcher-view"
+      }
+    ],
+    "shouldNotMatch": [
+      {
+        "domain": "invest",
+        "projection": "portfolios_root",
+        "reason": "Portfolio не имеет reputation-tier — это не социальная сущность"
+      },
+      {
+        "domain": "lifequest",
+        "projection": "habits_list",
+        "reason": "Habit — личная сущность, нет публичной репутации"
+      },
+      {
+        "domain": "planning",
+        "projection": "polls_list",
+        "reason": "Poll не имеет tier-оси (статусы равноправны)"
+      }
+    ]
+  }
+}

@@ -86,6 +86,62 @@ export default function V2Shell({
     return viewer;
   }, [viewer]);
 
+  // Universal-user role-switcher (freelance-pattern): если у viewer'а оба
+  // verified-флага (customerVerified && executorVerified), показываем toggle
+  // в header. Активная роль живёт в sessionStorage (не в Φ) и транслируется
+  // в session_set_active_role intent.
+  const canSwitchRole = Boolean(
+    viewerObj?.customerVerified && viewerObj?.executorVerified
+  );
+  const [activeRole, setActiveRole] = useState(() => {
+    if (typeof window === "undefined") return "customer";
+    try { return sessionStorage.getItem(`idf.activeRole.${domainId}`) || "customer"; } catch { return "customer"; }
+  });
+  const handleRoleSwitch = useCallback((role) => {
+    setActiveRole(role);
+    try { sessionStorage.setItem(`idf.activeRole.${domainId}`, role); } catch {}
+    if (exec) {
+      exec("session_set_active_role", { role });
+    }
+  }, [domainId, exec]);
+
+  const roleSwitcherBar = canSwitchRole ? (
+    <div style={{
+      display: "flex", alignItems: "center", gap: 8,
+      padding: "6px 14px",
+      background: "var(--idf-card, #f8f9fa)",
+      borderBottom: "1px solid var(--idf-border, #e9ecef)",
+      fontSize: 12,
+    }}>
+      <span style={{ color: "var(--idf-text-muted, #868e96)", fontWeight: 500 }}>Активная роль:</span>
+      <div style={{
+        display: "flex", gap: 2, padding: 2,
+        borderRadius: 6, background: "var(--idf-surface, #e9ecef)",
+      }}>
+        {[
+          { role: "customer", label: "Заказчик" },
+          { role: "executor", label: "Исполнитель" },
+        ].map(({ role, label }) => (
+          <button
+            key={role}
+            type="button"
+            onClick={() => handleRoleSwitch(role)}
+            style={{
+              border: "none",
+              padding: "4px 12px",
+              borderRadius: 4,
+              cursor: "pointer",
+              fontSize: 12,
+              fontWeight: 500,
+              background: activeRole === role ? "var(--idf-primary, #228be6)" : "transparent",
+              color: activeRole === role ? "white" : "var(--idf-text, #495057)",
+            }}
+          >{label}</button>
+        ))}
+      </div>
+    </div>
+  ) : null;
+
   // Обёртка exec/execBatch: автоматически инжектируем clientId из viewer.id
   // в каждый вызов buildEffects, чтобы create_booking, create_poll и т.д.
   // устанавливали ownership (clientId/organizerId) по реальному viewer, а не
@@ -361,7 +417,9 @@ export default function V2Shell({
     }
 
     return (
-      <div style={{ display: "flex", height: "100%", minHeight: 0, fontFamily: "system-ui, sans-serif", fontSize: "var(--idf-font-size, 14px)", ...personalStyle }}>
+      <div style={{ display: "flex", flexDirection: "column", height: "100%", minHeight: 0, fontFamily: "system-ui, sans-serif", fontSize: "var(--idf-font-size, 14px)", ...personalStyle }}>
+        {roleSwitcherBar}
+        <div style={{ display: "flex", flex: 1, minHeight: 0 }}>
         {/* Mobile hamburger */}
         {isMobile && !sidebarOpen && (
           <button
@@ -407,6 +465,7 @@ export default function V2Shell({
             onPreviewChange={handlePreviewChange}
           />
         )}
+        </div>
       </div>
     );
   }
@@ -416,6 +475,7 @@ export default function V2Shell({
       display: "flex", flexDirection: "column", height: "100%", minHeight: 0,
       fontFamily: "system-ui, sans-serif",
     }}>
+      {roleSwitcherBar}
       {rootProjections.length > 0 && (
         AdaptedTabs ? (
           <AdaptedTabs
