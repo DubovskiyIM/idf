@@ -47,8 +47,8 @@ export default function RegulatorReportCanvas({ world, viewer }) {
           onClick={() => window.print()}
           style={{
             padding: "10px 20px", borderRadius: 6, fontSize: 14, fontWeight: 500, cursor: "pointer",
-            border: "1px solid var(--mantine-color-indigo-6, #6366f1)",
-            background: "var(--mantine-color-indigo-6, #6366f1)", color: "#fff",
+            border: "1px solid var(--idf-accent, #6366f1)",
+            background: "var(--idf-accent, #6366f1)", color: "#fff",
           }}
         >
           🖨 Печать / Save as PDF
@@ -58,8 +58,8 @@ export default function RegulatorReportCanvas({ world, viewer }) {
           target="_blank" rel="noreferrer"
           style={{
             padding: "10px 20px", borderRadius: 6, fontSize: 14, fontWeight: 500, cursor: "pointer",
-            border: "1px solid var(--mantine-color-default-border, #d1d5db)",
-            background: "transparent", color: "var(--mantine-color-text, #111)",
+            border: "1px solid var(--idf-border, #d1d5db)",
+            background: "transparent", color: "var(--idf-text, #111)",
             textDecoration: "none",
           }}
         >

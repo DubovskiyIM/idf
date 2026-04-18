@@ -1,0 +1,58 @@
+/* Inline fallback для IDF Token Bridge — адаптер-specific overrides.
+ *
+ * Некоторые published npm-пакеты адаптеров не экспортируют theme.css
+ * (mantine, antd в v1.1.0), поэтому проксируем содержимое из idf-sdk
+ * локально. Когда SDK перепубликует theme.css, можно будет убрать эти
+ * блоки и восстановить `import '@intent-driven/adapter-*/styles.css'`
+ * в main.jsx.
+ */
+
+/* Mantine — через mantine-* CSS vars */
+[data-adapter="mantine"], :root {
+  --idf-primary: var(--mantine-color-primary, #6366f1);
+  --idf-primary-light: var(--mantine-color-primary-light, rgba(99, 102, 241, 0.08));
+  --idf-primary-border: var(--mantine-color-primary-light-border, rgba(99, 102, 241, 0.3));
+  --idf-surface: var(--mantine-color-body, #fff);
+  --idf-card: var(--mantine-color-default, #fff);
+  --idf-border: var(--mantine-color-default-border, #e5e7eb);
+  --idf-hover: var(--mantine-color-default-hover, #f9fafb);
+  --idf-text: var(--mantine-color-text, #1f2937);
+  --idf-text-muted: var(--mantine-color-dimmed, #9ca3af);
+  --idf-danger: var(--mantine-color-red-6, #ef4444);
+  --idf-danger-light: var(--mantine-color-red-light, rgba(239, 68, 68, 0.08));
+  --idf-danger-text: var(--mantine-color-red-light-color, #dc2626);
+  --idf-success: var(--mantine-color-teal-6, #0d9488);
+  --idf-warning: var(--mantine-color-yellow-6, #f59e0b);
+  --idf-accent: var(--mantine-color-indigo-6, #6366f1);
+  --idf-accent-light: var(--mantine-color-violet-light, rgba(99, 102, 241, 0.06));
+  --idf-gray-1: var(--mantine-color-gray-0, #f9fafb);
+  --idf-gray-3: var(--mantine-color-gray-3, #d1d5db);
+  --idf-gray-7: var(--mantine-color-gray-7, #374151);
+  --idf-font: system-ui, -apple-system, sans-serif;
+  --idf-radius: 8px;
+}
+
+/* AntD — enterprise-fintech blue */
+[data-adapter="antd"] {
+  --idf-primary: #1677ff;
+  --idf-primary-light: rgba(22, 119, 255, 0.08);
+  --idf-primary-border: rgba(22, 119, 255, 0.3);
+  --idf-surface: #ffffff;
+  --idf-card: #ffffff;
+  --idf-border: #d9d9d9;
+  --idf-hover: #f5f5f5;
+  --idf-text: rgba(0, 0, 0, 0.88);
+  --idf-text-muted: rgba(0, 0, 0, 0.45);
+  --idf-danger: #ff4d4f;
+  --idf-danger-light: rgba(255, 77, 79, 0.06);
+  --idf-danger-text: #cf1322;
+  --idf-success: #52c41a;
+  --idf-warning: #faad14;
+  --idf-accent: #1677ff;
+  --idf-accent-light: rgba(22, 119, 255, 0.06);
+  --idf-gray-1: #fafafa;
+  --idf-gray-3: #d9d9d9;
+  --idf-gray-7: #434343;
+  --idf-font: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --idf-radius: 6px;
+}
