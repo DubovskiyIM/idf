@@ -15,6 +15,7 @@ function intent(name, entities, conditions, effects, witnesses, confirmation = "
     ...(extra.irreversibility ? { irreversibility: extra.irreversibility } : {}),
     ...(extra.extended ? { extended: true } : {}),
     ...(extra.phase ? { phase: extra.phase } : {}),
+    ...(extra.salience !== undefined ? { salience: extra.salience } : {}),
   };
 }
 
@@ -25,13 +26,13 @@ export const INTENTS = {
   create_listing: intent("Создать лот", ["listing: Listing"],
     [], [ef("add", "listings")],
     ["title", "description", "startPrice"],
-    "enter", { creates: "Listing(draft)" }),
+    "enter", { creates: "Listing(draft)", salience: "primary" }),
 
   edit_listing: intent("Редактировать лот", ["listing: Listing"],
     ["listing.status = 'draft'", "listing.sellerId = me.id"],
     [ef("replace", "listing.title"), ef("replace", "listing.description"), ef("replace", "listing.startPrice")],
     ["title", "description", "startPrice", "condition"],
-    "click", { phase: "investigation" }),
+    "click", { phase: "investigation", salience: "primary" }),
 
   publish_listing: intent("Опубликовать", ["listing: Listing"],
     ["listing.status = 'draft'", "listing.sellerId = me.id"],

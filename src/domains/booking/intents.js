@@ -104,7 +104,7 @@ export const INTENTS = {
       ],
       witnesses: ["booking.serviceName", "booking.date", "new_slot.date", "new_slot.startTime"],
       confirmation: "click"
-    }, antagonist: null, creates: null, phase: "investigation"
+    }, antagonist: null, creates: null, phase: "investigation", salience: "primary"
   },
   mark_no_show: {
     name: "Отметить неявку", particles: {

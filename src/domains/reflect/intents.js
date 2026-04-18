@@ -15,6 +15,7 @@ function intent(name, entities, conditions, effects, witnesses, confirmation = "
     ...(extra.irreversibility ? { irreversibility: extra.irreversibility } : {}),
     ...(extra.extended ? { extended: true } : {}),
     ...(extra.phase ? { phase: extra.phase } : {}),
+    ...(extra.salience !== undefined ? { salience: extra.salience } : {}),
   };
 }
 
@@ -48,7 +49,7 @@ export const INTENTS = {
     ["entry.userId = me.id"],
     [ef("replace", "moodEntry.note")],
     ["note"],
-    "form"),
+    "form", { salience: "primary" }),
 
   delete_entry: intent("Удалить запись", ["entry: MoodEntry"],
     ["entry.userId = me.id"],
