@@ -19,6 +19,27 @@ export const PROJECTIONS = {
     layout: "grid",
   },
 
+  task_detail_public: {
+    name: "Задача",
+    kind: "detail",
+    mainEntity: "Task",
+    entities: ["Task", "Response", "Category", "CustomerProfile"],
+    idParam: "taskId",
+    witnesses: [
+      "title", "description", "budget", "deadline", "city", "type",
+      "categoryId", "responsesCount", "status", "createdAt",
+    ],
+    subCollections: [
+      {
+        entity: "Response",
+        foreignKey: "taskId",
+        title: "Отклики",
+        addable: true,
+        addIntent: "submit_response",
+      },
+    ],
+  },
+
 };
 
 export const ROOT_PROJECTIONS = ["task_catalog_public"];
