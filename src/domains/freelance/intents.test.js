@@ -14,6 +14,10 @@ const GROUPS = {
     "publish_task", "cancel_task_before_deal",
     "search_tasks", "filter_by_category", "sort_tasks",
   ],
+  response: [
+    "submit_response", "edit_response", "withdraw_response",
+    "select_executor", "view_responses",
+  ],
 };
 
 describe("freelance intents — auth + system", () => {
@@ -77,5 +81,31 @@ describe("freelance intents — task details", () => {
     expect(INTENTS.search_tasks.particles.effects).toEqual([]);
     expect(INTENTS.filter_by_category.particles.effects).toEqual([]);
     expect(INTENTS.sort_tasks.particles.effects).toEqual([]);
+  });
+});
+
+describe("freelance intents — response details", () => {
+  it("submit_response создаёт Response", () => {
+    expect(INTENTS.submit_response.creates).toBe("Response");
+  });
+
+  it("withdraw_response — remove Response", () => {
+    expect(INTENTS.withdraw_response.α).toBe("remove");
+  });
+
+  it("select_executor — replace response.status на selected", () => {
+    const e = INTENTS.select_executor.particles.effects[0];
+    expect(e.α).toBe("replace");
+    expect(e.value).toBe("selected");
+  });
+
+  it("view_responses read-only", () => {
+    expect(INTENTS.view_responses.particles.effects).toEqual([]);
+  });
+});
+
+describe("freelance intents — общий счёт", () => {
+  it("ровно 29 intents в Cycle 1", () => {
+    expect(Object.keys(INTENTS)).toHaveLength(29);
   });
 });

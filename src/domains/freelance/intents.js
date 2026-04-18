@@ -83,6 +83,94 @@ export const INTENTS = {
     confirmation: "auto",
   },
 
+  // ─── Response (5) ─────────────────────────────────────────────────────────
+
+  submit_response: {
+    name: "Откликнуться на задачу",
+    description: "Executor публикует Response на Task в статусе published",
+    α: "add",
+    irreversibility: "low",
+    particles: {
+      parameters: [
+        { name: "executorId", type: "id", required: true },
+        { name: "taskId", type: "id", required: true },
+        { name: "price", type: "number", required: true },
+        { name: "deliveryDays", type: "number", required: true },
+        { name: "message", type: "text" },
+      ],
+      effects: [
+        { α: "add", target: "responses", σ: "account" },
+      ],
+    },
+    creates: "Response",
+    confirmation: "auto",
+  },
+
+  edit_response: {
+    name: "Изменить отклик",
+    description: "Правка цены / срока / сообщения — пока status=pending",
+    α: "replace",
+    irreversibility: "low",
+    particles: {
+      parameters: [
+        { name: "id", type: "id", required: true },
+        { name: "price", type: "number" },
+        { name: "deliveryDays", type: "number" },
+        { name: "message", type: "text" },
+      ],
+      effects: [
+        { α: "replace", target: "response" },
+      ],
+    },
+    confirmation: "auto",
+  },
+
+  withdraw_response: {
+    name: "Отозвать отклик",
+    description: "Удалить Response до select_executor",
+    α: "remove",
+    irreversibility: "low",
+    particles: {
+      parameters: [
+        { name: "id", type: "id", required: true },
+      ],
+      effects: [
+        { α: "remove", target: "responses" },
+      ],
+    },
+    confirmation: "auto",
+  },
+
+  select_executor: {
+    name: "Выбрать исполнителя",
+    description: "Customer выбирает Response → status=selected. Создание Deal — Cycle 2",
+    α: "replace",
+    irreversibility: "low",
+    particles: {
+      parameters: [
+        { name: "id", type: "id", required: true },
+      ],
+      effects: [
+        { α: "replace", target: "response.status", value: "selected" },
+      ],
+    },
+    confirmation: "auto",
+  },
+
+  view_responses: {
+    name: "Посмотреть отклики",
+    description: "Customer смотрит Response к своей задаче (read-only)",
+    α: "replace",
+    irreversibility: "low",
+    particles: {
+      parameters: [
+        { name: "taskId", type: "id", required: true },
+      ],
+      effects: [],
+    },
+    confirmation: "auto",
+  },
+
   // ─── Task (8) ─────────────────────────────────────────────────────────────
 
   create_task_draft: {
