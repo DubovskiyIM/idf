@@ -15,8 +15,11 @@ export const PROJECTIONS = {
     filter: "item.status === 'published'",
     sort: "createdAt:desc",
     witnesses: ["title", "budget", "deadline", "city", "categoryId", "type"],
-    clickNavigate: "task_detail_public",
-    layout: "grid",
+    onItemClick: {
+      action: "navigate",
+      to: "task_detail_public",
+      params: { taskId: "item.id" },
+    },
   },
 
   task_detail_public: {
@@ -48,8 +51,11 @@ export const PROJECTIONS = {
     filter: "item.customerId === viewer.id",
     sort: "createdAt:desc",
     witnesses: ["title", "status", "budget", "deadline", "responsesCount"],
-    clickNavigate: "task_detail_customer",
-    layout: "table",
+    onItemClick: {
+      action: "navigate",
+      to: "task_detail_customer",
+      params: { taskId: "item.id" },
+    },
   },
 
   my_deals: {
@@ -60,8 +66,11 @@ export const PROJECTIONS = {
     filter: "item.customerId === viewer.id || item.executorId === viewer.id",
     sort: "createdAt:desc",
     witnesses: ["taskId", "amount", "status", "deadline"],
-    clickNavigate: "deal_detail_customer",
-    layout: "grid",
+    onItemClick: {
+      action: "navigate",
+      to: "deal_detail_customer",
+      params: { dealId: "item.id" },
+    },
   },
 
   task_detail_customer: {
