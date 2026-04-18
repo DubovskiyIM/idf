@@ -158,11 +158,19 @@ export default function DomainRuntime({ domainId, embedded = false, initialProje
     loader().then((mod) => {
       if (cancelled) return;
       const projections = mod.PROJECTIONS || {};
+      // Studio-generated domain skeleton (domainCreator.js) экспортирует
+      // только INTENTS/ONTOLOGY/PROJECTIONS — runtime-ф-ции отсутствуют.
+      // Движок падает на exec() без buildEffects. Подставляем no-op
+      // fallback'ы: engine-генерик применит intent.particles.effects сам.
       setDynamicDomain({
         ...mod,
         ROOT_PROJECTIONS: mod.ROOT_PROJECTIONS || Object.keys(projections),
         DOMAIN_ID: mod.DOMAIN_ID || domainId,
         DOMAIN_NAME: mod.DOMAIN_NAME || domainId,
+        buildEffects: mod.buildEffects || (() => null),
+        describeEffect: mod.describeEffect || ((intentId) => intentId),
+        signalForIntent: mod.signalForIntent || (() => null),
+        getSeedEffects: mod.getSeedEffects || (() => []),
       });
     }).catch((e) => { if (!cancelled) setDynamicError(e.message); });
     return () => { cancelled = true; };
