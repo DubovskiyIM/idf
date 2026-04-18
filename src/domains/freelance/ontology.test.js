@@ -90,3 +90,44 @@ describe("freelance ontology — roles", () => {
     }
   });
 });
+
+describe("freelance ontology — invariants", () => {
+  const byName = (n) => ONTOLOGY.invariants.find(i => i.name === n);
+
+  it("содержит ровно 3 invariants в Cycle 1", () => {
+    expect(ONTOLOGY.invariants).toHaveLength(3);
+  });
+
+  it("task_status_transition — transition с 4 allowed переходами", () => {
+    const inv = byName("task_status_transition");
+    expect(inv).toBeDefined();
+    expect(inv.kind).toBe("transition");
+    expect(inv.entity).toBe("Task");
+    expect(inv.field).toBe("status");
+    expect(inv.allowed).toEqual(expect.arrayContaining([
+      ["draft", "moderation"],
+      ["moderation", "published"],
+      ["moderation", "draft"],
+      ["published", "closed"],
+    ]));
+  });
+
+  it("response_references_task — referential FK", () => {
+    const inv = byName("response_references_task");
+    expect(inv).toBeDefined();
+    expect(inv.kind).toBe("referential");
+    expect(inv.entity).toBe("Response");
+    expect(inv.field).toBe("taskId");
+    expect(inv.references).toBe("tasks");
+  });
+
+  it("task_has_at_most_one_selected_response — cardinality ≤1 selected", () => {
+    const inv = byName("task_has_at_most_one_selected_response");
+    expect(inv).toBeDefined();
+    expect(inv.kind).toBe("cardinality");
+    expect(inv.entity).toBe("Response");
+    expect(inv.groupBy).toBe("taskId");
+    expect(inv.max).toBe(1);
+    expect(inv.where).toEqual({ status: "selected" });
+  });
+});

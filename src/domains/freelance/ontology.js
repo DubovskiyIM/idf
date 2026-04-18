@@ -211,5 +211,44 @@ export const ONTOLOGY = {
     },
   },
 
-  invariants: [],
+  invariants: [
+    // 1. Конечный автомат статусов задачи: draft → moderation → published → closed.
+    //    Из moderation возможен откат в draft (правка автором). Rollback при
+    //    нарушении — через cascadeReject + SSE.
+    {
+      name: "task_status_transition",
+      kind: "transition",
+      entity: "Task",
+      field: "status",
+      allowed: [
+        ["draft", "moderation"],
+        ["moderation", "published"],
+        ["moderation", "draft"],
+        ["published", "closed"],
+      ],
+      severity: "error",
+    },
+
+    // 2. Отклик ссылается на существующую Task: FK Response.taskId → tasks.
+    {
+      name: "response_references_task",
+      kind: "referential",
+      entity: "Response",
+      field: "taskId",
+      references: "tasks",
+      severity: "error",
+    },
+
+    // 3. На одну задачу — не более одного выбранного отклика (status=selected).
+    //    Остальные отклики получают not_chosen при select_executor.
+    {
+      name: "task_has_at_most_one_selected_response",
+      kind: "cardinality",
+      entity: "Response",
+      groupBy: "taskId",
+      max: 1,
+      where: { status: "selected" },
+      severity: "error",
+    },
+  ],
 };
