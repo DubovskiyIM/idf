@@ -9,8 +9,8 @@ import ProgressOverlay from "./ProgressOverlay.jsx";
 import PrototypeReadyCTA from "./PrototypeReadyCTA.jsx";
 import PatternsView from "./patterns/PatternsView.jsx";
 import PhiDrawer from "./PhiDrawer.jsx";
+import StudioPrefsPanel from "./StudioPrefsPanel.jsx";
 import DomainRuntime from "../runtime/DomainRuntime.jsx";
-import PrefsPanel from "../runtime/renderer/personal/PrefsPanel.jsx";
 import { usePersonalPrefs } from "../runtime/renderer/personal/usePersonalPrefs.js";
 import { useAuth } from "../runtime/renderer/auth/useAuth.js";
 import { fetchGraph } from "./api/graph.js";
@@ -330,16 +330,15 @@ export default function App() {
           />
         )}
       </div>
-      {prefsOpen && (
-        <PrefsPanel
-          prefs={prefs}
-          setPref={setPref}
-          resetPrefs={resetPrefs}
-          onClose={() => setPrefsOpen(false)}
-          onLogout={auth.currentUser ? auth.logout : undefined}
-          viewer={auth.currentUser}
-        />
-      )}
+      <StudioPrefsPanel
+        open={prefsOpen}
+        prefs={prefs}
+        setPref={setPref}
+        resetPrefs={resetPrefs}
+        onClose={() => setPrefsOpen(false)}
+        onLogout={auth.currentUser ? auth.logout : undefined}
+        viewer={auth.currentUser}
+      />
     </div>
   );
 }
