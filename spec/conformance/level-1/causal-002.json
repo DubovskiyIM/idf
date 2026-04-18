@@ -22,6 +22,7 @@
       {
         "id": "e2",
         "intent_id": "e2",
+        "parent_id": "e1",
         "alpha": "replace",
         "target": "listing.price",
         "context": {
