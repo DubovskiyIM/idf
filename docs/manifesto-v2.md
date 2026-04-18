@@ -722,7 +722,7 @@ Integrity-правило проверяется валидатором при co
 
 **Distributed scheduler.** Темпоральный слой как replicated state machine: unblocks enterprise deployments, multi-region failover, consistent timer guarantees. Требует изменения контракта `TimerQueue` без изменения формата user-visible API.
 
-**Authoring loop closure.** Anchoring promotion writer + counterexample-search — замкнуть §15 epistemic контур. Механизм, позволяющий witness-of-heuristic превращаться в witness-of-proof через automated counterexample-search или declarative human confirmation.
+**Authoring loop closure.** Anchoring promotion writer + counterexample-search — замкнуть epistemic контур, описанный в главах 10 (witnesses) и 19 (где уместен LLM). Механизм, позволяющий witness-of-heuristic превращаться в witness-of-proof через automated counterexample-search или declarative human confirmation.
 
 **Polymorphic entities.** Union-типы в `entity.kind` — закрытие семантической границы, упомянутой в 24.
 
