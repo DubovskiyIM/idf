@@ -19,6 +19,7 @@
 import { useState, useEffect, useMemo } from "react";
 import { useMantineColorScheme, MantineProvider } from "@mantine/core";
 import { useEngine } from "@intent-driven/core";
+import { v4 as uuid } from "uuid";
 import { registerUIAdapter, registerCanvas } from "@intent-driven/renderer";
 import { mantineAdapter } from "@intent-driven/adapter-mantine";
 import { shadcnAdapter } from "@intent-driven/adapter-shadcn";
@@ -108,6 +109,76 @@ const MANTINE_THEMES = {
   },
 };
 
+/**
+ * Generic buildEffects для Studio-сгенерированных доменов без своего
+ * buildEffects-export'а. Применяет intent.particles.effects декларативно:
+ * α='add' создаёт entity с новым id, α='replace' патчит через ctx, α='remove'
+ * удаляет. Повторяет шаблон из src/domains/invest/domain.js generic-fallback.
+ */
+function makeGenericBuildEffects(INTENTS) {
+  return function buildEffects(intentId, ctx = {}) {
+    const intent = INTENTS[intentId];
+    if (!intent) return null;
+    const intentEffects = intent.particles?.effects || [];
+    if (intentEffects.length === 0) return null;
+
+    const now = Date.now();
+    const effects = [];
+    const ef = (props) => effects.push({
+      id: uuid(), intent_id: intentId, parent_id: null, status: "proposed",
+      ttl: null, created_at: now, ...props,
+    });
+
+    for (const iEf of intentEffects) {
+      const alpha = iEf.α;
+      const target = iEf.target;
+      const scope = iEf.σ || "account";
+      switch (alpha) {
+        case "add": {
+          const id = ctx.id ||
+            `${target.slice(0, 4)}_${now}_${Math.random().toString(36).slice(2, 6)}`;
+          ef({
+            alpha: "add", target, scope, value: null,
+            context: {
+              id, ...ctx, createdAt: now,
+              userId: ctx.userId || ctx.clientId,
+            },
+          });
+          break;
+        }
+        case "replace": {
+          const entityId = ctx.id || ctx.entityId;
+          const field = target.includes(".") ? target.split(".").pop() : target;
+          const val = iEf.value !== undefined ? iEf.value
+                    : ctx[field] !== undefined ? ctx[field]
+                    : ctx.value;
+          if (entityId && val !== undefined) {
+            ef({
+              alpha: "replace", target, scope, value: val,
+              context: { id: entityId, userId: ctx.userId || ctx.clientId },
+            });
+          }
+          break;
+        }
+        case "remove": {
+          const entityId = ctx.id || ctx.entityId;
+          if (entityId) {
+            ef({
+              alpha: "remove", target, scope, value: null,
+              context: { id: entityId, userId: ctx.userId || ctx.clientId },
+            });
+          }
+          break;
+        }
+        default:
+          break;
+      }
+    }
+
+    return effects.length > 0 ? effects : null;
+  };
+}
+
 const EMPTY_DOMAIN = {
   ONTOLOGY: { entities: {}, roles: {} },
   INTENTS: {},
@@ -167,7 +238,7 @@ export default function DomainRuntime({ domainId, embedded = false, initialProje
         ROOT_PROJECTIONS: mod.ROOT_PROJECTIONS || Object.keys(projections),
         DOMAIN_ID: mod.DOMAIN_ID || domainId,
         DOMAIN_NAME: mod.DOMAIN_NAME || domainId,
-        buildEffects: mod.buildEffects || (() => null),
+        buildEffects: mod.buildEffects || makeGenericBuildEffects(mod.INTENTS || {}),
         describeEffect: mod.describeEffect || ((intentId) => intentId),
         signalForIntent: mod.signalForIntent || (() => null),
         getSeedEffects: mod.getSeedEffects || (() => []),
