@@ -6,7 +6,7 @@ import IntegrityGraph from "../components/IntegrityGraph.jsx";
  * IntegrityView — Studio-tab: граф целостности намерений/проекций/онтологии
  * для текущего домена. Красные узлы — error'ы алгебры/анкеринга/и т.п.
  */
-export default function IntegrityView({ domainId }) {
+export default function IntegrityView({ domainId, onFixWithClaude }) {
   const { domain, loading, error } = useDomainModule(domainId);
 
   if (!domainId) {
@@ -32,7 +32,7 @@ export default function IntegrityView({ domainId }) {
   }
   return (
     <div style={{ height: "100%", background: "#0b1220", position: "relative" }}>
-      <IntegrityGraph domain={domain} />
+      <IntegrityGraph domain={domain} onFixWithClaude={onFixWithClaude} />
     </div>
   );
 }

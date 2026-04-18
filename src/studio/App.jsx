@@ -240,6 +240,30 @@ export default function App() {
     setChatOpen(true);
   }, []);
 
+  // IntegrityGraph issue → Claude. node.type === "issue" | "intent" | "projection" | "entity".
+  // Формируем контекстный prompt с rule + detail, чтобы Claude начал с Read файла.
+  const onFixIntegrityIssue = useCallback((node) => {
+    const issues = node.issues || [];
+    const primary = issues[0] || node.data || {};
+    const rule = primary.rule || "integrity";
+    const detail = primary.detail || primary.message || node.name || "";
+    const subject = primary.intent || (node.type === "intent" ? node.id?.replace(/^intent:/, "") : node.name);
+    const fileHint = node.type === "projection"
+      ? `src/domains/${domain}/projections.js`
+      : node.type === "entity"
+        ? `src/domains/${domain}/ontology.js`
+        : `src/domains/${domain}/intents.js`;
+    setChatPrefill(
+      `Целостность домена \`${domain}\`: проблема \`${rule}\` на \`${subject}\`.\n` +
+      `Detail: ${detail}\n\n` +
+      `Прочитай ${fileHint}, найди соответствующий intent/projection/entity и почини согласно правилу. ` +
+      `Если проблема algebra_composition (⊗ двух intents) — проверь particles.effects обоих на пересечение targets и разведи через conditions или antagonists. ` +
+      `Если witness_completeness / anchoring — сверь witnesses с fields в ontology.entities. ` +
+      `Не добавляй фасадного кода, только формальные определения. Кратко отчитайся что починил.`
+    );
+    setChatOpen(true);
+  }, [domain]);
+
   const renderGraphView = () => {
     if (!domain) {
       return (
@@ -357,7 +381,7 @@ export default function App() {
         {view === "graph" ? renderGraphView()
           : view === "prototype" ? renderPrototypeView()
           : view === "ontology" ? <OntologyView domainId={domain} />
-          : view === "integrity" ? <IntegrityView domainId={domain} />
+          : view === "integrity" ? <IntegrityView domainId={domain} onFixWithClaude={readonly ? undefined : onFixIntegrityIssue} />
           : <PatternsView />}
         {/* Drawers (Chat, Φ) рендерятся в общем контейнере — доступны во всех табах */}
         {domain && (

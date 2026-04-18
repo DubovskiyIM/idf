@@ -91,7 +91,7 @@ function getResolutions(issue) {
   return resolutions;
 }
 
-export default function IntegrityGraph({ domain }) {
+export default function IntegrityGraph({ domain, onFixWithClaude }) {
   const containerRef = useRef();
   const graphRef = useRef(null);
   const [selectedNode, setSelectedNode] = useState(null);
@@ -351,6 +351,20 @@ export default function IntegrityGraph({ domain }) {
                 </div>
               ))}
             </div>
+          )}
+          {/* Fix через Claude — доступен когда у selectedNode есть issue(s) */}
+          {onFixWithClaude && (selectedNode.issues?.length > 0 || selectedNode.type === "issue") && (
+            <button
+              onClick={() => onFixWithClaude(selectedNode)}
+              style={{
+                width: "100%", padding: "6px 10px", marginTop: 4,
+                background: "#4338ca", border: "none", borderRadius: 4, color: "white",
+                fontSize: 11, fontWeight: 600, cursor: "pointer",
+                fontFamily: "system-ui, sans-serif",
+              }}
+            >
+              ⌘K Починить через Claude
+            </button>
           )}
           {!selectedNode.resolutions && (
             <pre style={{ fontSize: 9, color: "#6b7280", background: "#f9fafb", padding: 6, borderRadius: 4, overflow: "auto", maxHeight: 150 }}>
