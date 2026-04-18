@@ -53,6 +53,37 @@ export function checkOwnerField(ontology) {
   return gaps;
 }
 
+export function checkEmptyConditions(intents) {
+  const gaps = [];
+  for (const [name, intent] of Object.entries(intents || {})) {
+    if (intent.creates) continue;
+    const p = intent.particles || {};
+    const conditions = p.conditions || [];
+    const effects = p.effects || [];
+    const hasTransition = effects.some((e) => e.α === "replace" || e.α === "remove");
+    if (hasTransition && conditions.length === 0) {
+      gaps.push({ kind: "empty-conditions", intent: name });
+    }
+  }
+  return gaps;
+}
+
+export function checkEmptyWitnesses(intents) {
+  const gaps = [];
+  for (const [name, intent] of Object.entries(intents || {})) {
+    const p = intent.particles || {};
+    const witnesses = p.witnesses || [];
+    const confirmation = p.confirmation;
+    if (confirmation === "auto" || confirmation === "drag-end" || confirmation === "drag") continue;
+    if (witnesses.length > 0) continue;
+    const effects = p.effects || [];
+    const entities = p.entities || [];
+    if (effects.length === 0 && entities.length === 0) continue;
+    gaps.push({ kind: "empty-witnesses", intent: name });
+  }
+  return gaps;
+}
+
 export function checkEnumValues(ontology) {
   const gaps = [];
   for (const [entityName, entity] of Object.entries(ontology.entities || {})) {

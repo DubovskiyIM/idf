@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { checkFieldsTyped, checkEnumValues, checkEntityKind, checkRoleBase, checkOwnerField } from "./domain-audit.mjs";
+import { checkFieldsTyped, checkEnumValues, checkEntityKind, checkRoleBase, checkOwnerField, checkEmptyConditions, checkEmptyWitnesses } from "./domain-audit.mjs";
 
 describe("checkFieldsTyped", () => {
   it("entity с fields-массивом даёт gap", () => {
@@ -92,5 +92,55 @@ describe("checkOwnerField", () => {
   it("reference-сущность пропускается", () => {
     const onto = { entities: { Cat: { type: "reference", fields: { id: { type: "id" } } } } };
     expect(checkOwnerField(onto)).toEqual([]);
+  });
+});
+
+describe("checkEmptyConditions", () => {
+  it("транзиционный интент без conditions даёт gap", () => {
+    const intents = {
+      close_goal: {
+        creates: null,
+        particles: { entities: ["goal: Goal"], conditions: [], effects: [{ α: "replace", target: "goal.status", value: "closed" }], witnesses: [] },
+      },
+    };
+    expect(checkEmptyConditions(intents)).toEqual([{ kind: "empty-conditions", intent: "close_goal" }]);
+  });
+  it("create-интент пропускается", () => {
+    const intents = {
+      create_goal: {
+        creates: "Goal",
+        particles: { entities: ["goal: Goal"], conditions: [], effects: [{ α: "add", target: "goals" }], witnesses: [] },
+      },
+    };
+    expect(checkEmptyConditions(intents)).toEqual([]);
+  });
+  it("интент с conditions проходит", () => {
+    const intents = {
+      edit_goal: {
+        particles: { entities: [], conditions: ["goal.userId = me.id"], effects: [{ α: "replace", target: "goal.title" }], witnesses: [] },
+      },
+    };
+    expect(checkEmptyConditions(intents)).toEqual([]);
+  });
+});
+
+describe("checkEmptyWitnesses", () => {
+  it("form-интент без witnesses даёт gap", () => {
+    const intents = {
+      edit_goal: { particles: { entities: ["goal: Goal"], conditions: [], effects: [{ α: "replace", target: "goal.title" }], witnesses: [], confirmation: "form" } },
+    };
+    expect(checkEmptyWitnesses(intents)).toEqual([{ kind: "empty-witnesses", intent: "edit_goal" }]);
+  });
+  it("auto-confirmation пропускается", () => {
+    const intents = {
+      mark_read: { particles: { witnesses: [], confirmation: "auto", effects: [{ α: "replace", target: "p.lastReadAt" }], entities: [] } },
+    };
+    expect(checkEmptyWitnesses(intents)).toEqual([]);
+  });
+  it("witnesses заполнены — проходит", () => {
+    const intents = {
+      edit_goal: { particles: { witnesses: ["goal.title"], confirmation: "form", effects: [], entities: [] } },
+    };
+    expect(checkEmptyWitnesses(intents)).toEqual([]);
   });
 });
