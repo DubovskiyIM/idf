@@ -99,6 +99,32 @@ describe("freelance projections — create_task_wizard", () => {
   });
 });
 
+describe("freelance projections — my_tasks + my_deals (Cycle 2)", () => {
+  it("my_tasks — catalog mainEntity Task с фильтром по customerId (own)", () => {
+    const p = PROJECTIONS.my_tasks;
+    expect(p.kind).toBe("catalog");
+    expect(p.mainEntity).toBe("Task");
+    expect(p.filter).toContain("customerId");
+  });
+
+  it("my_deals — catalog mainEntity Deal, роль-agnostic (customer + executor видят свои)", () => {
+    const p = PROJECTIONS.my_deals;
+    expect(p.kind).toBe("catalog");
+    expect(p.mainEntity).toBe("Deal");
+    expect(p.witnesses).toEqual(expect.arrayContaining(["amount", "status", "deadline"]));
+  });
+
+  it("ROOT_PROJECTIONS содержит my_tasks и my_deals", () => {
+    expect(ROOT_PROJECTIONS).toEqual(expect.arrayContaining(["my_tasks", "my_deals"]));
+  });
+
+  it("обе кристаллизуются как catalog", () => {
+    const artifacts = crystallizeV2(INTENTS, PROJECTIONS, ONTOLOGY, "freelance");
+    expect(artifacts.my_tasks.archetype).toBe("catalog");
+    expect(artifacts.my_deals.archetype).toBe("catalog");
+  });
+});
+
 describe("freelance seed", () => {
   const getSeed = () => import("./seed.js").then(m => m.getSeedEffects());
 

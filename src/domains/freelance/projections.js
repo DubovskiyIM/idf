@@ -40,6 +40,30 @@ export const PROJECTIONS = {
     ],
   },
 
+  my_tasks: {
+    name: "Мои задачи",
+    kind: "catalog",
+    mainEntity: "Task",
+    entities: ["Task"],
+    filter: "item.customerId === viewer.id",
+    sort: "createdAt:desc",
+    witnesses: ["title", "status", "budget", "deadline", "responsesCount"],
+    clickNavigate: "task_detail_customer",
+    layout: "table",
+  },
+
+  my_deals: {
+    name: "Мои сделки",
+    kind: "catalog",
+    mainEntity: "Deal",
+    entities: ["Deal", "Task"],
+    filter: "item.customerId === viewer.id || item.executorId === viewer.id",
+    sort: "createdAt:desc",
+    witnesses: ["taskId", "amount", "status", "deadline"],
+    clickNavigate: "deal_detail_customer",
+    layout: "grid",
+  },
+
   create_task_wizard: {
     name: "Опубликовать задачу",
     kind: "wizard",
@@ -77,4 +101,6 @@ export const PROJECTIONS = {
 export const ROOT_PROJECTIONS = [
   "task_catalog_public",
   "create_task_wizard",
+  "my_tasks",
+  "my_deals",
 ];
