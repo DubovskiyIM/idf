@@ -15,10 +15,10 @@
 ## Ключевые документы
 
 - **Спецификация формата v0.1** (`docs/spec-v0.1/`) — **нормативный** документ: 7 глав, 6 JSON Schema (artifact, effect, ontology, intent, projection, conformance), conformance classes L1–L4, 124 test fixtures. Читай перед реализацией формата на другом стеке.
-- **Манифест v1.7** (`docs/manifesto-v1.7.md`) — 26 разделов. Философия и мотивация. **Читай §1, §4 (scheduler), §5, §14, §16a, §17, §22, §23, §26 перед работой над ядром.** Предыдущие версии: `manifesto-v1.6.md` / `-v1.5.md` / `-v1.4.md` / `-v1.3.md`. NB: числа в header манифеста устарели (572 → 585 intents, 8 → 9 доменов) — CLAUDE.md содержит актуальные.
-- **Полевые тесты 1–10** (`docs/field-test-*.md`) — от очереди чтения до invest (fintech + робо-эдвайзер). field-test-10 закрыл 6 §26 open items.
+- **Манифест v1.12** (`docs/manifesto-v1.7.md`, имя файла legacy) — 27 разделов. Философия и мотивация. **Читай §1, §4 (scheduler), §5, §14, §15 (witness), §16 (кристаллизация + apply), §16a, §17, §22, §23, §26, §27 перед работой над ядром.** Предыдущие версии: `manifesto-v1.6.md` / `-v1.5.md` / `-v1.4.md` / `-v1.3.md`. Header и §26 актуализированы в v1.12 Pattern Bank execution релизе.
+- **Полевые тесты 1–11** (`docs/field-test-*.md`) — от очереди чтения до delivery (food/groceries last-mile). field-test-10 (invest) закрыл 6 §26 open items, field-test-11 (delivery) применил все 3 v1.7 paradigm additions.
 - **Дизайн-спек M1–M5** (`docs/superpowers/specs/2026-04-10-intent-ui-generation-design.md`)
-- **Прототип** — 9 доменов, 585 намерений, 481 тест (server/*), 4 UI-адаптера + SDK monorepo (8 пакетов, 410 тестов core)
+- **Прототип** — 9 доменов, 585 намерений, **497 тестов idf** (42 файла) + **483 теста @intent-driven/core** + renderer 95 + canvas-kit 36 + 4 adapter'а 12 = **1123 теста**. 4 UI-адаптера + SDK monorepo (8 пакетов, опубликованы в npm: core@0.9.0 + renderer@0.5.0 + canvas-kit@0.2.0 + 4 adapter'а + cli).
 
 ## Архитектура
 
@@ -116,6 +116,8 @@ scripts/    # agent-login, agent-smoke (75 шагов)
 
 **UX Pattern Layer (v1.8)** — два ортогональных измерения: **архетип** (структура: feed/catalog/detail/...) × **паттерн** (поведение: monitoring/triage/execution/exploration/configuration). Signal Classifier выводит behavioral pattern из intent-группы через weighted scoring. Rendering Strategy определяет itemLayout, emphasisFields, preferControl. Pattern Bank — 13 stable structural patterns с формальным trigger/structure/rationale triple и falsification framework. Claude Researcher Pipeline (`scripts/pattern-researcher.mjs`) — extraction паттернов из реальных продуктов + self-improving loop.
 
+**Pattern Bank execution (§16, v1.12)** — от matching-only к executable rules. 3 паттерна с `structure.apply(slots, context)` — чистые функции, обогащают slots внутри crystallize pipeline (фаза `3d` после `assignToSlots*`, до `wrapByConfirmation`): **`subcollections`** (detail, FK-based sub-entity discovery + pluralization), **`grid-card-layout`** (catalog, layout+cardSpec), **`footer-inline-setter`** (detail, single-replace → inline-setter). Author-override: apply respects authored state (existing sections, any body.layout, existing footer items). `projection.patterns: { enabled, disabled }` — author-level preference, управляет applied set; `POST /api/patterns/preference` пишет через AST-safe codemod (recast). Feature-flag `ontology.features.structureApply` как kill-switch. `artifact.witnesses[]` — pattern matching как first-class §15 finding с `basis: "pattern-bank"`, `reliability: "rule-based"`. `explainMatch(intents, ontology, projection, options)` — единая SDK-surface для Studio viewer (`/studio/patterns`) и prototype `PatternInspector` drawer (§27 host-extension, toggle `Cmd+Shift+P`, три режима Off/Preview/Commit). Renderer props `artifactOverride` + `previewPatternId` + primitive `PatternPreviewOverlay` (dashed-border + badge) для §27 preview. 5 server endpoints `/api/patterns/{catalog,falsification,explain,projections,preference}`. 3 из 13 паттернов имеют apply; остальные 10 matching-only, roadmap v1.13+.
+
 **Reactive Rules Engine (§22)** — event-condition-action, правила в `ontology.rules`. **Extensions v1.5:** aggregation (counter), threshold (lookback predicate), schedule (cron-like), condition (JS expression). Invest использует все 4 в одном домене. Таблица `rule_state` per (rule, user).
 
 **Темпоральный scheduler (§4, v1.7)** — first-class механизм, закрыл v1.6 §26 open item. Два системных intent'а: `schedule_timer(afterMs|atISO, target, revokeOn?)` и `revoke_timer(timerId)`. Реализация: `server/timeEngine.js` с `TimerQueue` (min-heap по `firesAt`), `hydrateFromWorld` при старте, `onEffectConfirmed` для реакции на schedule/revoke эффекты, `fireDue` с guard evaluation. Таймеры — обычные эффекты τ=`scheduled_timer` в Φ (не отдельный state). `schedule` в `ontology.rules[].schedule` — object `{ after | at | revokeOn? }`. Object-form передаётся в `TimerQueue.insert`. String-DSL — future, не current (§23). Применение: booking `auto_cancel_pending_booking` (отмена через 24h если not confirmed); cron-правила Rules Engine v1 мигрированы на self-rescheduling timers.
@@ -142,9 +144,9 @@ npm run build        # prod-сборка
 
 ## SDK
 
-Монорепо `~/WebstormProjects/idf-sdk/` (pnpm workspace, tsup, vitest). Все пакеты в `packages/*`. 8 пакетов (v1.8):
+Монорепо `~/WebstormProjects/idf-sdk/` (pnpm workspace, tsup, vitest). Все пакеты в `packages/*`. 8 пакетов (v1.12):
 
-- **@intent-driven/core@0.7.2** (2026-04-17) — engine, fold, intentAlgebra, crystallize_v2, **+ additions**:
+- **@intent-driven/core@0.9.0** (2026-04-18) — engine, fold, intentAlgebra, crystallize_v2, **+ additions**:
   - `filterWorldForRole` — viewer-scoping с m2m через role.scope (§5)
   - `BASE_ROLES` + `getRolesByBase` + `auditOntologyRoles` — таксономия (§5)
   - `checkPreapproval` — agent лимиты (§17)
@@ -152,12 +154,16 @@ npm run build        # prod-сборка
   - `materializeAsVoice` / `renderVoiceSsml` / `renderVoicePlain` — 3-я материализация (§1)
   - `checkInvariants` + `KIND_HANDLERS` — schema-level ∀-свойства (§14 v1.6.1)
   - **UX Pattern Layer** (v1.8): `resolvePattern` — behavioral patterns (monitoring/triage/execution/exploration/configuration), signal classifier, rendering strategy. 5 behavioral + 13 structural stable patterns.
-  - **Pattern Bank** (v1.8): `matchPatterns`, `validatePattern`, `evaluateTrigger` — формальный банк правил деривации (trigger/structure/rationale), 9 trigger kinds, falsification framework
-- **@intent-driven/renderer@0.1.0** (2026-04-15) — ProjectionRendererV2 + 7 архетипов + 11 controls + 3 primitives (atoms/containers/chart) + 6 parameters + navigation + validation + adapter registry (capability surface). 36 тестов, dts 21.6KB.
-- **@intent-driven/adapter-{mantine,shadcn,apple,antd}@0.1.0** (2026-04-15) — 4 UI-адаптера. Каждый: spec-object + `{Name}AdapterProvider` helper. shadcn/apple `theme.css` экспортируется через `exports["./styles.css"]` — хост импортирует явно из entry.
-- **@intent-driven/canvas-kit@0.1.0** (2026-04-15) — 9 SVG-утилит (`makeSvgScale`, `axisTicks`, `pointsToPath`, `heatmapColorScale`, `useTooltipPosition`, `useDraggablePoint`, `useZoomPan`, `clusterLayout`, `calendarGrid`). Standalone (peer только react). 36 TDD-тестов.
+  - **Pattern Bank matching** (v1.8): `matchPatterns`, `validatePattern`, `evaluateTrigger` — формальный банк правил деривации (trigger/structure/rationale), 9 trigger kinds, falsification framework.
+  - **Pattern Bank execution** (v1.12): `structure.apply(slots, context)` в 3 паттернах (`subcollections`, `grid-card-layout`, `footer-inline-setter`) обогащают слоты внутри crystallize pipeline. `applyStructuralPatterns(slots, matched, context, preferences, registry)` — фаза `3d`. Helpers `findSubEntities`, `buildSection`, `sectionIdFor`, `buildCardSpec` экспортированы.
+  - **explainMatch / evaluateTriggerExplained** (v1.12): `explainMatch(intents, ontology, projection, options)` → `{ archetype, behavioral, structural: { matched, nearMiss }, witnesses, artifactBefore, artifactAfter, previewPatternId }`. Единая SDK-surface для Studio viewer и prototype Pattern Inspector. `evaluateTriggerExplained(trigger, intents, ontology, projection)` — per-requirement breakdown.
+  - **witnesses-of-crystallization** (v1.12): `artifact.witnesses[]` с `basis: "pattern-bank"`, `reliability: "rule-based"` — третий time-horizon witness (после anchoring / action).
+- **@intent-driven/renderer@0.5.0** (2026-04-18) — ProjectionRendererV2 + 7 архетипов + 11 controls + 3 primitives (atoms/containers/chart) + map-primitive (v1.7) + IrreversibleBadge (v1.7) + 6 parameters + navigation + validation + adapter registry (capability surface). **v1.12 additions:** `artifactOverride` + `previewPatternId` props (§27 dev-only), `PatternPreviewOverlay` primitive (dashed-border + corner-badge для derived-слотов). 95 тестов.
+- **@intent-driven/adapter-{mantine,shadcn,apple,antd}@1.1.0+** (2026-04-18) — 4 UI-адаптера. Каждый: spec-object + `{Name}AdapterProvider` helper. shadcn/apple `theme.css` экспортируется через `exports["./styles.css"]` — хост импортирует явно из entry.
+- **@intent-driven/canvas-kit@0.2.0** (2026-04-18) — 9 SVG-утилит (`makeSvgScale`, `axisTicks`, `pointsToPath`, `heatmapColorScale`, `useTooltipPosition`, `useDraggablePoint`, `useZoomPan`, `clusterLayout`, `calendarGrid`). Standalone (peer только react). 36 TDD-тестов.
+- **@intent-driven/cli@1.0.7** (2026-04-17, MIT) — `npx @intent-driven/cli init <name>` ведёт 5-шаговый LLM-диалог (Claude haiku/sonnet/opus) и генерирует каталог `<name>/`. System prompt со spec'ой кешируется (>90% скидка).
 
-Прототип импортирует через `file:../idf-sdk/packages/<name>`. Server/schema/*.cjs — **thin re-exports** из SDK core для CJS-совместимости.
+Прототип импортирует из публичного npm через semver (`^0.9.0` core, `^0.5.0` renderer, etc). Server/schema/*.cjs — **thin re-exports** из SDK core для CJS-совместимости. Release pipeline автоматический: changesets-bot создаёт "Version Packages" PR при merge в main → publish в npm при merge release PR.
 
 Postmortem'ы: `docs/superpowers/specs/2026-04-14-sdk-core-postmortem.md` (Phase 1), `docs/superpowers/specs/2026-04-15-renderer-extraction-postmortem.md` (Phase 2).
 
@@ -169,21 +175,26 @@ Postmortem'ы: `docs/superpowers/specs/2026-04-14-sdk-core-postmortem.md` (Phase
 
 ## Границы реализации
 
-**Полный список: `docs/manifesto-v1.7.md` §23 и §26.** NB: некоторые items из §26 уже закрыты (voice, CI). Не опирайся на «оно есть, раз написано в §N».
+**Полный список: `docs/manifesto-v1.7.md` §23 и §26.** NB: некоторые items из §26 уже закрыты (voice, CI, structure.apply). Не опирайся на «оно есть, раз написано в §N».
 
 ### Частично реализовано (осторожно)
 
 - **§15 Анкеринг** — конструктивные частицы блокируют через `AnchoringError` (v1.8). Witness-of-proof filled (v1.9: `reliability`/`basis`). Pattern labeling + zazor #3 phase 1 analyzer (v1.10: `witness.pattern` + `scripts/zazor3-candidates.mjs`). Promotion writer, counterexample-search — open.
 - **Voice** — `voiceMaterializer` + `/api/voice/` route реализованы (v1.6.2). Нет integration с реальным TTS / voice-agent.
-- **UX Pattern Layer** — behavioral + structural matching реализованы. `structure.apply` (автоматическое обогащение слотов) — not yet, matching only. Pattern Bank: 13 stable, falsification framework работает.
+- **UX Pattern Layer** — behavioral + structural matching + **`structure.apply` для 3 паттернов** (v1.12: subcollections, grid-card-layout, footer-inline-setter). Остальные 10 stable — matching-only. Pattern Bank: 13 stable, falsification framework работает, `explainMatch` SDK-surface + Studio viewer + prototype PatternInspector реализованы.
 
-### Open items v1.8
+### Open items v1.12
 
 - **Composite/polymorphic entities** — union-типы не в `entity.kind` (переносится)
 - **Adapter capability checks at startup** — новый primitive kind без уведомления адаптеров (переносится)
 - **`@intent-driven/server` extraction (Phase 3)** — после стабилизации scheduler'а
 - **Server-rendered PDF / DOCX** поверх documentMaterializer
-- **Pattern Bank: structure.apply** — паттерны матчатся, но не обогащают слоты автоматически
+- **Pattern Bank: `structure.apply` для оставшихся 10 stable паттернов** — hero-create / phase-aware-primary-cta / irreversible-confirm / inline-search / composer-entry / vote-group / antagonist-toggle / hierarchy-tree-nav / discriminator-wizard / m2m-attach-dialog
+- **Role-specific FK convention** — `sales/seller_profile` не матчится через `findSubEntities` (sellerId / targetUserId vs userId). Нужен `ontology.entities.<E>.references: { User: ["seller", "target"] }` hint
+- **PatternInspector component test** — требует `@testing-library/react` + `jsdom` в idf devDeps
+- **Studio PatternBank URL write-back** — domain change не пишет в URL
+- **X1: удаление 9 explicit `subCollections` overrides** — после ≥1 релиза с apply в проде
+- **Pattern Bank candidate/ + anti/** — директории пустые, будущая expansion task
 - **Pattern Bank: ML/auto-learning** — автоматический анализ приложений для пополнения банка
 - **Cluster-friendly scheduler** — single-leader для TimerQueue
 
@@ -191,5 +202,5 @@ Postmortem'ы: `docs/superpowers/specs/2026-04-14-sdk-core-postmortem.md` (Phase
 
 Roadmap: `docs/manifesto-v1.7.md` §25.
 
-- **Ближайшее (1-2 мес)**: invest visual polish для демо, structure.apply (Pattern Bank → автодеривация), публикация статьи, `@intent-driven/server` extraction (Phase 3)
-- **Среднесрочное (2-4 мес)**: public npm publish под scope `@idf`, CLI `idf init <domain>` с LLM-диалогом, production-ready invest, Pattern Bank → 50+ stable patterns через Researcher pipeline
+- **Ближайшее (1-2 мес)**: apply для оставшихся 10 паттернов (hero-create первый кандидат), invest visual polish для демо, публикация статьи, `@intent-driven/server` extraction (Phase 3)
+- **Среднесрочное (2-4 мес)**: production-ready invest, Pattern Bank → 50+ stable patterns через Researcher pipeline, X1-удаление explicit overrides, PatternInspector test-harness
