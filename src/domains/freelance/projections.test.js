@@ -154,6 +154,24 @@ describe("freelance projections — detail (customer + executor)", () => {
   });
 });
 
+describe("freelance projections — wallet", () => {
+  it("wallet — detail mainEntity Wallet с subCollection Transaction", () => {
+    const p = PROJECTIONS.wallet;
+    expect(p.kind).toBe("detail");
+    expect(p.mainEntity).toBe("Wallet");
+    expect(p.subCollections.find(s => s.entity === "Transaction")).toBeDefined();
+  });
+
+  it("wallet доступен в ROOT_PROJECTIONS", () => {
+    expect(ROOT_PROJECTIONS).toContain("wallet");
+  });
+
+  it("wallet кристаллизуется как detail", () => {
+    const arts = crystallizeV2(INTENTS, PROJECTIONS, ONTOLOGY, "freelance");
+    expect(arts.wallet.archetype).toBe("detail");
+  });
+});
+
 describe("freelance seed", () => {
   const getSeed = () => import("./seed.js").then(m => m.getSeedEffects());
 

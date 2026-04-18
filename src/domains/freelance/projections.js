@@ -121,6 +121,24 @@ export const PROJECTIONS = {
     toolbar: ["submit_work_result", "submit_revision", "cancel_deal_mutual"],
   },
 
+  wallet: {
+    name: "Кошелёк",
+    kind: "detail",
+    mainEntity: "Wallet",
+    entities: ["Wallet", "Transaction"],
+    filter: "item.userId === viewer.id",
+    witnesses: ["balance", "reserved", "currency"],
+    subCollections: [
+      {
+        entity: "Transaction",
+        foreignKey: "walletId",
+        title: "История операций",
+        addable: false,
+      },
+    ],
+    toolbar: ["top_up_wallet_by_card", "view_transaction_history"],
+  },
+
   create_task_wizard: {
     name: "Опубликовать задачу",
     kind: "wizard",
@@ -160,4 +178,5 @@ export const ROOT_PROJECTIONS = [
   "create_task_wizard",
   "my_tasks",
   "my_deals",
+  "wallet",
 ];
