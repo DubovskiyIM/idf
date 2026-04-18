@@ -16,3 +16,19 @@ export function checkFieldsTyped(ontology) {
   }
   return gaps;
 }
+
+export function checkEnumValues(ontology) {
+  const gaps = [];
+  for (const [entityName, entity] of Object.entries(ontology.entities || {})) {
+    if (Array.isArray(entity.fields)) continue;
+    for (const [fieldName, field] of Object.entries(entity.fields || {})) {
+      if (field.type !== "enum") continue;
+      if (!Array.isArray(field.values) || field.values.length === 0) {
+        gaps.push({ kind: "enum-no-values", entity: entityName, field: fieldName });
+      } else if (!field.valueLabels || typeof field.valueLabels !== "object") {
+        gaps.push({ kind: "enum-no-valueLabels", entity: entityName, field: fieldName });
+      }
+    }
+  }
+  return gaps;
+}
