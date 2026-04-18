@@ -210,4 +210,50 @@ describe("freelance seed", () => {
       expect(taskIds.has(r.context.taskId)).toBe(true);
     }
   });
+
+  it("содержит ≥3 Deal (Cycle 2)", async () => {
+    const seed = await getSeed();
+    const deals = seed.filter(e => e.target === "Deal");
+    expect(deals.length).toBeGreaterThanOrEqual(3);
+  });
+
+  it("все Deal.customerId ссылаются на User.customerVerified=true", async () => {
+    const seed = await getSeed();
+    const users = Object.fromEntries(
+      seed.filter(e => e.target === "User").map(e => [e.context.id, e.context])
+    );
+    const deals = seed.filter(e => e.target === "Deal");
+    for (const d of deals) {
+      expect(users[d.context.customerId]?.customerVerified).toBe(true);
+    }
+  });
+
+  it("все Deal.executorId ссылаются на User.executorVerified=true", async () => {
+    const seed = await getSeed();
+    const users = Object.fromEntries(
+      seed.filter(e => e.target === "User").map(e => [e.context.id, e.context])
+    );
+    const deals = seed.filter(e => e.target === "Deal");
+    for (const d of deals) {
+      expect(users[d.context.executorId]?.executorVerified).toBe(true);
+    }
+  });
+
+  it("содержит ≥3 Wallet (один на customer + один на executor + один на универсала)", async () => {
+    const seed = await getSeed();
+    const wallets = seed.filter(e => e.target === "Wallet");
+    expect(wallets.length).toBeGreaterThanOrEqual(3);
+  });
+
+  it("содержит ≥5 Transaction", async () => {
+    const seed = await getSeed();
+    const txs = seed.filter(e => e.target === "Transaction");
+    expect(txs.length).toBeGreaterThanOrEqual(5);
+  });
+
+  it("содержит ≥3 Review со стороны customer", async () => {
+    const seed = await getSeed();
+    const reviews = seed.filter(e => e.target === "Review");
+    expect(reviews.length).toBeGreaterThanOrEqual(3);
+  });
 });
