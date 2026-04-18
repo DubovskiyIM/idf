@@ -1,6 +1,6 @@
 import { useMemo, useState, useCallback, useEffect } from "react";
 import { usePersonalPrefs, prefsToStyle } from "../personal/usePersonalPrefs.js";
-import { ProjectionRendererV2, useProjectionRoute, Breadcrumbs, getAdaptedComponent } from "@intent-driven/renderer";
+import { ProjectionRendererV2, useProjectionRoute, Breadcrumbs, getAdaptedComponent, ViewSwitcher } from "@intent-driven/renderer";
 import { crystallizeV2, generateEditProjections } from "@intent-driven/core";
 import BottomTabs from "./BottomTabs.jsx";
 import PatternInspector from "./PatternInspector.jsx";
@@ -197,6 +197,35 @@ export default function V2Shell({
   const isEnriched = current && !!enrichedArtifacts[current.projectionId];
   const currentProjectionDef = current ? allProjections[current.projectionId] : null;
 
+  // v0.13 Multi-archetype views — активная view per projection.
+  // Источник: URL `?view=<id>` → state → artifact.defaultView.
+  const [activeViewByProj, setActiveViewByProj] = useState(() => {
+    if (typeof window === "undefined") return {};
+    const params = new URLSearchParams(window.location.search);
+    const v = params.get("view");
+    return v && current?.projectionId ? { [current.projectionId]: v } : {};
+  });
+  const currentActiveView = currentArtifact?.views
+    ? (activeViewByProj[current.projectionId] || currentArtifact.defaultView)
+    : null;
+
+  useEffect(() => {
+    if (typeof window === "undefined" || !current) return;
+    const params = new URLSearchParams(window.location.search);
+    if (currentActiveView && currentArtifact?.defaultView && currentActiveView !== currentArtifact.defaultView) {
+      params.set("view", currentActiveView);
+    } else {
+      params.delete("view");
+    }
+    const qs = params.toString();
+    const newUrl = qs ? `${window.location.pathname}?${qs}` : window.location.pathname;
+    window.history.replaceState(null, "", newUrl);
+  }, [current, currentActiveView, currentArtifact]);
+
+  const onChangeView = useCallback((projId, viewId) => {
+    setActiveViewByProj(prev => ({ ...prev, [projId]: viewId }));
+  }, []);
+
   const isOnRoot = rootProjections.includes(current?.projectionId);
 
   // Адаптированная реализация root-табов (Mantine Tabs через адаптер).
@@ -253,12 +282,26 @@ export default function V2Shell({
             workspace'а на уровне Studio App. Внутри прототипа больше не
             дублируется. */}
       </div>
+      {currentArtifact?.viewSwitcher && currentArtifact.views && currentArtifact.views.length > 1 && (
+        <div style={{
+          padding: "8px 16px",
+          borderBottom: "1px solid var(--idf-border, #e5e7eb)",
+          background: "var(--idf-bg-subtle, #fafafa)",
+        }}>
+          <ViewSwitcher
+            views={currentArtifact.viewSwitcher.views}
+            activeId={currentActiveView}
+            onChange={(id) => onChangeView(current.projectionId, id)}
+          />
+        </div>
+      )}
       <div style={{ flex: 1, overflow: "hidden", position: "relative", minHeight: 0 }}>
         {currentArtifact ? (
           <ProjectionRendererV2
             artifact={currentArtifact}
             artifactOverride={artifactOverride}
             previewPatternId={previewPatternId}
+            activeView={currentActiveView}
             projection={currentProjectionDef}
             world={worldWithRoute}
             exec={wrappedExec}
