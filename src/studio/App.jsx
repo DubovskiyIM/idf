@@ -45,18 +45,28 @@ function computeDiff(oldGraph, newGraph) {
 // (runtime-UI того же домена) / Patterns (Pattern Bank). Высота 44px
 // фиксирована, вложенные view рассчитывают через calc(100vh - 44px).
 function TabStrip({ view, setView, domainName, onTogglePhi, phiOpen, onToggleChat, chatOpen, onOpenPrefs, readonly }) {
-  const tabStyle = (active) => ({
+  const hasDomain = !!domainName;
+  const tabStyle = (active, disabled = false) => ({
     padding: "10px 20px",
-    cursor: "pointer",
+    cursor: disabled ? "not-allowed" : "pointer",
     background: active ? "#1e293b" : "transparent",
-    color: active ? "#e0e7ff" : "#94a3b8",
+    color: disabled ? "#475569" : active ? "#e0e7ff" : "#94a3b8",
     border: "none",
     borderBottom: active ? "2px solid #60a5fa" : "2px solid transparent",
     fontSize: 13,
     fontWeight: active ? 600 : 400,
     fontFamily: "inherit",
     outline: "none",
+    opacity: disabled ? 0.5 : 1,
   });
+  const domainOnly = (target, label) => (
+    <button
+      onClick={() => hasDomain && setView(target)}
+      disabled={!hasDomain}
+      style={tabStyle(view === target, !hasDomain)}
+      title={hasDomain ? undefined : "Выбери домен во вкладке «Граф»"}
+    >{label}</button>
+  );
   const actionStyle = (active) => ({
     padding: "5px 12px", fontSize: 12, borderRadius: 4, cursor: "pointer",
     background: active ? "#1e293b" : "transparent",
@@ -77,9 +87,9 @@ function TabStrip({ view, setView, domainName, onTogglePhi, phiOpen, onToggleCha
     >
       <div style={{ display: "flex" }}>
         <button onClick={() => setView("graph")} style={tabStyle(view === "graph")}>Граф</button>
-        <button onClick={() => setView("prototype")} style={tabStyle(view === "prototype")}>Прототип</button>
-        <button onClick={() => setView("ontology")} style={tabStyle(view === "ontology")}>Онтология</button>
-        <button onClick={() => setView("integrity")} style={tabStyle(view === "integrity")}>Целостность</button>
+        {domainOnly("prototype", "Прототип")}
+        {domainOnly("ontology", "Онтология")}
+        {domainOnly("integrity", "Целостность")}
         <button onClick={() => setView("patterns")} style={tabStyle(view === "patterns")}>Паттерны</button>
       </div>
       <div style={{ flex: 1 }} />
@@ -165,6 +175,14 @@ export default function App() {
   const auth = useAuth();
 
   useEffect(() => { setReadyDomain(null); setProgress({ lastTool: null, toolCount: 0 }); }, [domain]);
+  // Если домен сброшен (вернулись к picker) — сбросить view на Graph, чтобы
+  // domain-specific tabs (Прототип/Онтология/Целостность) не остались в
+  // «disabled but current» состоянии.
+  useEffect(() => {
+    if (!domain && ["prototype", "ontology", "integrity"].includes(view)) {
+      setView("graph");
+    }
+  }, [domain, view]);
   useEffect(() => { if (chatBusy) { setReadyDomain(null); setProgress({ lastTool: null, toolCount: 0 }); } }, [chatBusy]);
 
   useEffect(() => {
