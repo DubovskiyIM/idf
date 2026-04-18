@@ -512,6 +512,136 @@ export const INTENTS = {
     confirmation: "auto",
   },
 
+  // ─── Wallet (7) ───────────────────────────────────────────────────────────
+
+  top_up_wallet_by_card: {
+    name: "Пополнить баланс картой",
+    description: "Mock-gateway — создаёт Transaction.kind=topup, увеличивает Wallet.balance",
+    α: "add",
+    irreversibility: "medium",
+    particles: {
+      parameters: [
+        { name: "walletId", type: "id", required: true },
+        { name: "amount", type: "number", required: true },
+        { name: "cardLastFour", type: "text" },
+      ],
+      effects: [
+        { α: "add", target: "transactions", σ: "account" },
+        { α: "replace", target: "wallet.balance" },
+      ],
+    },
+    creates: "Transaction",
+    confirmation: "auto",
+  },
+
+  view_transaction_history: {
+    name: "История операций",
+    description: "Read-only выборка Transaction по walletId",
+    α: "replace",
+    irreversibility: "low",
+    particles: {
+      parameters: [
+        { name: "walletId", type: "id", required: true },
+      ],
+      effects: [],
+    },
+    confirmation: "auto",
+  },
+
+  charge_commission: {
+    name: "Списать комиссию",
+    description: "Internal — при accept_result платформенная комиссия (%)",
+    α: "add",
+    irreversibility: "low",
+    particles: {
+      parameters: [
+        { name: "dealId", type: "id", required: true },
+        { name: "walletId", type: "id", required: true },
+        { name: "amount", type: "number", required: true },
+      ],
+      effects: [
+        { α: "add", target: "transactions", σ: "account" },
+      ],
+    },
+    creates: "Transaction",
+    confirmation: "auto",
+  },
+
+  reserve_escrow: {
+    name: "Резервировать escrow",
+    description: "Internal — при confirm_deal: создаёт Transaction.kind=escrow-hold",
+    α: "add",
+    irreversibility: "low",
+    particles: {
+      parameters: [
+        { name: "dealId", type: "id", required: true },
+        { name: "walletId", type: "id", required: true },
+        { name: "amount", type: "number", required: true },
+      ],
+      effects: [
+        { α: "add", target: "transactions", σ: "account" },
+        { α: "replace", target: "wallet.reserved" },
+      ],
+    },
+    creates: "Transaction",
+    confirmation: "auto",
+  },
+
+  release_escrow: {
+    name: "Высвободить escrow",
+    description: "Internal — при accept_result: Transaction.kind=release + перевод исполнителю",
+    α: "add",
+    irreversibility: "low",
+    particles: {
+      parameters: [
+        { name: "dealId", type: "id", required: true },
+        { name: "walletId", type: "id", required: true },
+        { name: "amount", type: "number", required: true },
+      ],
+      effects: [
+        { α: "add", target: "transactions", σ: "account" },
+        { α: "replace", target: "wallet.reserved" },
+        { α: "replace", target: "wallet.balance" },
+      ],
+    },
+    creates: "Transaction",
+    confirmation: "auto",
+  },
+
+  refund_escrow: {
+    name: "Вернуть escrow",
+    description: "Internal — при cancel_deal_mutual: Transaction.kind=refund",
+    α: "add",
+    irreversibility: "low",
+    particles: {
+      parameters: [
+        { name: "dealId", type: "id", required: true },
+        { name: "walletId", type: "id", required: true },
+        { name: "amount", type: "number", required: true },
+      ],
+      effects: [
+        { α: "add", target: "transactions", σ: "account" },
+        { α: "replace", target: "wallet.reserved" },
+      ],
+    },
+    creates: "Transaction",
+    confirmation: "auto",
+  },
+
+  view_wallet_balance: {
+    name: "Посмотреть баланс",
+    description: "Read-only — возвращает Wallet balance + reserved",
+    α: "replace",
+    irreversibility: "low",
+    particles: {
+      parameters: [
+        { name: "userId", type: "id", required: true },
+      ],
+      effects: [],
+    },
+    confirmation: "auto",
+  },
+
   // ─── Deal (7) ─────────────────────────────────────────────────────────────
 
   confirm_deal: {

@@ -23,6 +23,10 @@ const GROUPS = {
     "auto_accept_result", "request_revision", "submit_revision",
     "cancel_deal_mutual",
   ],
+  wallet: [
+    "top_up_wallet_by_card", "view_transaction_history", "charge_commission",
+    "reserve_escrow", "release_escrow", "refund_escrow", "view_wallet_balance",
+  ],
 };
 
 describe("freelance intents — auth + system", () => {
