@@ -35,14 +35,14 @@ export const INTENTS = {
   add_activity_to_entry: intent("Добавить активность", ["entry: MoodEntry", "activity: Activity"],
     ["entry.userId = me.id"],
     [ef("add", "entryActivities")],
-    [],
+    ["activity.name"],
     "click"),
 
   remove_activity_from_entry: intent("Убрать активность", ["link: EntryActivity"],
     ["link.userId = me.id"],
     [ef("remove", "entryActivities")],
     [],
-    "click"),
+    "click", { irreversibility: "low" }),
 
   edit_entry_note: intent("Изменить заметку", ["entry: MoodEntry"],
     ["entry.userId = me.id"],
@@ -59,7 +59,7 @@ export const INTENTS = {
   duplicate_entry: intent("Повторить чек-ин", ["entry: MoodEntry"],
     ["entry.userId = me.id"],
     [],
-    [],
+    ["entry.pleasantness", "entry.note"],
     "click"),
 
   move_entry_time: intent("Изменить время", ["entry: MoodEntry"],
@@ -90,7 +90,7 @@ export const INTENTS = {
   merge_activities: intent("Объединить активности", ["source: Activity", "target: Activity"],
     ["source.userId = me.id", "target.userId = me.id"],
     [],
-    [],
+    ["source.name", "target.name"],
     "form"),
 
   archive_activity: intent("Архивировать", ["activity: Activity"],
@@ -122,13 +122,13 @@ export const INTENTS = {
     ["hypothesis.userId = me.id"],
     [ef("replace", "hypothesis.status", "account", { value: "rejected" })],
     [],
-    "click"),
+    "click", { irreversibility: "medium" }),
 
   archive_hypothesis: intent("Архивировать", ["hypothesis: Hypothesis"],
     ["hypothesis.userId = me.id"],
     [ef("replace", "hypothesis.status", "account", { value: "archived" })],
     [],
-    "click"),
+    "click", { irreversibility: "medium" }),
 
   delete_hypothesis: intent("Удалить", ["hypothesis: Hypothesis"],
     ["hypothesis.userId = me.id"],
@@ -165,24 +165,24 @@ export const INTENTS = {
     ["tag.userId = me.id"],
     [ef("remove", "tags")],
     [],
-    "click"),
+    "click", { irreversibility: "medium" }),
 
   add_tag_to_entry: intent("Прикрепить тег", ["entry: MoodEntry", "tag: Tag"],
     ["entry.userId = me.id"],
     [ef("add", "entryTags")],
-    [],
+    ["tag.name"],
     "click"),
 
   remove_tag_from_entry: intent("Открепить тег", ["link: EntryTag"],
     ["link.userId = me.id"],
     [ef("remove", "entryTags")],
     [],
-    "click"),
+    "click", { irreversibility: "low" }),
 
   merge_tags: intent("Объединить теги", ["source: Tag", "target: Tag"],
     ["source.userId = me.id", "target.userId = me.id"],
     [],
-    [],
+    ["source.name", "target.name"],
     "form"),
 
   // ===== REMINDERS (4) =====
@@ -208,7 +208,7 @@ export const INTENTS = {
     ["reminder.userId = me.id"],
     [ef("remove", "reminders")],
     [],
-    "click"),
+    "click", { irreversibility: "medium" }),
 
   // ===== INSIGHTS (3) =====
 
@@ -222,7 +222,7 @@ export const INTENTS = {
     ["insight.userId = me.id"],
     [ef("remove", "insights")],
     [],
-    "click"),
+    "click", { irreversibility: "low" }),
 
   pin_insight: intent("Закрепить", ["insight: Insight"],
     ["insight.userId = me.id"],
@@ -278,6 +278,6 @@ export const INTENTS = {
 
   delete_account: intent("Удалить аккаунт", ["user: User"],
     ["user.id = me.id"],
-    [], [], "click", { irreversibility: "high" }),
+    [], ["user.name", "user.email"], "click", { irreversibility: "high" }),
 
 };

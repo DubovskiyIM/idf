@@ -54,7 +54,7 @@ export function checkOwnerField(ontology) {
 }
 
 const DESTRUCTIVE_STATUSES = new Set(["archived", "deleted", "cancelled", "blocked", "closed", "abandoned", "rejected"]);
-const FORM_CONFIRMATIONS = new Set(["form", "composerEntry", "formModal", "file", "enter", "clickForm", "bulkWizard", "customCapture", "filePicker", "inlineSearch", "drag", "drag-end"]);
+const FORM_CONFIRMATIONS = new Set(["form", "composerEntry", "formModal", "file", "enter", "clickForm", "bulkWizard", "customCapture", "filePicker", "inlineSearch", "drag", "drag-end", "auto"]);
 
 export function checkAntagonistSymmetry(intents) {
   const gaps = [];
