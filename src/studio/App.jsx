@@ -10,6 +10,9 @@ import PrototypeReadyCTA from "./PrototypeReadyCTA.jsx";
 import PatternsView from "./patterns/PatternsView.jsx";
 import PhiDrawer from "./PhiDrawer.jsx";
 import DomainRuntime from "../runtime/DomainRuntime.jsx";
+import PrefsPanel from "../runtime/renderer/personal/PrefsPanel.jsx";
+import { usePersonalPrefs } from "../runtime/renderer/personal/usePersonalPrefs.js";
+import { useAuth } from "../runtime/renderer/auth/useAuth.js";
 import { fetchGraph } from "./api/graph.js";
 import { subscribeDomain } from "./api/watch.js";
 
@@ -38,7 +41,7 @@ function computeDiff(oldGraph, newGraph) {
 // Верхний tab-strip: переключатель между Graph (структура) / Прототип
 // (runtime-UI того же домена) / Patterns (Pattern Bank). Высота 44px
 // фиксирована, вложенные view рассчитывают через calc(100vh - 44px).
-function TabStrip({ view, setView, domainName, onTogglePhi, phiOpen, onToggleChat, chatOpen }) {
+function TabStrip({ view, setView, domainName, onTogglePhi, phiOpen, onToggleChat, chatOpen, onOpenPrefs }) {
   const tabStyle = (active) => ({
     padding: "10px 20px",
     cursor: "pointer",
@@ -80,9 +83,18 @@ function TabStrip({ view, setView, domainName, onTogglePhi, phiOpen, onToggleCha
           <div style={{ fontSize: 12, color: "#64748b", fontFamily: "ui-monospace, 'SF Mono', monospace", marginRight: 14 }}>
             {domainName}
           </div>
-          <div style={{ display: "flex", gap: 6 }}>
+          <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
             <button onClick={onToggleChat} style={actionStyle(chatOpen)} title="Chat с Claude · ⌘K">⌘K Chat</button>
             <button onClick={onTogglePhi} style={actionStyle(phiOpen)} title="Φ-журнал · ⌘J">⌘J Φ</button>
+            <button
+              onClick={onOpenPrefs}
+              title="Настройки UI"
+              style={{
+                padding: "5px 10px", fontSize: 14, borderRadius: 4, cursor: "pointer",
+                background: "transparent", color: "#94a3b8", border: "1px solid #1e293b",
+                fontFamily: "inherit",
+              }}
+            >⚙</button>
           </div>
         </>
       )}
@@ -119,6 +131,13 @@ export default function App() {
   const [progress, setProgress] = useState({ lastTool: null, toolCount: 0 });
   const [readyDomain, setReadyDomain] = useState(null);
   const [phiOpen, setPhiOpen] = useState(false);
+  const [prefsOpen, setPrefsOpen] = useState(false);
+  // Personal layer §17: глобальные UI-prefs + auth. Одни и те же hooks
+  // используются внутри V2Shell (где есть своя кнопка ⚙), но благодаря
+  // localStorage-persistance состояние синхронизируется. Делаем prefs
+  // доступными и на уровне Studio TabStrip.
+  const { prefs, setPref, resetPrefs } = usePersonalPrefs();
+  const auth = useAuth();
 
   useEffect(() => { setReadyDomain(null); setProgress({ lastTool: null, toolCount: 0 }); }, [domain]);
   useEffect(() => { if (chatBusy) { setReadyDomain(null); setProgress({ lastTool: null, toolCount: 0 }); } }, [chatBusy]);
@@ -283,6 +302,7 @@ export default function App() {
         phiOpen={phiOpen}
         onToggleChat={() => setChatOpen((v) => !v)}
         chatOpen={chatOpen}
+        onOpenPrefs={() => setPrefsOpen(true)}
       />
       <div style={{ flex: 1, position: "relative", minHeight: 0 }}>
         {view === "graph" ? renderGraphView()
@@ -310,6 +330,16 @@ export default function App() {
           />
         )}
       </div>
+      {prefsOpen && (
+        <PrefsPanel
+          prefs={prefs}
+          setPref={setPref}
+          resetPrefs={resetPrefs}
+          onClose={() => setPrefsOpen(false)}
+          onLogout={auth.currentUser ? auth.logout : undefined}
+          viewer={auth.currentUser}
+        />
+      )}
     </div>
   );
 }
