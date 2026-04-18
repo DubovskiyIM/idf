@@ -8,6 +8,7 @@ import ThinkingCat from "./ThinkingCat.jsx";
 import ProgressOverlay from "./ProgressOverlay.jsx";
 import PrototypeReadyCTA from "./PrototypeReadyCTA.jsx";
 import PatternsView from "./patterns/PatternsView.jsx";
+import DomainRuntime from "../runtime/DomainRuntime.jsx";
 import { fetchGraph } from "./api/graph.js";
 import { subscribeDomain } from "./api/watch.js";
 
@@ -33,12 +34,12 @@ function computeDiff(oldGraph, newGraph) {
   return diff;
 }
 
-// Верхний tab-strip: переключатель между Graph (текущая работа с доменом)
-// и Patterns (Pattern Bank catalog / inspector). Высота 44px фиксирована,
-// PatternsView рассчитывает высоту через calc(100vh - 44px).
-function TabStrip({ view, setView }) {
+// Верхний tab-strip: переключатель между Graph (структура) / Прототип
+// (runtime-UI того же домена) / Patterns (Pattern Bank). Высота 44px
+// фиксирована, вложенные view рассчитывают через calc(100vh - 44px).
+function TabStrip({ view, setView, domainName }) {
   const tabStyle = (active) => ({
-    padding: "10px 18px",
+    padding: "10px 20px",
     cursor: "pointer",
     background: active ? "#1e293b" : "transparent",
     color: active ? "#e0e7ff" : "#94a3b8",
@@ -54,38 +55,42 @@ function TabStrip({ view, setView }) {
       style={{
         height: 44,
         display: "flex",
-        alignItems: "stretch",
+        alignItems: "center",
         background: "#0b1220",
         borderBottom: "1px solid #1e293b",
+        paddingRight: 16,
       }}
     >
-      <button
-        onClick={() => setView("graph")}
-        style={tabStyle(view === "graph")}
-      >
-        Graph
-      </button>
-      <button
-        onClick={() => setView("patterns")}
-        style={tabStyle(view === "patterns")}
-      >
-        Patterns
-      </button>
+      <div style={{ display: "flex" }}>
+        <button onClick={() => setView("graph")} style={tabStyle(view === "graph")}>Граф</button>
+        <button onClick={() => setView("prototype")} style={tabStyle(view === "prototype")}>Прототип</button>
+        <button onClick={() => setView("patterns")} style={tabStyle(view === "patterns")}>Паттерны</button>
+      </div>
+      <div style={{ flex: 1 }} />
+      {domainName && (
+        <div style={{ fontSize: 12, color: "#64748b", fontFamily: "ui-monospace, 'SF Mono', monospace" }}>
+          {domainName}
+        </div>
+      )}
     </div>
   );
 }
 
-// URL-param ?domain=X — при первом mount сразу открываем Graph для этого
-// домена (deep-link из prototype баннера или CTA). Не reactive — URL не
-// слушается дальше, состоянием управляет setDomain.
 function initialDomainFromUrl() {
   if (typeof window === "undefined") return null;
   try { return new URLSearchParams(window.location.search).get("domain"); }
   catch { return null; }
 }
+function initialViewFromUrl() {
+  if (typeof window === "undefined") return "graph";
+  try {
+    const v = new URLSearchParams(window.location.search).get("view");
+    return ["graph", "prototype", "patterns"].includes(v) ? v : "graph";
+  } catch { return "graph"; }
+}
 
 export default function App() {
-  const [view, setView] = useState("graph");
+  const [view, setView] = useState(() => initialViewFromUrl());
   const [domain, setDomain] = useState(() => initialDomainFromUrl());
   const [graph, setGraph] = useState(null);
   const [selected, setSelected] = useState(null);
@@ -97,9 +102,7 @@ export default function App() {
   const pingTimerRef = useRef(null);
   const [flyToken, setFlyToken] = useState(0);
   const [chatBusy, setChatBusy] = useState(false);
-  // Progress из ChatDrawer — последний tool_use + счётчик для overlay-панели.
   const [progress, setProgress] = useState({ lastTool: null, toolCount: 0 });
-  // После done — «Prototype ready» CTA. Сбрасывается при смене домена/новой генерации.
   const [readyDomain, setReadyDomain] = useState(null);
 
   useEffect(() => { setReadyDomain(null); setProgress({ lastTool: null, toolCount: 0 }); }, [domain]);
@@ -155,9 +158,6 @@ export default function App() {
     setChatOpen(true);
   }, []);
 
-  // Graph-view контент: вынесен в локальную функцию, чтобы tab-strip был
-  // виден всегда (включая экраны picker / loading), а ранние return'ы не
-  // обходили его.
   const renderGraphView = () => {
     if (!domain) {
       return (
@@ -187,14 +187,18 @@ export default function App() {
         </>
       );
     }
-    if (!graph) return <div style={{ padding: 24 }}>Загрузка графа…</div>;
+    if (!graph) return <div style={{ padding: 24, color: "#94a3b8" }}>Загрузка графа…</div>;
 
     return (
-      <div style={{ height: "calc(100vh - 44px)", position: "relative" }}>
-        <div style={{ position: "absolute", top: 8, left: 8, zIndex: 10, background: "#1e293b", padding: "6px 10px", borderRadius: 4, fontSize: 12 }}>
-          <button onClick={() => setDomain(null)} style={{ marginRight: 8 }}>← domains</button>
-          {domain} · {graph.nodes.length} узлов · ⚠ {graph.warnings.length} ·
-          <button onClick={() => setChatOpen(true)} style={{ marginLeft: 8 }}>⌘K chat</button>
+      <div style={{ height: "calc(100vh - 44px)", position: "relative", background: "#0b1220" }}>
+        <div style={{ position: "absolute", top: 12, left: 12, zIndex: 10, background: "#1e293b", padding: "6px 12px", borderRadius: 6, fontSize: 12, display: "flex", alignItems: "center", gap: 10, color: "#cbd5e1" }}>
+          <button onClick={() => setDomain(null)} style={{ background: "transparent", border: "none", color: "#94a3b8", cursor: "pointer", fontSize: 12, padding: 0 }}>← домены</button>
+          <span style={{ color: "#475569" }}>·</span>
+          <span>{graph.nodes.length} узлов</span>
+          <span style={{ color: "#475569" }}>·</span>
+          <span style={{ color: graph.warnings.length > 0 ? "#eab308" : "#94a3b8" }}>⚠ {graph.warnings.length}</span>
+          <span style={{ color: "#475569" }}>·</span>
+          <button onClick={() => setChatOpen(true)} style={{ background: "transparent", border: "none", color: "#60a5fa", cursor: "pointer", fontSize: 12, padding: 0 }}>⌘K chat</button>
         </div>
         <Graph3D graph={graph} onNodeClick={setSelected} pings={pings} selectedId={selected?.id} flyToken={flyToken} />
         <ThinkingCat visible={chatBusy} />
@@ -210,6 +214,7 @@ export default function App() {
           intentsCount={graph.nodes.filter((n) => n.kind === "intent").length}
           entitiesCount={graph.nodes.filter((n) => n.kind === "entity").length}
           onDismiss={() => setReadyDomain(null)}
+          onOpenPrototype={() => { setReadyDomain(null); setView("prototype"); }}
         />
         <Inspector
           node={selected}
@@ -218,6 +223,39 @@ export default function App() {
           onFixWithClaude={onFixWithClaude}
           onFlyTo={() => setFlyToken((t) => t + 1)}
         />
+      </div>
+    );
+  };
+
+  const renderPrototypeView = () => {
+    if (!domain) {
+      return (
+        <div style={{ height: "calc(100vh - 44px)", display: "flex", alignItems: "center", justifyContent: "center", background: "#0f172a", color: "#94a3b8", fontFamily: "Inter, system-ui, sans-serif" }}>
+          <div style={{ textAlign: "center", maxWidth: 420 }}>
+            <div style={{ fontSize: 40, marginBottom: 14 }}>▢</div>
+            <div style={{ fontSize: 16, fontWeight: 500, marginBottom: 8, color: "#e2e8f0" }}>Сначала выбери домен</div>
+            <div style={{ fontSize: 13, lineHeight: 1.6, marginBottom: 18 }}>
+              Во вкладке <button onClick={() => setView("graph")} style={{ background: "transparent", border: "none", color: "#60a5fa", cursor: "pointer", fontSize: 13, padding: 0, textDecoration: "underline" }}>Граф</button> открой или создай домен — runtime-UI появится здесь.
+            </div>
+          </div>
+        </div>
+      );
+    }
+    return (
+      <div style={{ height: "calc(100vh - 44px)", background: "#0f172a" }}>
+        <DomainRuntime domainId={domain} embedded />
+      </div>
+    );
+  };
+
+  return (
+    <div style={{ height: "100vh", display: "flex", flexDirection: "column", background: "#0b1220", color: "#e2e8f0", fontFamily: "Inter, -apple-system, system-ui, sans-serif" }}>
+      <TabStrip view={view} setView={setView} domainName={domain} />
+      {view === "graph" ? renderGraphView()
+        : view === "prototype" ? renderPrototypeView()
+        : <PatternsView />}
+      {/* Chat доступен всегда когда выбран домен — не привязан к Graph-tab */}
+      {domain && (
         <ChatDrawer
           open={chatOpen}
           onClose={() => setChatOpen(false)}
@@ -228,14 +266,7 @@ export default function App() {
           onProgress={setProgress}
           onDone={() => setReadyDomain(domain)}
         />
-      </div>
-    );
-  };
-
-  return (
-    <div style={{ height: "100vh", display: "flex", flexDirection: "column" }}>
-      <TabStrip view={view} setView={setView} />
-      {view === "graph" ? renderGraphView() : <PatternsView />}
+      )}
     </div>
   );
 }

@@ -6,7 +6,7 @@ import { AnimatePresence, motion } from "framer-motion";
  * в домене уже что-то есть (intents или entities). Предлагает открыть
  * прототип в новом табе.
  */
-export default function PrototypeReadyCTA({ visible, domain, intentsCount, entitiesCount, onDismiss }) {
+export default function PrototypeReadyCTA({ visible, domain, intentsCount, entitiesCount, onDismiss, onOpenPrototype }) {
   const isEmpty = (intentsCount || 0) === 0 && (entitiesCount || 0) === 0;
   const show = visible && domain && !isEmpty;
 
@@ -46,10 +46,8 @@ export default function PrototypeReadyCTA({ visible, domain, intentsCount, entit
               {intentsCount} intents · {entitiesCount} entities · UI деривирован из projections
             </div>
           </div>
-          <a
-            href={`/?domain=${encodeURIComponent(domain)}`}
-            target="_blank"
-            rel="noreferrer"
+          <button
+            onClick={onOpenPrototype}
             style={{
               padding: "8px 16px",
               background: "#ecfdf5",
@@ -57,12 +55,13 @@ export default function PrototypeReadyCTA({ visible, domain, intentsCount, entit
               borderRadius: 6,
               fontWeight: 600,
               fontSize: 12,
-              textDecoration: "none",
+              border: "none",
+              cursor: "pointer",
               whiteSpace: "nowrap",
             }}
           >
             Открыть прототип →
-          </a>
+          </button>
           <button
             onClick={onDismiss}
             title="Скрыть"
