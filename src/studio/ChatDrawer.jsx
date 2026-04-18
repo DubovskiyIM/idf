@@ -63,8 +63,13 @@ export default function ChatDrawer({ open, onClose, domain, prefill, onPrefillCo
           } else if (event === "tool_result") {
             current.results[data.tool_use_id] = data;
             setMessages((m) => [...m.slice(0, -1), { ...current }]);
-          } else if (event === "done") {
-            onDone?.({ usage: data?.usage });
+          } else if (event === "done" || event === "end") {
+            // Claude CLI type=result → "done" или SSE fallback "end" из route.
+            // Триггерим onDone один раз, если была реальная работа.
+            if ((current.tools.length > 0 || current.text.length > 0) && !current._doneFired) {
+              current._doneFired = true;
+              onDone?.({ usage: data?.usage });
+            }
           } else if (event === "error" || event === "stderr") {
             current.text += `\n\n**[${event}]** ${data.message || data.text}`;
             setMessages((m) => [...m.slice(0, -1), { ...current }]);
