@@ -125,6 +125,35 @@ describe("freelance projections — my_tasks + my_deals (Cycle 2)", () => {
   });
 });
 
+describe("freelance projections — detail (customer + executor)", () => {
+  it("task_detail_customer содержит subCollection Response + toolbar action select_executor", () => {
+    const p = PROJECTIONS.task_detail_customer;
+    expect(p.kind).toBe("detail");
+    expect(p.mainEntity).toBe("Task");
+    expect(p.subCollections.find(s => s.entity === "Response")).toBeDefined();
+  });
+
+  it("deal_detail_customer — detail mainEntity Deal с subCollection Transaction", () => {
+    const p = PROJECTIONS.deal_detail_customer;
+    expect(p.kind).toBe("detail");
+    expect(p.mainEntity).toBe("Deal");
+    expect(p.subCollections.find(s => s.entity === "Transaction")).toBeDefined();
+  });
+
+  it("deal_detail_executor — detail mainEntity Deal, тот же subCollection но другой idParam scope", () => {
+    const p = PROJECTIONS.deal_detail_executor;
+    expect(p.kind).toBe("detail");
+    expect(p.mainEntity).toBe("Deal");
+  });
+
+  it("все 3 кристаллизуются как detail", () => {
+    const arts = crystallizeV2(INTENTS, PROJECTIONS, ONTOLOGY, "freelance");
+    expect(arts.task_detail_customer.archetype).toBe("detail");
+    expect(arts.deal_detail_customer.archetype).toBe("detail");
+    expect(arts.deal_detail_executor.archetype).toBe("detail");
+  });
+});
+
 describe("freelance seed", () => {
   const getSeed = () => import("./seed.js").then(m => m.getSeedEffects());
 

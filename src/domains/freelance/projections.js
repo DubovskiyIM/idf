@@ -64,6 +64,63 @@ export const PROJECTIONS = {
     layout: "grid",
   },
 
+  task_detail_customer: {
+    name: "Задача (автор)",
+    kind: "detail",
+    mainEntity: "Task",
+    entities: ["Task", "Response", "Category"],
+    idParam: "taskId",
+    witnesses: [
+      "title", "description", "budget", "deadline", "city", "type",
+      "categoryId", "responsesCount", "status", "createdAt",
+    ],
+    subCollections: [
+      {
+        entity: "Response",
+        foreignKey: "taskId",
+        title: "Отклики",
+        addable: false,
+      },
+    ],
+    toolbar: ["edit_task", "publish_task", "cancel_task_before_deal", "select_executor"],
+  },
+
+  deal_detail_customer: {
+    name: "Сделка (заказчик)",
+    kind: "detail",
+    mainEntity: "Deal",
+    entities: ["Deal", "Transaction", "Task", "ExecutorProfile"],
+    idParam: "dealId",
+    witnesses: ["amount", "commission", "status", "deadline", "completedAt"],
+    subCollections: [
+      {
+        entity: "Transaction",
+        foreignKey: "dealId",
+        title: "Операции",
+        addable: false,
+      },
+    ],
+    toolbar: ["accept_result", "request_revision", "cancel_deal_mutual"],
+  },
+
+  deal_detail_executor: {
+    name: "Сделка (исполнитель)",
+    kind: "detail",
+    mainEntity: "Deal",
+    entities: ["Deal", "Transaction", "Task"],
+    idParam: "dealId",
+    witnesses: ["amount", "status", "deadline", "completedAt"],
+    subCollections: [
+      {
+        entity: "Transaction",
+        foreignKey: "dealId",
+        title: "Операции",
+        addable: false,
+      },
+    ],
+    toolbar: ["submit_work_result", "submit_revision", "cancel_deal_mutual"],
+  },
+
   create_task_wizard: {
     name: "Опубликовать задачу",
     kind: "wizard",
