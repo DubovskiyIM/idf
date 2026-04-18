@@ -5,6 +5,7 @@ const { buildGraph } = require("../studio/graphBuilder.js");
 const { createFileWatcher } = require("../studio/fileWatcher.js");
 const { spawnClaude } = require("../studio/claudeProxy.js");
 const { createDomainSkeleton } = require("../studio/domainCreator.js");
+const { sluggify, existsInDomainsDir } = require("../studio/sluggify.js");
 
 const router = express.Router();
 const DOMAINS_DIR = path.resolve(__dirname, "..", "..", "src", "domains");
@@ -102,6 +103,18 @@ router.post("/domain/new", express.json(), (req, res) => {
   } catch (err) {
     res.status(400).json({ error: err.message });
   }
+});
+
+// Hero onboarding: POST /api/studio/slug {description} →
+// {slug, name, description}. Slug collision-free относительно src/domains/*.
+// Фронт затем POST /domain/new c этим slug'ом.
+router.post("/slug", express.json(), (req, res) => {
+  const { description } = req.body || {};
+  if (!description || typeof description !== "string") {
+    return res.status(400).json({ error: "description required" });
+  }
+  const result = sluggify(description, { existsCheck: existsInDomainsDir(DOMAINS_DIR) });
+  res.json({ slug: result.slug, name: result.name, description });
 });
 
 router.post("/chat", express.json(), async (req, res) => {

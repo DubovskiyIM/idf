@@ -4,7 +4,7 @@ import ReactMarkdown from "react-markdown";
 import { sendChat } from "./api/chat.js";
 import ToolUseBadge from "./components/ToolUseBadge.jsx";
 
-export default function ChatDrawer({ open, onClose, domain, prefill, onPrefillConsumed, onBusyChange }) {
+export default function ChatDrawer({ open, onClose, domain, prefill, onPrefillConsumed, onBusyChange, onProgress, onDone }) {
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState("");
   const [sessionId, setSessionId] = useState(null);
@@ -59,9 +59,12 @@ export default function ChatDrawer({ open, onClose, domain, prefill, onPrefillCo
           } else if (event === "tool_use") {
             current.tools.push(data);
             setMessages((m) => [...m.slice(0, -1), { ...current }]);
+            onProgress?.({ lastTool: data, toolCount: current.tools.length });
           } else if (event === "tool_result") {
             current.results[data.tool_use_id] = data;
             setMessages((m) => [...m.slice(0, -1), { ...current }]);
+          } else if (event === "done") {
+            onDone?.({ usage: data?.usage });
           } else if (event === "error" || event === "stderr") {
             current.text += `\n\n**[${event}]** ${data.message || data.text}`;
             setMessages((m) => [...m.slice(0, -1), { ...current }]);

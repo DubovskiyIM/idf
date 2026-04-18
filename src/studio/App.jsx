@@ -5,6 +5,8 @@ import Inspector from "./Inspector.jsx";
 import ChatDrawer from "./ChatDrawer.jsx";
 import NewDomainModal from "./NewDomainModal.jsx";
 import ThinkingCat from "./ThinkingCat.jsx";
+import ProgressOverlay from "./ProgressOverlay.jsx";
+import PrototypeReadyCTA from "./PrototypeReadyCTA.jsx";
 import PatternsView from "./patterns/PatternsView.jsx";
 import { fetchGraph } from "./api/graph.js";
 import { subscribeDomain } from "./api/watch.js";
@@ -86,6 +88,13 @@ export default function App() {
   const pingTimerRef = useRef(null);
   const [flyToken, setFlyToken] = useState(0);
   const [chatBusy, setChatBusy] = useState(false);
+  // Progress из ChatDrawer — последний tool_use + счётчик для overlay-панели.
+  const [progress, setProgress] = useState({ lastTool: null, toolCount: 0 });
+  // После done — «Prototype ready» CTA. Сбрасывается при смене домена/новой генерации.
+  const [readyDomain, setReadyDomain] = useState(null);
+
+  useEffect(() => { setReadyDomain(null); setProgress({ lastTool: null, toolCount: 0 }); }, [domain]);
+  useEffect(() => { if (chatBusy) { setReadyDomain(null); setProgress({ lastTool: null, toolCount: 0 }); } }, [chatBusy]);
 
   useEffect(() => {
     if (!domain) return;
@@ -144,7 +153,15 @@ export default function App() {
     if (!domain) {
       return (
         <>
-          <DomainPicker onPick={setDomain} onNewDomain={() => setNewModal(true)} />
+          <DomainPicker
+            onPick={setDomain}
+            onNewDomain={() => setNewModal(true)}
+            onGenerateFromDescription={({ slug, name, description }) => {
+              setDomain(slug);
+              setChatPrefill(`Создай начальный набор intents/entities/projections для домена "${name}". Описание процесса: ${description}. Следуй паттерну booking (как простейшего домена). Начни с ontology.entities, потом intents с частицами, в конце projections (feed/catalog/detail/form под archetype). Кратко отчитайся какие intents/entities созданы.`);
+              setChatOpen(true);
+            }}
+          />
           {newModal && (
             <NewDomainModal
               onClose={() => setNewModal(false)}
@@ -172,6 +189,19 @@ export default function App() {
         </div>
         <Graph3D graph={graph} onNodeClick={setSelected} pings={pings} selectedId={selected?.id} flyToken={flyToken} />
         <ThinkingCat visible={chatBusy} />
+        <ProgressOverlay
+          busy={chatBusy}
+          toolCount={progress.toolCount}
+          lastTool={progress.lastTool}
+          phase="Claude генерирует домен"
+        />
+        <PrototypeReadyCTA
+          visible={!!readyDomain && !chatBusy}
+          domain={readyDomain}
+          intentsCount={graph.nodes.filter((n) => n.kind === "intent").length}
+          entitiesCount={graph.nodes.filter((n) => n.kind === "entity").length}
+          onDismiss={() => setReadyDomain(null)}
+        />
         <Inspector
           node={selected}
           warnings={graph.warnings}
@@ -186,6 +216,8 @@ export default function App() {
           prefill={chatPrefill}
           onPrefillConsumed={() => setChatPrefill("")}
           onBusyChange={setChatBusy}
+          onProgress={setProgress}
+          onDone={() => setReadyDomain(domain)}
         />
       </div>
     );
