@@ -53,3 +53,40 @@ describe("freelance ontology — entities", () => {
     expect(ONTOLOGY.entities.Response.fields.taskId).toBeDefined();
   });
 });
+
+describe("freelance ontology — roles", () => {
+  const base = (name) => ONTOLOGY.roles[name]?.base;
+
+  it("customer и executor имеют base: 'owner'", () => {
+    expect(base("customer")).toBe("owner");
+    expect(base("executor")).toBe("owner");
+  });
+
+  it("guest имеет base: 'viewer'", () => {
+    expect(base("guest")).toBe("viewer");
+  });
+
+  it("customer видит CustomerProfile как own", () => {
+    expect(ONTOLOGY.roles.customer.visibleFields.Task).toBeDefined();
+    expect(ONTOLOGY.roles.customer.visibleFields.CustomerProfile).toBe("own");
+  });
+
+  it("executor видит Response 'own', Task — public fields", () => {
+    expect(ONTOLOGY.roles.executor.visibleFields.Response).toBe("own");
+    expect(ONTOLOGY.roles.executor.visibleFields.Task).toBeInstanceOf(Array);
+  });
+
+  it("guest видит публичные Task и ExecutorProfile — без customerId, без Wallet/Response", () => {
+    const guestTask = ONTOLOGY.roles.guest.visibleFields.Task;
+    expect(guestTask).toBeInstanceOf(Array);
+    expect(guestTask).not.toContain("customerId");
+    expect(ONTOLOGY.roles.guest.visibleFields.Wallet).toBeUndefined();
+    expect(ONTOLOGY.roles.guest.visibleFields.Response).toBeUndefined();
+  });
+
+  it("все 3 роли имеют canExecute массив", () => {
+    for (const r of ["customer", "executor", "guest"]) {
+      expect(Array.isArray(ONTOLOGY.roles[r].canExecute)).toBe(true);
+    }
+  });
+});

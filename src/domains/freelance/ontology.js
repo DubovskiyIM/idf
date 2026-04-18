@@ -133,7 +133,83 @@ export const ONTOLOGY = {
     },
   },
 
-  roles: {},
+  roles: {
+    guest: {
+      base: "viewer",
+      canExecute: [
+        "search_tasks",
+        "filter_by_category",
+        "sort_tasks",
+        "register_by_email",
+        "login",
+      ],
+      visibleFields: {
+        Task: [
+          "id", "title", "description", "categoryId", "budget",
+          "deadline", "city", "type", "status", "responsesCount", "createdAt",
+        ],
+        Category: ["id", "name", "slug", "icon"],
+        Skill: ["id", "name", "categoryId"],
+        ExecutorProfile: [
+          "id", "bio", "minPrice", "avgDeliveryHours", "rating", "level",
+          "completedDeals", "availability",
+        ],
+      },
+    },
+
+    customer: {
+      base: "owner",
+      canExecute: [
+        "update_profile", "logout",
+        "create_task_draft", "submit_task_for_moderation", "edit_task",
+        "publish_task", "cancel_task_before_deal",
+        "search_tasks", "filter_by_category", "sort_tasks",
+        "view_responses",
+        "session_set_active_role",
+      ],
+      visibleFields: {
+        Task: "own",
+        CustomerProfile: "own",
+        User: "own",
+        Category: ["id", "name", "slug", "icon"],
+        Skill: ["id", "name", "categoryId"],
+        ExecutorProfile: [
+          "id", "userId", "bio", "minPrice", "avgDeliveryHours",
+          "rating", "level", "completedDeals", "availability",
+        ],
+        Response: [
+          "id", "executorId", "taskId", "price", "deliveryDays",
+          "message", "status", "createdAt",
+        ],
+        ExecutorSkill: ["id", "executorId", "skillId"],
+      },
+    },
+
+    executor: {
+      base: "owner",
+      canExecute: [
+        "update_profile", "update_bio", "update_rates", "toggle_availability",
+        "logout",
+        "add_skill", "remove_skill", "add_portfolio_item", "activate_executor_profile",
+        "search_tasks", "filter_by_category", "sort_tasks",
+        "submit_response", "edit_response", "withdraw_response",
+        "session_set_active_role",
+      ],
+      visibleFields: {
+        Response: "own",
+        ExecutorProfile: "own",
+        ExecutorSkill: "own",
+        User: "own",
+        Task: [
+          "id", "customerId", "title", "description", "categoryId", "budget",
+          "deadline", "city", "type", "status", "responsesCount", "createdAt",
+        ],
+        Category: ["id", "name", "slug", "icon"],
+        Skill: ["id", "name", "categoryId"],
+        CustomerProfile: ["id", "userId", "displayName", "city"],
+      },
+    },
+  },
 
   invariants: [],
 };
