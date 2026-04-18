@@ -9,9 +9,16 @@
         "id": "create_foo",
         "name": "Создать Foo",
         "particles": {
-          "entities": ["Foo"],
+          "entities": [
+            "Foo"
+          ],
           "conditions": [],
-          "effects": [{ "type": "add", "target": "items", "payload": {} }],
+          "effects": [
+            {
+              "α": "add",
+              "target": "items"
+            }
+          ],
           "witnesses": []
         }
       },
@@ -19,9 +26,16 @@
         "id": "do_bar",
         "name": "Что-то с bars",
         "particles": {
-          "entities": ["Item"],
+          "entities": [
+            "Item"
+          ],
           "conditions": [],
-          "effects": [{ "type": "add", "target": "bars", "payload": {} }],
+          "effects": [
+            {
+              "α": "add",
+              "target": "bars"
+            }
+          ],
           "witnesses": []
         }
       }
@@ -30,14 +44,24 @@
       "entities": {
         "Item": {
           "fields": {
-            "id": { "type": "string" },
-            "title": { "type": "string" }
+            "id": {
+              "type": "string"
+            },
+            "title": {
+              "type": "string"
+            }
           }
         }
       }
     },
     "projections": {
-      "item_list": { "kind": "catalog", "entities": ["Item"], "mainEntity": "Item" }
+      "item_list": {
+        "kind": "catalog",
+        "entities": [
+          "Item"
+        ],
+        "mainEntity": "Item"
+      }
     }
   },
   "expected": {

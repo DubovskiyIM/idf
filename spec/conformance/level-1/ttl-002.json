@@ -7,17 +7,32 @@
     "effects": [
       {
         "id": "e1",
-        "type": "add",
-        "target": "Listing",
-        "payload": { "id": "l1", "title": "Flash Sale", "price": 50 },
+        "intent_id": "e1",
+        "target": "listings",
+        "scope": "account",
         "status": "confirmed",
         "created_at": 1000,
-        "ttl": 1000
+        "ttl": 1000,
+        "alpha": "add",
+        "context": {
+          "id": "l1",
+          "title": "Flash Sale",
+          "price": 50
+        }
       }
     ],
     "ontology": {
       "entities": {
-        "Listing": { "fields": { "title": { "type": "string" }, "price": { "type": "number" } } }
+        "Listing": {
+          "fields": {
+            "title": {
+              "type": "string"
+            },
+            "price": {
+              "type": "number"
+            }
+          }
+        }
       }
     },
     "fold_time": 90000

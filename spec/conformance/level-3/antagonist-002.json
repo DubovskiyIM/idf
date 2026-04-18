@@ -10,9 +10,16 @@
         "name": "Создать товар",
         "creates": "Item",
         "particles": {
-          "entities": ["Item"],
+          "entities": [
+            "Item"
+          ],
           "conditions": [],
-          "effects": [{ "type": "add", "target": "items", "payload": { "status": "active" } }],
+          "effects": [
+            {
+              "α": "add",
+              "target": "items"
+            }
+          ],
           "witnesses": []
         }
       },
@@ -21,10 +28,22 @@
         "name": "Опубликовать товар",
         "antagonist": "unpublish_item",
         "particles": {
-          "entities": ["Item"],
-          "conditions": ["item.status = 'active'"],
-          "effects": [{ "type": "replace", "target": "items.status", "payload": "published" }],
-          "witnesses": ["item.title", "item.status"]
+          "entities": [
+            "Item"
+          ],
+          "conditions": [
+            "item.status = 'active'"
+          ],
+          "effects": [
+            {
+              "α": "replace",
+              "target": "items.status"
+            }
+          ],
+          "witnesses": [
+            "item.title",
+            "item.status"
+          ]
         }
       },
       "unpublish_item": {
@@ -32,10 +51,22 @@
         "name": "Снять с публикации",
         "antagonist": "publish_item",
         "particles": {
-          "entities": ["Item"],
-          "conditions": ["item.status = 'published'"],
-          "effects": [{ "type": "replace", "target": "items.status", "payload": "draft" }],
-          "witnesses": ["item.title", "item.status"]
+          "entities": [
+            "Item"
+          ],
+          "conditions": [
+            "item.status = 'published'"
+          ],
+          "effects": [
+            {
+              "α": "replace",
+              "target": "items.status"
+            }
+          ],
+          "witnesses": [
+            "item.title",
+            "item.status"
+          ]
         }
       }
     },
@@ -43,23 +74,42 @@
       "entities": {
         "Item": {
           "fields": {
-            "id": { "type": "string" },
-            "title": { "type": "string" },
-            "status": { "type": "string" },
-            "ownerId": { "type": "entityRef", "ref": "User" }
+            "id": {
+              "type": "string"
+            },
+            "title": {
+              "type": "string"
+            },
+            "status": {
+              "type": "string"
+            },
+            "ownerId": {
+              "type": "entityRef",
+              "ref": "User"
+            }
           },
           "ownerField": "ownerId"
         },
         "User": {
           "fields": {
-            "id": { "type": "string" },
-            "name": { "type": "string" }
+            "id": {
+              "type": "string"
+            },
+            "name": {
+              "type": "string"
+            }
           }
         }
       }
     },
     "projections": {
-      "item_list": { "kind": "catalog", "entities": ["Item"], "mainEntity": "Item" }
+      "item_list": {
+        "kind": "catalog",
+        "entities": [
+          "Item"
+        ],
+        "mainEntity": "Item"
+      }
     }
   },
   "expected": {

@@ -7,66 +7,104 @@
     "effects": [
       {
         "id": "e1",
-        "type": "batch",
-        "target": "User",
-        "payload": {
-          "effects": [
-            {
-              "id": "e1a",
-              "type": "add",
-              "target": "User",
-              "payload": { "id": "u1", "name": "Alice" },
-              "status": "confirmed",
-              "created_at": 1000
-            },
-            {
-              "id": "e1b",
-              "type": "batch",
-              "target": "Listing",
-              "payload": {
-                "effects": [
-                  {
-                    "id": "e1b1",
-                    "type": "add",
-                    "target": "Listing",
-                    "payload": { "id": "l1", "title": "Lamp" },
-                    "status": "confirmed",
-                    "created_at": 1001
-                  },
-                  {
-                    "id": "e1b2",
-                    "type": "add",
-                    "target": "Listing",
-                    "payload": { "id": "l2", "title": "Chair" },
-                    "status": "confirmed",
-                    "created_at": 1002
-                  }
-                ]
-              },
-              "status": "confirmed",
-              "created_at": 1001
-            }
-          ]
-        },
+        "intent_id": "e1",
+        "target": "users",
+        "scope": "account",
         "status": "confirmed",
-        "created_at": 1000
+        "created_at": 1000,
+        "alpha": "batch",
+        "value": [
+          {
+            "id": "e1a",
+            "intent_id": "e1a",
+            "target": "users",
+            "scope": "account",
+            "status": "confirmed",
+            "created_at": 1000,
+            "alpha": "add",
+            "context": {
+              "id": "u1",
+              "name": "Alice"
+            }
+          },
+          {
+            "id": "e1b",
+            "intent_id": "e1b",
+            "target": "listings",
+            "scope": "account",
+            "status": "confirmed",
+            "created_at": 1001,
+            "alpha": "batch",
+            "value": [
+              {
+                "id": "e1b1",
+                "intent_id": "e1b1",
+                "target": "listings",
+                "scope": "account",
+                "status": "confirmed",
+                "created_at": 1001,
+                "alpha": "add",
+                "context": {
+                  "id": "l1",
+                  "title": "Lamp"
+                }
+              },
+              {
+                "id": "e1b2",
+                "intent_id": "e1b2",
+                "target": "listings",
+                "scope": "account",
+                "status": "confirmed",
+                "created_at": 1002,
+                "alpha": "add",
+                "context": {
+                  "id": "l2",
+                  "title": "Chair"
+                }
+              }
+            ],
+            "context": {}
+          }
+        ],
+        "context": {}
       }
     ],
     "ontology": {
       "entities": {
-        "User": { "fields": { "name": { "type": "string" } } },
-        "Listing": { "fields": { "title": { "type": "string" } } }
+        "User": {
+          "fields": {
+            "name": {
+              "type": "string"
+            }
+          }
+        },
+        "Listing": {
+          "fields": {
+            "title": {
+              "type": "string"
+            }
+          }
+        }
       }
     }
   },
   "expected": {
     "world": {
       "users": [
-        { "id": "u1", "name": "Alice" }
+        {
+          "id": "u1",
+          "name": "Alice"
+        }
       ],
       "listings": [
-        { "id": "l1", "title": "Lamp" },
-        { "id": "l2", "title": "Chair" }
+        {
+          "id": "l1",
+          "title": "Lamp"
+        },
+        {
+          "id": "l2",
+          "title": "Chair"
+        }
       ]
     }
   }

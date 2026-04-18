@@ -7,23 +7,37 @@
     "effects": [
       {
         "id": "e1",
-        "type": "add",
-        "target": "User",
-        "payload": { "id": "u1", "name": "Alice" },
+        "intent_id": "e1",
+        "target": "users",
+        "scope": "account",
         "status": "confirmed",
-        "created_at": 1000
+        "created_at": 1000,
+        "alpha": "add",
+        "context": {
+          "id": "u1",
+          "name": "Alice"
+        }
       }
     ],
     "ontology": {
       "entities": {
-        "User": { "fields": { "name": { "type": "string" } } }
+        "User": {
+          "fields": {
+            "name": {
+              "type": "string"
+            }
+          }
+        }
       }
     }
   },
   "expected": {
     "world": {
       "users": [
-        { "id": "u1", "name": "Alice" }
+        {
+          "id": "u1",
+          "name": "Alice"
+        }
       ]
     }
   }

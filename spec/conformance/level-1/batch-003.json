@@ -7,58 +7,98 @@
     "effects": [
       {
         "id": "e0",
-        "type": "add",
-        "target": "Listing",
-        "payload": { "id": "l1", "title": "Old", "price": 100, "status": "draft" },
+        "intent_id": "e0",
+        "target": "listings",
+        "scope": "account",
         "status": "confirmed",
-        "created_at": 1000
+        "created_at": 1000,
+        "alpha": "add",
+        "context": {
+          "id": "l1",
+          "title": "Old",
+          "price": 100,
+          "status": "draft"
+        }
       },
       {
         "id": "e1",
-        "type": "batch",
-        "target": "Listing",
-        "payload": {
-          "effects": [
-            {
-              "id": "e1a",
-              "type": "replace",
-              "target": "Listing",
-              "payload": { "id": "l1", "title": "New Title" },
-              "status": "confirmed",
-              "created_at": 2000
-            },
-            {
-              "id": "e1b",
-              "type": "replace",
-              "target": "Listing",
-              "payload": { "id": "l1", "price": 250 },
-              "status": "confirmed",
-              "created_at": 2001
-            },
-            {
-              "id": "e1c",
-              "type": "replace",
-              "target": "Listing",
-              "payload": { "id": "l1", "status": "active" },
-              "status": "confirmed",
-              "created_at": 2002
-            }
-          ]
-        },
+        "intent_id": "e1",
+        "target": "listings",
+        "scope": "account",
         "status": "confirmed",
-        "created_at": 2000
+        "created_at": 2000,
+        "alpha": "batch",
+        "value": [
+          {
+            "id": "e1a",
+            "intent_id": "e1a",
+            "alpha": "replace",
+            "target": "listing.title",
+            "context": {
+              "id": "l1"
+            },
+            "value": "New Title",
+            "scope": "account",
+            "status": "confirmed",
+            "created_at": 2000
+          },
+          {
+            "id": "e1b",
+            "intent_id": "e1b",
+            "alpha": "replace",
+            "target": "listing.price",
+            "context": {
+              "id": "l1"
+            },
+            "value": 250,
+            "scope": "account",
+            "status": "confirmed",
+            "created_at": 2001
+          },
+          {
+            "id": "e1c",
+            "intent_id": "e1c",
+            "alpha": "replace",
+            "target": "listing.status",
+            "context": {
+              "id": "l1"
+            },
+            "value": "active",
+            "scope": "account",
+            "status": "confirmed",
+            "created_at": 2002
+          }
+        ],
+        "context": {}
       }
     ],
     "ontology": {
       "entities": {
-        "Listing": { "fields": { "title": { "type": "string" }, "price": { "type": "number" }, "status": { "type": "string" } } }
+        "Listing": {
+          "fields": {
+            "title": {
+              "type": "string"
+            },
+            "price": {
+              "type": "number"
+            },
+            "status": {
+              "type": "string"
+            }
+          }
+        }
       }
     }
   },
   "expected": {
     "world": {
       "listings": [
-        { "id": "l1", "title": "New Title", "price": 250, "status": "active" }
+        {
+          "id": "l1",
+          "title": "New Title",
+          "price": 250,
+          "status": "active"
+        }
       ]
     }
   }

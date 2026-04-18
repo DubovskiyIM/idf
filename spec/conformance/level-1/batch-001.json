@@ -7,42 +7,67 @@
     "effects": [
       {
         "id": "e1",
-        "type": "batch",
-        "target": "User",
-        "payload": {
-          "effects": [
-            {
-              "id": "e1a",
-              "type": "add",
-              "target": "User",
-              "payload": { "id": "u1", "name": "Alice", "role": "buyer" },
-              "status": "confirmed",
-              "created_at": 1000
-            },
-            {
-              "id": "e1b",
-              "type": "replace",
-              "target": "User",
-              "payload": { "id": "u1", "role": "seller" },
-              "status": "confirmed",
-              "created_at": 1001
-            }
-          ]
-        },
+        "intent_id": "e1",
+        "target": "users",
+        "scope": "account",
         "status": "confirmed",
-        "created_at": 1000
+        "created_at": 1000,
+        "alpha": "batch",
+        "value": [
+          {
+            "id": "e1a",
+            "intent_id": "e1a",
+            "target": "users",
+            "scope": "account",
+            "status": "confirmed",
+            "created_at": 1000,
+            "alpha": "add",
+            "context": {
+              "id": "u1",
+              "name": "Alice",
+              "role": "buyer"
+            }
+          },
+          {
+            "id": "e1b",
+            "intent_id": "e1b",
+            "alpha": "replace",
+            "target": "user.role",
+            "context": {
+              "id": "u1"
+            },
+            "value": "seller",
+            "scope": "account",
+            "status": "confirmed",
+            "created_at": 1001
+          }
+        ],
+        "context": {}
       }
     ],
     "ontology": {
       "entities": {
-        "User": { "fields": { "name": { "type": "string" }, "role": { "type": "string" } } }
+        "User": {
+          "fields": {
+            "name": {
+              "type": "string"
+            },
+            "role": {
+              "type": "string"
+            }
+          }
+        }
       }
     }
   },
   "expected": {
     "world": {
       "users": [
-        { "id": "u1", "name": "Alice", "role": "seller" }
+        {
+          "id": "u1",
+          "name": "Alice",
+          "role": "seller"
+        }
       ]
     }
   }
