@@ -1,0 +1,74 @@
+{
+  "id": "bulk-selection-toolbar",
+  "version": 1,
+  "status": "candidate",
+  "archetype": "feed",
+  "trigger": {
+    "requires": [
+      {
+        "kind": "intent-count",
+        "min": 1,
+        "where": {
+          "idPrefix": "bulk_"
+        }
+      }
+    ]
+  },
+  "structure": {
+    "slot": "toolbar",
+    "description": "Включить multi-select (Shift+click range, click toggle). При ≥1 selected — toolbar с bulk_* intent'ами становится visible; unselect закрывает toolbar. Selection count — first-class индикатор."
+  },
+  "rationale": {
+    "hypothesis": "Если bulk_* intent'ы присутствуют в namespace, это явное заявление, что пользователь обрабатывает items атомарно группой. UX должен поднять selection до first-class, не прятать в contextual menu.",
+    "evidence": [
+      {
+        "source": "linear-triage",
+        "description": "Shift+click range + bulk_take/bulk_decline",
+        "reliability": "high"
+      },
+      {
+        "source": "gmail",
+        "description": "Checkbox-selection с bulk archive/label/delete",
+        "reliability": "high"
+      },
+      {
+        "source": "notion-database",
+        "description": "Multi-row selection с bulk actions bar",
+        "reliability": "high"
+      }
+    ],
+    "counterexample": [
+      {
+        "source": "single-entity-detail",
+        "description": "Detail-экраны одного item — bulk бессмыслен",
+        "reliability": "high"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [
+      {
+        "domain": "sales",
+        "projection": "listing_inbox",
+        "reason": "при добавлении bulk_archive/bulk_relist на Listing"
+      },
+      {
+        "domain": "messenger",
+        "projection": "conversation_list",
+        "reason": "bulk_mark_read/bulk_archive — стандарт мессенджеров"
+      }
+    ],
+    "shouldNotMatch": [
+      {
+        "domain": "planning",
+        "projection": "poll_detail",
+        "reason": "single-entity focus, bulk не применим"
+      },
+      {
+        "domain": "invest",
+        "projection": "portfolio_dashboard",
+        "reason": "dashboard без list-items для multi-select"
+      }
+    ]
+  }
+}

@@ -1,0 +1,87 @@
+{
+  "id": "resumable-wizard-with-draft",
+  "version": 1,
+  "status": "candidate",
+  "archetype": "detail",
+  "trigger": {
+    "requires": [
+      {
+        "kind": "intent-count",
+        "min": 4,
+        "filter": {
+          "α": "replace",
+          "targetPrefix": "subscriptionDraft."
+        }
+      },
+      {
+        "kind": "intent-creates",
+        "entity": "mainEntity",
+        "confirmation": "form"
+      },
+      {
+        "kind": "intent-effect",
+        "α": "add",
+        "creates": "mainEntity",
+        "idMatches": "save_draft_.*"
+      },
+      {
+        "kind": "entity-field",
+        "entity": "mainEntity",
+        "field": "status",
+        "includes": "draft"
+      }
+    ]
+  },
+  "structure": {
+    "slot": "body",
+    "description": "Оборачивает серию `replace` интентов на черновой сущности (xxxDraft.*) в линейный wizard с back-navigation и save-as-draft CTA, фиксируя финальный commit через form-confirmation на создающем intent."
+  },
+  "rationale": {
+    "hypothesis": "Когда создание сущности требует ≥4 независимых параметров и финальный commit необратим, линейный wizard с сохранением черновика снижает когнитивную нагрузку и риск потери данных по сравнению с одностраничной формой или hero-create модалкой.",
+    "evidence": [
+      {
+        "source": "stripe-subscriptions",
+        "description": "Create Subscription разбит на 5 шагов (customer → price → trial → collection → metadata → review) с save-as-draft и back-navigation",
+        "reliability": "high"
+      },
+      {
+        "source": "shopify-admin",
+        "description": "Product create в админке — multi-step wizard с автосохранением черновика",
+        "reliability": "medium"
+      }
+    ],
+    "counterexample": [
+      {
+        "source": "linear-issue-create",
+        "description": "Issue создаётся одной inline-формой без wizard — 2-3 обязательных поля, irreversibility низкая",
+        "reliability": "high"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [
+      {
+        "domain": "sales",
+        "projection": "listing_create",
+        "reason": "Listing создаётся с много-параметровым flow (категория, цена, фото, описание, аукцион vs fixed) и черновиком"
+      },
+      {
+        "domain": "workflow",
+        "projection": "workflow_builder",
+        "reason": "Workflow строится пошагово с возможностью save-as-draft"
+      }
+    ],
+    "shouldNotMatch": [
+      {
+        "domain": "reflect",
+        "projection": "mood_entry_create",
+        "reason": "MoodEntry — короткая одностраничная форма без черновика"
+      },
+      {
+        "domain": "messenger",
+        "projection": "conversation_compose",
+        "reason": "Сообщение отправляется композером, а не wizard'ом"
+      }
+    ]
+  }
+}

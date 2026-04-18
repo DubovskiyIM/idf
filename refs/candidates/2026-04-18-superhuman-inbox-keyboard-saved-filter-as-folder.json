@@ -1,0 +1,70 @@
+{
+  "id": "saved-filter-as-folder",
+  "version": 1,
+  "status": "candidate",
+  "archetype": "feed",
+  "trigger": {
+    "requires": [
+      {
+        "kind": "entity-field",
+        "entity": "*",
+        "field": "filterRule"
+      },
+      {
+        "kind": "reference"
+      }
+    ]
+  },
+  "structure": {
+    "slot": "header",
+    "description": "Feed-навигация показывает не физические папки, а сохранённые фильтры как first-class объекты; переключение между ними = смена feed.query/feed.folderId без физического перемещения сущностей."
+  },
+  "rationale": {
+    "hypothesis": "Пользователю нужны разрезы одного корпуса сущностей, не коробки-для-хранения. Сохранённый фильтр как folder снимает mental-overhead 'куда я это положил' и даёт композируемые разрезы поверх одного источника истины.",
+    "evidence": [
+      {
+        "source": "superhuman-inbox",
+        "description": "Split Inbox — пять 'папок' (VIP, News, Other, ...), но Conversation физически не перемещается, только фильтруется по sender category.",
+        "reliability": "high"
+      },
+      {
+        "source": "gmail-labels",
+        "description": "Labels = tags + saved search; letter может быть в нескольких labels одновременно.",
+        "reliability": "high"
+      }
+    ],
+    "counterexample": [
+      {
+        "source": "files-folders",
+        "description": "Физическая иерархия файловой системы — folder = location, filter не эквивалентен.",
+        "reliability": "high"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [
+      {
+        "domain": "sales",
+        "projection": "saved_searches_feed",
+        "reason": "SavedSearch как именованный filter поверх Listing — архетипично соответствует."
+      },
+      {
+        "domain": "messenger",
+        "projection": "split_inbox",
+        "reason": "Прямая реализация Superhuman-подобной split-логики."
+      }
+    ],
+    "shouldNotMatch": [
+      {
+        "domain": "invest",
+        "projection": "portfolio_detail",
+        "reason": "Position-в-Portfolio — владение, не фильтр (смена Portfolio физически меняет Φ)."
+      },
+      {
+        "domain": "workflow",
+        "projection": "workflow_canvas",
+        "reason": "Node-в-Workflow — структурная принадлежность, не разрез."
+      }
+    ]
+  }
+}

@@ -1,0 +1,73 @@
+{
+  "id": "view-swimlane-regrouping",
+  "version": 1,
+  "status": "candidate",
+  "archetype": "catalog",
+  "trigger": {
+    "requires": [
+      {
+        "kind": "intent-effect",
+        "α": "replace",
+        "target": "view.swimlane",
+        "minCount": 2
+      }
+    ]
+  },
+  "structure": {
+    "slot": "body",
+    "description": "Catalog получает второе (горизонтальное) группирование по выбираемому fieldRole (assignee / label / priority). Swimlanes ортогональны основному columns-layout — не заменяют его, а добавляют ось. Переключатель group-by в header."
+  },
+  "rationale": {
+    "hypothesis": "View-level группировка, выраженная как intent на view.*, — явный контракт 'клиент может перегруппировать без мутации Φ'. Это не настоящая мутация world — это проекционная трансформация. Паттерн признаёт ортогональность: status остаётся колонками, swimlane становится строками → одна и та же Φ, три layout'а.",
+    "evidence": [
+      {
+        "source": "height-phase-board",
+        "description": "group_by_assignee / group_by_label пересобирают board без изменения tasks",
+        "reliability": "high"
+      },
+      {
+        "source": "linear-board",
+        "description": "Group by status / priority / assignee — core view-spec",
+        "reliability": "high"
+      },
+      {
+        "source": "notion-database-views",
+        "description": "Group-by как first-class view-property",
+        "reliability": "high"
+      }
+    ],
+    "counterexample": [
+      {
+        "source": "messenger",
+        "description": "Conversation-list нет естественного второго measure для swimlane",
+        "reliability": "medium"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [
+      {
+        "domain": "workflow",
+        "projection": "executions",
+        "reason": "group_by author/status — valid"
+      },
+      {
+        "domain": "delivery",
+        "projection": "orders-dispatcher",
+        "reason": "group_by zone / courier — dispatcher use-case"
+      }
+    ],
+    "shouldNotMatch": [
+      {
+        "domain": "reflect",
+        "projection": "mood-entries",
+        "reason": "Нет view.swimlane intent'ов"
+      },
+      {
+        "domain": "invest",
+        "projection": "position-detail",
+        "reason": "Detail — одна сущность, swimlanes неприменимы"
+      }
+    ]
+  }
+}

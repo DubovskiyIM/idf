@@ -1,0 +1,81 @@
+{
+  "id": "review-summary-before-irreversible",
+  "version": 1,
+  "status": "candidate",
+  "archetype": "detail",
+  "trigger": {
+    "requires": [
+      {
+        "kind": "intent-effect",
+        "α": "add",
+        "creates": "mainEntity",
+        "irreversibility": "high"
+      },
+      {
+        "kind": "intent-confirmation",
+        "intentMatches": "create_.*",
+        "confirmation": "form"
+      },
+      {
+        "kind": "intent-count",
+        "min": 4,
+        "filter": {
+          "α": "replace",
+          "targetPrefix": "mainEntityDraft."
+        }
+      }
+    ]
+  },
+  "structure": {
+    "slot": "primaryCTA",
+    "description": "Перед irreversible create-button рендерится read-only summary всех собранных draft-полей, группированных по секциям wizard'а, с возможностью back-навигации к каждой секции."
+  },
+  "rationale": {
+    "hypothesis": "irreversible-confirm (single dialog) недостаточен когда собрано ≥4 параметров; read-only review снижает вероятность случайного commit неверного параметра, сохраняя возможность точечного исправления.",
+    "evidence": [
+      {
+        "source": "stripe-subscriptions",
+        "description": "Финальный step — «Review» с всеми параметрами и «Edit» ссылками на каждую секцию",
+        "reliability": "high"
+      },
+      {
+        "source": "aws-console-create-instance",
+        "description": "«Review and launch» — обязательный шаг перед созданием EC2",
+        "reliability": "high"
+      }
+    ],
+    "counterexample": [
+      {
+        "source": "figma-file-delete",
+        "description": "Один irreversible dialog достаточен — action atomic, нет составных параметров",
+        "reliability": "high"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [
+      {
+        "domain": "sales",
+        "projection": "listing_publish",
+        "reason": "Publish listing — irreversible commit многопараметрового draft"
+      },
+      {
+        "domain": "delivery",
+        "projection": "order_checkout",
+        "reason": "Order confirm — review перед irreversible capture_payment"
+      }
+    ],
+    "shouldNotMatch": [
+      {
+        "domain": "messenger",
+        "projection": "message_send",
+        "reason": "Send сообщения — 1-параметр, review излишен"
+      },
+      {
+        "domain": "lifequest",
+        "projection": "habit_log",
+        "reason": "Habit check-in — atomic, не irreversible"
+      }
+    ]
+  }
+}

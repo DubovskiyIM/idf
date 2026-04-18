@@ -1,0 +1,72 @@
+{
+  "id": "timeline-range-drag",
+  "version": 1,
+  "status": "candidate",
+  "archetype": "catalog",
+  "trigger": {
+    "requires": [
+      {
+        "kind": "entity-field",
+        "entity": "Entry",
+        "field": "dateRange"
+      },
+      {
+        "kind": "intent-effect",
+        "α": "replace",
+        "target": "entry.dateRange"
+      }
+    ]
+  },
+  "structure": {
+    "slot": "body",
+    "description": "Timeline/Gantt-archetype: entries = bars вдоль горизонтальной временной оси по date-range field. Drag edges → replace start/end независимо, drag центра → shift обоих. Точка невозврата: требует range-тип, не точечный date."
+  },
+  "rationale": {
+    "hypothesis": "Project-задачи имеют длительность, не момент. Gantt раскрывает overlap'ы и dependencies, недоступные в calendar (point-in-time). Drag-edges — прямой маппинг геометрии bar на значения start/end.",
+    "evidence": [
+      {
+        "source": "notion",
+        "description": "Timeline view с Gantt-bars, drag edges = replace start/end",
+        "reliability": "high"
+      },
+      {
+        "source": "asana-timeline",
+        "description": "Drag-edges канонический Gantt-gesture",
+        "reliability": "high"
+      },
+      {
+        "source": "ms-project",
+        "description": "Gantt как industry-standard для PM",
+        "reliability": "high"
+      }
+    ],
+    "counterexample": [
+      {
+        "source": "todo-list",
+        "description": "Point-in-time задачи (только dueDate) — timeline не даёт value, calendar достаточно",
+        "reliability": "medium"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [
+      {
+        "domain": "booking",
+        "projection": "bookings_catalog",
+        "reason": "Booking.start/end — естественный range для timeline"
+      }
+    ],
+    "shouldNotMatch": [
+      {
+        "domain": "lifequest",
+        "projection": "habits_catalog",
+        "reason": "Habit — recurring-событие, не range"
+      },
+      {
+        "domain": "messenger",
+        "projection": "messages_feed",
+        "reason": "Message — point-in-time"
+      }
+    ]
+  }
+}

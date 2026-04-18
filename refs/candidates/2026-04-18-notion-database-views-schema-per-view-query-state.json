@@ -1,0 +1,87 @@
+{
+  "id": "per-view-query-state",
+  "version": 1,
+  "status": "candidate",
+  "archetype": "catalog",
+  "trigger": {
+    "requires": [
+      {
+        "kind": "entity-field",
+        "entity": "View",
+        "field": "filters"
+      },
+      {
+        "kind": "entity-field",
+        "entity": "View",
+        "field": "sorts"
+      },
+      {
+        "kind": "intent-effect",
+        "α": "replace",
+        "target": "view.filters"
+      },
+      {
+        "kind": "intent-effect",
+        "α": "replace",
+        "target": "view.sorts"
+      }
+    ]
+  },
+  "structure": {
+    "slot": "toolbar",
+    "description": "Filters / sorts / groupBy живут per-view, не per-database. Toolbar/sidebar управляет query-state активной view; сохранённые view'ы = именованные query-shortcuts без дублирования данных."
+  },
+  "rationale": {
+    "hypothesis": "Query-state (scope, order, grouping) — свойство намерения смотрящего, не данных. Персистентные именованные query экономят reconfiguration cost и дают команде shared vocabulary ('Sprint board', 'My inbox').",
+    "evidence": [
+      {
+        "source": "notion",
+        "description": "Filter/Sort/Group sidebar привязан к active view, коммит в view.filters",
+        "reliability": "high"
+      },
+      {
+        "source": "airtable",
+        "description": "Каждая view хранит own filter/sort/group независимо",
+        "reliability": "high"
+      },
+      {
+        "source": "linear",
+        "description": "Saved views с персистентным filter+grouping",
+        "reliability": "high"
+      }
+    ],
+    "counterexample": [
+      {
+        "source": "simple-list-apps",
+        "description": "Без named views query-state живёт в URL-params; per-view абстракция избыточна",
+        "reliability": "medium"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [
+      {
+        "domain": "lifequest",
+        "projection": "tasks_catalog",
+        "reason": "Filter-by-sphere / group-by-status — типовое query"
+      },
+      {
+        "domain": "sales",
+        "projection": "listings_catalog",
+        "reason": "Saved searches выигрывают от per-view стейта"
+      }
+    ],
+    "shouldNotMatch": [
+      {
+        "domain": "invest",
+        "projection": "portfolio_dashboard",
+        "reason": "Dashboard про aggregation, не про фильтрацию"
+      },
+      {
+        "domain": "messenger",
+        "projection": "conversation_detail",
+        "reason": "Feed беседы не фильтруется как catalog"
+      }
+    ]
+  }
+}

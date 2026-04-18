@@ -1,0 +1,76 @@
+{
+  "id": "saved-query-sidebar",
+  "version": 1,
+  "status": "candidate",
+  "archetype": "feed",
+  "trigger": {
+    "requires": [
+      {
+        "kind": "sub-entity-exists",
+        "hasFilterFields": true,
+        "description": "вспомогательная entity с *Filter полями, описывающая сохранённый запрос к mainEntity"
+      },
+      {
+        "kind": "intent-creates",
+        "entity": "<filter-entity>"
+      }
+    ]
+  },
+  "structure": {
+    "slot": "sections",
+    "description": "Левая nav с saved views (instances вспомогательной filter-entity). Клик по view применяет filter к feed. 'Create filter' — последний item списка. Активный view подсвечивается. 'All' — implicit дефолтный view."
+  },
+  "rationale": {
+    "hypothesis": "Пользовательские queries — не ad-hoc, они повторяются. Если пользователь явно создаёт Filter/Queue/View entity, это сигнал persistence; такие запросы должны быть one-click доступны в sidebar, а не скрыты в dropdown-inside-dropdown.",
+    "evidence": [
+      {
+        "source": "linear-triage",
+        "description": "TriageQueue по source/label/priority как sidebar items",
+        "reliability": "high"
+      },
+      {
+        "source": "gmail-labels",
+        "description": "Labels левой nav = persistent saved filters",
+        "reliability": "high"
+      },
+      {
+        "source": "jira-filters",
+        "description": "Starred filters в sidebar",
+        "reliability": "medium"
+      }
+    ],
+    "counterexample": [
+      {
+        "source": "ephemeral-search",
+        "description": "Если пользователь не создаёт explicit saved entity — inline-search достаточно",
+        "reliability": "high"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [
+      {
+        "domain": "sales",
+        "projection": "listing_inbox",
+        "reason": "SavedSearch entity уже декларирована в ontology"
+      },
+      {
+        "domain": "messenger",
+        "projection": "conversation_list",
+        "reason": "если добавится ChatFolder с filter-полями"
+      }
+    ],
+    "shouldNotMatch": [
+      {
+        "domain": "planning",
+        "projection": "poll_detail",
+        "reason": "detail, не feed; нет filter-entity"
+      },
+      {
+        "domain": "workflow",
+        "projection": "workflow_canvas",
+        "reason": "canvas archetype, sidebar занят palette/inspector"
+      }
+    ]
+  }
+}

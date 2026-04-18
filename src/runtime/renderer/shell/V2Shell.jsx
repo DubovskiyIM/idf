@@ -1,6 +1,5 @@
 import { useMemo, useState, useCallback, useEffect } from "react";
 import { usePersonalPrefs, prefsToStyle } from "../personal/usePersonalPrefs.js";
-import PrefsPanel from "../personal/PrefsPanel.jsx";
 import { ProjectionRendererV2, useProjectionRoute, Breadcrumbs, getAdaptedComponent } from "@intent-driven/renderer";
 import { crystallizeV2, generateEditProjections } from "@intent-driven/core";
 import BottomTabs from "./BottomTabs.jsx";
@@ -110,7 +109,7 @@ export default function V2Shell({
 
   // Personal layer (§17)
   const { prefs, setPref, resetPrefs } = usePersonalPrefs();
-  const [prefsOpen, setPrefsOpen] = useState(false);
+  // Prefs-panel теперь в Studio TabStrip (⚙-кнопка главного UI).
 
   // Deep-link ?inspect=<patternId> — читается один раз при первом mount.
   // Если параметр присутствует: активируем drawer и seed'им selection
@@ -243,16 +242,9 @@ export default function V2Shell({
             {enriching ? "⏳ Обогащение..." : isEnriched ? "✨ Обогащён" : "✨ LLM"}
           </button>
         )}
-        <button
-          onClick={() => setPrefsOpen(true)}
-          title="Настройки UI"
-          style={{
-            padding: "4px 10px", borderRadius: 6, border: "1px solid var(--idf-border, #d1d5db)",
-            background: "transparent", color: "var(--idf-text, #374151)",
-            fontSize: 11, cursor: "pointer", whiteSpace: "nowrap",
-          }}
-        >⚙</button>
-        {/* Кнопка логаута перенесена в PrefsPanel (доступна через ⚙) */}
+        {/* Кнопка ⚙ перенесена в Studio TabStrip — единая точка настроек
+            workspace'а на уровне Studio App. Внутри прототипа больше не
+            дублируется. */}
       </div>
       <div style={{ flex: 1, overflow: "hidden", position: "relative", minHeight: 0 }}>
         {currentArtifact ? (
@@ -305,7 +297,6 @@ export default function V2Shell({
             onSelect={(id) => onSelectTab(id)}
             projectionNames={projectionNames}
           />
-          {prefsOpen && <PrefsPanel prefs={prefs} setPref={setPref} resetPrefs={resetPrefs} onClose={() => setPrefsOpen(false)} onLogout={onLogout} viewer={viewer} />}
           {prefs.patternInspector && (
             <PatternInspector
               domain={domainId}
@@ -358,7 +349,6 @@ export default function V2Shell({
         <div style={{ flex: 1, display: "flex", flexDirection: "column", minHeight: 0, overflow: "hidden" }}>
           {mainContent}
         </div>
-        {prefsOpen && <PrefsPanel prefs={prefs} setPref={setPref} resetPrefs={resetPrefs} onClose={() => setPrefsOpen(false)} onLogout={onLogout} viewer={viewer} />}
         {prefs.patternInspector && (
           <PatternInspector
             domain={domainId}
@@ -416,7 +406,6 @@ export default function V2Shell({
         )
       )}
       {mainContent}
-      {prefsOpen && <PrefsPanel prefs={prefs} setPref={setPref} resetPrefs={resetPrefs} onClose={() => setPrefsOpen(false)} onLogout={onLogout} viewer={viewer} />}
       {prefs.patternInspector && (
         <PatternInspector
           domain={domainId}

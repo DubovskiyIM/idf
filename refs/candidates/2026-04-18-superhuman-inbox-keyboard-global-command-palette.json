@@ -1,0 +1,81 @@
+{
+  "id": "global-command-palette",
+  "version": 1,
+  "status": "candidate",
+  "archetype": null,
+  "trigger": {
+    "requires": [
+      {
+        "kind": "intent-count",
+        "minimum": 10
+      },
+      {
+        "kind": "intent-effect",
+        "alpha": "replace",
+        "target": "feed.query"
+      },
+      {
+        "kind": "intent-effect",
+        "alpha": "replace",
+        "target": "feed.folderId"
+      }
+    ]
+  },
+  "structure": {
+    "slot": "overlay",
+    "description": "Единый ⌘K overlay агрегирует три поверхности: search (query поверх сущностей), navigation (goto_folder / goto_entity) и command execution (intent trigger по имени); один hotkey, одна ментальная модель."
+  },
+  "rationale": {
+    "hypothesis": "Когда surface > ~15 интентов, плоский memorisation hotkey'ев не масштабируется. Единое fuzzy-поле с унифицированным ранжированием (recent/frecency) даёт O(1) стоимость обнаружения любого действия без запоминания конкретной клавиши.",
+    "evidence": [
+      {
+        "source": "superhuman-inbox",
+        "description": "⌘K открывает command bar, где в одном списке — inbox, folders, команды (archive, snooze), и search по содержимому.",
+        "reliability": "high"
+      },
+      {
+        "source": "linear",
+        "description": "⌘K — навигация + команды + создание issue из одного поля.",
+        "reliability": "high"
+      },
+      {
+        "source": "vscode",
+        "description": "⌘⇧P как универсальный command palette для сотен действий — доказал масштабируемость модели.",
+        "reliability": "high"
+      }
+    ],
+    "counterexample": [
+      {
+        "source": "kiosk-ui",
+        "description": "Приложения с 3–5 действиями не выигрывают от палитры — прямые кнопки быстрее.",
+        "reliability": "medium"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [
+      {
+        "domain": "sales",
+        "projection": "marketplace_shell",
+        "reason": "225 интентов, много ролей — палитра оправдана."
+      },
+      {
+        "domain": "invest",
+        "projection": "trading_shell",
+        "reason": "58 интентов + 4 роли, keyboard-first power-user сценарий."
+      }
+    ],
+    "shouldNotMatch": [
+      {
+        "domain": "booking",
+        "projection": "booking_flow",
+        "reason": "22 интента, линейный funnel — палитра создаёт cognitive overhead без ROI."
+      },
+      {
+        "domain": "planning",
+        "projection": "poll_detail",
+        "reason": "17 интентов, большинство — голосование, overlay не нужен."
+      }
+    ]
+  }
+}

@@ -1,0 +1,72 @@
+{
+  "id": "observer-readonly-escape",
+  "version": 1,
+  "status": "candidate",
+  "archetype": "detail",
+  "trigger": {
+    "requires": [
+      {
+        "kind": "has-role",
+        "base": "observer"
+      },
+      {
+        "kind": "intent-count",
+        "scope": "role:observer",
+        "predicate": "creates-entity",
+        "max": 1
+      },
+      {
+        "kind": "intent-effect",
+        "scope": "role:observer",
+        "irreversibility": "high"
+      }
+    ]
+  },
+  "structure": {
+    "slot": "primaryCTA",
+    "description": "Observer-видимый detail — read-only с единственным primaryCTA (high-irreversibility). Все остальные слоты без mutation-controls; единственный escape-hatch визуально выделен как terminal action."
+  },
+  "rationale": {
+    "hypothesis": "Observer-роль не совершает транзакционных действий, но иногда нужен escape для компаенса / правового отклика. Единственный CTA снижает когнитивную нагрузку и делает terminal-действие очевидным (vs запрятанным в меню).",
+    "evidence": [
+      {
+        "source": "stripe-dashboard",
+        "description": "Payment detail для observer: read-only поля, единственный primary CTA «Dispute» с type-to-confirm",
+        "reliability": "high"
+      },
+      {
+        "source": "github-security-advisories",
+        "description": "Read-only advisory view с единственной кнопкой «Report abuse»",
+        "reliability": "medium"
+      }
+    ],
+    "counterexample": [
+      {
+        "source": "linear-issue",
+        "description": "Observer в Linear имеет два escape'а (report + subscribe) — паттерн требует max=1 чтобы не скатываться в кнопочный toolbar",
+        "reliability": "medium"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [
+      {
+        "domain": "invest",
+        "projection": "position_detail_observer",
+        "reason": "Observer видит position read-only с единственным dispute-like escape"
+      }
+    ],
+    "shouldNotMatch": [
+      {
+        "domain": "messenger",
+        "projection": "conversation_detail",
+        "reason": "Owner-роль с множественными mutation-intents — паттерн не для owner"
+      },
+      {
+        "domain": "lifequest",
+        "projection": "goal_detail",
+        "reason": "Нет observer-роли и нет high-irreversibility escape"
+      }
+    ]
+  }
+}

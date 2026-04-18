@@ -1,0 +1,70 @@
+{
+  "id": "table-cell-inline-edit",
+  "version": 1,
+  "status": "candidate",
+  "archetype": "catalog",
+  "trigger": {
+    "requires": [
+      {
+        "kind": "intent-count",
+        "predicate": "α:replace target:entry.* confirmation:enter",
+        "min": 3
+      },
+      {
+        "kind": "internal"
+      }
+    ]
+  },
+  "structure": {
+    "slot": "body",
+    "description": "Table-archetype: каждое поле entity = колонка. Click на ячейку открывает type-specific inline-editor (select → pill-menu, date → popover-calendar, text → textarea, relation → search-picker). Enter коммитит, Esc откатывает, Tab идёт в следующую ячейку."
+  },
+  "rationale": {
+    "hypothesis": "Bulk-editing требует массово менять одно поле across rows. Modal-per-row prohibitively slow. Inline cell-edit воспроизводит spreadsheet-idiom: keyboard-first, fast tabbing, zero per-row context switch.",
+    "evidence": [
+      {
+        "source": "notion",
+        "description": "Table view inline-edit per cell с type-aware редакторами",
+        "reliability": "high"
+      },
+      {
+        "source": "airtable",
+        "description": "Spreadsheet-like inline edit — core differentiator",
+        "reliability": "high"
+      },
+      {
+        "source": "linear",
+        "description": "Issues table click-to-edit priority/assignee/status",
+        "reliability": "high"
+      }
+    ],
+    "counterexample": [
+      {
+        "source": "sales-critical-fields",
+        "description": "Цены/валютные поля требуют explicit confirm, inline без safeguard опасен",
+        "reliability": "high"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [
+      {
+        "domain": "lifequest",
+        "projection": "tasks_catalog",
+        "reason": "Массовое editing title/status/priority выигрывает от табличного вида"
+      }
+    ],
+    "shouldNotMatch": [
+      {
+        "domain": "invest",
+        "projection": "transactions_catalog",
+        "reason": "Transactions immutable — inline edit недопустим"
+      },
+      {
+        "domain": "messenger",
+        "projection": "conversation_feed",
+        "reason": "Feed не табличен"
+      }
+    ]
+  }
+}

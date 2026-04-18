@@ -1,0 +1,81 @@
+{
+  "id": "multi-archetype-view",
+  "version": 1,
+  "status": "candidate",
+  "archetype": "catalog",
+  "trigger": {
+    "requires": [
+      {
+        "kind": "entity-field",
+        "entity": "View",
+        "field": "archetype"
+      },
+      {
+        "kind": "intent-effect",
+        "α": "replace",
+        "target": "view.archetype"
+      },
+      {
+        "kind": "intent-creates",
+        "creates": "View"
+      }
+    ]
+  },
+  "structure": {
+    "slot": "header",
+    "description": "Рендерит tab-bar сохранённых view'ов + '+ Add view' (picker архетипа). Один projection spec переключается между table/board/calendar/gallery/timeline/list поверх одних данных; archetype — runtime-choice, а не compile-time."
+  },
+  "rationale": {
+    "hypothesis": "Разные задачи требуют разных проекций одних и тех же данных (due-tracking → календарь, prioritization → board, bulk-edit → table). Жёсткая связь archetype↔projection заставляет пользователя дублировать данные или принимать субоптимальный вид.",
+    "evidence": [
+      {
+        "source": "notion",
+        "description": "Database tabs: table/board/list/calendar/gallery/timeline поверх одной collection, '+' открывает archetype picker",
+        "reliability": "high"
+      },
+      {
+        "source": "airtable",
+        "description": "Views с archetype-switch: grid/kanban/calendar/gantt/gallery/form",
+        "reliability": "high"
+      },
+      {
+        "source": "linear",
+        "description": "Issues: list ↔ board, saved views персистятся per-workspace",
+        "reliability": "high"
+      }
+    ],
+    "counterexample": [
+      {
+        "source": "slack",
+        "description": "Channel-feed монолитен — gallery/board ломает смысл conversational-thread",
+        "reliability": "high"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [
+      {
+        "domain": "lifequest",
+        "projection": "tasks_catalog",
+        "reason": "Task выигрывает от board-by-status / calendar-by-dueDate / table"
+      },
+      {
+        "domain": "sales",
+        "projection": "listings_catalog",
+        "reason": "Listings: grid-gallery ↔ list ↔ map — разные use-case'ы"
+      }
+    ],
+    "shouldNotMatch": [
+      {
+        "domain": "messenger",
+        "projection": "conversation_feed",
+        "reason": "Feed-сообщений не проецируется как board/calendar"
+      },
+      {
+        "domain": "invest",
+        "projection": "portfolio_dashboard",
+        "reason": "Dashboard-архетип single-purpose, archetype-switching разрушает aggregation"
+      }
+    ]
+  }
+}

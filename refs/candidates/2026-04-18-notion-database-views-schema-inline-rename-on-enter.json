@@ -1,0 +1,76 @@
+{
+  "id": "inline-rename-on-enter",
+  "version": 1,
+  "status": "candidate",
+  "archetype": "detail",
+  "trigger": {
+    "requires": [
+      {
+        "kind": "intent-effect",
+        "α": "replace",
+        "target": "*.name"
+      },
+      {
+        "kind": "intent-confirmation",
+        "confirmation": "enter"
+      }
+    ]
+  },
+  "structure": {
+    "slot": "header",
+    "description": "Name/title сущности рендерится как inline-editable в header: click → edit-mode, Enter коммитит, Esc откатывает. Без отдельной 'Rename' modal-form. Cursor-hover даёт affordance."
+  },
+  "rationale": {
+    "hypothesis": "Rename — наиболее частая mutation над именем (view, document, project, goal). Modal для single-field — overkill. Inline-edit сохраняет focus и keyboard-первенство, коммит через Enter — conventional expectation.",
+    "evidence": [
+      {
+        "source": "notion",
+        "description": "View tab / page title rename inline click + type + enter",
+        "reliability": "high"
+      },
+      {
+        "source": "google-docs",
+        "description": "Document name inline-editable в header-bar",
+        "reliability": "high"
+      },
+      {
+        "source": "figma",
+        "description": "Layer name double-click rename, enter commit",
+        "reliability": "high"
+      }
+    ],
+    "counterexample": [
+      {
+        "source": "compliance-regulated-fields",
+        "description": "Поля, требующие validation/review (публичный title в sales) — inline без safeguard рискован",
+        "reliability": "medium"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [
+      {
+        "domain": "workflow",
+        "projection": "workflow_detail",
+        "reason": "Workflow.name inline-rename в header"
+      },
+      {
+        "domain": "planning",
+        "projection": "poll_detail",
+        "reason": "Poll.title inline-rename"
+      }
+    ],
+    "shouldNotMatch": [
+      {
+        "domain": "invest",
+        "projection": "portfolio_dashboard",
+        "reason": "Portfolio.name mutable, но rename через settings-panel formal"
+      },
+      {
+        "domain": "messenger",
+        "projection": "conversation_feed",
+        "reason": "DM без mutable name — group-conv rename отдельный flow"
+      }
+    ]
+  }
+}

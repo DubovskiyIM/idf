@@ -1,0 +1,255 @@
+{
+  "source": "notion-database-multi-view",
+  "entities": [
+    {
+      "name": "Database",
+      "fields": [
+        "title",
+        "icon",
+        "cover",
+        "description",
+        "defaultViewId"
+      ]
+    },
+    {
+      "name": "Schema",
+      "fields": [
+        "databaseId",
+        "properties"
+      ],
+      "foreignKey": "databaseId→Database"
+    },
+    {
+      "name": "Property",
+      "fields": [
+        "name",
+        "type",
+        "options",
+        "config",
+        "order"
+      ],
+      "foreignKey": "schemaId→Schema"
+    },
+    {
+      "name": "View",
+      "fields": [
+        "name",
+        "archetype",
+        "filters",
+        "sorts",
+        "groupBy",
+        "visibleProperties",
+        "cardSize",
+        "databaseId"
+      ],
+      "statusValues": [
+        "table",
+        "board",
+        "list",
+        "calendar",
+        "gallery",
+        "timeline"
+      ],
+      "foreignKey": "databaseId→Database"
+    },
+    {
+      "name": "Entry",
+      "fields": [
+        "title",
+        "type",
+        "status",
+        "priority",
+        "assignee",
+        "dueDate",
+        "dateRange",
+        "tags",
+        "relations",
+        "cover",
+        "icon",
+        "content"
+      ],
+      "statusValues": [
+        "not_started",
+        "in_progress",
+        "done",
+        "archived"
+      ],
+      "foreignKey": "databaseId→Database"
+    },
+    {
+      "name": "Relation",
+      "fields": [
+        "fromEntryId",
+        "toEntryId",
+        "propertyName"
+      ],
+      "foreignKey": "fromEntryId→Entry"
+    }
+  ],
+  "intents": [
+    {
+      "id": "switch_view",
+      "α": "replace",
+      "target": "database.activeViewId",
+      "confirmation": "click"
+    },
+    {
+      "id": "add_view",
+      "α": "add",
+      "creates": "View",
+      "confirmation": "form"
+    },
+    {
+      "id": "rename_view",
+      "α": "replace",
+      "target": "view.name",
+      "confirmation": "enter"
+    },
+    {
+      "id": "change_view_archetype",
+      "α": "replace",
+      "target": "view.archetype",
+      "confirmation": "click"
+    },
+    {
+      "id": "set_view_filter",
+      "α": "replace",
+      "target": "view.filters",
+      "confirmation": "form"
+    },
+    {
+      "id": "set_view_sort",
+      "α": "replace",
+      "target": "view.sorts",
+      "confirmation": "form"
+    },
+    {
+      "id": "set_view_groupby",
+      "α": "replace",
+      "target": "view.groupBy",
+      "confirmation": "click"
+    },
+    {
+      "id": "toggle_property_visibility",
+      "α": "replace",
+      "target": "view.visibleProperties",
+      "confirmation": "click"
+    },
+    {
+      "id": "delete_view",
+      "α": "remove",
+      "target": "entities",
+      "irreversibility": "high",
+      "confirmation": "click"
+    },
+    {
+      "id": "add_property",
+      "α": "add",
+      "creates": "Property",
+      "confirmation": "form"
+    },
+    {
+      "id": "change_property_type",
+      "α": "replace",
+      "target": "property.type",
+      "irreversibility": "high",
+      "confirmation": "form"
+    },
+    {
+      "id": "rename_property",
+      "α": "replace",
+      "target": "property.name",
+      "confirmation": "enter"
+    },
+    {
+      "id": "delete_property",
+      "α": "remove",
+      "target": "entities",
+      "irreversibility": "high",
+      "confirmation": "click"
+    },
+    {
+      "id": "create_entry",
+      "α": "add",
+      "creates": "Entry",
+      "confirmation": "click"
+    },
+    {
+      "id": "edit_entry_field",
+      "α": "replace",
+      "target": "entry.field",
+      "confirmation": "enter"
+    },
+    {
+      "id": "change_entry_status",
+      "α": "replace",
+      "target": "entry.status",
+      "confirmation": "click"
+    },
+    {
+      "id": "set_entry_date",
+      "α": "replace",
+      "target": "entry.dueDate",
+      "confirmation": "click"
+    },
+    {
+      "id": "drag_entry_between_columns",
+      "α": "replace",
+      "target": "entry.status",
+      "confirmation": "click"
+    },
+    {
+      "id": "drag_entry_on_timeline",
+      "α": "replace",
+      "target": "entry.dateRange",
+      "confirmation": "click"
+    },
+    {
+      "id": "link_relation",
+      "α": "add",
+      "creates": "Relation",
+      "confirmation": "click"
+    },
+    {
+      "id": "unlink_relation",
+      "α": "remove",
+      "target": "entities",
+      "confirmation": "click"
+    },
+    {
+      "id": "open_entry_detail",
+      "α": "replace",
+      "target": "ui.openEntryId",
+      "confirmation": "click"
+    },
+    {
+      "id": "delete_entry",
+      "α": "remove",
+      "target": "entities",
+      "irreversibility": "high",
+      "confirmation": "click"
+    }
+  ],
+  "roles": [
+    "owner",
+    "viewer"
+  ],
+  "observations": [
+    "Single ontology, runtime-switched archetype: table / board / list / calendar / gallery / timeline",
+    "Top tab-bar lists saved views; '+ Add view' opens template picker (archetype choice)",
+    "Left sidebar exposes filters / sorts / groupBy as per-view controls, not per-database",
+    "Schema-driven rendering: field type → control (select → pill, date → calendar popover, relation → linked chip, checkbox → toggle, url → link, email → mailto)",
+    "Board archetype groups entries by a select-property (status or priority); drag between columns writes status",
+    "Calendar archetype positions entries by date-field; drag changes date",
+    "Timeline archetype renders Gantt-style bars over a date-range field; drag edges re-schedule",
+    "Gallery archetype renders cards with image/cover preview; cardSize configurable",
+    "Table archetype supports inline-edit per cell; every property visible as column",
+    "Row click opens full-page entity edit modal regardless of archetype",
+    "Multi-select relations materialize as chip-stack with linked-entity titles",
+    "Polymorphic entries via discriminator field (Type: Task / Milestone / Doc); rendering differs per type",
+    "Schema edit ('... / Edit property') affects all views simultaneously — one ontology, many projections",
+    "Changing property type is irreversible / lossy — warrants confirmation",
+    "'Add view' is form-based (pick archetype + name); rename is inline enter-to-commit",
+    "Pattern: view-multi-archetype — same projection spec, archetype chosen by author-config or auto-detected from ontology signals"
+  ]
+}

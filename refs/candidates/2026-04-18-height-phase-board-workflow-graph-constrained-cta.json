@@ -1,0 +1,78 @@
+{
+  "id": "workflow-graph-constrained-cta",
+  "version": 1,
+  "status": "candidate",
+  "archetype": "detail",
+  "trigger": {
+    "requires": [
+      {
+        "kind": "sub-entity-exists",
+        "entity": "Phase",
+        "field": "allowedNextPhases"
+      },
+      {
+        "kind": "entity-field",
+        "field": "status",
+        "referencesEntity": "Phase"
+      },
+      {
+        "kind": "intent-effect",
+        "α": "replace",
+        "target": "<mainEntity>.status",
+        "minCount": 2
+      }
+    ]
+  },
+  "structure": {
+    "slot": "primaryCTA",
+    "description": "Уточнение phase-aware-primary-cta: когда workflow задан явным directed graph через Phase.allowedNextPhases, рендерятся ТОЛЬКО те status-transitions, что разрешены из текущей фазы — не весь enum. Это делает UI отражением формального workflow, а не plain-select'а."
+  },
+  "rationale": {
+    "hypothesis": "Static enum status даёт фиксированный набор transitions; workflow-graph с allowedNextPhases кодирует business-constraints (нельзя done → in_progress без reopen). Рендер всех n→n переходов нарушит эти constraints либо заставит валидатор гасить уже показанные кнопки, что плохой UX. Фильтрация по графу = single-source-of-truth рендеринг.",
+    "evidence": [
+      {
+        "source": "height-phase-board",
+        "description": "Кнопки CTA меняются по фазе: Start → Mark done → Reopen — а не все 6 transitions",
+        "reliability": "high"
+      },
+      {
+        "source": "jira",
+        "description": "Workflow transitions — first-class concept; detail-view показывает только разрешённые",
+        "reliability": "high"
+      }
+    ],
+    "counterexample": [
+      {
+        "source": "lifequest",
+        "description": "Task.status ∈ {todo, doing, done} без Phase-сущности — plain-enum, все переходы валидны, граф не нужен",
+        "reliability": "high"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [
+      {
+        "domain": "workflow",
+        "projection": "execution-detail",
+        "reason": "Execution имеет Node-graph с явными transitions"
+      },
+      {
+        "domain": "booking",
+        "projection": "booking-detail",
+        "reason": "Booking.status pending→confirmed→completed|cancelled — directed graph, reverse не все"
+      }
+    ],
+    "shouldNotMatch": [
+      {
+        "domain": "reflect",
+        "projection": "hypothesis-detail",
+        "reason": "Hypothesis.status — plain enum без graph-определения"
+      },
+      {
+        "domain": "invest",
+        "projection": "position-detail",
+        "reason": "Position.status binary, Phase-сущности нет"
+      }
+    ]
+  }
+}

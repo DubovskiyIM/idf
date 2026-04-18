@@ -1,0 +1,74 @@
+{
+  "id": "universal-command-palette",
+  "version": 1,
+  "status": "candidate",
+  "archetype": null,
+  "trigger": {
+    "requires": [
+      {
+        "kind": "intent-count",
+        "filter": {
+          "all": true
+        },
+        "minCount": 15
+      }
+    ]
+  },
+  "structure": {
+    "slot": "overlay",
+    "description": "Global ⌘K overlay — flat fuzzy-searchable entrypoint ко ВСЕМ intents домена (cross-archetype). Каждый intent.id становится command-row; параметризованные intents запрашивают параметры внутри палитры (nested form). Альтернатива button-spaghetti при высокой intent-density."
+  },
+  "rationale": {
+    "hypothesis": "При intent-count > ~15 button-layout становится overwhelming: кнопки мигрируют в меню, меню вложенные, скорость исполнения падает. Command palette — плоский keyboard-first вход: O(1) доступ к любому intent по имени. Паттерн не заменяет archetype-specific UI — работает поверх любого projection'а как универсальный keyboard layer.",
+    "evidence": [
+      {
+        "source": "linear",
+        "description": "⌘K — primary entry-point, command для каждого intent",
+        "reliability": "high"
+      },
+      {
+        "source": "height-phase-board",
+        "description": "⌘K + J/K navigation — всё управляется с клавиатуры",
+        "reliability": "high"
+      },
+      {
+        "source": "vscode",
+        "description": "Command palette — canonical pattern для high-intent-count продуктов",
+        "reliability": "high"
+      }
+    ],
+    "counterexample": [
+      {
+        "source": "lifequest-mobile",
+        "description": "Mobile-first + <20 intents — bottom-tabs эффективнее, keyboard entrypoint неактуален",
+        "reliability": "high"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [
+      {
+        "domain": "sales",
+        "projection": "*",
+        "reason": "225 intents — overload без палитры"
+      },
+      {
+        "domain": "messenger",
+        "projection": "*",
+        "reason": "100 intents + keyboard-heavy пользователи"
+      }
+    ],
+    "shouldNotMatch": [
+      {
+        "domain": "planning",
+        "projection": "poll-detail",
+        "reason": "17 intents — button-layout достаточен"
+      },
+      {
+        "domain": "reflect",
+        "projection": "mood-meter",
+        "reason": "Mobile-first reflective flow, keyboard не primary"
+      }
+    ]
+  }
+}

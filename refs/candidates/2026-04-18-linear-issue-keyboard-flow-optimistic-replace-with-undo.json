@@ -1,0 +1,80 @@
+{
+  "id": "optimistic-replace-with-undo",
+  "version": 1,
+  "status": "candidate",
+  "archetype": null,
+  "trigger": {
+    "requires": [
+      {
+        "kind": "intent-effect",
+        "value": "replace"
+      },
+      {
+        "kind": "intent-confirmation",
+        "value": "click"
+      },
+      {
+        "kind": "intent-count",
+        "effect": "replace",
+        "min": 3
+      }
+    ]
+  },
+  "structure": {
+    "slot": "overlay",
+    "description": "Reversible replace-intent (без irreversibility=high) применяется оптимистически сразу после click/select; рендерится undo-toast в overlay-слоте на 5–10 секунд. Отдельный confirmation-step не показывается."
+  },
+  "rationale": {
+    "hypothesis": "Confirmation на каждый property-change порождает modal-fatigue и тормозит power-user путь; для reversible операций дешевле скрыть подтверждение и предоставить undo, потому что latency ценнее accuracy. Этот паттерн — дуал к irreversible-confirm.",
+    "evidence": [
+      {
+        "source": "linear",
+        "description": "Status/priority/assignee apply без confirmation, undo-toast внизу экрана",
+        "reliability": "high"
+      },
+      {
+        "source": "gmail",
+        "description": "Archive / move to folder с undo-toast — canonical pattern",
+        "reliability": "high"
+      },
+      {
+        "source": "notion",
+        "description": "Inline-edits database cell apply optimistically, undo через ⌘Z",
+        "reliability": "medium"
+      }
+    ],
+    "counterexample": [
+      {
+        "source": "banking",
+        "description": "Money-transfer — explicit confirmation обязателен; скорость уступает правильности",
+        "reliability": "high"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [
+      {
+        "domain": "lifequest",
+        "projection": "habit-list",
+        "reason": "toggle habit completion — reversible replace"
+      },
+      {
+        "domain": "invest",
+        "projection": "watchlist",
+        "reason": "add/remove watchlist — reversible mutations"
+      }
+    ],
+    "shouldNotMatch": [
+      {
+        "domain": "delivery",
+        "projection": "order-payment",
+        "reason": "capture_payment irreversibility=high — требует confirm"
+      },
+      {
+        "domain": "invest",
+        "projection": "buy-order",
+        "reason": "financial transaction не reversible — irreversible-confirm"
+      }
+    ]
+  }
+}

@@ -1,0 +1,77 @@
+{
+  "id": "causal-chain-timeline",
+  "version": 1,
+  "status": "candidate",
+  "archetype": "detail",
+  "trigger": {
+    "requires": [
+      {
+        "kind": "sub-entity-exists",
+        "foreignKey": "mainEntity"
+      },
+      {
+        "kind": "entity-field",
+        "entity": "<sub>",
+        "field": "causedById",
+        "selfReference": true
+      },
+      {
+        "kind": "entity-field",
+        "entity": "<sub>",
+        "field": "timestamp"
+      }
+    ]
+  },
+  "structure": {
+    "slot": "sections",
+    "description": "Sub-entity с self-referential FK (`causedById → self.id`) рендерится как causal tree/chain в хронологическом порядке, с visual-связями parent→child, а не как flat list. Root-события expanded, child-события indented/linked."
+  },
+  "rationale": {
+    "hypothesis": "Self-referential causality несёт информацию, которая теряется при flat-рендере. User нужно видеть что `refunded` возник из-за `disputed`, а не независимо. Причинно-следственная связь — first-class структура, не декоративный attribute.",
+    "evidence": [
+      {
+        "source": "stripe-dashboard",
+        "description": "Payment timeline: capture → partial_refund → dispute_opened, где каждое событие указывает causedById на предыдущее",
+        "reliability": "high"
+      },
+      {
+        "source": "sentry",
+        "description": "Event breadcrumbs показывают causal-chain с parent-child indentation",
+        "reliability": "medium"
+      }
+    ],
+    "counterexample": [
+      {
+        "source": "slack",
+        "description": "Message thread: flat временная лента без causal-FK — паттерн не применим",
+        "reliability": "high"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [
+      {
+        "domain": "workflow",
+        "projection": "execution_detail",
+        "reason": "NodeResult с causedById указывает на upstream node — причинная цепочка"
+      },
+      {
+        "domain": "invest",
+        "projection": "position_detail",
+        "reason": "Transaction.causedById для связанных операций (buy→rebalance→sell)"
+      }
+    ],
+    "shouldNotMatch": [
+      {
+        "domain": "messenger",
+        "projection": "conversation_detail",
+        "reason": "Message без causedById — flat timeline"
+      },
+      {
+        "domain": "reflect",
+        "projection": "mood_history",
+        "reason": "MoodEntry независимы, нет causal-FK"
+      }
+    ]
+  }
+}

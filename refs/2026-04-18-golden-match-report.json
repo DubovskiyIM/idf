@@ -1,0 +1,889 @@
+{
+  "date": "2026-04-18",
+  "corePatterns": 20,
+  "domainCount": 10,
+  "patternHits": {
+    "hero-create": 20,
+    "irreversible-confirm": 106,
+    "global-command-palette": 106,
+    "optimistic-replace-with-undo": 67,
+    "kanban-phase-column-board": 21,
+    "subcollections": 19,
+    "footer-inline-setter": 23,
+    "keyboard-property-popover": 11,
+    "lifecycle-locked-parameters": 8,
+    "hierarchy-tree-nav": 9,
+    "m2m-attach-dialog": 10,
+    "phase-aware-primary-cta": 3,
+    "grid-card-layout": 6,
+    "discriminator-wizard": 1,
+    "inline-search": 20,
+    "composer-entry": 2,
+    "antagonist-toggle": 2,
+    "vote-group": 8,
+    "bulk-action-toolbar": 15
+  },
+  "matchMatrix": {
+    "booking": {
+      "service_catalog": [
+        "hero-create",
+        "irreversible-confirm",
+        "global-command-palette",
+        "optimistic-replace-with-undo"
+      ],
+      "specialist_schedule": [
+        "irreversible-confirm",
+        "global-command-palette",
+        "optimistic-replace-with-undo",
+        "kanban-phase-column-board"
+      ],
+      "my_bookings": [
+        "hero-create",
+        "irreversible-confirm",
+        "global-command-palette",
+        "optimistic-replace-with-undo",
+        "kanban-phase-column-board"
+      ],
+      "booking_detail": [
+        "subcollections",
+        "irreversible-confirm",
+        "footer-inline-setter",
+        "global-command-palette",
+        "optimistic-replace-with-undo",
+        "keyboard-property-popover",
+        "lifecycle-locked-parameters"
+      ],
+      "service_detail": [
+        "subcollections",
+        "irreversible-confirm",
+        "footer-inline-setter",
+        "global-command-palette",
+        "optimistic-replace-with-undo"
+      ],
+      "booking_wizard": [
+        "irreversible-confirm",
+        "global-command-palette",
+        "optimistic-replace-with-undo"
+      ]
+    },
+    "delivery": {
+      "customer_home": [
+        "irreversible-confirm",
+        "hierarchy-tree-nav",
+        "global-command-palette",
+        "kanban-phase-column-board"
+      ],
+      "merchant_catalog": [
+        "irreversible-confirm",
+        "global-command-palette"
+      ],
+      "menu_detail": [
+        "irreversible-confirm",
+        "m2m-attach-dialog",
+        "global-command-palette"
+      ],
+      "cart": [
+        "phase-aware-primary-cta",
+        "subcollections",
+        "irreversible-confirm",
+        "footer-inline-setter",
+        "m2m-attach-dialog",
+        "global-command-palette",
+        "lifecycle-locked-parameters"
+      ],
+      "checkout": [
+        "irreversible-confirm",
+        "global-command-palette"
+      ],
+      "order_tracker": [
+        "irreversible-confirm",
+        "global-command-palette"
+      ],
+      "order_history": [
+        "irreversible-confirm",
+        "global-command-palette",
+        "kanban-phase-column-board"
+      ],
+      "order_detail": [
+        "phase-aware-primary-cta",
+        "subcollections",
+        "irreversible-confirm",
+        "footer-inline-setter",
+        "m2m-attach-dialog",
+        "global-command-palette",
+        "lifecycle-locked-parameters"
+      ],
+      "courier_lobby": [
+        "irreversible-confirm",
+        "global-command-palette",
+        "kanban-phase-column-board"
+      ],
+      "active_delivery": [
+        "irreversible-confirm",
+        "global-command-palette"
+      ],
+      "delivery_history": [
+        "irreversible-confirm",
+        "global-command-palette",
+        "kanban-phase-column-board"
+      ],
+      "earnings_dashboard": [
+        "irreversible-confirm",
+        "global-command-palette"
+      ],
+      "kds_board": [
+        "irreversible-confirm",
+        "global-command-palette"
+      ],
+      "menu_management": [
+        "irreversible-confirm",
+        "global-command-palette"
+      ],
+      "stop_list": [
+        "irreversible-confirm",
+        "global-command-palette"
+      ],
+      "merchant_analytics": [
+        "irreversible-confirm",
+        "global-command-palette"
+      ],
+      "dispatcher_map": [
+        "irreversible-confirm",
+        "global-command-palette"
+      ],
+      "orders_feed": [
+        "irreversible-confirm",
+        "global-command-palette",
+        "kanban-phase-column-board"
+      ],
+      "couriers_list": [
+        "irreversible-confirm",
+        "global-command-palette"
+      ],
+      "zones_catalog": [
+        "irreversible-confirm",
+        "hierarchy-tree-nav",
+        "global-command-palette"
+      ],
+      "assignments_form": [
+        "irreversible-confirm",
+        "global-command-palette"
+      ],
+      "settings": [
+        "irreversible-confirm",
+        "global-command-palette"
+      ],
+      "preapprovals_list": [
+        "irreversible-confirm",
+        "global-command-palette"
+      ],
+      "preapproval_form": [
+        "irreversible-confirm",
+        "global-command-palette"
+      ],
+      "scheduled_timers_debug": [
+        "irreversible-confirm",
+        "global-command-palette"
+      ]
+    },
+    "invest": {
+      "portfolios_root": [
+        "hero-create",
+        "irreversible-confirm",
+        "grid-card-layout",
+        "global-command-palette"
+      ],
+      "goals_root": [
+        "hero-create",
+        "irreversible-confirm",
+        "grid-card-layout",
+        "global-command-palette"
+      ],
+      "watchlists_root": [
+        "irreversible-confirm",
+        "global-command-palette"
+      ],
+      "recommendations_inbox": [
+        "irreversible-confirm",
+        "discriminator-wizard",
+        "global-command-palette",
+        "kanban-phase-column-board"
+      ],
+      "alerts_feed": [
+        "irreversible-confirm",
+        "global-command-palette"
+      ],
+      "transactions_history": [
+        "irreversible-confirm",
+        "grid-card-layout",
+        "global-command-palette"
+      ],
+      "portfolio_detail": [
+        "subcollections",
+        "irreversible-confirm",
+        "footer-inline-setter",
+        "m2m-attach-dialog",
+        "global-command-palette"
+      ],
+      "goal_detail": [
+        "irreversible-confirm",
+        "footer-inline-setter",
+        "m2m-attach-dialog",
+        "global-command-palette"
+      ],
+      "transaction_detail": [
+        "irreversible-confirm",
+        "m2m-attach-dialog",
+        "global-command-palette"
+      ],
+      "recommendation_detail": [
+        "phase-aware-primary-cta",
+        "irreversible-confirm",
+        "footer-inline-setter",
+        "m2m-attach-dialog",
+        "global-command-palette",
+        "lifecycle-locked-parameters"
+      ],
+      "alert_detail": [
+        "irreversible-confirm",
+        "footer-inline-setter",
+        "m2m-attach-dialog",
+        "global-command-palette"
+      ],
+      "asset_detail": [
+        "subcollections",
+        "irreversible-confirm",
+        "m2m-attach-dialog",
+        "global-command-palette"
+      ],
+      "watchlist_detail": [
+        "irreversible-confirm",
+        "footer-inline-setter",
+        "m2m-attach-dialog",
+        "global-command-palette"
+      ],
+      "performance_dashboard": [
+        "irreversible-confirm",
+        "global-command-palette"
+      ],
+      "allocation_breakdown": [
+        "irreversible-confirm",
+        "global-command-palette"
+      ],
+      "market_trends": [
+        "irreversible-confirm",
+        "global-command-palette"
+      ],
+      "advisor_clients": [
+        "hero-create",
+        "irreversible-confirm",
+        "global-command-palette",
+        "kanban-phase-column-board"
+      ],
+      "advisor_client_dashboard": [
+        "irreversible-confirm",
+        "global-command-palette"
+      ],
+      "regulator_report": [
+        "irreversible-confirm",
+        "global-command-palette"
+      ],
+      "assets_catalog": [
+        "irreversible-confirm",
+        "global-command-palette"
+      ],
+      "rules_list": [
+        "irreversible-confirm",
+        "global-command-palette"
+      ],
+      "risk_questionnaire": [
+        "irreversible-confirm",
+        "global-command-palette"
+      ],
+      "portfolio_onboarding": [
+        "irreversible-confirm",
+        "global-command-palette"
+      ]
+    },
+    "lifequest": {
+      "dashboard": [
+        "irreversible-confirm",
+        "global-command-palette",
+        "optimistic-replace-with-undo"
+      ],
+      "today": [
+        "irreversible-confirm",
+        "global-command-palette",
+        "optimistic-replace-with-undo"
+      ],
+      "week_progress": [
+        "irreversible-confirm",
+        "global-command-palette",
+        "optimistic-replace-with-undo"
+      ],
+      "habit_list": [
+        "irreversible-confirm",
+        "global-command-palette",
+        "optimistic-replace-with-undo",
+        "kanban-phase-column-board"
+      ],
+      "habit_detail": [
+        "subcollections",
+        "irreversible-confirm",
+        "footer-inline-setter",
+        "global-command-palette",
+        "optimistic-replace-with-undo",
+        "keyboard-property-popover",
+        "lifecycle-locked-parameters"
+      ],
+      "goal_list": [
+        "irreversible-confirm",
+        "global-command-palette",
+        "optimistic-replace-with-undo",
+        "kanban-phase-column-board"
+      ],
+      "calendar": [
+        "irreversible-confirm",
+        "global-command-palette",
+        "optimistic-replace-with-undo"
+      ],
+      "point_a": [
+        "irreversible-confirm",
+        "global-command-palette",
+        "optimistic-replace-with-undo"
+      ],
+      "vision_board": [
+        "irreversible-confirm",
+        "global-command-palette",
+        "optimistic-replace-with-undo"
+      ],
+      "goal_detail": [
+        "subcollections",
+        "irreversible-confirm",
+        "footer-inline-setter",
+        "global-command-palette",
+        "optimistic-replace-with-undo",
+        "keyboard-property-popover",
+        "lifecycle-locked-parameters"
+      ],
+      "all_time_stats": [
+        "subcollections",
+        "irreversible-confirm",
+        "footer-inline-setter",
+        "hierarchy-tree-nav",
+        "global-command-palette",
+        "optimistic-replace-with-undo",
+        "keyboard-property-popover"
+      ],
+      "badge_list": [
+        "irreversible-confirm",
+        "global-command-palette",
+        "optimistic-replace-with-undo"
+      ]
+    },
+    "messenger": {
+      "conversation_list": [
+        "hero-create",
+        "irreversible-confirm",
+        "inline-search",
+        "global-command-palette",
+        "optimistic-replace-with-undo"
+      ],
+      "chat_view": [
+        "irreversible-confirm",
+        "inline-search",
+        "composer-entry",
+        "antagonist-toggle",
+        "global-command-palette",
+        "optimistic-replace-with-undo"
+      ],
+      "contact_list": [
+        "hero-create",
+        "irreversible-confirm",
+        "inline-search",
+        "global-command-palette",
+        "optimistic-replace-with-undo",
+        "kanban-phase-column-board"
+      ],
+      "user_profile": [
+        "subcollections",
+        "irreversible-confirm",
+        "inline-search",
+        "footer-inline-setter",
+        "global-command-palette",
+        "optimistic-replace-with-undo",
+        "keyboard-property-popover"
+      ],
+      "people_list": [
+        "irreversible-confirm",
+        "grid-card-layout",
+        "inline-search",
+        "global-command-palette",
+        "optimistic-replace-with-undo",
+        "kanban-phase-column-board"
+      ]
+    },
+    "planning": {
+      "my_polls": [
+        "hero-create",
+        "irreversible-confirm",
+        "global-command-palette",
+        "optimistic-replace-with-undo",
+        "kanban-phase-column-board"
+      ],
+      "poll_overview": [
+        "subcollections",
+        "irreversible-confirm",
+        "vote-group",
+        "footer-inline-setter",
+        "global-command-palette",
+        "optimistic-replace-with-undo",
+        "keyboard-property-popover"
+      ],
+      "voting_matrix": [
+        "irreversible-confirm",
+        "global-command-palette",
+        "optimistic-replace-with-undo"
+      ]
+    },
+    "prilozhenie_otslezhivani": {
+      "pets_catalog": [
+        "hero-create",
+        "optimistic-replace-with-undo"
+      ],
+      "pet_detail": [
+        "subcollections",
+        "footer-inline-setter",
+        "optimistic-replace-with-undo",
+        "lifecycle-locked-parameters"
+      ],
+      "health_feed": [
+        "hero-create",
+        "optimistic-replace-with-undo"
+      ],
+      "vaccinations_catalog": [
+        "hero-create",
+        "optimistic-replace-with-undo"
+      ],
+      "vet_visits_catalog": [
+        "hero-create",
+        "optimistic-replace-with-undo",
+        "kanban-phase-column-board"
+      ],
+      "vet_visit_detail": [
+        "footer-inline-setter",
+        "optimistic-replace-with-undo"
+      ],
+      "medications_catalog": [
+        "hero-create",
+        "optimistic-replace-with-undo",
+        "kanban-phase-column-board"
+      ],
+      "add_pet_form": [
+        "optimistic-replace-with-undo"
+      ],
+      "log_health_form": [
+        "optimistic-replace-with-undo"
+      ]
+    },
+    "reflect": {
+      "checkin": [
+        "irreversible-confirm",
+        "global-command-palette",
+        "optimistic-replace-with-undo"
+      ],
+      "timeline": [
+        "irreversible-confirm",
+        "global-command-palette",
+        "optimistic-replace-with-undo"
+      ],
+      "calendar_heatmap": [
+        "irreversible-confirm",
+        "global-command-palette",
+        "optimistic-replace-with-undo"
+      ],
+      "mood_trends": [
+        "irreversible-confirm",
+        "global-command-palette",
+        "optimistic-replace-with-undo"
+      ],
+      "activity_correlation": [
+        "irreversible-confirm",
+        "global-command-palette",
+        "optimistic-replace-with-undo"
+      ],
+      "mood_meter_cluster": [
+        "irreversible-confirm",
+        "global-command-palette",
+        "optimistic-replace-with-undo"
+      ],
+      "entry_detail": [
+        "irreversible-confirm",
+        "vote-group",
+        "global-command-palette",
+        "optimistic-replace-with-undo"
+      ],
+      "weekly_summary": [
+        "subcollections",
+        "irreversible-confirm",
+        "vote-group",
+        "footer-inline-setter",
+        "hierarchy-tree-nav",
+        "global-command-palette",
+        "optimistic-replace-with-undo"
+      ],
+      "hypothesis_detail": [
+        "subcollections",
+        "irreversible-confirm",
+        "vote-group",
+        "footer-inline-setter",
+        "global-command-palette",
+        "optimistic-replace-with-undo",
+        "keyboard-property-popover"
+      ],
+      "hypothesis_list": [
+        "irreversible-confirm",
+        "global-command-palette",
+        "optimistic-replace-with-undo"
+      ],
+      "activity_list": [
+        "irreversible-confirm",
+        "global-command-palette",
+        "optimistic-replace-with-undo"
+      ],
+      "tag_list": [
+        "irreversible-confirm",
+        "global-command-palette",
+        "optimistic-replace-with-undo"
+      ],
+      "insights_feed": [
+        "irreversible-confirm",
+        "global-command-palette",
+        "optimistic-replace-with-undo"
+      ]
+    },
+    "sales": {
+      "listing_feed": [
+        "hero-create",
+        "irreversible-confirm",
+        "grid-card-layout",
+        "inline-search",
+        "hierarchy-tree-nav",
+        "global-command-palette",
+        "optimistic-replace-with-undo",
+        "bulk-action-toolbar",
+        "kanban-phase-column-board"
+      ],
+      "listing_detail": [
+        "subcollections",
+        "irreversible-confirm",
+        "inline-search",
+        "vote-group",
+        "footer-inline-setter",
+        "hierarchy-tree-nav",
+        "global-command-palette",
+        "optimistic-replace-with-undo",
+        "bulk-action-toolbar",
+        "keyboard-property-popover",
+        "lifecycle-locked-parameters"
+      ],
+      "listing_detail_edit": [
+        "irreversible-confirm",
+        "inline-search",
+        "hierarchy-tree-nav",
+        "global-command-palette",
+        "optimistic-replace-with-undo",
+        "bulk-action-toolbar"
+      ],
+      "my_listings": [
+        "hero-create",
+        "irreversible-confirm",
+        "grid-card-layout",
+        "inline-search",
+        "hierarchy-tree-nav",
+        "global-command-palette",
+        "optimistic-replace-with-undo",
+        "bulk-action-toolbar",
+        "kanban-phase-column-board"
+      ],
+      "my_bids": [
+        "hero-create",
+        "irreversible-confirm",
+        "inline-search",
+        "global-command-palette",
+        "optimistic-replace-with-undo",
+        "bulk-action-toolbar",
+        "kanban-phase-column-board"
+      ],
+      "order_list": [
+        "hero-create",
+        "irreversible-confirm",
+        "inline-search",
+        "global-command-palette",
+        "optimistic-replace-with-undo",
+        "bulk-action-toolbar",
+        "kanban-phase-column-board"
+      ],
+      "order_detail": [
+        "subcollections",
+        "irreversible-confirm",
+        "inline-search",
+        "vote-group",
+        "footer-inline-setter",
+        "global-command-palette",
+        "optimistic-replace-with-undo",
+        "bulk-action-toolbar",
+        "keyboard-property-popover"
+      ],
+      "watchlist": [
+        "irreversible-confirm",
+        "inline-search",
+        "global-command-palette",
+        "optimistic-replace-with-undo",
+        "bulk-action-toolbar"
+      ],
+      "inbox": [
+        "irreversible-confirm",
+        "inline-search",
+        "composer-entry",
+        "antagonist-toggle",
+        "global-command-palette",
+        "optimistic-replace-with-undo",
+        "bulk-action-toolbar"
+      ],
+      "seller_profile": [
+        "subcollections",
+        "irreversible-confirm",
+        "inline-search",
+        "vote-group",
+        "footer-inline-setter",
+        "global-command-palette",
+        "optimistic-replace-with-undo",
+        "bulk-action-toolbar",
+        "keyboard-property-popover"
+      ],
+      "category_browse": [
+        "hero-create",
+        "irreversible-confirm",
+        "inline-search",
+        "hierarchy-tree-nav",
+        "global-command-palette",
+        "optimistic-replace-with-undo",
+        "bulk-action-toolbar"
+      ],
+      "dispute_detail": [
+        "irreversible-confirm",
+        "inline-search",
+        "vote-group",
+        "footer-inline-setter",
+        "global-command-palette",
+        "optimistic-replace-with-undo",
+        "bulk-action-toolbar",
+        "keyboard-property-popover"
+      ],
+      "notifications": [
+        "irreversible-confirm",
+        "inline-search",
+        "global-command-palette",
+        "optimistic-replace-with-undo",
+        "bulk-action-toolbar"
+      ],
+      "saved_searches": [
+        "hero-create",
+        "irreversible-confirm",
+        "inline-search",
+        "global-command-palette",
+        "optimistic-replace-with-undo",
+        "bulk-action-toolbar"
+      ],
+      "sales_home": [
+        "irreversible-confirm",
+        "inline-search",
+        "global-command-palette",
+        "optimistic-replace-with-undo",
+        "bulk-action-toolbar"
+      ]
+    },
+    "workflow": {
+      "workflow_list": [
+        "hero-create",
+        "irreversible-confirm",
+        "global-command-palette",
+        "optimistic-replace-with-undo",
+        "kanban-phase-column-board"
+      ],
+      "workflow_canvas": [
+        "irreversible-confirm",
+        "global-command-palette",
+        "optimistic-replace-with-undo"
+      ],
+      "node_inspector": [
+        "subcollections",
+        "irreversible-confirm",
+        "footer-inline-setter",
+        "global-command-palette",
+        "optimistic-replace-with-undo"
+      ],
+      "execution_log": [
+        "subcollections",
+        "irreversible-confirm",
+        "global-command-palette",
+        "optimistic-replace-with-undo"
+      ]
+    }
+  },
+  "falsification": {
+    "shouldMatch": {
+      "correct": 4,
+      "total": 19,
+      "rate": "21.1"
+    },
+    "shouldNotMatch": {
+      "correct": 8,
+      "total": 13,
+      "rate": "61.5"
+    },
+    "mismatches": [
+      {
+        "pattern": "global-command-palette",
+        "type": "shouldMatch",
+        "domain": "sales",
+        "projection": "listings_catalog",
+        "reason": "sales имеет 225 intents — явный overflow для menu-approach"
+      },
+      {
+        "pattern": "global-command-palette",
+        "type": "shouldMatch",
+        "domain": "messenger",
+        "projection": "conversations_root",
+        "reason": "messenger 100 intents"
+      },
+      {
+        "pattern": "global-command-palette",
+        "type": "shouldNotMatch",
+        "domain": "workflow",
+        "projection": "workflow_list",
+        "reason": "workflow 15 intents exactly — граница; требуется fresh trigger без палитры"
+      },
+      {
+        "pattern": "optimistic-replace-with-undo",
+        "type": "shouldMatch",
+        "domain": "lifequest",
+        "projection": "habits_root",
+        "reason": "≥3 replace intents (complete_habit, skip_habit, ...) + click-confirmation"
+      },
+      {
+        "pattern": "optimistic-replace-with-undo",
+        "type": "shouldMatch",
+        "domain": "reflect",
+        "projection": "mood_log",
+        "reason": "rapid replace на mood entries, reversible"
+      },
+      {
+        "pattern": "optimistic-replace-with-undo",
+        "type": "shouldMatch",
+        "domain": "planning",
+        "projection": "poll_detail",
+        "reason": "vote_yes/no/maybe — frequent reversible replace"
+      },
+      {
+        "pattern": "optimistic-replace-with-undo",
+        "type": "shouldNotMatch",
+        "domain": "sales",
+        "projection": "listing_detail",
+        "reason": "close_auction — irreversible side-effects"
+      },
+      {
+        "pattern": "bulk-action-toolbar",
+        "type": "shouldMatch",
+        "domain": "sales",
+        "projection": "listings_catalog",
+        "reason": "aspirational: bulk_archive_listings / bulk_mark_spam для moderation"
+      },
+      {
+        "pattern": "bulk-action-toolbar",
+        "type": "shouldMatch",
+        "domain": "delivery",
+        "projection": "orders_queue",
+        "reason": "aspirational: bulk_assign_courier / bulk_cancel для dispatcher"
+      },
+      {
+        "pattern": "kanban-phase-column-board",
+        "type": "shouldMatch",
+        "domain": "workflow",
+        "projection": "workflow_runs",
+        "reason": "Execution.status ≥3 values (queued/running/completed/failed) + replace"
+      },
+      {
+        "pattern": "kanban-phase-column-board",
+        "type": "shouldMatch",
+        "domain": "sales",
+        "projection": "listings_catalog",
+        "reason": "Listing.status ≥3 (draft/active/sold/archived) + transition intents"
+      },
+      {
+        "pattern": "kanban-phase-column-board",
+        "type": "shouldMatch",
+        "domain": "delivery",
+        "projection": "orders_queue",
+        "reason": "Order.status 7+ phases + status-replace intents"
+      },
+      {
+        "pattern": "kanban-phase-column-board",
+        "type": "shouldNotMatch",
+        "domain": "booking",
+        "projection": "specialist_schedule",
+        "reason": "slot.status не driven через explicit status-replace intent, а через create_booking"
+      },
+      {
+        "pattern": "keyboard-property-popover",
+        "type": "shouldMatch",
+        "domain": "invest",
+        "projection": "portfolio_detail",
+        "reason": "Portfolio имеет ≥4 replace-intents (name/riskProfile/targets/allocations)"
+      },
+      {
+        "pattern": "keyboard-property-popover",
+        "type": "shouldNotMatch",
+        "domain": "booking",
+        "projection": "booking_detail",
+        "reason": "Booking имеет только cancel/confirm, не property-edits"
+      },
+      {
+        "pattern": "observer-readonly-escape",
+        "type": "shouldMatch",
+        "domain": "invest",
+        "projection": "alert_detail",
+        "reason": "observer role + escalate_alert с high irreversibility"
+      },
+      {
+        "pattern": "observer-readonly-escape",
+        "type": "shouldMatch",
+        "domain": "delivery",
+        "projection": "order_detail",
+        "reason": "observer role + flag_order с irreversibility"
+      },
+      {
+        "pattern": "lifecycle-locked-parameters",
+        "type": "shouldMatch",
+        "domain": "invest",
+        "projection": "agent_preapproval_detail",
+        "reason": "AgentPreapproval с active-status + ≥2 setter-intents"
+      },
+      {
+        "pattern": "lifecycle-locked-parameters",
+        "type": "shouldMatch",
+        "domain": "delivery",
+        "projection": "agent_preapproval_detail",
+        "reason": "Аналогично — preapproval lifecycle"
+      },
+      {
+        "pattern": "lifecycle-locked-parameters",
+        "type": "shouldNotMatch",
+        "domain": "lifequest",
+        "projection": "habit_detail",
+        "reason": "Habit без activation-gate — параметры всегда editable"
+      }
+    ]
+  }
+}

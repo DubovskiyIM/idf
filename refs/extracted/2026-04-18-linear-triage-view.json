@@ -1,0 +1,175 @@
+{
+  "source": "linear-triage",
+  "entities": [
+    {
+      "name": "Issue",
+      "fields": [
+        "title",
+        "description",
+        "source",
+        "submitter",
+        "receivedAt",
+        "priority",
+        "labels",
+        "assignee",
+        "status",
+        "triageState"
+      ],
+      "statusValues": [
+        "triage",
+        "backlog",
+        "todo",
+        "in_progress",
+        "done",
+        "cancelled",
+        "declined"
+      ]
+    },
+    {
+      "name": "TriageQueue",
+      "fields": [
+        "name",
+        "sourceFilter",
+        "labelFilter",
+        "priorityFilter",
+        "ownerId"
+      ],
+      "foreignKey": "ownerId→User"
+    },
+    {
+      "name": "Source",
+      "fields": [
+        "kind",
+        "label",
+        "icon"
+      ],
+      "statusValues": [
+        "email",
+        "slack",
+        "feedback_widget",
+        "api",
+        "manual"
+      ]
+    },
+    {
+      "name": "Submitter",
+      "fields": [
+        "name",
+        "email",
+        "externalId",
+        "avatar"
+      ]
+    },
+    {
+      "name": "Project",
+      "fields": [
+        "name",
+        "status",
+        "teamId"
+      ]
+    },
+    {
+      "name": "User",
+      "fields": [
+        "name",
+        "email",
+        "avatar",
+        "role"
+      ]
+    }
+  ],
+  "intents": [
+    {
+      "id": "take_issue",
+      "α": "replace",
+      "target": "issue.assignee",
+      "confirmation": "click"
+    },
+    {
+      "id": "accept_to_backlog",
+      "α": "replace",
+      "target": "issue.triageState",
+      "confirmation": "click"
+    },
+    {
+      "id": "assign_issue",
+      "α": "replace",
+      "target": "issue.assignee",
+      "confirmation": "form"
+    },
+    {
+      "id": "convert_to_project",
+      "α": "add",
+      "creates": "Project",
+      "confirmation": "form"
+    },
+    {
+      "id": "decline_issue",
+      "α": "replace",
+      "target": "issue.triageState",
+      "confirmation": "click",
+      "irreversibility": "high"
+    },
+    {
+      "id": "discard_issue",
+      "α": "remove",
+      "target": "entities",
+      "confirmation": "click",
+      "irreversibility": "high"
+    },
+    {
+      "id": "set_priority",
+      "α": "replace",
+      "target": "issue.priority",
+      "confirmation": "click"
+    },
+    {
+      "id": "add_label",
+      "α": "replace",
+      "target": "issue.labels",
+      "confirmation": "click"
+    },
+    {
+      "id": "create_triage_filter",
+      "α": "add",
+      "creates": "TriageQueue",
+      "confirmation": "form"
+    },
+    {
+      "id": "bulk_take",
+      "α": "replace",
+      "target": "issue.assignee",
+      "confirmation": "click"
+    },
+    {
+      "id": "bulk_decline",
+      "α": "replace",
+      "target": "issue.triageState",
+      "confirmation": "click",
+      "irreversibility": "high"
+    },
+    {
+      "id": "navigate_next_issue",
+      "α": "replace",
+      "target": "session.focusedIssue",
+      "confirmation": "click"
+    }
+  ],
+  "roles": [
+    "owner",
+    "viewer",
+    "observer"
+  ],
+  "observations": [
+    "Flat reverse-chronological feed of unassigned issues (newest first)",
+    "Each card shows source icon (email/Slack/widget), submitter, title, excerpt — source provenance is first-class",
+    "Keyboard-first single-key hotkeys (T/P/D/X) for primary triage decisions without mouse",
+    "Actions cause immediate removal from feed — item leaves queue and reappears in destination context",
+    "Left sidebar filters act as saved triage-queue views (by source / label / priority)",
+    "Bulk selection via Shift+click with actions applied to entire range",
+    "Bottom status bar reveals hotkey cheat-sheet contextually on selection",
+    "Triage is a discrete lifecycle state before backlog — issues are gated, not auto-admitted",
+    "Decline and discard are irreversible-high actions but executed with single keystroke (no modal), relying on undo toast pattern",
+    "Convert-to-project is an escalation path: single issue promoted to higher-order Project entity"
+  ]
+}

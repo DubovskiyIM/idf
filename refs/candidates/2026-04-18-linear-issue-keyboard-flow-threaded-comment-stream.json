@@ -1,0 +1,75 @@
+{
+  "id": "threaded-comment-stream",
+  "version": 1,
+  "status": "candidate",
+  "archetype": "detail",
+  "trigger": {
+    "requires": [
+      {
+        "kind": "sub-entity-exists",
+        "name": "Comment"
+      },
+      {
+        "kind": "entity-field",
+        "entity": "Comment",
+        "field": "parentCommentId"
+      },
+      {
+        "kind": "intent-creates",
+        "value": "Comment"
+      }
+    ]
+  },
+  "structure": {
+    "slot": "sections",
+    "description": "Sub-entity Comment с self-referencing parentCommentId рендерится как threaded stream section: root-comments — top-level, replies — indented под parent. Composer дуальный: inline-reply под веткой vs top-level composer в подвале секции (обычно биндится к разным hotkeys, напр. R/C)."
+  },
+  "rationale": {
+    "hypothesis": "Flat comment-list теряет causality между вопросом и ответом; для sub-entity с self-reference (tree-структура) UI обязан отразить эту структуру, иначе обсуждение деградирует в несвязный feed и теряется context reply-цепочки.",
+    "evidence": [
+      {
+        "source": "linear",
+        "description": "Comments под issue nested по parentCommentId, reply inline внутри thread",
+        "reliability": "high"
+      },
+      {
+        "source": "github-pr",
+        "description": "Review-comments threaded по line + conversation",
+        "reliability": "high"
+      },
+      {
+        "source": "slack",
+        "description": "Threads как отдельная поверхность на parent message",
+        "reliability": "high"
+      }
+    ],
+    "counterexample": [
+      {
+        "source": "youtube-legacy",
+        "description": "Flat chronological comments — считается antipattern для многоуровневой дискуссии",
+        "reliability": "medium"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [
+      {
+        "domain": "sales",
+        "projection": "listing-detail",
+        "reason": "Если Message имеет self-referencing parentId — threaded rendering оправдан"
+      }
+    ],
+    "shouldNotMatch": [
+      {
+        "domain": "messenger",
+        "projection": "conversation",
+        "reason": "Messages flat (feed-архетип), нет self-reference"
+      },
+      {
+        "domain": "reflect",
+        "projection": "mood-entry-detail",
+        "reason": "Нет Comment sub-entity с self-reference"
+      }
+    ]
+  }
+}

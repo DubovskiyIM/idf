@@ -1,0 +1,83 @@
+{
+  "id": "undo-toast-irreversible",
+  "version": 1,
+  "status": "candidate",
+  "archetype": "feed",
+  "trigger": {
+    "requires": [
+      {
+        "kind": "intent-count",
+        "min": 1,
+        "where": {
+          "irreversibility": "high",
+          "confirmation": "click"
+        }
+      },
+      {
+        "kind": "intent-count",
+        "min": 3,
+        "where": {
+          "confirmation": "click"
+        },
+        "description": "high-throughput контекст"
+      }
+    ]
+  },
+  "structure": {
+    "slot": "overlay",
+    "description": "Альтернатива irreversible-confirm: execute immediately + toast с N-секундным undo window. Undo откатывает effect до истечения timer; после — hard-commit. Сохраняет safety за счёт soft-commit окна, не блокируя keyboard speed."
+  },
+  "rationale": {
+    "hypothesis": "В high-throughput feed (triage, inbox) modal-confirm на каждый destructive — friction killer. Если отменяемо optimistically И item не имеет external side-effect, undo-toast строго лучше modal.",
+    "evidence": [
+      {
+        "source": "gmail-undo-send",
+        "description": "Canonical undo-toast для irreversible send (30s window)",
+        "reliability": "high"
+      },
+      {
+        "source": "linear-triage",
+        "description": "Decline/discard одним keystroke без модалки + undo toast",
+        "reliability": "high"
+      },
+      {
+        "source": "slack-delete-message",
+        "description": "Delete без confirm + короткий undo",
+        "reliability": "medium"
+      }
+    ],
+    "counterexample": [
+      {
+        "source": "invest-trade-execute",
+        "description": "Financial/high-stakes — нужен explicit confirm-modal (irreversible-confirm)",
+        "reliability": "high"
+      },
+      {
+        "source": "delivery-capture-payment",
+        "description": "External effect (платёж) — undo физически невозможен, нужен modal",
+        "reliability": "high"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [
+      {
+        "domain": "messenger",
+        "projection": "conversation_list",
+        "reason": "archive/delete conversation — reversible в transactional сроки"
+      }
+    ],
+    "shouldNotMatch": [
+      {
+        "domain": "invest",
+        "projection": "trade_execution",
+        "reason": "high-stakes financial — irreversible-confirm с modal обязателен"
+      },
+      {
+        "domain": "delivery",
+        "projection": "payment_capture",
+        "reason": "external side-effect (__irr), undo невозможен"
+      }
+    ]
+  }
+}

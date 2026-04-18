@@ -1,0 +1,85 @@
+{
+  "id": "keyboard-property-popover",
+  "version": 1,
+  "status": "candidate",
+  "archetype": "detail",
+  "trigger": {
+    "requires": [
+      {
+        "kind": "intent-count",
+        "effect": "replace",
+        "min": 4,
+        "targetPrefix": "mainEntity"
+      },
+      {
+        "kind": "intent-confirmation",
+        "value": "click",
+        "min": 4
+      },
+      {
+        "kind": "field-role-present",
+        "roles": [
+          "status",
+          "reference"
+        ]
+      }
+    ]
+  },
+  "structure": {
+    "slot": "sections",
+    "description": "Каждый property-setter mainEntity рендерится как sidebar-row с single-letter hotkey и inline fuzzy-popover, type-specific picker (calendar/ordered-list/multi-select-with-create). Click и keyboard-путь ведут к одному popover — dual-modal parity без дублирования UI."
+  },
+  "rationale": {
+    "hypothesis": "Когда detail-entity имеет ≥4 scalar/reference свойств с replace-intent, модальные editors создают trip-to-modal friction и ломают context; sidebar+hotkey+inline-popover даёт keyboard-first power-users и click-first casual-users общий surface contract.",
+    "evidence": [
+      {
+        "source": "linear",
+        "description": "10 sidebar-свойств Issue (status S, priority P, assignee A, labels L, cycle Y, estimate E, due D) открываются single-letter hotkey ИЛИ click и приводят к одному popover с fuzzy-search",
+        "reliability": "high"
+      },
+      {
+        "source": "height",
+        "description": "Аналогичный sidebar с hotkey-driven property editors на task-detail",
+        "reliability": "medium"
+      },
+      {
+        "source": "notion-database",
+        "description": "Property-rows fuzzy-picker, дуальная клавиатура/мышь",
+        "reliability": "medium"
+      }
+    ],
+    "counterexample": [
+      {
+        "source": "jira-cloud",
+        "description": "Sidebar-свойства с click-only модалкой без keyboard-equivalence — критикуется за скорость",
+        "reliability": "medium"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [
+      {
+        "domain": "invest",
+        "projection": "position-detail",
+        "reason": "Position имеет много reference-свойств (portfolio, asset) — fits"
+      },
+      {
+        "domain": "sales",
+        "projection": "listing-detail",
+        "reason": "Listing с status/category/condition как keyboard-addressable sidebar"
+      }
+    ],
+    "shouldNotMatch": [
+      {
+        "domain": "messenger",
+        "projection": "conversation-thread",
+        "reason": "feed-архетип без property-setters"
+      },
+      {
+        "domain": "planning",
+        "projection": "poll-vote",
+        "reason": "Единственный action — голосование, property-sidebar не нужен"
+      }
+    ]
+  }
+}

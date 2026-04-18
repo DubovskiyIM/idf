@@ -1,0 +1,74 @@
+{
+  "id": "bulk-action-toolbar",
+  "version": 1,
+  "status": "candidate",
+  "archetype": "catalog",
+  "trigger": {
+    "requires": [
+      {
+        "kind": "intent-count",
+        "filter": {
+          "idPrefix": "bulk_"
+        },
+        "minCount": 2
+      }
+    ]
+  },
+  "structure": {
+    "slot": "toolbar",
+    "description": "Catalog получает checkbox-колонку + floating action bar, активирующийся при selection.size ≥ 1. Bar хостит все bulk_* намерения в виде batched-effect'ов; каждый bulk-intent исполняется по выбранной коллекции, не по одной сущности."
+  },
+  "rationale": {
+    "hypothesis": "Bulk-intents в онтологии — явный signal, что domain ожидает операций-по-множеству. Без dedicated bar пользователю придётся исполнять один и тот же intent N раз подряд (дорогой loop), либо open-каждый-detail → contract нарушен. Toolbar'овый bar — каноничный fit: активируется по selection, исчезает при 0, не конкурирует с per-card actions.",
+    "evidence": [
+      {
+        "source": "height-phase-board",
+        "description": "Чекбоксы открывают bar с Move to Phase / Assign / Archive",
+        "reliability": "high"
+      },
+      {
+        "source": "linear-triage",
+        "description": "Bulk selection-bar с move/assign/label actions",
+        "reliability": "high"
+      },
+      {
+        "source": "gmail",
+        "description": "Canonical pattern: select → toolbar of archive/label/move",
+        "reliability": "high"
+      }
+    ],
+    "counterexample": [
+      {
+        "source": "reflect",
+        "description": "MoodEntry — однократные записи, bulk-операции не моделируются",
+        "reliability": "high"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [
+      {
+        "domain": "sales",
+        "projection": "listings-seller",
+        "reason": "bulk_delist, bulk_edit_price уместны для крупного seller"
+      },
+      {
+        "domain": "delivery",
+        "projection": "orders-dispatcher",
+        "reason": "bulk_assign_courier по zone — реальный use-case"
+      }
+    ],
+    "shouldNotMatch": [
+      {
+        "domain": "planning",
+        "projection": "poll-detail",
+        "reason": "Vote — индивидуальное действие, bulk бессмыслен"
+      },
+      {
+        "domain": "booking",
+        "projection": "booking-detail",
+        "reason": "Detail-view — одна сущность, bulk не применим"
+      }
+    ]
+  }
+}

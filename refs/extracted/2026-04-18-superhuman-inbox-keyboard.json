@@ -1,0 +1,203 @@
+{
+  "source": "superhuman-inbox",
+  "entities": [
+    {
+      "name": "Conversation",
+      "fields": [
+        "subject",
+        "participants",
+        "lastMessageAt",
+        "status",
+        "category",
+        "isRead",
+        "snoozedUntil"
+      ],
+      "statusValues": [
+        "inbox",
+        "done",
+        "snoozed",
+        "sent",
+        "draft"
+      ]
+    },
+    {
+      "name": "Message",
+      "fields": [
+        "sender",
+        "recipients",
+        "subject",
+        "body",
+        "sentAt",
+        "isRead"
+      ],
+      "foreignKey": "conversationId→Conversation"
+    },
+    {
+      "name": "Draft",
+      "fields": [
+        "to",
+        "cc",
+        "subject",
+        "body",
+        "updatedAt"
+      ],
+      "foreignKey": "conversationId→Conversation"
+    },
+    {
+      "name": "Folder",
+      "fields": [
+        "name",
+        "kind",
+        "filterRule"
+      ],
+      "statusValues": [
+        "inbox",
+        "done",
+        "snoozed",
+        "sent",
+        "drafts",
+        "split"
+      ]
+    },
+    {
+      "name": "SplitInbox",
+      "fields": [
+        "name",
+        "senderCategory",
+        "order"
+      ],
+      "foreignKey": "folderId→Folder"
+    },
+    {
+      "name": "Snippet",
+      "fields": [
+        "trigger",
+        "body"
+      ]
+    },
+    {
+      "name": "UndoableAction",
+      "fields": [
+        "actionType",
+        "targetId",
+        "performedAt",
+        "expiresAt"
+      ]
+    }
+  ],
+  "intents": [
+    {
+      "id": "archive_conversation",
+      "α": "replace",
+      "target": "conversation.status",
+      "confirmation": "click",
+      "irreversibility": "high"
+    },
+    {
+      "id": "mark_read_unread",
+      "α": "replace",
+      "target": "conversation.isRead",
+      "confirmation": "click"
+    },
+    {
+      "id": "read_later",
+      "α": "replace",
+      "target": "conversation.status",
+      "confirmation": "click"
+    },
+    {
+      "id": "snooze_conversation",
+      "α": "replace",
+      "target": "conversation.snoozedUntil",
+      "confirmation": "click"
+    },
+    {
+      "id": "reply_message",
+      "α": "add",
+      "creates": "Draft",
+      "confirmation": "enter"
+    },
+    {
+      "id": "reply_all",
+      "α": "add",
+      "creates": "Draft",
+      "confirmation": "enter"
+    },
+    {
+      "id": "forward_message",
+      "α": "add",
+      "creates": "Draft",
+      "confirmation": "enter"
+    },
+    {
+      "id": "send_message",
+      "α": "add",
+      "creates": "Message",
+      "confirmation": "enter"
+    },
+    {
+      "id": "save_draft",
+      "α": "add",
+      "creates": "Draft",
+      "confirmation": "click"
+    },
+    {
+      "id": "undo_last_action",
+      "α": "replace",
+      "target": "conversation.status",
+      "confirmation": "click"
+    },
+    {
+      "id": "search_conversations",
+      "α": "replace",
+      "target": "feed.query",
+      "confirmation": "enter"
+    },
+    {
+      "id": "navigate_next",
+      "α": "replace",
+      "target": "feed.selection",
+      "confirmation": "click"
+    },
+    {
+      "id": "navigate_prev",
+      "α": "replace",
+      "target": "feed.selection",
+      "confirmation": "click"
+    },
+    {
+      "id": "goto_folder",
+      "α": "replace",
+      "target": "feed.folderId",
+      "confirmation": "click"
+    },
+    {
+      "id": "expand_snippet",
+      "α": "replace",
+      "target": "draft.body",
+      "confirmation": "enter"
+    },
+    {
+      "id": "switch_split_inbox",
+      "α": "replace",
+      "target": "feed.splitId",
+      "confirmation": "click"
+    }
+  ],
+  "roles": [
+    "owner",
+    "viewer"
+  ],
+  "observations": [
+    "Feed archetype with two-pane layout: list left, thread right, single-selection driven by J/K",
+    "All mutating actions go through keyboard shortcuts, never modals — composer is inline in the thread pane",
+    "Every destructive or state-changing action produces an undo toast with ~3s expiry; Cmd+Z/U reverts",
+    "Snooze is a replace on conversation.snoozedUntil with preset options (1h / tomorrow / custom date)",
+    "Split Inbox is a saved filtered feed — folder-like but derived from sender category, not a physical location",
+    "Command bar ⌘K is a single entry-point for search + navigation + command execution",
+    "Combo-key navigation (G then I/D/S) indicates hierarchical hotkey namespace, not flat shortcuts",
+    "Composer uses Tab-cycle between To/Subject/Body instead of focus-on-click, reinforcing keyboard-first model",
+    "Snippet expansion (;abc → text) is a replace on draft.body triggered by typing pattern, not explicit command",
+    "Perceived latency ≤80ms implies optimistic local mutation with background sync — undo-toast is the reconciliation UI"
+  ]
+}

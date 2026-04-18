@@ -1,0 +1,66 @@
+{
+  "id": "metadata-kv-readonly",
+  "version": 1,
+  "status": "candidate",
+  "archetype": "detail",
+  "trigger": {
+    "requires": [
+      {
+        "kind": "entity-field",
+        "field": "metadata",
+        "semanticType": "json"
+      },
+      {
+        "kind": "field-role-present",
+        "role": "user-defined-key-value"
+      }
+    ]
+  },
+  "structure": {
+    "slot": "sections",
+    "description": "Поле `metadata` (открытая JSON key-value структура, задаваемая владельцем системы/integration'ом) рендерится как отдельная collapsible секция с monospace key-value list. Не inline в основном fields-block, не editable из observer-view."
+  },
+  "rationale": {
+    "hypothesis": "Metadata — escape-hatch для интеграций, её keys заранее неизвестны и не semantic. Inline-рендер рядом с типизированными полями ломает visual hierarchy (пользователь не отличает системное поле от custom). Отдельная секция с monospace сигналит «это технический контракт, не human-content».",
+    "evidence": [
+      {
+        "source": "stripe-dashboard",
+        "description": "Payment.metadata как collapsed «Metadata» section с key-value monospace rows",
+        "reliability": "high"
+      },
+      {
+        "source": "kubernetes-dashboard",
+        "description": "pod.metadata.labels — отдельный key-value block, не inline",
+        "reliability": "high"
+      }
+    ],
+    "counterexample": [
+      {
+        "source": "airtable",
+        "description": "Custom fields равноправны с built-in — там metadata это first-class content, не escape-hatch. Паттерн применяется только к opaque JSON, не к typed custom fields",
+        "reliability": "medium"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [
+      {
+        "domain": "invest",
+        "projection": "transaction_detail",
+        "reason": "Transaction.metadata от integration partners — opaque kv"
+      }
+    ],
+    "shouldNotMatch": [
+      {
+        "domain": "reflect",
+        "projection": "mood_detail",
+        "reason": "Нет metadata-поля, а activities — typed entity"
+      },
+      {
+        "domain": "messenger",
+        "projection": "message_detail",
+        "reason": "Нет opaque JSON-metadata"
+      }
+    ]
+  }
+}

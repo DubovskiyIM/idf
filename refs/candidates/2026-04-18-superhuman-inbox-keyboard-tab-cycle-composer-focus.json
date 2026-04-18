@@ -1,0 +1,75 @@
+{
+  "id": "tab-cycle-composer-focus",
+  "version": 1,
+  "status": "candidate",
+  "archetype": null,
+  "trigger": {
+    "requires": [
+      {
+        "kind": "intent-creates",
+        "entity": "*"
+      },
+      {
+        "kind": "intent-confirmation",
+        "value": "enter"
+      },
+      {
+        "kind": "entity-field",
+        "entity": "*",
+        "minFields": 3
+      }
+    ]
+  },
+  "structure": {
+    "slot": "composer",
+    "description": "Inline composer для создаваемой сущности циклирует фокус между полями через Tab/Shift+Tab вместо click-to-focus; Enter подтверждает из любого поля (не только 'submit')."
+  },
+  "rationale": {
+    "hypothesis": "В keyboard-first среде переход 'руки → мышь → руки' съедает флоу. Tab-цикл даёт предсказуемый O(1) переход между полями без leaving home-row; composer ведёт себя как единое state-поле, не как набор виджетов.",
+    "evidence": [
+      {
+        "source": "superhuman-inbox",
+        "description": "To → Subject → Body циклично через Tab; Enter отправляет из body.",
+        "reliability": "high"
+      },
+      {
+        "source": "gmail-compose",
+        "description": "Аналогичная схема — Tab между полями, Cmd+Enter отправка.",
+        "reliability": "high"
+      }
+    ],
+    "counterexample": [
+      {
+        "source": "long-form-editor",
+        "description": "В редакторе с множеством inline-widgets Tab должен означать 'отступ', не 'следующее поле'.",
+        "reliability": "high"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [
+      {
+        "domain": "messenger",
+        "projection": "composer_thread",
+        "reason": "Draft с recipients/subject/body — канонический случай."
+      },
+      {
+        "domain": "sales",
+        "projection": "listing_create_form",
+        "reason": "Listing с title/price/description — ≥3 поля, часто создаются power-user'ами."
+      }
+    ],
+    "shouldNotMatch": [
+      {
+        "domain": "lifequest",
+        "projection": "habit_quick_add",
+        "reason": "Один text-input, циклирование не нужно."
+      },
+      {
+        "domain": "reflect",
+        "projection": "mood_entry_slider",
+        "reason": "Основной ввод — slider Mood Meter, не текстовый form."
+      }
+    ]
+  }
+}

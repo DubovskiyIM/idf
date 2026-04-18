@@ -1,0 +1,79 @@
+{
+  "id": "soft-hard-termination-pair",
+  "version": 1,
+  "status": "candidate",
+  "archetype": "detail",
+  "trigger": {
+    "requires": [
+      {
+        "kind": "intent-effect",
+        "α": "replace",
+        "targetMatches": "mainEntity\\.(cancelAt|endDate|scheduledTermination).*"
+      },
+      {
+        "kind": "intent-effect",
+        "α": "remove",
+        "entity": "mainEntity",
+        "irreversibility": "high"
+      },
+      {
+        "kind": "entity-field",
+        "entity": "mainEntity",
+        "field": "status",
+        "includes": "active"
+      }
+    ]
+  },
+  "structure": {
+    "slot": "footer",
+    "description": "Два termination-intent'а на mainEntity подаются как пара в dangerZone footer: мягкий (schedule at period end — reversible) как primary, необратимый (immediate) как secondary с явным ирр-маркером."
+  },
+  "rationale": {
+    "hypothesis": "Когда сущность имеет lifecycle и прекращение имеет два режима (graceful vs immediate), представление их как связанной пары с явной иерархией снижает accidental-destruction и делает reversibility explicit.",
+    "evidence": [
+      {
+        "source": "stripe-subscriptions",
+        "description": "Cancel subscription — «At period end» (default) vs «Immediately» (confirm dialog)",
+        "reliability": "high"
+      },
+      {
+        "source": "github-repo-settings",
+        "description": "Archive (soft) vs Delete (hard) репо — visually pair в danger zone",
+        "reliability": "high"
+      }
+    ],
+    "counterexample": [
+      {
+        "source": "linear-issue-archive",
+        "description": "Только soft-вариант (archive), hard-delete через settings-уровень — не пара на detail",
+        "reliability": "medium"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [
+      {
+        "domain": "invest",
+        "projection": "position_detail",
+        "reason": "Close position: schedule vs market-order immediate"
+      },
+      {
+        "domain": "booking",
+        "projection": "booking_detail",
+        "reason": "Cancel booking: до 24h grace vs immediate с penalty"
+      }
+    ],
+    "shouldNotMatch": [
+      {
+        "domain": "messenger",
+        "projection": "message_detail",
+        "reason": "Message delete — только immediate, нет soft-варианта"
+      },
+      {
+        "domain": "reflect",
+        "projection": "mood_entry_detail",
+        "reason": "MoodEntry не имеет lifecycle / termination"
+      }
+    ]
+  }
+}

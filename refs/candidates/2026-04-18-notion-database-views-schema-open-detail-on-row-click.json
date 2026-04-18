@@ -1,0 +1,76 @@
+{
+  "id": "open-detail-on-row-click",
+  "version": 1,
+  "status": "candidate",
+  "archetype": "catalog",
+  "trigger": {
+    "requires": [
+      {
+        "kind": "intent-effect",
+        "α": "replace",
+        "target": "ui.openEntryId"
+      },
+      {
+        "kind": "intent-confirmation",
+        "confirmation": "click"
+      }
+    ]
+  },
+  "structure": {
+    "slot": "body",
+    "description": "Catalog: click по row/card (но не по inline-control внутри него) открывает detail-modal/drawer/full-page для deep edit. Inline-control = shallow refine, row-click = explorative deep-dive. Жесты ортогональны."
+  },
+  "rationale": {
+    "hypothesis": "Catalog-view даёт summary, detail нужен для long-form content, multi-field orchestration, related-entities. Разделение explorative-click ↔ inline-refine сохраняет information-density в catalog и глубину в detail.",
+    "evidence": [
+      {
+        "source": "notion",
+        "description": "Row/card click → full-page page-view, inline-edit для ячеек отдельный жест",
+        "reliability": "high"
+      },
+      {
+        "source": "gmail",
+        "description": "Click thread → full thread view",
+        "reliability": "high"
+      },
+      {
+        "source": "linear",
+        "description": "Click issue → full detail panel",
+        "reliability": "high"
+      }
+    ],
+    "counterexample": [
+      {
+        "source": "pure-spreadsheet",
+        "description": "В чистом spreadsheet detail отсутствует — всё inline",
+        "reliability": "medium"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [
+      {
+        "domain": "sales",
+        "projection": "listings_catalog",
+        "reason": "Click listing → detail с описанием/photos"
+      },
+      {
+        "domain": "lifequest",
+        "projection": "tasks_catalog",
+        "reason": "Click task → detail с content/subtasks"
+      }
+    ],
+    "shouldNotMatch": [
+      {
+        "domain": "invest",
+        "projection": "portfolio_dashboard",
+        "reason": "Dashboard — read-only aggregate, row-click семантически пуст"
+      },
+      {
+        "domain": "messenger",
+        "projection": "conversation_feed",
+        "reason": "Message inline, нет отдельного detail"
+      }
+    ]
+  }
+}

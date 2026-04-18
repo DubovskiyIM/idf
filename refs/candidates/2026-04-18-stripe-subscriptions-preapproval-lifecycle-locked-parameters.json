@@ -1,0 +1,81 @@
+{
+  "id": "lifecycle-locked-parameters",
+  "version": 1,
+  "status": "candidate",
+  "archetype": "detail",
+  "trigger": {
+    "requires": [
+      {
+        "kind": "sub-entity-exists",
+        "childOf": "mainEntity",
+        "nameMatches": ".*Preapproval$"
+      },
+      {
+        "kind": "entity-field",
+        "entity": "mainEntity",
+        "field": "status",
+        "includes": "active"
+      },
+      {
+        "kind": "intent-count",
+        "min": 1,
+        "filter": {
+          "α": "replace",
+          "targetPrefix": "mainEntity."
+        }
+      }
+    ]
+  },
+  "structure": {
+    "slot": "sections",
+    "description": "Preapproval-сущность (агентские лимиты, captured at creation) рендерится в mainEntity detail как read-only secondary section после status-транзиции в active, с явным «locked after activation» маркером."
+  },
+  "rationale": {
+    "hypothesis": "Поля с lifecycle-contract (captured-at-create, immutable-after-activation) требуют двух режимов отображения: writable во время create-wizard, read-only с explainer после активации — иначе пользователь теряет visibility почему не может редактировать.",
+    "evidence": [
+      {
+        "source": "stripe-subscriptions",
+        "description": "Preapproval параметры (maxAmountPerCycle, maxCycles) собираются в create-wizard и потом отображаются read-only в subscription detail с пометкой «Set at creation»",
+        "reliability": "high"
+      },
+      {
+        "source": "aws-iam-role-trust-policy",
+        "description": "Trust policy editable до attach, frozen после — UI меняет режим",
+        "reliability": "medium"
+      }
+    ],
+    "counterexample": [
+      {
+        "source": "notion-page-properties",
+        "description": "Все properties всегда editable — нет lifecycle-lock",
+        "reliability": "high"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [
+      {
+        "domain": "invest",
+        "projection": "agent_preapproval_detail",
+        "reason": "AgentPreapproval в invest — frozen после confirm"
+      },
+      {
+        "domain": "delivery",
+        "projection": "agent_preapproval_detail",
+        "reason": "Delivery agent preapproval locked после активации"
+      }
+    ],
+    "shouldNotMatch": [
+      {
+        "domain": "lifequest",
+        "projection": "goal_detail",
+        "reason": "Goal — все поля editable в течение lifecycle"
+      },
+      {
+        "domain": "reflect",
+        "projection": "hypothesis_detail",
+        "reason": "Hypothesis не имеет preapproval / locked-after-activation семантики"
+      }
+    ]
+  }
+}
