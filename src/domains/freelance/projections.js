@@ -148,33 +148,10 @@ export const PROJECTIONS = {
     toolbar: ["top_up_wallet_by_card", "view_transaction_history"],
   },
 
-  create_task_wizard: {
-    name: "Опубликовать задачу",
-    kind: "wizard",
-    mainEntity: "Task",
-    steps: [
-      {
-        id: "category",
-        label: "Категория",
-        intent: "filter_by_category",
-        pick: ["categoryId"],
-        source: { collection: "categories" },
-        display: ["name", "slug"],
-      },
-      {
-        id: "confirm",
-        label: "Подтверждение",
-        intent: "create_task_draft",
-        summary: true,
-      },
-    ],
-  },
-
 };
 
 export const ROOT_PROJECTIONS = [
   "task_catalog_public",
-  "create_task_wizard",
   "my_tasks",
   "my_deals",
   "wallet",

@@ -20,11 +20,33 @@ export function describeEffect(intentId, alpha, ctx, target) {
   return `${intent?.name || intentId}: ${alpha} ${target || ""}`;
 }
 
+// Ownership-field auto-injection для creator intents: UI-формы не спрашивают
+// customerId/authorId/executorId (ownership детали), viewer.id подставляется
+// из ctx.userId перед применением effects.
+const OWNERSHIP_INJECT = {
+  create_task_draft: { customerId: "userId" },
+  confirm_deal: { customerId: "userId" },
+  leave_review: { authorId: "userId" },
+  submit_response: { executorId: "userId" },
+  top_up_wallet_by_card: { userId: "userId" },
+};
+
 export function buildEffects(intentId, ctx, world, drafts) {
   const intent = INTENTS[intentId];
   if (!intent) return null;
   const intentEffects = intent.particles?.effects || [];
   if (intentEffects.length === 0) return null;
+
+  const injectRules = OWNERSHIP_INJECT[intentId];
+  if (injectRules && ctx.userId) {
+    const patches = {};
+    for (const [field, source] of Object.entries(injectRules)) {
+      if (ctx[field] === undefined && ctx[source] !== undefined) {
+        patches[field] = ctx[source];
+      }
+    }
+    if (Object.keys(patches).length > 0) ctx = { ...ctx, ...patches };
+  }
 
   const now = Date.now();
   const effects = [];

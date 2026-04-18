@@ -68,38 +68,23 @@ describe("freelance projections — task_detail_public", () => {
   });
 });
 
-describe("freelance projections — create_task_wizard", () => {
-  it("зарегистрирована как wizard", () => {
-    const p = PROJECTIONS.create_task_wizard;
-    expect(p).toBeDefined();
-    expect(p.kind).toBe("wizard");
-    expect(p.mainEntity).toBe("Task");
+describe("freelance create_task_draft — formModal archetype (вместо wizard)", () => {
+  it("create_task_draft.confirmation === 'form'", () => {
+    expect(INTENTS.create_task_draft.confirmation).toBe("form");
   });
 
-  it("steps: category (picker с source.collection) + confirm (summary)", () => {
-    const steps = PROJECTIONS.create_task_wizard.steps;
-    expect(steps.length).toBeGreaterThanOrEqual(2);
-    const ids = steps.map(s => s.id);
-    expect(ids).toContain("category");
-    expect(ids).toContain("confirm");
-    const cat = steps.find(s => s.id === "category");
-    expect(cat.source).toEqual({ collection: "categories" });
-  });
-
-  it("финальный шаг вызывает create_task_draft", () => {
-    const confirm = PROJECTIONS.create_task_wizard.steps.find(s => s.id === "confirm");
-    expect(confirm.intent).toBe("create_task_draft");
-  });
-
-  it("кристаллизуется как wizard", () => {
-    const artifacts = crystallizeV2(INTENTS, PROJECTIONS, ONTOLOGY, "freelance");
-    expect(artifacts.create_task_wizard.archetype).toBe("wizard");
-  });
-
-  it("ROOT_PROJECTIONS включает catalog и wizard", () => {
-    expect(ROOT_PROJECTIONS).toEqual(expect.arrayContaining([
-      "task_catalog_public", "create_task_wizard",
+  it("customerId НЕ в UI-параметрах (auto-injected через buildEffects)", () => {
+    const params = INTENTS.create_task_draft.particles.parameters.map(p => p.name);
+    expect(params).not.toContain("customerId");
+    expect(params).toEqual(expect.arrayContaining([
+      "title", "categoryId", "budget", "type",
     ]));
+  });
+
+  it("categoryId — entityRef на Category (для picker dropdown в form modal)", () => {
+    const catParam = INTENTS.create_task_draft.particles.parameters.find(p => p.name === "categoryId");
+    expect(catParam.type).toBe("entityRef");
+    expect(catParam.entity).toBe("Category");
   });
 });
 
