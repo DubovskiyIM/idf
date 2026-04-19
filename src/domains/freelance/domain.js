@@ -76,6 +76,56 @@ function buildCustomEffects(intentId, ctx, world) {
     ];
   }
 
+  if (intentId === "confirm_deal") {
+    const wallet = world.wallets?.find((w) => w.userId === ctx.customerId);
+    if (!wallet) return null;
+    const amount = Number(ctx.amount);
+    if (!Number.isFinite(amount) || amount <= 0) return null;
+    if ((wallet.balance || 0) < amount) return null;
+
+    const COMMISSION_RATE = 0.1;
+    const commission = Math.round(amount * COMMISSION_RATE);
+    const dealId = `deal_${now}_${Math.random().toString(36).slice(2, 6)}`;
+    const txId = `tx_${now}_${Math.random().toString(36).slice(2, 6)}`;
+
+    return [
+      mkEffect({
+        alpha: "add", target: "deals", scope: "account", value: null,
+        context: {
+          id: dealId,
+          customerId: ctx.customerId, executorId: ctx.executorId,
+          taskId: ctx.taskId, responseId: ctx.responseId,
+          amount, commission,
+          status: "in_progress", deadline: ctx.deadline,
+          createdAt: now,
+          __irr: { point: "high", at: now, reason: "escrow reserved" },
+        },
+        desc: `confirm_deal: add deals`,
+      }),
+      mkEffect({
+        alpha: "add", target: "transactions", scope: "account", value: null,
+        context: {
+          id: txId, walletId: wallet.id, dealId, amount,
+          kind: "escrow-hold", status: "posted",
+          note: `Escrow для сделки ${dealId}`, createdAt: now,
+        },
+        desc: `confirm_deal: add transactions (escrow-hold)`,
+      }),
+      mkEffect({
+        alpha: "replace", target: "wallet.balance", scope: "account",
+        value: (wallet.balance || 0) - amount,
+        context: { id: wallet.id, userId: wallet.userId },
+        desc: `confirm_deal: replace wallet.balance`,
+      }),
+      mkEffect({
+        alpha: "replace", target: "wallet.reserved", scope: "account",
+        value: (wallet.reserved || 0) + amount,
+        context: { id: wallet.id, userId: wallet.userId },
+        desc: `confirm_deal: replace wallet.reserved`,
+      }),
+    ];
+  }
+
   return undefined;
 }
 
