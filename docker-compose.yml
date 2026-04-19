@@ -19,6 +19,10 @@ services:
       NODE_ENV: production
       PORT: "3001"
       IDF_DB_PATH: /data/idf.db
+      # Публичное демо студии — read-only: все write-операции (chat, domain/new)
+      # возвращают 403. Claude CLI и так не ставится в Dockerfile main, но
+      # IDF_READONLY=1 — explicit kill-switch, проверяется в server/studio/claudeProxy.js.
+      IDF_READONLY: "1"
 
   external-calendar:
     image: idf:latest
