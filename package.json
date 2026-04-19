@@ -84,6 +84,7 @@
     "react-force-graph-3d": "^1.29.1",
     "react-markdown": "^10.1.0",
     "react-router-dom": "^7.14.0",
+    "recast": "^0.23.11",
     "tailwind-merge": "^3.5.0",
     "tailwindcss": "^4.2.2",
     "three": "^0.170.0",
@@ -95,7 +96,6 @@
     "@emnapi/core": "1.10.0",
     "@emnapi/runtime": "1.10.0",
     "concurrently": "^9.2.1",
-    "recast": "^0.23.11",
     "supertest": "^7.2.2",
     "typescript": "^5.5.3",
     "vitest": "^4.1.4"
