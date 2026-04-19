@@ -1,0 +1,588 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>IDF — формат описания приложения</title>
+  <meta name="description" content="IDF — формат описания приложения уровня OpenAPI / JSON-LD. Четыре читателя одного артефакта.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,700;9..144,900&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --paper: #fbfaf6;
+      --paper-dim: #f2f0e9;
+      --ink: #14120f;
+      --ink-dim: #57544e;
+      --ink-mid: #8a867d;
+      --rule: #d9d5c9;
+      --rule-dim: #ebe7db;
+      --accent: #a4491a;
+      --accent-bg: rgba(164,73,26,.06);
+      --ok: #2e6b3d;
+      --warn: #8a5a0a;
+      --serif: 'Fraunces', Georgia, serif;
+      --sans: 'Inter', system-ui, sans-serif;
+      --mono: 'JetBrains Mono', ui-monospace, monospace;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --paper: #14120f;
+        --paper-dim: #1b1916;
+        --ink: #f0ebdf;
+        --ink-dim: #a7a295;
+        --ink-mid: #6a675f;
+        --rule: #2a2721;
+        --rule-dim: #221f1a;
+        --accent: #e08b57;
+        --accent-bg: rgba(224,139,87,.08);
+        --ok: #6fbf7f;
+      }
+    }
+    *{margin:0;padding:0;box-sizing:border-box}
+    html{scroll-behavior:smooth}
+    body{background:var(--paper);color:var(--ink);font-family:var(--sans);font-size:17px;line-height:1.65;-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
+    a{color:var(--accent);text-decoration:underline;text-underline-offset:3px;text-decoration-thickness:1px}
+    a:hover{text-decoration-thickness:2px}
+    ::selection{background:var(--accent);color:var(--paper)}
+
+    /* ===== LAYOUT ===== */
+    .frame{max-width:1200px;margin:0 auto;padding:0 48px;display:grid;grid-template-columns:220px minmax(0,1fr);gap:64px}
+    @media(max-width:900px){.frame{grid-template-columns:1fr;gap:0;padding:0 28px}}
+
+    .sidenav{grid-column:1;position:sticky;top:40px;align-self:start;padding-top:64px}
+    @media(max-width:900px){.sidenav{display:none}}
+    .sidenav-label{font-family:var(--mono);font-size:10.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--ink-mid);margin-bottom:14px;padding-left:16px}
+    .sidenav ol{list-style:none;counter-reset:nav;border-left:1px solid var(--rule)}
+    .sidenav li{counter-increment:nav;position:relative;font-size:13.5px;line-height:1.5}
+    .sidenav a{display:block;padding:7px 16px;color:var(--ink-dim);text-decoration:none;border-left:2px solid transparent;margin-left:-1px;transition:all .2s}
+    .sidenav a::before{content:counter(nav,upper-roman) ".";font-family:var(--mono);font-size:10.5px;color:var(--ink-mid);margin-right:10px;letter-spacing:.04em}
+    .sidenav a:hover{color:var(--ink);border-left-color:var(--accent);background:var(--accent-bg)}
+    .sidenav a.on{color:var(--ink);border-left-color:var(--accent);font-weight:500}
+
+    main{grid-column:2;padding:64px 0 120px;min-width:0}
+    section{padding:64px 0;border-top:1px solid var(--rule-dim)}
+    section:first-of-type{border-top:none;padding-top:0}
+
+    /* ===== MASTHEAD ===== */
+    .masthead{padding-top:16px;padding-bottom:32px;border-top:none;display:flex;flex-wrap:wrap;gap:14px;align-items:baseline;justify-content:space-between;font-family:var(--mono);font-size:11.5px;color:var(--ink-dim);letter-spacing:.04em;border-bottom:1px solid var(--rule);padding:18px 0 22px}
+    .masthead .left{display:flex;gap:14px;align-items:baseline;flex-wrap:wrap}
+    .masthead strong{color:var(--ink);font-weight:600;letter-spacing:.08em}
+    .masthead .dot{color:var(--rule)}
+    .masthead .right{display:flex;gap:14px}
+    .masthead .right a{color:var(--ink-dim);text-decoration:none}
+    .masthead .right a:hover{color:var(--accent)}
+    .masthead .right a.on{color:var(--ink);font-weight:600}
+
+    /* ===== HERO ===== */
+    .hero{padding:72px 0 56px;border-top:none}
+    .hero .eyebrow{font-family:var(--mono);font-size:12px;letter-spacing:.18em;text-transform:uppercase;color:var(--accent);margin-bottom:24px}
+    .hero h1{font-family:var(--serif);font-weight:400;font-size:clamp(3rem,7vw,6rem);line-height:.98;letter-spacing:-.035em;margin-bottom:28px;font-variation-settings:"opsz" 144}
+    .hero h1 em{font-style:italic;color:var(--accent);font-variation-settings:"opsz" 144}
+    .hero .lede{font-family:var(--serif);font-size:clamp(1.15rem,2vw,1.45rem);line-height:1.45;max-width:640px;color:var(--ink);margin-bottom:40px;font-variation-settings:"opsz" 48}
+    .hero .lede strong{font-weight:600}
+    .hero .byline{font-family:var(--mono);font-size:12.5px;color:var(--ink-dim);margin-bottom:44px;letter-spacing:.02em}
+    .hero .actions{display:flex;gap:0;flex-wrap:wrap;border-top:1px solid var(--rule);border-bottom:1px solid var(--rule);margin-top:12px}
+    .hero .actions a{flex:1;min-width:180px;padding:20px 18px;font-family:var(--mono);font-size:13px;color:var(--ink);text-decoration:none;border-right:1px solid var(--rule);display:flex;flex-direction:column;gap:5px;transition:background .2s;letter-spacing:.01em}
+    .hero .actions a:last-child{border-right:none}
+    .hero .actions a:hover{background:var(--accent-bg)}
+    .hero .actions a .k{font-family:var(--mono);font-size:10.5px;color:var(--ink-mid);letter-spacing:.16em;text-transform:uppercase}
+    .hero .actions a .v{font-weight:500}
+    .hero .actions a.primary .v{color:var(--accent)}
+
+    /* ===== DIAGRAM ===== */
+    .diagram{padding:48px 0 20px;margin:0 auto;max-width:760px}
+    .diagram svg{width:100%;height:auto;display:block}
+    .diagram .caption{font-family:var(--mono);font-size:11.5px;color:var(--ink-mid);text-align:center;margin-top:20px;letter-spacing:.02em}
+    .diagram-label{font-family:var(--mono);font-size:12px;fill:var(--ink)}
+    .diagram-sub{font-family:var(--mono);font-size:10px;fill:var(--ink-mid);letter-spacing:.04em}
+    .diagram-box{fill:var(--paper);stroke:var(--ink);stroke-width:1.2}
+    .diagram-box-accent{fill:var(--accent-bg);stroke:var(--accent);stroke-width:1.4}
+    .diagram-arrow{stroke:var(--ink-dim);stroke-width:1;fill:none;marker-end:url(#arrow)}
+    .diagram-arrow-accent{stroke:var(--accent);stroke-width:1.4;fill:none;marker-end:url(#arrow-accent)}
+
+    /* ===== SECTION TITLES ===== */
+    h2{font-family:var(--serif);font-weight:500;font-size:clamp(1.7rem,3vw,2.1rem);line-height:1.15;letter-spacing:-.02em;margin-bottom:10px;font-variation-settings:"opsz" 72}
+    .sect-eyebrow{font-family:var(--mono);font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--ink-mid);margin-bottom:14px}
+    .sect-eyebrow .num{color:var(--accent);margin-right:10px;font-weight:600}
+    .sect-lede{font-family:var(--serif);font-size:1.2rem;line-height:1.5;color:var(--ink);max-width:600px;margin-bottom:36px;font-variation-settings:"opsz" 36}
+
+    h3{font-family:var(--serif);font-weight:600;font-size:1.15rem;line-height:1.3;margin-bottom:6px;font-variation-settings:"opsz" 18}
+    p{color:var(--ink);margin-bottom:14px}
+    p.dim{color:var(--ink-dim)}
+    p.sml{font-size:15px;line-height:1.6}
+    code{font-family:var(--mono);font-size:.88em;background:var(--paper-dim);padding:1px 6px;border-radius:3px;color:var(--accent)}
+    pre code{background:none;padding:0;color:inherit}
+
+    /* ===== DEFINITIONS (four objects) ===== */
+    .defs{display:grid;grid-template-columns:1fr 1fr;gap:0;border-top:1px solid var(--rule);border-left:1px solid var(--rule)}
+    @media(max-width:720px){.defs{grid-template-columns:1fr}}
+    .def{padding:28px 28px 26px;border-right:1px solid var(--rule);border-bottom:1px solid var(--rule)}
+    .def .term{font-family:var(--serif);font-weight:700;font-size:1.1rem;letter-spacing:-.01em;margin-bottom:4px;font-variation-settings:"opsz" 18}
+    .def .term .sym{font-family:var(--mono);color:var(--accent);margin-right:10px;font-weight:500}
+    .def .sub{font-family:var(--mono);font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-mid);margin-bottom:10px}
+    .def p{font-size:14.5px;line-height:1.6;color:var(--ink-dim);margin:0}
+
+    /* ===== FACTS ROW ===== */
+    .facts{display:grid;grid-template-columns:repeat(5,1fr);gap:0;border-top:1px solid var(--rule);border-bottom:1px solid var(--rule);margin:12px 0}
+    @media(max-width:720px){.facts{grid-template-columns:repeat(3,1fr)}}
+    @media(max-width:440px){.facts{grid-template-columns:repeat(2,1fr)}}
+    .fact{padding:22px 10px 20px;text-align:center;border-right:1px solid var(--rule)}
+    .fact:last-child{border-right:none}
+    @media(max-width:720px){.fact{border-bottom:1px solid var(--rule-dim)}}
+    .fact .n{font-family:var(--serif);font-weight:700;font-size:clamp(1.8rem,4vw,2.4rem);line-height:1;letter-spacing:-.02em;font-variation-settings:"opsz" 72}
+    .fact .l{font-family:var(--mono);font-size:10.5px;color:var(--ink-mid);margin-top:6px;letter-spacing:.1em;text-transform:uppercase}
+
+    /* ===== MATERIALIZATIONS TABLE ===== */
+    .mtable{border-collapse:collapse;width:100%;font-size:14.5px;margin-top:6px}
+    .mtable th{text-align:left;font-family:var(--mono);font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-mid);font-weight:500;padding:12px 16px 12px 0;border-bottom:1px solid var(--rule)}
+    .mtable td{padding:18px 16px 18px 0;border-bottom:1px solid var(--rule-dim);vertical-align:top}
+    .mtable td:first-child{width:160px}
+    .mtable td.name{font-family:var(--serif);font-weight:600;font-size:1.05rem;color:var(--ink);font-variation-settings:"opsz" 18}
+    .mtable td.name .num{font-family:var(--mono);font-size:11px;color:var(--ink-mid);letter-spacing:.1em;margin-right:10px;font-weight:400}
+    .mtable td.api{font-family:var(--mono);font-size:12px;color:var(--ink-dim);word-break:break-word}
+    .mtable td p{margin:0;font-size:14px;color:var(--ink-dim);line-height:1.55}
+
+    /* ===== CURL EXAMPLES ===== */
+    .curls{background:var(--paper-dim);border:1px solid var(--rule);border-radius:4px;padding:20px 24px;font-family:var(--mono);font-size:13px;line-height:1.9;color:var(--ink);margin-top:20px;overflow-x:auto}
+    .curls .cm{color:var(--ink-mid);user-select:none}
+    .curls .hl{color:var(--accent);font-weight:500}
+    .curls .ok{color:var(--ok)}
+
+    /* ===== LLM two-col ===== */
+    .llm{display:grid;grid-template-columns:1fr 1fr;gap:32px;margin-top:8px}
+    @media(max-width:720px){.llm{grid-template-columns:1fr;gap:24px}}
+    .llm-col{border-top:2px solid var(--ink)}
+    .llm-col.no{border-top-color:var(--accent)}
+    .llm-col .hd{font-family:var(--mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;padding:14px 0 10px;color:var(--ink)}
+    .llm-col.no .hd{color:var(--accent)}
+    .llm-col ul{list-style:none;padding:0;margin:0}
+    .llm-col li{padding:12px 0;border-bottom:1px solid var(--rule-dim);font-size:14.5px;line-height:1.5;color:var(--ink)}
+    .llm-col li:last-child{border-bottom:none}
+    .llm-col li .sub{display:block;font-size:12.5px;color:var(--ink-mid);margin-top:3px}
+
+    /* ===== DOMAINS TABLE ===== */
+    .dtable{border-collapse:collapse;width:100%;font-size:14.5px;margin-top:6px}
+    .dtable th{text-align:left;font-family:var(--mono);font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-mid);font-weight:500;padding:12px 12px 12px 0;border-bottom:1px solid var(--rule)}
+    .dtable th.num{text-align:right;width:80px}
+    .dtable td{padding:14px 12px 14px 0;border-bottom:1px solid var(--rule-dim);vertical-align:top}
+    .dtable td.num{text-align:right;font-family:var(--mono);font-weight:500;color:var(--accent);width:80px}
+    .dtable td.name{font-family:var(--serif);font-weight:600;width:140px;font-size:1.02rem;font-variation-settings:"opsz" 18}
+    .dtable td p{margin:0;font-size:14px;color:var(--ink-dim);line-height:1.5}
+
+    /* ===== QUOTE ===== */
+    .pull{margin:32px 0 8px;padding:28px 0 24px 28px;border-left:3px solid var(--accent);font-family:var(--serif);font-size:1.35rem;line-height:1.45;color:var(--ink);font-variation-settings:"opsz" 48;max-width:720px}
+    .pull em{font-style:italic;color:var(--accent)}
+    .pull cite{display:block;font-family:var(--mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-mid);margin-top:18px;font-style:normal}
+
+    /* ===== COLOPHON ===== */
+    .colophon{border-top:1px solid var(--rule);padding:48px 0 32px;margin-top:64px;display:grid;grid-template-columns:1fr 1fr;gap:32px;font-size:13.5px;color:var(--ink-dim)}
+    @media(max-width:720px){.colophon{grid-template-columns:1fr;gap:20px}}
+    .colophon h4{font-family:var(--mono);font-size:10.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--ink);margin-bottom:14px;font-weight:500}
+    .colophon p{margin-bottom:8px;font-size:13.5px;line-height:1.55;color:var(--ink-dim)}
+    .colophon a{color:var(--ink);text-decoration:underline;text-decoration-color:var(--rule);text-underline-offset:2px}
+    .colophon a:hover{text-decoration-color:var(--accent);color:var(--accent)}
+    .colophon .meta{font-family:var(--mono);font-size:11px;color:var(--ink-mid);margin-top:12px;letter-spacing:.02em}
+
+    /* ===== SCROLL REVEAL ===== */
+    .rv{opacity:0;transform:translateY(12px);transition:opacity .7s ease-out,transform .7s ease-out}
+    .rv.vis{opacity:1;transform:none}
+
+    @media(max-width:900px){
+      body{font-size:16px}
+      main{padding:40px 0 80px}
+      section{padding:48px 0}
+      .hero{padding:48px 0 40px}
+      .hero .actions a{min-width:140px;padding:16px 14px}
+    }
+  </style>
+</head>
+<body>
+
+<div class="frame">
+
+  <!-- ===== SIDE NAV ===== -->
+  <aside class="sidenav">
+    <div class="sidenav-label">Содержание</div>
+    <ol>
+      <li><a href="#tezis">Тезис</a></li>
+      <li><a href="#obekty">Четыре объекта</a></li>
+      <li><a href="#chitateli">Четыре читателя</a></li>
+      <li><a href="#algebra">Алгебра формата</a></li>
+      <li><a href="#llm">LLM: где и где нет</a></li>
+      <li><a href="#domeny">Девять доменов</a></li>
+      <li><a href="#nachat">Как начать</a></li>
+    </ol>
+  </aside>
+
+  <main>
+
+    <!-- ===== MASTHEAD ===== -->
+    <div class="masthead">
+      <div class="left">
+        <strong>IDF</strong>
+        <span class="dot">/</span>
+        <span>Intent-Driven Frontend</span>
+        <span class="dot">/</span>
+        <span>манифест&nbsp;v2</span>
+        <span class="dot">/</span>
+        <span>core&nbsp;0.9</span>
+      </div>
+      <div class="right">
+        <a href="./manifesto.html">Манифест</a>
+        <a href="./onboarding.html">Онбординг</a>
+        <a href="#" class="on">RU</a>
+        <a href="./index.html">EN →</a>
+      </div>
+    </div>
+
+    <!-- ===== HERO ===== -->
+    <section class="hero">
+      <div class="eyebrow">Открытый формат · 2026</div>
+      <h1>Формат описания <em>приложения.</em></h1>
+      <p class="lede">IDF — <strong>не фреймворк и не no-code генератор</strong>. Это спецификация формы данных, в одном ряду с OpenAPI и JSON-LD. Адаптеры, рендерер, голосовой слой, агентский API и документ — читатели формата. Каждый превращает один артефакт в свою среду.</p>
+      <div class="byline">9 доменов · 585 намерений · 1 123 теста · 4 материализации · опубликовано 19 апреля 2026</div>
+      <div class="actions">
+        <a href="./onboarding.html" class="primary">
+          <span class="k">Начать</span>
+          <span class="v">5 слайдов онбординга →</span>
+        </a>
+        <a href="./manifesto.html">
+          <span class="k">Читать</span>
+          <span class="v">Манифест v2 →</span>
+        </a>
+        <a href="https://www.npmjs.com/package/@intent-driven/core">
+          <span class="k">Установить</span>
+          <span class="v">@intent-driven/core →</span>
+        </a>
+      </div>
+    </section>
+
+    <!-- ===== DIAGRAM ===== -->
+    <div class="diagram rv">
+      <svg viewBox="0 0 720 340" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+            <path d="M 0 0 L 10 5 L 0 10 z" fill="var(--ink-dim)"/>
+          </marker>
+          <marker id="arrow-accent" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+            <path d="M 0 0 L 10 5 L 0 10 z" fill="var(--accent)"/>
+          </marker>
+        </defs>
+
+        <!-- inputs column -->
+        <g>
+          <rect class="diagram-box" x="20" y="30" width="150" height="48" rx="3"/>
+          <text class="diagram-label" x="95" y="56" text-anchor="middle">ontology</text>
+          <text class="diagram-sub" x="95" y="71" text-anchor="middle">сущности · роли · правила</text>
+
+          <rect class="diagram-box" x="20" y="98" width="150" height="48" rx="3"/>
+          <text class="diagram-label" x="95" y="124" text-anchor="middle">intents</text>
+          <text class="diagram-sub" x="95" y="139" text-anchor="middle">декларативные частицы</text>
+
+          <rect class="diagram-box" x="20" y="166" width="150" height="48" rx="3"/>
+          <text class="diagram-label" x="95" y="192" text-anchor="middle">projection</text>
+          <text class="diagram-sub" x="95" y="207" text-anchor="middle">preference · pattern bank</text>
+
+          <rect class="diagram-box" x="20" y="234" width="150" height="48" rx="3"/>
+          <text class="diagram-label" x="95" y="260" text-anchor="middle">Φ · лог</text>
+          <text class="diagram-sub" x="95" y="275" text-anchor="middle">confirmed эффекты</text>
+        </g>
+
+        <!-- artifact core -->
+        <rect class="diagram-box-accent" x="270" y="120" width="170" height="80" rx="4"/>
+        <text class="diagram-label" x="355" y="150" text-anchor="middle" style="font-weight:600">artifact</text>
+        <text class="diagram-sub" x="355" y="168" text-anchor="middle">чистая функция</text>
+        <text class="diagram-sub" x="355" y="184" text-anchor="middle">detеrministic · перегенерируем</text>
+
+        <!-- arrows inputs -> artifact -->
+        <path class="diagram-arrow" d="M 175 54 Q 230 54 260 140"/>
+        <path class="diagram-arrow" d="M 175 122 Q 230 122 260 152"/>
+        <path class="diagram-arrow" d="M 175 190 Q 230 190 260 170"/>
+        <path class="diagram-arrow" d="M 175 258 Q 230 258 260 182"/>
+
+        <!-- four readers -->
+        <g>
+          <rect class="diagram-box" x="540" y="20" width="160" height="52" rx="3"/>
+          <text class="diagram-label" x="620" y="48" text-anchor="middle">pixels</text>
+          <text class="diagram-sub" x="620" y="63" text-anchor="middle">renderer · adapter</text>
+
+          <rect class="diagram-box" x="540" y="90" width="160" height="52" rx="3"/>
+          <text class="diagram-label" x="620" y="118" text-anchor="middle">voice</text>
+          <text class="diagram-sub" x="620" y="133" text-anchor="middle">SSML · plain · turns</text>
+
+          <rect class="diagram-box" x="540" y="180" width="160" height="52" rx="3"/>
+          <text class="diagram-label" x="620" y="208" text-anchor="middle">agent API</text>
+          <text class="diagram-sub" x="620" y="223" text-anchor="middle">schema · world · exec</text>
+
+          <rect class="diagram-box" x="540" y="250" width="160" height="52" rx="3"/>
+          <text class="diagram-label" x="620" y="278" text-anchor="middle">document</text>
+          <text class="diagram-sub" x="620" y="293" text-anchor="middle">HTML · JSON</text>
+        </g>
+
+        <!-- arrows artifact -> readers -->
+        <path class="diagram-arrow-accent" d="M 445 145 Q 495 80 535 46"/>
+        <path class="diagram-arrow-accent" d="M 445 155 Q 495 140 535 116"/>
+        <path class="diagram-arrow-accent" d="M 445 170 Q 495 195 535 206"/>
+        <path class="diagram-arrow-accent" d="M 445 180 Q 495 250 535 276"/>
+
+        <!-- filter annotation -->
+        <text class="diagram-sub" x="490" y="334" text-anchor="middle">filterWorldForRole(world, viewer, ontology)</text>
+      </svg>
+      <div class="caption">Fig. 1 — Один артефакт, четыре материализации. Все читают тот же viewerWorld.</div>
+    </div>
+
+    <!-- ===== §1 ТЕЗИС ===== -->
+    <section id="tezis">
+      <div class="sect-eyebrow"><span class="num">I.</span>Тезис</div>
+      <h2>Всё остальное — производное.</h2>
+      <p class="sect-lede">Приложение в IDF полностью описывается четырьмя сущностями. UI, агентская схема, документ, speech-script — функции над этими четырьмя. Ни одна из функций не содержит скрытого состояния и не требует рантайм-интерпретации LLM.</p>
+
+      <div class="pull">
+        Артефакт — <em>функция</em> от онтологии, намерений и проекции. UI — <em>функция</em> от артефакта. Всё вычислимо, всё воспроизводимо. Никакого рантайм-LLM.
+        <cite>— Манифест v2, часть III</cite>
+      </div>
+    </section>
+
+    <!-- ===== §2 ЧЕТЫРЕ ОБЪЕКТА ===== -->
+    <section id="obekty">
+      <div class="sect-eyebrow"><span class="num">II.</span>Объекты формата</div>
+      <h2>Четыре объекта. Больше ничего.</h2>
+      <p class="sect-lede">Онтология описывает домен. Намерения — декларативные частицы изменения. Проекции — авторский контракт. Φ — лог confirmed-эффектов, единственный источник истины.</p>
+
+      <div class="defs">
+        <div class="def">
+          <div class="term"><span class="sym">◉</span>Ontology</div>
+          <div class="sub">§8 манифеста</div>
+          <p>Типизированные сущности с read/write matrix, роли (5 баз: owner · viewer · agent · observer · admin), инварианты, правила реактивной автоматизации.</p>
+        </div>
+        <div class="def">
+          <div class="term"><span class="sym">→</span>Intents</div>
+          <div class="sub">§6</div>
+          <p>Не функция и не handler — запись формата: ownerRole, requiredFields, conditions, effects. Эмиттятся в Φ через generic effect handler.</p>
+        </div>
+        <div class="def">
+          <div class="term"><span class="sym">▢</span>Projections</div>
+          <div class="sub">§9</div>
+          <p>Какие намерения образуют один экран, диалог, страницу. Preference поверх Pattern Bank — вход кристаллизации, не snapshot.</p>
+        </div>
+        <div class="def">
+          <div class="term"><span class="sym">Φ</span>Phi · лог</div>
+          <div class="sub">§4</div>
+          <p>Упорядоченная последовательность confirmed-эффектов. Мир не хранится — вычисляется как <code>fold(Φ)</code>. Audit trail бесплатный.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== MEASURES ===== -->
+    <section>
+      <div class="sect-eyebrow"><span class="num">III.</span>Счёт</div>
+      <h2>Объём референсной реализации.</h2>
+      <p class="sect-lede">Один движок, девять наборов определений. 9 доменов × 1 ontology × 0 runtime LLM. <a href="https://github.com/DubovskiyIM/idf/blob/main/docs/implementation-status.md">Живой implementation status</a>.</p>
+      <div class="facts">
+        <div class="fact"><div class="n">9</div><div class="l">доменов</div></div>
+        <div class="fact"><div class="n">585</div><div class="l">намерений</div></div>
+        <div class="fact"><div class="n">1 123</div><div class="l">теста</div></div>
+        <div class="fact"><div class="n">4</div><div class="l">материализации</div></div>
+        <div class="fact"><div class="n">4</div><div class="l">UI-адаптера</div></div>
+      </div>
+    </section>
+
+    <!-- ===== §3 ЧЕТЫРЕ ЧИТАТЕЛЯ ===== -->
+    <section id="chitateli">
+      <div class="sect-eyebrow"><span class="num">IV.</span>Четыре читателя</div>
+      <h2>Один артефакт. Четыре среды.</h2>
+      <p class="sect-lede">Pixels, voice, agent API, document — архитектурно равноправны. Все читают один <code>viewerWorld = filterWorldForRole(world, viewer, ontology)</code>. Безопасность — свойство формата, а не рендера.</p>
+
+      <table class="mtable">
+        <thead>
+          <tr><th>Материализация</th><th>Контракт</th><th>Endpoint / API</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="name"><span class="num">01</span>Pixels</td>
+            <td><p>Renderer + adapter + Token Bridge. 4 UI-адаптера: Mantine, shadcn (doodle), Apple visionOS-glass, AntD. Capability surface для graceful fallback.</p></td>
+            <td class="api">ProjectionRendererV2</td>
+          </tr>
+          <tr>
+            <td class="name"><span class="num">02</span>Voice</td>
+            <td><p>Speech-script из turns (system · assistant · prompts). Brevity: top-3 для catalog, money читается «два с половиной миллиона рублей».</p></td>
+            <td class="api">/api/voice/:domain/:projection</td>
+          </tr>
+          <tr>
+            <td class="name"><span class="num">03</span>Agent API</td>
+            <td><p>JSON-schema намерений, viewer-scoped world snapshot, exec endpoint. Preapproval guard с 5 предикатами: active · notExpired · maxAmount · csvInclude · dailySum.</p></td>
+            <td class="api">/api/agent/:domain/{schema, world, exec}</td>
+          </tr>
+          <tr>
+            <td class="name"><span class="num">04</span>Document</td>
+            <td><p>Structured document-граф: sections · tables · fields · badges. HTML для печати и чтения, JSON для индексации и архивов.</p></td>
+            <td class="api">/api/document/:domain/:projection</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <pre class="curls">
+<span class="cm"># 1. agent schema — что роль может сделать</span>
+curl <span class="hl">/api/agent/invest/schema</span>?as=advisor
+
+<span class="cm"># 2. speech-script для голосового ассистента</span>
+curl <span class="hl">/api/voice/reflect/home</span>?format=ssml
+
+<span class="cm"># 3. документ-граф для отчёта</span>
+curl <span class="hl">/api/document/invest/portfolio</span>?format=html
+      </pre>
+    </section>
+
+    <!-- ===== §4 АЛГЕБРА ===== -->
+    <section id="algebra">
+      <div class="sect-eyebrow"><span class="num">V.</span>Алгебра формата</div>
+      <h2>Две формулы. Остальное — следствия.</h2>
+      <p class="sect-lede">Мир — свёртка лога. Артефакт — чистая функция от входа. Эти две формулы задают всю алгебру формата: fold, filterWorldForRole, crystallize. Тот же вход — тот же выход, всегда.</p>
+
+      <pre class="curls" style="font-size:14px;line-height:1.85">
+<span class="cm">// мир — не хранимое состояние, а свёртка эффектов</span>
+<span class="hl">world</span>       = fold(<span class="hl">Φ</span>_confirmed)
+
+<span class="cm">// каждый читатель получает свой срез мира по роли</span>
+<span class="hl">viewerWorld</span> = filterWorldForRole(world, viewer, ontology)
+
+<span class="cm">// артефакт — чистая функция, перегенерируем из тех же входов</span>
+<span class="hl">artifact</span>    = crystallize(intents, ontology, projection, patterns, features)
+      </pre>
+      <p class="sml dim" style="margin-top:16px;max-width:640px">Детерминизм обязателен: два вызова с идентичным входом возвращают идентичный артефакт. Это делает артефакт кешируемым по content hash, сравнимым diff'ом и проверяемым через equality.</p>
+    </section>
+
+    <!-- ===== §5 LLM ===== -->
+    <section id="llm">
+      <div class="sect-eyebrow"><span class="num">VI.</span>LLM в формате</div>
+      <h2>Уместен в авторстве. Исключён из рантайма.</h2>
+      <p class="sect-lede">Ни одно решение, влияющее на состояние мира или рендер, не зависит от непредсказуемого провайдера. Детерминизм формата не соседствует с LLM — он его исключает.</p>
+
+      <div class="llm">
+        <div class="llm-col">
+          <div class="hd">Design-time — уместен</div>
+          <ul>
+            <li>Вывод онтологии из описания домена<span class="sub">Draft сущностей, полей, ролей, начальных намерений — автор подтверждает или отвергает.</span></li>
+            <li>Crystallize enrichment — labels, iconHints<span class="sub">Witness с reliability «heuristic»; требует подтверждения.</span></li>
+            <li>Pattern suggestion<span class="sub">Candidate-паттерны из живых приложений; promotion в stable через falsification-fixtures.</span></li>
+          </ul>
+        </div>
+        <div class="llm-col no">
+          <div class="hd">Runtime — исключён</div>
+          <ul>
+            <li>Рендер артефакта в DOM<span class="sub">Pure functions. Zero LLM calls.</span></li>
+            <li>Валидация и применение намерений<span class="sub">Инварианты проверяются декларативно.</span></li>
+            <li>Voice / document / agent API<span class="sub">Чистые функции над артефактом.</span></li>
+            <li>Anchoring witness'ов<span class="sub">Промоция требует доказательства, не LLM-подтверждения.</span></li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== §6 ДОМЕНЫ ===== -->
+    <section id="domeny">
+      <div class="sect-eyebrow"><span class="num">VII.</span>Зоны силы</div>
+      <h2>Девять доменов валидации.</h2>
+      <p class="sect-lede">Каждый домен толкает формат в новую форму задачи: транзакционную, коммуникационную, аналитическую. Все — из одной онтологии через один кристаллизатор.</p>
+
+      <table class="dtable">
+        <thead>
+          <tr><th class="num">intents</th><th>Домен</th><th>Характер</th></tr>
+        </thead>
+        <tbody>
+          <tr><td class="num">225</td><td class="name">Sales</td><td><p>Аукционная барахолка. 11 сущностей, 4 роли, полный lifecycle заказа. Чисто-кристаллизационный — без ManualUI.</p></td></tr>
+          <tr><td class="num">100</td><td class="name">Messenger</td><td><p>Real-time чат. WebSocket, WebRTC, threads, реакции.</p></td></tr>
+          <tr><td class="num">58</td><td class="name">Invest</td><td><p>AntD enterprise-fintech. 4 роли, 7 правил Rules Engine, 3 внешних ML-сервиса, все 4 v1.5 extensions в одном домене.</p></td></tr>
+          <tr><td class="num">56</td><td class="name">LifeQuest</td><td><p>Цели + привычки. Shadcn-doodle, mobile-first, 6 custom canvas.</p></td></tr>
+          <tr><td class="num">47</td><td class="name">Reflect</td><td><p>Дневник эмоций по Yale RULER. Apple visionOS-glass, 6 analytical canvas.</p></td></tr>
+          <tr><td class="num">45</td><td class="name">Delivery</td><td><p>Food last-mile. 5 ролей, map-primitive, temporal scheduler, irreversible capture_payment.</p></td></tr>
+          <tr><td class="num">22</td><td class="name">Booking</td><td><p>Service booking. Темпоральные предикаты, первое применение scheduler'а.</p></td></tr>
+          <tr><td class="num">17</td><td class="name">Planning</td><td><p>Коллективные опросы. Кворум, фазы, phase-aware CTA.</p></td></tr>
+          <tr><td class="num">15</td><td class="name">Workflow</td><td><p>Визуальный редактор процессов. React Flow canvas, топологический executor.</p></td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <!-- ===== §7 НАЧАТЬ ===== -->
+    <section id="nachat">
+      <div class="sect-eyebrow"><span class="num">VIII.</span>Как начать</div>
+      <h2>Три входа по возрастанию глубины.</h2>
+      <p class="sect-lede">Быстрый путь — прочитать 5 слайдов онбординга. Средний — манифест v2 (timeless-документ формата). Глубокий — установить SDK и сгенерировать свой домен через CLI.</p>
+
+      <table class="mtable">
+        <tbody>
+          <tr>
+            <td class="name"><span class="num">15&nbsp;мин</span>Онбординг</td>
+            <td><p>Пять слайдов с диаграммами и кодом — базовые идеи формата за один присест. Стрелки / пробел / клик по точкам для навигации.</p></td>
+            <td class="api"><a href="./onboarding.html">./onboarding.html →</a></td>
+          </tr>
+          <tr>
+            <td class="name"><span class="num">1&nbsp;час</span>Манифест v2</td>
+            <td><p>26 глав в 8 частях: тезис, объекты формата, алгебра, четыре читателя, авторство, conformance, границы, перспектива.</p></td>
+            <td class="api"><a href="https://github.com/DubovskiyIM/idf/blob/main/docs/manifesto-v2.md">docs/manifesto-v2.md →</a></td>
+          </tr>
+          <tr>
+            <td class="name"><span class="num">1&nbsp;день</span>Свой домен</td>
+            <td><p>CLI ведёт 5-шаговый LLM-диалог (Claude haiku/sonnet/opus) и генерирует каталог домена с ontology, intents, projections.</p></td>
+            <td class="api">npx @intent-driven/cli init &lt;name&gt;</td>
+          </tr>
+          <tr>
+            <td class="name"><span class="num">живое</span>Impl status</td>
+            <td><p>Что реализовано и валидировано на практике. Обновляется вместе с кодом; манифест остаётся timeless.</p></td>
+            <td class="api"><a href="https://github.com/DubovskiyIM/idf/blob/main/docs/implementation-status.md">implementation-status.md →</a></td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
+    <!-- ===== COLOPHON ===== -->
+    <footer class="colophon">
+      <div>
+        <h4>Формат</h4>
+        <p><a href="https://github.com/DubovskiyIM/idf/blob/main/docs/manifesto-v2.md">Манифест v2</a> — timeless-документ</p>
+        <p><a href="https://github.com/DubovskiyIM/idf/blob/main/docs/implementation-status.md">Implementation status</a> — живой статус</p>
+        <p><a href="./onboarding.html">Онбординг</a> — 5 слайдов</p>
+        <p class="meta">Manifesto · Apache 2.0</p>
+      </div>
+      <div>
+        <h4>Реализация</h4>
+        <p><a href="https://www.npmjs.com/org/intent-driven">npm / @intent-driven</a> — 8 пакетов</p>
+        <p><a href="https://github.com/DubovskiyIM/idf">github.com/DubovskiyIM/idf</a> — прототип</p>
+        <p><a href="./index-ru.html">Первая версия лендинга</a></p>
+        <p class="meta">core 0.9.0 · BSL 1.1 → Apache 2.0 (2030-04-15)</p>
+        <p class="meta">impl-status обновлён 2026-04-19</p>
+      </div>
+    </footer>
+
+  </main>
+</div>
+
+<script>
+// Scroll reveal
+(function(){
+  const obs=new IntersectionObserver(entries=>{
+    entries.forEach(e=>{if(e.isIntersecting)e.target.classList.add('vis')});
+  },{threshold:.12,rootMargin:'0px 0px -60px 0px'});
+  document.querySelectorAll('.rv, section, .facts, .defs, .pull, .curls').forEach(el=>{
+    el.classList.add('rv');
+    obs.observe(el);
+  });
+})();
+
+// Sidebar section highlight on scroll
+(function(){
+  const navs=[...document.querySelectorAll('.sidenav a')];
+  const ids=navs.map(a=>a.getAttribute('href').slice(1)).filter(Boolean);
+  const sections=ids.map(id=>document.getElementById(id)).filter(Boolean);
+  function update(){
+    let active=null;
+    const y=window.scrollY+160;
+    sections.forEach(s=>{if(s.offsetTop<=y) active=s.id});
+    navs.forEach(a=>a.classList.toggle('on',a.getAttribute('href')==='#'+active));
+  }
+  window.addEventListener('scroll',update,{passive:true});
+  update();
+})();
+</script>
+</body>
+</html>

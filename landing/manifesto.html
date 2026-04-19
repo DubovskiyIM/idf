@@ -1,0 +1,895 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Манифест v2 — IDF</title>
+  <meta name="description" content="Технический манифест формата IDF версии 2.0. 26 глав в 8 частях.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,ital,wght@9..144,0,400;9..144,0,500;9..144,0,700;9..144,1,400;9..144,1,500&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --paper:      #fbfaf6;
+      --paper-dim:  #f2f0e9;
+      --paper-sunk: #ede9dc;
+      --ink:        #14120f;
+      --ink-dim:    #57544e;
+      --ink-mid:    #8a867d;
+      --rule:       #d9d5c9;
+      --rule-dim:   #ebe7db;
+      --accent:     #a4491a;
+      --accent-bg:  rgba(164,73,26,.06);
+      --ok:         #2e6b3d;
+      --serif:      'Fraunces', Georgia, serif;
+      --sans:       'Inter', system-ui, sans-serif;
+      --mono:       'JetBrains Mono', ui-monospace, monospace;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --paper:      #14120f;
+        --paper-dim:  #1b1916;
+        --paper-sunk: #0d0c0a;
+        --ink:        #f0ebdf;
+        --ink-dim:    #a7a295;
+        --ink-mid:    #6a675f;
+        --rule:       #2a2721;
+        --rule-dim:   #221f1a;
+        --accent:     #e08b57;
+        --accent-bg:  rgba(224,139,87,.09);
+        --ok:         #6fbf7f;
+      }
+    }
+    *{margin:0;padding:0;box-sizing:border-box}
+    html{scroll-behavior:smooth}
+    body{background:var(--paper);color:var(--ink);font-family:var(--sans);font-size:17px;line-height:1.65;-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
+    a{color:var(--accent);text-decoration:underline;text-underline-offset:3px;text-decoration-thickness:1px}
+    a:hover{text-decoration-thickness:2px}
+    ::selection{background:var(--accent);color:var(--paper)}
+
+    .frame{max-width:1200px;margin:0 auto;padding:0 48px;display:grid;grid-template-columns:260px minmax(0,1fr);gap:64px}
+    @media(max-width:1000px){.frame{grid-template-columns:1fr;gap:0;padding:0 28px}}
+
+    /* ===== SIDEBAR ===== */
+    .sidenav{grid-column:1;position:sticky;top:0;align-self:start;height:100vh;overflow-y:auto;padding:56px 0 32px;font-size:13px}
+    @media(max-width:1000px){.sidenav{position:static;height:auto;padding:24px 0;border-bottom:1px solid var(--rule)}}
+    .sidenav-label{font-family:var(--mono);font-size:10.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--ink-mid);margin-bottom:14px;padding-left:14px}
+    .sidenav-home{display:block;font-family:var(--mono);font-size:11px;letter-spacing:.06em;color:var(--ink-dim);text-decoration:none;padding:6px 14px;margin-bottom:8px;border-bottom:1px solid var(--rule-dim)}
+    .sidenav-home:hover{color:var(--accent)}
+    .sidenav ol{list-style:none;counter-reset:part}
+    .sidenav .part{counter-increment:part;margin-bottom:6px;border-left:1px solid var(--rule)}
+    .sidenav .part-label{display:block;font-family:var(--mono);font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-mid);padding:10px 14px 6px;font-weight:600}
+    .sidenav .part-label::before{content:counter(part,upper-roman) ". ";color:var(--accent)}
+    .sidenav .chapters{list-style:none;margin-bottom:8px}
+    .sidenav .chapters li{line-height:1.4}
+    .sidenav .chapters a{display:block;padding:5px 14px 5px 22px;color:var(--ink-dim);text-decoration:none;border-left:2px solid transparent;margin-left:-1px;transition:all .15s;font-size:12.5px}
+    .sidenav .chapters a:hover{color:var(--ink);background:var(--accent-bg)}
+    .sidenav .chapters a.on{color:var(--ink);border-left-color:var(--accent);font-weight:500;background:var(--accent-bg)}
+    .sidenav .chapters a .ch-num{font-family:var(--mono);color:var(--ink-mid);font-size:10.5px;margin-right:7px;letter-spacing:.02em}
+
+    /* ===== MAIN ===== */
+    main{grid-column:2;padding:72px 0 140px;min-width:0;max-width:760px}
+    @media(max-width:1000px){main{padding:32px 0 80px}}
+
+    .masthead{font-family:var(--mono);font-size:11.5px;color:var(--ink-dim);letter-spacing:.04em;padding-bottom:22px;margin-bottom:40px;border-bottom:1px solid var(--rule);display:flex;justify-content:space-between;flex-wrap:wrap;gap:14px}
+    .masthead strong{color:var(--ink);font-weight:600;letter-spacing:.08em}
+    .masthead .dot{color:var(--rule)}
+    .masthead a{color:var(--ink-dim);text-decoration:none}
+    .masthead a:hover{color:var(--accent)}
+
+    .title{font-family:var(--serif);font-weight:400;font-size:clamp(2.6rem,5vw,3.8rem);line-height:1.02;letter-spacing:-.03em;margin-bottom:20px;font-variation-settings:"opsz" 144}
+    .title em{font-style:italic;color:var(--accent)}
+    .subtitle{font-family:var(--serif);font-size:1.3rem;line-height:1.5;color:var(--ink-dim);margin-bottom:28px;font-variation-settings:"opsz" 36;max-width:620px}
+    .meta{font-family:var(--mono);font-size:12px;color:var(--ink-mid);padding:16px 0;border-top:1px solid var(--rule);border-bottom:1px solid var(--rule);margin-bottom:64px;display:flex;gap:24px;flex-wrap:wrap}
+    .meta span strong{color:var(--ink);font-weight:500}
+
+    .part{margin:96px 0 64px;padding-top:48px;border-top:2px solid var(--ink)}
+    .part:first-of-type{margin-top:0;border-top:none;padding-top:0}
+    .part-num{font-family:var(--mono);font-size:11.5px;letter-spacing:.2em;text-transform:uppercase;color:var(--accent);margin-bottom:14px;font-weight:600}
+    .part h2{font-family:var(--serif);font-weight:500;font-size:clamp(2rem,3.6vw,2.6rem);line-height:1.1;letter-spacing:-.02em;margin-bottom:0;font-variation-settings:"opsz" 96}
+
+    .chapter{margin:56px 0;scroll-margin-top:24px}
+    .chapter h3{font-family:var(--serif);font-weight:500;font-size:clamp(1.4rem,2.4vw,1.85rem);line-height:1.2;letter-spacing:-.015em;margin-bottom:24px;font-variation-settings:"opsz" 48}
+    .chapter h3 .ch-num{font-family:var(--mono);font-size:.6em;color:var(--ink-mid);margin-right:14px;font-weight:500;letter-spacing:.02em}
+    .chapter h4{font-family:var(--serif);font-weight:600;font-size:1.12rem;line-height:1.3;margin:32px 0 12px;font-variation-settings:"opsz" 18}
+    .chapter h4 .sec{font-family:var(--mono);font-size:.82em;color:var(--ink-mid);margin-right:10px;font-weight:500}
+
+    p{margin-bottom:18px;color:var(--ink)}
+    p + p{margin-top:-6px}
+    strong{font-weight:600}
+    em{font-style:italic;color:var(--ink)}
+    code{font-family:var(--mono);font-size:.88em;background:var(--paper-dim);padding:1px 6px;border-radius:3px;color:var(--accent);font-weight:500}
+    pre{margin:20px 0;background:var(--paper-sunk);border:1px solid var(--rule);border-radius:4px;padding:16px 20px;overflow-x:auto;font-family:var(--mono);font-size:13.5px;line-height:1.7;color:var(--ink)}
+    pre code{background:none;padding:0;color:inherit;font-weight:400}
+
+    ul,ol{margin:14px 0 20px 24px;color:var(--ink)}
+    li{margin-bottom:8px;padding-left:4px}
+    li strong{color:var(--ink);font-weight:600}
+    ul ul, ol ol{margin-top:8px;margin-bottom:8px}
+
+    .pull{margin:28px 0;padding:6px 0 6px 24px;border-left:3px solid var(--accent);font-family:var(--serif);font-size:1.12rem;line-height:1.55;color:var(--ink-dim);font-variation-settings:"opsz" 24;font-style:italic}
+    .pull strong{color:var(--ink);font-style:normal}
+
+    .note{margin:20px 0;padding:16px 20px;background:var(--accent-bg);border-left:3px solid var(--accent);font-size:15px;line-height:1.55;color:var(--ink)}
+    .note .label{font-family:var(--mono);font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--accent);font-weight:600;margin-bottom:6px;display:block}
+
+    hr{border:none;border-top:1px solid var(--rule);margin:48px 0}
+
+    /* Footer */
+    footer.colophon{margin-top:120px;padding-top:32px;border-top:1px solid var(--rule);font-family:var(--mono);font-size:11.5px;color:var(--ink-dim);letter-spacing:.02em;display:flex;justify-content:space-between;flex-wrap:wrap;gap:14px}
+    footer.colophon a{color:var(--ink-dim);text-decoration:underline;text-decoration-color:var(--rule);text-underline-offset:2px}
+    footer.colophon a:hover{color:var(--accent);text-decoration-color:var(--accent)}
+
+    @media(max-width:700px){
+      body{font-size:16px}
+      .sidenav{max-height:240px;margin-bottom:20px}
+      .chapter h3{font-size:1.5rem}
+      pre{font-size:12.5px}
+    }
+  </style>
+</head>
+<body>
+
+<div class="frame">
+
+  <!-- ===== SIDEBAR ===== -->
+  <aside class="sidenav">
+    <a class="sidenav-home" href="./index-v2.html">← к лендингу</a>
+    <div class="sidenav-label">Манифест v2 · 26 глав</div>
+    <ol>
+      <li class="part">
+        <span class="part-label">Тезис</span>
+        <ul class="chapters">
+          <li><a href="#ch-1"><span class="ch-num">1</span>IDF — формат описания приложения</a></li>
+          <li><a href="#ch-2"><span class="ch-num">2</span>Чем IDF не является</a></li>
+          <li><a href="#ch-3"><span class="ch-num">3</span>Манифест и спека</a></li>
+        </ul>
+      </li>
+      <li class="part">
+        <span class="part-label">Объекты формата</span>
+        <ul class="chapters">
+          <li><a href="#ch-4"><span class="ch-num">4</span>Φ — лог событий</a></li>
+          <li><a href="#ch-5"><span class="ch-num">5</span>Δ — черновики</a></li>
+          <li><a href="#ch-6"><span class="ch-num">6</span>Intent — конструктивные частицы</a></li>
+          <li><a href="#ch-7"><span class="ch-num">7</span>Effect — атомы изменения</a></li>
+          <li><a href="#ch-8"><span class="ch-num">8</span>Ontology — тип домена</a></li>
+          <li><a href="#ch-9"><span class="ch-num">9</span>Projection — авторский контракт</a></li>
+          <li><a href="#ch-10"><span class="ch-num">10</span>Artifact — результат</a></li>
+        </ul>
+      </li>
+      <li class="part">
+        <span class="part-label">Алгебра</span>
+        <ul class="chapters">
+          <li><a href="#ch-11"><span class="ch-num">11</span>fold — мир как функция от Φ</a></li>
+          <li><a href="#ch-12"><span class="ch-num">12</span>Crystallization</a></li>
+          <li><a href="#ch-13"><span class="ch-num">13</span>Pattern Bank</a></li>
+          <li><a href="#ch-14"><span class="ch-num">14</span>Viewer-scoping</a></li>
+        </ul>
+      </li>
+      <li class="part">
+        <span class="part-label">Четыре читателя</span>
+        <ul class="chapters">
+          <li><a href="#ch-15"><span class="ch-num">15</span>Pixels — runtime UI</a></li>
+          <li><a href="#ch-16"><span class="ch-num">16</span>Voice — speech-script</a></li>
+          <li><a href="#ch-17"><span class="ch-num">17</span>Agent API</a></li>
+          <li><a href="#ch-18"><span class="ch-num">18</span>Document — HTML / JSON</a></li>
+        </ul>
+      </li>
+      <li class="part">
+        <span class="part-label">Авторство</span>
+        <ul class="chapters">
+          <li><a href="#ch-19"><span class="ch-num">19</span>Где уместен LLM</a></li>
+          <li><a href="#ch-20"><span class="ch-num">20</span>Authored vs derived</span></a></li>
+          <li><a href="#ch-21"><span class="ch-num">21</span>Authoring environment</a></li>
+        </ul>
+      </li>
+      <li class="part">
+        <span class="part-label">Conformance</span>
+        <ul class="chapters">
+          <li><a href="#ch-22"><span class="ch-num">22</span>Классы L1–L4</a></li>
+          <li><a href="#ch-23"><span class="ch-num">23</span>Инварианты формата</a></li>
+        </ul>
+      </li>
+      <li class="part">
+        <span class="part-label">Границы</span>
+        <ul class="chapters">
+          <li><a href="#ch-24"><span class="ch-num">24</span>Что формат не решает</a></li>
+          <li><a href="#ch-25"><span class="ch-num">25</span>Чем валидирован формат</a></li>
+        </ul>
+      </li>
+      <li class="part">
+        <span class="part-label">Перспектива</span>
+        <ul class="chapters">
+          <li><a href="#ch-26"><span class="ch-num">26</span>Направления развития</a></li>
+        </ul>
+      </li>
+    </ol>
+  </aside>
+
+  <!-- ===== MAIN ===== -->
+  <main>
+
+    <div class="masthead">
+      <div>
+        <strong>IDF</strong>
+        <span class="dot"> / </span>
+        Intent-Driven Frontend
+        <span class="dot"> / </span>
+        Манифест v2
+      </div>
+      <div>
+        <a href="./index-v2.html">лендинг →</a>
+        &nbsp;·&nbsp;
+        <a href="./onboarding.html">онбординг →</a>
+      </div>
+    </div>
+
+    <h1 class="title">Технический манифест<br>формата <em>описания приложения.</em></h1>
+    <p class="subtitle">Мотивация и неформальные аксиомы формата IDF. Адресован людям — авторам, архитекторам, исследователям.</p>
+    <div class="meta">
+      <span><strong>Версия:</strong> 2.0</span>
+      <span><strong>Статус:</strong> мотивационный документ</span>
+      <span><strong>26 глав</strong> в 8 частях</span>
+      <span><strong>Apache 2.0</strong></span>
+    </div>
+
+    <!-- ==================================================================
+         ЧАСТЬ I. ТЕЗИС
+         ================================================================== -->
+    <div class="part" id="part-1">
+      <div class="part-num">Часть I</div>
+      <h2>Тезис</h2>
+    </div>
+
+    <article class="chapter" id="ch-1">
+      <h3><span class="ch-num">§1</span>IDF — формат описания приложения</h3>
+      <p>IDF — это <strong>формат данных</strong>, а не фреймворк. Приложение в IDF полностью описывается четырьмя сущностями:</p>
+      <ul>
+        <li><strong>Ontology</strong> — типизированное описание домена: сущности, поля, роли, инварианты, правила</li>
+        <li><strong>Intents</strong> — конструктивные частицы изменения мира: declarations, не императивные handler'ы</li>
+        <li><strong>Projections</strong> — авторские контракты на то, какие намерения образуют логически связный вид</li>
+        <li><strong>Φ</strong> — лог событий (confirmed effects), порождённый выполнением намерений</li>
+      </ul>
+      <p>Всё остальное — производное. Мир приложения = <code>fold(Φ)</code>. Пользовательский интерфейс = функция от артефакта, который в свою очередь функция от онтологии, намерений, проекции и банка паттернов. Ни одна из этих функций не содержит скрытого состояния и не требует рантайм-интерпретации LLM.</p>
+      <p>Такое позиционирование ставит IDF в один ряд с OpenAPI и JSON-LD: это <strong>спецификация формы данных</strong>, а не исполняющая среда. Адаптер, рендерер, voice-материализатор, agent API, document-генератор — это <em>читатели</em> формата. Каждый читатель принимает тот же артефакт и превращает его в свою целевую среду (DOM, SSML, JSON-schema, HTML-граф).</p>
+      <p>Конформная реализация читает формат и предоставляет документированные гарантии: детерминизм кристаллизации, viewer-scoping, irreversibility high-risk действий, полный audit trail через Φ. Реализация свободна в выборе технологий (React, Vue, native mobile, server-side HTML), но не в определениях — те задаёт спецификация.</p>
+      <p>LLM в IDF уместен на этапе <strong>проектирования</strong> (вывод онтологии из описания домена, предложение паттернов, enrichment артефакта) и на этапе <strong>кристаллизации</strong> (witnesses с <code>reliability: "heuristic"</code>). В <strong>рантайме</strong> LLM отсутствует: ни одно решение, влияющее на состояние мира или рендер, не зависит от непредсказуемого провайдера.</p>
+    </article>
+
+    <article class="chapter" id="ch-2">
+      <h3><span class="ch-num">§2</span>Чем IDF не является</h3>
+      <ul>
+        <li><strong>Не no-code / low-code генератор.</strong> Формат описывает приложение; инструменты вокруг него (Studio, CLI) помогают автору формализовать онтологию. Кодогенерация целевых артефактов не является частью формата.</li>
+        <li><strong>Не runtime framework</strong> в духе React, Angular, Svelte. React — один из возможных хостов для pixel-материализации; хост может быть любым. Сам формат не ограничивает выбор стека.</li>
+        <li><strong>Не data-binding fabric.</strong> IDF не связывает DOM-узлы с моделями данных. Artifact — структура слотов, а не directive-дерево; читатель интерпретирует слоты согласно своим конвенциям.</li>
+        <li><strong>Не BaaS и не backend-framework.</strong> Сервер референсной реализации — один из возможных хостов для фиксации Φ; спецификация не предписывает конкретную архитектуру сервера.</li>
+        <li><strong>Не UI-toolkit.</strong> Адаптеры используют UI-toolkit'ы (Mantine, shadcn/ui, Apple-glass, AntD и другие), но адаптер — это <em>mapping</em> между форматом и toolkit'ом, а не сам toolkit.</li>
+        <li><strong>Не IDE-плагин.</strong> Authoring environment — отдельный инструмент исследования формата, опциональный и не являющийся его частью.</li>
+      </ul>
+    </article>
+
+    <article class="chapter" id="ch-3">
+      <h3><span class="ch-num">§3</span>Манифест и спека</h3>
+      <p>Два документа описывают один формат в разных регистрах.</p>
+      <p><strong>Манифест</strong> (этот текст) — мотивация и неформальные аксиомы. Адресован людям: авторам, архитекторам, исследователям. Цель — передать <em>почему</em> формат устроен именно так и как читать его тексты.</p>
+      <p><strong>Спека</strong> (<code>docs/spec-v0.1/</code>, <strong>запланирована к реализации</strong>) — нормативный закон. Адресована реализациям: JSON Schema для artifact / intent / effect / ontology / projection, таблица conformance classes, эталонные test fixtures. Цель — дать однозначное определение того, что означает «говорить на IDF».</p>
+      <p>Манифест без спеки — философия без нормы. Спека без манифеста — норма без контекста. Оба документа обязательны для зрелого формата.</p>
+      <p class="pull">Честное замечание: спека существует сейчас на уровне архитектурного решения и набросков, но не как написанный артефакт. Написание спеки требует стабильности референсной реализации — зрелости достаточной, чтобы фиксировать аксиомы, а не обсуждать их.</p>
+    </article>
+
+    <!-- ==================================================================
+         ЧАСТЬ II. ОБЪЕКТЫ ФОРМАТА
+         ================================================================== -->
+    <div class="part" id="part-2">
+      <div class="part-num">Часть II</div>
+      <h2>Объекты формата</h2>
+    </div>
+
+    <article class="chapter" id="ch-4">
+      <h3><span class="ch-num">§4</span>Φ — лог событий как единственный источник истины</h3>
+      <p>Φ (phi) — это упорядоченная по времени последовательность эффектов, каждый из которых достиг состояния <code>confirmed</code>. Она одна содержит всё изменение мира приложения.</p>
+      <p>Каждый эффект — это запись вида:</p>
+      <ul>
+        <li><strong>α</strong> — вид изменения: <code>create</code>, <code>replace</code>, <code>remove</code>, <code>transition</code>, <code>commit</code></li>
+        <li><strong>entity</strong> — тип сущности, которую эффект затрагивает</li>
+        <li><strong>fields</strong> — полезная нагрузка (значения полей)</li>
+        <li><strong>context</strong> — метаданные: кто инициировал, к какой сессии относится, какая степень необратимости, ссылки на другие эффекты</li>
+      </ul>
+      <p>Мир не хранится отдельно. Состояние любой сущности в любой момент — результат <code>fold(Φ)</code> (см. §11), применённого к эффектам, видимым к этому моменту. Это свойство даёт три следствия, которые проходят через весь формат:</p>
+      <ol>
+        <li><strong>Audit trail бесплатный</strong>: каждое изменение в мире имеет свидетеля в Φ. Нет in-place мутаций, которые обошли бы журнал.</li>
+        <li><strong>Rebuild from scratch — первоклассная операция.</strong> Тесты, дебаг, миграция — всё это частные случаи перевычисления мира от Φ.</li>
+        <li><strong>Причинность сохраняется</strong>: rejected эффекты тоже остаются в журнале (в отдельной зоне), чтобы можно было понять, что именно было отвергнуто и почему.</li>
+      </ol>
+      <p>Жизненный цикл эффекта: <code>proposed → { confirmed | rejected }</code>. Переход — отдельный шаг валидации, в котором проверяются инварианты онтологии, препятствия типа irreversibility и условия намерения.</p>
+    </article>
+
+    <article class="chapter" id="ch-5">
+      <h3><span class="ch-num">§5</span>Δ — черновики, session-scoped namespace</h3>
+      <p>Δ (delta) — это пространство черновиков: эффектов, инициированных, но не достигших статуса <code>confirmed</code>. Черновики видны только инициатору и живут до момента commit, cancel или истечения сессии.</p>
+      <p>Структурная функция Δ в формате — позволить автору намерения накапливать состояние до решения его зафиксировать. Форма-wizard с четырьмя шагами — череда черновиков, где каждый шаг добавляет поля; финальный шаг превращает accumulated draft в confirmed effect.</p>
+      <p>Промоция Δ → Φ происходит атомарно при подтверждении намерения. Rejected черновики уничтожаются (не становятся частью Φ, не остаются в rejected-зоне — это чистый рабочий процесс автора, не свидетельство в мире).</p>
+      <p>Множественные черновики одного инициатора могут существовать параллельно: пользователь может работать одновременно над несколькими намерениями.</p>
+    </article>
+
+    <article class="chapter" id="ch-6">
+      <h3><span class="ch-num">§6</span>Intent — конструктивные частицы</h3>
+      <p><strong>Intent</strong> — это декларативное описание возможности изменить мир, которая может быть предложена viewer'у.</p>
+      <p>Намерение — не функция и не handler. Оно — запись формата:</p>
+      <ul>
+        <li><strong>id</strong> — стабильный идентификатор</li>
+        <li><strong>ownerRole</strong> — какая роль авторизована его инициировать</li>
+        <li><strong>requiredFields</strong> — какие поля должны быть заполнены до подтверждения</li>
+        <li><strong>conditions</strong> — предикаты над миром, которые должны выполняться</li>
+        <li><strong>effects</strong> — список эффектов, которые будут эмитены при подтверждении</li>
+      </ul>
+      <p>Пять первичных видов намерений (<strong>α / β / χ / τ / ω</strong>), соответствующих пяти видам эффектов: создание, замена, удаление, переход состояния, commit workflow. Шестой вид — <strong>системные намерения</strong>: <code>schedule_timer</code>, <code>revoke_timer</code> — конструкты темпорального слоя.</p>
+      <p>Generic effect handler формата механически применяет объявленные <code>effects</code> к Φ. Это свойство — ключевое: намерения <strong>не несут императивный код</strong>. Domain-автор описывает, что должно произойти; движок гарантирует, как это произойдёт.</p>
+    </article>
+
+    <article class="chapter" id="ch-7">
+      <h3><span class="ch-num">§7</span>Effect — атомы изменения мира</h3>
+      <p>Эффект — квант изменения: минимальная единица, которая может быть записана в Φ.</p>
+<pre><code>{ α, entity, fields, context }</code></pre>
+      <p>Поле <strong>α</strong> принимает одно из пяти значений:</p>
+      <ul>
+        <li><strong>create</strong> — добавить новую сущность</li>
+        <li><strong>replace</strong> — заменить поля существующей сущности</li>
+        <li><strong>remove</strong> — удалить сущность (с ограничением irreversibility)</li>
+        <li><strong>transition</strong> — изменить состояние workflow'а</li>
+        <li><strong>commit</strong> — зафиксировать завершение сложной частицы (wizard, batch)</li>
+      </ul>
+      <p>Поле <strong>context</strong> несёт метаданные, важные для валидации и интерпретации:</p>
+      <ul>
+        <li><code>__irr: { point, at, reason }</code> — степень необратимости: <code>point = "high"</code> блокирует последующие <code>remove</code> после <code>at</code></li>
+        <li>ссылки на инициирующее намерение, инициатора, session-id</li>
+        <li>external refs — если эффект отражает вовне-мировое событие</li>
+      </ul>
+      <div class="note">
+        <span class="label">Честная граница</span>
+        Particle uniformity: generic effect handler покрывает большинство намерений, но не все. Domain-автор может поставить custom effect builder для доменно-специфичных инвариантов. Формат гарантирует форму <code>{α, entity, fields, context}</code> — а путь их порождения может быть generic или custom.
+      </div>
+    </article>
+
+    <article class="chapter" id="ch-8">
+      <h3><span class="ch-num">§8</span>Ontology — тип данных домена</h3>
+      <p>Онтология — центральный объект формата. Она определяет, что такое «домен»: какие сущности существуют, какие роли ими манипулируют, какие инварианты должны выполняться, какие правила автоматики движок исполняет.</p>
+
+      <h4><span class="sec">§8.1</span>Entities</h4>
+      <p>Сущности — типы данных домена. Каждая имеет:</p>
+      <ul>
+        <li><strong>fields</strong> — типизированные поля с read/write matrix по ролям</li>
+        <li><strong>ownerField</strong> — поле, указывающее single-owner (foreign key на роль)</li>
+        <li><strong>kind</strong> — таксономический маркер: <code>internal</code> (default), <code>reference</code> (без owner), <code>assignment</code> (bridge для m2m)</li>
+      </ul>
+      <p>Приоритет row-filter: <code>role.scope &gt; entity.kind:"reference" &gt; entity.ownerField &gt; none</code>.</p>
+
+      <h4><span class="sec">§8.2</span>Roles и base-таксономия</h4>
+      <p>Роли — это viewer-типы. Каждая роль имеет:</p>
+      <ul>
+        <li><strong>base</strong> — семантическая таксономия: <code>owner | viewer | agent | observer | admin</code></li>
+        <li><strong>visibleFields</strong> — какие поля каждой сущности она видит</li>
+        <li><strong>canExecute</strong> — какие намерения она может инициировать</li>
+        <li><strong>scope</strong> — декларативное m2m-присоединение через bridge-сущность</li>
+      </ul>
+      <p>Base-таксономия не заменяет доменные имена; она даёт cross-domain инструментам возможность узнавать структурный паттерн: «все <code>agent</code>-роли обязаны иметь <code>preapproval</code>», «<code>observer</code>-роли не могут эмитить <code>α</code>-эффекты», «<code>admin</code>-роли видят все записи независимо от <code>ownerField</code>».</p>
+      <p>Базы устроены как открытое множество прецедентов, не closed enum: пятый класс <code>admin</code> появился post-v2.0 после стресс-теста на library-домене.</p>
+
+      <h4><span class="sec">§8.3</span>Invariants — ∀-свойства</h4>
+      <p>Инварианты — декларативные предикаты, которые должны выполняться для состояния мира всегда. Пять видов:</p>
+      <ul>
+        <li><strong>role-capability</strong> — какие роли могут инициировать какие намерения</li>
+        <li><strong>referential</strong> — referential integrity (foreign keys)</li>
+        <li><strong>transition</strong> — допустимые переходы workflow (state machine)</li>
+        <li><strong>cardinality</strong> — N-to-M кардинальности</li>
+        <li><strong>aggregate</strong> — свойства агрегатов (<code>sum(portfolio.positions.weight) = 1.0</code>)</li>
+      </ul>
+      <p>Инварианты проверяются при каждом confirm effect. Нарушение блокирует эффект и каскадно отклоняет зависимые.</p>
+
+      <h4><span class="sec">§8.4</span>Rules — Reactive Rules Engine</h4>
+      <p>Правила — декларативные event-condition-action автоматы. Четыре расширения:</p>
+      <ul>
+        <li><strong>aggregation</strong>: счётчик per-user, срабатывает на каждое N-е событие</li>
+        <li><strong>threshold</strong>: предикат над последними N записями (lookback window)</li>
+        <li><strong>schedule</strong>: темпоральный триггер</li>
+        <li><strong>condition</strong>: JS-выражение (whitelisted Math)</li>
+      </ul>
+
+      <h4><span class="sec">§8.5</span>Scheduler — темпоральный слой</h4>
+      <p>Расписание — частный случай rule:</p>
+<pre><code>rule.schedule = { after: &lt;duration&gt; }
+         | { at: &lt;ISO timestamp&gt; }
+         | { after: ..., revokeOn: &lt;effect patterns&gt; }</code></pre>
+      <p>Движок поддерживает priority-queue таймеров. Таймеры — обычные эффекты (<code>τ=scheduled_timer</code>) в Φ. Системные намерения: <code>schedule_timer(afterMs | atISO, target, revokeOn?)</code>, <code>revoke_timer(timerId)</code>.</p>
+
+      <h4><span class="sec">§8.6</span>Field roles — семантические типы</h4>
+      <p>Поле сущности имеет тип (<code>string</code>, <code>number</code>, <code>enum</code>, ...) и, опционально, <strong>семантическую роль</strong>:</p>
+      <ul>
+        <li>pure-data: <code>money</code>, <code>percentage</code>, <code>trend</code>, <code>ticker</code></li>
+        <li>spatial: <code>coordinate</code>, <code>address</code>, <code>zone</code></li>
+        <li>temporal: <code>datetime</code>, <code>duration</code></li>
+      </ul>
+      <p>Семантические роли — advisory hints для читателей формата. Формат гарантирует, что роль будет прослежена в артефакт; качество рендера — свойство читателя.</p>
+    </article>
+
+    <article class="chapter" id="ch-9">
+      <h3><span class="ch-num">§9</span>Projection — авторский контракт</h3>
+      <p>Projection — декларация автора о том, какие намерения и сущности образуют один «экран», «диалог», «страницу». Она содержит:</p>
+      <ul>
+        <li>список намерений, которые должны быть доступны в этой проекции</li>
+        <li>предпочтительный архетип (<code>catalog</code>, <code>detail</code>, <code>form</code>, <code>feed</code>, <code>canvas</code>, <code>dashboard</code>, <code>wizard</code>) или <code>auto</code></li>
+        <li>preference по паттернам Pattern Bank'а: <code>patterns: { enabled: [...], disabled: [...] }</code></li>
+        <li>опциональный slot-override для конкретных мест в артефакте</li>
+      </ul>
+      <p>Projection — это <strong>input</strong> для кристаллизации; artifact — <strong>output</strong>. Автор влияет на результат через два механизма:</p>
+      <ul>
+        <li><strong>Projection.patterns</strong> — preference, модификатор входа. Артефакт остаётся перегенерируемым из <code>(intents, ontology, projection, patterns, features)</code>.</li>
+        <li><strong>Slot-override</strong> — freezing output. Автор фиксирует конкретный слот, bypass'а кристаллизацию. Потеря: артефакт больше не чистая функция от входа.</li>
+      </ul>
+      <p class="pull">Preference сохраняет инвариант «артефакт = f(input)»; slot-override жертвует им ради локального контроля. Рекомендация формата: <strong>preference first, slot-override только когда preference принципиально не выражает нужное поведение</strong>.</p>
+    </article>
+
+    <article class="chapter" id="ch-10">
+      <h3><span class="ch-num">§10</span>Artifact — кристаллизованный результат</h3>
+      <p>Артефакт v2 — это <strong>тип данных</strong>, не результат рендеринга.</p>
+      <p>Структура артефакта:</p>
+      <ul>
+        <li><strong>archetype</strong> — один из семи: <code>feed</code>, <code>catalog</code>, <code>detail</code>, <code>form</code>, <code>canvas</code>, <code>dashboard</code>, <code>wizard</code></li>
+        <li><strong>slots</strong> — именованные контейнеры содержимого (<code>header</code>, <code>body</code>, <code>footer</code>, <code>toolbar</code>, <code>sidebar</code>, ...)</li>
+        <li><strong>witnesses</strong> — structured findings о свойствах артефакта</li>
+        <li><strong>shape</strong> — деривационный слой над архетипом (<code>timeline</code>, <code>directory</code>, <code>default</code>)</li>
+        <li><strong>pattern annotations</strong> — матченные паттерны Pattern Bank'а</li>
+      </ul>
+      <p><strong>Witnesses</strong> — свидетельства свойств артефакта. Три основных <code>basis</code>:</p>
+      <ul>
+        <li><strong>heuristic</strong> — вывод через эвристику; <code>reliability: "heuristic"</code>, требует promotion через анкеринг</li>
+        <li><strong>pattern-bank</strong> — formal match паттерна банка; <code>reliability: "rule-based"</code>, детерминированный</li>
+        <li><strong>anchored</strong> — constructive proof через witness-of-proof. Самый сильный класс; anchoring promotion writer — открытая epistemic задача</li>
+      </ul>
+      <p>Артефакт <strong>не рендерится напрямую</strong>. Его читают разные материализации: pixel-рендерер собирает DOM, voice-материализатор строит speech-script, agent-API сериализует в JSON-schema, document-генератор строит HTML-граф.</p>
+      <p>Семь структурных архетипов описывают <em>скелет</em> артефакта; пять behavioral паттернов (<code>monitoring</code>, <code>triage</code>, <code>execution</code>, <code>exploration</code>, <code>configuration</code>) — перпендикулярны архетипу и описывают <em>поведение</em>.</p>
+    </article>
+
+    <!-- ==================================================================
+         ЧАСТЬ III. АЛГЕБРА
+         ================================================================== -->
+    <div class="part" id="part-3">
+      <div class="part-num">Часть III</div>
+      <h2>Алгебра</h2>
+    </div>
+
+    <article class="chapter" id="ch-11">
+      <h3><span class="ch-num">§11</span>fold — мир как функция от Φ</h3>
+      <p><code>fold(Φ) → world</code> — чистая операция reduce, применяющая эффекты журнала к начальному пустому состоянию в порядке их времени.</p>
+      <p>Детерминизм — жёсткое требование: один и тот же Φ даёт одно и то же состояние мира. Это следует из трёх свойств:</p>
+      <ol>
+        <li><strong>α-квантование</strong>: каждый эффект описывает минимальный шаг. Последствия эффекта локализованы.</li>
+        <li><strong>Порядок устойчив</strong>: эффекты в Φ упорядочены по времени, fold применяет их строго в этом порядке.</li>
+        <li><strong>Без сайд-эффектов в fold</strong>: fold — функция над данными, не читает внешние источники.</li>
+      </ol>
+      <p>Из детерминизма следует, что <strong>rebuild from scratch — первоклассная операция</strong>.</p>
+      <p>Производные от fold:</p>
+      <ul>
+        <li><code>foldFiltered(Φ, predicate)</code> — пересчёт мира только по релевантным эффектам</li>
+        <li><code>foldView(Φ, viewerRole, ontology)</code> — композиция fold и viewer-scoping</li>
+      </ul>
+    </article>
+
+    <article class="chapter" id="ch-12">
+      <h3><span class="ch-num">§12</span>Crystallization — артефакт как чистая функция</h3>
+      <p>Кристаллизация — процедура, превращающая набор намерений и онтологию в артефакт. Её сигнатура:</p>
+<pre><code>crystallize(intents, ontology, projection, patternBank, features) → artifact</code></pre>
+      <p>Все пять аргументов — input; артефакт — output. Никаких скрытых состояний, LLM-провайдеров или сетевых обращений.</p>
+      <p>Процедура состоит из шести фаз:</p>
+      <ol>
+        <li><strong>deriveProjections</strong> — выводит скелеты проекций из (intents × ontology) по правилам R1–R8</li>
+        <li><strong>mergeProjections</strong> — shallow-merge авторских <code>projection</code> поверх derived-скелетов</li>
+        <li><strong>assignToSlots</strong> — распределяет намерения и данные по слотам согласно архетипу</li>
+        <li><strong>matchPatterns</strong> — применяет Pattern Bank в matching-режиме; сматченный паттерн становится witness'ом</li>
+        <li><strong>applyStructuralPatterns</strong> — для паттернов с <code>structure.apply</code> прогоняет apply-функцию</li>
+        <li><strong>wrapByConfirmation</strong> — оборачивает намерения в control-архетипы</li>
+      </ol>
+      <p>Детерминизм каждой фазы обязателен. Это делает артефакт <strong>перегенерируемым</strong>, <strong>сравниваемым</strong>, <strong>проверяемым</strong>.</p>
+    </article>
+
+    <article class="chapter" id="ch-13">
+      <h3><span class="ch-num">§13</span>Pattern Bank — декларативные правила деривации</h3>
+      <p>Pattern Bank — формализованный реестр правил, которые угадывают структуру артефакта из конфигурации входа. Каждый паттерн — запись формата:</p>
+<pre><code>{
+  id: "subcollections",
+  archetype: "detail",
+  trigger: { match(projection, ontology, intents) → bool, ... },
+  structure: {
+    rationale: "...",
+    apply?: (slots, context) → mutated slots
+  },
+  falsification: { shouldMatch: [...], shouldNotMatch: [...] }
+}</code></pre>
+      <p>Три формы паттерна:</p>
+      <ul>
+        <li><strong>Matching-only</strong> — паттерн имеет <code>trigger</code> и <code>rationale</code>, но не <code>apply</code>. Роль: аннотация.</li>
+        <li><strong>Structure.apply</strong> — паттерн имеет чистую функцию <code>apply(slots, context) → slots</code>, которая обогащает артефакт.</li>
+        <li><strong>Rationale-only</strong> — паттерн имеет только объяснительный narrative.</li>
+      </ul>
+      <p><strong>Behavioral vs structural</strong>: поведение (monitoring, triage, execution, exploration, configuration) и структура (subcollections, grid-card-layout, hero-create, ...) — ортогональны.</p>
+      <p><strong>Falsification framework</strong> — обязательная часть каждого стабильного паттерна. Декларация <code>shouldMatch</code> фиксирует примеры, где паттерн должен сработать; <code>shouldNotMatch</code> — где не должен.</p>
+      <p>Witnesses с <code>basis: "pattern-bank"</code> имеют <code>reliability: "rule-based"</code> — самый сильный класс после <code>anchored</code>.</p>
+    </article>
+
+    <article class="chapter" id="ch-14">
+      <h3><span class="ch-num">§14</span>Viewer-scoping — мир и артефакт как функции viewer'а</h3>
+      <p>Один и тот же мир выглядит по-разному для разных ролей — не потому, что рендерер решает что-то скрыть, а потому, что <strong>viewerWorld — это отдельный тип данных</strong>.</p>
+      <p>Функция <code>filterWorldForRole(world, viewer, ontology) → viewerWorld</code> применяет row-filter по приоритету:</p>
+      <ol>
+        <li><code>role.scope</code> — m2m через bridge-сущность</li>
+        <li><code>entity.kind: "reference"</code> — справочные сущности видны всем</li>
+        <li><code>entity.ownerField</code> — single-owner semantics</li>
+        <li><strong>none</strong> — если ни одного из правил не сработало, сущность не видна (privacy by default)</li>
+      </ol>
+      <p>Base-таксономия роли усиливает viewer-scoping:</p>
+      <ul>
+        <li><strong>owner</strong> — видит свои сущности, может инициировать все namespace намерений</li>
+        <li><strong>viewer</strong> — видит ограниченное подмножество (read-mostly)</li>
+        <li><strong>agent</strong> — видит то же, что owner, но каждое намерение проходит через preapproval guard</li>
+        <li><strong>observer</strong> — видит read-only view без привилегий</li>
+      </ul>
+      <p>Материализации (pixel, voice, agent API, document) все используют один и тот же <code>filterWorldForRole</code>. <strong>Viewer-scoping — единый механизм безопасности формата.</strong></p>
+    </article>
+
+    <!-- ==================================================================
+         ЧАСТЬ IV. ЧЕТЫРЕ ЧИТАТЕЛЯ
+         ================================================================== -->
+    <div class="part" id="part-4">
+      <div class="part-num">Часть IV</div>
+      <h2>Четыре читателя формата</h2>
+    </div>
+
+    <p style="margin-top:-32px; margin-bottom:48px; color:var(--ink-dim); font-style:italic">Формат описывает приложение. Реализации <em>читают</em> формат и рендерят его в целевую среду. Четыре материализации архитектурно равноправны.</p>
+
+    <article class="chapter" id="ch-15">
+      <h3><span class="ch-num">§15</span>Pixels — runtime UI</h3>
+      <p>Pixel-материализация — рендеринг артефакта в DOM. Читатель состоит из трёх слоёв:</p>
+      <ul>
+        <li><strong>Renderer</strong> — интерпретирует структуру артефакта и строит дерево абстрактных UI-узлов</li>
+        <li><strong>Adapter</strong> — mapping между абстрактными узлами и конкретным UI-toolkit'ом (pluggable)</li>
+        <li><strong>Token Bridge</strong> — канонический contract CSS-переменных между адаптером и доменным кодом</li>
+      </ul>
+      <p><strong>Capability surface</strong> — декларативный список поддерживаемых адаптером primitive'ов:</p>
+<pre><code>adapter.capabilities = {
+  primitive: {
+    chart:     { chartTypes: ["line", "pie"] },
+    map:       false,
+    statistic: true,
+    sparkline: true
+  }
+}</code></pre>
+      <p>Renderer консультируется с capability при выборе primitive'а. Mismatch → console.warn + fallback. Unknown capability — assume supported.</p>
+      <p><strong>Token Bridge</strong> — формальный contract. Адаптер обязан предоставить canonical CSS-переменные; domain-специфичный код пишет только в canonical переменные, адаптер мапит их в свои значения.</p>
+      <div class="note">
+        <span class="label">Граница pixel-материализации — analytical UI</span>
+        Чарты, heatmap'ы, 2D-редакторы не кристаллизуются автоматически: они требуют authored custom canvas. Chart-primitive и map-primitive частично закрывают spatial / time-series случаи; sophisticated аналитика остаётся за custom canvas'ами.
+      </div>
+    </article>
+
+    <article class="chapter" id="ch-16">
+      <h3><span class="ch-num">§16</span>Voice — speech-script</h3>
+      <p>Voice-материализация превращает проекцию в структурированный speech-script:</p>
+<pre><code>materializeAsVoice(projection, world, viewer) → turns[]</code></pre>
+      <p>Turn — речевая единица:</p>
+<pre><code>{ role: "system" | "assistant" | "prompts", text, items? }</code></pre>
+      <p>Три формата вывода:</p>
+      <ul>
+        <li><strong>json</strong> — для voice-agent (Claude Voice, OpenAI realtime)</li>
+        <li><strong>SSML</strong> — XML для TTS-движков</li>
+        <li><strong>plain</strong> — для debug или IVR</li>
+      </ul>
+      <p><strong>Brevity-правила</strong>:</p>
+      <ul>
+        <li>Catalog с более чем тремя элементами — озвучиваются top-3 с «и ещё N»</li>
+        <li>Money читается человеческим языком: <code>2500000 RUB → «два с половиной миллиона рублей»</code></li>
+        <li>Percentage и trend формируются как числительные, не символы</li>
+      </ul>
+      <p>Voice использует тот же <code>filterWorldForRole</code>, что pixel и agent API. Viewer-scoping транзитивен.</p>
+    </article>
+
+    <article class="chapter" id="ch-17">
+      <h3><span class="ch-num">§17</span>Agent API — JSON + exec</h3>
+      <p>Agent API превращает формат в schema + RPC для внешних LLM-агентов. Три endpoint'а:</p>
+      <ul>
+        <li><code>GET /agent/:domain/schema?as=&lt;role&gt;</code> — JSON-schema намерений</li>
+        <li><code>GET /agent/:domain/world?as=&lt;role&gt;</code> — viewer-scoped world snapshot</li>
+        <li><code>POST /agent/:domain/exec?as=&lt;role&gt;</code> — подтверждение намерения с payload</li>
+      </ul>
+      <p><strong>Preapproval guard</strong> — декларативный лимитирующий слой для <code>agent</code>-base ролей:</p>
+<pre><code>role.agent.preapproval = {
+  createTrade: { active: true, maxAmount: 100000, dailySum: 500000 }
+  rebalance:   { notExpired: true, csvInclude: ["AAPL","MSFT"] }
+}</code></pre>
+      <p>Пять типов предикатов: <strong>active</strong>, <strong>notExpired</strong>, <strong>maxAmount</strong>, <strong>csvInclude</strong>, <strong>dailySum</strong>.</p>
+      <p>Guard проверяется <strong>перед</strong> любыми invariants онтологии. Agent API — это не отдельная материализация в смысле «альтернативного вида UI»; это <strong>машинный интерфейс формата</strong>, равноправный с пиксельным.</p>
+    </article>
+
+    <article class="chapter" id="ch-18">
+      <h3><span class="ch-num">§18</span>Document — HTML / JSON граф</h3>
+      <p>Document-материализация превращает проекцию в structured document-граф:</p>
+<pre><code>materializeAsDocument(projection, world, viewer) → documentGraph</code></pre>
+      <p>Document-граф — дерево узлов:</p>
+      <ul>
+        <li><strong>Sections</strong> — заголовки, тело, подсекции</li>
+        <li><strong>Tables</strong> — коллекции с колонками (catalog-архетип)</li>
+        <li><strong>Fields</strong> — name-value пары с semantic type</li>
+        <li><strong>Badges</strong> — маркеры статуса, irreversibility, ролей</li>
+      </ul>
+      <p>Два формата вывода: <strong>HTML</strong> (server-side, для браузера / печати), <strong>JSON</strong> (для индексации, экспорта, архива).</p>
+      <p class="pull">Document больше не «альтернативная материализация» — это четвёртый равноправный читатель. Формат делает один и тот же контент доступным пользователю (pixel), голосом (voice), агенту (JSON API) и документом (HTML/JSON).</p>
+    </article>
+
+    <!-- ==================================================================
+         ЧАСТЬ V. АВТОРСТВО
+         ================================================================== -->
+    <div class="part" id="part-5">
+      <div class="part-num">Часть V</div>
+      <h2>Авторство</h2>
+    </div>
+
+    <article class="chapter" id="ch-19">
+      <h3><span class="ch-num">§19</span>Где уместен LLM</h3>
+      <p>IDF — формат, в котором LLM отсутствует в рантайме. Это означает: ни одно решение, влияющее на состояние мира или на рендер артефакта, не зависит от непредсказуемого провайдера. Детерминизм формата не соседствует с LLM; он его исключает.</p>
+      <p>Это не означает, что LLM бесполезен. Напротив, он уместен в трёх местах формата — все на этапе <strong>проектирования</strong>:</p>
+
+      <h4>(а) Вывод онтологии из описания домена</h4>
+      <p>Автор описывает домен текстом. LLM превращает описание в draft онтологии: сущности, поля с типами и read/write matrix, роли, начальные намерения. Draft — не истина; автор подтверждает, корректирует или отвергает.</p>
+
+      <h4>(б) Crystallize enrichment</h4>
+      <p>Артефакт после кристаллизации — структура слотов и контролов. Labels, placeholder'ы, iconHints, explanation-теггинги — это натурально-языковые строки, которые LLM может предложить. Enrichment — это <strong>witness-of-heuristic</strong>: reliability <code>"heuristic"</code>, caveat «это предположение, требующее подтверждения».</p>
+
+      <h4>(в) Pattern suggestion</h4>
+      <p>Pattern Bank расширяется постепенно. LLM-researcher pipeline просматривает живые приложения, находит повторяющиеся структурные паттерны, предлагает их как candidate-паттерны. Candidate становится stable после human review и добавления falsification-fixtures.</p>
+
+      <p>Что исключено из LLM:</p>
+      <ul>
+        <li><strong>Runtime UI</strong> — рендер артефакта в DOM происходит детерминированно</li>
+        <li><strong>Execute</strong> — валидация и применение намерений не обращаются к LLM</li>
+        <li><strong>Materialize</strong> — voice, agent API, document не генерируются LLM</li>
+        <li><strong>Анкеринг без witness-of-proof</strong> — переход witness'а к более сильному классу требует декларативного доказательства</li>
+      </ul>
+      <p class="pull">Формат проектирует так, чтобы LLM можно было заменить любой другой design-time эвристикой (grep+линтеры, rule-based recommendation, human-only) без изменения формата и его гарантий.</p>
+    </article>
+
+    <article class="chapter" id="ch-20">
+      <h3><span class="ch-num">§20</span>Authored vs derived</h3>
+      <p>Каждый элемент артефакта имеет происхождение: он либо <strong>authored</strong> (автор проекции зафиксировал его), либо <strong>derived</strong> (движок вывел его из намерений и онтологии).</p>
+      <p>Это различие — первоклассное свойство артефакта. Его можно прочесть в <code>artifact.witnesses[]</code>: derived-элементы несут witness с соответствующим basis (<code>pattern-bank</code>, <code>heuristic</code>), authored-элементы — witness с basis <code>authored</code> или отсутствуют.</p>
+      <p>Формат даёт автору два различающихся механизма влияния на derived-часть:</p>
+      <ul>
+        <li><strong>Preference (input modifier)</strong>: <code>projection.patterns = { enabled: [...], disabled: [...] }</code>. Артефакт остаётся чистой функцией.</li>
+        <li><strong>Slot-override (output freeze)</strong>: авторская <code>projection.slots</code> явно переопределяет слот артефакта. Свойство «артефакт = f(input)» для этой части теряется.</li>
+      </ul>
+      <p>Формат не запрещает slot-override, но рекомендует preference как первый выбор. Если slot-override становится распространённым — это сигнал расширить Pattern Bank или онтологию.</p>
+      <p>Authored vs derived — не дихотомия «мой код vs движка». Это epistemological различие: derived-часть имеет формальное происхождение, authored — декларативное решение автора.</p>
+    </article>
+
+    <article class="chapter" id="ch-21">
+      <h3><span class="ch-num">§21</span>Authoring environment</h3>
+      <p><strong>Studio</strong> — отдельный инструмент исследования формата: визуализация онтологии как графа, Pattern Inspector для prototype-preview кристаллизации, viewer/role switching, Φ-playback. Формально Studio <strong>не является частью формата</strong> и не требуется для конформной реализации.</p>
+      <p>Важно, что Studio не участвует в рантайме. Если автор использует Studio при проектировании и потом поставляет домен в production, никакой элемент рантайма не знает о существовании Studio.</p>
+      <p>Это следует из строгого разделения:</p>
+      <ul>
+        <li>Формат — описание (онтология, намерения, проекции, Pattern Bank)</li>
+        <li>Реализация — читатели формата (adapter, voice, agent, document)</li>
+        <li>Studio — инструмент работы с описанием (design-time)</li>
+      </ul>
+      <p>Studio может быть реализована разными способами и командами — на React, как CLI, как LSP-plugin. Это также не ограничивает формат.</p>
+      <p class="pull">Наличие или отсутствие Studio — не аксиома формата, но её возможность — важный качественный тест «формат достаточно ясен, чтобы быть auditable'ным».</p>
+    </article>
+
+    <!-- ==================================================================
+         ЧАСТЬ VI. CONFORMANCE
+         ================================================================== -->
+    <div class="part" id="part-6">
+      <div class="part-num">Часть VI</div>
+      <h2>Conformance (набросок)</h2>
+    </div>
+
+    <p style="margin-top:-32px; margin-bottom:48px; color:var(--ink-dim); font-style:italic">Этот раздел — карта для будущей нормативной спеки, не сама спека. Полная матрица классов с JSON-Schema, test fixtures и edge cases появится в <code>docs/spec-v0.1/</code>. Ниже — аксиомы, которых конформная реализация обязана придерживаться на любом уровне.</p>
+
+    <article class="chapter" id="ch-22">
+      <h3><span class="ch-num">§22</span>Классы L1–L4</h3>
+      <p>Формат определяет четыре класса конформности, каждый — subset предыдущего.</p>
+
+      <h4>L1 — Minimum</h4>
+      <p>Реализация умеет: парсить онтологию, парсить namespace намерений, складывать Φ (append-only log), выполнять <code>fold(Φ) → world</code>. L1-реализация может не иметь UI, не иметь кристаллизации, не иметь материализаций.</p>
+
+      <h4>L2 — Crystallize</h4>
+      <p>L1 плюс: базовая кристаллизация, хотя бы один архетип (минимум — <code>detail</code>), assignToSlots без Pattern Bank, mergeProjections для авторских override'ов. L2 достаточна для реализаций, которые работают только с machine-interface: agent API, document generation.</p>
+
+      <h4>L3 — Four materializations</h4>
+      <p>L2 плюс: Pattern Bank matching (без <code>structure.apply</code>), все четыре материализации (pixel, voice, agent API, document) с единым viewer-scoping, минимум два архетипа.</p>
+
+      <h4>L4 — Full</h4>
+      <p>L3 плюс: Pattern Bank с <code>structure.apply</code>, все пять видов инвариантов, irreversibility с integrity-правилом, темпоральный scheduler, custom canvas / primitive extension points.</p>
+
+      <p>Внедрение формата начинается с L1 и может остановиться на L2 или L3 для специфичных задач. Переход L3 → L4 не является обязательным.</p>
+    </article>
+
+    <article class="chapter" id="ch-23">
+      <h3><span class="ch-num">§23</span>Инварианты формата</h3>
+      <p>Четыре аксиомы, которые конформная реализация обязана гарантировать:</p>
+
+      <h4>1. Детерминизм кристаллизации</h4>
+      <p><code>crystallize(intents, ontology, projection, patternBank, features)</code> — чистая функция. Два вызова с идентичным входом возвращают идентичный артефакт. Никаких скрытых состояний, временны́х зависимостей, LLM-побочных эффектов.</p>
+
+      <h4>2. Viewer-scoping — тип данных, не фильтр</h4>
+      <p><code>viewerWorld = filterWorldForRole(world, viewer, ontology)</code>. Это — тип данных для конкретного viewer'а, не постобработочный фильтр render'а. Любая материализация читает viewerWorld, не world.</p>
+
+      <h4>3. Irreversibility — свойство эффекта, не процесса</h4>
+      <p>Эффект с <code>context.__irr = { point: "high", at: &lt;past ISO&gt; }</code> не может быть отменён через <code>α: "remove"</code> на целевой сущности. <code>α: "replace"</code> (forward correction) разрешён всегда.</p>
+
+      <h4>4. Audit trail через Φ</h4>
+      <p>Любое изменение мира происходит через confirmed effect в Φ. Мир не редактируется in-place. Это означает, что история мира полная — каждое изменение имеет свидетеля.</p>
+
+      <p class="pull">Эти четыре инварианта не обсуждаются. Любая реализация, нарушающая один из них, не является конформной — вне зависимости от класса L1–L4.</p>
+    </article>
+
+    <!-- ==================================================================
+         ЧАСТЬ VII. ГРАНИЦЫ
+         ================================================================== -->
+    <div class="part" id="part-7">
+      <div class="part-num">Часть VII</div>
+      <h2>Границы</h2>
+    </div>
+
+    <article class="chapter" id="ch-24">
+      <h3><span class="ch-num">§24</span>Что формат не решает</h3>
+      <p>Каждый формат имеет границы. Ниже — честный список того, что IDF <strong>не покрывает</strong>, сгруппированный по типу.</p>
+
+      <h4>Семантические границы</h4>
+      <ul>
+        <li><strong>Composite / polymorphic entities.</strong> Union-типы не выражаются через <code>entity.kind</code>. Авторы обходят это декомпозицией.</li>
+        <li><strong>i18n за пределами fieldRole.</strong> Локализация layout'а, тональности labels, плюрализационных правил — не в формате. Host реализует локализацию сам.</li>
+        <li><strong>Сложные графовые отношения.</strong> N-ary relationships и cyclic ссылки моделируются assignment-сущностями — требует от автора ручной декомпозиции.</li>
+      </ul>
+
+      <h4>Границы pixel-материализации</h4>
+      <ul>
+        <li><strong>Analytical UI.</strong> Чарты, heatmap'ы, 2D-редакторы, timeline-визуализации, map-canvas'ы — не кристаллизуются автоматически. Сложная аналитика требует authored custom canvas.</li>
+        <li><strong>Capability mismatch.</strong> Добавление нового primitive kind без обновления адаптера производит fallback (SVG/text), не ошибку.</li>
+      </ul>
+
+      <h4>Инфраструктурные границы</h4>
+      <ul>
+        <li><strong>Cluster-friendly scheduler.</strong> Темпоральный слой — single-leader in-memory TimerQueue.</li>
+        <li><strong>Supply chain и dependency management.</strong> Формат не описывает, как загружать домены, apply миграции, обрабатывать breaking changes онтологии.</li>
+        <li><strong>Backup, replication, disaster recovery.</strong> Φ — append-only log, легко backup'ируется, но конкретные BCDR-стратегии — вне формата.</li>
+      </ul>
+
+      <h4>Генеративные границы</h4>
+      <ul>
+        <li><strong>PDF / DOCX output.</strong> DocumentMaterializer даёт HTML/JSON граф; PDF/DOCX требуют server-side rendering пайплайна, который не формализован.</li>
+        <li><strong>Второй reference implementation.</strong> Единственная существующая референсная реализация — React/Node. Без второй реализации формат не получил структурного стресс-теста на связь с React-specifics.</li>
+      </ul>
+
+      <h4>Epistemic границы</h4>
+      <ul>
+        <li><strong>Anchoring promotion writer.</strong> Механизм превращения witness-of-heuristic в witness-of-proof через counterexample search — описан на уровне идеи, не формализован.</li>
+        <li><strong>Pattern Bank: <code>structure.apply</code> для большинства stable паттернов.</strong> Три из тринадцати stable-паттернов имеют apply-функции; остальные — matching-only.</li>
+        <li><strong>ML auto-learning паттернов.</strong> Claude Researcher pipeline предлагает паттерны, но automated promotion из candidate в stable не реализован.</li>
+      </ul>
+
+      <div class="note">
+        <span class="label">Методологическая заметка</span>
+        Манифест имеет три вида drift — числовой (счётчики устаревают), aspirational (заявлено, не реализовано), фактический (значения документа расходятся с кодом). v2 проектируется с зазором между нормой (этот документ) и статусом (<a href="https://github.com/DubovskiyIM/idf/blob/main/docs/implementation-status.md">implementation-status.md</a>), чтобы drift'ы не накладывались.
+      </div>
+    </article>
+
+    <article class="chapter" id="ch-25">
+      <h3><span class="ch-num">§25</span>Чем валидирован формат</h3>
+      <p>Короткая ссылка. Формат валидирован параллельным существованием нескольких различных доменов, разных UI-адаптеров и всех четырёх материализаций — все построенные через один движок.</p>
+
+      <h4>Различные зоны силы формата проверены</h4>
+      <ul>
+        <li>Транзакционные домены (booking, delivery, invest)</li>
+        <li>Коммуникационные домены (messenger, planning)</li>
+        <li>CRUD-масштаб и сложные permission-модели (sales)</li>
+        <li>Creative / analytical домены (lifequest, reflect, workflow)</li>
+        <li>Fintech с external ML-сервисами и irreversibility (invest, delivery)</li>
+      </ul>
+
+      <h4>Различные целевые среды проверены</h4>
+      <ul>
+        <li>Corporate / data-dense эстетика</li>
+        <li>Handcrafted / sketch эстетика</li>
+        <li>Premium / minimal эстетика</li>
+        <li>Dashboard / enterprise-fintech эстетика</li>
+      </ul>
+
+      <p><strong>Все четыре материализации работают параллельно через viewer-scoping.</strong></p>
+      <p>Детальный имплементационный статус — в <a href="https://github.com/DubovskiyIM/idf/blob/main/docs/implementation-status.md">implementation-status.md</a>. Этот документ обновляется вместе с кодом; манифест остаётся timeless.</p>
+    </article>
+
+    <!-- ==================================================================
+         ЧАСТЬ VIII. ПЕРСПЕКТИВА
+         ================================================================== -->
+    <div class="part" id="part-8">
+      <div class="part-num">Часть VIII</div>
+      <h2>Перспектива</h2>
+    </div>
+
+    <article class="chapter" id="ch-26">
+      <h3><span class="ch-num">§26</span>Направления развития формата</h3>
+      <p>Формат в текущем виде — не финальный. Ниже — направления развития, не roadmap. Они могут развиваться параллельно и независимо; их последовательность определяется исследовательскими результатами, а не календарём.</p>
+
+      <h4>Нормативная спека <code>docs/spec-v0.1/</code></h4>
+      <p>JSON Schema для <code>artifact</code>, <code>intent</code>, <code>effect</code>, <code>ontology</code>, <code>projection</code>; таблица conformance classes с детальной матрицей L1–L4; набор эталонных test fixtures. Это <strong>отдельный проект</strong>, не минорная версия манифеста.</p>
+
+      <h4>Второй reference implementation</h4>
+      <p>Vue, Svelte, native mobile, или server-side-first (Phoenix LiveView, Rails + Turbo). Вторая реализация — структурный стресс-тест формата на decoupling от React.</p>
+
+      <h4>Pattern Bank expansion</h4>
+      <p>От тринадцати к пятидесяти и более stable-паттернов через Claude Researcher pipeline. Механизм promotion candidate → stable через human review + falsification-fixtures. Формализация <code>anti/</code> — явно запрещённых паттернов.</p>
+
+      <h4>Новые материализации</h4>
+      <p>Текущие четыре — достаточны, но не исчерпывают пространство целевых сред:</p>
+      <ul>
+        <li><strong>Print</strong> — PDF / DOCX через server-side document-renderer</li>
+        <li><strong>Embed</strong> — iframe-совместимая materialization для встраивания в third-party приложения</li>
+        <li><strong>AR / XR</strong> — spatial layout читатель артефакта для голографических / расширенных сред</li>
+        <li><strong>Email</strong> — structure-граф в HTML-email, с degradation для legacy клиентов</li>
+      </ul>
+      <p>Каждая новая материализация — реализация читателя; формат не меняется.</p>
+
+      <h4>Distributed scheduler</h4>
+      <p>Темпоральный слой как replicated state machine: unblocks enterprise deployments, multi-region failover, consistent timer guarantees.</p>
+
+      <h4>Authoring loop closure</h4>
+      <p>Anchoring promotion writer + counterexample-search — замкнуть epistemic контур. Механизм, позволяющий witness-of-heuristic превращаться в witness-of-proof через automated counterexample-search или declarative human confirmation.</p>
+
+      <h4>Polymorphic entities</h4>
+      <p>Union-типы в <code>entity.kind</code> — закрытие семантической границы, упомянутой в §24.</p>
+
+      <p class="pull">Эти направления не образуют линейный roadmap. Они — стороны формата, каждая из которых может развиваться независимо. Выбор приоритетов определяется тем, какое направление принесёт наибольший валидационный сигнал: какое сдвинет уверенность в том, что IDF — достаточная абстракция для описания приложений.</p>
+    </article>
+
+    <footer class="colophon">
+      <div>
+        Манифест v2 · <strong style="color:var(--ink);font-weight:500">IDF Authors</strong> · Apache 2.0
+      </div>
+      <div>
+        <a href="./index-v2.html">← лендинг</a>
+        &nbsp;·&nbsp;
+        <a href="./onboarding.html">онбординг →</a>
+        &nbsp;·&nbsp;
+        <a href="https://github.com/DubovskiyIM/idf">GitHub</a>
+      </div>
+    </footer>
+
+  </main>
+</div>
+
+<script>
+// Scroll-highlight sidebar chapter
+(function(){
+  const navs=[...document.querySelectorAll('.sidenav .chapters a')];
+  const ids=navs.map(a=>a.getAttribute('href').slice(1)).filter(Boolean);
+  const chapters=ids.map(id=>document.getElementById(id)).filter(Boolean);
+  function update(){
+    let active=null;
+    const y=window.scrollY + 120;
+    chapters.forEach(c=>{if(c.offsetTop<=y) active=c.id});
+    navs.forEach(a=>a.classList.toggle('on',a.getAttribute('href')==='#'+active));
+    // auto-scroll sidebar to keep active in view
+    if(active){
+      const activeLink=navs.find(a=>a.classList.contains('on'));
+      if(activeLink){
+        const nav=document.querySelector('.sidenav');
+        const lr=activeLink.getBoundingClientRect(), nr=nav.getBoundingClientRect();
+        if(lr.top<nr.top+40) nav.scrollTop += lr.top - nr.top - 40;
+        else if(lr.bottom>nr.bottom-40) nav.scrollTop += lr.bottom - nr.bottom + 40;
+      }
+    }
+  }
+  window.addEventListener('scroll',update,{passive:true});
+  update();
+})();
+</script>
+</body>
+</html>
