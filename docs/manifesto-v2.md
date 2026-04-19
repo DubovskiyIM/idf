@@ -722,6 +722,8 @@ Integrity-правило проверяется валидатором при co
 
 Каждая новая материализация — реализация читателя; формат не меняется.
 
+**Intent salience и spec-debt.** Детерминизм кристаллизации (§12) — это не то же самое, что её семантическая устойчивость. Когда M намерений конкурируют за слот ёмкости N < M, формально корректный алгоритм выбирает первые N по алфавиту id — результат повторяемый, но не осмысленный. Направление развития — формализовать **intent salience** как первоклассное свойство: автор декларирует `intent.salience` (explicit ординальная метка или число), движок сортирует кандидатов по salience до применения tiebreak'а. Недостающие salience выводятся из `particles.effects` по правилам (creates-main → primary, phase-transition → secondary, remove-main → tertiary). Случаи, где tiebreak всё же оказывается алфавитным, фиксируются как witness'ы с отдельным `basis: "alphabetical-fallback"` — **spec-debt** метрика. Цель — довести число таких witness'ов до нуля, делая spec-debt операциональной мерой «насколько формат недоопределён» для конкретной онтологии.
+
 **Distributed scheduler.** Темпоральный слой как replicated state machine: unblocks enterprise deployments, multi-region failover, consistent timer guarantees. Требует изменения контракта `TimerQueue` без изменения формата user-visible API.
 
 **Authoring loop closure.** Anchoring promotion writer + counterexample-search — замкнуть epistemic контур, описанный в главах 10 (witnesses) и 19 (где уместен LLM). Механизм, позволяющий witness-of-heuristic превращаться в witness-of-proof через automated counterexample-search или declarative human confirmation.
