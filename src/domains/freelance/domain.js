@@ -38,6 +38,47 @@ const OWNERSHIP_INJECT = {
   top_up_wallet_by_card: { userId: "userId" },
 };
 
+function buildCustomEffects(intentId, ctx, world) {
+  const now = Date.now();
+  const mkEffect = (props) => ({
+    id: uuid(),
+    intent_id: intentId,
+    parent_id: null,
+    status: "proposed",
+    ttl: null,
+    created_at: now,
+    ...props,
+  });
+
+  if (intentId === "top_up_wallet_by_card") {
+    const wallet = world.wallets?.find((w) => w.id === ctx.walletId);
+    if (!wallet) return null;
+    const amount = Number(ctx.amount);
+    if (!Number.isFinite(amount) || amount <= 0) return null;
+
+    const txId = `tx_${now}_${Math.random().toString(36).slice(2, 6)}`;
+    return [
+      mkEffect({
+        alpha: "add", target: "transactions", scope: "account", value: null,
+        context: {
+          id: txId, walletId: wallet.id, amount, kind: "topup", status: "posted",
+          note: ctx.cardLastFour ? `Card *${ctx.cardLastFour}` : "Card",
+          createdAt: now,
+        },
+        desc: `top_up_wallet_by_card: add transactions`,
+      }),
+      mkEffect({
+        alpha: "replace", target: "wallet.balance", scope: "account",
+        value: (wallet.balance || 0) + amount,
+        context: { id: wallet.id, userId: wallet.userId },
+        desc: `top_up_wallet_by_card: replace wallet.balance`,
+      }),
+    ];
+  }
+
+  return undefined;
+}
+
 export function buildEffects(intentId, ctx, world, drafts) {
   const intent = INTENTS[intentId];
   if (!intent) return null;
@@ -54,6 +95,9 @@ export function buildEffects(intentId, ctx, world, drafts) {
     }
     if (Object.keys(patches).length > 0) ctx = { ...ctx, ...patches };
   }
+
+  const customEffects = buildCustomEffects(intentId, ctx, world);
+  if (customEffects !== undefined) return customEffects;
 
   const now = Date.now();
   const effects = [];
