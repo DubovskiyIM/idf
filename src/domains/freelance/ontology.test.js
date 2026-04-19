@@ -126,10 +126,47 @@ describe("freelance ontology — roles", () => {
     expect(ONTOLOGY.roles.guest.visibleFields.Response).toBeUndefined();
   });
 
-  it("все 3 роли имеют canExecute массив", () => {
-    for (const r of ["customer", "executor", "guest"]) {
+  it("все 4 роли имеют canExecute массив", () => {
+    for (const r of ["customer", "executor", "guest", "agent"]) {
       expect(Array.isArray(ONTOLOGY.roles[r].canExecute)).toBe(true);
     }
+  });
+
+  it("agent имеет base: 'agent' (§5 таксономия)", () => {
+    expect(base("agent")).toBe("agent");
+  });
+
+  it("agent может читать public-каталог и подавать отклики/ревью", () => {
+    const a = ONTOLOGY.roles.agent.canExecute;
+    // Safe read-intensive
+    expect(a).toContain("search_tasks");
+    expect(a).toContain("view_wallet_balance");
+    expect(a).toContain("view_reviews_for_user");
+    // Safe writes
+    expect(a).toContain("submit_response");
+    expect(a).toContain("leave_review");
+  });
+
+  it("agent НЕ может исполнять необратимые escrow-intents без preapproval", () => {
+    const a = ONTOLOGY.roles.agent.canExecute;
+    // __irr:high должны быть исключены до ревизии с preapproval
+    expect(a).not.toContain("confirm_deal");
+    expect(a).not.toContain("accept_result");
+    // Risky money-moves тоже исключены
+    expect(a).not.toContain("top_up_wallet_by_card");
+    expect(a).not.toContain("select_executor");
+    expect(a).not.toContain("cancel_deal_mutual");
+  });
+
+  it("agent видит own Response/Deal/Wallet + public Task/Category/ExecutorProfile", () => {
+    const vf = ONTOLOGY.roles.agent.visibleFields;
+    expect(vf.Response).toBe("own");
+    expect(vf.Deal).toBe("own");
+    expect(vf.Wallet).toBe("own");
+    expect(vf.User).toBe("own");
+    expect(vf.Task).toBeInstanceOf(Array);
+    expect(vf.Category).toBeInstanceOf(Array);
+    expect(vf.ExecutorProfile).toBeInstanceOf(Array);
   });
 
   it("customer может инициировать deal/wallet/review intents", () => {

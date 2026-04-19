@@ -300,6 +300,54 @@ export const ONTOLOGY = {
       },
     },
 
+    agent: {
+      base: "agent",
+      label: "Агент (API)",
+      // §17: JWT-scoped automation. Минимальный набор — безопасные
+      // read-intensive + submit_response (от имени executor) + reviews.
+      // Необратимые escrow-переходы (confirm_deal / accept_result) и
+      // финансовые операции (top_up_wallet_by_card) намеренно исключены
+      // до появления preapproval-декларации (следующая ревизия: добавить
+      // AgentPreapproval entity с `maxAmount`, `csvInclude` по категориям,
+      // `dailySum` на submit_response).
+      canExecute: [
+        "search_tasks", "filter_by_category", "sort_tasks",
+        "view_responses",
+        "view_wallet_balance", "view_transaction_history",
+        "view_reviews_for_user",
+        "session_set_active_role",
+        "submit_response",
+        "leave_review",
+        "reply_to_review",
+      ],
+      visibleFields: {
+        Task: [
+          "id", "customerId", "title", "description", "categoryId", "budget",
+          "deadline", "city", "type", "status", "responsesCount", "createdAt",
+        ],
+        Category: ["id", "name", "slug", "icon"],
+        Skill: ["id", "name", "categoryId"],
+        ExecutorProfile: [
+          "id", "userId", "bio", "minPrice", "avgDeliveryHours",
+          "rating", "level", "completedDeals", "availability",
+        ],
+        ExecutorSkill: ["id", "executorId", "skillId"],
+        CustomerProfile: ["id", "userId", "displayName", "city"],
+        Response: "own",
+        Deal: "own",
+        Wallet: "own",
+        Transaction: [
+          "id", "walletId", "dealId", "amount", "kind", "status",
+          "note", "createdAt",
+        ],
+        Review: [
+          "id", "authorId", "dealId", "targetUserId", "role",
+          "rating", "comment", "createdAt",
+        ],
+        User: "own",
+      },
+    },
+
     executor: {
       base: "owner",
       canExecute: [
