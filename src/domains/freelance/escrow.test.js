@@ -96,4 +96,51 @@ describe("escrow / buildEffects", () => {
       expect(effects).toBeNull();
     });
   });
+
+  describe("accept_result", () => {
+    it("releases escrow, crediting executor wallet, minus commission", () => {
+      const world = {
+        deals: [{
+          id: "deal_1", customerId: "u_cust", executorId: "u_exe", taskId: "t_1",
+          responseId: "r_1", amount: 20000, commission: 2000, status: "on_review",
+        }],
+        wallets: [
+          { id: "w_cust", userId: "u_cust", balance: 80000, reserved: 20000 },
+          { id: "w_exe",  userId: "u_exe",  balance: 0,      reserved: 0 },
+        ],
+        transactions: [
+          { id: "tx_1", walletId: "w_cust", dealId: "deal_1", amount: 20000, kind: "escrow-hold", status: "posted" },
+        ],
+      };
+      const ctx = { userId: "u_cust", id: "deal_1" };
+      const effects = buildEffects("accept_result", ctx, world, []);
+      expect(effects).toHaveLength(5);
+
+      const status = effects.find((e) => e.target === "deal.status");
+      expect(status.value).toBe("completed");
+
+      const release = effects.find((e) => e.alpha === "add" && e.target === "transactions" && e.context.kind === "release");
+      expect(release.context.walletId).toBe("w_exe");
+      expect(release.context.amount).toBe(18000);
+      expect(release.context.status).toBe("posted");
+
+      const commTx = effects.find((e) => e.alpha === "add" && e.target === "transactions" && e.context.kind === "commission");
+      expect(commTx.context.amount).toBe(2000);
+
+      const exeBalance = effects.find((e) => e.target === "wallet.balance" && e.context.id === "w_exe");
+      expect(exeBalance.value).toBe(18000);
+
+      const custReserved = effects.find((e) => e.target === "wallet.reserved" && e.context.id === "w_cust");
+      expect(custReserved.value).toBe(0);
+    });
+
+    it("null если сделка не on_review / in_progress", () => {
+      const world = {
+        deals: [{ id: "deal_1", status: "cancelled", amount: 20000, commission: 2000, customerId: "u", executorId: "e" }],
+        wallets: [], transactions: [],
+      };
+      const effects = buildEffects("accept_result", { id: "deal_1" }, world, []);
+      expect(effects).toBeNull();
+    });
+  });
 });

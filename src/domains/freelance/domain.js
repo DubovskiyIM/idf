@@ -76,6 +76,63 @@ function buildCustomEffects(intentId, ctx, world) {
     ];
   }
 
+  if (intentId === "accept_result" || intentId === "auto_accept_result") {
+    const deal = world.deals?.find((d) => d.id === ctx.id);
+    if (!deal) return null;
+    if (!["on_review", "in_progress"].includes(deal.status)) return null;
+
+    const custWallet = world.wallets?.find((w) => w.userId === deal.customerId);
+    const exeWallet  = world.wallets?.find((w) => w.userId === deal.executorId);
+    if (!custWallet || !exeWallet) return null;
+
+    const amount = Number(deal.amount);
+    const commission = Number(deal.commission) || 0;
+    const payout = amount - commission;
+    if (!Number.isFinite(payout) || payout < 0) return null;
+
+    const rTx = `tx_${now}_${Math.random().toString(36).slice(2, 6)}`;
+    const cTx = `tx_${now + 1}_${Math.random().toString(36).slice(2, 6)}`;
+
+    return [
+      mkEffect({
+        alpha: "replace", target: "deal.status", scope: "account",
+        value: "completed",
+        context: { id: deal.id, completedAt: now },
+        desc: `${intentId}: replace deal.status=completed`,
+      }),
+      mkEffect({
+        alpha: "add", target: "transactions", scope: "account", value: null,
+        context: {
+          id: rTx, walletId: exeWallet.id, dealId: deal.id,
+          amount: payout, kind: "release", status: "posted",
+          note: `Payout для сделки ${deal.id}`, createdAt: now,
+        },
+        desc: `${intentId}: add transactions (release)`,
+      }),
+      mkEffect({
+        alpha: "add", target: "transactions", scope: "account", value: null,
+        context: {
+          id: cTx, walletId: custWallet.id, dealId: deal.id,
+          amount: commission, kind: "commission", status: "posted",
+          note: `Комиссия платформы ${commission}`, createdAt: now,
+        },
+        desc: `${intentId}: add transactions (commission)`,
+      }),
+      mkEffect({
+        alpha: "replace", target: "wallet.balance", scope: "account",
+        value: (exeWallet.balance || 0) + payout,
+        context: { id: exeWallet.id, userId: exeWallet.userId },
+        desc: `${intentId}: replace executor wallet.balance`,
+      }),
+      mkEffect({
+        alpha: "replace", target: "wallet.reserved", scope: "account",
+        value: Math.max(0, (custWallet.reserved || 0) - amount),
+        context: { id: custWallet.id, userId: custWallet.userId },
+        desc: `${intentId}: replace customer wallet.reserved`,
+      }),
+    ];
+  }
+
   if (intentId === "confirm_deal") {
     const wallet = world.wallets?.find((w) => w.userId === ctx.customerId);
     if (!wallet) return null;
