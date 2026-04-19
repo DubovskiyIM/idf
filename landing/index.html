@@ -3,12 +3,12 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>IDF — Intent-Driven Framework</title>
-  <meta name="description" content="The open standard for deriving applications from user intentions.">
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <title>IDF — application description format</title>
+  <meta name="description" content="IDF is an application description format at the OpenAPI / JSON-LD level. Four readers of one artifact: pixels, voice, agent API, document.">
   <link rel="alternate" hreflang="en" href="./index.html">
   <link rel="alternate" hreflang="ru" href="./index-ru.html">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
   <style>
     :root {
       --bg: #050508;
@@ -24,11 +24,9 @@
       --purple: #a78bfa;
       --green: #4ade80;
       --rose: #fb7185;
-      --yellow: #fbbf24;
       --cyan: #22d3ee;
       --mono: 'JetBrains Mono', monospace;
-      --sans: 'Inter', system-ui, sans-serif;
-      --rhythm: 140px;
+      --rhythm: 120px;
     }
     *{margin:0;padding:0;box-sizing:border-box}
     html{scroll-behavior:smooth}
@@ -37,537 +35,312 @@
       radial-gradient(ellipse 80% 50% at 20% 60%, rgba(108,138,255,.04) 0%, transparent 60%),
       radial-gradient(ellipse 60% 40% at 80% 30%, rgba(167,139,250,.035) 0%, transparent 50%),
       radial-gradient(ellipse 50% 60% at 50% 90%, rgba(34,211,238,.025) 0%, transparent 50%);
-      animation:bgDrift 20s ease-in-out infinite alternate;pointer-events:none}
-    @keyframes bgDrift{
-      0%{background:
-        radial-gradient(ellipse 80% 50% at 20% 60%, rgba(108,138,255,.04) 0%, transparent 60%),
-        radial-gradient(ellipse 60% 40% at 80% 30%, rgba(167,139,250,.035) 0%, transparent 50%),
-        radial-gradient(ellipse 50% 60% at 50% 90%, rgba(34,211,238,.025) 0%, transparent 50%)}
-      33%{background:
-        radial-gradient(ellipse 70% 60% at 70% 40%, rgba(167,139,250,.045) 0%, transparent 60%),
-        radial-gradient(ellipse 60% 50% at 30% 70%, rgba(108,138,255,.035) 0%, transparent 50%),
-        radial-gradient(ellipse 50% 40% at 60% 20%, rgba(74,222,128,.02) 0%, transparent 50%)}
-      66%{background:
-        radial-gradient(ellipse 60% 50% at 40% 30%, rgba(34,211,238,.04) 0%, transparent 60%),
-        radial-gradient(ellipse 80% 40% at 60% 80%, rgba(108,138,255,.03) 0%, transparent 50%),
-        radial-gradient(ellipse 50% 60% at 20% 50%, rgba(251,113,133,.02) 0%, transparent 50%)}
-      100%{background:
-        radial-gradient(ellipse 80% 50% at 80% 50%, rgba(108,138,255,.04) 0%, transparent 60%),
-        radial-gradient(ellipse 60% 40% at 20% 40%, rgba(167,139,250,.035) 0%, transparent 50%),
-        radial-gradient(ellipse 50% 60% at 50% 10%, rgba(34,211,238,.025) 0%, transparent 50%)}
-    }
+      pointer-events:none}
     a{color:var(--accent);text-decoration:none}
     ::selection{background:rgba(108,138,255,0.3)}
 
-    /* ===== REVEAL ===== */
-    .rv{opacity:0;transform:translateY(40px);transition:opacity 1s cubic-bezier(.16,1,.3,1),transform 1s cubic-bezier(.16,1,.3,1)}
+    .rv{opacity:0;transform:translateY(32px);transition:opacity .9s cubic-bezier(.16,1,.3,1),transform .9s cubic-bezier(.16,1,.3,1)}
     .rv.vis{opacity:1;transform:none}
     .rv-d1{transition-delay:.1s}.rv-d2{transition-delay:.2s}.rv-d3{transition-delay:.3s}.rv-d4{transition-delay:.4s}
 
-    /* ===== HERO ===== */
     .hero{position:relative;min-height:100vh;display:flex;align-items:center;justify-content:center;overflow:hidden}
     #particleCanvas{position:absolute;inset:0;z-index:0;width:100%;height:100%;display:block}
-    .hero-inner{position:relative;z-index:2;text-align:center;max-width:900px;padding:40px 24px}
-
-    .badge{display:inline-flex;align-items:center;gap:10px;font-family:var(--mono);font-size:10.5px;font-weight:500;letter-spacing:.12em;color:var(--text-mid);border:1px solid var(--border);background:rgba(14,14,22,.5);backdrop-filter:blur(14px);border-radius:100px;padding:9px 20px;margin-bottom:42px}
+    .hero-inner{position:relative;z-index:2;text-align:center;max-width:860px;padding:40px 24px}
+    .badge{display:inline-flex;align-items:center;gap:10px;font-size:10.5px;font-weight:500;letter-spacing:.12em;color:var(--text-mid);border:1px solid var(--border);background:rgba(14,14,22,.5);backdrop-filter:blur(14px);border-radius:100px;padding:9px 20px;margin-bottom:42px}
     .badge .pulse{width:6px;height:6px;background:var(--green);border-radius:50%;animation:pulse 2s ease-in-out infinite;flex-shrink:0}
     @keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(74,222,128,.5)}50%{box-shadow:0 0 0 7px rgba(74,222,128,0)}}
-
-    .hero h1{font-family:var(--mono);font-size:clamp(2.6rem,7vw,5rem);font-weight:800;line-height:1.02;letter-spacing:-.045em;margin-bottom:32px}
+    .hero h1{font-size:clamp(2.4rem,6.4vw,4.4rem);font-weight:800;line-height:1.05;letter-spacing:-.045em;margin-bottom:26px}
     .hero h1 .line2{display:block;background:linear-gradient(135deg,var(--accent) 0%,var(--purple) 35%,var(--cyan) 70%,var(--accent) 100%);background-size:280% 280%;-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;animation:aurora 9s ease-in-out infinite}
     @keyframes aurora{0%{background-position:0% 50%}50%{background-position:100% 50%}100%{background-position:0% 50%}}
-
-    .hero .sub{font-family:var(--mono);font-size:clamp(.92rem,1.7vw,1.08rem);color:var(--text-mid);max-width:640px;margin:0 auto 48px;font-weight:400;line-height:1.7}
-
-    .ctas{display:flex;gap:12px;justify-content:center;flex-wrap:wrap;margin-bottom:56px}
-    .btn{font-family:var(--mono);font-size:13px;font-weight:600;padding:13px 26px;border-radius:12px;border:1px solid var(--border);background:var(--surface);backdrop-filter:blur(12px);color:var(--text);cursor:pointer;transition:all .35s cubic-bezier(.16,1,.3,1);display:inline-flex;align-items:center;gap:8px}
+    .hero .sub{font-size:clamp(.92rem,1.6vw,1.05rem);color:var(--text-mid);max-width:640px;margin:0 auto 42px;font-weight:400;line-height:1.7}
+    .ctas{display:flex;gap:12px;justify-content:center;flex-wrap:wrap;margin-bottom:40px}
+    .btn{font-size:13px;font-weight:600;padding:13px 26px;border-radius:12px;border:1px solid var(--border);background:var(--surface);backdrop-filter:blur(12px);color:var(--text);cursor:pointer;transition:all .35s cubic-bezier(.16,1,.3,1);display:inline-flex;align-items:center;gap:8px}
     .btn:hover{border-color:var(--border-hover);transform:translateY(-3px);box-shadow:0 8px 32px rgba(108,138,255,.12)}
     .btn-glow{background:linear-gradient(135deg,var(--accent),#5070ee);border:none;color:#fff;position:relative;overflow:hidden}
     .btn-glow::after{content:'';position:absolute;inset:-1px;background:linear-gradient(135deg,var(--accent),var(--purple),var(--cyan));border-radius:12px;z-index:-1;opacity:.5;filter:blur(12px);transition:opacity .3s}
     .btn-glow:hover{transform:translateY(-3px);box-shadow:0 8px 40px rgba(108,138,255,.35)}
     .btn-glow:hover::after{opacity:.8}
-
-    /* Formula */
-    .formula{font-family:var(--mono);font-size:clamp(.8rem,1.8vw,1rem);color:var(--text-mid);background:var(--surface);backdrop-filter:blur(20px);border:1px solid var(--border);border-radius:16px;padding:18px 32px;display:inline-block;position:relative;overflow:hidden}
+    .btn.ghost{background:transparent}
+    .formula{font-size:clamp(.78rem,1.7vw,.95rem);color:var(--text-mid);background:var(--surface);backdrop-filter:blur(20px);border:1px solid var(--border);border-radius:14px;padding:14px 24px;display:inline-block}
     .formula .hl{color:var(--accent-bright)}
-    .formula::before{content:'';position:absolute;top:0;left:-100%;width:60%;height:100%;background:linear-gradient(90deg,transparent,rgba(108,138,255,.08),transparent);animation:scan 4s ease-in-out infinite}
-    @keyframes scan{0%{left:-60%}100%{left:160%}}
-
     .scroll-arrow{position:absolute;bottom:28px;left:50%;transform:translateX(-50%);color:var(--text-dim);font-size:20px;animation:bob 2.5s ease-in-out infinite}
     @keyframes bob{0%,100%{transform:translateX(-50%) translateY(0);opacity:.3}50%{transform:translateX(-50%) translateY(10px);opacity:.8}}
 
-    /* ===== GLASS CARD ===== */
     .glass{background:var(--surface);backdrop-filter:blur(16px);border:1px solid var(--border);border-radius:16px;transition:all .4s cubic-bezier(.16,1,.3,1)}
     .glass:hover{border-color:var(--border-hover);transform:translateY(-6px);box-shadow:0 16px 48px rgba(108,138,255,.08)}
 
-    /* ===== SECTIONS ===== */
     section{padding:var(--rhythm) 24px}
-    .container{max-width:1060px;margin:0 auto}
-    .stag{font-family:var(--mono);font-size:11px;font-weight:600;letter-spacing:.18em;text-transform:uppercase;color:var(--accent);margin-bottom:16px;display:inline-flex;align-items:center;gap:10px}
+    .container{max-width:1040px;margin:0 auto}
+    .stag{font-size:11px;font-weight:600;letter-spacing:.18em;text-transform:uppercase;color:var(--accent);margin-bottom:14px;display:inline-flex;align-items:center;gap:10px}
     .stag::before{content:'';width:24px;height:1px;background:linear-gradient(90deg,transparent,var(--accent));display:inline-block}
-    .stitle{font-size:clamp(2rem,4.5vw,3.1rem);font-weight:800;letter-spacing:-.045em;line-height:1.08;margin-bottom:20px;max-width:760px}
-    .sdesc{font-size:1.08rem;color:var(--text-mid);max-width:600px;margin-bottom:64px;line-height:1.65;font-weight:400}
+    .stitle{font-size:clamp(1.85rem,4vw,2.7rem);font-weight:800;letter-spacing:-.045em;line-height:1.1;margin-bottom:18px;max-width:760px}
+    .sdesc{font-size:1rem;color:var(--text-mid);max-width:640px;margin-bottom:52px;line-height:1.65;font-weight:400}
 
-    /* ===== PARTICLES ===== */
-    .pgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--border);border-radius:20px;overflow:hidden}
-    @media(max-width:700px){.pgrid{grid-template-columns:1fr 1fr}}
-    .pcell{background:var(--surface-solid);padding:32px 24px;position:relative;overflow:hidden;transition:background .3s}
-    .pcell:hover{background:#111120}
-    .pcell:hover .pcell-glow{opacity:1}
-    .pcell-glow{position:absolute;top:-40px;right:-40px;width:120px;height:120px;border-radius:50%;filter:blur(50px);opacity:0;transition:opacity .5s;pointer-events:none}
-    .pcell .sym{font-family:var(--mono);font-size:2.2rem;font-weight:800;margin-bottom:10px}
-    .pcell h3{font-weight:600;font-size:.95rem;margin-bottom:6px}
-    .pcell p{font-size:.82rem;color:var(--text-dim);line-height:1.5}
+    .objects{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--border);border-radius:18px;overflow:hidden}
+    @media(max-width:860px){.objects{grid-template-columns:1fr 1fr}}
+    @media(max-width:480px){.objects{grid-template-columns:1fr}}
+    .obj{background:var(--surface-solid);padding:30px 24px 26px}
+    .obj .sym{font-size:1.9rem;font-weight:800;margin-bottom:10px;letter-spacing:-.02em}
+    .obj h3{font-weight:700;font-size:1rem;margin-bottom:8px;color:var(--text)}
+    .obj p{font-size:.8rem;color:var(--text-mid);line-height:1.6}
+    .obj.o1{color:var(--accent)}.obj.o2{color:var(--purple)}.obj.o3{color:var(--cyan)}.obj.o4{color:var(--green)}
 
-    /* ===== COUNTERS ===== */
-    .counters{display:grid;grid-template-columns:repeat(5,1fr);border:1px solid var(--border);border-radius:20px;overflow:hidden;margin:96px 0;background:var(--surface-solid)}
+    .counters{display:grid;grid-template-columns:repeat(5,1fr);border:1px solid var(--border);border-radius:18px;overflow:hidden;margin:72px 0;background:var(--surface-solid)}
     @media(max-width:860px){.counters{grid-template-columns:repeat(3,1fr)}}
     @media(max-width:520px){.counters{grid-template-columns:repeat(2,1fr)}}
-    .ctr{padding:42px 12px 38px;text-align:center;border-right:1px solid var(--border);border-bottom:1px solid var(--border);position:relative;overflow:hidden}
+    .ctr{padding:38px 12px 34px;text-align:center;border-right:1px solid var(--border);border-bottom:1px solid var(--border)}
     .ctr:last-child{border-right:none}
     @media(max-width:860px){.ctr{border-bottom:1px solid var(--border)}}
-    .ctr:hover .ctr-bg{opacity:1}
-    .ctr-bg{position:absolute;inset:0;background:radial-gradient(circle at 50% 50%,rgba(108,138,255,.07),transparent 70%);opacity:0;transition:opacity .5s}
-    .ctr .v{font-family:var(--mono);font-size:clamp(2.1rem,5vw,3.2rem);font-weight:900;position:relative;z-index:1;letter-spacing:-.03em;color:var(--text)}
-    .ctr .l{font-family:var(--mono);font-size:.72rem;color:var(--text-dim);margin-top:8px;position:relative;z-index:1;letter-spacing:.08em;text-transform:lowercase}
+    .ctr .v{font-size:clamp(2rem,4.5vw,2.9rem);font-weight:900;letter-spacing:-.03em;color:var(--text)}
+    .ctr .l{font-size:.72rem;color:var(--text-dim);margin-top:6px;letter-spacing:.08em;text-transform:lowercase}
 
-    /* ===== ALGEBRA ===== */
-    #algebraCanvas{width:100%;height:320px;border-radius:20px;border:1px solid var(--border);background:var(--surface-solid);margin-bottom:20px;cursor:crosshair}
-    .algebra-legend{display:flex;gap:24px;justify-content:center;flex-wrap:wrap;font-family:var(--mono);font-size:.8rem;color:var(--text-dim)}
-    .algebra-legend span{display:inline-flex;align-items:center;gap:6px}
-    .algebra-legend .d{width:10px;height:3px;border-radius:2px}
-
-    /* ===== PROCESS PIPELINE (v1.6.2) ===== */
-    .pipeline{display:grid;grid-template-columns:repeat(5,1fr);gap:0;border-radius:18px;overflow:hidden;border:1px solid var(--border);background:var(--surface-solid);position:relative}
-    @media(max-width:900px){.pipeline{grid-template-columns:1fr 1fr;gap:1px;background:var(--border)}}
-    @media(max-width:520px){.pipeline{grid-template-columns:1fr}}
-    .step{padding:32px 24px 28px;position:relative;background:var(--surface-solid);border-right:1px solid var(--border);min-height:200px;display:flex;flex-direction:column}
-    .step:last-child{border-right:none}
-    @media(max-width:900px){.step{border-right:none}}
-    .step::after{content:'';position:absolute;top:32px;right:-1px;width:1px;height:32px;background:linear-gradient(180deg,transparent,var(--accent),transparent);opacity:0;transition:opacity .3s}
-    .step:hover::after{opacity:.6}
-    .step .num{font-family:var(--mono);font-size:.7rem;font-weight:600;letter-spacing:.15em;color:var(--text-dim);margin-bottom:14px}
-    .step .num strong{color:var(--accent);font-weight:700}
-    .step h4{font-size:1rem;font-weight:700;margin-bottom:8px;color:var(--text);line-height:1.3}
-    .step p{font-size:.78rem;color:var(--text-mid);line-height:1.55;margin-bottom:14px;flex:1}
-    .step .actor{font-family:var(--mono);font-size:.66rem;color:var(--text-dim);text-transform:uppercase;letter-spacing:.12em;padding-top:12px;border-top:1px solid var(--border)}
-    .step .actor.h{color:var(--green)}
-    .step .actor.l{color:var(--purple)}
-    .step .actor.s{color:var(--accent)}
-
-    /* ===== METRICS (speed/tokens) ===== */
-    .metric-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:14px}
-    @media(max-width:760px){.metric-grid{grid-template-columns:1fr}}
-    .metric{padding:32px 28px;position:relative;overflow:hidden}
-    .metric .h{font-family:var(--mono);font-size:.72rem;letter-spacing:.14em;color:var(--text-dim);text-transform:uppercase;margin-bottom:18px}
-    .metric table{width:100%;border-collapse:collapse;font-family:var(--mono);font-size:.85rem}
-    .metric td{padding:11px 0;border-bottom:1px solid var(--border)}
-    .metric tr:last-child td{border-bottom:none}
-    .metric td:first-child{color:var(--text-mid);width:55%}
-    .metric td:last-child{text-align:right;font-weight:700;color:var(--text)}
-    .metric td:last-child .accent{color:var(--accent-bright)}
-    .metric td:last-child .green{color:var(--green)}
-    .metric td:last-child .strike{text-decoration:line-through;color:var(--text-dim);font-weight:400;margin-right:8px}
-    .metric .legend{font-family:var(--mono);font-size:.7rem;color:var(--text-dim);margin-top:18px;padding-top:14px;border-top:1px solid var(--border);line-height:1.5}
-
-    /* ===== FOUR MATERIALIZATIONS (v1.6.2) ===== */
-    .matgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:28px}
+    .matgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:24px}
     @media(max-width:860px){.matgrid{grid-template-columns:repeat(2,1fr)}}
     @media(max-width:480px){.matgrid{grid-template-columns:1fr}}
-    .mat{padding:36px 28px 32px;position:relative;overflow:hidden;border-radius:18px;min-width:0;display:flex;flex-direction:column}
+    .mat{padding:28px 22px 24px;position:relative;overflow:hidden;border-radius:16px;display:flex;flex-direction:column}
     .mat::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:currentColor;opacity:.6}
-    .mat::after{content:'';position:absolute;top:-60px;right:-60px;width:160px;height:160px;border-radius:50%;background:currentColor;opacity:.04;filter:blur(40px);transition:opacity .5s}
-    .mat:hover::after{opacity:.08}
-    .mat .sym{font-family:var(--mono);font-size:1.6rem;font-weight:700;margin-bottom:12px;display:flex;align-items:baseline;gap:10px}
-    .mat .sym .num{font-size:.7em;color:var(--text-dim);font-weight:500}
-    .mat h3{font-weight:700;font-size:1.05rem;margin-bottom:8px;color:var(--text)}
-    .mat p{font-size:.82rem;color:var(--text-mid);line-height:1.55;margin-bottom:14px}
-    .mat .api{font-family:var(--mono);font-size:.7rem;color:var(--text-dim);padding:6px 10px;background:rgba(255,255,255,.03);border-radius:6px;display:block;letter-spacing:.02em;overflow-wrap:anywhere;word-break:break-word;line-height:1.5;max-width:100%}
-    .mat.m-pix{color:var(--accent)}
-    .mat.m-voc{color:var(--cyan)}
-    .mat.m-api{color:var(--purple)}
-    .mat.m-doc{color:var(--green)}
-    .mat-footer{text-align:center;font-family:var(--mono);font-size:.82rem;color:var(--text-dim);padding-top:28px;border-top:1px solid var(--border)}
+    .mat .sym{font-size:1.4rem;font-weight:700;margin-bottom:10px;display:flex;align-items:baseline;gap:8px}
+    .mat .sym .num{font-size:.66em;color:var(--text-dim);font-weight:500}
+    .mat h3{font-weight:700;font-size:1rem;margin-bottom:6px;color:var(--text)}
+    .mat p{font-size:.78rem;color:var(--text-mid);line-height:1.55;margin-bottom:12px}
+    .mat .api{font-size:.66rem;color:var(--text-dim);padding:5px 8px;background:rgba(255,255,255,.03);border-radius:6px;display:block;overflow-wrap:anywhere;line-height:1.5}
+    .mat.m-pix{color:var(--accent)}.mat.m-voc{color:var(--cyan)}.mat.m-api{color:var(--purple)}.mat.m-doc{color:var(--green)}
+    .mat-footer{text-align:center;font-size:.82rem;color:var(--text-dim);padding-top:22px;border-top:1px solid var(--border);line-height:1.7}
     .mat-footer em{color:var(--accent-bright);font-style:normal;font-weight:600}
 
-    /* ===== CODE ===== */
-    .code-wrap{border-radius:20px;overflow:hidden;border:1px solid var(--border);background:var(--surface-solid);position:relative}
-    .code-bar{display:flex;align-items:center;gap:8px;padding:14px 18px;border-bottom:1px solid var(--border);font-family:var(--mono);font-size:12px;color:var(--text-dim)}
-    .dots span{display:inline-block;width:11px;height:11px;border-radius:50%;margin-right:5px}
-    .dots span:nth-child(1){background:#ff5f57}.dots span:nth-child(2){background:#ffbd2e}.dots span:nth-child(3){background:#28c840}
-    pre{padding:24px;overflow-x:auto;font-family:var(--mono);font-size:.82rem;line-height:1.8;color:var(--text-mid)}
-    pre .kw{color:var(--purple)}pre .fn{color:var(--accent-bright)}pre .str{color:var(--green)}pre .cm{color:#333}pre .num{color:var(--yellow)}
-    .code-cursor{display:inline-block;width:2px;height:1em;background:var(--accent);animation:blink 1s step-end infinite;vertical-align:text-bottom;margin-left:2px}
-    @keyframes blink{0%,100%{opacity:1}50%{opacity:0}}
+    .llm{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+    @media(max-width:760px){.llm{grid-template-columns:1fr}}
+    .llm-col{padding:26px 24px;border-radius:16px}
+    .llm-col.yes{border:1px solid rgba(74,222,128,.18);background:linear-gradient(180deg,rgba(74,222,128,.04),rgba(14,14,22,.5))}
+    .llm-col.no{border:1px solid rgba(251,113,133,.18);background:linear-gradient(180deg,rgba(251,113,133,.04),rgba(14,14,22,.5))}
+    .llm-col .hd{font-size:.72rem;letter-spacing:.14em;text-transform:uppercase;font-weight:700;margin-bottom:14px}
+    .llm-col.yes .hd{color:var(--green)}
+    .llm-col.no .hd{color:var(--rose)}
+    .llm-col ul{list-style:none}
+    .llm-col li{font-size:.82rem;color:var(--text);line-height:1.55;padding:9px 0 9px 22px;border-bottom:1px solid var(--border);position:relative}
+    .llm-col li:last-child{border-bottom:none}
+    .llm-col li::before{position:absolute;left:0;top:9px;font-weight:700;font-size:.82rem}
+    .llm-col.yes li::before{content:'+';color:var(--green)}
+    .llm-col.no li::before{content:'−';color:var(--rose)}
 
-    /* ===== CONFORMANCE ===== */
-    .lvls{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
-    @media(max-width:640px){.lvls{grid-template-columns:1fr}}
-    .lvl{text-align:center;padding:40px 24px;position:relative;overflow:hidden}
-    .lvl .n{font-family:var(--mono);font-size:4rem;font-weight:900;background:linear-gradient(180deg,var(--accent),var(--purple));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
-    .lvl .nm{font-size:1.1rem;font-weight:700;margin:8px 0 4px}
-    .lvl .ts{font-family:var(--mono);font-size:.85rem;color:var(--text-dim)}
-    .lvl .detail{font-size:.78rem;color:var(--text-dim);margin-top:12px;line-height:1.8}
-    .lvl::after{content:'';position:absolute;bottom:0;left:20%;right:20%;height:1px;background:linear-gradient(90deg,transparent,var(--border-hover),transparent)}
-
-    /* ===== DOMAINS ===== */
-    .domains{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:14px}
-    .dcard{padding:28px;position:relative;overflow:hidden}
-    .dcard::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,var(--accent),var(--purple));transform:scaleX(0);transform-origin:left;transition:transform .4s cubic-bezier(.16,1,.3,1)}
+    .domains{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px}
+    .dcard{padding:22px 20px;position:relative;overflow:hidden}
+    .dcard::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,var(--accent),var(--purple));transform:scaleX(0);transform-origin:left;transition:transform .4s cubic-bezier(.16,1,.3,1)}
     .dcard:hover::before{transform:scaleX(1)}
-    .dcard .cn{font-family:var(--mono);font-size:2.5rem;font-weight:900;background:linear-gradient(135deg,var(--accent),var(--purple));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
-    .dcard .dn{font-weight:700;margin:6px 0 4px}
-    .dcard .dd{font-size:.78rem;color:var(--text-dim);line-height:1.4}
+    .dcard .cn{font-size:2rem;font-weight:900;background:linear-gradient(135deg,var(--accent),var(--purple));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;letter-spacing:-.03em}
+    .dcard .dn{font-weight:700;margin:4px 0 4px;font-size:.92rem}
+    .dcard .dd{font-size:.74rem;color:var(--text-dim);line-height:1.5}
 
-    /* ===== STUDIO GALLERY ===== */
-    .studio-hero{position:relative;border-radius:16px;overflow:hidden;border:1px solid var(--border);margin-bottom:28px}
+    .studio-hero{position:relative;border-radius:16px;overflow:hidden;border:1px solid var(--border);margin-bottom:20px}
     .studio-hero img{display:block;width:100%;height:auto}
     .studio-hero::after{content:'';position:absolute;inset:0;background:linear-gradient(180deg,transparent 60%,rgba(5,5,8,.7));pointer-events:none}
-    .studio-caption{position:absolute;bottom:18px;left:22px;right:22px;z-index:2;font-family:var(--mono);font-size:.82rem;color:var(--text-mid);pointer-events:none}
+    .studio-caption{position:absolute;bottom:18px;left:22px;right:22px;z-index:2;font-size:.78rem;color:var(--text-mid);pointer-events:none}
     .studio-caption strong{color:var(--accent-bright);font-weight:600}
-    .studio-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+    .studio-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
     @media(max-width:860px){.studio-grid{grid-template-columns:repeat(2,1fr)}}
     @media(max-width:480px){.studio-grid{grid-template-columns:1fr}}
-    .studio-card{padding:0;position:relative;overflow:hidden;border-radius:14px;display:flex;flex-direction:column}
-    .studio-card img{display:block;width:100%;height:170px;object-fit:cover;border-bottom:1px solid var(--border)}
-    .studio-card .body{padding:16px 18px 18px}
-    .studio-card h4{font-size:.95rem;font-weight:700;margin-bottom:6px;color:var(--text)}
-    .studio-card p{font-size:.78rem;color:var(--text-mid);line-height:1.55}
+    .studio-card{padding:0;overflow:hidden;border-radius:14px;display:flex;flex-direction:column}
+    .studio-card img{display:block;width:100%;height:160px;object-fit:cover;border-bottom:1px solid var(--border)}
+    .studio-card .body{padding:14px 16px 16px}
+    .studio-card h4{font-size:.9rem;font-weight:700;margin-bottom:5px;color:var(--text)}
+    .studio-card p{font-size:.74rem;color:var(--text-mid);line-height:1.55}
 
-    /* ===== QUOTE ===== */
-    .quote-wrap{position:relative;padding:56px 40px;border-radius:24px;background:linear-gradient(135deg,rgba(108,138,255,.06),rgba(167,139,250,.04),rgba(34,211,238,.03));border:1px solid var(--border);overflow:hidden;text-align:center}
-    .quote-wrap::before{content:'';position:absolute;inset:-2px;border-radius:24px;background:conic-gradient(from 0deg,var(--accent),var(--purple),var(--cyan),var(--green),var(--accent));opacity:.12;animation:rotateBorder 10s linear infinite;filter:blur(1px)}
-    @keyframes rotateBorder{0%{transform:rotate(0)}100%{transform:rotate(360deg)}}
-    .quote-wrap blockquote{position:relative;z-index:1;font-size:clamp(1.15rem,2.5vw,1.5rem);font-weight:500;line-height:1.6;max-width:700px;margin:0 auto}
+    .quote-wrap{position:relative;padding:48px 36px;border-radius:22px;background:linear-gradient(135deg,rgba(108,138,255,.06),rgba(167,139,250,.04),rgba(34,211,238,.03));border:1px solid var(--border);text-align:center}
+    .quote-wrap blockquote{font-size:clamp(1.05rem,2.2vw,1.35rem);font-weight:500;line-height:1.65;max-width:720px;margin:0 auto}
     .quote-wrap blockquote em{font-style:normal;color:var(--accent-bright);font-weight:600}
+    .quote-wrap .attrib{margin-top:18px;font-size:.74rem;color:var(--text-dim);letter-spacing:.08em;text-transform:uppercase}
 
-    /* ===== FOOTER ===== */
-    footer{padding:60px 24px;text-align:center;border-top:1px solid var(--border)}
-    footer .logo{font-family:var(--mono);font-size:2rem;font-weight:900;background:linear-gradient(135deg,var(--accent),var(--purple));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:16px}
-    footer p{font-size:.82rem;color:var(--text-dim);margin:4px 0}
-    footer .flinks{display:flex;gap:28px;justify-content:center;margin-top:20px}
-    footer .flinks a{font-family:var(--mono);font-size:.85rem;color:var(--text-mid);transition:color .2s}
+    footer{padding:56px 24px;text-align:center;border-top:1px solid var(--border)}
+    footer .logo{font-size:1.8rem;font-weight:900;background:linear-gradient(135deg,var(--accent),var(--purple));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:14px}
+    footer p{font-size:.78rem;color:var(--text-dim);margin:3px 0;line-height:1.6}
+    footer .flinks{display:flex;gap:24px;justify-content:center;margin-top:18px;flex-wrap:wrap}
+    footer .flinks a{font-size:.82rem;color:var(--text-mid);transition:color .2s}
     footer .flinks a:hover{color:var(--accent)}
   </style>
 </head>
 <body>
 
-<!-- ===== HERO ===== -->
 <section class="hero">
   <canvas id="particleCanvas"></canvas>
   <div class="hero-inner">
-    <div class="badge"><span class="pulse"></span>Spec v1.0&nbsp;&middot;&nbsp;Reference impl v1.7&nbsp;&middot;&nbsp;@intent-driven/core 0.3&nbsp;&middot;&nbsp;<a href="./index-ru.html" style="color:inherit;text-decoration:underline;text-underline-offset:3px">RU</a></div>
-    <h1>One artifact.<br><span class="line2">Four materializations.</span></h1>
-    <p class="sub">A formal system that derives applications from what users come to do. Pixels, voice, agent API, and document &mdash; rendered from the same intent model.</p>
+    <div class="badge"><span class="pulse"></span>Manifesto v2&nbsp;&middot;&nbsp;core 0.9&nbsp;&middot;&nbsp;9 domains&nbsp;&middot;&nbsp;<a href="./index-ru.html" style="color:inherit;text-decoration:underline;text-underline-offset:3px">RU</a></div>
+    <h1>Application<br><span class="line2">description format</span></h1>
+    <p class="sub">At the OpenAPI / JSON-LD level. One artifact — four readers: pixels, voice, agent API, document. LLM helps during authoring; at runtime it's not there.</p>
     <div class="ctas">
-      <a class="btn btn-glow" href="https://github.com/DubovskiyIM/idf/tree/main/spec">Read the Specification</a>
-      <a class="btn" href="https://www.npmjs.com/package/@intent-driven/core">npm&nbsp;i&nbsp;@intent-driven/core</a>
-      <a class="btn" href="https://github.com/DubovskiyIM/idf">GitHub</a>
+      <a class="btn btn-glow" href="./onboarding.html">Get started — 5 slides →</a>
+      <a class="btn" href="https://github.com/DubovskiyIM/idf/blob/main/docs/manifesto-v2.md">Manifesto v2</a>
+      <a class="btn ghost" href="https://github.com/DubovskiyIM/idf">GitHub</a>
     </div>
     <div class="formula">
-      <span class="hl">World(t)</span> = fold( &oplus;, &empty;, sort<span style="font-size:.7em;vertical-align:sub">&prec;</span>( <span class="hl">&Phi;</span><span style="font-size:.7em;vertical-align:sub">confirmed</span> &darr; t ) )
+      <span class="hl">world</span> = fold(<span class="hl">Φ</span>) &nbsp;&middot;&nbsp; <span class="hl">artifact</span> = f(intents, ontology, projection)
     </div>
   </div>
   <div class="scroll-arrow">&darr;</div>
 </section>
 
-<!-- ===== PARTICLES ===== -->
 <section>
   <div class="container rv">
-    <div class="stag">The atom</div>
-    <div class="stitle">Five particles. Complete decomposition.</div>
-    <div class="sdesc">Every user intention decomposes into exactly five types. This covers the full cycle: what exists, when applicable, what changes, what to show, how to confirm.</div>
-  </div>
-  <div class="container">
-    <div class="pgrid">
-      <div class="pcell rv rv-d1"><div class="pcell-glow" style="background:var(--accent)"></div><div class="sym" style="color:var(--accent)">C</div><h3>Conditions</h3><p>When is this available? Predicates on world state. Static or temporal.</p></div>
-      <div class="pcell rv rv-d2"><div class="pcell-glow" style="background:var(--purple)"></div><div class="sym" style="color:var(--purple)">F</div><h3>Effects</h3><p>What becomes true? The only substance of state. Add, replace, remove, batch.</p></div>
-      <div class="pcell rv rv-d3"><div class="pcell-glow" style="background:var(--cyan)"></div><div class="sym" style="color:var(--cyan)">W</div><h3>Witnesses</h3><p>What does the actor need to know? The human-readable dual of conditions.</p></div>
-      <div class="pcell rv rv-d1"><div class="pcell-glow" style="background:var(--green)"></div><div class="sym" style="color:var(--green)">P</div><h3>Confirmation</h3><p>What does the system need back? Click, text, form, or custom.</p></div>
-      <div class="pcell rv rv-d2" style="grid-column:span 2"><div class="pcell-glow" style="background:var(--yellow)"></div><div class="sym" style="color:var(--yellow)">&rarr;</div><h3>Maximum Derivation Principle</h3><p>If a structure is computable from intentions and ontology, it is not an input &mdash; it is a derived artifact. Projections, algebra, four materializations, agent schemas, audit reports &mdash; all derived. 78% of screens emerge automatically across 9 domains.</p></div>
+    <div class="stag">Four objects of the format</div>
+    <div class="stitle">Ontology, intents, projections, log.</div>
+    <div class="sdesc">Everything else is derived. The artifact, the UI, the agent schema, the document — are all functions over these four.</div>
+    <div class="objects">
+      <div class="obj o1"><div class="sym">◉</div><h3>Ontology</h3><p>Entities, fields with read/write matrix, roles, invariants, rules.</p></div>
+      <div class="obj o2"><div class="sym">→</div><h3>Intents</h3><p>Declarative particles: ownerRole, requiredFields, conditions, effects.</p></div>
+      <div class="obj o3"><div class="sym">▢</div><h3>Projections</h3><p>Which intents form one screen, one dialog, one page.</p></div>
+      <div class="obj o4"><div class="sym">Φ</div><h3>Phi — the log</h3><p>Stream of confirmed effects. World isn't stored — it's <code>fold(Φ)</code>.</p></div>
     </div>
   </div>
 </section>
 
-<!-- ===== COUNTERS (v1.6.2) ===== -->
 <div class="container rv">
   <div class="counters">
-    <div class="ctr"><div class="ctr-bg"></div><div class="v" data-target="9">0</div><div class="l">domains</div></div>
-    <div class="ctr"><div class="ctr-bg"></div><div class="v" data-target="572">0</div><div class="l">intentions</div></div>
-    <div class="ctr"><div class="ctr-bg"></div><div class="v" data-target="426">0</div><div class="l">tests</div></div>
-    <div class="ctr"><div class="ctr-bg"></div><div class="v" data-target="4">0</div><div class="l">UI&nbsp;adapters</div></div>
-    <div class="ctr"><div class="ctr-bg"></div><div class="v" data-target="78" data-suffix="%">0</div><div class="l">auto-derived</div></div>
+    <div class="ctr"><div class="v" data-target="9">0</div><div class="l">domains</div></div>
+    <div class="ctr"><div class="v" data-target="585">0</div><div class="l">intents</div></div>
+    <div class="ctr"><div class="v" data-target="1123">0</div><div class="l">tests</div></div>
+    <div class="ctr"><div class="v" data-target="4">0</div><div class="l">materializations</div></div>
+    <div class="ctr"><div class="v" data-target="4">0</div><div class="l">UI&nbsp;adapters</div></div>
   </div>
 </div>
 
-<!-- ===== ALGEBRA ===== -->
 <section>
   <div class="container rv">
-    <div class="stag">Intent Algebra</div>
-    <div class="stitle">Relations derived, not declared.</div>
-    <div class="sdesc">Four relation types emerge automatically from intention particles. Hover the graph to explore.</div>
-    <canvas id="algebraCanvas"></canvas>
-    <div class="algebra-legend">
-      <span><span class="d" style="background:var(--accent)"></span>sequential &#x25B7;</span>
-      <span><span class="d" style="background:var(--purple)"></span>antagonistic &#x21CC;</span>
-      <span><span class="d" style="background:var(--rose)"></span>excluding &oplus;</span>
-      <span><span class="d" style="background:var(--green)"></span>parallel &#x2225;</span>
-    </div>
-  </div>
-</section>
-
-<!-- ===== FOUR MATERIALIZATIONS ===== -->
-<section>
-  <div class="container rv">
-    <div class="stag">&sect;1 &mdash; Four materializations</div>
-    <div class="stitle">The same model. Every interface derived.</div>
-    <div class="sdesc">UI is the intersection of projections (what the user sees) and intentions (what they can do). Pixels, voice, agent&nbsp;API, document &mdash; equal renderings of one artifact, scoped by the same viewer&nbsp;function.</div>
+    <div class="stag">Four readers</div>
+    <div class="stitle">One artifact. Four equal materializations.</div>
+    <div class="sdesc">Pixels, voice, agent API, document — architecturally equal. All read the same <code>viewerWorld</code>, scoped by role.</div>
     <div class="matgrid">
       <div class="mat glass m-pix rv rv-d1">
-        <div class="sym"><span class="num">01</span> <span>&#x25A0;</span></div>
+        <div class="sym"><span class="num">01</span> <span>▦</span></div>
         <h3>Pixels</h3>
-        <p>Four UI&nbsp;adapters: Mantine, shadcn-doodle, Apple visionOS-glass, AntD enterprise-fintech. Capability surface, graceful fallback.</p>
+        <p>Renderer + adapter + Token Bridge. Mantine, shadcn, Apple-glass, AntD.</p>
         <span class="api">ProjectionRendererV2</span>
       </div>
       <div class="mat glass m-voc rv rv-d2">
-        <div class="sym"><span class="num">02</span> <span>&#x266B;</span></div>
+        <div class="sym"><span class="num">02</span> <span>♫</span></div>
         <h3>Voice</h3>
-        <p>Speech-script with system &middot; assistant &middot; prompts turns. JSON for voice agents, SSML for TTS, plain text for IVR.</p>
+        <p>Speech-script of turns. JSON for voice-agents, SSML for TTS, plain for IVR.</p>
         <span class="api">/api/voice/:domain/:projection</span>
       </div>
       <div class="mat glass m-api rv rv-d3">
         <div class="sym"><span class="num">03</span> <span>&#x21B5;</span></div>
         <h3>Agent API</h3>
-        <p>JWT-scoped REST with role taxonomy and declarative preapproval guards. LLMs become first-class users of the same intent model.</p>
+        <p>JSON-schema of intents, viewer-scoped world, exec. Preapproval guard for limits.</p>
         <span class="api">/api/agent/:domain/{schema,world,exec}</span>
       </div>
       <div class="mat glass m-doc rv rv-d4">
-        <div class="sym"><span class="num">04</span> <span>&#x25A1;</span></div>
+        <div class="sym"><span class="num">04</span> <span>▤</span></div>
         <h3>Document</h3>
-        <p>Generic structured graph for catalog &middot; detail &middot; dashboard. Print-ready HTML, JSON for pipelines, regulatory exports.</p>
+        <p>Structured graph: sections, tables, fields, badges. HTML for print, JSON for archives.</p>
         <span class="api">/api/document/:domain/:projection</span>
       </div>
     </div>
     <div class="mat-footer">
-      All four reuse the <em>same</em> <code style="font-family:var(--mono)">filterWorldForRole(world, ontology, role, viewer)</code>. Equality is factored code, not metaphor.
+      Safety is a property of the format: all four readers get <em>filterWorldForRole</em> for free.
     </div>
   </div>
 </section>
 
-<!-- ===== STUDIO ===== -->
 <section>
   <div class="container rv">
-    <div class="stag">&sect;27 &mdash; Authoring environment</div>
-    <div class="stitle">IDF Studio. One artefact &mdash; six sides.</div>
-    <div class="sdesc">The design environment where ontology, intents and projections are first-class widgets. LLM assists in &laquo;crystallization&raquo; but never runs in runtime: projection output is deterministic.</div>
+    <div class="stag">Where LLM belongs</div>
+    <div class="stitle">Authoring — yes. Runtime — no.</div>
+    <div class="sdesc">No decision that affects world state or rendering depends on the LLM. The format's determinism excludes it.</div>
+    <div class="llm">
+      <div class="llm-col yes glass">
+        <div class="hd">Design-time</div>
+        <ul>
+          <li>Ontology inference from a domain description</li>
+          <li>Artifact enrichment — labels, icons, placeholders</li>
+          <li>Pattern suggestion — candidate patterns from live apps</li>
+        </ul>
+      </div>
+      <div class="llm-col no glass">
+        <div class="hd">Runtime</div>
+        <ul>
+          <li>Artifact rendering</li>
+          <li>Intent validation and application</li>
+          <li>Voice / document / agent API</li>
+          <li>Witness promotion</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="container rv">
+    <div class="stag">Zones of strength</div>
+    <div class="stitle">Nine domains. 585 intents. One engine.</div>
+    <div class="sdesc">Each domain is a new shape of problem. Different aesthetics, roles, materializations — from one ontology.</div>
+    <div class="domains">
+      <div class="dcard glass rv rv-d1"><div class="cn">225</div><div class="dn">Sales</div><div class="dd">Auction. 11 entities, 4 roles. Pure-crystallization.</div></div>
+      <div class="dcard glass rv rv-d2"><div class="cn">100</div><div class="dn">Messenger</div><div class="dd">Real-time chat. WebSocket, WebRTC, threads.</div></div>
+      <div class="dcard glass rv rv-d3"><div class="cn">58</div><div class="dn">Invest</div><div class="dd">AntD fintech. 4 roles, 7 rules, 3 ML services.</div></div>
+      <div class="dcard glass rv rv-d4"><div class="cn">56</div><div class="dn">LifeQuest</div><div class="dd">Goals + habits. Shadcn/doodle, mobile-first.</div></div>
+      <div class="dcard glass rv rv-d1"><div class="cn">47</div><div class="dn">Reflect</div><div class="dd">Mood diary. Apple visionOS-glass.</div></div>
+      <div class="dcard glass rv rv-d2"><div class="cn">45</div><div class="dn">Delivery</div><div class="dd">Food last-mile. 5 roles, map, scheduler.</div></div>
+      <div class="dcard glass rv rv-d3"><div class="cn">22</div><div class="dn">Booking</div><div class="dd">Service booking. Temporal predicates.</div></div>
+      <div class="dcard glass rv rv-d4"><div class="cn">17</div><div class="dn">Planning</div><div class="dd">Collaborative polls. Quorum, phases.</div></div>
+      <div class="dcard glass rv rv-d1"><div class="cn">15</div><div class="dn">Workflow</div><div class="dd">Process editor. React Flow canvas.</div></div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="container rv">
+    <div class="stag">Authoring environment</div>
+    <div class="stitle">IDF Studio. A tool, not part of the format.</div>
+    <div class="sdesc">Ontology visualization, Pattern Inspector, viewer / role switching, Φ-playback. Plays no role at runtime.</div>
   </div>
   <div class="container">
     <div class="studio-hero rv">
-      <img src="./assets/screenshots/idf-studio.png" alt="IDF Studio — overview">
-      <div class="studio-caption">Overview: domain <strong>invest</strong> in the authoring environment</div>
+      <img src="./assets/screenshots/idf-studio.png" alt="IDF Studio">
+      <div class="studio-caption">The <strong>invest</strong> domain in the authoring environment</div>
     </div>
     <div class="studio-grid">
-      <div class="studio-card glass rv rv-d1">
-        <img src="./assets/screenshots/idf-studio-graph.png" alt="Ontology graph">
-        <div class="body"><h4>Ontology graph</h4><p>Entities / roles / references visualized with ownership and range highlights.</p></div>
-      </div>
-      <div class="studio-card glass rv rv-d2">
-        <img src="./assets/screenshots/idf-studio-prototype.png" alt="Live prototype">
-        <div class="body"><h4>Live prototype</h4><p>Projections render inline &mdash; crystallizer runs on every intent / ontology change.</p></div>
-      </div>
-      <div class="studio-card glass rv rv-d3">
-        <img src="./assets/screenshots/idf-studio-patterns.png" alt="Pattern Inspector">
-        <div class="body"><h4>Pattern Inspector</h4><p>Preview / Commit for 28 stable + 127 candidate patterns. Derived slots highlighted.</p></div>
-      </div>
-      <div class="studio-card glass rv rv-d1">
-        <img src="./assets/screenshots/idf-studio-chat.png" alt="Chat copilot with Claude">
-        <div class="body"><h4>Chat copilot</h4><p>Claude haiku / sonnet / opus via subprocess. System prompt cached with &gt;90% discount.</p></div>
-      </div>
-      <div class="studio-card glass rv rv-d2">
-        <img src="./assets/screenshots/idf-studio-algebra.png" alt="Intent algebra">
-        <div class="body"><h4>Intent algebra</h4><p>Four relations &#x25B7; &#x21CC; &oplus; &#x2225; are derived from particles &mdash; not declared.</p></div>
-      </div>
-      <div class="studio-card glass rv rv-d3">
-        <img src="./assets/screenshots/idf-studio-integrity.png" alt="Invariants">
-        <div class="body"><h4>Checks &amp; invariants</h4><p>Six invariant kinds + integrity. Real-time status, graceful warnings instead of crashes.</p></div>
-      </div>
+      <div class="studio-card glass rv rv-d1"><img src="./assets/screenshots/idf-studio-graph.png" alt=""><div class="body"><h4>Ontology graph</h4><p>Entities, roles, ownership, references.</p></div></div>
+      <div class="studio-card glass rv rv-d2"><img src="./assets/screenshots/idf-studio-prototype.png" alt=""><div class="body"><h4>Live prototype</h4><p>Projections render inline on every change.</p></div></div>
+      <div class="studio-card glass rv rv-d3"><img src="./assets/screenshots/idf-studio-patterns.png" alt=""><div class="body"><h4>Pattern Inspector</h4><p>Off / Preview / Commit for stable patterns.</p></div></div>
     </div>
   </div>
 </section>
 
-<!-- ===== CODE ===== -->
-<section>
-  <div class="container rv">
-    <div class="stag">Developer experience</div>
-    <div class="stitle">Declare once. Render four ways.</div>
-    <div class="sdesc">@intent-driven/core ships everything: fold, intent algebra, crystallizer, four materializers, role taxonomy, invariants. Pure functions, dual ESM&#x2009;+&#x2009;CJS.</div>
-    <div class="code-wrap">
-      <div class="code-bar"><div class="dots"><span></span><span></span><span></span></div>&nbsp;&nbsp;trading.js&nbsp;&middot;&nbsp;@intent-driven/core@0.3</div>
-<pre id="codeBlock"></pre>
-    </div>
-  </div>
-</section>
-
-<!-- ===== PROCESS: from intent to result ===== -->
-<section>
-  <div class="container rv">
-    <div class="stag">Workflow &mdash; from intent to result</div>
-    <div class="stitle">Five steps. The author talks; the model derives; the runtime renders.</div>
-    <div class="sdesc">The LLM helps in <em>design</em> and <em>crystallization</em>, but never runs in production. Each step has a clear actor and a clear artifact.</div>
-    <div class="pipeline">
-
-      <div class="step">
-        <div class="num"><strong>01</strong> &middot; describe</div>
-        <h4>Author writes intentions</h4>
-        <p>Domain author enumerates user intentions in natural language. No screens, no endpoints &mdash; just <em>what people come to do</em>. Five particles per intent: conditions, effects, witnesses, confirmation.</p>
-        <div class="actor h">human</div>
-      </div>
-
-      <div class="step">
-        <div class="num"><strong>02</strong> &middot; refine</div>
-        <h4>LLM dialog &amp; ontology</h4>
-        <p>Claude assists in extracting entities, predicates, role taxonomy. Author validates and corrects. Output: declarative <code style="font-family:var(--mono);font-size:.78em;color:var(--accent-bright)">intents.js</code>, <code style="font-family:var(--mono);font-size:.78em;color:var(--accent-bright)">ontology.js</code>.</p>
-        <div class="actor l">human + LLM</div>
-      </div>
-
-      <div class="step">
-        <div class="num"><strong>03</strong> &middot; crystallize</div>
-        <h4>Derive every artifact</h4>
-        <p>78% of projections emerge from R1&ndash;R7 rules. Intent algebra (▷ ⇌ ⊕ ∥) inferred from particles. Agent schema, document graph, voice script &mdash; all derived from one ontology.</p>
-        <div class="actor s">SDK / pure</div>
-      </div>
-
-      <div class="step">
-        <div class="num"><strong>04</strong> &middot; render</div>
-        <h4>Four materializations</h4>
-        <p>One artifact, four outputs. Pixels via UI&nbsp;adapter, voice via SSML, agent via REST, document via HTML. All viewer-scoped through <code style="font-family:var(--mono);font-size:.78em;color:var(--accent-bright)">filterWorldForRole</code>.</p>
-        <div class="actor s">runtime</div>
-      </div>
-
-      <div class="step">
-        <div class="num"><strong>05</strong> &middot; observe</div>
-        <h4>Φ as audit trail</h4>
-        <p>Every effect has parent_id. Causal sort restores any chain. Schema-level invariants checked after every fold. Regulator gets the full audit through document materialization.</p>
-        <div class="actor s">runtime</div>
-      </div>
-
-    </div>
-  </div>
-</section>
-
-<!-- ===== METRICS: speed + tokenomics ===== -->
-<section>
-  <div class="container rv">
-    <div class="stag">Speed &amp; tokenomics</div>
-    <div class="stitle">Hours, not weeks. Cents, not dollars.</div>
-    <div class="sdesc">Measured across 9 production-shape domains. The bigger the domain, the bigger the leverage &mdash; declarative ontology compresses authoring time by 30&times;, LLM cost stays flat.</div>
-    <div class="metric-grid">
-
-      <div class="metric glass rv rv-d1">
-        <div class="h">Domain authoring &mdash; time to first run</div>
-        <table>
-          <tr><td>Booking &middot; 21 intents</td><td><span class="strike">~3 days</span><span class="accent">2&#x2009;h</span></td></tr>
-          <tr><td>Reflect &middot; 47 intents</td><td><span class="strike">~5 days</span><span class="accent">~3&#x2009;h</span></td></tr>
-          <tr><td>Invest &middot; 49 intents + 6 §26 closures</td><td><span class="strike">~10 days</span><span class="accent">1&#x2009;day</span></td></tr>
-          <tr><td>Delivery &middot; 45 intents + 3 paradigm additions</td><td><span class="strike">~2 weeks</span><span class="accent">~1&#x2009;day</span></td></tr>
-          <tr><td>Sales &middot; 223 intents (no ManualUI)</td><td><span class="strike">~3 weeks</span><span class="accent">~5&#x2009;h</span></td></tr>
-          <tr><td>Boilerplate per domain</td><td><span class="strike">~700 LOC</span><span class="green">~280 LOC</span></td></tr>
-        </table>
-        <div class="legend">Existing prototype baseline. With <code style="color:var(--accent-bright)">idf init &lt;domain&gt;</code> CLI (planned v0.3): &lt;&nbsp;10&nbsp;min for scaffold + 80% generated.</div>
-      </div>
-
-      <div class="metric glass rv rv-d2">
-        <div class="h">Tokenomics &mdash; LLM cost per stage</div>
-        <table>
-          <tr><td>Initial crystallization (14 intents)</td><td><span class="accent">~10&#x2009;k tokens</span></td></tr>
-          <tr><td>Full domain (52 intents)</td><td><span class="accent">~50&ndash;60&#x2009;k tokens</span></td></tr>
-          <tr><td>Incremental change (1 new intent)</td><td><span class="green">~80&#x2009;ms re-derive</span></td></tr>
-          <tr><td>LLM enrichment (labels, icons)</td><td><span class="accent">~2&#x2009;k tokens</span></td></tr>
-          <tr><td>Total cost per domain &middot; Haiku</td><td><span class="green">$0.05 &ndash; $0.10</span></td></tr>
-        </table>
-        <div class="legend">LLM only at design / crystallization. Runtime is pure functions &mdash; <em>zero LLM calls</em>, deterministic, traceable.</div>
-      </div>
-
-    </div>
-  </div>
-</section>
-
-<!-- ===== CONFORMANCE ===== -->
-<section>
-  <div class="container rv">
-    <div class="stag">Open standard</div>
-    <div class="stitle">Three conformance levels. Any language.</div>
-    <div class="sdesc">54 language-agnostic JSON tests &mdash; pass them in Rust, Python, or&nbsp;Go and your implementation is conformant. The reference impl in JavaScript ships as <code style="font-family:var(--mono);color:var(--accent-bright)">@intent-driven/core</code>.</div>
-    <div class="lvls">
-      <div class="lvl glass rv rv-d1"><div class="n">L1</div><div class="nm">Core</div><div class="ts">24 tests</div><div class="detail">fold &bull; causal sort &bull; batch<br>TTL &bull; scope &bull; lifecycle</div></div>
-      <div class="lvl glass rv rv-d2"><div class="n">L2</div><div class="nm">Algebra</div><div class="ts">15 tests</div><div class="detail">sequential &bull; antagonistic<br>excluding &bull; parallel</div></div>
-      <div class="lvl glass rv rv-d3"><div class="n">L3</div><div class="nm">Full</div><div class="ts">15 tests</div><div class="detail">7 integrity rules<br>anchoring &bull; witnesses</div></div>
-    </div>
-  </div>
-</section>
-
-<!-- ===== DOMAINS ===== -->
-<section>
-  <div class="container rv">
-    <div class="stag">Field-tested</div>
-    <div class="stitle">9 domains. 572 intentions. Zero red blockers.</div>
-    <div class="sdesc">Each domain pushes the paradigm against a different shape of problem. The crystallizer renders all of them from declaration alone.</div>
-    <div class="domains">
-      <div class="dcard glass rv rv-d1"><div class="cn">223</div><div class="dn">Sales</div><div class="dd">Auction marketplace. 10 entities, 4 roles, full order lifecycle. No&nbsp;ManualUI.</div></div>
-      <div class="dcard glass rv rv-d2"><div class="cn">99</div><div class="dn">Messenger</div><div class="dd">Real-time chat. WebSocket, WebRTC, threads, reactions.</div></div>
-      <div class="dcard glass rv rv-d3"><div class="cn">56</div><div class="dn">LifeQuest</div><div class="dd">Goals + habits. Mobile-first, doodle aesthetic, 6 custom canvases.</div></div>
-      <div class="dcard glass rv rv-d4"><div class="cn">49</div><div class="dn">Invest</div><div class="dd">Personal investing + robo-adviser. m2m advisor, observer, regulatory exports.</div></div>
-      <div class="dcard glass rv rv-d1"><div class="cn">47</div><div class="dn">Reflect</div><div class="dd">Mood diary by Yale&nbsp;RULER. Apple visionOS-glass, analytical canvases.</div></div>
-      <div class="dcard glass rv rv-d2"><div class="cn">45</div><div class="dn">Delivery</div><div class="dd">Food last-mile. 5 roles, temporal scheduler, map primitive, irreversible payments.</div></div>
-      <div class="dcard glass rv rv-d3"><div class="cn">21</div><div class="dn">Booking</div><div class="dd">Service booking. Time slots, temporal predicates, calendar wizard.</div></div>
-      <div class="dcard glass rv rv-d4"><div class="cn">17</div><div class="dn">Planning</div><div class="dd">Collaborative polls. Voting, quorum policies, deadlines.</div></div>
-      <div class="dcard glass rv rv-d1"><div class="cn">15</div><div class="dn">Workflow</div><div class="dd">Visual process editor. Canvas, topological executor.</div></div>
-    </div>
-  </div>
-</section>
-
-<!-- ===== QUOTE ===== -->
 <section>
   <div class="container rv">
     <div class="quote-wrap">
-      <blockquote>UI is not what you draw. UI is the intersection of <em>projections</em> and <em>intentions</em>. Pixels, voice, agent API, document &mdash; equal materializations of that intersection.</blockquote>
+      <blockquote>The artifact is a <em>function</em> of ontology, intents and projection. The UI is a <em>function</em> of the artifact. Everything computable, everything reproducible. No runtime LLM.</blockquote>
+      <div class="attrib">— Manifesto v2, Part III</div>
     </div>
   </div>
 </section>
 
-<!-- ===== FOOTER ===== -->
 <footer>
   <div class="logo">IDF</div>
-  <p>Specification v1.0 &copy; 2026 IDF Authors &mdash; Apache&nbsp;2.0</p>
-  <p>Reference implementation v1.7: <strong>@intent-driven/core 0.3 &mdash; BSL&nbsp;1.1</strong> (Change Date 2030-04-15 &rarr; Apache&nbsp;2.0) &middot; SDK client packages + prototype &mdash; MIT</p>
+  <p>Manifesto v2 · @intent-driven/core 0.9.0 — BSL 1.1 → Apache 2.0 (2030-04-15)</p>
+  <p style="color:var(--text-dim);font-size:.7rem;margin-top:8px">impl-status updated 2026-04-19</p>
   <div class="flinks">
-    <a href="https://github.com/DubovskiyIM/idf/tree/main/spec">Spec</a>
-    <a href="https://www.npmjs.com/package/@intent-driven/core">@intent-driven/core</a>
-    <a href="https://github.com/DubovskiyIM/idf/tree/main/spec/conformance">Conformance</a>
+    <a href="./onboarding.html">Dev onboarding</a>
+    <a href="https://github.com/DubovskiyIM/idf/blob/main/docs/manifesto-v2.md">Manifesto v2</a>
+    <a href="https://www.npmjs.com/org/intent-driven">npm</a>
     <a href="https://github.com/DubovskiyIM/idf">GitHub</a>
     <a href="./index-ru.html" style="color:var(--accent-bright)">RU</a>
   </div>
 </footer>
 
 <script>
-// ===== PARTICLE CANVAS (hero) =====
 (function(){
   const c=document.getElementById('particleCanvas'),ctx=c.getContext('2d');
   let w,h,particles=[],mouse={x:-1000,y:-1000};
   function resize(){const r=c.parentElement.getBoundingClientRect();w=c.width=r.width;h=c.height=r.height}
   window.addEventListener('resize',resize);resize();
-
-  const N=80;
+  const N=70;
   for(let i=0;i<N;i++) particles.push({
     x:Math.random()*w,y:Math.random()*h,
     vx:(Math.random()-.5)*.3,vy:(Math.random()-.5)*.3,
     r:Math.random()*2+1,
     color:['#6c8aff','#a78bfa','#22d3ee','#4ade80'][Math.floor(Math.random()*4)]
   });
-
   c.addEventListener('mousemove',e=>{const r=c.getBoundingClientRect();mouse.x=e.clientX-r.left;mouse.y=e.clientY-r.top});
   c.addEventListener('mouseleave',()=>{mouse.x=-1000;mouse.y=-1000});
-
   function draw(){
     ctx.clearRect(0,0,w,h);
     for(let i=0;i<N;i++){
@@ -575,12 +348,10 @@
       p.x+=p.vx;p.y+=p.vy;
       if(p.x<0||p.x>w)p.vx*=-1;
       if(p.y<0||p.y>h)p.vy*=-1;
-      // mouse repel
       const dx=p.x-mouse.x,dy=p.y-mouse.y,dist=Math.sqrt(dx*dx+dy*dy);
       if(dist<150){p.vx+=dx/dist*.15;p.vy+=dy/dist*.15}
       p.vx*=.99;p.vy*=.99;
       ctx.beginPath();ctx.arc(p.x,p.y,p.r,0,Math.PI*2);ctx.fillStyle=p.color;ctx.globalAlpha=.6;ctx.fill();
-      // connections
       for(let j=i+1;j<N;j++){
         const q=particles[j],dx2=p.x-q.x,dy2=p.y-q.y,d=Math.sqrt(dx2*dx2+dy2*dy2);
         if(d<120){ctx.beginPath();ctx.moveTo(p.x,p.y);ctx.lineTo(q.x,q.y);ctx.strokeStyle=p.color;ctx.globalAlpha=.08*(1-d/120);ctx.lineWidth=1;ctx.stroke()}
@@ -592,7 +363,6 @@
   draw();
 })();
 
-// ===== COUNTER ANIMATION =====
 (function(){
   const counters=document.querySelectorAll('.ctr .v');
   let fired=false;
@@ -601,15 +371,14 @@
     entries.forEach(e=>{if(e.isIntersecting){fired=true;animateCounters()}});
   },{threshold:.5});
   counters.forEach(c=>obs.observe(c));
-
   function animateCounters(){
     counters.forEach(el=>{
-      const target=+el.dataset.target,suffix=el.dataset.suffix||'';
+      const target=+el.dataset.target;
       const duration=1200,start=performance.now();
       function tick(now){
         const t=Math.min((now-start)/duration,1);
         const ease=1-Math.pow(1-t,3);
-        el.textContent=Math.round(target*ease)+suffix;
+        el.textContent=Math.round(target*ease);
         if(t<1)requestAnimationFrame(tick);
       }
       requestAnimationFrame(tick);
@@ -617,241 +386,6 @@
   }
 })();
 
-// ===== ALGEBRA CANVAS =====
-(function(){
-  const c=document.getElementById('algebraCanvas'),ctx=c.getContext('2d');
-  let W,H,mouseX=-1,mouseY=-1;
-  function resize(){W=c.width=c.offsetWidth;H=c.height=c.offsetHeight}
-  window.addEventListener('resize',resize);resize();
-
-  const typeNames={seq:'sequential ▷',ant:'antagonistic ⇌',excl:'excluding ⊕',par:'parallel ∥'};
-  const typeColors={seq:'#6c8aff',ant:'#a78bfa',excl:'#fb7185',par:'#4ade80'};
-
-  const nodes=[
-    {id:'create',label:'create',x:.15,y:.5,color:'#4ade80'},
-    {id:'publish',label:'publish',x:.35,y:.3,color:'#6c8aff'},
-    {id:'edit',label:'edit',x:.35,y:.7,color:'#22d3ee'},
-    {id:'bid',label:'bid',x:.55,y:.25,color:'#fbbf24'},
-    {id:'buy',label:'buy_now',x:.55,y:.55,color:'#fbbf24'},
-    {id:'close',label:'close',x:.75,y:.4,color:'#fb7185'},
-    {id:'cancel',label:'cancel',x:.75,y:.7,color:'#fb7185'},
-    {id:'review',label:'review',x:.9,y:.5,color:'#a78bfa'},
-  ];
-  const edges=[
-    {from:'create',to:'publish',type:'seq'},
-    {from:'create',to:'edit',type:'par'},
-    {from:'publish',to:'bid',type:'seq'},
-    {from:'publish',to:'buy',type:'seq'},
-    {from:'publish',to:'cancel',type:'ant'},
-    {from:'bid',to:'close',type:'seq'},
-    {from:'buy',to:'close',type:'seq'},
-    {from:'close',to:'review',type:'seq'},
-    {from:'bid',to:'buy',type:'excl'},
-  ];
-
-  let hoveredNode=null,dragNode=null;
-  c.addEventListener('mousemove',e=>{
-    const r=c.getBoundingClientRect();mouseX=e.clientX-r.left;mouseY=e.clientY-r.top;
-    if(dragNode){
-      dragNode.x=Math.max(.02,Math.min(.98,mouseX/W));
-      dragNode.y=Math.max(.02,Math.min(.98,mouseY/H));
-      return;
-    }
-    hoveredNode=null;
-    for(const n of nodes){
-      const dx=n.x*W-mouseX,dy=n.y*H-mouseY;
-      if(Math.sqrt(dx*dx+dy*dy)<30){hoveredNode=n;break}
-    }
-    c.style.cursor=hoveredNode?'grab':'crosshair';
-  });
-  c.addEventListener('mousedown',e=>{
-    if(hoveredNode){dragNode=hoveredNode;c.style.cursor='grabbing';e.preventDefault()}
-  });
-  c.addEventListener('mouseup',()=>{dragNode=null;c.style.cursor=hoveredNode?'grab':'crosshair'});
-  c.addEventListener('mouseleave',()=>{mouseX=-1;mouseY=-1;hoveredNode=null;dragNode=null});
-
-  function connectedEdges(nodeId){return edges.filter(e=>e.from===nodeId||e.to===nodeId)}
-  function connectedNodeIds(nodeId){
-    const ids=new Set();
-    connectedEdges(nodeId).forEach(e=>{ids.add(e.from);ids.add(e.to)});
-    ids.delete(nodeId);
-    return ids;
-  }
-
-  let t=0;
-  function draw(){
-    t+=.008;
-    ctx.clearRect(0,0,W,H);
-    const hId=hoveredNode?.id;
-    const hConnected=hId?connectedNodeIds(hId):new Set();
-    const hEdges=hId?new Set(connectedEdges(hId)):new Set();
-
-    // edges
-    edges.forEach(e=>{
-      const a=nodes.find(n=>n.id===e.from),b=nodes.find(n=>n.id===e.to);
-      const ax=a.x*W,ay=a.y*H,bx=b.x*W,by=b.y*H;
-      const isHighlighted=hEdges.has(e);
-      const dimmed=hId&&!isHighlighted;
-
-      // line
-      ctx.beginPath();ctx.moveTo(ax,ay);ctx.lineTo(bx,by);
-      ctx.strokeStyle=typeColors[e.type];
-      ctx.globalAlpha=dimmed?.04:isHighlighted?.7:.2;
-      ctx.lineWidth=isHighlighted?2.5:1.5;
-      if(e.type==='ant'){ctx.setLineDash([6,4])}else{ctx.setLineDash([])}
-      ctx.stroke();ctx.setLineDash([]);
-
-      // edge glow when highlighted
-      if(isHighlighted){
-        ctx.beginPath();ctx.moveTo(ax,ay);ctx.lineTo(bx,by);
-        ctx.strokeStyle=typeColors[e.type];ctx.globalAlpha=.15;ctx.lineWidth=8;
-        ctx.filter='blur(4px)';ctx.stroke();ctx.filter='none';
-      }
-
-      // animated dot
-      const p=(t*(.3+edges.indexOf(e)*.05))%1;
-      const px=ax+(bx-ax)*p,py=ay+(by-ay)*p;
-      ctx.beginPath();ctx.arc(px,py,isHighlighted?4:2.5,0,Math.PI*2);
-      ctx.fillStyle=typeColors[e.type];ctx.globalAlpha=dimmed?.15:.7;ctx.fill();
-
-      // edge label on hover
-      if(isHighlighted){
-        const mx=(ax+bx)/2,my=(ay+by)/2;
-        ctx.font='500 10px "JetBrains Mono"';ctx.textAlign='center';ctx.textBaseline='bottom';
-        ctx.fillStyle=typeColors[e.type];ctx.globalAlpha=.9;
-        ctx.fillText(typeNames[e.type],mx,my-6);
-      }
-    });
-
-    // nodes
-    nodes.forEach(n=>{
-      const nx=n.x*W,ny=n.y*H;
-      const isHovered=n===hoveredNode;
-      const isConnected=hConnected.has(n.id);
-      const dimmed=hId&&!isHovered&&!isConnected;
-      const active=isHovered||isConnected;
-      const r=isHovered?24:active?18:16;
-      const glowAlpha=isHovered?.6:active?.3:.12;
-
-      // glow
-      ctx.beginPath();ctx.arc(nx,ny,r+14,0,Math.PI*2);
-      const g=ctx.createRadialGradient(nx,ny,r,nx,ny,r+20);
-      g.addColorStop(0,n.color);g.addColorStop(1,'transparent');
-      ctx.fillStyle=g;ctx.globalAlpha=dimmed?.03:glowAlpha;ctx.fill();
-
-      // circle
-      ctx.beginPath();ctx.arc(nx,ny,r,0,Math.PI*2);
-      ctx.fillStyle=dimmed?'#08080e':'#0a0a12';ctx.globalAlpha=1;ctx.fill();
-      ctx.strokeStyle=n.color;ctx.lineWidth=isHovered?2.5:active?2:1.5;
-      ctx.globalAlpha=dimmed?.15:active?1:.5;ctx.stroke();
-
-      // label
-      ctx.fillStyle=dimmed?'#333':active?'#fff':n.color;
-      ctx.globalAlpha=dimmed?.2:active?1:.6;
-      ctx.font=`${active?'700':'500'} ${isHovered?13:11}px 'JetBrains Mono'`;
-      ctx.textAlign='center';ctx.textBaseline='middle';
-      ctx.fillText(n.label,nx,ny);
-    });
-
-    // tooltip box
-    if(hoveredNode){
-      const n=hoveredNode;
-      const nx=n.x*W,ny=n.y*H;
-      const ce=connectedEdges(n.id);
-      const lines=[`— ${n.label} —`];
-      ce.forEach(e=>{
-        const other=e.from===n.id?e.to:e.from;
-        const dir=e.from===n.id?'→':'←';
-        lines.push(`${dir} ${other}  ${typeNames[e.type]}`);
-      });
-
-      const lineH=16,padX=14,padY=10;
-      const maxW=Math.max(...lines.map(l=>{ctx.font='500 11px "JetBrains Mono"';return ctx.measureText(l).width}));
-      const boxW=maxW+padX*2,boxH=lines.length*lineH+padY*2;
-      let tx=nx+32,ty=ny-boxH/2;
-      if(tx+boxW>W)tx=nx-32-boxW;
-      if(ty<4)ty=4;if(ty+boxH>H)ty=H-boxH-4;
-
-      // bg
-      ctx.globalAlpha=.92;ctx.fillStyle='#0e0e18';
-      ctx.beginPath();
-      ctx.roundRect(tx,ty,boxW,boxH,8);
-      ctx.fill();
-      ctx.strokeStyle=n.color;ctx.lineWidth=1;ctx.globalAlpha=.4;ctx.stroke();
-
-      // text
-      ctx.font='500 11px "JetBrains Mono"';ctx.textAlign='left';ctx.textBaseline='top';
-      lines.forEach((line,i)=>{
-        ctx.fillStyle=i===0?n.color:'#bbb';ctx.globalAlpha=i===0?1:.7;
-        ctx.fillText(line,tx+padX,ty+padY+i*lineH);
-      });
-    }
-
-    ctx.globalAlpha=1;
-    requestAnimationFrame(draw);
-  }
-  draw();
-})();
-
-// ===== CODE TYPING =====
-(function(){
-  const code=`<span class="kw">import</span> {
-  <span class="fn">fold</span>, <span class="fn">filterWorldForRole</span>,
-  <span class="fn">materializeAsDocument</span>, <span class="fn">materializeAsVoice</span>,
-  <span class="fn">checkInvariants</span>, <span class="fn">checkPreapproval</span>,
-} <span class="kw">from</span> <span class="str">'@intent-driven/core'</span>;
-
-<span class="cm">// 1. Declare what users come to do (intents \u00d7 ontology)</span>
-<span class="kw">const</span> world = <span class="fn">fold</span>(\u03A6_confirmed, typeMap);
-
-<span class="cm">// 2. Same model, scoped per viewer \u2014 m2m via role.scope</span>
-<span class="kw">const</span> scoped = <span class="fn">filterWorldForRole</span>(world, ontology, <span class="str">'advisor'</span>, viewer);
-
-<span class="cm">// 3. Render any of four materializations from the same artifact:</span>
-<span class="kw">const</span> doc   = <span class="fn">materializeAsDocument</span>(projection, scoped, viewer);  <span class="cm">// HTML \/ JSON</span>
-<span class="kw">const</span> voice = <span class="fn">materializeAsVoice</span>(projection, scoped, viewer);     <span class="cm">// SSML \/ turns</span>
-<span class="cm">// pixels      \u2192 ProjectionRendererV2 + adapter (Mantine \/ AntD \/ ...)</span>
-<span class="cm">// agent API   \u2192 /api/agent/:domain/{schema,world,exec}</span>
-
-<span class="cm">// 4. Schema-level guarantees \u2014 declarative, enforced after every fold</span>
-<span class="kw">const</span> { ok, violations } = <span class="fn">checkInvariants</span>(world, ontology);
-<span class="cm">// referential \u00b7 transition \u00b7 cardinality \u00b7 aggregate \u00b7 role-capability</span>
-
-<span class="cm">// 5. Agent guards \u2014 limits beyond JWT, declarative</span>
-<span class="kw">const</span> guard = <span class="fn">checkPreapproval</span>(<span class="str">'agent_execute_order'</span>, params, viewer, ontology, world);`;
-
-  const el=document.getElementById('codeBlock');
-  let shown=false;
-  const obs=new IntersectionObserver(entries=>{
-    if(shown)return;
-    entries.forEach(e=>{if(e.isIntersecting){shown=true;typeCode()}});
-  },{threshold:.3});
-  obs.observe(el);
-
-  function typeCode(){
-    // Strip tags for character counting, but insert with tags
-    const lines=code.split('\n');
-    let lineIdx=0,charIdx=0,html='';
-    function tick(){
-      if(lineIdx>=lines.length){el.innerHTML=html;return}
-      const line=lines[lineIdx];
-      const plainLen=line.replace(/<[^>]*>/g,'').length;
-      if(charIdx>=plainLen){
-        html+=line+'\n';lineIdx++;charIdx=0;
-        el.innerHTML=html+'<span class="code-cursor"></span>';
-        setTimeout(tick,lineIdx>0&&lines[lineIdx-1]===''?100:30);
-      }else{
-        charIdx=plainLen; // instant per line for speed
-        html+=line+'\n';lineIdx++;charIdx=0;
-        el.innerHTML=html+'<span class="code-cursor"></span>';
-        setTimeout(tick,50+Math.random()*30);
-      }
-    }
-    tick();
-  }
-})();
-
-// ===== SCROLL REVEAL =====
 (function(){
   const obs=new IntersectionObserver(entries=>{
     entries.forEach(e=>{if(e.isIntersecting)e.target.classList.add('vis')});
