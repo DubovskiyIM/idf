@@ -219,6 +219,21 @@
     .dcard .dn{font-weight:700;margin:6px 0 4px}
     .dcard .dd{font-size:.78rem;color:var(--text-dim);line-height:1.4}
 
+    /* ===== STUDIO GALLERY ===== */
+    .studio-hero{position:relative;border-radius:16px;overflow:hidden;border:1px solid var(--border);margin-bottom:28px}
+    .studio-hero img{display:block;width:100%;height:auto}
+    .studio-hero::after{content:'';position:absolute;inset:0;background:linear-gradient(180deg,transparent 60%,rgba(5,5,8,.7));pointer-events:none}
+    .studio-caption{position:absolute;bottom:18px;left:22px;right:22px;z-index:2;font-family:var(--mono);font-size:.82rem;color:var(--text-mid);pointer-events:none}
+    .studio-caption strong{color:var(--accent-bright);font-weight:600}
+    .studio-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+    @media(max-width:860px){.studio-grid{grid-template-columns:repeat(2,1fr)}}
+    @media(max-width:480px){.studio-grid{grid-template-columns:1fr}}
+    .studio-card{padding:0;position:relative;overflow:hidden;border-radius:14px;display:flex;flex-direction:column}
+    .studio-card img{display:block;width:100%;height:170px;object-fit:cover;border-bottom:1px solid var(--border)}
+    .studio-card .body{padding:16px 18px 18px}
+    .studio-card h4{font-size:.95rem;font-weight:700;margin-bottom:6px;color:var(--text)}
+    .studio-card p{font-size:.78rem;color:var(--text-mid);line-height:1.55}
+
     /* ===== QUOTE ===== */
     .quote-wrap{position:relative;padding:56px 40px;border-radius:24px;background:linear-gradient(135deg,rgba(108,138,255,.06),rgba(167,139,250,.04),rgba(34,211,238,.03));border:1px solid var(--border);overflow:hidden;text-align:center}
     .quote-wrap::before{content:'';position:absolute;inset:-2px;border-radius:24px;background:conic-gradient(from 0deg,var(--accent),var(--purple),var(--cyan),var(--green),var(--accent));opacity:.12;animation:rotateBorder 10s linear infinite;filter:blur(1px)}
@@ -335,6 +350,47 @@
     </div>
     <div class="mat-footer">
       All four reuse the <em>same</em> <code style="font-family:var(--mono)">filterWorldForRole(world, ontology, role, viewer)</code>. Equality is factored code, not metaphor.
+    </div>
+  </div>
+</section>
+
+<!-- ===== STUDIO ===== -->
+<section>
+  <div class="container rv">
+    <div class="stag">&sect;27 &mdash; Authoring environment</div>
+    <div class="stitle">IDF Studio. One artefact &mdash; six sides.</div>
+    <div class="sdesc">The design environment where ontology, intents and projections are first-class widgets. LLM assists in &laquo;crystallization&raquo; but never runs in runtime: projection output is deterministic.</div>
+  </div>
+  <div class="container">
+    <div class="studio-hero rv">
+      <img src="./assets/screenshots/idf-studio.png" alt="IDF Studio — overview">
+      <div class="studio-caption">Overview: domain <strong>invest</strong> in the authoring environment</div>
+    </div>
+    <div class="studio-grid">
+      <div class="studio-card glass rv rv-d1">
+        <img src="./assets/screenshots/idf-studio-graph.png" alt="Ontology graph">
+        <div class="body"><h4>Ontology graph</h4><p>Entities / roles / references visualized with ownership and range highlights.</p></div>
+      </div>
+      <div class="studio-card glass rv rv-d2">
+        <img src="./assets/screenshots/idf-studio-prototype.png" alt="Live prototype">
+        <div class="body"><h4>Live prototype</h4><p>Projections render inline &mdash; crystallizer runs on every intent / ontology change.</p></div>
+      </div>
+      <div class="studio-card glass rv rv-d3">
+        <img src="./assets/screenshots/idf-studio-patterns.png" alt="Pattern Inspector">
+        <div class="body"><h4>Pattern Inspector</h4><p>Preview / Commit for 28 stable + 127 candidate patterns. Derived slots highlighted.</p></div>
+      </div>
+      <div class="studio-card glass rv rv-d1">
+        <img src="./assets/screenshots/idf-studio-chat.png" alt="Chat copilot with Claude">
+        <div class="body"><h4>Chat copilot</h4><p>Claude haiku / sonnet / opus via subprocess. System prompt cached with &gt;90% discount.</p></div>
+      </div>
+      <div class="studio-card glass rv rv-d2">
+        <img src="./assets/screenshots/idf-studio-algebra.png" alt="Intent algebra">
+        <div class="body"><h4>Intent algebra</h4><p>Four relations &#x25B7; &#x21CC; &oplus; &#x2225; are derived from particles &mdash; not declared.</p></div>
+      </div>
+      <div class="studio-card glass rv rv-d3">
+        <img src="./assets/screenshots/idf-studio-integrity.png" alt="Invariants">
+        <div class="body"><h4>Checks &amp; invariants</h4><p>Six invariant kinds + integrity. Real-time status, graceful warnings instead of crashes.</p></div>
+      </div>
     </div>
   </div>
 </section>

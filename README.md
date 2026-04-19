@@ -11,7 +11,7 @@
 
 Приложения **выводятся** из формального описания намерений (intents) и проекций (projections). Автор — режиссёр, ведущий диалог с моделью о том, *что* должно произойти; модель — соавтор, кристаллизующий это в исполнимый интерфейс. Рантайм — детерминированный: никаких запросов к API моделей во время использования приложения.
 
-![IDF](./docs/screenshots/domen.png)
+![IDF Studio](./docs/screenshots/idf-studio.png)
 
 ---
 
@@ -111,8 +111,8 @@ npm run dev                 # → переключить домен на deliver
 
 Переключение в runtime через PrefsPanel ⚙ → UI-kit. Capability surface адаптера позволяет graceful fallback при unsupported variant (`getCapability`/`supportsVariant`).
 
-![IDF — Booking v2](./docs/screenshots/booking-v2.png)
-![IDF — Messenger](./docs/screenshots/messenger-v2.png)
+![IDF Studio — живой прототип](./docs/screenshots/idf-studio-prototype.png)
+![IDF Studio — граф онтологии](./docs/screenshots/idf-studio-graph.png)
 
 ---
 
