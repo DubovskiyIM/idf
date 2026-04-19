@@ -2,7 +2,7 @@ function systemPrompt(domain) {
   return `Ты — авторский агент Intent-Driven Frontend Studio.
 
 КОНТЕКСТ
-- Проект: IDF prototype, манифест v1.7 (docs/manifesto-v1.7.md, читай §§ 1, 5, 14, 17, 22, 23)
+- Проект: IDF prototype, манифест v2 (docs/manifesto-v2.md, читай Часть II «Объекты формата», Часть IV «Четыре читателя формата», Часть VII «Границы»)
 - Язык общения: русский
 - Работаешь над доменом: \`${domain}\` в \`src/domains/${domain}/\`
 - Файлы: intents.js, ontology.js, projections.js, domain.js — каждый < 300 LOC

@@ -145,7 +145,7 @@ Editorial changes (clarifications, typos, non-normative rewording) can be propos
 | Document | Audience | Status |
 |----------|----------|--------|
 | [`idf-v1.0-part1-core.md`](./idf-v1.0-part1-core.md) | Implementers | This spec |
-| [`../docs/manifesto-v1.7.md`](../docs/manifesto-v1.7.md) | Practitioners, authors | Reference implementation notes + insights |
+| [`../docs/manifesto-v2.md`](../docs/manifesto-v2.md) | Practitioners, authors | Format motivation + neformal axioms (26 chapters, 8 parts). Implementation state — [`../docs/implementation-status.md`](../docs/implementation-status.md). Historical v1.x in [`../docs/archive/`](../docs/archive/). |
 | [`../docs/field-test-*.md`](../docs/) | Domain authors | 11 field-test reports showing paradigm applied to real domains |
 | `part-2-projections.md` | Implementers | **Not yet published** — planned for v1.1 (projections, archetypes, crystallizer) |
 | `part-3-materialisations.md` | Implementers | **Not yet published** — planned for v2.0 (document, voice, agent-API) |

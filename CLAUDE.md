@@ -10,15 +10,16 @@
 
 ## Суть проекта
 
-**IDF — формат описания приложения (уровень OpenAPI / JSON-LD), не фреймворк.** Артефакт v2 с онтологией, намерениями, проекциями и ролями — тип данных; адаптеры и материализаторы — *читатели* формата. LLM участвует в проектировании и кристаллизации, но **не в рантайме**. **Четыре равноправные материализации** (§1, все реализованы в v1.6.2): пиксели (4 UI-адаптера), голос (`/api/voice/*`), агентский API (`/api/agent/*`), документ (`/api/document/*`).
+**IDF — формат описания приложения (уровень OpenAPI / JSON-LD), не фреймворк.** Артефакт v2 с онтологией, намерениями, проекциями и ролями — тип данных; адаптеры и материализаторы — *читатели* формата. LLM участвует в проектировании и кристаллизации, но **не в рантайме**. **Четыре равноправные материализации** (Часть IV манифеста v2): пиксели (4 UI-адаптера), голос (`/api/voice/*`), агентский API (`/api/agent/*`), документ (`/api/document/*`).
 
 ## Ключевые документы
 
-- **Спецификация формата v0.1** (`docs/spec-v0.1/`) — **нормативный** документ: 7 глав, 6 JSON Schema (artifact, effect, ontology, intent, projection, conformance), conformance classes L1–L4, 124 test fixtures. Читай перед реализацией формата на другом стеке.
-- **Манифест v1.12** (`docs/manifesto-v1.7.md`, имя файла legacy) — 27 разделов. Философия и мотивация. **Читай §1, §4 (scheduler), §5, §14, §15 (witness), §16 (кристаллизация + apply), §16a, §17, §22, §23, §26, §27 перед работой над ядром.** Предыдущие версии: `manifesto-v1.6.md` / `-v1.5.md` / `-v1.4.md` / `-v1.3.md`. Header и §26 актуализированы в v1.12 Pattern Bank execution релизе.
-- **Полевые тесты 1–11** (`docs/field-test-*.md`) — от очереди чтения до delivery (food/groceries last-mile). field-test-10 (invest) закрыл 6 §26 open items, field-test-11 (delivery) применил все 3 v1.7 paradigm additions.
+- **Манифест v2** (`docs/manifesto-v2.md`) — timeless-документ о формате IDF: 26 глав в 8 частях (I. Тезис · II. Объекты формата · III. Алгебра · IV. Четыре читателя формата · V. Авторство · VI. Conformance набросок · VII. Границы · VIII. Перспектива). Читай перед работой над ядром формата.
+- **Имплементационный статус** (`docs/implementation-status.md`) — живой документ о состоянии референсной реализации: 9 доменов, SDK пакеты (версии/лицензии), 1123 теста, open items. Обновляется как README вместе с кодом.
+- **Архив манифестов v1.3–v1.12** (`docs/archive/`) — исторические версии с change-log тоном, сохранены как снимок эволюции. Актуальные факты — в v2, актуальные счётчики — в implementation-status.
+- **Спецификация формата v0.1** (`docs/spec-v0.1/`) — **нормативный** документ, **запланирован к реализации** (отдельный проект). Когда появится: JSON Schema для artifact/intent/effect/ontology/projection + conformance matrix (L1–L4) + test fixtures. Сейчас не существует.
+- **Полевые тесты 1–11** (`docs/field-test-*.md`) — от очереди чтения до delivery (food/groceries last-mile). История развёртывания формата через 11 домен-проверок.
 - **Дизайн-спек M1–M5** (`docs/superpowers/specs/2026-04-10-intent-ui-generation-design.md`)
-- **Прототип** — 9 доменов, 585 намерений, **497 тестов idf** (42 файла) + **483 теста @intent-driven/core** + renderer 95 + canvas-kit 36 + 4 adapter'а 12 = **1123 теста**. 4 UI-адаптера + SDK monorepo (8 пакетов, опубликованы в npm: core@0.9.0 + renderer@0.5.0 + canvas-kit@0.2.0 + 4 adapter'а + cli).
 
 ## Архитектура
 
@@ -179,7 +180,7 @@ Postmortem'ы: `docs/superpowers/specs/2026-04-14-sdk-core-postmortem.md` (Phase
 
 ## Границы реализации
 
-**Полный список: `docs/manifesto-v1.7.md` §23 и §26.** NB: некоторые items из §26 уже закрыты (voice, CI, structure.apply). Не опирайся на «оно есть, раз написано в §N».
+**Полный список: Часть VII манифеста v2 (`docs/manifesto-v2.md`) + Open items в `docs/implementation-status.md`.** Архивный манифест v1.12 (`docs/archive/manifesto-v1.12.md`) содержит §23/§26 как исторический срез. Не опирайся на «оно есть, раз написано в §N» — валидируй через implementation-status.
 
 ### Частично реализовано (осторожно)
 
@@ -204,7 +205,7 @@ Postmortem'ы: `docs/superpowers/specs/2026-04-14-sdk-core-postmortem.md` (Phase
 
 ## Приоритеты
 
-Roadmap: `docs/manifesto-v1.7.md` §25.
+Roadmap: Часть VIII манифеста v2 `docs/manifesto-v2.md` (направления формата без дат) + GitHub issues (оперативные задачи).
 
 - **Ближайшее (1-2 мес)**: apply для оставшихся 10 паттернов (hero-create первый кандидат), invest visual polish для демо, публикация статьи, `@intent-driven/server` extraction (Phase 3)
 - **Среднесрочное (2-4 мес)**: production-ready invest, Pattern Bank → 50+ stable patterns через Researcher pipeline, X1-удаление explicit overrides, PatternInspector test-harness
