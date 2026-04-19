@@ -133,6 +133,51 @@ function buildCustomEffects(intentId, ctx, world) {
     ];
   }
 
+  if (intentId === "cancel_deal_mutual") {
+    const deal = world.deals?.find((d) => d.id === ctx.id);
+    if (!deal) return null;
+    if (["completed", "cancelled"].includes(deal.status)) return null;
+
+    const custWallet = world.wallets?.find((w) => w.userId === deal.customerId);
+    if (!custWallet) return null;
+
+    const amount = Number(deal.amount);
+    if (!Number.isFinite(amount) || amount <= 0) return null;
+
+    const txId = `tx_${now}_${Math.random().toString(36).slice(2, 6)}`;
+
+    return [
+      mkEffect({
+        alpha: "replace", target: "deal.status", scope: "account",
+        value: "cancelled",
+        context: { id: deal.id, cancelledAt: now, cancelReason: ctx.reason },
+        desc: `cancel_deal_mutual: replace deal.status=cancelled`,
+      }),
+      mkEffect({
+        alpha: "add", target: "transactions", scope: "account", value: null,
+        context: {
+          id: txId, walletId: custWallet.id, dealId: deal.id, amount,
+          kind: "refund", status: "posted",
+          note: `Refund по сделке ${deal.id}: ${ctx.reason || "mutual cancel"}`,
+          createdAt: now,
+        },
+        desc: `cancel_deal_mutual: add transactions (refund)`,
+      }),
+      mkEffect({
+        alpha: "replace", target: "wallet.balance", scope: "account",
+        value: (custWallet.balance || 0) + amount,
+        context: { id: custWallet.id, userId: custWallet.userId },
+        desc: `cancel_deal_mutual: replace wallet.balance`,
+      }),
+      mkEffect({
+        alpha: "replace", target: "wallet.reserved", scope: "account",
+        value: Math.max(0, (custWallet.reserved || 0) - amount),
+        context: { id: custWallet.id, userId: custWallet.userId },
+        desc: `cancel_deal_mutual: replace wallet.reserved`,
+      }),
+    ];
+  }
+
   if (intentId === "confirm_deal") {
     const wallet = world.wallets?.find((w) => w.userId === ctx.customerId);
     if (!wallet) return null;

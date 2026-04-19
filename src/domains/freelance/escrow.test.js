@@ -143,4 +143,34 @@ describe("escrow / buildEffects", () => {
       expect(effects).toBeNull();
     });
   });
+
+  describe("cancel_deal_mutual", () => {
+    it("refunds escrow to customer, cancels deal", () => {
+      const world = {
+        deals: [{ id: "deal_1", customerId: "u_cust", executorId: "u_exe", amount: 15000, commission: 1500, status: "in_progress" }],
+        wallets: [
+          { id: "w_cust", userId: "u_cust", balance: 85000, reserved: 15000 },
+          { id: "w_exe", userId: "u_exe", balance: 0, reserved: 0 },
+        ],
+        transactions: [],
+      };
+      const ctx = { userId: "u_cust", id: "deal_1", reason: "Обоюдная отмена" };
+      const effects = buildEffects("cancel_deal_mutual", ctx, world, []);
+      expect(effects).toHaveLength(4);
+
+      const status = effects.find((e) => e.target === "deal.status");
+      expect(status.value).toBe("cancelled");
+
+      const refund = effects.find((e) => e.target === "transactions");
+      expect(refund.context.kind).toBe("refund");
+      expect(refund.context.amount).toBe(15000);
+      expect(refund.context.walletId).toBe("w_cust");
+
+      const balance = effects.find((e) => e.target === "wallet.balance");
+      expect(balance.value).toBe(100000);
+
+      const reserved = effects.find((e) => e.target === "wallet.reserved");
+      expect(reserved.value).toBe(0);
+    });
+  });
 });
