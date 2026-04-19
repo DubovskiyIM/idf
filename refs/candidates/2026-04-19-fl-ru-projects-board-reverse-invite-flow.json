@@ -1,0 +1,76 @@
+{
+  "id": "reverse-invite-flow",
+  "version": 1,
+  "status": "candidate",
+  "archetype": "detail",
+  "trigger": {
+    "requires": [
+      {
+        "kind": "sub-entity-exists",
+        "entity": "Invitation",
+        "foreignKey": "projectId"
+      },
+      {
+        "kind": "intent-creates",
+        "creates": "Invitation"
+      },
+      {
+        "kind": "intent-effect",
+        "α": "replace",
+        "target": "invitation.status"
+      }
+    ]
+  },
+  "structure": {
+    "slot": "sections",
+    "description": "Detail-проекция получает section 'Приглашённые' со списком Invitation + CTA 'Пригласить ещё' (ведёт в каталог target-entity с multi-select); target-role видит inbox-секцию на своём detail с accept/decline кнопками."
+  },
+  "rationale": {
+    "hypothesis": "Reverse-flow (owner → target) отличается от классического application-flow (target → owner): инициатор — владелец контейнера, не кандидат, поэтому UI-entry point должен быть на detail контейнера, не в feed target'ов. Flat 'apply' список не покрывает m2m-invite семантику, где обе стороны подтверждают.",
+    "evidence": [
+      {
+        "source": "fl-ru",
+        "description": "На detail проекта — 'Пригласить фрилансера' ведёт в каталог с чекбоксами; у фрилансера — inbox приглашений",
+        "reliability": "high"
+      },
+      {
+        "source": "linkedin-recruiter",
+        "description": "InMail к кандидату от recruiter'а — тот же reverse-pattern",
+        "reliability": "high"
+      }
+    ],
+    "counterexample": [
+      {
+        "source": "stackoverflow-answers",
+        "description": "Answer — pure forward flow (respondent инициирует), invite не применим",
+        "reliability": "medium"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [
+      {
+        "domain": "planning",
+        "projection": "poll_detail",
+        "reason": "Poll-owner приглашает участников — Invitation sub-entity через poll"
+      },
+      {
+        "domain": "booking",
+        "projection": "booking_detail",
+        "reason": "Customer приглашает альтернативных специалистов"
+      }
+    ],
+    "shouldNotMatch": [
+      {
+        "domain": "sales",
+        "projection": "bid_detail",
+        "reason": "Bid — forward-only (bidder инициирует), не invite"
+      },
+      {
+        "domain": "reflect",
+        "projection": "mood_entry_detail",
+        "reason": "Personal entity, invite-механика не применима"
+      }
+    ]
+  }
+}

@@ -1,0 +1,62 @@
+{
+  "id": "bounded-revision-buffer",
+  "version": 1,
+  "status": "candidate",
+  "archetype": "detail",
+  "trigger": {
+    "requires": [
+      {
+        "kind": "entity-field",
+        "entity": "*",
+        "field": "revisionsUsed"
+      },
+      {
+        "kind": "intent-effect",
+        "intent": "request_revision",
+        "α": "replace"
+      }
+    ]
+  },
+  "structure": {
+    "slot": "primaryCTA",
+    "description": "Intent request_revision рендерится с chip-счётчиком 'Осталось N из M правок' рядом с кнопкой; при достижении лимита (revisionsUsed === maxRevisions) кнопка disabled с hint про эскалацию в dispute. Счётчик — derived-from-state witness."
+  },
+  "rationale": {
+    "hypothesis": "Bounded revision buffer — структурная защита от infinite-revision loops. Показ оставшихся попыток в cta-chip делает контрактное ограничение осязаемым и предотвращает cold surprise 'вы исчерпали лимит' на N-ой попытке.",
+    "evidence": [
+      {
+        "source": "kwork.ru",
+        "description": "Кнопка 'Запросить правку' с pill '2/3 использовано'",
+        "reliability": "high"
+      },
+      {
+        "source": "fiverr.com",
+        "description": "Revision counter в order detail",
+        "reliability": "high"
+      }
+    ],
+    "counterexample": [
+      {
+        "source": "email reply",
+        "description": "Нет bounded-revision model",
+        "reliability": "high"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [
+      {
+        "domain": "sales",
+        "projection": "order_detail",
+        "reason": "Buyer request_changes с cap"
+      }
+    ],
+    "shouldNotMatch": [
+      {
+        "domain": "planning",
+        "projection": "poll_detail",
+        "reason": "Vote — не revision loop"
+      }
+    ]
+  }
+}

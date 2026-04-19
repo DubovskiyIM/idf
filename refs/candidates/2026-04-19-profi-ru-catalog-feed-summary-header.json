@@ -1,0 +1,80 @@
+{
+  "id": "feed-summary-header",
+  "version": 1,
+  "status": "candidate",
+  "archetype": "feed",
+  "trigger": {
+    "requires": [
+      {
+        "kind": "sub-entity-exists",
+        "child": "Bid|Order|Transaction",
+        "parent": "*"
+      },
+      {
+        "kind": "field-role-present",
+        "roles": [
+          "aggregate-count",
+          "money",
+          "status-new"
+        ]
+      }
+    ]
+  },
+  "structure": {
+    "slot": "header",
+    "description": "Над inbox-like feed'ом — sticky summary-header c 2-4 агрегатами (всего, новых, средняя цена, max отклик) — сгущённая метрика по видимой выборке"
+  },
+  "rationale": {
+    "hypothesis": "Когда в feed'е гетерогенные items с численными атрибутами, агрегаты сверху дают мгновенный контекст: юзер сразу видит объём и распределение, прежде чем скроллить",
+    "evidence": [
+      {
+        "source": "profi.ru",
+        "description": "Над списком откликов: «12 откликов · 3 новых · в среднем 2500₽»",
+        "reliability": "high"
+      },
+      {
+        "source": "upwork-proposals",
+        "description": "Header с count + average bid",
+        "reliability": "high"
+      },
+      {
+        "source": "gmail-inbox",
+        "description": "Counter «N unread» сверху",
+        "reliability": "medium"
+      }
+    ],
+    "counterexample": [
+      {
+        "source": "twitter-timeline",
+        "description": "Агрегаты бессмысленны для бесконечной ленты",
+        "reliability": "medium"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [
+      {
+        "domain": "invest",
+        "projection": "portfolio_dashboard",
+        "reason": "positions-count + total-value + day-change"
+      },
+      {
+        "domain": "delivery",
+        "projection": "dispatcher_orders",
+        "reason": "active/pending/completed counts"
+      }
+    ],
+    "shouldNotMatch": [
+      {
+        "domain": "reflect",
+        "projection": "mood_entries_feed",
+        "reason": "personal-scope, агрегаты не несут ценности над записями"
+      },
+      {
+        "domain": "messenger",
+        "projection": "conversations_list",
+        "reason": "unread-count уже достаточен, без price/count breakdown"
+      }
+    ]
+  }
+}

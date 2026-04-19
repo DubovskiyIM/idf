@@ -1,0 +1,63 @@
+{
+  "id": "badge-stack-markers",
+  "version": 1,
+  "status": "candidate",
+  "archetype": "catalog",
+  "trigger": {
+    "requires": [
+      {
+        "kind": "entity-field",
+        "fieldType": "boolean",
+        "min": 3,
+        "naming": "flag-like"
+      }
+    ]
+  },
+  "structure": {
+    "slot": "body",
+    "description": "Стек компактных бейджей в углу карточки, показывающих boolean-маркеры (Easy Apply / Promoted / Actively Recruiting / Top Applicant). Не экспандируется в подпись — визуальный shortcut для фильтрации глазом."
+  },
+  "rationale": {
+    "hypothesis": "Несколько boolean-флагов на entity эффективнее рендерить как парсируемый badge-стек, чем как текстовые подписи: цветовое кодирование + icon-glyph даёт 5x быстрее scan, чем чтение 'Easy Apply enabled. Promoted. Actively recruiting.'",
+    "evidence": [
+      {
+        "source": "linkedin-jobs-mobile",
+        "description": "Easy Apply (bolt) / Promoted (pin) / Actively Recruiting (person-check) / Top Applicant (crown, Premium-gated) в правом нижнем углу job card",
+        "reliability": "high"
+      },
+      {
+        "source": "github-pr-list",
+        "description": "Badges: draft / ready-for-review / conflicts / changes-requested",
+        "reliability": "high"
+      }
+    ],
+    "counterexample": [
+      {
+        "source": "jira",
+        "description": "Когда флагов 10+ — badge-стек превращается в шум; нужен collapsed indicator",
+        "reliability": "medium"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [
+      {
+        "domain": "invest",
+        "projection": "assets_catalog",
+        "reason": "boolean-поля: isWatchlisted / hasActiveSignal / isRestrictedRegion"
+      },
+      {
+        "domain": "delivery",
+        "projection": "orders_catalog",
+        "reason": "isExpress / requiresAgeCheck / hasSpecialInstructions"
+      }
+    ],
+    "shouldNotMatch": [
+      {
+        "domain": "messenger",
+        "projection": "messages_detail",
+        "reason": "message не имеет набора boolean-флагов для badge-стека"
+      }
+    ]
+  }
+}

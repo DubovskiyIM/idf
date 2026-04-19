@@ -1,0 +1,67 @@
+{
+  "id": "paid-visibility-elevation",
+  "version": 1,
+  "status": "candidate",
+  "archetype": "catalog",
+  "trigger": {
+    "requires": [
+      {
+        "kind": "entity-field",
+        "entity": "mainEntity",
+        "field": "isPromoted"
+      },
+      {
+        "kind": "intent-effect",
+        "α": "replace",
+        "target": "mainEntity.isPromoted"
+      }
+    ]
+  },
+  "structure": {
+    "slot": "body",
+    "description": "Карточки с isPromoted=true рендерятся с визуальным uplift (фон-bleed, звезда, pinning в верх блока) и группируются в отдельную 'Promoted' полосу над основной лентой; replace-intent на isPromoted даёт author-uplift UI (paid upsell)."
+  },
+  "rationale": {
+    "hypothesis": "Monetized visibility boost — отдельный паттерн от regular sort: requires visual differentiation (иначе unfair advantage неочевиден автору и читателю) и separate slot (иначе ломает ранжирование). Naive highlight через bold/colored border не работает — читатель игнорирует как декор.",
+    "evidence": [
+      {
+        "source": "fl-ru",
+        "description": "'Проект дня' — bleed-через-фон + золотая звезда, отделён от основной ленты",
+        "reliability": "high"
+      },
+      {
+        "source": "avito",
+        "description": "'VIP' и 'Выделенные' объявления — top-pinned полоса с иконкой",
+        "reliability": "high"
+      }
+    ],
+    "counterexample": [
+      {
+        "source": "github-issues",
+        "description": "Pinned issues — структурно похоже, но не monetized; читатель ожидает maintainer-intent, не рекламу",
+        "reliability": "medium"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [
+      {
+        "domain": "sales",
+        "projection": "listing_catalog",
+        "reason": "Listing с featured/boosted полем — marketplace-паттерн"
+      }
+    ],
+    "shouldNotMatch": [
+      {
+        "domain": "invest",
+        "projection": "portfolio_overview",
+        "reason": "Position не имеет paid-boost поля — элевация сломала бы объективность данных"
+      },
+      {
+        "domain": "reflect",
+        "projection": "mood_timeline",
+        "reason": "MoodEntry не монетизируется, personal-domain"
+      }
+    ]
+  }
+}

@@ -1,0 +1,80 @@
+{
+  "id": "base-plus-overrides-editor",
+  "version": 1,
+  "status": "candidate",
+  "archetype": "detail",
+  "trigger": {
+    "requires": [
+      {
+        "kind": "entity-field",
+        "pattern": "weeklySchedule|recurrence|rrule"
+      },
+      {
+        "kind": "sub-entity-exists",
+        "foreignKey": "toBaseRule",
+        "hasField": "date"
+      },
+      {
+        "kind": "intent-creates",
+        "entity": "override-like"
+      }
+    ]
+  },
+  "structure": {
+    "slot": "sections",
+    "description": "Detail-проекция base-rule разделяется на две секции: (1) еженедельная recurrence-таблица — inline-setter на полях weeklySchedule; (2) sparse-список date-overrides — composer + flat list отсортирован по date. Два разных способа редактирования одного концепта availability."
+  },
+  "rationale": {
+    "hypothesis": "Хранить все доступные даты как плоский список (каждая дата — строка) неподъёмно UX-wise; weekly recurrence покрывает 90% расписания, overrides — sparse 10% исключений. UI должен отражать эту асимметрию, не сливать в один table.",
+    "evidence": [
+      {
+        "source": "calendly",
+        "description": "Availability editor: weekly schedule сверху (пн-вс строки) + Date Overrides снизу как отдельный список",
+        "reliability": "high"
+      },
+      {
+        "source": "google-calendar",
+        "description": "Working hours + individual date exceptions разделены в настройках",
+        "reliability": "high"
+      },
+      {
+        "source": "outlook-scheduling-assistant",
+        "description": "Recurring availability + one-off overrides",
+        "reliability": "medium"
+      }
+    ],
+    "counterexample": [
+      {
+        "source": "shift-scheduler-hotschedules",
+        "description": "Только sparse shift-list без recurring base — подходит только для irregular работы",
+        "reliability": "medium"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [
+      {
+        "domain": "booking",
+        "projection": "specialist_availability",
+        "reason": "Если добавить weekly+overrides entities — применимо"
+      },
+      {
+        "domain": "lifequest",
+        "projection": "habit_schedule",
+        "reason": "Habit с recurrence + skip-dates как overrides"
+      }
+    ],
+    "shouldNotMatch": [
+      {
+        "domain": "delivery",
+        "projection": "order_tracker",
+        "reason": "Нет recurrence-концепции, каждый order дискретен"
+      },
+      {
+        "domain": "invest",
+        "projection": "portfolio_detail",
+        "reason": "Нет расписания у portfolio"
+      }
+    ]
+  }
+}

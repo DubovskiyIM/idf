@@ -1,0 +1,77 @@
+{
+  "id": "sticky-cta-bar",
+  "version": 1,
+  "status": "candidate",
+  "archetype": "detail",
+  "trigger": {
+    "requires": [
+      {
+        "kind": "sub-entity-exists",
+        "parent": "*",
+        "minChildren": 3
+      },
+      {
+        "kind": "intent-creates",
+        "entity": "CallIntent|Conversation|Bid",
+        "role": "primary-action"
+      }
+    ]
+  },
+  "structure": {
+    "slot": "footer",
+    "description": "В detail с множественными sub-sections (≥3) primary-action CTA переезжает в sticky-bar внизу viewport'a (особенно на mobile), оставаясь всегда доступным при скролле контента"
+  },
+  "rationale": {
+    "hypothesis": "Когда detail содержит много контента (tabs, portfolio, reviews), primary CTA из heading-bar уходит за viewport; sticky footer гарантирует постоянный доступ без скролла вверх",
+    "evidence": [
+      {
+        "source": "profi.ru",
+        "description": "Bottom-bar с «Написать / Позвонить» на profile",
+        "reliability": "high"
+      },
+      {
+        "source": "airbnb-listing",
+        "description": "Sticky «Reserve» CTA внизу на mobile",
+        "reliability": "high"
+      },
+      {
+        "source": "booking-hotel",
+        "description": "Sticky booking CTA внизу при длинном описании",
+        "reliability": "high"
+      }
+    ],
+    "counterexample": [
+      {
+        "source": "wikipedia-article",
+        "description": "Нет single primary action — sticky CTA избыточен",
+        "reliability": "high"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [
+      {
+        "domain": "booking",
+        "projection": "specialist_profile",
+        "reason": "sections Services/Reviews/Portfolio + primary booking CTA"
+      },
+      {
+        "domain": "delivery",
+        "projection": "merchant_detail",
+        "reason": "меню + отзывы + часы, primary — «Заказать»"
+      }
+    ],
+    "shouldNotMatch": [
+      {
+        "domain": "reflect",
+        "projection": "mood_entry_detail",
+        "reason": "нет primary external action"
+      },
+      {
+        "domain": "workflow",
+        "projection": "node_detail",
+        "reason": "нет primary CTA в потребительском смысле"
+      }
+    ]
+  }
+}

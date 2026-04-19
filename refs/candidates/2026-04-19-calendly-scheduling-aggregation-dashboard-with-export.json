@@ -1,0 +1,79 @@
+{
+  "id": "aggregation-dashboard-with-export",
+  "version": 1,
+  "status": "candidate",
+  "archetype": "dashboard",
+  "trigger": {
+    "requires": [
+      {
+        "kind": "entity-kind",
+        "value": "aggregate-snapshot"
+      },
+      {
+        "kind": "intent-creates",
+        "entity": "snapshot-export"
+      },
+      {
+        "kind": "field-role-present",
+        "role": "period|bucket"
+      }
+    ]
+  },
+  "structure": {
+    "slot": "toolbar",
+    "description": "Dashboard-архетип с period-selector в header + multi-facet breakdown charts в body (по event-type, по time, по source) + terminal CSV/PDF-export в toolbar как не-destructive α:add. Export-intent — последнее действие, после визуального exploration."
+  },
+  "rationale": {
+    "hypothesis": "Аналитика читается глазами, но работа с цифрами дальше — в Sheets/BI; поэтому CSV-export не опциональная кнопка, а terminal action dashboard'а. Period-selector в header — primary dimension, остальные facets — chart-level breakdowns.",
+    "evidence": [
+      {
+        "source": "calendly-analytics",
+        "description": "Bookings overview с period selector + breakdown + CSV export",
+        "reliability": "high"
+      },
+      {
+        "source": "stripe-dashboard",
+        "description": "Period + facet breakdown + export-to-csv terminal",
+        "reliability": "high"
+      },
+      {
+        "source": "ga4",
+        "description": "Date range + dimensions + export как базовый паттерн",
+        "reliability": "high"
+      }
+    ],
+    "counterexample": [
+      {
+        "source": "realtime-ops-dashboard",
+        "description": "Live metrics без export — read-only alerting surface, другая задача",
+        "reliability": "medium"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [
+      {
+        "domain": "invest",
+        "projection": "portfolio_analytics",
+        "reason": "Performance breakdown + period selector + export"
+      },
+      {
+        "domain": "delivery",
+        "projection": "dispatcher_analytics",
+        "reason": "Order metrics по zone/period/courier + CSV export"
+      }
+    ],
+    "shouldNotMatch": [
+      {
+        "domain": "messenger",
+        "projection": "conversation",
+        "reason": "Не aggregation-view"
+      },
+      {
+        "domain": "lifequest",
+        "projection": "goal_detail",
+        "reason": "Single-entity detail, не multi-dim aggregation"
+      }
+    ]
+  }
+}

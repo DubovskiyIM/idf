@@ -1,0 +1,85 @@
+{
+  "id": "saved-search-subscription",
+  "version": 1,
+  "status": "candidate",
+  "archetype": "feed",
+  "trigger": {
+    "requires": [
+      {
+        "kind": "intent-creates",
+        "entity": "SavedSearch"
+      },
+      {
+        "kind": "entity-field",
+        "entity": "SavedSearch",
+        "fields": [
+          "query",
+          "filters",
+          "notifyEnabled"
+        ]
+      },
+      {
+        "kind": "intent-effect",
+        "α": "replace",
+        "target": "savedSearch.notifyEnabled"
+      }
+    ]
+  },
+  "structure": {
+    "slot": "toolbar",
+    "description": "Save-current-query action в toolbar feed'а, конвертирующая ad-hoc query+filters в именованную subscribed SavedSearch с notify-toggle. Создаёт sub-feed, управляемый через отдельный My-section."
+  },
+  "rationale": {
+    "hypothesis": "Повторяющийся поиск имеет stateful-intent ('расскажи, когда появится'). Без SavedSearch пользователь возвращается в feed каждый N дней и pollиng'ует; с SavedSearch — push-нотификации. Конверсия pull → push снижает re-engagement cost.",
+    "evidence": [
+      {
+        "source": "linkedin-jobs-mobile",
+        "description": "Floating 'Get job alerts for this search' CTA после второго-третьего search, toggle в saved-search detail",
+        "reliability": "high"
+      },
+      {
+        "source": "craigslist",
+        "description": "Save search + email alert",
+        "reliability": "high"
+      },
+      {
+        "source": "zillow",
+        "description": "Saved searches with daily/weekly alerts",
+        "reliability": "high"
+      }
+    ],
+    "counterexample": [
+      {
+        "source": "google-search-general",
+        "description": "Web search queries слишком broad, saved-search как first-class сущность нет смысла",
+        "reliability": "medium"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [
+      {
+        "domain": "sales",
+        "projection": "listings_catalog",
+        "reason": "в sales есть SavedSearch — classic marketplace pattern"
+      },
+      {
+        "domain": "invest",
+        "projection": "assets_catalog",
+        "reason": "alerts на screener query"
+      }
+    ],
+    "shouldNotMatch": [
+      {
+        "domain": "messenger",
+        "projection": "conversations_feed",
+        "reason": "messages не являются discoverable через search+alert flow"
+      },
+      {
+        "domain": "planning",
+        "projection": "polls_feed",
+        "reason": "polls — временные, не subscribeable query"
+      }
+    ]
+  }
+}

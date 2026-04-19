@@ -1,0 +1,88 @@
+{
+  "id": "status-tab-partitioned-feed",
+  "version": 1,
+  "status": "candidate",
+  "archetype": "feed",
+  "trigger": {
+    "requires": [
+      {
+        "kind": "entity-field",
+        "entity": "mainEntity",
+        "field": "status"
+      },
+      {
+        "kind": "intent-count",
+        "min": 4,
+        "note": "status enum имеет ≥4 дискретных значения (Upcoming/Past/Pending/Cancelled)"
+      },
+      {
+        "kind": "intent-effect",
+        "target": "mainEntity.status",
+        "α": "replace",
+        "note": "статус меняется через intents, то есть партиция — не статика"
+      }
+    ]
+  },
+  "structure": {
+    "slot": "header",
+    "description": "Feed разбивается на таб-группы по значениям mainEntity.status. Каждый таб — preset-filter по status; активный таб управляет содержимым body. Счётчики рядом с табами показывают cardinality."
+  },
+  "rationale": {
+    "hypothesis": "Когда сущность имеет жизненный цикл с ≥4 качественно разными статусами, плоский feed с status-badge перегружает сканирование. Таб-партиция превращает status в первичную ось навигации и убирает ментальный filtering-шум.",
+    "evidence": [
+      {
+        "source": "cal-com",
+        "description": "Bookings разделены на Upcoming/Past/Pending/Cancelled tabs с счётчиками",
+        "reliability": "high"
+      },
+      {
+        "source": "linear",
+        "description": "Issues: Triage/Backlog/Active/Backlog — status-tabs как primary navigation",
+        "reliability": "high"
+      },
+      {
+        "source": "gmail",
+        "description": "Inbox/Sent/Drafts/Spam — status-like партиция feed",
+        "reliability": "high"
+      }
+    ],
+    "counterexample": [
+      {
+        "source": "messenger-conversations",
+        "description": "Conversations имеют status но partition по нему не нужен — sort важнее",
+        "reliability": "high"
+      },
+      {
+        "source": "invest-positions",
+        "description": "Position status есть, но primary-ось — asset, не status",
+        "reliability": "medium"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [
+      {
+        "domain": "booking",
+        "projection": "booking_feed",
+        "reason": "Booking.status имеет 6 значений и меняется через confirm/reject/cancel/reschedule"
+      },
+      {
+        "domain": "sales",
+        "projection": "order_feed",
+        "reason": "Order.status с жизненным циклом pending→paid→shipped→delivered"
+      }
+    ],
+    "shouldNotMatch": [
+      {
+        "domain": "messenger",
+        "projection": "conversations_feed",
+        "reason": "partition по recency, не по status"
+      },
+      {
+        "domain": "invest",
+        "projection": "portfolio_detail",
+        "reason": "detail-архетип, не feed"
+      }
+    ]
+  }
+}

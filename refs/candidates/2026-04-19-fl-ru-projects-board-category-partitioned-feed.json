@@ -1,0 +1,76 @@
+{
+  "id": "category-partitioned-feed",
+  "version": 1,
+  "status": "candidate",
+  "archetype": "feed",
+  "trigger": {
+    "requires": [
+      {
+        "kind": "entity-kind",
+        "entity": "Category"
+      },
+      {
+        "kind": "entity-field",
+        "entity": "Category",
+        "field": "parentId"
+      },
+      {
+        "kind": "entity-field",
+        "entity": "mainEntity",
+        "field": "category"
+      }
+    ]
+  },
+  "structure": {
+    "slot": "body",
+    "description": "Feed разбивается на именованные секции по первому уровню hierarchical Category (parentId=null) с счётчиком на каждой секции; порядок секций — по total count убыванию."
+  },
+  "rationale": {
+    "hypothesis": "Категориальная группировка снимает когнитивную нагрузку при большом объёме разнородных записей: пользователь сканирует не N сущностей, а K категорий, и заходит в одну. Flat-feed работает только когда все элементы — вариации одного класса.",
+    "evidence": [
+      {
+        "source": "fl-ru",
+        "description": "Главная страница проектов — лента сгруппирована по 'Веб-разработка / Дизайн / Тексты / ...' с счётчиком и ссылкой 'Все'",
+        "reliability": "high"
+      },
+      {
+        "source": "avito",
+        "description": "Категории верхнего уровня — точки входа, каждая раскрывается в свою ленту",
+        "reliability": "high"
+      }
+    ],
+    "counterexample": [
+      {
+        "source": "twitter",
+        "description": "Timeline без категориальной группировки — все tweets равноправны, partition убил бы ценность хронологии",
+        "reliability": "high"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [
+      {
+        "domain": "sales",
+        "projection": "listing_catalog",
+        "reason": "Listing.category + Category.parentId существуют — классический marketplace-сценарий"
+      },
+      {
+        "domain": "delivery",
+        "projection": "menu_catalog",
+        "reason": "MenuItem+Zone допускают категориальный partition по зоне/типу кухни"
+      }
+    ],
+    "shouldNotMatch": [
+      {
+        "domain": "messenger",
+        "projection": "conversation_feed",
+        "reason": "Нет Category-сущности, conversation — flat timeline"
+      },
+      {
+        "domain": "reflect",
+        "projection": "mood_timeline",
+        "reason": "Timeline-shape не должен партиционироваться, хронология — основной signal"
+      }
+    ]
+  }
+}

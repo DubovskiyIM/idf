@@ -1,0 +1,266 @@
+{
+  "source": "indeed-mobile-job-board",
+  "entities": [
+    {
+      "name": "Job",
+      "fields": [
+        "title",
+        "companyId",
+        "location",
+        "salary",
+        "jobType",
+        "remote",
+        "urgentlyHiring",
+        "description",
+        "benefits",
+        "requirements",
+        "responsibilities",
+        "postedAt",
+        "status",
+        "sponsored"
+      ],
+      "statusValues": [
+        "active",
+        "expired",
+        "filled"
+      ],
+      "foreignKey": "companyId→Company"
+    },
+    {
+      "name": "Company",
+      "fields": [
+        "name",
+        "logo",
+        "headquarters",
+        "size",
+        "industry",
+        "overallRating",
+        "ratingBreakdown"
+      ]
+    },
+    {
+      "name": "CompanyReview",
+      "fields": [
+        "companyId",
+        "authorId",
+        "rating",
+        "sentiment",
+        "employmentStatus",
+        "content",
+        "createdAt"
+      ],
+      "foreignKey": "companyId→Company"
+    },
+    {
+      "name": "SalaryReport",
+      "fields": [
+        "companyId",
+        "role",
+        "averageSalary",
+        "sampleSize"
+      ],
+      "foreignKey": "companyId→Company"
+    },
+    {
+      "name": "Resume",
+      "fields": [
+        "userId",
+        "name",
+        "email",
+        "phone",
+        "workExperience",
+        "education",
+        "skills"
+      ],
+      "foreignKey": "userId→User"
+    },
+    {
+      "name": "SavedSearch",
+      "fields": [
+        "userId",
+        "name",
+        "what",
+        "where",
+        "filters",
+        "notificationsEnabled",
+        "newResultsCount"
+      ],
+      "foreignKey": "userId→User"
+    },
+    {
+      "name": "SavedJob",
+      "fields": [
+        "userId",
+        "jobId",
+        "savedAt"
+      ],
+      "foreignKey": "jobId→Job"
+    },
+    {
+      "name": "Application",
+      "fields": [
+        "userId",
+        "jobId",
+        "resumeSnapshot",
+        "applyMethod",
+        "status",
+        "submittedAt",
+        "viewedAt"
+      ],
+      "statusValues": [
+        "submitted",
+        "viewed",
+        "rejected",
+        "interview",
+        "no_response"
+      ],
+      "foreignKey": "jobId→Job"
+    },
+    {
+      "name": "Message",
+      "fields": [
+        "applicationId",
+        "fromUserId",
+        "toUserId",
+        "body",
+        "sentAt"
+      ],
+      "foreignKey": "applicationId→Application"
+    },
+    {
+      "name": "User",
+      "fields": [
+        "name",
+        "email",
+        "role"
+      ]
+    }
+  ],
+  "intents": [
+    {
+      "id": "search_jobs",
+      "α": "replace",
+      "target": "searchContext.query",
+      "confirmation": "enter"
+    },
+    {
+      "id": "save_search",
+      "α": "add",
+      "creates": "SavedSearch",
+      "confirmation": "form"
+    },
+    {
+      "id": "rename_saved_search",
+      "α": "replace",
+      "target": "savedSearch.name",
+      "confirmation": "form"
+    },
+    {
+      "id": "toggle_search_notifications",
+      "α": "replace",
+      "target": "savedSearch.notificationsEnabled",
+      "confirmation": "click"
+    },
+    {
+      "id": "delete_saved_search",
+      "α": "remove",
+      "target": "savedSearches",
+      "irreversibility": "high",
+      "confirmation": "click"
+    },
+    {
+      "id": "save_job",
+      "α": "add",
+      "creates": "SavedJob",
+      "confirmation": "click"
+    },
+    {
+      "id": "unsave_job",
+      "α": "remove",
+      "target": "savedJobs",
+      "confirmation": "click"
+    },
+    {
+      "id": "share_job",
+      "α": "add",
+      "confirmation": "click"
+    },
+    {
+      "id": "apply_quick",
+      "α": "add",
+      "creates": "Application",
+      "confirmation": "form",
+      "irreversibility": "high"
+    },
+    {
+      "id": "apply_external",
+      "α": "add",
+      "creates": "Application",
+      "confirmation": "click",
+      "irreversibility": "high"
+    },
+    {
+      "id": "message_recruiter",
+      "α": "add",
+      "creates": "Message",
+      "confirmation": "enter"
+    },
+    {
+      "id": "rate_company",
+      "α": "add",
+      "creates": "CompanyReview",
+      "confirmation": "form"
+    },
+    {
+      "id": "leave_review",
+      "α": "add",
+      "creates": "CompanyReview",
+      "confirmation": "form"
+    },
+    {
+      "id": "submit_salary_report",
+      "α": "add",
+      "creates": "SalaryReport",
+      "confirmation": "form"
+    },
+    {
+      "id": "update_resume",
+      "α": "replace",
+      "target": "resume.fields",
+      "confirmation": "form"
+    },
+    {
+      "id": "post_job",
+      "α": "add",
+      "creates": "Job",
+      "confirmation": "form"
+    },
+    {
+      "id": "close_job",
+      "α": "replace",
+      "target": "job.status",
+      "irreversibility": "high",
+      "confirmation": "click"
+    }
+  ],
+  "roles": [
+    "seeker",
+    "employer",
+    "observer"
+  ],
+  "observations": [
+    "Two-field search (What + Where) occupies nearly half the home screen — dominant primary input surface",
+    "Inline company rating (stars + review count) embedded in each job card, clickable to open reviews",
+    "Job card is minimalist: title, company+location line, highlighted salary, 3-4 description bullets, single primary Apply CTA plus Save/Share icons",
+    "Progressive disclosure on detail: hero with badges (Full-time/Remote/Urgently hiring), then description, then structured Benefits/Requirements/Responsibilities sections, then About-the-company block",
+    "Saved searches are first-class: named subscription with per-item push toggle and badge on Find Jobs tab for new results",
+    "Sponsored jobs explicitly labeled and segregated from organic Jobs-for-you feed",
+    "Company profile uses rating breakdown across 5 axes (work-life / compensation / management / culture / opportunities) plus filterable reviews (All/Positive/Negative/Former/Current)",
+    "Resume is a single unified document auto-attached to every Quick Apply — no per-application customization surface",
+    "Application tracker is visually thin: 'viewed' status and silence are the dominant states — weak post-apply feedback loop",
+    "App-install interstitial on web is a documented anti-pattern forcing mobile-app adoption",
+    "AI relevance filter silently removes up to 90% of matches with no user control — opaque algorithmic gate",
+    "No ghost-job reporting mechanism — stale listings persist without user-driven expiry signal",
+    "Bottom tab bar with 5 destinations: Home / Find Jobs / Messages / My Jobs / Profile — My Jobs acts as dual tracker for saved + applied"
+  ]
+}

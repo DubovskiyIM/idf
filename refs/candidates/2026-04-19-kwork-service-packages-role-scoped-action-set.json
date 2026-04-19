@@ -1,0 +1,70 @@
+{
+  "id": "role-scoped-action-set",
+  "version": 1,
+  "status": "candidate",
+  "archetype": "detail",
+  "trigger": {
+    "requires": [
+      {
+        "kind": "has-role",
+        "roles": [
+          "owner",
+          "viewer"
+        ],
+        "min": 2
+      },
+      {
+        "kind": "intent-count",
+        "pattern": "*_status",
+        "min": 3
+      }
+    ]
+  },
+  "structure": {
+    "slot": "primaryCTA",
+    "description": "В detail-проекции shared между двумя ролями (owner/seller и viewer/buyer) primary/secondary действия отбираются ролью текущего зрителя: buyer видит request_revision, open_dispute; seller видит deliver_order, mark_in_progress. Обе роли читают тот же Φ, но CTA-поверхность role-scoped."
+  },
+  "rationale": {
+    "hypothesis": "Два участника работы над одним Order (buyer+seller) естественны для marketplace; показывать им одинаковый набор actions нелогично и опасно (seller не должен 'accept delivery'). Role-scoped actions = taxonomy §5 + affordance.",
+    "evidence": [
+      {
+        "source": "kwork.ru",
+        "description": "Order detail: buyer видит 'Запросить правку', seller — 'Сдать работу'; состояние одно",
+        "reliability": "high"
+      },
+      {
+        "source": "upwork.com",
+        "description": "Client/Freelancer shared contract page с role-specific buttons",
+        "reliability": "high"
+      }
+    ],
+    "counterexample": [
+      {
+        "source": "personal task app",
+        "description": "Одна роль — owner; role-scoping некому применять",
+        "reliability": "high"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [
+      {
+        "domain": "delivery",
+        "projection": "order_detail",
+        "reason": "customer/courier/merchant role-scoped actions"
+      },
+      {
+        "domain": "sales",
+        "projection": "order_detail",
+        "reason": "buyer/seller split"
+      }
+    ],
+    "shouldNotMatch": [
+      {
+        "domain": "lifequest",
+        "projection": "goal_detail",
+        "reason": "Single-role (owner)"
+      }
+    ]
+  }
+}

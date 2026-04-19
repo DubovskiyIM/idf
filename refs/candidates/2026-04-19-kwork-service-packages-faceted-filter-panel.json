@@ -1,0 +1,72 @@
+{
+  "id": "faceted-filter-panel",
+  "version": 1,
+  "status": "candidate",
+  "archetype": "catalog",
+  "trigger": {
+    "requires": [
+      {
+        "kind": "intent-effect",
+        "intent": "*filter*",
+        "α": "replace"
+      },
+      {
+        "kind": "intent-count",
+        "pattern": "filter_*",
+        "min": 1
+      }
+    ]
+  },
+  "structure": {
+    "slot": "sidebar",
+    "description": "Несколько независимых осей (price, rating, language, verification, delivery) рендерятся как отдельные секции фильтр-панели с локальным применением; каждая ось — typed control по field-role (money→range, enum→checklist, boolean→toggle)."
+  },
+  "rationale": {
+    "hypothesis": "Когда факты каталога варьируются по ≥3 независимым осям, single-search-box не даёт раскрыть ранжирующие сигналы. Faceted-panel превращает онтологические поля в первичные рычаги выбора.",
+    "evidence": [
+      {
+        "source": "kwork.ru",
+        "description": "Левая панель фильтров: цена, срок, рейтинг, язык, верификация — все одновременно видимы",
+        "reliability": "high"
+      },
+      {
+        "source": "airbnb.com",
+        "description": "Канонический faceted-filter для marketplace listings",
+        "reliability": "high"
+      },
+      {
+        "source": "booking.com",
+        "description": "Фильтры отелей — стандарт",
+        "reliability": "high"
+      }
+    ],
+    "counterexample": [
+      {
+        "source": "twitter",
+        "description": "Лента с одним таймлайном — faceted-panel избыточен",
+        "reliability": "high"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [
+      {
+        "domain": "sales",
+        "projection": "listings_catalog",
+        "reason": "Множество filter_* intents"
+      },
+      {
+        "domain": "delivery",
+        "projection": "menu_browse",
+        "reason": "Фильтры по price, cuisine, rating"
+      }
+    ],
+    "shouldNotMatch": [
+      {
+        "domain": "messenger",
+        "projection": "conversations_feed",
+        "reason": "Нет facet-полей — только время и unread"
+      }
+    ]
+  }
+}

@@ -1,0 +1,72 @@
+{
+  "id": "auto-detected-context-with-override",
+  "version": 1,
+  "status": "candidate",
+  "archetype": null,
+  "trigger": {
+    "requires": [
+      {
+        "kind": "field-role-present",
+        "roles": [
+          "timezone",
+          "locale",
+          "coordinate"
+        ],
+        "note": "поле контекстуальной среды"
+      },
+      {
+        "kind": "intent-effect",
+        "target": "*.timeZone|*.locale|*.coords",
+        "α": "replace",
+        "note": "override-intent позволяет переопределить"
+      }
+    ]
+  },
+  "structure": {
+    "slot": "header",
+    "description": "Контекстуальное поле (timezone/locale/координаты) автоопределяется браузером/устройством и отображается в header проекции как readable-badge с edit-аффордансом. Клик открывает inline-override без reload. Default — detected value."
+  },
+  "rationale": {
+    "hypothesis": "Контекст (где я, на каком языке, в какой TZ) — detectable, но 90% users имеют корректный detect. Заставлять выбирать upfront — friction. Auto-detect + visible override даёт ленивое большинство бесплатно + миграцию/гостей обслуживает.",
+    "evidence": [
+      {
+        "source": "cal-com",
+        "description": "Slot picker auto-detects booker TZ с manual override",
+        "reliability": "high"
+      },
+      {
+        "source": "google-calendar",
+        "description": "TZ detected по IP, editable в header",
+        "reliability": "high"
+      },
+      {
+        "source": "airbnb",
+        "description": "Language/currency auto-detect + manual switcher",
+        "reliability": "high"
+      }
+    ],
+    "counterexample": [
+      {
+        "source": "multi-user-admin",
+        "description": "Admin выбирает TZ другого user — auto-detect бесполезен",
+        "reliability": "medium"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [
+      {
+        "domain": "delivery",
+        "projection": "order_placement",
+        "reason": "coords auto-detect с manual address override"
+      }
+    ],
+    "shouldNotMatch": [
+      {
+        "domain": "invest",
+        "projection": "portfolio_detail",
+        "reason": "нет auto-detectable context-поля"
+      }
+    ]
+  }
+}

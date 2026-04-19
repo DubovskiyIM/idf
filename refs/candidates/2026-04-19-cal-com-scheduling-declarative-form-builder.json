@@ -1,0 +1,84 @@
+{
+  "id": "declarative-form-builder",
+  "version": 1,
+  "status": "candidate",
+  "archetype": "detail",
+  "trigger": {
+    "requires": [
+      {
+        "kind": "sub-entity-exists",
+        "relation": "mainEntity → Question|Field|Prompt",
+        "note": "sub-entity описывает поле динамической формы"
+      },
+      {
+        "kind": "entity-field",
+        "entity": "subEntity",
+        "field": "kind",
+        "note": "поле с типом input (text/select/checkbox/...)"
+      },
+      {
+        "kind": "intent-creates",
+        "creates": "subEntity",
+        "confirmation": "form",
+        "note": "пользователь создаёт поля формы как данные"
+      }
+    ]
+  },
+  "structure": {
+    "slot": "sections",
+    "description": "Sub-entity Question/Field/Prompt, которая сама имеет поле kind (=тип инпута) и options, отрисовывается как form-builder: drag-sortable список полей + превью сгенерированной формы. Authored-as-data, не как код."
+  },
+  "rationale": {
+    "hypothesis": "Когда owner авторит форму для bookers/респондентов, разделение author-time / fill-time критично. Form-builder делает author-time first-class: видно сразу что получит tenant. Это мета-паттерн declarative UI: форма — данные.",
+    "evidence": [
+      {
+        "source": "cal-com",
+        "description": "BookingQuestion с полями label/kind/required/options/order — конструктор вопросов",
+        "reliability": "high"
+      },
+      {
+        "source": "typeform",
+        "description": "Form-builder как основной surface продукта",
+        "reliability": "high"
+      },
+      {
+        "source": "google-forms",
+        "description": "Авторинг формы через drag-sort полей с типом/опциями",
+        "reliability": "high"
+      }
+    ],
+    "counterexample": [
+      {
+        "source": "static-settings-form",
+        "description": "Когда поля формы известны статически, builder избыточен",
+        "reliability": "high"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [
+      {
+        "domain": "planning",
+        "projection": "poll_detail",
+        "reason": "TimeOption — sub-entity с полем kind, конструктор опций голосования"
+      },
+      {
+        "domain": "workflow",
+        "projection": "workflow_detail",
+        "reason": "Node с полем type — конструктор действий"
+      }
+    ],
+    "shouldNotMatch": [
+      {
+        "domain": "invest",
+        "projection": "portfolio_detail",
+        "reason": "Position — не описание поля формы"
+      },
+      {
+        "domain": "delivery",
+        "projection": "order_detail",
+        "reason": "OrderItem — не meta-author"
+      }
+    ]
+  }
+}

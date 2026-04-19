@@ -54,7 +54,7 @@ export function parseArgs(argv) {
   return args;
 }
 
-export function callClaude(prompt, { images = [], timeoutMs = 120_000 } = {}) {
+export function callClaude(prompt, { images = [], timeoutMs = 300_000 } = {}) {
   return new Promise((resolve, reject) => {
     const args = ["-p", "-", "--output-format", "json"];
     for (const img of images) args.push("--image", img);

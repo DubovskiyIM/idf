@@ -1,0 +1,72 @@
+{
+  "id": "composite-default-sort",
+  "version": 1,
+  "status": "candidate",
+  "archetype": "catalog",
+  "trigger": {
+    "requires": [
+      {
+        "kind": "intent-effect",
+        "intent": "sort_*",
+        "target": "*.sort"
+      },
+      {
+        "kind": "entity-field",
+        "entity": "*",
+        "field": "rating"
+      },
+      {
+        "kind": "entity-field",
+        "entity": "*",
+        "field": "createdAt"
+      }
+    ]
+  },
+  "structure": {
+    "slot": "toolbar",
+    "description": "Sort-контрол предлагает 'По умолчанию' (скрытая композиция: rating × freshness × popularity) первым, затем детерминистичные оси — новизна, цена, рейтинг. Default — первый вариант, не реверсируется вручную."
+  },
+  "rationale": {
+    "hypothesis": "Marketplace'ы всегда имеют алгоритмическое ранжирование, которое не сводится к одной оси. Показать его как именованный sort-опцион 'По умолчанию' честнее, чем скрывать — пользователь видит, что есть альтернативы, но trust default.",
+    "evidence": [
+      {
+        "source": "kwork.ru",
+        "description": "Dropdown 'Сортировать по: По умолчанию / Новые / Дешевле / Рейтинг'",
+        "reliability": "high"
+      },
+      {
+        "source": "ebay.com",
+        "description": "Best Match как дефолт + price/ending soon альтернативы",
+        "reliability": "high"
+      }
+    ],
+    "counterexample": [
+      {
+        "source": "gmail inbox",
+        "description": "Одна ось — дата, без алгоритмического ранжирования",
+        "reliability": "high"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [
+      {
+        "domain": "sales",
+        "projection": "listings_catalog",
+        "reason": "rating + createdAt + sort intent"
+      },
+      {
+        "domain": "booking",
+        "projection": "specialists_catalog",
+        "reason": "rating + freshness + алгоритмический default"
+      }
+    ],
+    "shouldNotMatch": [
+      {
+        "domain": "messenger",
+        "projection": "conversations_feed",
+        "reason": "Сортировка одномерная (lastActivityAt)"
+      }
+    ]
+  }
+}

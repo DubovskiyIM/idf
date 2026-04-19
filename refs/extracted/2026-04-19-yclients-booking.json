@@ -1,0 +1,470 @@
+{
+  "source": "yclients-booking-admin",
+  "entities": [
+    {
+      "name": "Salon",
+      "fields": [
+        "name",
+        "address",
+        "phone",
+        "timezone",
+        "logo",
+        "workingHours"
+      ]
+    },
+    {
+      "name": "Master",
+      "fields": [
+        "name",
+        "avatar",
+        "specialization",
+        "schedule",
+        "services",
+        "salaryScheme",
+        "phone"
+      ],
+      "foreignKey": "salonId→Salon"
+    },
+    {
+      "name": "Service",
+      "fields": [
+        "title",
+        "category",
+        "duration",
+        "price",
+        "description",
+        "masters",
+        "consumables"
+      ],
+      "foreignKey": "salonId→Salon"
+    },
+    {
+      "name": "ServiceCategory",
+      "fields": [
+        "title",
+        "parentId",
+        "icon"
+      ],
+      "foreignKey": "salonId→Salon"
+    },
+    {
+      "name": "Client",
+      "fields": [
+        "name",
+        "phone",
+        "email",
+        "birthday",
+        "notes",
+        "allergies",
+        "preferences",
+        "loyaltyBalance",
+        "discount",
+        "isBlocked",
+        "tags"
+      ],
+      "foreignKey": "salonId→Salon"
+    },
+    {
+      "name": "Appointment",
+      "fields": [
+        "clientId",
+        "masterId",
+        "serviceIds",
+        "startAt",
+        "duration",
+        "status",
+        "price",
+        "paymentStatus",
+        "source",
+        "comment",
+        "createdAt"
+      ],
+      "statusValues": [
+        "pending",
+        "confirmed",
+        "arrived",
+        "completed",
+        "cancelled",
+        "no_show"
+      ],
+      "foreignKey": "masterId→Master"
+    },
+    {
+      "name": "TimeBlock",
+      "fields": [
+        "masterId",
+        "startAt",
+        "duration",
+        "reason",
+        "kind"
+      ],
+      "statusValues": [
+        "break",
+        "absence",
+        "vacation",
+        "sick_leave"
+      ],
+      "foreignKey": "masterId→Master"
+    },
+    {
+      "name": "MasterSchedule",
+      "fields": [
+        "masterId",
+        "date",
+        "startAt",
+        "endAt",
+        "isWorkingDay"
+      ],
+      "foreignKey": "masterId→Master"
+    },
+    {
+      "name": "Visit",
+      "fields": [
+        "appointmentId",
+        "actualStart",
+        "actualEnd",
+        "servicesProvided",
+        "consumablesUsed",
+        "totalAmount",
+        "paymentMethod"
+      ],
+      "foreignKey": "appointmentId→Appointment"
+    },
+    {
+      "name": "Review",
+      "fields": [
+        "visitId",
+        "clientId",
+        "masterId",
+        "rating",
+        "text",
+        "photos",
+        "createdAt"
+      ],
+      "foreignKey": "visitId→Visit"
+    },
+    {
+      "name": "Consumable",
+      "fields": [
+        "title",
+        "unit",
+        "stockQty",
+        "minStock",
+        "costPerUnit",
+        "supplier"
+      ],
+      "foreignKey": "salonId→Salon"
+    },
+    {
+      "name": "ConsumableUsage",
+      "fields": [
+        "consumableId",
+        "visitId",
+        "quantity",
+        "cost"
+      ],
+      "foreignKey": "visitId→Visit"
+    },
+    {
+      "name": "Payment",
+      "fields": [
+        "visitId",
+        "amount",
+        "method",
+        "fiscalReceiptId",
+        "shiftId",
+        "createdAt"
+      ],
+      "statusValues": [
+        "pending",
+        "captured",
+        "refunded"
+      ],
+      "foreignKey": "visitId→Visit"
+    },
+    {
+      "name": "CashShift",
+      "fields": [
+        "openedBy",
+        "openedAt",
+        "closedAt",
+        "openingBalance",
+        "closingBalance",
+        "totalSales"
+      ],
+      "statusValues": [
+        "open",
+        "closed"
+      ]
+    },
+    {
+      "name": "LoyaltyTransaction",
+      "fields": [
+        "clientId",
+        "visitId",
+        "delta",
+        "reason",
+        "balanceAfter"
+      ],
+      "foreignKey": "clientId→Client"
+    },
+    {
+      "name": "SalaryRule",
+      "fields": [
+        "masterId",
+        "serviceId",
+        "percentage",
+        "fixedSalary",
+        "bonus"
+      ],
+      "foreignKey": "masterId→Master"
+    },
+    {
+      "name": "NotificationTemplate",
+      "fields": [
+        "trigger",
+        "channel",
+        "subject",
+        "body",
+        "timing"
+      ],
+      "statusValues": [
+        "active",
+        "disabled"
+      ]
+    },
+    {
+      "name": "Notification",
+      "fields": [
+        "clientId",
+        "appointmentId",
+        "templateId",
+        "channel",
+        "sentAt",
+        "status"
+      ],
+      "statusValues": [
+        "scheduled",
+        "sent",
+        "delivered",
+        "failed"
+      ],
+      "foreignKey": "appointmentId→Appointment"
+    }
+  ],
+  "intents": [
+    {
+      "id": "create_appointment",
+      "α": "add",
+      "creates": "Appointment",
+      "confirmation": "form"
+    },
+    {
+      "id": "quick_create_appointment",
+      "α": "add",
+      "creates": "Appointment",
+      "confirmation": "form"
+    },
+    {
+      "id": "reassign_appointment",
+      "α": "replace",
+      "target": "appointment.masterId",
+      "confirmation": "click"
+    },
+    {
+      "id": "reschedule_appointment",
+      "α": "replace",
+      "target": "appointment.startAt",
+      "confirmation": "click"
+    },
+    {
+      "id": "confirm_appointment",
+      "α": "replace",
+      "target": "appointment.status",
+      "confirmation": "click"
+    },
+    {
+      "id": "mark_arrived",
+      "α": "replace",
+      "target": "appointment.status",
+      "confirmation": "click"
+    },
+    {
+      "id": "mark_no_show",
+      "α": "replace",
+      "target": "appointment.status",
+      "confirmation": "click"
+    },
+    {
+      "id": "complete_visit",
+      "α": "replace",
+      "target": "appointment.status",
+      "confirmation": "form"
+    },
+    {
+      "id": "cancel_appointment",
+      "α": "replace",
+      "target": "appointment.status",
+      "confirmation": "click",
+      "irreversibility": "high"
+    },
+    {
+      "id": "block_time",
+      "α": "add",
+      "creates": "TimeBlock",
+      "confirmation": "form"
+    },
+    {
+      "id": "remove_time_block",
+      "α": "remove",
+      "confirmation": "click"
+    },
+    {
+      "id": "create_client",
+      "α": "add",
+      "creates": "Client",
+      "confirmation": "form"
+    },
+    {
+      "id": "edit_client_notes",
+      "α": "replace",
+      "target": "client.notes",
+      "confirmation": "enter"
+    },
+    {
+      "id": "block_client",
+      "α": "replace",
+      "target": "client.isBlocked",
+      "confirmation": "click",
+      "irreversibility": "high"
+    },
+    {
+      "id": "adjust_loyalty_balance",
+      "α": "add",
+      "creates": "LoyaltyTransaction",
+      "confirmation": "form"
+    },
+    {
+      "id": "create_service",
+      "α": "add",
+      "creates": "Service",
+      "confirmation": "form"
+    },
+    {
+      "id": "assign_master_to_service",
+      "α": "replace",
+      "target": "service.masters",
+      "confirmation": "click"
+    },
+    {
+      "id": "charge_visit",
+      "α": "add",
+      "creates": "Payment",
+      "confirmation": "form",
+      "irreversibility": "high"
+    },
+    {
+      "id": "open_cash_shift",
+      "α": "add",
+      "creates": "CashShift",
+      "confirmation": "click"
+    },
+    {
+      "id": "close_cash_shift",
+      "α": "replace",
+      "target": "cashShift.status",
+      "confirmation": "form",
+      "irreversibility": "high"
+    },
+    {
+      "id": "record_consumable_usage",
+      "α": "add",
+      "creates": "ConsumableUsage",
+      "confirmation": "form"
+    },
+    {
+      "id": "restock_consumable",
+      "α": "replace",
+      "target": "consumable.stockQty",
+      "confirmation": "form"
+    },
+    {
+      "id": "send_reminder",
+      "α": "add",
+      "creates": "Notification",
+      "confirmation": "click"
+    },
+    {
+      "id": "configure_notification_template",
+      "α": "replace",
+      "target": "notificationTemplate.body",
+      "confirmation": "form"
+    },
+    {
+      "id": "book_online",
+      "α": "add",
+      "creates": "Appointment",
+      "confirmation": "form"
+    },
+    {
+      "id": "verify_phone",
+      "α": "replace",
+      "target": "client.phone",
+      "confirmation": "enter"
+    },
+    {
+      "id": "cancel_my_appointment",
+      "α": "replace",
+      "target": "appointment.status",
+      "confirmation": "click",
+      "irreversibility": "high"
+    },
+    {
+      "id": "reschedule_my_appointment",
+      "α": "replace",
+      "target": "appointment.startAt",
+      "confirmation": "form"
+    },
+    {
+      "id": "review_visit",
+      "α": "add",
+      "creates": "Review",
+      "confirmation": "form"
+    },
+    {
+      "id": "accrue_loyalty",
+      "α": "add",
+      "creates": "LoyaltyTransaction",
+      "confirmation": "click"
+    }
+  ],
+  "roles": [
+    "owner",
+    "viewer",
+    "provider",
+    "booker",
+    "observer"
+  ],
+  "observations": [
+    "Vertical-resource × time-grid как основной canvas журнала: columns = мастера, rows = 15-мин слоты",
+    "Drag-drop appointment между cells для reassign + reschedule в одном жесте",
+    "Cell state имеет 4 модуса: free / busy / break / absence — декларируется через TimeBlock.kind и Appointment.status",
+    "Right-click на свободной ячейке → contextMenu с quick-create формой (префиллит master + startAt)",
+    "Боковая панель: сегодняшний feed записей с фильтром по master — второй projection на ту же сущность",
+    "CRM-карточка клиента = hub-detail: history (visits) + preferences + loyalty + notes как absorbed subcollections",
+    "Public booking widget = 5-шаговый wizard с phase-aware primary CTA (service → master → slot → contact → confirm)",
+    "'Любой свободный мастер' — virtual master с derived availability (union свободных слотов)",
+    "Availability computation derived: fold(schedule) ∖ fold(appointments) ∖ fold(timeBlocks)",
+    "Phone verification как отдельный intent-gate перед confirm (не поле формы)",
+    "Modular capability gates: склад / касса / зарплата / аналитика включаются по тарифу — feature flags на уровне projection visibility",
+    "Multi-channel notifications: owner настраивает templates × triggers × channels (matrix-editor архетип)",
+    "Scheduled notifications через темпоральный scheduler: reminder за день / час от appointment.startAt",
+    "Cash shift — explicit open/close lifecycle; charge_visit возможен только при shift.status=open (role-capability invariant)",
+    "Consumable stock auto-decrement при complete_visit (rule: aggregation + threshold для low-stock alert)",
+    "Review привязан к visit, не к appointment — нельзя оценить незавершённую встречу (transition invariant)",
+    "Blacklist клиента блокирует create_appointment через condition-rule на client.isBlocked",
+    "Иерархия ролей: salon owner → master (видит только свою колонку в журнале), client (видит только свои записи) — filterWorld по scope",
+    "Drag-drop irreversibility: low для reassign (можно вернуть), но complete_visit + charge_visit — high (ФФД 54-ФЗ фискальный чек)",
+    "White-label mobile app: та же booker-projection с кастомизированным adapter theme (logo/colors salon)"
+  ]
+}

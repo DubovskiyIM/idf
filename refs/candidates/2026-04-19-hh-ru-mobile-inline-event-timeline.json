@@ -1,0 +1,85 @@
+{
+  "id": "inline-event-timeline",
+  "version": 1,
+  "status": "candidate",
+  "archetype": "catalog",
+  "trigger": {
+    "requires": [
+      {
+        "kind": "sub-entity-exists",
+        "parent": "mainEntity",
+        "hasFields": [
+          "type",
+          "timestamp"
+        ]
+      },
+      {
+        "kind": "entity-field",
+        "entity": "mainEntity",
+        "field": "status"
+      },
+      {
+        "kind": "intent-count",
+        "min": 1,
+        "filter": "status-transitions-observable"
+      }
+    ]
+  },
+  "structure": {
+    "slot": "body",
+    "description": "EventLog-sub-entity с FK и timestamp визуализируется inline внутри родительской карточки как горизонтальный chevron-timeline (Sent → Viewed → Invited → Rejected). Каждая node соответствует event.type, текущий state — highlighted."
+  },
+  "rationale": {
+    "hypothesis": "Когда sub-entity описывает state-transitions родителя (а не independent child-data), вынос её в отдельную section разрывает контекст. Inline-timeline сохраняет visual causality: 'что было → что сейчас' читается единым scan-motion, не требуя tap-in.",
+    "evidence": [
+      {
+        "source": "hh-ru-mobile",
+        "description": "Timeline 'Отправлено 12 апр → Просмотрено 14 апр → Приглашение' inside application card",
+        "reliability": "high"
+      },
+      {
+        "source": "amazon-orders",
+        "description": "Ordered → Shipped → Out for delivery → Delivered — stepper прямо на order-карточке",
+        "reliability": "high"
+      },
+      {
+        "source": "github-pr",
+        "description": "Opened → Review requested → Approved — horizontal timeline в PR-list",
+        "reliability": "medium"
+      }
+    ],
+    "counterexample": [
+      {
+        "source": "jira-issues",
+        "description": "Workflow transitions слишком многочисленны (20+ custom states) — inline timeline становится нечитаем, уходит в отдельный log-tab",
+        "reliability": "high"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [
+      {
+        "domain": "delivery",
+        "projection": "order_detail",
+        "reason": "Order + state-transitions (placed/picked/in-transit/delivered) через CourierLocation/OrderEvents — prime case"
+      },
+      {
+        "domain": "sales",
+        "projection": "order_detail",
+        "reason": "Sales Order flow (pending → paid → shipped → delivered) с event-log"
+      }
+    ],
+    "shouldNotMatch": [
+      {
+        "domain": "messenger",
+        "projection": "conversation_detail",
+        "reason": "Message — content-поток, не state-transition события"
+      },
+      {
+        "domain": "lifequest",
+        "projection": "goal_detail",
+        "reason": "HabitLog — metric-сбор, не state transition"
+      }
+    ]
+  }
+}

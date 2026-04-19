@@ -1,0 +1,79 @@
+{
+  "id": "overflow-secondary-actions",
+  "version": 1,
+  "status": "candidate",
+  "archetype": "detail",
+  "trigger": {
+    "requires": [
+      {
+        "kind": "intent-count",
+        "min": 4,
+        "where": {
+          "entity": "<mainEntity>"
+        }
+      },
+      {
+        "kind": "intent-creates",
+        "min": 1,
+        "marker": "primary"
+      }
+    ]
+  },
+  "structure": {
+    "slot": "toolbar",
+    "description": "Kebab/overflow-меню в toolbar для низкочастотных или destructive действий (Share / Report / Save / Hide), отделённое от primary-CTA. Primary actions остаются visible, secondary — one-tap-away."
+  },
+  "rationale": {
+    "hypothesis": "Когда intent'ов на entity >3, равное визуальное представление разжижает primary call-to-action. Overflow-menu сохраняет primary-weight, при этом не скрывает secondary полностью (cost = 1 extra tap). Discoverability > always-visible для rare/destructive actions.",
+    "evidence": [
+      {
+        "source": "linkedin-jobs-mobile",
+        "description": "⋯ меню в job card/detail содержит Save / Share / Report / Hide / Copy link — primary (Apply) остаётся visible",
+        "reliability": "high"
+      },
+      {
+        "source": "gmail",
+        "description": "Kebab-меню в email-row: archive/label/mute/report-spam",
+        "reliability": "high"
+      },
+      {
+        "source": "slack",
+        "description": "... menu на message: pin/bookmark/copy-link/report",
+        "reliability": "high"
+      }
+    ],
+    "counterexample": [
+      {
+        "source": "figma-canvas",
+        "description": "В creative tools overflow вреден — все действия должны быть one-tap для flow-state",
+        "reliability": "medium"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [
+      {
+        "domain": "sales",
+        "projection": "listing_detail",
+        "reason": "8+ intent'ов (save/share/report/bid/ask/message/watch/hide) — primary CTA нужно защитить"
+      },
+      {
+        "domain": "messenger",
+        "projection": "message_detail",
+        "reason": "pin/react/forward/copy/delete/report — overflow естественен"
+      }
+    ],
+    "shouldNotMatch": [
+      {
+        "domain": "booking",
+        "projection": "slot_detail",
+        "reason": "2 intent'а (book/cancel) — overflow избыточен"
+      },
+      {
+        "domain": "planning",
+        "projection": "vote_detail",
+        "reason": "3 intent'а — все primary-равны, overflow скроет core-flow"
+      }
+    ]
+  }
+}

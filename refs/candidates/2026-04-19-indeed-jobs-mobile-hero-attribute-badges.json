@@ -1,0 +1,82 @@
+{
+  "id": "hero-attribute-badges",
+  "version": 1,
+  "status": "candidate",
+  "archetype": "detail",
+  "trigger": {
+    "requires": [
+      {
+        "kind": "entity-field",
+        "fieldTypes": [
+          "boolean",
+          "enum"
+        ],
+        "count": ">=2"
+      },
+      {
+        "kind": "intent-count",
+        "minMatching": 1,
+        "where": {
+          "archetype": "detail"
+        }
+      }
+    ]
+  },
+  "structure": {
+    "slot": "hero",
+    "description": "Render boolean/enum attributes of mainEntity as compact badge row directly under title in detail hero, before long-form description. Badges carry type modifiers (Remote, Full-time) and urgency signals (Urgently hiring)."
+  },
+  "rationale": {
+    "hypothesis": "Categorical attributes that determine fit/no-fit decisions compress better as visual chips than as labeled fields. Placing them in hero enables sub-second eligibility scan before the user commits to reading description.",
+    "evidence": [
+      {
+        "source": "indeed-mobile-job-board",
+        "description": "Hero shows '$25/hr · Full-time · Remote · Urgently hiring' as inline badges before description section",
+        "reliability": "high"
+      },
+      {
+        "source": "linkedin-jobs",
+        "description": "Same badge row under title on job detail",
+        "reliability": "high"
+      },
+      {
+        "source": "airbnb-listing-detail",
+        "description": "Amenity chips (Wifi, Kitchen, Washer) in hero area",
+        "reliability": "medium"
+      }
+    ],
+    "counterexample": [
+      {
+        "source": "wordpress-admin-post-edit",
+        "description": "Detail forms with many boolean options use checklists, not hero badges — badges only work when attributes are mutually compatible filters, not config toggles",
+        "reliability": "medium"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [
+      {
+        "domain": "sales",
+        "projection": "listing_detail",
+        "reason": "Listing has type/condition/shipping as boolean+enum — badge row reinforces scan"
+      },
+      {
+        "domain": "booking",
+        "projection": "service_detail",
+        "reason": "Service has duration/online/in-person type markers"
+      }
+    ],
+    "shouldNotMatch": [
+      {
+        "domain": "workflow",
+        "projection": "execution_detail",
+        "reason": "Execution attributes are telemetry, not categorical scan signals"
+      },
+      {
+        "domain": "reflect",
+        "projection": "mood_entry_detail",
+        "reason": "MoodEntry fields are not eligibility filters"
+      }
+    ]
+  }
+}

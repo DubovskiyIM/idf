@@ -1,0 +1,71 @@
+{
+  "id": "capability-gated-section",
+  "version": 1,
+  "status": "candidate",
+  "archetype": "detail",
+  "trigger": {
+    "requires": [
+      {
+        "kind": "entity-field",
+        "entity": "mainEntity",
+        "field": "contactsVisibility"
+      },
+      {
+        "kind": "has-role",
+        "role": "viewer"
+      }
+    ]
+  },
+  "structure": {
+    "slot": "sections",
+    "description": "Section рендерится с placeholder-контентом (blur / locked icon / CTA 'Войдите чтобы увидеть' или 'Доступно для PRO') когда viewer-role не имеет capability; при наличии capability — полный контент. Gate читается из entity-поля + role.capabilities."
+  },
+  "rationale": {
+    "hypothesis": "Hidden section (полностью убирать из DOM) ломает discovery: пользователь не знает, что capability существует, и не конвертируется в upgrade. Shown-but-gated создаёт явный upsell-pathway и сохраняет structural integrity projection'а для всех ролей.",
+    "evidence": [
+      {
+        "source": "fl-ru",
+        "description": "Contacts фрилансера — серый блок 'Контакты доступны PRO-заказчикам' + CTA апгрейда",
+        "reliability": "high"
+      },
+      {
+        "source": "linkedin",
+        "description": "'See full profile — sign in' на public-view — та же механика",
+        "reliability": "high"
+      }
+    ],
+    "counterexample": [
+      {
+        "source": "banking-apps",
+        "description": "Private sections полностью скрыты до auth — security-context, gate-с-preview небезопасен",
+        "reliability": "high"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [
+      {
+        "domain": "sales",
+        "projection": "listing_detail",
+        "reason": "Seller contacts — capability-gated для non-buyers"
+      },
+      {
+        "domain": "invest",
+        "projection": "advisor_detail",
+        "reason": "Advisor contacts gated по tier клиента"
+      }
+    ],
+    "shouldNotMatch": [
+      {
+        "domain": "messenger",
+        "projection": "conversation_detail",
+        "reason": "Участники conversation имеют full access по определению (auth-gate на уровне projection'а)"
+      },
+      {
+        "domain": "workflow",
+        "projection": "workflow_detail",
+        "reason": "Workflow — internal entity, capability-gating не применимо"
+      }
+    ]
+  }
+}

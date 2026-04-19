@@ -1,0 +1,72 @@
+{
+  "id": "status-tab-feed",
+  "version": 1,
+  "status": "candidate",
+  "archetype": "feed",
+  "trigger": {
+    "requires": [
+      {
+        "kind": "entity-field",
+        "entity": "*",
+        "field": "status"
+      },
+      {
+        "kind": "intent-count",
+        "pattern": "*_status*",
+        "min": 3
+      }
+    ]
+  },
+  "structure": {
+    "slot": "header",
+    "description": "Feed-проекция, где mainEntity имеет status с ≥4 значениями и lifecycle, группируется табами по smeantic-кластерам статусов (active / pending / done / cancelled). Tab = неявный filter по status ∈ {cluster}. Active — default tab."
+  },
+  "rationale": {
+    "hypothesis": "Когда lifecycle длинный и пользователь работает в одном фазе одновременно, single list с mixed statuses создаёт визуальный шум. Tabs по статусам делают 'сейчас моё внимание' первичным focus и отделяют work-in-progress от архива.",
+    "evidence": [
+      {
+        "source": "kwork.ru",
+        "description": "Orders: 'В работе / На проверке / Завершённые / Отменённые' как табы",
+        "reliability": "high"
+      },
+      {
+        "source": "upwork.com",
+        "description": "Contracts: Active / Past / Disputed tabs",
+        "reliability": "high"
+      },
+      {
+        "source": "linear.app",
+        "description": "Issues grouped by status lanes (частный случай)",
+        "reliability": "high"
+      }
+    ],
+    "counterexample": [
+      {
+        "source": "email inbox",
+        "description": "Lifecycle-мерзкий; только read/unread — tabs избыточны",
+        "reliability": "high"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [
+      {
+        "domain": "delivery",
+        "projection": "orders_feed",
+        "reason": "Order.status с 7+ значениями + status-transition intents"
+      },
+      {
+        "domain": "sales",
+        "projection": "orders_feed",
+        "reason": "Order lifecycle long"
+      }
+    ],
+    "shouldNotMatch": [
+      {
+        "domain": "messenger",
+        "projection": "conversations_feed",
+        "reason": "Нет длинного status-lifecycle"
+      }
+    ]
+  }
+}

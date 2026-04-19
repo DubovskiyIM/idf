@@ -1,0 +1,77 @@
+{
+  "id": "profile-level-bulk-toggle",
+  "version": 1,
+  "status": "candidate",
+  "archetype": "detail",
+  "trigger": {
+    "requires": [
+      {
+        "kind": "entity-field",
+        "entity": "*Profile*",
+        "field": "*Mode"
+      },
+      {
+        "kind": "field-role-present",
+        "entity": "*Profile*",
+        "role": "boolean"
+      },
+      {
+        "kind": "sub-entity-exists",
+        "parent": "*Profile*",
+        "child": "*"
+      }
+    ]
+  },
+  "structure": {
+    "slot": "header",
+    "description": "Одиночный boolean-флаг на Profile-entity (vacationMode, awayMode, pauseMode) рендерится как prominent header-toggle, который при активации неявно применяет side-effect ко всем активным child-сущностям профиля (скрыть из catalog). Один switch — bulk-эффект."
+  },
+  "rationale": {
+    "hypothesis": "Активный продавец с десятками объявлений физически не может по одному поставить каждый на паузу уходя в отпуск. Profile-level toggle — единая точка управления доступностью, агрегатная абстракция.",
+    "evidence": [
+      {
+        "source": "kwork.ru",
+        "description": "Переключатель 'Режим отпуска' на SellerProfile скрывает все активные kworks из каталога",
+        "reliability": "high"
+      },
+      {
+        "source": "fiverr.com",
+        "description": "Pause/Unpause на уровне gig — тот же bulk-паттерн",
+        "reliability": "high"
+      },
+      {
+        "source": "airbnb.com",
+        "description": "Host snooze для listings",
+        "reliability": "high"
+      }
+    ],
+    "counterexample": [
+      {
+        "source": "personal todo app",
+        "description": "Нет multi-ownership — bulk-toggle не нужен",
+        "reliability": "medium"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [
+      {
+        "domain": "sales",
+        "projection": "seller_profile",
+        "reason": "SellerProfile с awayMode + множеством Listings"
+      },
+      {
+        "domain": "delivery",
+        "projection": "merchant_profile",
+        "reason": "Merchant closedMode → hide menu"
+      }
+    ],
+    "shouldNotMatch": [
+      {
+        "domain": "lifequest",
+        "projection": "user_profile",
+        "reason": "Personal — нет shared child-entities"
+      }
+    ]
+  }
+}

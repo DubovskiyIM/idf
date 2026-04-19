@@ -1,0 +1,79 @@
+{
+  "id": "trigger-action-list-workflow",
+  "version": 1,
+  "status": "candidate",
+  "archetype": "detail",
+  "trigger": {
+    "requires": [
+      {
+        "kind": "entity-field",
+        "entity": "workflow",
+        "field": "trigger",
+        "note": "single trigger-descriptor"
+      },
+      {
+        "kind": "entity-field",
+        "entity": "workflow",
+        "field": "actions",
+        "note": "array действий"
+      },
+      {
+        "kind": "sub-entity-exists",
+        "relation": "workflow → binding",
+        "note": "join-entity привязывает workflow к target-entity"
+      }
+    ]
+  },
+  "structure": {
+    "slot": "sections",
+    "description": "Workflow detail раскладывается на три зоны: (1) trigger-picker (одно событие с параметрами), (2) ordered list of actions с add/remove/reorder, (3) bindings-section со списком привязанных targets. Trigger-action-binding — триада, а не монолит."
+  },
+  "rationale": {
+    "hypothesis": "Declarative workflow — это именно триада trigger/actions/bindings: когда запускать, что делать, к чему применять. Плоская форма скрывает семантическое разделение и делает невозможной reordering actions. Секционный layout отражает operational model.",
+    "evidence": [
+      {
+        "source": "cal-com",
+        "description": "Workflows: trigger + actions list (SMS/email/webhook) + bindings к event-types",
+        "reliability": "high"
+      },
+      {
+        "source": "zapier",
+        "description": "Trigger + actions ordered chain — дефинишн продукта",
+        "reliability": "high"
+      },
+      {
+        "source": "github-actions",
+        "description": "on:<trigger> + steps: ordered list",
+        "reliability": "high"
+      }
+    ],
+    "counterexample": [
+      {
+        "source": "scheduled-cron-job",
+        "description": "Cron без bindings — одна целевая entity, binding избыточен",
+        "reliability": "medium"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [
+      {
+        "domain": "workflow",
+        "projection": "workflow_detail",
+        "reason": "Workflow domain — canonical case"
+      },
+      {
+        "domain": "invest",
+        "projection": "rule_detail",
+        "reason": "Rule: trigger (threshold/schedule) + actions (alert/rebalance) + bindings к portfolio"
+      }
+    ],
+    "shouldNotMatch": [
+      {
+        "domain": "reflect",
+        "projection": "hypothesis_detail",
+        "reason": "Hypothesis не имеет trigger/action/binding триады"
+      }
+    ]
+  }
+}

@@ -1,0 +1,83 @@
+{
+  "id": "filter-chip-bar",
+  "version": 1,
+  "status": "candidate",
+  "archetype": "feed",
+  "trigger": {
+    "requires": [
+      {
+        "kind": "intent-effect",
+        "α": "replace",
+        "target": "feed.filters"
+      },
+      {
+        "kind": "intent-confirmation",
+        "value": "click"
+      },
+      {
+        "kind": "intent-count",
+        "min": 1,
+        "where": {
+          "target": "feed.filters"
+        }
+      }
+    ]
+  },
+  "structure": {
+    "slot": "toolbar",
+    "description": "Горизонтальный scrollable chip-bar над body с boolean/enum фильтрами, применяемыми live по tap без submit-кнопки. Chip = одно replace на feed.filters."
+  },
+  "rationale": {
+    "hypothesis": "Chip-bar даёт visible filter-state и mutational access за 1 tap — дешевле, чем modal filter-sheet, который скрывает активные фильтры и требует submit. Горизонтальный scroll масштабируется лучше, чем grid из чекбоксов.",
+    "evidence": [
+      {
+        "source": "linkedin-jobs-mobile",
+        "description": "Chip-bar под search input: Easy Apply / Remote / Date Posted / Experience Level — активные chips визуально выделены, tap моментально сужает feed",
+        "reliability": "high"
+      },
+      {
+        "source": "google-maps",
+        "description": "Restaurants / Gas / Coffee chip-bar над картой с live-apply",
+        "reliability": "high"
+      },
+      {
+        "source": "youtube-mobile",
+        "description": "Chip-bar категорий над feed (All / Music / Gaming)",
+        "reliability": "high"
+      }
+    ],
+    "counterexample": [
+      {
+        "source": "booking.com",
+        "description": "Для многомерных фильтров (цена+даты+удобства) используется sheet — chip-bar не вмещает range-параметры",
+        "reliability": "medium"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [
+      {
+        "domain": "sales",
+        "projection": "listings_catalog",
+        "reason": "многократные toggle/enum-фильтры над каталогом объявлений"
+      },
+      {
+        "domain": "delivery",
+        "projection": "menu_feed",
+        "reason": "фильтры по категории блюд / времени доставки"
+      }
+    ],
+    "shouldNotMatch": [
+      {
+        "domain": "booking",
+        "projection": "booking_detail",
+        "reason": "detail — нет feed.filters"
+      },
+      {
+        "domain": "reflect",
+        "projection": "mood_canvas",
+        "reason": "canvas-архетип не использует filter-chip-bar"
+      }
+    ]
+  }
+}

@@ -1,0 +1,71 @@
+{
+  "id": "multi-select-extras-live-total",
+  "version": 1,
+  "status": "candidate",
+  "archetype": "detail",
+  "trigger": {
+    "requires": [
+      {
+        "kind": "sub-entity-exists",
+        "parent": "*",
+        "child": "*Extra*"
+      },
+      {
+        "kind": "field-role-present",
+        "entity": "*Extra*",
+        "role": "money"
+      },
+      {
+        "kind": "intent-creates",
+        "entity": "Order"
+      }
+    ]
+  },
+  "structure": {
+    "slot": "sections",
+    "description": "Sub-entity 'Extras' (FK на parent) рендерится как multi-select checkbox-список в detail; каждый extra несёт money-field и опциональный duration-delta; выбор моментально пересчитывает derived total и прокидывает его в primaryCTA (см. derived-total-in-cta)."
+  },
+  "rationale": {
+    "hypothesis": "Когда цена заказа = base + Σ(extras), показывать extras как отдельный следующий шаг (wizard) ломает 'прицеливание' — пользователь теряет связь между галочкой и итогом. Inline-select с live-total делает cause/effect непрерывным.",
+    "evidence": [
+      {
+        "source": "kwork.ru",
+        "description": "Блок 'Дополнительные опции' с чекбоксами, каждый с ценой; итог над кнопкой 'Заказать за X ₽' обновляется моментально",
+        "reliability": "high"
+      },
+      {
+        "source": "uber eats",
+        "description": "Modifiers для MenuItem с live-total в корзине",
+        "reliability": "high"
+      },
+      {
+        "source": "deliveroo",
+        "description": "Item customization с inline price-delta",
+        "reliability": "high"
+      }
+    ],
+    "counterexample": [
+      {
+        "source": "enterprise invoice builder",
+        "description": "Extras там — отдельная line-items таблица, не inline-select",
+        "reliability": "medium"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [
+      {
+        "domain": "delivery",
+        "projection": "menu_item_detail",
+        "reason": "MenuItem + modifiers/options с price + order creation"
+      }
+    ],
+    "shouldNotMatch": [
+      {
+        "domain": "messenger",
+        "projection": "conversation_detail",
+        "reason": "Нет money-field + order creation"
+      }
+    ]
+  }
+}

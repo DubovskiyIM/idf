@@ -1,0 +1,64 @@
+{
+  "id": "highlight-important-flag",
+  "version": 1,
+  "status": "candidate",
+  "archetype": "feed",
+  "trigger": {
+    "requires": [
+      {
+        "kind": "entity-field",
+        "entity": "mainEntity",
+        "field": "*",
+        "type": "boolean",
+        "semanticRole": "priority|featured"
+      }
+    ]
+  },
+  "structure": {
+    "slot": "body",
+    "description": "Булев флаг 'важное/супер/featured' визуально поднимает карточку в ленте (фон / рамка / иконка / pin), не меняя её позицию в sort-результате. Ортогонально sort-as-parameter."
+  },
+  "rationale": {
+    "hypothesis": "Priority-флаг — семантический сигнал автора, а не артефакт сортировки. Смешивание с sort приводит к тому, что 'важные' прячутся при переключении режима. Визуальное выделение сохраняет сигнал независимо от порядка.",
+    "evidence": [
+      {
+        "source": "workzilla-marketplace",
+        "description": "isSuperTask → повышенный визуальный вес карточки + бейдж",
+        "reliability": "high"
+      }
+    ],
+    "counterexample": [
+      {
+        "source": "typical-product-catalog",
+        "description": "Если 30%+ элементов 'featured' — паттерн теряет сигнал",
+        "reliability": "medium"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [
+      {
+        "domain": "sales",
+        "projection": "listings_feed",
+        "reason": "promoted/featured объявления"
+      },
+      {
+        "domain": "invest",
+        "projection": "watchlist",
+        "reason": "starred/critical активы"
+      }
+    ],
+    "shouldNotMatch": [
+      {
+        "domain": "planning",
+        "projection": "polls_feed",
+        "reason": "нет priority-флага"
+      },
+      {
+        "domain": "reflect",
+        "projection": "mood_log",
+        "reason": "равнозначные записи дневника"
+      }
+    ]
+  }
+}

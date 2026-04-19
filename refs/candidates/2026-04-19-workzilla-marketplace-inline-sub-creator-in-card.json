@@ -1,0 +1,70 @@
+{
+  "id": "inline-sub-creator-in-card",
+  "version": 1,
+  "status": "candidate",
+  "archetype": "feed",
+  "trigger": {
+    "requires": [
+      {
+        "kind": "intent-creates",
+        "archetype": "feed"
+      },
+      {
+        "kind": "sub-entity-exists",
+        "foreignKey": "mainEntity"
+      },
+      {
+        "kind": "intent-confirmation",
+        "target": "sub-entity creation",
+        "confirmation": "enter"
+      }
+    ]
+  },
+  "structure": {
+    "slot": "composer",
+    "description": "Карточка feed-элемента содержит quick-apply композер, создающий sub-entity (Bid) без перехода в detail и без модалки. Распространение composer-entry на sub-entity из feed-слота."
+  },
+  "rationale": {
+    "hypothesis": "Модалка / навигация в detail ради одного действия (оставить отклик / ставку) ломают сканируемость ленты. Inline-composer внутри карточки превращает lead-generation действие в нулевой клик.",
+    "evidence": [
+      {
+        "source": "workzilla-marketplace",
+        "description": "Карточка задачи: forma с ценой/сроком/сообщением прямо внутри card, submit → Bid",
+        "reliability": "high"
+      }
+    ],
+    "counterexample": [
+      {
+        "source": "any-listing-feed",
+        "description": "Там, где создание sub-entity требует многостраничной формы (контракт, ответ на RFP) — inline не масштабируется",
+        "reliability": "medium"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [
+      {
+        "domain": "sales",
+        "projection": "listings_feed",
+        "reason": "Bid к Listing прямо из карточки"
+      },
+      {
+        "domain": "planning",
+        "projection": "polls_feed",
+        "reason": "Vote к Poll inline"
+      }
+    ],
+    "shouldNotMatch": [
+      {
+        "domain": "booking",
+        "projection": "specialists_feed",
+        "reason": "бронирование требует выбора TimeSlot → отдельный flow"
+      },
+      {
+        "domain": "invest",
+        "projection": "portfolio_feed",
+        "reason": "нет sub-entity для быстрого создания"
+      }
+    ]
+  }
+}

@@ -1,0 +1,67 @@
+{
+  "id": "hover-peek-preview",
+  "version": 1,
+  "status": "candidate",
+  "archetype": "catalog",
+  "trigger": {
+    "requires": [
+      {
+        "kind": "entity-field",
+        "entity": "*",
+        "field": "previewImages"
+      },
+      {
+        "kind": "entity-field",
+        "entity": "*",
+        "field": "description"
+      },
+      {
+        "kind": "intent-effect",
+        "intent": "open_*_detail",
+        "α": "replace"
+      }
+    ]
+  },
+  "structure": {
+    "slot": "overlay",
+    "description": "Hover по grid-card триггерит ленивый popover с дополнительной галереей и first-paragraph описания — lightweight peek без навигации. При mobile — degraded (long-press или просто disabled)."
+  },
+  "rationale": {
+    "hypothesis": "Navigating в detail стоит 1-2 сек + потерю позиции в grid. Hover-peek снижает стоимость evaluation на 10x в сценарии browsing, оставляя детализацию для коммитмента к конкретному варианту.",
+    "evidence": [
+      {
+        "source": "kwork.ru",
+        "description": "Наведение на карточку kwork показывает дополнительные изображения + выдержку описания",
+        "reliability": "high"
+      },
+      {
+        "source": "pinterest.com",
+        "description": "Hover раскрывает save+pin-actions без ухода со страницы",
+        "reliability": "medium"
+      }
+    ],
+    "counterexample": [
+      {
+        "source": "mobile-first UX",
+        "description": "Нет hover — паттерн деградирует",
+        "reliability": "high"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [
+      {
+        "domain": "sales",
+        "projection": "listings_catalog",
+        "reason": "Listing с image + description + open_detail"
+      }
+    ],
+    "shouldNotMatch": [
+      {
+        "domain": "messenger",
+        "projection": "conversations_feed",
+        "reason": "Conversation не имеет preview-галереи"
+      }
+    ]
+  }
+}

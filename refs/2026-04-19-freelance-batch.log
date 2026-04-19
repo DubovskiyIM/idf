@@ -1,0 +1,131 @@
+Freelance Pattern Batch — 2026-04-19T06:28:11.808Z
+Sources: profi-ru-catalog, workzilla-marketplace, kwork-service-packages, fl-ru-projects-board
+
+═══════════ profi-ru-catalog ═══════════
+  started at 2026-04-19T06:28:11.809Z
+
+═══ Extract Mode: profi-ru-catalog ═══
+
+Phase 1: Extracting domain model...
+  Saved: /Users/ignatdubovskiy/WebstormProjects/idf/refs/extracted/2026-04-19-profi-ru-catalog.json
+
+Phase 2: Generating candidate pattern...
+Error: Claude timeout
+  profi-ru-catalog finished in 2.6 min (exit 1)
+  error: profi-ru-catalog failed with exit 1
+
+═══════════ workzilla-marketplace ═══════════
+  started at 2026-04-19T06:30:48.814Z
+
+═══ Extract Mode: workzilla-marketplace ═══
+
+Phase 1: Extracting domain model...
+  Saved: /Users/ignatdubovskiy/WebstormProjects/idf/refs/extracted/2026-04-19-workzilla-marketplace.json
+
+Phase 2: Generating candidate pattern...
+Error: Claude timeout
+  workzilla-marketplace finished in 2.5 min (exit 1)
+  error: workzilla-marketplace failed with exit 1
+
+═══════════ kwork-service-packages ═══════════
+  started at 2026-04-19T06:33:21.603Z
+
+═══ Extract Mode: kwork-service-packages ═══
+
+Phase 1: Extracting domain model...
+  Saved: /Users/ignatdubovskiy/WebstormProjects/idf/refs/extracted/2026-04-19-kwork-service-packages.json
+
+Phase 2: Generating candidate pattern...
+Freelance Pattern Resume — 2026-04-19T07:02:26.485Z
+
+═══════════ fl-ru-projects-board (Phase 1) ═══════════
+  extract done in 0.7 min, entities: 11, intents: 24
+  saved: /Users/ignatdubovskiy/WebstormProjects/idf/refs/extracted/2026-04-19-fl-ru-projects-board.json
+
+═══════════ profi-ru-catalog (Phase 2+3) ═══════════
+  covered (3):
+    Specialist card is a dense composite: avatar + identity + rating + price-from + tier badge + verification + 2-3 specialization tags + CTA → grid-card-layout
+    Bid actions: write, mark interesting, reject — reject is irreversible with undo-toast affordance → irreversible-confirm
+    Specialist profile as tabbed detail (О себе / Цены / Отзывы / Портфолио / Видео) with sticky bottom CTA bar → subcollections
+  hypothesize done in 3.3 min, 14 candidate(s)
+    hierarchy-tree-nav: format ✓, overlap ✓
+    promoted-slot-injection: format ✓, overlap ✓
+    faceted-filter-panel: format ✓, overlap ✓
+    elevated-facet-toggle: format ✓, overlap ✓
+    composite-default-sort: format ✓, overlap ✓
+    multi-step-wizard-with-progress: format ✓, overlap ✓
+    polymorphic-form-step: format ✓, overlap ✓
+    draft-resume-entry: format ✓, overlap ✓
+    preview-before-publish: format ✓, overlap ✓
+    feed-summary-header: format ✓, overlap ✓
+    sticky-cta-bar: format ✓, overlap ✓
+    stat-breakdown-header: format ✓, overlap ✓
+    capability-gated-cta: format ✓, overlap ✓
+    undo-toast-irreversible: format ✓, overlap ✓
+
+═══════════ workzilla-marketplace (Phase 2+3) ═══════════
+  covered (6):
+    select_performer irreversibility:high — confirmation-dialog с summary (escrow списание) → irreversible-confirm
+    open_dispute / accept_work / auto_release_escrow как irreversible transitions через confirm-диалог → irreversible-confirm
+    SafeDeal — явная state-machine с buttons-as-transitions (phase-dependent primary CTA) → phase-aware-primary-cta
+    publish_task — feed creates Task с form-confirmation (hero-вариант в catalog Task) → hero-create
+    ChatMessage как sub-entity dealId→SafeDeal внутри detail сделки → subcollections
+    Attachment как sub-entity taskId→Task внутри detail задачи → subcollections
+  hypothesize done in 3.0 min, 12 candidate(s)
+    sort-as-parameter: format ✓, overlap ✓
+    inline-sub-creator-in-card: format ✓, overlap ✓
+    trust-signal-badges-on-card: format ✓, overlap ✓
+    highlight-important-flag: format ✓, overlap ✓
+    polymorphic-value-field: format ✓, overlap ✓
+    sidebar-subcollection: format ✓, overlap ✓
+    single-select-siblings-reject: format ✓, overlap ✓
+    countdown-auto-transition: format ✓, overlap ✓
+    escalation-observer-readonly-bundle: format ✓, overlap ✓
+    derived-tier-badge: format ✓, overlap ✓
+    faceted-filter-panel: format ✓, overlap ✓
+    role-scoped-state-transitions: format ✓, overlap ✓
+
+═══════════ kwork-service-packages (Phase 2+3) ═══════════
+  covered (3):
+    Kwork card composes preview image, title, price-from, seller rating, delivery time, and promo TOP badge → grid-card-layout
+    Moderation is an explicit state machine: draft → on_moderation → approved/rejected — ModerationDecision carries reason → phase-aware-primary-cta
+    Order completion and cancellation are irreversible transitions (release of escrow, rating impact) → irreversible-confirm
+  hypothesize done in 3.1 min, 16 candidate(s)
+    hierarchy-tree-nav: format ✓, overlap ✓
+    faceted-filter-panel: format ✓, overlap ✓
+    composite-default-sort: format ✓, overlap ✓
+    hover-peek-preview: format ✓, overlap ✓
+    gallery-hero-detail: format ✓, overlap ✓
+    multi-select-extras-live-total: format ✓, overlap ✓
+    derived-total-in-cta: format ✓, overlap ✓
+    trust-signal-mini-card: format ✓, overlap ✓
+    status-tab-feed: format ✓, overlap ✓
+    temporal-witness-chip: format ✓, overlap ✓
+    role-scoped-action-set: format ✓, overlap ✓
+    autosave-draft-wizard: format ✓, overlap ✓
+    profile-level-bulk-toggle: format ✓, overlap ✓
+    bounded-revision-buffer: format ✓, overlap ✓
+    dashboard-kpi-plus-per-item-stats: format ✓, overlap ✓
+    secondary-filters-on-subcollection: format ✓, overlap ✓
+
+═══════════ fl-ru-projects-board (Phase 2+3) ═══════════
+  covered (3):
+    Safe-deal toggle = опциональный escrow-контракт на проект; блокировка средств при select_executor, release при complete — классический irreversibility=high chain → irreversible-confirm
+    Grid-галерея портфолио с lightbox expansion — canvas-like deep-view на hero-entity → grid-card-layout
+    Состояние проекта как FSM с 5 значениями; 'В работе с фрилансером X' — status+assignee compound phase → phase-aware-primary-cta
+  hypothesize done in 2.9 min, 9 candidate(s)
+    category-partitioned-feed: format ✓, overlap ✓
+    paid-visibility-elevation: format ✓, overlap ✓
+    tier-badge-marker: format ✓, overlap ✓
+    derived-presence-indicator: format ✓, overlap ✓
+    reverse-invite-flow: format ✓, overlap ✓
+    capability-gated-section: format ✓, overlap ✓
+    paid-modifier-composer: format ✓, overlap ✓
+    role-scoped-dual-view: format ✓, overlap ✓
+    emphasis-priority-card: format ✓, overlap ✓
+
+═══ RESUME DONE in 13.0 min ═══
+  ✓ profi-ru-catalog: ok (14 candidates)
+  ✓ workzilla-marketplace: ok (12 candidates)
+  ✓ kwork-service-packages: ok (16 candidates)
+  ✓ fl-ru-projects-board: ok (9 candidates)

@@ -1,0 +1,305 @@
+{
+  "source": "calendly-scheduling",
+  "entities": [
+    {
+      "name": "Host",
+      "fields": [
+        "username",
+        "displayName",
+        "avatar",
+        "bio",
+        "timezone",
+        "plan"
+      ]
+    },
+    {
+      "name": "EventType",
+      "fields": [
+        "name",
+        "slug",
+        "duration",
+        "description",
+        "location",
+        "color",
+        "status",
+        "price",
+        "currency",
+        "paymentRequired",
+        "customQuestions",
+        "hostId"
+      ],
+      "statusValues": [
+        "active",
+        "paused",
+        "archived"
+      ],
+      "foreignKey": "hostId→Host"
+    },
+    {
+      "name": "AvailabilityRule",
+      "fields": [
+        "name",
+        "weeklySchedule",
+        "bufferBefore",
+        "bufferAfter",
+        "minNotice",
+        "timezone",
+        "hostId"
+      ],
+      "foreignKey": "hostId→Host"
+    },
+    {
+      "name": "DateOverride",
+      "fields": [
+        "date",
+        "slots",
+        "unavailable",
+        "ruleId"
+      ],
+      "foreignKey": "ruleId→AvailabilityRule"
+    },
+    {
+      "name": "CalendarIntegration",
+      "fields": [
+        "provider",
+        "accountEmail",
+        "status",
+        "syncBusy",
+        "writeEvents",
+        "hostId"
+      ],
+      "statusValues": [
+        "connected",
+        "disconnected",
+        "error"
+      ],
+      "foreignKey": "hostId→Host"
+    },
+    {
+      "name": "TeamMember",
+      "fields": [
+        "role",
+        "userId",
+        "eventTypeId"
+      ],
+      "foreignKey": "eventTypeId→EventType"
+    },
+    {
+      "name": "Booking",
+      "fields": [
+        "eventTypeId",
+        "startTime",
+        "endTime",
+        "status",
+        "bookerName",
+        "bookerEmail",
+        "answers",
+        "meetingUrl",
+        "icsToken",
+        "paymentStatus",
+        "noShow"
+      ],
+      "statusValues": [
+        "confirmed",
+        "rescheduled",
+        "cancelled",
+        "completed",
+        "no_show"
+      ],
+      "foreignKey": "eventTypeId→EventType"
+    },
+    {
+      "name": "TimeSlot",
+      "fields": [
+        "eventTypeId",
+        "date",
+        "startTime",
+        "available"
+      ],
+      "foreignKey": "eventTypeId→EventType"
+    },
+    {
+      "name": "WorkflowAutomation",
+      "fields": [
+        "name",
+        "trigger",
+        "delay",
+        "action",
+        "template",
+        "branches",
+        "eventTypeId",
+        "enabled"
+      ],
+      "foreignKey": "eventTypeId→EventType"
+    },
+    {
+      "name": "Payment",
+      "fields": [
+        "bookingId",
+        "amount",
+        "currency",
+        "provider",
+        "status",
+        "depositAmount"
+      ],
+      "statusValues": [
+        "pending",
+        "captured",
+        "refunded",
+        "failed"
+      ],
+      "foreignKey": "bookingId→Booking"
+    },
+    {
+      "name": "AnalyticsSnapshot",
+      "fields": [
+        "eventTypeId",
+        "period",
+        "totalBookings",
+        "noShowRate",
+        "popularTimes",
+        "leadSource"
+      ],
+      "foreignKey": "eventTypeId→EventType"
+    }
+  ],
+  "intents": [
+    {
+      "id": "create_event_type",
+      "α": "add",
+      "creates": "EventType",
+      "confirmation": "form"
+    },
+    {
+      "id": "edit_event_type",
+      "α": "replace",
+      "target": "eventType.description",
+      "confirmation": "form"
+    },
+    {
+      "id": "pause_event_type",
+      "α": "replace",
+      "target": "eventType.status",
+      "confirmation": "click"
+    },
+    {
+      "id": "archive_event_type",
+      "α": "remove",
+      "irreversibility": "high",
+      "confirmation": "click"
+    },
+    {
+      "id": "share_booking_link",
+      "α": "replace",
+      "target": "eventType.slug",
+      "confirmation": "click"
+    },
+    {
+      "id": "set_availability",
+      "α": "replace",
+      "target": "availabilityRule.weeklySchedule",
+      "confirmation": "form"
+    },
+    {
+      "id": "add_date_override",
+      "α": "add",
+      "creates": "DateOverride",
+      "confirmation": "form"
+    },
+    {
+      "id": "connect_calendar",
+      "α": "add",
+      "creates": "CalendarIntegration",
+      "confirmation": "click"
+    },
+    {
+      "id": "disconnect_calendar",
+      "α": "remove",
+      "irreversibility": "high",
+      "confirmation": "click"
+    },
+    {
+      "id": "invite_teammate",
+      "α": "add",
+      "creates": "TeamMember",
+      "confirmation": "form"
+    },
+    {
+      "id": "select_date",
+      "α": "replace",
+      "target": "bookingDraft.date",
+      "confirmation": "click"
+    },
+    {
+      "id": "book_slot",
+      "α": "add",
+      "creates": "Booking",
+      "confirmation": "form"
+    },
+    {
+      "id": "reschedule_booking",
+      "α": "replace",
+      "target": "booking.startTime",
+      "confirmation": "click"
+    },
+    {
+      "id": "cancel_booking",
+      "α": "remove",
+      "irreversibility": "high",
+      "confirmation": "click"
+    },
+    {
+      "id": "capture_payment",
+      "α": "add",
+      "creates": "Payment",
+      "confirmation": "form",
+      "irreversibility": "high"
+    },
+    {
+      "id": "mark_no_show",
+      "α": "replace",
+      "target": "booking.status",
+      "confirmation": "click",
+      "irreversibility": "high"
+    },
+    {
+      "id": "create_workflow",
+      "α": "add",
+      "creates": "WorkflowAutomation",
+      "confirmation": "form"
+    },
+    {
+      "id": "toggle_workflow",
+      "α": "replace",
+      "target": "workflowAutomation.enabled",
+      "confirmation": "click"
+    },
+    {
+      "id": "export_analytics",
+      "α": "add",
+      "creates": "AnalyticsSnapshot",
+      "confirmation": "click"
+    }
+  ],
+  "roles": [
+    "owner",
+    "viewer",
+    "agent",
+    "observer"
+  ],
+  "observations": [
+    "Asymmetric dual-surface product: authenticated host dashboard vs stateless guest booking page under public slug URL",
+    "EventType as first-class template entity — card-grid dashboard with each card representing reusable scheduling configuration (duration + policy + integrations)",
+    "Booker flow is a linear 3-step wizard: month calendar → slot column → form, not a form with all fields at once",
+    "Calendar grid shows derived TimeSlot availability by overlaying CalendarIntegration busy-times on AvailabilityRule recurrence — slots are computed, not stored",
+    "Slot selection acts as primary CTA, bypassing typical list-detail navigation",
+    "Reschedule and cancel are stateless — accessed via signed ICS token in confirmation email, no account required",
+    "Weekly-recurring AvailabilityRule + DateOverride pattern (base schedule + sparse exceptions) rather than storing every available date",
+    "Round-robin / collective event-types implied m2m between EventType and TeamMember (host.scope vs team.scope)",
+    "Workflow automation uses temporal scheduler: pre-meeting, reminders, follow-up as time-offset triggers relative to Booking.startTime",
+    "Payment gate sits between slot selection and Booking confirmation — capture_payment is irreversible (__irr high) with no-show deposit auto-capture via schedule rule",
+    "Analytics dashboard is aggregation-shaped (by event-type, by time, by source) with CSV export as terminal action",
+    "Guest booker has no persistent identity — bookerEmail is the de-facto identifier, not a User entity",
+    "Calendar integration is single-host-scoped (ownerField: hostId), sync direction declared via writeEvents boolean"
+  ]
+}

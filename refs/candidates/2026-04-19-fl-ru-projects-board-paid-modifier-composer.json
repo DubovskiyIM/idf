@@ -1,0 +1,69 @@
+{
+  "id": "paid-modifier-composer",
+  "version": 1,
+  "status": "candidate",
+  "archetype": "catalog",
+  "trigger": {
+    "requires": [
+      {
+        "kind": "intent-creates",
+        "creates": "mainEntity"
+      },
+      {
+        "kind": "intent-count",
+        "min": 2,
+        "filter": {
+          "α": "replace",
+          "target": "mainEntity.{boost_flag}"
+        }
+      }
+    ]
+  },
+  "structure": {
+    "slot": "composer",
+    "description": "Create-form получает collapsed секцию 'Продвижение' с upsell-стилизованными toggles (Поднять в топ / Выделить / PRO-only) и derived-total в CTA: 'Опубликовать за X ₽'; каждый toggle — отдельный paid-modifier intent, агрегируется в single submit."
+  },
+  "rationale": {
+    "hypothesis": "Разделение create + post-create promotion даёт drop-off: пользователь кристаллизует базовый артефакт, откладывает promotion на 'потом' и не возвращается. Bundled-at-creation снимает frame-switch, но должен визуально отличаться от обязательных полей (upsell-styling + derived price), иначе воспринимается как скрытая плата.",
+    "evidence": [
+      {
+        "source": "fl-ru",
+        "description": "В create-form проекта — секция с чекбоксами 'Поднять' / 'Выделить' / 'Только PRO' и итоговой ценой",
+        "reliability": "high"
+      },
+      {
+        "source": "avito-submit",
+        "description": "VIP/TOP опции в submit-form объявления",
+        "reliability": "high"
+      }
+    ],
+    "counterexample": [
+      {
+        "source": "github-issue-create",
+        "description": "Issue creation без paid-modifiers — community-domain не монетизирован",
+        "reliability": "medium"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [
+      {
+        "domain": "sales",
+        "projection": "listing_catalog",
+        "reason": "Listing creation с boost/feature полями — marketplace-natural"
+      }
+    ],
+    "shouldNotMatch": [
+      {
+        "domain": "reflect",
+        "projection": "mood_entry_form",
+        "reason": "MoodEntry — personal, нет boost-полей"
+      },
+      {
+        "domain": "workflow",
+        "projection": "workflow_catalog",
+        "reason": "Workflow creation — internal, нет monetization"
+      }
+    ]
+  }
+}

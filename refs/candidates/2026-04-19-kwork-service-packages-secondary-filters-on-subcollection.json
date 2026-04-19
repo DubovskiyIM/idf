@@ -1,0 +1,72 @@
+{
+  "id": "secondary-filters-on-subcollection",
+  "version": 1,
+  "status": "candidate",
+  "archetype": "detail",
+  "trigger": {
+    "requires": [
+      {
+        "kind": "sub-entity-exists",
+        "parent": "*",
+        "child": "Review"
+      },
+      {
+        "kind": "intent-effect",
+        "intent": "filter_reviews",
+        "α": "replace"
+      }
+    ]
+  },
+  "structure": {
+    "slot": "sections",
+    "description": "Sub-entity коллекция в detail (reviews) получает собственный локальный filter-bar (with-photo, negative-only, rating=1★/5★), независимый от caller-filter'ов каталога. Filters scope-бутаются к sub-collection."
+  },
+  "rationale": {
+    "hypothesis": "Reviews — decision-support surface: buyer ищет либо подтверждение (negative-only for worst case), либо визуальные доказательства (with-photo). Без вторичных фильтров сотни reviews становятся noise. Локальные фильтры не загрязняют catalog-state.",
+    "evidence": [
+      {
+        "source": "kwork.ru",
+        "description": "В reviews блок чекбоксы 'С фото', 'Только негативные'",
+        "reliability": "high"
+      },
+      {
+        "source": "amazon",
+        "description": "Filter reviews: verified only, with media, 1-star etc",
+        "reliability": "high"
+      },
+      {
+        "source": "booking.com",
+        "description": "Отфильтровать отзывы по типу путешественника и оценке",
+        "reliability": "high"
+      }
+    ],
+    "counterexample": [
+      {
+        "source": "single-review surface",
+        "description": "<10 reviews — фильтры избыточны",
+        "reliability": "high"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [
+      {
+        "domain": "booking",
+        "projection": "specialist_detail",
+        "reason": "Specialist.reviews с filter capability"
+      },
+      {
+        "domain": "delivery",
+        "projection": "merchant_detail",
+        "reason": "Merchant reviews"
+      }
+    ],
+    "shouldNotMatch": [
+      {
+        "domain": "messenger",
+        "projection": "conversation_detail",
+        "reason": "Нет sub-collection с decision-support role"
+      }
+    ]
+  }
+}

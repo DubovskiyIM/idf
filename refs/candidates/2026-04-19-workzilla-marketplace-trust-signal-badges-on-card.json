@@ -1,0 +1,75 @@
+{
+  "id": "trust-signal-badges-on-card",
+  "version": 1,
+  "status": "candidate",
+  "archetype": "feed",
+  "trigger": {
+    "requires": [
+      {
+        "kind": "entity-field",
+        "entity": "User",
+        "field": "isVerified*|isNew*|rating"
+      },
+      {
+        "kind": "intent-creates",
+        "archetype": "feed"
+      },
+      {
+        "kind": "field-role-present",
+        "role": "trust-signal"
+      }
+    ]
+  },
+  "structure": {
+    "slot": "body",
+    "description": "Булевы/derived trust-поля автора элемента (verified, new, tier) выносятся бейджами на карточку в ленте, а не только в детальный профиль. Feed-уровень trust-decisioning."
+  },
+  "rationale": {
+    "hypothesis": "В marketplace решение 'делать ли отклик' принимается в ленте за секунды. Trust-сигналы, скрытые за клик в профиль, теряются. Card-level badges сжимают signal-to-decision time.",
+    "evidence": [
+      {
+        "source": "workzilla-marketplace",
+        "description": "Бейджи 'Верифицированный' и 'Новый заказчик' на карточке задачи",
+        "reliability": "high"
+      },
+      {
+        "source": "airbnb",
+        "description": "Superhost-badge на карточке листинга",
+        "reliability": "high"
+      }
+    ],
+    "counterexample": [
+      {
+        "source": "linkedin-feed",
+        "description": "Professional context: badges уместны только в профиле, в ленте создают шум",
+        "reliability": "medium"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [
+      {
+        "domain": "sales",
+        "projection": "listings_feed",
+        "reason": "seller verified/rating на карточке"
+      },
+      {
+        "domain": "booking",
+        "projection": "specialists_feed",
+        "reason": "verified professional + rating"
+      }
+    ],
+    "shouldNotMatch": [
+      {
+        "domain": "messenger",
+        "projection": "conversations",
+        "reason": "trust уже установлен — это контакты"
+      },
+      {
+        "domain": "lifequest",
+        "projection": "goals_feed",
+        "reason": "приватный домен, нет внешних авторов"
+      }
+    ]
+  }
+}

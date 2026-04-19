@@ -1,0 +1,84 @@
+{
+  "id": "template-library-quickfire",
+  "version": 1,
+  "status": "candidate",
+  "archetype": "detail",
+  "trigger": {
+    "requires": [
+      {
+        "kind": "sub-entity-exists",
+        "entity": "Template",
+        "hasFields": [
+          "title",
+          "content"
+        ]
+      },
+      {
+        "kind": "intent-creates",
+        "entity": "ContentEntity",
+        "usingField": "templateId"
+      },
+      {
+        "kind": "intent-confirmation",
+        "value": "click"
+      }
+    ]
+  },
+  "structure": {
+    "slot": "composer",
+    "description": "TemplateEntity ({title, content, category}) проецируется как горизонтальный chip-row над composer input'ом. Один tap по chip создаёт ContentEntity из шаблона без промежуточных шагов. Category даёт grouping / scroll-sections."
+  },
+  "rationale": {
+    "hypothesis": "Когда creator-intent часто повторяется с минимальной вариативностью (recruiter replies, support macros), free-form input избыточен. Templates как quick-row превращают creation в 1-tap selection, сохраняя escape-hatch для custom-ввода в том же composer.",
+    "evidence": [
+      {
+        "source": "hh-ru-mobile",
+        "description": "'Спасибо за отклик', 'Приглашаем на интервью', 'К сожалению, отказ' — chip-row над chat-input",
+        "reliability": "high"
+      },
+      {
+        "source": "gmail-smart-reply",
+        "description": "3 suggested replies как chips под conversation thread",
+        "reliability": "high"
+      },
+      {
+        "source": "zendesk-macros",
+        "description": "Agent-macros как dropdown/hotkey в ticket response",
+        "reliability": "medium"
+      }
+    ],
+    "counterexample": [
+      {
+        "source": "personal-messenger",
+        "description": "Personal-общение варьируется слишком сильно — templates неуместны",
+        "reliability": "high"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [
+      {
+        "domain": "messenger",
+        "projection": "conversation_detail",
+        "reason": "При добавлении MessageTemplate entity — прямое применение"
+      },
+      {
+        "domain": "booking",
+        "projection": "booking_detail",
+        "reason": "Spec-to-client reply-templates: 'Приду вовремя', 'Задержусь на 10 мин'"
+      }
+    ],
+    "shouldNotMatch": [
+      {
+        "domain": "invest",
+        "projection": "transaction_detail",
+        "reason": "Transaction не имеет templated content-создания"
+      },
+      {
+        "domain": "lifequest",
+        "projection": "goal_detail",
+        "reason": "Goal creation глубоко персональный, не из шаблонов"
+      }
+    ]
+  }
+}

@@ -1,0 +1,75 @@
+{
+  "id": "emphasis-priority-card",
+  "version": 1,
+  "status": "candidate",
+  "archetype": "catalog",
+  "trigger": {
+    "requires": [
+      {
+        "kind": "field-role-present",
+        "role": "money"
+      },
+      {
+        "kind": "field-role-present",
+        "role": "datetime"
+      },
+      {
+        "kind": "entity-field",
+        "entity": "mainEntity",
+        "field": "description"
+      }
+    ]
+  },
+  "structure": {
+    "slot": "body",
+    "description": "Карточка жёстко ранжирует поля: title (H-level) → money/budget (prominent) → datetime/deadline (secondary) → description (truncated 3 lines, muted); emphasisFields: [title, budget, deadline]. Description как fallback для skimmability, не primary channel."
+  },
+  "rationale": {
+    "hypothesis": "При сканировании listing-каталога пользователь принимает решение 'стоит ли открывать' за <1s: decision-критерии — scope (title), стоимость (money), срочность (deadline); description занимает место, но читается только после клика. Equal-emphasis на description ломает сканирование, full-hide — лишает контекста.",
+    "evidence": [
+      {
+        "source": "fl-ru",
+        "description": "Карточка проекта: крупный title + бюджет справа + deadline под ним, description truncate до 3 строк серым",
+        "reliability": "high"
+      },
+      {
+        "source": "airbnb-listing-card",
+        "description": "Price prominent, description обрезан — та же emphasis-приоритизация",
+        "reliability": "high"
+      }
+    ],
+    "counterexample": [
+      {
+        "source": "medium-article-card",
+        "description": "Description (preview) важнее metadata — контент-first domain, emphasis на тексте",
+        "reliability": "high"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [
+      {
+        "domain": "sales",
+        "projection": "listing_catalog",
+        "reason": "Listing с price+createdAt+description — классический commerce-card"
+      },
+      {
+        "domain": "delivery",
+        "projection": "menu_catalog",
+        "reason": "MenuItem с price+name+description"
+      }
+    ],
+    "shouldNotMatch": [
+      {
+        "domain": "messenger",
+        "projection": "message_feed",
+        "reason": "Message — content-first, truncation description'а убивает смысл"
+      },
+      {
+        "domain": "reflect",
+        "projection": "mood_timeline",
+        "reason": "MoodEntry — reflective text есть content, не secondary"
+      }
+    ]
+  }
+}

@@ -1,0 +1,78 @@
+{
+  "id": "precursor-routing-form",
+  "version": 1,
+  "status": "candidate",
+  "archetype": "wizard",
+  "trigger": {
+    "requires": [
+      {
+        "kind": "sub-entity-exists",
+        "relation": "RoutingForm → RoutingResponse",
+        "note": "form с conditional rules → response"
+      },
+      {
+        "kind": "entity-field",
+        "entity": "routingForm",
+        "field": "rules",
+        "note": "правила conditional routing"
+      },
+      {
+        "kind": "intent-creates",
+        "creates": "TerminalEntity",
+        "note": "главный intent (booking) следует за routing"
+      }
+    ]
+  },
+  "structure": {
+    "slot": "overlay",
+    "description": "Перед основным booking/purchase/submission intent вклинивается routing-step: форма с conditional rules определяет, кому/куда направить (host/department/queue). Результат выбора пресетит параметры основной формы."
+  },
+  "rationale": {
+    "hypothesis": "Когда 'кто обрабатывает' зависит от данных запроса, наивное решение — спрашивать booker выбрать host. Но booker не знает структуры organization. Precursor-routing инвертирует: booker отвечает на качественные вопросы, система мэппит на host.",
+    "evidence": [
+      {
+        "source": "cal-com",
+        "description": "Routing Forms с conditional rules → host до slot picker",
+        "reliability": "high"
+      },
+      {
+        "source": "intercom-help-center",
+        "description": "Pre-chat form маршрутизирует на правильный team",
+        "reliability": "high"
+      },
+      {
+        "source": "zendesk-ticket-forms",
+        "description": "Conditional ticket fields → правильная assignee-group",
+        "reliability": "high"
+      }
+    ],
+    "counterexample": [
+      {
+        "source": "simple-booking",
+        "description": "Если host один, routing избыточен",
+        "reliability": "high"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [
+      {
+        "domain": "delivery",
+        "projection": "dispatcher_routing",
+        "reason": "conditional rules выбирают courier zone pre-assignment"
+      }
+    ],
+    "shouldNotMatch": [
+      {
+        "domain": "reflect",
+        "projection": "mood_entry_form",
+        "reason": "нет multi-host выбора"
+      },
+      {
+        "domain": "invest",
+        "projection": "transaction_form",
+        "reason": "нет conditional pre-routing"
+      }
+    ]
+  }
+}

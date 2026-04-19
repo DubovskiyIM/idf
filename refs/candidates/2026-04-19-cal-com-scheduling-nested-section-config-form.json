@@ -1,0 +1,78 @@
+{
+  "id": "nested-section-config-form",
+  "version": 1,
+  "status": "candidate",
+  "archetype": "detail",
+  "trigger": {
+    "requires": [
+      {
+        "kind": "intent-effect",
+        "target": "mainEntity.*",
+        "α": "replace",
+        "note": "конфигурационный intent с широким target (wildcard или ≥8 полей)"
+      },
+      {
+        "kind": "intent-count",
+        "min": 8,
+        "note": "у mainEntity ≥8 различимых configuration-полей"
+      }
+    ]
+  },
+  "structure": {
+    "slot": "sections",
+    "description": "Configuration-intent с широкой областью применения раскладывается в иерархию тематических секций (Basic/Advanced/Limits/Integrations) внутри detail-проекции вместо монолитной формы. Каждая секция — accordion или anchored-subview."
+  },
+  "rationale": {
+    "hypothesis": "Монолитная форма с 15+ полями вызывает form-fatigue и прячет важные defaults. Тематическая группировка создаёт progressive-disclosure: basic видна сразу, advanced сворачивается. Пользователь сканирует по смысловым доменам, а не по порядку полей.",
+    "evidence": [
+      {
+        "source": "cal-com",
+        "description": "Event Type config разделён на Basic/Advanced/Apps/Workflows/Limits",
+        "reliability": "high"
+      },
+      {
+        "source": "stripe-dashboard",
+        "description": "Product configuration разбит на Details/Pricing/Tax/Shipping секции",
+        "reliability": "high"
+      },
+      {
+        "source": "github-repo-settings",
+        "description": "General/Branches/Actions/Webhooks секции для широкой конфигурации",
+        "reliability": "high"
+      }
+    ],
+    "counterexample": [
+      {
+        "source": "lifequest-goal",
+        "description": "Goal имеет 5 полей, одна форма достаточна",
+        "reliability": "high"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [
+      {
+        "domain": "workflow",
+        "projection": "workflow_detail",
+        "reason": "Workflow имеет множество параметров trigger+actions+bindings"
+      },
+      {
+        "domain": "invest",
+        "projection": "portfolio_settings",
+        "reason": "Portfolio config имеет risk-profile+rules+alerts+goals"
+      }
+    ],
+    "shouldNotMatch": [
+      {
+        "domain": "reflect",
+        "projection": "mood_entry_form",
+        "reason": "3-4 поля, секции избыточны"
+      },
+      {
+        "domain": "messenger",
+        "projection": "conversation_detail",
+        "reason": "не configuration-focused"
+      }
+    ]
+  }
+}

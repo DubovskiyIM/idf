@@ -1,0 +1,74 @@
+{
+  "id": "multi-axis-rating-breakdown",
+  "version": 1,
+  "status": "candidate",
+  "archetype": "detail",
+  "trigger": {
+    "requires": [
+      {
+        "kind": "entity-field",
+        "field": "ratingBreakdown",
+        "shape": "record-of-numeric"
+      },
+      {
+        "kind": "entity-field",
+        "field": "overallRating",
+        "fieldTypes": [
+          "number"
+        ]
+      }
+    ]
+  },
+  "structure": {
+    "slot": "hero",
+    "description": "Render overall rating as large score + per-axis horizontal bars (e.g. work-life / compensation / management / culture / opportunities). Each axis clickable, filters nested review subcollection to that axis."
+  },
+  "rationale": {
+    "hypothesis": "A single aggregate score hides dimensional trade-offs that drive real decisions (great pay, awful management). Breaking the rating along authored axes gives users a cognitive handle on 'why' the score is what it is, and linking axes to review filter makes the breakdown an active navigation surface, not just decoration.",
+    "evidence": [
+      {
+        "source": "indeed-mobile-job-board",
+        "description": "Company profile shows 5 axes with horizontal bars; tap on axis filters reviews panel below",
+        "reliability": "high"
+      },
+      {
+        "source": "glassdoor",
+        "description": "Similar 5-axis breakdown for employer pages",
+        "reliability": "high"
+      },
+      {
+        "source": "airbnb-host",
+        "description": "6-axis rating (cleanliness, accuracy, check-in, communication, location, value) in host profile",
+        "reliability": "high"
+      }
+    ],
+    "counterexample": [
+      {
+        "source": "amazon-reviews",
+        "description": "Star histogram (5★/4★/3★/2★/1★) is frequency breakdown, not semantic axes — different pattern. Multi-axis requires authored axes with meaning",
+        "reliability": "medium"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [
+      {
+        "domain": "booking",
+        "projection": "specialist_detail",
+        "reason": "Specialist with ratingBreakdown across skills/punctuality/value axes fits exactly"
+      }
+    ],
+    "shouldNotMatch": [
+      {
+        "domain": "invest",
+        "projection": "portfolio_detail",
+        "reason": "Portfolio metrics are single-dimensional performance, not subjective axes"
+      },
+      {
+        "domain": "workflow",
+        "projection": "workflow_detail",
+        "reason": "No rating semantics on workflows"
+      }
+    ]
+  }
+}

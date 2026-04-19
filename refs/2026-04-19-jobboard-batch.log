@@ -1,0 +1,125 @@
+Job-board Pattern Batch — 2026-04-19T07:29:28.491Z
+Sources: linkedin-jobs-mobile, indeed-jobs-mobile, hh-ru-mobile
+
+═══════════ linkedin-jobs-mobile ═══════════
+  started at 2026-04-19T07:29:28.492Z
+
+═══ Extract Mode: linkedin-jobs-mobile ═══
+
+Phase 1: Extracting domain model...
+  Saved: /Users/ignatdubovskiy/WebstormProjects/idf/refs/extracted/2026-04-19-linkedin-jobs-mobile.json
+
+Phase 2: Generating candidate pattern...
+
+  Already covered:
+    Search input в hero верхней части feed + горизонтальный scrollable chip-bar фильтров с live-apply по tap (search-часть) → inline-search
+    About-the-company секция содержит embedded компанийскую ленту БЕЗ навигационного перехода — sub-collection inline → subcollections
+    save_job / unsave_job как paired add/remove на одной сущности SavedJob → antagonist-toggle
+    report_job / withdraw_application с irreversibility=high → irreversible-confirm
+    Observer-role (не залогиненный) имеет ограниченный read-only доступ через role-capability invariant → invariant:role-capability (не UX-pattern)
+
+Phase 3: Validating 8 candidate(s)...
+  filter-chip-bar: format ✅, overlap ✅
+  Saved: /Users/ignatdubovskiy/WebstormProjects/idf/refs/candidates/2026-04-19-linkedin-jobs-mobile-filter-chip-bar.json
+  dual-cta-branching: format ✅, overlap ✅
+  Saved: /Users/ignatdubovskiy/WebstormProjects/idf/refs/candidates/2026-04-19-linkedin-jobs-mobile-dual-cta-branching.json
+  inline-social-proof-row: format ✅, overlap ✅
+  Saved: /Users/ignatdubovskiy/WebstormProjects/idf/refs/candidates/2026-04-19-linkedin-jobs-mobile-inline-social-proof-row.json
+  badge-stack-markers: format ✅, overlap ✅
+  Saved: /Users/ignatdubovskiy/WebstormProjects/idf/refs/candidates/2026-04-19-linkedin-jobs-mobile-badge-stack-markers.json
+  lateral-similar-items: format ✅, overlap ✅
+  Saved: /Users/ignatdubovskiy/WebstormProjects/idf/refs/candidates/2026-04-19-linkedin-jobs-mobile-lateral-similar-items.json
+  saved-search-subscription: format ✅, overlap ✅
+  Saved: /Users/ignatdubovskiy/WebstormProjects/idf/refs/candidates/2026-04-19-linkedin-jobs-mobile-saved-search-subscription.json
+  completeness-progress: format ✅, overlap ✅
+  Saved: /Users/ignatdubovskiy/WebstormProjects/idf/refs/candidates/2026-04-19-linkedin-jobs-mobile-completeness-progress.json
+  overflow-secondary-actions: format ✅, overlap ✅
+  Saved: /Users/ignatdubovskiy/WebstormProjects/idf/refs/candidates/2026-04-19-linkedin-jobs-mobile-overflow-secondary-actions.json
+
+  Review candidates and promote to stable/ when ready.
+  linkedin-jobs-mobile finished in 2.9 min (exit 0)
+
+═══════════ indeed-jobs-mobile ═══════════
+  started at 2026-04-19T07:32:22.136Z
+
+═══ Extract Mode: indeed-jobs-mobile ═══
+
+Phase 1: Extracting domain model...
+  Saved: /Users/ignatdubovskiy/WebstormProjects/idf/refs/extracted/2026-04-19-indeed-jobs-mobile.json
+
+Phase 2: Generating candidate pattern...
+
+  Already covered:
+    Two-field search (What + Where) occupies nearly half the home screen — dominant primary input surface → inline-search
+    Job card is minimalist: title, company+location line, highlighted salary, 3-4 description bullets, single primary Apply CTA plus Save/Share icons → grid-card-layout
+    App-install interstitial on web is a documented anti-pattern forcing mobile-app adoption → anti-pattern
+    AI relevance filter silently removes up to 90% of matches with no user control — opaque algorithmic gate → anti-pattern
+    No ghost-job reporting mechanism — stale listings persist without user-driven expiry signal → anti-pattern
+    Resume is a single unified document auto-attached to every Quick Apply — no per-application customization surface → anti-pattern
+    Application tracker is visually thin: 'viewed' status and silence are the dominant states — weak post-apply feedback loop → anti-pattern
+
+Phase 3: Validating 7 candidate(s)...
+  related-entity-rating-chip: format ✅, overlap ✅
+  Saved: /Users/ignatdubovskiy/WebstormProjects/idf/refs/candidates/2026-04-19-indeed-jobs-mobile-related-entity-rating-chip.json
+  hero-attribute-badges: format ✅, overlap ✅
+  Saved: /Users/ignatdubovskiy/WebstormProjects/idf/refs/candidates/2026-04-19-indeed-jobs-mobile-hero-attribute-badges.json
+  saved-query-with-notify: format ✅, overlap ✅
+  Saved: /Users/ignatdubovskiy/WebstormProjects/idf/refs/candidates/2026-04-19-indeed-jobs-mobile-saved-query-with-notify.json
+  sponsored-segregated-feed: format ✅, overlap ✅
+  Saved: /Users/ignatdubovskiy/WebstormProjects/idf/refs/candidates/2026-04-19-indeed-jobs-mobile-sponsored-segregated-feed.json
+  multi-axis-rating-breakdown: format ✅, overlap ✅
+  Saved: /Users/ignatdubovskiy/WebstormProjects/idf/refs/candidates/2026-04-19-indeed-jobs-mobile-multi-axis-rating-breakdown.json
+  faceted-subcollection-filter: format ✅, overlap ✅
+  Saved: /Users/ignatdubovskiy/WebstormProjects/idf/refs/candidates/2026-04-19-indeed-jobs-mobile-faceted-subcollection-filter.json
+  unified-dual-tracker-tab: format ✅, overlap ✅
+  Saved: /Users/ignatdubovskiy/WebstormProjects/idf/refs/candidates/2026-04-19-indeed-jobs-mobile-unified-dual-tracker-tab.json
+
+  Review candidates and promote to stable/ when ready.
+  indeed-jobs-mobile finished in 2.6 min (exit 0)
+
+═══════════ hh-ru-mobile ═══════════
+  started at 2026-04-19T07:34:56.912Z
+
+═══ Extract Mode: hh-ru-mobile ═══
+
+Phase 1: Extracting domain model...
+  Saved: /Users/ignatdubovskiy/WebstormProjects/idf/refs/extracted/2026-04-19-hh-ru-mobile.json
+
+Phase 2: Generating candidate pattern...
+
+  Already covered:
+    Multiple resumes per user — each targeted at different job types → grid-card-layout
+    Bottom tab bar with 5 sections as top-level navigation spine → out-of-scope: shell-level navigation, not a crystallize-phase pattern
+    Push notifications tied to application.status transitions → out-of-scope: Reactive Rules Engine (§22) concern, not a UX-pattern
+
+Phase 3: Validating 11 candidate(s)...
+  personalization-score-badge: format ✅, overlap ✅
+  Saved: /Users/ignatdubovskiy/WebstormProjects/idf/refs/candidates/2026-04-19-hh-ru-mobile-personalization-score-badge.json
+  trust-attribute-badges: format ✅, overlap ✅
+  Saved: /Users/ignatdubovskiy/WebstormProjects/idf/refs/candidates/2026-04-19-hh-ru-mobile-trust-attribute-badges.json
+  quick-apply-subentity-cta: format ✅, overlap ✅
+  Saved: /Users/ignatdubovskiy/WebstormProjects/idf/refs/candidates/2026-04-19-hh-ru-mobile-quick-apply-subentity-cta.json
+  inline-event-timeline: format ✅, overlap ✅
+  Saved: /Users/ignatdubovskiy/WebstormProjects/idf/refs/candidates/2026-04-19-hh-ru-mobile-inline-event-timeline.json
+  status-segmented-tabs: format ✅, overlap ✅
+  Saved: /Users/ignatdubovskiy/WebstormProjects/idf/refs/candidates/2026-04-19-hh-ru-mobile-status-segmented-tabs.json
+  context-pinned-header: format ✅, overlap ✅
+  Saved: /Users/ignatdubovskiy/WebstormProjects/idf/refs/candidates/2026-04-19-hh-ru-mobile-context-pinned-header.json
+  template-library-quickfire: format ✅, overlap ✅
+  Saved: /Users/ignatdubovskiy/WebstormProjects/idf/refs/candidates/2026-04-19-hh-ru-mobile-template-library-quickfire.json
+  chips-plus-advanced-sheet: format ✅, overlap ✅
+  Saved: /Users/ignatdubovskiy/WebstormProjects/idf/refs/candidates/2026-04-19-hh-ru-mobile-chips-plus-advanced-sheet.json
+  primary-scanning-anchor-field: format ✅, overlap ✅
+  Saved: /Users/ignatdubovskiy/WebstormProjects/idf/refs/candidates/2026-04-19-hh-ru-mobile-primary-scanning-anchor-field.json
+  promo-banner-injection: format ✅, overlap ✅
+  Saved: /Users/ignatdubovskiy/WebstormProjects/idf/refs/candidates/2026-04-19-hh-ru-mobile-promo-banner-injection.json
+  contextual-wizard-tooltips: format ✅, overlap ✅
+  Saved: /Users/ignatdubovskiy/WebstormProjects/idf/refs/candidates/2026-04-19-hh-ru-mobile-contextual-wizard-tooltips.json
+
+  Review candidates and promote to stable/ when ready.
+  hh-ru-mobile finished in 4.2 min (exit 0)
+
+═══ BATCH DONE in 9.6 min ═══
+  ✓ linkedin-jobs-mobile (2.9 min)
+  ✓ indeed-jobs-mobile (2.6 min)
+  ✓ hh-ru-mobile (4.2 min)

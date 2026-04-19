@@ -1,0 +1,77 @@
+{
+  "id": "composite-default-sort",
+  "version": 1,
+  "status": "candidate",
+  "archetype": "catalog",
+  "trigger": {
+    "requires": [
+      {
+        "kind": "intent-effect",
+        "target": "session.sort"
+      },
+      {
+        "kind": "entity-field",
+        "entity": "*",
+        "field": "rating|tier|promoted",
+        "role": "composite-rank"
+      }
+    ]
+  },
+  "structure": {
+    "slot": "toolbar",
+    "description": "Дефолтный sort — композитный («Оптимально»), альтернативы (цена/рейтинг/новизна) раскрываются в dropdown; композит сигнализирует, что ranking много-факторный"
+  },
+  "rationale": {
+    "hypothesis": "Композитный дефолт лучше, чем сортировка по одному полю: новый юзер доверяется ranking-алгоритму, а power-user переключается явно",
+    "evidence": [
+      {
+        "source": "profi.ru",
+        "description": "Дефолт «Оптимально», альтернативы: Цена / Рейтинг / Опыт",
+        "reliability": "high"
+      },
+      {
+        "source": "yandex.market",
+        "description": "«Популярные», «По рейтингу», «По цене»",
+        "reliability": "high"
+      },
+      {
+        "source": "google-search",
+        "description": "Relevance = composite, alternatives = date/site",
+        "reliability": "high"
+      }
+    ],
+    "counterexample": [
+      {
+        "source": "gmail",
+        "description": "Только один sort — дата",
+        "reliability": "medium"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [
+      {
+        "domain": "booking",
+        "projection": "specialists_browse",
+        "reason": "ranking по rating+tier+verification"
+      },
+      {
+        "domain": "sales",
+        "projection": "listings_browse",
+        "reason": "featured + recency + relevance"
+      }
+    ],
+    "shouldNotMatch": [
+      {
+        "domain": "messenger",
+        "projection": "conversations_list",
+        "reason": "естественный sort = lastMessageAt"
+      },
+      {
+        "domain": "workflow",
+        "projection": "executions_feed",
+        "reason": "sort по времени, не композит"
+      }
+    ]
+  }
+}

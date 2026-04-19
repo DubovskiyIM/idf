@@ -1,0 +1,78 @@
+{
+  "id": "dashboard-kpi-plus-per-item-stats",
+  "version": 1,
+  "status": "candidate",
+  "archetype": "dashboard",
+  "trigger": {
+    "requires": [
+      {
+        "kind": "field-role-present",
+        "entity": "*Profile*",
+        "role": "money"
+      },
+      {
+        "kind": "intent-count",
+        "pattern": "*",
+        "min": 10
+      },
+      {
+        "kind": "has-role",
+        "roles": [
+          "owner"
+        ]
+      }
+    ]
+  },
+  "structure": {
+    "slot": "hero",
+    "description": "Owner-scoped dashboard имеет два уровня stats: глобальные KPI-tiles (balance / day·week·month revenue / conversion views→orders) в hero + per-item micro-stats (views, orders, rating) на каждой карточке в grid ниже. Оба уровня derived из Φ."
+  },
+  "rationale": {
+    "hypothesis": "Owner marketplace-профиля оптимизирует два разных решения: 'как моё дело в целом?' (макро-KPI) и 'какие товары дают результат?' (per-item). Раздельные surface'ы + совмещение в одном экране даёт holistic + actionable view.",
+    "evidence": [
+      {
+        "source": "kwork.ru",
+        "description": "Кабинет продавца: блок статистики сверху + per-kwork показы/заказы/рейтинг на карточках",
+        "reliability": "high"
+      },
+      {
+        "source": "etsy.com",
+        "description": "Shop stats + per-listing views/favorites",
+        "reliability": "high"
+      },
+      {
+        "source": "stripe.com",
+        "description": "Dashboard KPI + per-product revenue",
+        "reliability": "high"
+      }
+    ],
+    "counterexample": [
+      {
+        "source": "consumer profile",
+        "description": "Viewer не нуждается в дашборде своих покупок",
+        "reliability": "medium"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [
+      {
+        "domain": "sales",
+        "projection": "seller_dashboard",
+        "reason": "Owner + money + per-listing stats"
+      },
+      {
+        "domain": "delivery",
+        "projection": "merchant_dashboard",
+        "reason": "Merchant KPI + per-item"
+      }
+    ],
+    "shouldNotMatch": [
+      {
+        "domain": "lifequest",
+        "projection": "user_profile",
+        "reason": "Single-role, нет money-role"
+      }
+    ]
+  }
+}

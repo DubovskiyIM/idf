@@ -1,0 +1,75 @@
+{
+  "id": "sidebar-subcollection",
+  "version": 1,
+  "status": "candidate",
+  "archetype": "detail",
+  "trigger": {
+    "requires": [
+      {
+        "kind": "sub-entity-exists",
+        "foreignKey": "mainEntity"
+      },
+      {
+        "kind": "intent-count",
+        "target": "sub-entity",
+        "minBids": 1
+      },
+      {
+        "kind": "internal",
+        "entity": "sub-entity"
+      }
+    ]
+  },
+  "structure": {
+    "slot": "sections",
+    "description": "Sub-entity (Bids / Offers / Responses) рендерится в правой колонке detail-проекции рядом с описанием главной сущности, а не ниже (как subcollections). Применяется, когда sub-entity — ключевой decision-driver, а не второстепенный контекст."
+  },
+  "rationale": {
+    "hypothesis": "Когда вся цель просмотра detail — решить по sub-entity (выбрать исполнителя/оффер), засовывать её 'ниже fold' заставляет scroll и разрывает сравнение 'условия задачи ↔ предложения'. Side-by-side layout держит оба контекста в viewport.",
+    "evidence": [
+      {
+        "source": "workzilla-marketplace",
+        "description": "detail задачи: описание слева 60%, Bids справа 40%",
+        "reliability": "high"
+      },
+      {
+        "source": "upwork",
+        "description": "job-detail со списком proposals в правой колонке",
+        "reliability": "high"
+      }
+    ],
+    "counterexample": [
+      {
+        "source": "github-issue",
+        "description": "Комментарии — below-контент (хронологический лог), sidebar был бы противоестественным",
+        "reliability": "high"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [
+      {
+        "domain": "sales",
+        "projection": "listing_detail",
+        "reason": "bids как decision-driver рядом с описанием"
+      },
+      {
+        "domain": "planning",
+        "projection": "poll_detail",
+        "reason": "TimeOptions + Votes рядом с описанием встречи"
+      }
+    ],
+    "shouldNotMatch": [
+      {
+        "domain": "messenger",
+        "projection": "conversation_detail",
+        "reason": "messages — единственный контент, нет 'главного' слева"
+      },
+      {
+        "domain": "lifequest",
+        "projection": "goal_detail",
+        "reason": "habits — chronological progress, не сравнение"
+      }
+    ]
+  }
+}

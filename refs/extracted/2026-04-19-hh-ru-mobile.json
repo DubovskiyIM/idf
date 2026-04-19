@@ -1,0 +1,274 @@
+{
+  "source": "hh-ru-mobile-job-search",
+  "entities": [
+    {
+      "name": "Vacancy",
+      "fields": [
+        "title",
+        "company",
+        "location",
+        "salaryFrom",
+        "salaryTo",
+        "currency",
+        "description",
+        "requirements",
+        "responsibilities",
+        "conditions",
+        "experience",
+        "schedule",
+        "employmentType",
+        "isRemote",
+        "isVerifiedEmployer",
+        "matchPercent",
+        "publishedAt"
+      ],
+      "statusValues": [
+        "active",
+        "archived",
+        "closed"
+      ]
+    },
+    {
+      "name": "Company",
+      "fields": [
+        "name",
+        "size",
+        "website",
+        "logo",
+        "isOpenEmployer",
+        "industry"
+      ]
+    },
+    {
+      "name": "Resume",
+      "fields": [
+        "title",
+        "desiredPosition",
+        "desiredSalary",
+        "personalData",
+        "experience",
+        "education",
+        "skills",
+        "languages",
+        "additionalInfo",
+        "completeness",
+        "isBoosted",
+        "boostExpiresAt"
+      ],
+      "foreignKey": "userId→User"
+    },
+    {
+      "name": "Application",
+      "fields": [
+        "vacancyId",
+        "resumeId",
+        "coverLetter",
+        "status",
+        "appliedAt",
+        "lastStatusChangeAt"
+      ],
+      "statusValues": [
+        "sent",
+        "viewed",
+        "invited",
+        "rejected",
+        "no_response",
+        "archived"
+      ],
+      "foreignKey": "vacancyId→Vacancy"
+    },
+    {
+      "name": "ApplicationEvent",
+      "fields": [
+        "applicationId",
+        "type",
+        "actor",
+        "timestamp",
+        "note"
+      ],
+      "foreignKey": "applicationId→Application"
+    },
+    {
+      "name": "Favorite",
+      "fields": [
+        "vacancyId",
+        "userId",
+        "savedAt"
+      ],
+      "foreignKey": "vacancyId→Vacancy"
+    },
+    {
+      "name": "Conversation",
+      "fields": [
+        "applicationId",
+        "vacancyId",
+        "employerId",
+        "lastMessageAt",
+        "unreadCount"
+      ],
+      "foreignKey": "applicationId→Application"
+    },
+    {
+      "name": "Message",
+      "fields": [
+        "conversationId",
+        "author",
+        "content",
+        "sentAt",
+        "readAt",
+        "templateId"
+      ],
+      "foreignKey": "conversationId→Conversation"
+    },
+    {
+      "name": "MessageTemplate",
+      "fields": [
+        "title",
+        "content",
+        "category"
+      ]
+    },
+    {
+      "name": "SearchFilter",
+      "fields": [
+        "query",
+        "salaryFrom",
+        "experience",
+        "schedule",
+        "isRemote",
+        "employmentType",
+        "extendedParams"
+      ]
+    },
+    {
+      "name": "User",
+      "fields": [
+        "name",
+        "email",
+        "phone",
+        "role"
+      ]
+    }
+  ],
+  "intents": [
+    {
+      "id": "search_vacancies",
+      "α": "replace",
+      "target": "searchFilter.query",
+      "confirmation": "enter"
+    },
+    {
+      "id": "apply_quick_filter",
+      "α": "replace",
+      "target": "searchFilter.chips",
+      "confirmation": "click"
+    },
+    {
+      "id": "open_advanced_search",
+      "α": "replace",
+      "target": "searchFilter.extendedParams",
+      "confirmation": "form"
+    },
+    {
+      "id": "apply_to_vacancy",
+      "α": "add",
+      "creates": "Application",
+      "confirmation": "form"
+    },
+    {
+      "id": "save_to_favorites",
+      "α": "add",
+      "creates": "Favorite",
+      "confirmation": "click"
+    },
+    {
+      "id": "remove_from_favorites",
+      "α": "remove",
+      "target": "favorites",
+      "confirmation": "click"
+    },
+    {
+      "id": "archive_application",
+      "α": "replace",
+      "target": "application.status",
+      "irreversibility": "high",
+      "confirmation": "click"
+    },
+    {
+      "id": "view_application_funnel",
+      "α": "replace",
+      "target": "application.view",
+      "confirmation": "click"
+    },
+    {
+      "id": "send_message",
+      "α": "add",
+      "creates": "Message",
+      "confirmation": "enter"
+    },
+    {
+      "id": "use_message_template",
+      "α": "add",
+      "creates": "Message",
+      "confirmation": "click"
+    },
+    {
+      "id": "create_resume",
+      "α": "add",
+      "creates": "Resume",
+      "confirmation": "form"
+    },
+    {
+      "id": "edit_resume_step",
+      "α": "replace",
+      "target": "resume.section",
+      "confirmation": "form"
+    },
+    {
+      "id": "check_resume",
+      "α": "replace",
+      "target": "resume.completeness",
+      "confirmation": "click"
+    },
+    {
+      "id": "boost_resume",
+      "α": "replace",
+      "target": "resume.isBoosted",
+      "irreversibility": "high",
+      "confirmation": "form"
+    },
+    {
+      "id": "receive_status_update",
+      "α": "replace",
+      "target": "application.status",
+      "confirmation": "click"
+    },
+    {
+      "id": "view_match_percent",
+      "α": "replace",
+      "target": "vacancy.matchView",
+      "confirmation": "click"
+    }
+  ],
+  "roles": [
+    "owner",
+    "viewer",
+    "observer"
+  ],
+  "observations": [
+    "Match percentage ('Подходит вам на 82%') embedded directly in vacancy card — derived signal reducing scroll cognitive load",
+    "Salary range visually emphasized with bold typography as primary scanning anchor",
+    "Verification badges ('Открытый работодатель', 'Готов к удалёнке') as trust signals on card",
+    "Quick-apply: one-tap 'Откликнуться' with optional modal for resume selection + cover letter",
+    "Applications funnel visualized as timeline of recruiter actions inside card (Sent → Viewed → Invited/Rejected)",
+    "Status-segmented tabs in Applications section: All / Invitations / Rejections / Archived",
+    "Push notifications tied to application.status transitions",
+    "Integrated messenger scoped to application context — vacancy header persistently pinned at top of chat",
+    "Pre-built message templates as quick-action buttons for common recruiter responses",
+    "Resume creation as 6-step wizard with inline contextual tooltips per field",
+    "Multiple resumes per user — each targeted at different job types",
+    "Filter chips as primary UX with escape hatch to heavyweight advanced-search sheet (15+ params)",
+    "Monetization surfaces (Premium, resume boost) rendered as banners in main feed and applications — commercially aggressive",
+    "Bottom tab bar with 5 sections as top-level navigation spine"
+  ]
+}

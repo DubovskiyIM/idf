@@ -1,0 +1,74 @@
+{
+  "id": "countdown-auto-transition",
+  "version": 1,
+  "status": "candidate",
+  "archetype": "detail",
+  "trigger": {
+    "requires": [
+      {
+        "kind": "entity-field",
+        "entity": "mainEntity",
+        "field": "autoRelease*|expiresAt|*Deadline",
+        "semanticRole": "timestamp-future"
+      },
+      {
+        "kind": "intent-effect",
+        "α": "replace",
+        "target": "*.state|*.status",
+        "trigger": "scheduled_timer"
+      }
+    ]
+  },
+  "structure": {
+    "slot": "header",
+    "description": "В header detail-проекции рендерится живой countdown ('авто-перевод в released через 2д 14ч') до scheduled_timer-события. Countdown — не декоративный таймер, а визуализация §4 schedule-правила с revokeOn-условием."
+  },
+  "rationale": {
+    "hypothesis": "Scheduled state-transition без видимого таймера воспринимается как 'внезапный': пользователь не понимает, что бездействие = согласие. Countdown делает принцип 'silence is consent' явным и возвращает agency.",
+    "evidence": [
+      {
+        "source": "workzilla-marketplace",
+        "description": "SafeDeal.autoReleaseAt: countdown 'деньги уйдут исполнителю через X' с кнопкой 'запросить доработку' (revokeOn)",
+        "reliability": "high"
+      },
+      {
+        "source": "ebay",
+        "description": "auction-end-countdown с возможностью bid до нуля",
+        "reliability": "high"
+      }
+    ],
+    "counterexample": [
+      {
+        "source": "soft-deadlines",
+        "description": "Дедлайн без auto-action (например, просто due-date задачи) — countdown создаёт ложное давление",
+        "reliability": "medium"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [
+      {
+        "domain": "booking",
+        "projection": "booking_detail",
+        "reason": "auto_cancel_pending_booking через 24h (timer-driven)"
+      },
+      {
+        "domain": "delivery",
+        "projection": "order_detail",
+        "reason": "auto-confirm after delivery window"
+      }
+    ],
+    "shouldNotMatch": [
+      {
+        "domain": "reflect",
+        "projection": "mood_entry_detail",
+        "reason": "нет автоматических transitions"
+      },
+      {
+        "domain": "workflow",
+        "projection": "workflow_detail",
+        "reason": "transitions триггерятся event'ами, не timer'ом"
+      }
+    ]
+  }
+}

@@ -1,0 +1,77 @@
+{
+  "id": "sort-as-parameter",
+  "version": 1,
+  "status": "candidate",
+  "archetype": "feed",
+  "trigger": {
+    "requires": [
+      {
+        "kind": "intent-creates",
+        "archetype": "feed"
+      },
+      {
+        "kind": "entity-field",
+        "entity": "SavedFilter|Filter|Params",
+        "field": "sortBy"
+      },
+      {
+        "kind": "intent-effect",
+        "α": "replace",
+        "target": "*.sortBy",
+        "minCount": 1
+      }
+    ]
+  },
+  "structure": {
+    "slot": "toolbar",
+    "description": "Несколько эквивалентных сортировок ленты рендерятся segmented-control / dropdown в toolbar как единый sort-параметр, а не как отдельные табы/проекции. Sort — атрибут одной feed-проекции, а не её размножение."
+  },
+  "rationale": {
+    "hypothesis": "Tabs за sort создают ложное разнообразие: пользователь ожидает разный контент, а получает ту же ленту другим порядком. Параметр сохраняет модель 'одна лента, разные взгляды' и не умножает навигацию.",
+    "evidence": [
+      {
+        "source": "workzilla-marketplace",
+        "description": "Лента задач: 'Новые / Дорогие / Срочные / По рейтингу автора' — одна лента, четыре sort-режима",
+        "reliability": "high"
+      },
+      {
+        "source": "profi-ru-catalog",
+        "description": "Каталог мастеров: сортировка как параметр поверх одного списка",
+        "reliability": "medium"
+      }
+    ],
+    "counterexample": [
+      {
+        "source": "gmail-inbox",
+        "description": "Inbox / Promotions / Social — это НЕ сортировки, а фильтры по категории; табы оправданы",
+        "reliability": "high"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [
+      {
+        "domain": "sales",
+        "projection": "listings_feed",
+        "reason": "лента объявлений с вариантами sortBy"
+      },
+      {
+        "domain": "delivery",
+        "projection": "merchant_menu",
+        "reason": "меню с сортировками по цене/популярности"
+      }
+    ],
+    "shouldNotMatch": [
+      {
+        "domain": "messenger",
+        "projection": "conversation_detail",
+        "reason": "chronological, нет альтернативных sort-режимов"
+      },
+      {
+        "domain": "workflow",
+        "projection": "canvas",
+        "reason": "canvas не сортируется"
+      }
+    ]
+  }
+}

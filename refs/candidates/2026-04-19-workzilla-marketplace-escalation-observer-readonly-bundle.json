@@ -1,0 +1,76 @@
+{
+  "id": "escalation-observer-readonly-bundle",
+  "version": 1,
+  "status": "candidate",
+  "archetype": "detail",
+  "trigger": {
+    "requires": [
+      {
+        "kind": "intent-creates",
+        "entity": "Dispute|Escalation|Appeal"
+      },
+      {
+        "kind": "has-role",
+        "base": "observer",
+        "withCapability": "read-across-entities"
+      },
+      {
+        "kind": "sub-entity-exists",
+        "foreignKey": "parent",
+        "minCount": 2
+      }
+    ]
+  },
+  "structure": {
+    "slot": "body",
+    "description": "При создании Dispute активируется arbiter-роль (observer с расширенным scope), которому собирается bundle: messages + attachments + state-history + review-context в одной read-only проекции, без возможности писать в исходные sub-entity."
+  },
+  "rationale": {
+    "hypothesis": "Арбитр не участник конфликта — его роль require-evidence, а не participate. Собирать контекст по отдельным проекциям (Chat, Files, History) замедляет rule и создаёт информационную асимметрию. Escalation-bundle формализует read-only консолидацию всего контекста.",
+    "evidence": [
+      {
+        "source": "workzilla-marketplace",
+        "description": "Открытие Dispute → arbiter видит всю переписку + attachments + state-log одной проекцией",
+        "reliability": "high"
+      },
+      {
+        "source": "ebay-resolution-center",
+        "description": "dispute-resolution: buyer+seller chat, photos, transaction history в одном view",
+        "reliability": "high"
+      }
+    ],
+    "counterexample": [
+      {
+        "source": "code-review",
+        "description": "Reviewer активный участник (write via comments) — не escalation-observer",
+        "reliability": "medium"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [
+      {
+        "domain": "sales",
+        "projection": "dispute_detail",
+        "reason": "арбитр видит chat + order-history + bid-context"
+      },
+      {
+        "domain": "delivery",
+        "projection": "order_dispute",
+        "reason": "dispatcher escalation bundle: courier-chat + route + photos"
+      }
+    ],
+    "shouldNotMatch": [
+      {
+        "domain": "planning",
+        "projection": "poll_detail",
+        "reason": "нет dispute-эскалации"
+      },
+      {
+        "domain": "invest",
+        "projection": "position_detail",
+        "reason": "advisor read-access штатный, не escalation"
+      }
+    ]
+  }
+}

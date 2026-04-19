@@ -1,0 +1,72 @@
+{
+  "id": "elevated-facet-toggle",
+  "version": 1,
+  "status": "candidate",
+  "archetype": "catalog",
+  "trigger": {
+    "requires": [
+      {
+        "kind": "entity-field",
+        "entity": "*",
+        "field": "format|mode|delivery",
+        "role": "categorical"
+      },
+      {
+        "kind": "intent-effect",
+        "target": "session.filters.format|session.filters.mode"
+      }
+    ]
+  },
+  "structure": {
+    "slot": "toolbar",
+    "description": "Высокотрафиковый enum-фасет вытащен над общим filter-панелем как сегментированный toggle (Онлайн / Очно / Выезд); остальные фильтры остаются свёрнутыми"
+  },
+  "rationale": {
+    "hypothesis": "Если один фасет переключают чаще остальных, его элевация снижает cognitive cost: первое решение юзер принимает в 1 клик, не сканируя панель",
+    "evidence": [
+      {
+        "source": "profi.ru",
+        "description": "Кнопки «Онлайн / Очно / Выезд» выше всех фильтров",
+        "reliability": "high"
+      },
+      {
+        "source": "uber-eats",
+        "description": "Delivery / Pickup toggle в верхней части",
+        "reliability": "high"
+      }
+    ],
+    "counterexample": [
+      {
+        "source": "booking.com",
+        "description": "Нет одного доминирующего фасета — все равноправны",
+        "reliability": "medium"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [
+      {
+        "domain": "delivery",
+        "projection": "merchants_browse",
+        "reason": "pickup vs delivery — high-traffic toggle"
+      },
+      {
+        "domain": "booking",
+        "projection": "specialists_browse",
+        "reason": "online/offline формат"
+      }
+    ],
+    "shouldNotMatch": [
+      {
+        "domain": "invest",
+        "projection": "positions_dashboard",
+        "reason": "нет format-поля с равнозначными вариантами"
+      },
+      {
+        "domain": "reflect",
+        "projection": "mood_entries_feed",
+        "reason": "нет formats"
+      }
+    ]
+  }
+}

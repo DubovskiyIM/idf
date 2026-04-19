@@ -1,0 +1,82 @@
+{
+  "id": "faceted-filter-panel",
+  "version": 1,
+  "status": "candidate",
+  "archetype": "catalog",
+  "trigger": {
+    "requires": [
+      {
+        "kind": "entity-kind",
+        "entity": "SavedFilter|Params",
+        "fields": "≥4"
+      },
+      {
+        "kind": "intent-effect",
+        "α": "replace",
+        "target": "*.categories|*Min|*Max|*Only",
+        "minCount": 3
+      },
+      {
+        "kind": "intent-creates",
+        "archetype": "catalog|feed"
+      }
+    ]
+  },
+  "structure": {
+    "slot": "body",
+    "description": "Левая колонка catalog-проекции: checkboxes (categories) + range-slider (budget) + booleans (verified-only / safe-only / no-test). Live-apply без submit: каждое изменение триггерит replace(filter.*) → refold."
+  },
+  "rationale": {
+    "hypothesis": "Modal-filter заставляет 'открыть → выбрать → применить → закрыть → смотреть результат' — четырёхтактный цикл. Sidebar с live-apply схлопывает до одного такта: tweak → see. Это превращает фильтр из transaction в conversation.",
+    "evidence": [
+      {
+        "source": "workzilla-marketplace",
+        "description": "Лента задач: левая колонка с catset + budget-slider + 3 toggle — live apply",
+        "reliability": "high"
+      },
+      {
+        "source": "profi-ru-catalog",
+        "description": "Тот же pattern в каталоге специалистов",
+        "reliability": "high"
+      },
+      {
+        "source": "amazon-search",
+        "description": "Left sidebar facets — de-facto standard e-commerce",
+        "reliability": "high"
+      }
+    ],
+    "counterexample": [
+      {
+        "source": "mobile-marketplace",
+        "description": "На mobile left-sidebar неуместен — bottom-sheet pattern",
+        "reliability": "high"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [
+      {
+        "domain": "sales",
+        "projection": "listings_feed",
+        "reason": "category + price-range + condition-filters"
+      },
+      {
+        "domain": "booking",
+        "projection": "specialists_feed",
+        "reason": "service-category + price-range + rating-threshold"
+      }
+    ],
+    "shouldNotMatch": [
+      {
+        "domain": "messenger",
+        "projection": "conversations",
+        "reason": "≤2 фильтра (unread/pinned) — overkill"
+      },
+      {
+        "domain": "workflow",
+        "projection": "executions",
+        "reason": "chronological log, нет SavedFilter сущности"
+      }
+    ]
+  }
+}

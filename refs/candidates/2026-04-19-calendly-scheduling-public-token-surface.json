@@ -1,0 +1,80 @@
+{
+  "id": "public-token-surface",
+  "version": 1,
+  "status": "candidate",
+  "archetype": "detail",
+  "trigger": {
+    "requires": [
+      {
+        "kind": "intent-effect",
+        "α": "replace",
+        "hasField": "token-like"
+      },
+      {
+        "kind": "has-role",
+        "role": "viewer-stateless"
+      },
+      {
+        "kind": "entity-field",
+        "pattern": "icsToken|signedToken|shareLink|slug"
+      }
+    ]
+  },
+  "structure": {
+    "slot": "primaryCTA",
+    "description": "На detail-проекции, к которой есть stateless доступ через подписанный токен/slug, primaryCTA набор = [reschedule, cancel] без логин-гейта; ownerField и agent-guard не применяются, применяется token-signature guard."
+  },
+  "rationale": {
+    "hypothesis": "Для одноразовых action'ов (подтвердить, отменить, перенести) регистрация аккаунта создаёт drop-off; подписанный токен в email'е даёт достаточный уровень авторизации для конкретного booking.",
+    "evidence": [
+      {
+        "source": "calendly",
+        "description": "Ссылки Reschedule/Cancel в confirmation email ведут на public-страницу без логина",
+        "reliability": "high"
+      },
+      {
+        "source": "stripe-invoice",
+        "description": "Pay invoice через signed link, без аккаунта",
+        "reliability": "high"
+      },
+      {
+        "source": "doodle",
+        "description": "Вход в poll через токенизированный url без регистрации",
+        "reliability": "medium"
+      }
+    ],
+    "counterexample": [
+      {
+        "source": "airbnb",
+        "description": "Cancel booking требует логина — модель другая, booker имеет persistent identity",
+        "reliability": "high"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [
+      {
+        "domain": "booking",
+        "projection": "manage_booking",
+        "reason": "Если добавить signed-token поле в Booking — идентично calendly"
+      },
+      {
+        "domain": "planning",
+        "projection": "cast_vote",
+        "reason": "Poll-token url для участия без регистрации"
+      }
+    ],
+    "shouldNotMatch": [
+      {
+        "domain": "invest",
+        "projection": "portfolio_detail",
+        "reason": "Нет stateless-доступа, всё под auth"
+      },
+      {
+        "domain": "messenger",
+        "projection": "conversation",
+        "reason": "Messenger — полностью authenticated"
+      }
+    ]
+  }
+}

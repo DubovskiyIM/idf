@@ -1,0 +1,85 @@
+{
+  "id": "primary-scanning-anchor-field",
+  "version": 1,
+  "status": "candidate",
+  "archetype": "catalog",
+  "trigger": {
+    "requires": [
+      {
+        "kind": "field-role-present",
+        "role": "money"
+      },
+      {
+        "kind": "intent-count",
+        "min": 1,
+        "filter": "apply-filter-on-field"
+      },
+      {
+        "kind": "entity-kind",
+        "value": "internal"
+      }
+    ]
+  },
+  "structure": {
+    "slot": "body",
+    "description": "Одно поле с money-ролью (salary, price, value), по которому пользователь наиболее часто фильтрует/сортирует, визуально выделяется как primary scanning anchor: bold typography, +30-50% font-size, primary-color. Title остаётся secondary в scan-hierarchy."
+  },
+  "rationale": {
+    "hypothesis": "Catalog-скан по cognitively-relevant полю ≠ скан по title. На job/listing/pricing ленте именно money-поле — то, по чему делается go/no-go decision за 300мс. Typography-иерархия должна следовать decision-иерархии, а не document-структуре (где title = h1).",
+    "evidence": [
+      {
+        "source": "hh-ru-mobile",
+        "description": "'от 150 000 ₽' bold + крупнее title vacancy",
+        "reliability": "high"
+      },
+      {
+        "source": "airbnb",
+        "description": "'$120/night' bold под thumbnail, title вторичен",
+        "reliability": "high"
+      },
+      {
+        "source": "stock-screener",
+        "description": "Price + change% — primary visual в row, ticker вторичен",
+        "reliability": "medium"
+      }
+    ],
+    "counterexample": [
+      {
+        "source": "e-commerce-premium",
+        "description": "Brand-heavy контекст (luxury-fashion) инвертирует: название бренда крупнее price — positioning signal сильнее cost",
+        "reliability": "medium"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [
+      {
+        "domain": "sales",
+        "projection": "listing_catalog",
+        "reason": "Listing.price — очевидный scanning anchor"
+      },
+      {
+        "domain": "invest",
+        "projection": "asset_catalog",
+        "reason": "Asset.currentPrice + change% — primary decision-поля"
+      },
+      {
+        "domain": "delivery",
+        "projection": "menuitem_catalog",
+        "reason": "MenuItem.price — пользователь сканирует по цене, а не названию блюда"
+      }
+    ],
+    "shouldNotMatch": [
+      {
+        "domain": "messenger",
+        "projection": "conversation_list",
+        "reason": "Нет money-поля — имя/last-message остаются primary"
+      },
+      {
+        "domain": "lifequest",
+        "projection": "goal_catalog",
+        "reason": "Goals не содержат money-decision поля"
+      }
+    ]
+  }
+}
