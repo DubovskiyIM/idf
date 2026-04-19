@@ -20,6 +20,7 @@ const DEFAULTS = {
   fontSize: "md",
   uiKit: null, // null = использовать дефолт домена; "mantine" | "shadcn" — override
   patternInspector: false, // dev-only: оверлей инспектора паттернов (Pattern Bank)
+  crystallizeInspector: false, // dev-only: оверлей explain(artifact) через witness trail (§28)
 };
 
 function loadPrefs() {

@@ -4,6 +4,7 @@ import { ProjectionRendererV2, useProjectionRoute, Breadcrumbs, getAdaptedCompon
 import { crystallizeV2, generateEditProjections } from "@intent-driven/core";
 import BottomTabs from "./BottomTabs.jsx";
 import PatternInspector from "./PatternInspector.jsx";
+import CrystallizeInspector from "./CrystallizeInspector.jsx";
 
 const UI_KIT_OPTIONS = [
   { value: null, label: "авто" },
@@ -263,6 +264,18 @@ export default function V2Shell({
     return () => window.removeEventListener("keydown", onKey);
   }, [prefs.patternInspector, setPref]);
 
+  // Hotkey Cmd+Shift+C / Ctrl+Shift+C — toggle Crystallize Inspector drawer.
+  useEffect(() => {
+    const onKey = (e) => {
+      if ((e.metaKey || e.ctrlKey) && e.shiftKey && e.key && e.key.toLowerCase() === "c") {
+        e.preventDefault();
+        setPref("crystallizeInspector", !prefs.crystallizeInspector);
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [prefs.crystallizeInspector, setPref]);
+
   // Pattern Bank live preview (§27 authoring-env): override передаётся
   // в ProjectionRendererV2, заменяя currentArtifact на artifactAfter
   // из /api/patterns/explain?previewPatternId=...
@@ -470,6 +483,12 @@ export default function V2Shell({
               initialSelectedPatternId={initialInspectPattern}
             />
           )}
+          {prefs.crystallizeInspector && (
+            <CrystallizeInspector
+              artifact={currentArtifact}
+              onClose={() => setPref("crystallizeInspector", false)}
+            />
+          )}
         </div>
       );
     }
@@ -521,6 +540,12 @@ export default function V2Shell({
             projectionId={current?.projectionId}
             onClose={() => setPref("patternInspector", false)}
             onPreviewChange={handlePreviewChange}
+          />
+        )}
+        {prefs.crystallizeInspector && (
+          <CrystallizeInspector
+            artifact={currentArtifact}
+            onClose={() => setPref("crystallizeInspector", false)}
           />
         )}
         </div>
@@ -580,6 +605,12 @@ export default function V2Shell({
           projectionId={current?.projectionId}
           onClose={() => setPref("patternInspector", false)}
           onPreviewChange={handlePreviewChange}
+        />
+      )}
+      {prefs.crystallizeInspector && (
+        <CrystallizeInspector
+          artifact={currentArtifact}
+          onClose={() => setPref("crystallizeInspector", false)}
         />
       )}
     </div>
