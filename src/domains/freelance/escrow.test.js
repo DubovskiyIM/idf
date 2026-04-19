@@ -199,4 +199,46 @@ describe("escrow / buildEffects", () => {
       expect(touchesOther).toBeUndefined();
     });
   });
+
+  describe("leave_review", () => {
+    const baseWorld = () => ({
+      deals: [
+        { id: "deal_completed", customerId: "u_cust", executorId: "u_exe", status: "completed" },
+        { id: "deal_in_progress", customerId: "u_cust", executorId: "u_exe", status: "in_progress" },
+      ],
+      reviews: [],
+    });
+
+    it("proceeds if deal.status=completed and viewer is participant", () => {
+      const ctx = {
+        userId: "u_cust", authorId: "u_cust",
+        dealId: "deal_completed", targetUserId: "u_exe",
+        role: "customer", rating: 5, comment: "Отлично",
+      };
+      const effects = buildEffects("leave_review", ctx, baseWorld(), []);
+      expect(effects).toBeTruthy();
+      expect(effects.length).toBeGreaterThanOrEqual(1);
+      expect(effects[0].target).toBe("reviews");
+    });
+
+    it("null if deal.status !== completed", () => {
+      const ctx = {
+        userId: "u_cust", authorId: "u_cust",
+        dealId: "deal_in_progress", targetUserId: "u_exe",
+        role: "customer", rating: 5,
+      };
+      const effects = buildEffects("leave_review", ctx, baseWorld(), []);
+      expect(effects).toBeNull();
+    });
+
+    it("null if author не участник deal", () => {
+      const ctx = {
+        userId: "u_stranger", authorId: "u_stranger",
+        dealId: "deal_completed", targetUserId: "u_exe",
+        role: "customer", rating: 5,
+      };
+      const effects = buildEffects("leave_review", ctx, baseWorld(), []);
+      expect(effects).toBeNull();
+    });
+  });
 });

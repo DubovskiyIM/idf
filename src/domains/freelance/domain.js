@@ -133,6 +133,15 @@ function buildCustomEffects(intentId, ctx, world) {
     ];
   }
 
+  if (intentId === "leave_review") {
+    const deal = world.deals?.find((d) => d.id === ctx.dealId);
+    if (!deal) return null;
+    if (deal.status !== "completed") return null;
+    const author = ctx.authorId || ctx.userId;
+    if (author !== deal.customerId && author !== deal.executorId) return null;
+    return undefined;
+  }
+
   if (intentId === "select_executor") {
     const selectedResponse = world.responses?.find((r) => r.id === ctx.id);
     if (!selectedResponse) return null;
