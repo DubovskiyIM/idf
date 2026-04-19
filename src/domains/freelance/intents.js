@@ -143,12 +143,13 @@ export const INTENTS = {
 
   select_executor: {
     name: "Выбрать исполнителя",
-    description: "Customer выбирает Response → status=selected. Создание Deal — Cycle 2",
+    description: "Customer выбирает Response → status=selected; остальные Response этой задачи → not_chosen",
     α: "replace",
     irreversibility: "low",
     particles: {
       parameters: [
-        { name: "id", type: "id", required: true },
+        { name: "id", type: "id", required: true, label: "ID выбранного отклика" },
+        { name: "taskId", type: "id", required: true, label: "ID задачи" },
       ],
       effects: [
         { α: "replace", target: "response.status", value: "selected" },
