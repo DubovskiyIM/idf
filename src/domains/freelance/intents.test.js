@@ -69,8 +69,8 @@ describe("freelance intents — profile details", () => {
 });
 
 describe("freelance intents — task details", () => {
-  it("create_task_draft создаёт Task", () => {
-    expect(INTENTS.create_task_draft.creates).toBe("Task");
+  it("create_task_draft создаёт Task в статусе draft (нотация creates: 'Task(draft)')", () => {
+    expect(INTENTS.create_task_draft.creates).toBe("Task(draft)");
   });
 
   it("submit_task_for_moderation — replace task.status на moderation", () => {
@@ -95,12 +95,34 @@ describe("freelance intents — task details", () => {
 });
 
 describe("freelance intents — response details", () => {
-  it("submit_response создаёт Response", () => {
-    expect(INTENTS.submit_response.creates).toBe("Response");
+  it("submit_response создаёт Response в статусе pending (нотация creates: 'Response(pending)')", () => {
+    expect(INTENTS.submit_response.creates).toBe("Response(pending)");
   });
 
-  it("withdraw_response — remove Response", () => {
-    expect(INTENTS.withdraw_response.α).toBe("remove");
+  it("withdraw_response — soft-delete через replace response.status на withdrawn (сохраняет историю)", () => {
+    expect(INTENTS.withdraw_response.α).toBe("replace");
+    const e = INTENTS.withdraw_response.particles.effects[0];
+    expect(e.target).toBe("response.status");
+    expect(e.value).toBe("withdrawn");
+  });
+
+  it("submit_response — guard task.status=published + entities task+response (для SDK buildSection)", () => {
+    expect(INTENTS.submit_response.particles.conditions).toContain("task.status = 'published'");
+    expect(INTENTS.submit_response.particles.entities).toEqual(
+      expect.arrayContaining(["task: Task", "response: Response"])
+    );
+  });
+
+  it("edit_response — guards response.status=pending + response.executorId=me.id", () => {
+    const conds = INTENTS.edit_response.particles.conditions || [];
+    expect(conds).toContain("response.status = 'pending'");
+    expect(conds).toContain("response.executorId = me.id");
+  });
+
+  it("withdraw_response — те же guards", () => {
+    const conds = INTENTS.withdraw_response.particles.conditions || [];
+    expect(conds).toContain("response.status = 'pending'");
+    expect(conds).toContain("response.executorId = me.id");
   });
 
   it("select_executor — replace response.status на selected", () => {
@@ -131,10 +153,48 @@ describe("freelance intents — deal details + __irr декларация", () =
     });
   }
 
-  it("confirm_deal создаёт Deal + reserve_escrow в effects", () => {
-    expect(INTENTS.confirm_deal.creates).toBe("Deal");
+  it("confirm_deal — particles.effects создают Deal + escrow Transaction + reserve wallet", () => {
+    // `creates:"Deal"` снят осознанно — иначе my_deals-catalog получает
+    // heroCreate-форму с 6 required-params (customerId/executorId/...),
+    // которые должны derive'иться из selected Response. confirm_deal — это
+    // per-item действие на task_detail_customer → Response section.
+    expect(INTENTS.confirm_deal.creates).toBeUndefined();
     const effs = INTENTS.confirm_deal.particles.effects;
     expect(effs.some(e => e.α === "add" && e.target === "deals")).toBe(true);
+    expect(effs.some(e => e.α === "add" && e.target === "transactions")).toBe(true);
+    expect(effs.some(e => e.α === "replace" && e.target === "wallet.reserved")).toBe(true);
+  });
+
+  it("confirm_deal появляется как item intent на Response в task_detail_customer (Response в entities, Deal исключён во избежание дубля в Deal.toolbar)", () => {
+    const entities = INTENTS.confirm_deal.particles.entities || [];
+    const entityNames = entities.map(e => e.split(":").pop().trim());
+    expect(entityNames).toContain("Response");
+    expect(entityNames).toContain("Task");
+    expect(entityNames).not.toContain("Deal");
+    expect(INTENTS.confirm_deal.particles.conditions).toContain("response.status = 'selected'");
+  });
+
+  it("submit_work_result — form, medium-irr, guards: deal.status=in_progress + executor-ownership", () => {
+    expect(INTENTS.submit_work_result.control).toBe("formModal");
+    expect(INTENTS.submit_work_result.particles.confirmation).toBe("form");
+    const conds = INTENTS.submit_work_result.particles.conditions || [];
+    expect(conds).toContain("deal.status = 'in_progress'");
+    expect(conds).toContain("deal.executorId = me.id");
+  });
+
+  it("accept_result — guards: deal.status=on_review + customer-ownership (после completed не доступен)", () => {
+    const conds = INTENTS.accept_result.particles.conditions || [];
+    expect(conds).toContain("deal.status = 'on_review'");
+    expect(conds).toContain("deal.customerId = me.id");
+  });
+
+  it("auto_accept_result не показывается в UI (particles.entities пуст — scheduler-fired only)", () => {
+    expect(INTENTS.auto_accept_result.particles.entities).toEqual([]);
+  });
+
+  it("cancel_deal_mutual guard: только pre-completion фазы (in_progress, on_review)", () => {
+    const conds = INTENTS.cancel_deal_mutual.particles.conditions || [];
+    expect(conds.some(c => /deal\.status.*in_progress.*on_review/i.test(c))).toBe(true);
   });
 
   it("accept_result → replace deal.status на completed", () => {

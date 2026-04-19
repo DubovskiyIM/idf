@@ -65,11 +65,15 @@ describe("freelance ontology — entities", () => {
     ]));
   });
 
-  it("Wallet.ownerField === 'userId', имеет balance + reserved (fieldRole=money)", () => {
+  it("Wallet.ownerField === 'userId', balance/reserved с fieldRole=price (SDK PriceBlock + AntdNumber ₽-префикс)", () => {
     const w = ONTOLOGY.entities.Wallet;
     expect(w.ownerField).toBe("userId");
-    expect(w.fields.balance.fieldRole).toBe("money");
-    expect(w.fields.reserved.fieldRole).toBe("money");
+    // fieldRole="price" — SDK inferFieldRole маппит в role:"price", который
+    // buildDetailBody (assignToSlotsDetail §3 PriceBlock) группирует и
+    // рендерит через PriceBlock с ₽-суффиксом. "money" в SDK не имеет
+    // обработчика — раньше балансы дропались из detail body.
+    expect(w.fields.balance.fieldRole).toBe("price");
+    expect(w.fields.reserved.fieldRole).toBe("price");
   });
 
   it("Transaction.ownerField === 'walletId', kind options покрывают 4 типа", () => {
@@ -174,17 +178,25 @@ describe("freelance ontology — roles", () => {
 describe("freelance ontology — invariants", () => {
   const byName = (n) => ONTOLOGY.invariants.find(i => i.name === n);
 
-  it("содержит 6 invariants в Cycle 2 (3 Cycle 1 + 3 escrow)", () => {
+  it("содержит 6 invariants (5 enforced + 1 documentary: response_unique_per_executor_task)", () => {
     expect(ONTOLOGY.invariants).toHaveLength(6);
   });
 
-  it("task_status_transition — transition с 4 allowed переходами", () => {
+  it("response_unique_per_executor_task — documentary-инвариант (severity:info, реальное enforcement в buildCustomEffects)", () => {
+    const inv = ONTOLOGY.invariants.find(i => i.name === "response_unique_per_executor_task");
+    expect(inv).toBeDefined();
+    expect(inv.kind).toBe("cardinality");
+    expect(inv.severity).toBe("info");
+    expect(inv.where).toEqual({ status: "pending" });
+  });
+
+  it("task_status_transition — transition с 4 whitelist парами", () => {
     const inv = byName("task_status_transition");
     expect(inv).toBeDefined();
     expect(inv.kind).toBe("transition");
     expect(inv.entity).toBe("Task");
     expect(inv.field).toBe("status");
-    expect(inv.allowed).toEqual(expect.arrayContaining([
+    expect(inv.transitions).toEqual(expect.arrayContaining([
       ["draft", "moderation"],
       ["moderation", "published"],
       ["moderation", "draft"],
@@ -192,13 +204,12 @@ describe("freelance ontology — invariants", () => {
     ]));
   });
 
-  it("response_references_task — referential FK", () => {
+  it("response_references_task — referential FK в SDK-схеме from/to", () => {
     const inv = byName("response_references_task");
     expect(inv).toBeDefined();
     expect(inv.kind).toBe("referential");
-    expect(inv.entity).toBe("Response");
-    expect(inv.field).toBe("taskId");
-    expect(inv.references).toBe("tasks");
+    expect(inv.from).toBe("Response.taskId");
+    expect(inv.to).toBe("Task.id");
   });
 
   it("task_has_at_most_one_selected_response — cardinality ≤1 selected", () => {
@@ -211,35 +222,46 @@ describe("freelance ontology — invariants", () => {
     expect(inv.where).toEqual({ status: "selected" });
   });
 
-  it("deal_status_transition — transition с legal переходами и без skip", () => {
+  it("deal_status_transition — transition cycle включая revision_requested", () => {
     const inv = byName("deal_status_transition");
     expect(inv).toBeDefined();
     expect(inv.kind).toBe("transition");
     expect(inv.entity).toBe("Deal");
     expect(inv.field).toBe("status");
-    expect(inv.allowed).toEqual(expect.arrayContaining([
+    // Revision-cycle: on_review ↔ revision_requested ↔ on_review → completed.
+    // `on_review → in_progress` снят — revision проходит через отдельный
+    // статус revision_requested, который даёт executor'у и customer'у
+    // явный сигнал о фазе.
+    expect(inv.transitions).toEqual(expect.arrayContaining([
       ["new", "awaiting_payment"],
       ["awaiting_payment", "in_progress"],
       ["in_progress", "on_review"],
       ["on_review", "completed"],
-      ["on_review", "in_progress"],
+      ["on_review", "revision_requested"],
+      ["revision_requested", "on_review"],
+      ["revision_requested", "cancelled"],
       ["new", "cancelled"],
     ]));
   });
 
-  it("wallet_reserved_equals_escrow_sum — aggregate", () => {
+  it("wallet_reserved_equals_escrow_sum — aggregate в SDK-схеме op/from/target", () => {
     const inv = byName("wallet_reserved_equals_escrow_sum");
     expect(inv).toBeDefined();
     expect(inv.kind).toBe("aggregate");
-    expect(inv.entity).toBe("Wallet");
-    expect(inv.field).toBe("reserved");
-    expect(inv.formula).toBeDefined();
+    expect(inv.op).toBe("sum");
+    expect(inv.from).toBe("Transaction.amount");
+    expect(inv.target).toBe("Wallet.reserved");
+    expect(inv.where).toMatchObject({ kind: "escrow-hold", status: "posted", walletId: "$target.id" });
   });
 
-  it("deal_customer_differs_from_executor — referential", () => {
-    const inv = byName("deal_customer_differs_from_executor");
-    expect(inv).toBeDefined();
-    expect(inv.kind).toBe("referential");
-    expect(inv.entity).toBe("Deal");
+  it("severity: shared-collection инварианты переведены в warning", () => {
+    // tasks / deals / wallets пересекаются между доменами в общей DB; SDK-handler'ы
+    // не фильтруют по domain → transition/aggregate переведены в warning.
+    expect(byName("task_status_transition").severity).toBe("warning");
+    expect(byName("deal_status_transition").severity).toBe("warning");
+    expect(byName("wallet_reserved_equals_escrow_sum").severity).toBe("warning");
+    // Freelance-internal остаются error.
+    expect(byName("response_references_task").severity).toBe("error");
+    expect(byName("task_has_at_most_one_selected_response").severity).toBe("error");
   });
 });

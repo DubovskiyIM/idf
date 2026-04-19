@@ -25,8 +25,9 @@ import { mantineAdapter } from "@intent-driven/adapter-mantine";
 import { shadcnAdapter } from "@intent-driven/adapter-shadcn";
 import { appleAdapter } from "@intent-driven/adapter-apple";
 import { antdAdapter } from "@intent-driven/adapter-antd";
-import { ConfigProvider as AntConfigProvider, theme as antTheme } from "antd";
+import { ConfigProvider as AntConfigProvider, theme as antTheme, DatePicker as AntDatePicker, InputNumber as AntInputNumber, Input as AntInput } from "antd";
 import ruRU from "antd/locale/ru_RU";
+import dayjs from "dayjs";
 
 import * as bookingDomain from "../domains/booking/domain.js";
 import * as planningDomain from "../domains/planning/domain.js";
@@ -88,8 +89,141 @@ registerCanvas("order_tracker", DeliveryMapCanvas);
 registerCanvas("active_delivery", DeliveryMapCanvas);
 registerCanvas("dispatcher_map", DeliveryMapCanvas);
 
-const UI_KITS = { mantine: mantineAdapter, shadcn: shadcnAdapter, apple: appleAdapter, antd: antdAdapter };
-const DOMAIN_DEFAULT_KITS = { lifequest: appleAdapter, reflect: appleAdapter, invest: antdAdapter };
+// SDK `@intent-driven/adapter-antd` рисует button.primary/secondary/danger
+// через prop `label`, но FormModal-renderer передаёт подпись через `children`.
+// До того как SDK это выровняет — оборачиваем antd-кнопки: если `label`
+// пуст, берём `children`. Патч затрагивает только antdAdapter.
+function patchAntdButtonsChildrenAsLabel(adapter) {
+  if (!adapter?.button) return adapter;
+  const wrap = (Orig) => {
+    if (!Orig) return Orig;
+    const Wrapped = ({ label, children, ...rest }) => (
+      <Orig {...rest} label={label != null && label !== "" ? label : children} />
+    );
+    Wrapped.displayName = `WithChildrenLabel(${Orig.displayName || Orig.name || "AntdBtn"})`;
+    return Wrapped;
+  };
+  return {
+    ...adapter,
+    button: {
+      ...adapter.button,
+      primary: wrap(adapter.button.primary),
+      secondary: wrap(adapter.button.secondary),
+      danger: wrap(adapter.button.danger),
+    },
+  };
+}
+
+// SDK `adapter-antd::AntdDateTime` всегда рисует DatePicker без времени —
+// переопределяем на DatePicker с showTime (минуты), чтобы deadline / дедлайны
+// имели часы+минуты. spec.control==="datetime" идёт сюда.
+function AntdDateTimeWithTime({ spec, value, onChange, error }) {
+  const label = spec.label || spec.name;
+  return (
+    <div style={{ marginBottom: 4 }}>
+      {label && <div style={{ fontSize: 13, color: "var(--idf-text-muted, #64748b)", marginBottom: 4 }}>{label}</div>}
+      <AntDatePicker
+        value={value ? dayjs(value) : null}
+        onChange={(v) => onChange(v ? v.toISOString() : "")}
+        showTime={{ format: "HH:mm", minuteStep: 5 }}
+        format="DD.MM.YYYY HH:mm"
+        style={{ width: "100%" }}
+        placeholder="Выберите дату и время"
+        status={error ? "error" : undefined}
+      />
+      {error && <div style={{ color: "var(--idf-danger, #ef4444)", fontSize: 12, marginTop: 4 }}>{error}</div>}
+    </div>
+  );
+}
+function patchAntdDateTimeWithTime(adapter) {
+  if (!adapter?.parameter) return adapter;
+  return {
+    ...adapter,
+    parameter: { ...adapter.parameter, datetime: AntdDateTimeWithTime },
+  };
+}
+
+// SDK AntdNumber считает fieldRole money только по литералу "money" или
+// эвристике по имени (/price|amount|cost|fee|value/). После миграции
+// money→price в онтологии (SDK PriceBlock на detail использует role="price")
+// нужно ещё в форме добавлять "₽" для fieldRole:"price". Здесь отдельный
+// компонент с правильной семантикой.
+function AntdPriceNumber({ spec, value, onChange, error }) {
+  const label = spec.label || spec.name;
+  return (
+    <div style={{ marginBottom: 4 }}>
+      {label && <div style={{ fontSize: 13, color: "var(--idf-text-muted, #64748b)", marginBottom: 4 }}>{label}</div>}
+      <AntInputNumber
+        value={value === "" || value == null ? null : value}
+        onChange={(v) => onChange(v == null ? "" : v)}
+        placeholder={spec.placeholder}
+        status={error ? "error" : undefined}
+        style={{ width: "100%" }}
+        min={spec.min}
+        max={spec.max}
+        step={spec.step}
+        prefix="₽"
+        formatter={(v) => `${v}`.replace(/\B(?=(\d{3})+(?!\d))/g, " ")}
+        parser={(v) => v?.replace(/\s/g, "")}
+      />
+      {error && <div style={{ color: "var(--idf-danger, #ef4444)", fontSize: 12, marginTop: 4 }}>{error}</div>}
+    </div>
+  );
+}
+
+// SDK AntdTextInput не читает spec.maxLength / minLength / pattern.
+// Расширяем — для cardLastFour (ровно 4 цифры), email/tel-валидации и т.п.
+function AntdTextInputWithValidation({ spec, value, onChange, error }) {
+  const label = spec.label || spec.name;
+  return (
+    <div style={{ marginBottom: 4 }}>
+      {label && <div style={{ fontSize: 13, color: "var(--idf-text-muted, #64748b)", marginBottom: 4 }}>{label}</div>}
+      <AntInput
+        value={value ?? ""}
+        onChange={(e) => onChange(e.target.value)}
+        placeholder={spec.placeholder}
+        status={error ? "error" : undefined}
+        maxLength={spec.maxLength}
+        minLength={spec.minLength}
+        // pattern через нативный html-атрибут на внутреннем input
+        {...(spec.pattern ? { pattern: spec.pattern } : {})}
+      />
+      {error && <div style={{ color: "var(--idf-danger, #ef4444)", fontSize: 12, marginTop: 4 }}>{error}</div>}
+    </div>
+  );
+}
+
+// Отдельный wrapper для number-параметров: если fieldRole:"price" —
+// рендерим как AntdPriceNumber, иначе — исходный SDK AntdNumber.
+function makeNumberDispatcher(origNumber) {
+  if (!origNumber) return origNumber;
+  const Dispatched = (props) => {
+    if (props.spec?.fieldRole === "price") {
+      return <AntdPriceNumber {...props} />;
+    }
+    return <origNumber {...props} />;
+  };
+  Dispatched.displayName = "AntdNumberWithPriceRole";
+  return Dispatched;
+}
+function patchAntdParameterExtras(adapter) {
+  if (!adapter?.parameter) return adapter;
+  return {
+    ...adapter,
+    parameter: {
+      ...adapter.parameter,
+      number: makeNumberDispatcher(adapter.parameter.number),
+      text: AntdTextInputWithValidation,
+    },
+  };
+}
+
+const patchedAntd = patchAntdParameterExtras(
+  patchAntdDateTimeWithTime(patchAntdButtonsChildrenAsLabel(antdAdapter))
+);
+
+const UI_KITS = { mantine: mantineAdapter, shadcn: shadcnAdapter, apple: appleAdapter, antd: patchedAntd };
+const DOMAIN_DEFAULT_KITS = { lifequest: appleAdapter, reflect: appleAdapter, invest: patchedAntd };
 
 const MANTINE_THEMES = {
   antd: {

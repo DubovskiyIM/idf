@@ -69,8 +69,16 @@ describe("freelance projections — task_detail_public", () => {
 });
 
 describe("freelance create_task_draft — formModal archetype (вместо wizard)", () => {
-  it("create_task_draft.confirmation === 'form'", () => {
-    expect(INTENTS.create_task_draft.confirmation).toBe("form");
+  it("particles.confirmation === 'form' (перенесено внутрь particles, чтобы SDK-матчер formModal его видел)", () => {
+    expect(INTENTS.create_task_draft.particles.confirmation).toBe("form");
+  });
+
+  it("particles.witnesses length ≥ 2 — триггерит skip heroCreate в SDK controlArchetypes", () => {
+    expect(INTENTS.create_task_draft.particles.witnesses?.length).toBeGreaterThanOrEqual(2);
+  });
+
+  it("creates === 'Task(draft)' — статусная нотация: новый Task инициализируется в status=draft", () => {
+    expect(INTENTS.create_task_draft.creates).toBe("Task(draft)");
   });
 
   it("customerId НЕ в UI-параметрах (auto-injected через buildEffects)", () => {

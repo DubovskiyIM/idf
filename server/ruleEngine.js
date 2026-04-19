@@ -16,6 +16,11 @@
  */
 
 function matchTrigger(trigger, intentId) {
+  // Массив — любой элемент матчит (OR).
+  if (Array.isArray(trigger)) {
+    return trigger.some((t) => matchTrigger(t, intentId));
+  }
+  if (typeof trigger !== "string") return false;
   if (trigger === "*") return true;
   if (trigger.endsWith("*")) {
     return intentId.startsWith(trigger.slice(0, -1));

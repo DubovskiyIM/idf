@@ -5,6 +5,19 @@ import { crystallizeV2, generateEditProjections } from "@intent-driven/core";
 import BottomTabs from "./BottomTabs.jsx";
 import PatternInspector from "./PatternInspector.jsx";
 
+const UI_KIT_OPTIONS = [
+  { value: null, label: "авто" },
+  { value: "mantine", label: "Mantine" },
+  { value: "shadcn", label: "Doodle" },
+  { value: "apple", label: "Apple" },
+  { value: "antd", label: "AntD" },
+];
+
+const ROLE_LABELS = {
+  customer: "Заказчик", executor: "Исполнитель",
+  agent: "Агент", observer: "Наблюдатель", moderator: "Модератор",
+};
+
 /**
  * V2Shell — доменонезависимый рендерер проекций через кристаллизатор v2.
  *
@@ -86,16 +99,26 @@ export default function V2Shell({
     return viewer;
   }, [viewer]);
 
-  // Universal-user role-switcher (freelance-pattern): если у viewer'а оба
-  // verified-флага (customerVerified && executorVerified), показываем toggle
-  // в header. Активная роль живёт в sessionStorage (не в Φ) и транслируется
-  // в session_set_active_role intent.
-  const canSwitchRole = Boolean(
-    viewerObj?.customerVerified && viewerObj?.executorVerified
-  );
+  // Role-switcher + UI-kit («слой») switcher — dev-toolbar для работы
+  // с прототипом. Role-switcher показывается, когда домен определяет
+  // session_set_active_role (универсальный паттерн вне зависимости от
+  // verified-флагов на viewer'е — нужно для прототипирования). Активная
+  // роль живёт в sessionStorage (не в Φ) и транслируется в intent.
+  const roleIntent = domain.INTENTS?.session_set_active_role;
+  const hasRoleSwitch = Boolean(roleIntent);
+  const roleOptions = useMemo(() => {
+    const param = roleIntent?.particles?.parameters?.find(p => p.name === "role");
+    const opts = Array.isArray(param?.options) && param.options.length > 0
+      ? param.options
+      : ["customer", "executor"];
+    return opts.map(role => ({ role, label: ROLE_LABELS[role] || role }));
+  }, [roleIntent]);
+
   const [activeRole, setActiveRole] = useState(() => {
-    if (typeof window === "undefined") return "customer";
-    try { return sessionStorage.getItem(`idf.activeRole.${domainId}`) || "customer"; } catch { return "customer"; }
+    if (typeof window === "undefined") return roleOptions[0]?.role || "customer";
+    try {
+      return sessionStorage.getItem(`idf.activeRole.${domainId}`) || roleOptions[0]?.role || "customer";
+    } catch { return roleOptions[0]?.role || "customer"; }
   });
   const handleRoleSwitch = useCallback((role) => {
     setActiveRole(role);
@@ -104,43 +127,6 @@ export default function V2Shell({
       exec("session_set_active_role", { role });
     }
   }, [domainId, exec]);
-
-  const roleSwitcherBar = canSwitchRole ? (
-    <div style={{
-      display: "flex", alignItems: "center", gap: 8,
-      padding: "6px 14px",
-      background: "var(--idf-card, #f8f9fa)",
-      borderBottom: "1px solid var(--idf-border, #e9ecef)",
-      fontSize: 12,
-    }}>
-      <span style={{ color: "var(--idf-text-muted, #868e96)", fontWeight: 500 }}>Активная роль:</span>
-      <div style={{
-        display: "flex", gap: 2, padding: 2,
-        borderRadius: 6, background: "var(--idf-surface, #e9ecef)",
-      }}>
-        {[
-          { role: "customer", label: "Заказчик" },
-          { role: "executor", label: "Исполнитель" },
-        ].map(({ role, label }) => (
-          <button
-            key={role}
-            type="button"
-            onClick={() => handleRoleSwitch(role)}
-            style={{
-              border: "none",
-              padding: "4px 12px",
-              borderRadius: 4,
-              cursor: "pointer",
-              fontSize: 12,
-              fontWeight: 500,
-              background: activeRole === role ? "var(--idf-primary, #228be6)" : "transparent",
-              color: activeRole === role ? "white" : "var(--idf-text, #495057)",
-            }}
-          >{label}</button>
-        ))}
-      </div>
-    </div>
-  ) : null;
 
   // Обёртка exec/execBatch: автоматически инжектируем clientId из viewer.id
   // в каждый вызов buildEffects, чтобы create_booking, create_poll и т.д.
@@ -173,6 +159,77 @@ export default function V2Shell({
   // Personal layer (§17)
   const { prefs, setPref, resetPrefs } = usePersonalPrefs();
   // Prefs-panel теперь в Studio TabStrip (⚙-кнопка главного UI).
+
+  // Toolbar: быстрые dev-переключатели для работы с прототипом.
+  //   1) Активная роль — если домен объявил session_set_active_role.
+  //   2) UI-kit («слой») — override адаптера. null = domain default.
+  // Оба пишут в persistence: роль в sessionStorage (per-domain),
+  // uiKit в localStorage через usePersonalPrefs.
+  const currentKit = prefs.uiKit ?? null;
+  const onChangeKit = useCallback((v) => setPref("uiKit", v), [setPref]);
+
+  const toolbarBar = (
+    <div style={{
+      display: "flex", alignItems: "center", gap: 16,
+      padding: "6px 14px",
+      background: "var(--idf-card, #f8f9fa)",
+      borderBottom: "1px solid var(--idf-border, #e9ecef)",
+      fontSize: 12, flexWrap: "wrap",
+    }}>
+      {hasRoleSwitch && (
+        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          <span style={{ color: "var(--idf-text-muted, #868e96)", fontWeight: 500 }}>Роль:</span>
+          <div style={{
+            display: "flex", gap: 2, padding: 2,
+            borderRadius: 6, background: "var(--idf-surface, #e9ecef)",
+          }}>
+            {roleOptions.map(({ role, label }) => (
+              <button
+                key={role}
+                type="button"
+                onClick={() => handleRoleSwitch(role)}
+                style={{
+                  border: "none",
+                  padding: "4px 12px",
+                  borderRadius: 4,
+                  cursor: "pointer",
+                  fontSize: 12,
+                  fontWeight: 500,
+                  background: activeRole === role ? "var(--idf-primary, #228be6)" : "transparent",
+                  color: activeRole === role ? "white" : "var(--idf-text, #495057)",
+                }}
+              >{label}</button>
+            ))}
+          </div>
+        </div>
+      )}
+      <div style={{ display: "flex", alignItems: "center", gap: 8, marginLeft: hasRoleSwitch ? 0 : "auto" }}>
+        <span style={{ color: "var(--idf-text-muted, #868e96)", fontWeight: 500 }}>Слой:</span>
+        <div style={{
+          display: "flex", gap: 2, padding: 2,
+          borderRadius: 6, background: "var(--idf-surface, #e9ecef)",
+        }}>
+          {UI_KIT_OPTIONS.map(({ value, label }) => (
+            <button
+              key={value ?? "auto"}
+              type="button"
+              onClick={() => onChangeKit(value)}
+              style={{
+                border: "none",
+                padding: "4px 10px",
+                borderRadius: 4,
+                cursor: "pointer",
+                fontSize: 12,
+                fontWeight: 500,
+                background: currentKit === value ? "var(--idf-primary, #228be6)" : "transparent",
+                color: currentKit === value ? "white" : "var(--idf-text, #495057)",
+              }}
+            >{label}</button>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
 
   // Deep-link ?inspect=<patternId> — читается один раз при первом mount.
   // Если параметр присутствует: активируем drawer и seed'им selection
@@ -394,6 +451,7 @@ export default function V2Shell({
           fontSize: "var(--idf-font-size, 14px)",
           ...personalStyle,
         }}>
+          {toolbarBar}
           <div style={{ flex: 1, overflow: "auto", padding: 0, paddingBottom: 120 }}>
             {mainContent}
           </div>
@@ -418,7 +476,7 @@ export default function V2Shell({
 
     return (
       <div style={{ display: "flex", flexDirection: "column", height: "100%", minHeight: 0, fontFamily: "system-ui, sans-serif", fontSize: "var(--idf-font-size, 14px)", ...personalStyle }}>
-        {roleSwitcherBar}
+        {toolbarBar}
         <div style={{ display: "flex", flex: 1, minHeight: 0 }}>
         {/* Mobile hamburger */}
         {isMobile && !sidebarOpen && (
@@ -475,7 +533,7 @@ export default function V2Shell({
       display: "flex", flexDirection: "column", height: "100%", minHeight: 0,
       fontFamily: "system-ui, sans-serif",
     }}>
-      {roleSwitcherBar}
+      {toolbarBar}
       {rootProjections.length > 0 && (
         AdaptedTabs ? (
           <AdaptedTabs

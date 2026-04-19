@@ -165,6 +165,26 @@ server.listen(PORT, () => {
       console.error("[timer] tick error:", e);
     }
   }, TIMER_TICK_MS);
+
+  // Dev-endpoint: fast-forward — принудительно прогоняет timers в будущее.
+  //   POST /api/timer/fast-forward           → fire all due at Number.MAX
+  //   POST /api/timer/fast-forward?ms=86400000 → fire due at now+ms
+  // Для e2e-проверки auto_accept_after_3d без реального ожидания 72ч.
+  app.post("/api/timer/fast-forward", (req, res) => {
+    try {
+      const ms = Number(req.query.ms);
+      const fireAt = Number.isFinite(ms) && ms > 0 ? Date.now() + ms : Number.MAX_SAFE_INTEGER;
+      const beforeSize = global.__timerQueue.size();
+      fireDue(global.__timerQueue, fireAt, {
+        ingestEffect: (ef) => ingest2(ef, { broadcast: effectsRouter.broadcast, delay: 0 }),
+        foldWorld,
+      });
+      const afterSize = global.__timerQueue.size();
+      res.json({ fired: beforeSize - afterSize, remaining: afterSize, firedAt: fireAt });
+    } catch (e) {
+      res.status(500).json({ error: String(e) });
+    }
+  });
 }
 
 // ─── Cron-rules v1 → schedule v2 (self-rescheduling timers) ───

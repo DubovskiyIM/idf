@@ -9,13 +9,17 @@ export const RULES = [
   {
     id: "auto_accept_after_3d",
     extension: "schedule",
-    trigger: "submit_work_result",
+    // trigger как массив: перезапуск timer'а и после первичной сдачи,
+    // и после каждого submit_revision (иначе после revision customer
+    // имел бы неограниченное время на accept).
+    trigger: ["submit_work_result", "submit_revision"],
     after: "72h",
     warnAt: "48h",
+    // Timer отзывается при ручном accept / запросе revision / cancellation.
     revokeOn: ["accept_result", "request_revision", "cancel_deal_mutual"],
     fireIntent: "auto_accept_result",
     params: { id: "$.id" },
-    description: "Auto-accept через 72h если customer не среагировал на сдачу работы",
+    description: "Auto-accept через 72h если customer не среагировал на сдачу работы (или доработки)",
   },
 
   {

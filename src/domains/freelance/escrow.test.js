@@ -41,24 +41,26 @@ describe("escrow / buildEffects", () => {
   });
 
   describe("confirm_deal", () => {
-    it("создаёт Deal(in_progress), reserves escrow, decrements balance", () => {
-      const world = {
-        wallets: [
-          { id: "w_1", userId: "u_customer", balance: 100000, reserved: 0, currency: "RUB" },
-        ],
-        transactions: [],
-        deals: [],
-      };
-      const ctx = {
-        userId: "u_customer",
-        customerId: "u_customer",
-        executorId: "u_executor",
-        taskId: "t_1",
-        responseId: "r_1",
-        amount: 25000,
-        deadline: "2026-05-01T00:00:00Z",
-      };
-      const effects = buildEffects("confirm_deal", ctx, world, []);
+    // Новый контракт: ctx.id = response.id (per-item call на Response.status=selected).
+    // Все остальные поля (customerId, executorId, taskId, amount, deadline)
+    // derive'ятся в buildCustomEffects из responses + tasks в world.
+    const baseWorld = () => ({
+      tasks: [
+        { id: "t_1", customerId: "u_customer", status: "published", deadline: "2026-05-01T00:00:00Z" },
+      ],
+      responses: [
+        { id: "r_1", taskId: "t_1", executorId: "u_executor", price: 25000, status: "selected" },
+      ],
+      wallets: [
+        { id: "w_1", userId: "u_customer", balance: 100000, reserved: 0, currency: "RUB" },
+      ],
+      transactions: [],
+      deals: [],
+    });
+
+    it("создаёт Deal(in_progress), reserves escrow, decrements balance, commission 10%", () => {
+      const ctx = { userId: "u_customer", id: "r_1" };
+      const effects = buildEffects("confirm_deal", ctx, baseWorld(), []);
       expect(effects).toHaveLength(4);
 
       const deal = effects.find((e) => e.alpha === "add" && e.target === "deals");
@@ -68,6 +70,9 @@ describe("escrow / buildEffects", () => {
       expect(deal.context.amount).toBe(25000);
       expect(deal.context.status).toBe("in_progress");
       expect(deal.context.commission).toBe(2500);
+      // __irr с at — IrreversibleBadge найдёт его в world.deals.
+      expect(deal.context.__irr).toMatchObject({ point: "high", reason: expect.any(String) });
+      expect(deal.context.__irr.at).toBeGreaterThan(0);
 
       const tx = effects.find((e) => e.alpha === "add" && e.target === "transactions");
       expect(tx.context.kind).toBe("escrow-hold");
@@ -78,21 +83,34 @@ describe("escrow / buildEffects", () => {
 
       const balance = effects.find((e) => e.target === "wallet.balance");
       expect(balance.value).toBe(75000);
-
       const reserved = effects.find((e) => e.target === "wallet.reserved");
       expect(reserved.value).toBe(25000);
     });
 
-    it("возвращает null если баланс недостаточен", () => {
-      const world = {
-        wallets: [{ id: "w_1", userId: "u_customer", balance: 10000, reserved: 0 }],
-        transactions: [], deals: [],
-      };
-      const ctx = {
-        userId: "u_customer", customerId: "u_customer",
-        executorId: "u_exe", taskId: "t_1", responseId: "r_1", amount: 25000,
-      };
+    it("null если баланс недостаточен", () => {
+      const world = baseWorld();
+      world.wallets[0].balance = 10000; // 10k < 25k
+      const ctx = { userId: "u_customer", id: "r_1" };
       const effects = buildEffects("confirm_deal", ctx, world, []);
+      expect(effects).toBeNull();
+    });
+
+    it("null если response.status !== 'selected' (guard против вызова без select_executor)", () => {
+      const world = baseWorld();
+      world.responses[0].status = "pending";
+      const effects = buildEffects("confirm_deal", { userId: "u_customer", id: "r_1" }, world, []);
+      expect(effects).toBeNull();
+    });
+
+    it("null если viewer не customer этой task (ownership guard)", () => {
+      const effects = buildEffects("confirm_deal", { userId: "u_stranger", id: "r_1" }, baseWorld(), []);
+      expect(effects).toBeNull();
+    });
+
+    it("null если уже есть Deal на эту task в активной фазе (no double-confirm)", () => {
+      const world = baseWorld();
+      world.deals.push({ id: "deal_existing", taskId: "t_1", status: "in_progress", customerId: "u_customer", executorId: "u_executor", amount: 25000 });
+      const effects = buildEffects("confirm_deal", { userId: "u_customer", id: "r_1" }, world, []);
       expect(effects).toBeNull();
     });
   });
@@ -175,28 +193,69 @@ describe("escrow / buildEffects", () => {
   });
 
   describe("select_executor", () => {
-    it("selected + не выбранные отклики становятся not_chosen", () => {
+    const selectWorld = () => ({
+      tasks: [
+        { id: "t_1", customerId: "u_customer", status: "published" },
+        { id: "t_2", customerId: "u_customer", status: "published" },
+      ],
+      responses: [
+        { id: "r_1", taskId: "t_1", executorId: "e_1", status: "pending" },
+        { id: "r_2", taskId: "t_1", executorId: "e_2", status: "pending" },
+        { id: "r_3", taskId: "t_1", executorId: "e_3", status: "pending" },
+        { id: "r_other", taskId: "t_2", executorId: "e_4", status: "pending" },
+      ],
+    });
+
+    it("selected + не выбранные отклики становятся not_chosen (3 effects: 2 demote + 1 promote)", () => {
+      const ctx = { userId: "u_customer", id: "r_2", taskId: "t_1" };
+      const effects = buildEffects("select_executor", ctx, selectWorld(), []);
+      expect(effects).toHaveLength(3);
+
+      // Критический порядок: siblings демотируются ПЕРВЫМИ, promote — последним
+      expect(effects[effects.length - 1].context.id).toBe("r_2");
+      expect(effects[effects.length - 1].value).toBe("selected");
+
+      const demoted = effects.slice(0, -1);
+      expect(demoted).toHaveLength(2);
+      demoted.forEach((e) => expect(e.value).toBe("not_chosen"));
+
+      const touchesOther = effects.find((e) => e.context.id === "r_other");
+      expect(touchesOther).toBeUndefined();
+    });
+
+    it("ownership guard: не-customer не может выбирать — returns null", () => {
+      const ctx = { userId: "u_stranger", id: "r_2", taskId: "t_1" };
+      const effects = buildEffects("select_executor", ctx, selectWorld(), []);
+      expect(effects).toBeNull();
+    });
+
+    it("re-select при смене решения: previously-selected демотируется, invariant не ловит транзитную 2-selected", () => {
       const world = {
+        tasks: [{ id: "t_1", customerId: "u_customer", status: "published" }],
         responses: [
-          { id: "r_1", taskId: "t_1", executorId: "e_1", status: "pending" },
-          { id: "r_2", taskId: "t_1", executorId: "e_2", status: "pending" },
-          { id: "r_3", taskId: "t_1", executorId: "e_3", status: "pending" },
-          { id: "r_other", taskId: "t_2", executorId: "e_4", status: "pending" },
+          { id: "r_1", taskId: "t_1", executorId: "e_1", status: "selected" }, // уже выбран
+          { id: "r_2", taskId: "t_1", executorId: "e_2", status: "pending" },  // хочет выбрать этого
         ],
       };
       const ctx = { userId: "u_customer", id: "r_2", taskId: "t_1" };
       const effects = buildEffects("select_executor", ctx, world, []);
-      expect(effects).toHaveLength(3);
+      expect(effects).toHaveLength(2);
+      // r_1 демотируется первым (status: selected → not_chosen)
+      expect(effects[0].context.id).toBe("r_1");
+      expect(effects[0].value).toBe("not_chosen");
+      // r_2 повышается вторым (pending → selected)
+      expect(effects[1].context.id).toBe("r_2");
+      expect(effects[1].value).toBe("selected");
+    });
 
-      const selected = effects.find((e) => e.context.id === "r_2");
-      expect(selected.value).toBe("selected");
-
-      const others = effects.filter((e) => e.context.id !== "r_2");
-      expect(others).toHaveLength(2);
-      others.forEach((e) => expect(e.value).toBe("not_chosen"));
-
-      const touchesOther = effects.find((e) => e.context.id === "r_other");
-      expect(touchesOther).toBeUndefined();
+    it("guard на status: повторный выбор уже-selected отклика — null", () => {
+      const world = {
+        tasks: [{ id: "t_1", customerId: "u_customer", status: "published" }],
+        responses: [{ id: "r_1", taskId: "t_1", executorId: "e_1", status: "selected" }],
+      };
+      const ctx = { userId: "u_customer", id: "r_1", taskId: "t_1" };
+      const effects = buildEffects("select_executor", ctx, world, []);
+      expect(effects).toBeNull();
     });
   });
 
