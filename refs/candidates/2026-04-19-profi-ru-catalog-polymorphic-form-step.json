@@ -1,0 +1,79 @@
+{
+  "id": "polymorphic-form-step",
+  "version": 1,
+  "status": "candidate",
+  "archetype": "catalog",
+  "trigger": {
+    "requires": [
+      {
+        "kind": "entity-field",
+        "entity": "*Draft",
+        "field": "categoryId|typeId|discriminatorId",
+        "role": "reference"
+      },
+      {
+        "kind": "entity-field",
+        "entity": "*Draft",
+        "field": "stepAnswers",
+        "role": "polymorphic-bag"
+      }
+    ]
+  },
+  "structure": {
+    "slot": "body",
+    "description": "Один шаг wizard-а рендерится полиморфно по значению discriminator (category): поля «класс» для tutor, «площадь» для repair, «проблема» для psychologist — подгружаются из category-specific schema"
+  },
+  "rationale": {
+    "hypothesis": "Показывать все возможные поля одновременно — шум; условные поля по discriminator сужают внимание до релевантного и снижают ошибки заполнения",
+    "evidence": [
+      {
+        "source": "profi.ru",
+        "description": "Шаг «Детали» меняет поля в зависимости от выбранной рубрики",
+        "reliability": "high"
+      },
+      {
+        "source": "avito.ru",
+        "description": "Форма подачи объявления меняется по категории",
+        "reliability": "high"
+      },
+      {
+        "source": "typeform-logic-jumps",
+        "description": "Условные ветки по ответу",
+        "reliability": "medium"
+      }
+    ],
+    "counterexample": [
+      {
+        "source": "contact-form",
+        "description": "Плоский form без полиморфизма — полей мало и они одинаковы",
+        "reliability": "high"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [
+      {
+        "domain": "workflow",
+        "projection": "node_config",
+        "reason": "node.type определяет config-поля"
+      },
+      {
+        "domain": "delivery",
+        "projection": "menu_item_edit",
+        "reason": "MenuItem.type (dish/drink/combo) меняет поля"
+      }
+    ],
+    "shouldNotMatch": [
+      {
+        "domain": "reflect",
+        "projection": "mood_log",
+        "reason": "единая форма без discriminator"
+      },
+      {
+        "domain": "messenger",
+        "projection": "send_message",
+        "reason": "нет polymorphic bag"
+      }
+    ]
+  }
+}

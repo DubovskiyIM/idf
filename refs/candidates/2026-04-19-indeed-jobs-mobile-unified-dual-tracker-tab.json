@@ -1,0 +1,76 @@
+{
+  "id": "unified-dual-tracker-tab",
+  "version": 1,
+  "status": "candidate",
+  "archetype": "catalog",
+  "trigger": {
+    "requires": [
+      {
+        "kind": "intent-creates",
+        "minEntities": 2,
+        "samePrimaryFK": true
+      },
+      {
+        "kind": "has-role",
+        "base": "owner"
+      }
+    ]
+  },
+  "structure": {
+    "slot": "header",
+    "description": "Single host catalog screen with segmented tab header switching between 2-3 related user-owned collections (e.g. saved / applied). Both collections anchor on same parent entity (Job) so users treat the screen as one mental bucket: 'things I'm tracking'."
+  },
+  "rationale": {
+    "hypothesis": "When two owner-scoped collections share the same target entity and similar temporal rhythm (saved-for-later → applied → outcome), treating them as separate top-level destinations fragments attention. Unifying under one tab with segment switcher reflects the user's actual funnel and keeps the tracker discoverable with one tap instead of two.",
+    "evidence": [
+      {
+        "source": "indeed-mobile-job-board",
+        "description": "'My Jobs' tab contains Saved + Applied as internal segment switcher — one destination in bottom nav, two subcollections inside",
+        "reliability": "high"
+      },
+      {
+        "source": "linkedin-jobs",
+        "description": "My Jobs has 'Saved / Applied / In Progress / Archived' internal tabs",
+        "reliability": "high"
+      },
+      {
+        "source": "zillow-saved",
+        "description": "Saved Homes + Recently Viewed unified under one 'Saved' destination",
+        "reliability": "medium"
+      }
+    ],
+    "counterexample": [
+      {
+        "source": "shopify-admin",
+        "description": "Orders and Draft Orders are separate top-level destinations — justified because roles/actions differ drastically, not just status stage",
+        "reliability": "medium"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [
+      {
+        "domain": "sales",
+        "projection": "my_activity_catalog",
+        "reason": "Watchlist + Bids + Orders all hang off Listing for buyer role — unified tracker fits"
+      },
+      {
+        "domain": "delivery",
+        "projection": "customer_orders_catalog",
+        "reason": "Active + Past orders as segments within one destination"
+      }
+    ],
+    "shouldNotMatch": [
+      {
+        "domain": "workflow",
+        "projection": "executions_catalog",
+        "reason": "Executions don't have 2+ parallel collections on same parent — single list"
+      },
+      {
+        "domain": "planning",
+        "projection": "polls_catalog",
+        "reason": "Poll authorship is single collection, no natural dual"
+      }
+    ]
+  }
+}

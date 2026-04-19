@@ -1,0 +1,80 @@
+{
+  "id": "completeness-progress",
+  "version": 1,
+  "status": "candidate",
+  "archetype": "detail",
+  "trigger": {
+    "requires": [
+      {
+        "kind": "field-role-present",
+        "role": "percentage"
+      },
+      {
+        "kind": "entity-field",
+        "fields": [
+          "completenessPercent",
+          "complete",
+          "progress"
+        ],
+        "nameLike": true
+      }
+    ]
+  },
+  "structure": {
+    "slot": "header",
+    "description": "Прогресс-бар в header detail с percentage completion + actionable hint ('add N to reach M%'). Gamifies заполнение optional-полей через visible goal-distance."
+  },
+  "rationale": {
+    "hypothesis": "Опциональные поля entity не заполняются без external-pressure. Completeness-meter конвертирует passive optional-fields в active goal-gradient: пользователь видит '87%' и интуитивно хочет '100%'. Zeigarnik-effect + visible progress-bar.",
+    "evidence": [
+      {
+        "source": "linkedin-jobs-mobile",
+        "description": "Profile strength meter (All-Star, Intermediate, Beginner) с contextual 'add X to improve'",
+        "reliability": "high"
+      },
+      {
+        "source": "github-profile",
+        "description": "Profile completion checklist при onboarding",
+        "reliability": "medium"
+      },
+      {
+        "source": "duolingo",
+        "description": "Daily goal progress bar — тот же gamification-механизм",
+        "reliability": "high"
+      }
+    ],
+    "counterexample": [
+      {
+        "source": "medical-chart",
+        "description": "Completeness meter вреден — врач не должен воспринимать медицинскую карту как gamified goal",
+        "reliability": "medium"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [
+      {
+        "domain": "lifequest",
+        "projection": "profile_detail",
+        "reason": "user onboarding с sphere-assessment-completeness идеально ложится"
+      },
+      {
+        "domain": "reflect",
+        "projection": "profile_detail",
+        "reason": "entries-variety completeness для мотивации разнообразия мудов"
+      }
+    ],
+    "shouldNotMatch": [
+      {
+        "domain": "invest",
+        "projection": "portfolio_detail",
+        "reason": "portfolio completeness не имеет смысла — портфолио завершается не заполнением полей"
+      },
+      {
+        "domain": "messenger",
+        "projection": "conversation_detail",
+        "reason": "conversation не имеет 'complete' state"
+      }
+    ]
+  }
+}

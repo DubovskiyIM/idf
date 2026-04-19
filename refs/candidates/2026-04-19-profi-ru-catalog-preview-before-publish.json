@@ -1,0 +1,76 @@
+{
+  "id": "preview-before-publish",
+  "version": 1,
+  "status": "candidate",
+  "archetype": "catalog",
+  "trigger": {
+    "requires": [
+      {
+        "kind": "intent-creates",
+        "entity": "*",
+        "irreversibility": "high"
+      },
+      {
+        "kind": "intent-effect",
+        "target": "*.previewMode"
+      }
+    ]
+  },
+  "structure": {
+    "slot": "body",
+    "description": "Перед high-irreversibility publish интент показывается preview-рендер того же мира, что увидит counterparty (specialist — для клиента) — как mastering-view, убеждающий в полноте и корректности"
+  },
+  "rationale": {
+    "hypothesis": "Preview-шаг перед необратимым коммитом снижает regret и поддерживает уверенность: юзер видит финальный артефакт до публикации, может уточнить без cancel-flow",
+    "evidence": [
+      {
+        "source": "profi.ru",
+        "description": "«Предпросмотр задания» шаг перед публикацией order",
+        "reliability": "high"
+      },
+      {
+        "source": "medium.com",
+        "description": "Preview-режим перед publish статьи",
+        "reliability": "high"
+      },
+      {
+        "source": "airbnb-listing-create",
+        "description": "Preview объявления перед go-live",
+        "reliability": "high"
+      }
+    ],
+    "counterexample": [
+      {
+        "source": "twitter-tweet",
+        "description": "Нет preview — tweet публикуется сразу, preview избыточен для короткого текста",
+        "reliability": "medium"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [
+      {
+        "domain": "sales",
+        "projection": "listing_create",
+        "reason": "publish_listing — irreversible publish"
+      },
+      {
+        "domain": "delivery",
+        "projection": "merchant_menu_publish",
+        "reason": "публикация меню"
+      }
+    ],
+    "shouldNotMatch": [
+      {
+        "domain": "messenger",
+        "projection": "send_message",
+        "reason": "message ephemeral, preview избыточен"
+      },
+      {
+        "domain": "reflect",
+        "projection": "mood_log",
+        "reason": "private-scope, нет counterparty"
+      }
+    ]
+  }
+}

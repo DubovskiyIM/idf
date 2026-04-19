@@ -1,0 +1,80 @@
+{
+  "id": "faceted-subcollection-filter",
+  "version": 1,
+  "status": "candidate",
+  "archetype": "detail",
+  "trigger": {
+    "requires": [
+      {
+        "kind": "sub-entity-exists",
+        "count": ">=1"
+      },
+      {
+        "kind": "entity-field",
+        "onSubEntity": true,
+        "fieldTypes": [
+          "enum"
+        ],
+        "minCount": 1,
+        "description": "classifier field like sentiment/status"
+      }
+    ]
+  },
+  "structure": {
+    "slot": "sections",
+    "description": "Within absorbed or authored sub-entity section on detail, surface horizontal segmented-control filter (All / <enum values>) above sub-entity list. Filters scoped to section, not global; preserves context of parent detail."
+  },
+  "rationale": {
+    "hypothesis": "Sub-collection lists longer than a screen need a low-friction narrowing mechanism. A single enum-axis filter as chip-group is discoverable without a modal, and enum values authored in ontology give meaningful facets 'for free'. Users comparing reviews/attempts/activity want to slice without losing the parent context.",
+    "evidence": [
+      {
+        "source": "indeed-mobile-job-board",
+        "description": "Company reviews section has 'All / Positive / Negative / Former / Current' chip filter above list",
+        "reliability": "high"
+      },
+      {
+        "source": "amazon-product-detail",
+        "description": "Review section with 'star rating / verified / photos' filter chips",
+        "reliability": "high"
+      },
+      {
+        "source": "github-issues",
+        "description": "Open/Closed pill filter on issue list within repo",
+        "reliability": "high"
+      }
+    ],
+    "counterexample": [
+      {
+        "source": "stripe-dashboard",
+        "description": "Sub-tables use full search+filter panel, not chip facets — works when sub-collection has 10+ filterable dimensions",
+        "reliability": "medium"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [
+      {
+        "domain": "sales",
+        "projection": "listing_detail",
+        "reason": "Bids sub-section with status enum (active/retracted/won) benefits from faceted filter"
+      },
+      {
+        "domain": "invest",
+        "projection": "portfolio_detail",
+        "reason": "Transactions sub-section filterable by kind (buy/sell/dividend)"
+      }
+    ],
+    "shouldNotMatch": [
+      {
+        "domain": "messenger",
+        "projection": "conversation_detail",
+        "reason": "Messages are chronological stream, not faceted"
+      },
+      {
+        "domain": "reflect",
+        "projection": "mood_entry_detail",
+        "reason": "Single entry, no sub-collection to filter"
+      }
+    ]
+  }
+}

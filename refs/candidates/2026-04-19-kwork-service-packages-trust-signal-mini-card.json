@@ -1,0 +1,77 @@
+{
+  "id": "trust-signal-mini-card",
+  "version": 1,
+  "status": "candidate",
+  "archetype": "detail",
+  "trigger": {
+    "requires": [
+      {
+        "kind": "entity-field",
+        "entity": "*Profile*",
+        "field": "rating"
+      },
+      {
+        "kind": "entity-field",
+        "entity": "*Profile*",
+        "field": "responseTime"
+      },
+      {
+        "kind": "entity-field",
+        "entity": "*Profile*",
+        "field": "verified"
+      }
+    ]
+  },
+  "structure": {
+    "slot": "sections",
+    "description": "В detail-проекции у mainEntity (покупка/бронь у seller'а) появляется секция 'seller mini-card': avatar, displayName + ≤3 trust-сигнала (rating, responseTime, completedOrders, verified-badge). Кликабельна к полному профилю."
+  },
+  "rationale": {
+    "hypothesis": "Покупательская evaluation — это в половине случаев доверие к продавцу, не к товару. Mini-card компактно инъектирует trust-сигналы прямо в solve-surface покупки без навигации к полному профилю.",
+    "evidence": [
+      {
+        "source": "kwork.ru",
+        "description": "В detail kwork'а справа блок продавца: avatar, имя, рейтинг ★4.9, время ответа '1 час'",
+        "reliability": "high"
+      },
+      {
+        "source": "etsy.com",
+        "description": "Shop-mini-card на listing detail",
+        "reliability": "high"
+      },
+      {
+        "source": "airbnb.com",
+        "description": "Host-card с Superhost badge и response-time",
+        "reliability": "high"
+      }
+    ],
+    "counterexample": [
+      {
+        "source": "amazon retail",
+        "description": "Продавец обычно скрыт — товар обезличен",
+        "reliability": "medium"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [
+      {
+        "domain": "booking",
+        "projection": "service_detail",
+        "reason": "Specialist с rating + responseTime + verified"
+      },
+      {
+        "domain": "sales",
+        "projection": "listing_detail",
+        "reason": "SellerProfile + rating"
+      }
+    ],
+    "shouldNotMatch": [
+      {
+        "domain": "invest",
+        "projection": "position_detail",
+        "reason": "Нет human-seller counterpart"
+      }
+    ]
+  }
+}

@@ -1,0 +1,76 @@
+{
+  "id": "hierarchy-tree-nav",
+  "version": 1,
+  "status": "candidate",
+  "archetype": "catalog",
+  "trigger": {
+    "requires": [
+      {
+        "kind": "entity-field",
+        "entity": "*",
+        "field": "parentId"
+      },
+      {
+        "kind": "reference",
+        "entity": "*"
+      }
+    ]
+  },
+  "structure": {
+    "slot": "sidebar",
+    "description": "Self-referential taxonomy (parentId FK на ту же сущность) разворачивается как двух-уровневое дерево-навигация слева от каталога: раздел → подраздел, выбор подраздела применяется как неявный filter."
+  },
+  "rationale": {
+    "hypothesis": "Иерархическая таксономия — это онтологический факт (parentId → same entity), а не фильтр; рендер её как дерева даёт пользователю глобальную mental map раньше, чем первую выдачу. Плоский chip-фильтр теряет масштаб при ≥50 узлах.",
+    "evidence": [
+      {
+        "source": "kwork.ru",
+        "description": "Каталог услуг открывается с двух-уровневым деревом категорий слева, правый столбец — grid карточек выбранной подкатегории",
+        "reliability": "high"
+      },
+      {
+        "source": "profi.ru",
+        "description": "Каталог специалистов с тем же паттерном: разделы Услуги → конкретные профили",
+        "reliability": "high"
+      },
+      {
+        "source": "yandex.market",
+        "description": "Дерево категорий товаров — каноничный marketplace-приём",
+        "reliability": "high"
+      }
+    ],
+    "counterexample": [
+      {
+        "source": "twitter feed",
+        "description": "Лента без taxonomy — tree-nav был бы шумом",
+        "reliability": "high"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [
+      {
+        "domain": "sales",
+        "projection": "listings_catalog",
+        "reason": "Category имеет parentId→Category (same-entity)"
+      },
+      {
+        "domain": "delivery",
+        "projection": "menu_browse",
+        "reason": "MenuItem group/subgroup может иметь иерархию"
+      }
+    ],
+    "shouldNotMatch": [
+      {
+        "domain": "planning",
+        "projection": "polls_feed",
+        "reason": "Poll без taxonomy-иерархии"
+      },
+      {
+        "domain": "reflect",
+        "projection": "mood_timeline",
+        "reason": "MoodEntry flat, нет self-ref FK"
+      }
+    ]
+  }
+}

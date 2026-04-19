@@ -1,0 +1,164 @@
+Uncovered-Domains Pattern Batch — 2026-04-19T10:03:04.707Z
+Targets: booking (Calendly, Cal.com, YClients) · messenger (WhatsApp, Telegram, Slack) · invest (Robinhood, Tinkoff, IBKR)
+Sources: calendly-scheduling, cal-com-scheduling, yclients-booking, whatsapp-mobile, telegram-mobile, slack-desktop, robinhood-mobile, tinkoff-investments, interactive-brokers-pro
+
+═══════════ calendly-scheduling ═══════════
+  started at 2026-04-19T10:03:04.709Z
+
+═══ Extract Mode: calendly-scheduling ═══
+
+Phase 1: Extracting domain model...
+  Saved: /Users/ignatdubovskiy/WebstormProjects/idf/refs/extracted/2026-04-19-calendly-scheduling.json
+
+Phase 2: Generating candidate pattern...
+
+  Already covered:
+    EventType as first-class template entity — card-grid dashboard with each card representing reusable scheduling configuration (duration + policy + integrations) → grid-card-layout
+    Round-robin / collective event-types implied m2m between EventType and TeamMember (host.scope vs team.scope) → subcollections
+    Payment gate sits between slot selection and Booking confirmation — capture_payment is irreversible (__irr high) with no-show deposit auto-capture via schedule rule → irreversible-confirm
+    Guest booker has no persistent identity — bookerEmail is the de-facto identifier, not a User entity → none-data-model-only
+    Calendar integration is single-host-scoped (ownerField: hostId), sync direction declared via writeEvents boolean → none-data-model-only
+
+Phase 3: Validating 7 candidate(s)...
+  calendar-date-slot-wizard: format ✅, overlap ✅
+  Saved: /Users/ignatdubovskiy/WebstormProjects/idf/refs/candidates/2026-04-19-calendly-scheduling-calendar-date-slot-wizard.json
+  public-token-surface: format ✅, overlap ✅
+  Saved: /Users/ignatdubovskiy/WebstormProjects/idf/refs/candidates/2026-04-19-calendly-scheduling-public-token-surface.json
+  base-plus-overrides-editor: format ✅, overlap ✅
+  Saved: /Users/ignatdubovskiy/WebstormProjects/idf/refs/candidates/2026-04-19-calendly-scheduling-base-plus-overrides-editor.json
+  derived-availability-overlay: format ✅, overlap ✅
+  Saved: /Users/ignatdubovskiy/WebstormProjects/idf/refs/candidates/2026-04-19-calendly-scheduling-derived-availability-overlay.json
+  dual-surface-owner-public: format ✅, overlap ✅
+  Saved: /Users/ignatdubovskiy/WebstormProjects/idf/refs/candidates/2026-04-19-calendly-scheduling-dual-surface-owner-public.json
+  temporal-offset-trigger-editor: format ✅, overlap ✅
+  Saved: /Users/ignatdubovskiy/WebstormProjects/idf/refs/candidates/2026-04-19-calendly-scheduling-temporal-offset-trigger-editor.json
+  aggregation-dashboard-with-export: format ✅, overlap ✅
+  Saved: /Users/ignatdubovskiy/WebstormProjects/idf/refs/candidates/2026-04-19-calendly-scheduling-aggregation-dashboard-with-export.json
+
+  Review candidates and promote to stable/ when ready.
+  calendly-scheduling finished in 2.6 min (exit 0)
+
+═══════════ cal-com-scheduling ═══════════
+  started at 2026-04-19T10:05:40.832Z
+
+═══ Extract Mode: cal-com-scheduling ═══
+
+Phase 1: Extracting domain model...
+  Saved: /Users/ignatdubovskiy/WebstormProjects/idf/refs/extracted/2026-04-19-cal-com-scheduling.json
+
+Phase 2: Generating candidate pattern...
+
+  Already covered:
+    Event Types presented as card-feed with per-type inline configuration entry → grid-card-layout
+    Host-moderated confirmation flow: booking starts in pending, host confirms or rejects → phase-aware-primary-cta
+
+Phase 3: Validating 11 candidate(s)...
+  status-tab-partitioned-feed: format ✅, overlap ✅
+  Saved: /Users/ignatdubovskiy/WebstormProjects/idf/refs/candidates/2026-04-19-cal-com-scheduling-status-tab-partitioned-feed.json
+  nested-section-config-form: format ✅, overlap ✅
+  Saved: /Users/ignatdubovskiy/WebstormProjects/idf/refs/candidates/2026-04-19-cal-com-scheduling-nested-section-config-form.json
+  declarative-form-builder: format ✅, overlap ✅
+  Saved: /Users/ignatdubovskiy/WebstormProjects/idf/refs/candidates/2026-04-19-cal-com-scheduling-declarative-form-builder.json
+  plugin-marketplace-feed: format ✅, overlap ✅
+  Saved: /Users/ignatdubovskiy/WebstormProjects/idf/refs/candidates/2026-04-19-cal-com-scheduling-plugin-marketplace-feed.json
+  precursor-routing-form: format ✅, overlap ✅
+  Saved: /Users/ignatdubovskiy/WebstormProjects/idf/refs/candidates/2026-04-19-cal-com-scheduling-precursor-routing-form.json
+  embeddable-distribution-surface: format ✅, overlap ✅
+  Saved: /Users/ignatdubovskiy/WebstormProjects/idf/refs/candidates/2026-04-19-cal-com-scheduling-embeddable-distribution-surface.json
+  auto-detected-context-with-override: format ✅, overlap ✅
+  Saved: /Users/ignatdubovskiy/WebstormProjects/idf/refs/candidates/2026-04-19-cal-com-scheduling-auto-detected-context-with-override.json
+  funnel-metrics-dashboard: format ✅, overlap ✅
+  Saved: /Users/ignatdubovskiy/WebstormProjects/idf/refs/candidates/2026-04-19-cal-com-scheduling-funnel-metrics-dashboard.json
+  scoped-credential-management: format ✅, overlap ✅
+  Saved: /Users/ignatdubovskiy/WebstormProjects/idf/refs/candidates/2026-04-19-cal-com-scheduling-scoped-credential-management.json
+  trigger-action-list-workflow: format ✅, overlap ✅
+  Saved: /Users/ignatdubovskiy/WebstormProjects/idf/refs/candidates/2026-04-19-cal-com-scheduling-trigger-action-list-workflow.json
+  conditional-sub-section-reveal: format ✅, overlap ✅
+  Saved: /Users/ignatdubovskiy/WebstormProjects/idf/refs/candidates/2026-04-19-cal-com-scheduling-conditional-sub-section-reveal.json
+
+  Review candidates and promote to stable/ when ready.
+  cal-com-scheduling finished in 3.2 min (exit 0)
+
+═══════════ yclients-booking ═══════════
+  started at 2026-04-19T10:08:50.409Z
+
+═══ Extract Mode: yclients-booking ═══
+
+Phase 1: Extracting domain model...
+  Saved: /Users/ignatdubovskiy/WebstormProjects/idf/refs/extracted/2026-04-19-yclients-booking.json
+
+Phase 2: Generating candidate pattern...
+Error: Claude exited 1: 
+  yclients-booking finished in 0.8 min (exit 1)
+  error: yclients-booking failed with exit 1
+
+═══════════ whatsapp-mobile ═══════════
+  started at 2026-04-19T10:09:37.779Z
+
+═══ Extract Mode: whatsapp-mobile ═══
+
+Phase 1: Extracting domain model...
+Error: Claude exited 1: 
+  whatsapp-mobile finished in 0.1 min (exit 1)
+  error: whatsapp-mobile failed with exit 1
+
+═══════════ telegram-mobile ═══════════
+  started at 2026-04-19T10:09:40.786Z
+
+═══ Extract Mode: telegram-mobile ═══
+
+Phase 1: Extracting domain model...
+Error: Claude exited 1: 
+  telegram-mobile finished in 0.0 min (exit 1)
+  error: telegram-mobile failed with exit 1
+
+═══════════ slack-desktop ═══════════
+  started at 2026-04-19T10:09:43.637Z
+
+═══ Extract Mode: slack-desktop ═══
+
+Phase 1: Extracting domain model...
+Error: Claude exited 1: 
+  slack-desktop finished in 0.0 min (exit 1)
+  error: slack-desktop failed with exit 1
+
+═══════════ robinhood-mobile ═══════════
+  started at 2026-04-19T10:09:46.498Z
+
+═══ Extract Mode: robinhood-mobile ═══
+
+Phase 1: Extracting domain model...
+Error: Claude exited 1: 
+  robinhood-mobile finished in 0.0 min (exit 1)
+  error: robinhood-mobile failed with exit 1
+
+═══════════ tinkoff-investments ═══════════
+  started at 2026-04-19T10:09:49.341Z
+
+═══ Extract Mode: tinkoff-investments ═══
+
+Phase 1: Extracting domain model...
+Error: Claude exited 1: 
+  tinkoff-investments finished in 0.1 min (exit 1)
+  error: tinkoff-investments failed with exit 1
+
+═══════════ interactive-brokers-pro ═══════════
+  started at 2026-04-19T10:09:52.408Z
+
+═══ Extract Mode: interactive-brokers-pro ═══
+
+Phase 1: Extracting domain model...
+Error: Claude exited 1: 
+  interactive-brokers-pro finished in 0.0 min (exit 1)
+  error: interactive-brokers-pro failed with exit 1
+
+═══ BATCH DONE in 6.8 min ═══
+  ✓ calendly-scheduling (2.6 min)
+  ✓ cal-com-scheduling (3.2 min)
+  ✗ yclients-booking
+  ✗ whatsapp-mobile
+  ✗ telegram-mobile
+  ✗ slack-desktop
+  ✗ robinhood-mobile
+  ✗ tinkoff-investments
+  ✗ interactive-brokers-pro

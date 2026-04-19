@@ -1,0 +1,82 @@
+{
+  "id": "inline-social-proof-row",
+  "version": 1,
+  "status": "candidate",
+  "archetype": "catalog",
+  "trigger": {
+    "requires": [
+      {
+        "kind": "sub-entity-exists",
+        "foreignKey": "toMainEntity",
+        "entityKind": "reference"
+      },
+      {
+        "kind": "entity-field",
+        "fields": [
+          "count",
+          "percent",
+          "photo",
+          "name"
+        ],
+        "minMatch": 2
+      }
+    ]
+  },
+  "structure": {
+    "slot": "body",
+    "description": "Под title карточки — secondary row с агрегатными данными из reference-сущности: количество связей, процент совпадения, аватар+имя ответственного. Не primary decision-signal, но reduces cost-of-evaluation."
+  },
+  "rationale": {
+    "hypothesis": "Proof-данные о связях (N mutual connections / X% match / known recruiter) снижают скрининг-стоимость с O(n) открытий detail до O(1) scanning. Без inline proof пользователь open'ает каждую карточку, чтобы оценить relevance.",
+    "evidence": [
+      {
+        "source": "linkedin-jobs-mobile",
+        "description": "12 connections / 7 of 10 skills match / recruiter photo+name inline в job card",
+        "reliability": "high"
+      },
+      {
+        "source": "airbnb",
+        "description": "Superhost badge + review count+rating inline в listing card",
+        "reliability": "high"
+      },
+      {
+        "source": "amazon",
+        "description": "Rating stars + review count inline на product card",
+        "reliability": "high"
+      }
+    ],
+    "counterexample": [
+      {
+        "source": "tinder",
+        "description": "Inline social proof вреден — продукт намеренно скрывает mutual friends до match'а",
+        "reliability": "medium"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [
+      {
+        "domain": "sales",
+        "projection": "listings_catalog",
+        "reason": "рейтинг продавца + количество review inline на карточке listing"
+      },
+      {
+        "domain": "delivery",
+        "projection": "merchants_catalog",
+        "reason": "рейтинг + delivery-time + review-count inline"
+      }
+    ],
+    "shouldNotMatch": [
+      {
+        "domain": "workflow",
+        "projection": "workflows_catalog",
+        "reason": "workflow не имеет reference-entity с proof-метриками"
+      },
+      {
+        "domain": "lifequest",
+        "projection": "goals_catalog",
+        "reason": "цели — personal scope, social-proof не применим"
+      }
+    ]
+  }
+}

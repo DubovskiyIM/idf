@@ -1,0 +1,78 @@
+{
+  "id": "funnel-metrics-dashboard",
+  "version": 1,
+  "status": "candidate",
+  "archetype": "dashboard",
+  "trigger": {
+    "requires": [
+      {
+        "kind": "entity-field",
+        "entity": "insights",
+        "field": "metric",
+        "note": "dashboard с series метрик"
+      },
+      {
+        "kind": "intent-count",
+        "min": 3,
+        "note": "≥3 sequential-intent'а формирующие воронку (visit→slot→book→attend)"
+      }
+    ]
+  },
+  "structure": {
+    "slot": "body",
+    "description": "Dashboard показывает sequential-стадии пользовательского пути (visit→slot→book→attend) как connected funnel-primitive с абсолютными и % числами между этапами. Scope-фильтр (team/member/date-range) применяется ко всей воронке."
+  },
+  "rationale": {
+    "hypothesis": "Когда intents образуют линейную последовательность с drop-off'ами на каждом шаге, отдельные counters скрывают узкие места. Funnel визуализирует именно conversion rate, а не абсолютные числа. Owner видит, где именно падает retention.",
+    "evidence": [
+      {
+        "source": "cal-com",
+        "description": "Insights dashboard per team/member с funnel (visit→slot→book→attend)",
+        "reliability": "high"
+      },
+      {
+        "source": "mixpanel-funnels",
+        "description": "Funnel — core analytics surface продукта",
+        "reliability": "high"
+      },
+      {
+        "source": "amplitude",
+        "description": "Funnel charts для conversion-focused domains",
+        "reliability": "high"
+      }
+    ],
+    "counterexample": [
+      {
+        "source": "non-sequential-metrics",
+        "description": "Метрики без sequence (MAU/DAU) — bar chart, не funnel",
+        "reliability": "high"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [
+      {
+        "domain": "sales",
+        "projection": "listings_analytics",
+        "reason": "view→watchlist→bid→win funnel"
+      },
+      {
+        "domain": "delivery",
+        "projection": "merchant_dashboard",
+        "reason": "view→cart→order→delivered funnel"
+      }
+    ],
+    "shouldNotMatch": [
+      {
+        "domain": "messenger",
+        "projection": "conversation_list",
+        "reason": "нет sequential conversion steps"
+      },
+      {
+        "domain": "reflect",
+        "projection": "mood_dashboard",
+        "reason": "time-series, не funnel"
+      }
+    ]
+  }
+}

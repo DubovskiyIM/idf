@@ -1,0 +1,78 @@
+{
+  "id": "promoted-slot-injection",
+  "version": 1,
+  "status": "candidate",
+  "archetype": "catalog",
+  "trigger": {
+    "requires": [
+      {
+        "kind": "entity-kind",
+        "entity": "PromotionSlot|SponsoredSlot|FeaturedPlacement",
+        "kind_value": "reference"
+      },
+      {
+        "kind": "entity-field",
+        "entity": "*",
+        "field": "position|rank|tier",
+        "role": "rank"
+      }
+    ]
+  },
+  "structure": {
+    "slot": "body",
+    "description": "Первые N позиций каталога — промо-слоты, маркируются badge (TOP / Рекомендуем); ranking = композиция органического и paid-tier, promoted-кратч выводится как отдельная визуальная прослойка"
+  },
+  "rationale": {
+    "hypothesis": "Явный badge на промо-слоте сохраняет доверие к ranking'у при монетизации — юзер видит, что позиция куплена, и может сравнить с органическим хвостом",
+    "evidence": [
+      {
+        "source": "profi.ru",
+        "description": "2-4 верхние карточки с «TOP», рядом с органическими",
+        "reliability": "high"
+      },
+      {
+        "source": "yandex.market",
+        "description": "«Спонсор» над карточкой товара в поиске",
+        "reliability": "high"
+      },
+      {
+        "source": "google-search",
+        "description": "«Реклама» лейбл над paid-результатами",
+        "reliability": "high"
+      }
+    ],
+    "counterexample": [
+      {
+        "source": "spotify-playlist",
+        "description": "Нет монетизированных позиций внутри плейлиста — badge избыточен",
+        "reliability": "medium"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [
+      {
+        "domain": "sales",
+        "projection": "listings_browse",
+        "reason": "маркетплейс с платными позициями"
+      },
+      {
+        "domain": "delivery",
+        "projection": "merchants_browse",
+        "reason": "рестораны могут покупать верхние позиции"
+      }
+    ],
+    "shouldNotMatch": [
+      {
+        "domain": "reflect",
+        "projection": "entries_feed",
+        "reason": "нет монетизации порядка"
+      },
+      {
+        "domain": "workflow",
+        "projection": "nodes_canvas",
+        "reason": "нет entity PromotionSlot"
+      }
+    ]
+  }
+}

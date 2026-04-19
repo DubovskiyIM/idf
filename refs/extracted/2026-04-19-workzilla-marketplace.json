@@ -1,0 +1,324 @@
+{
+  "source": "workzilla-task-feed-and-safe-deal",
+  "entities": [
+    {
+      "name": "Task",
+      "fields": [
+        "title",
+        "description",
+        "category",
+        "budgetType",
+        "budgetMin",
+        "budgetMax",
+        "deadline",
+        "status",
+        "isSuperTask",
+        "safeDealOnly",
+        "verifiedPerformersOnly",
+        "noTestAssignment",
+        "attachments",
+        "bidsCount",
+        "customerId",
+        "selectedBidId",
+        "autoReleaseAt"
+      ],
+      "statusValues": [
+        "opened",
+        "bidders",
+        "in_work",
+        "waiting_review",
+        "completed",
+        "disputed",
+        "cancelled"
+      ]
+    },
+    {
+      "name": "Category",
+      "fields": [
+        "name",
+        "slug",
+        "parentId"
+      ]
+    },
+    {
+      "name": "Bid",
+      "fields": [
+        "taskId",
+        "performerId",
+        "proposedPrice",
+        "proposedDeadline",
+        "message",
+        "status",
+        "createdAt"
+      ],
+      "foreignKey": "taskId→Task",
+      "statusValues": [
+        "pending",
+        "selected",
+        "rejected",
+        "withdrawn"
+      ]
+    },
+    {
+      "name": "SafeDeal",
+      "fields": [
+        "taskId",
+        "performerId",
+        "customerId",
+        "escrowAmount",
+        "state",
+        "startedAt",
+        "submittedAt",
+        "autoReleaseAt",
+        "arbiterId"
+      ],
+      "foreignKey": "taskId→Task",
+      "statusValues": [
+        "funded",
+        "in_work",
+        "waiting_review",
+        "accepted",
+        "revision_requested",
+        "disputed",
+        "released",
+        "refunded"
+      ]
+    },
+    {
+      "name": "ChatMessage",
+      "fields": [
+        "dealId",
+        "authorId",
+        "content",
+        "attachments",
+        "createdAt"
+      ],
+      "foreignKey": "dealId→SafeDeal"
+    },
+    {
+      "name": "Attachment",
+      "fields": [
+        "taskId",
+        "dealId",
+        "filename",
+        "url",
+        "uploadedBy",
+        "uploadedAt"
+      ],
+      "foreignKey": "taskId→Task"
+    },
+    {
+      "name": "Dispute",
+      "fields": [
+        "dealId",
+        "openedBy",
+        "reason",
+        "status",
+        "arbiterId",
+        "resolution",
+        "resolvedAt"
+      ],
+      "foreignKey": "dealId→SafeDeal",
+      "statusValues": [
+        "open",
+        "under_review",
+        "resolved_for_customer",
+        "resolved_for_performer",
+        "split"
+      ]
+    },
+    {
+      "name": "Review",
+      "fields": [
+        "dealId",
+        "authorId",
+        "targetId",
+        "rating",
+        "comment",
+        "createdAt"
+      ],
+      "foreignKey": "dealId→SafeDeal"
+    },
+    {
+      "name": "User",
+      "fields": [
+        "username",
+        "avatar",
+        "role",
+        "isVerifiedCustomer",
+        "isNewCustomer",
+        "isVerifiedPerformer",
+        "performerTier",
+        "rating",
+        "completedTasksCount",
+        "positiveReviewsPercent",
+        "balance"
+      ],
+      "statusValues": [
+        "novice",
+        "specialist",
+        "pro",
+        "master"
+      ]
+    },
+    {
+      "name": "SavedFilter",
+      "fields": [
+        "userId",
+        "categories",
+        "budgetMin",
+        "budgetMax",
+        "safeDealOnly",
+        "verifiedPerformersOnly",
+        "noTestAssignment",
+        "sortBy"
+      ],
+      "foreignKey": "userId→User"
+    }
+  ],
+  "intents": [
+    {
+      "id": "publish_task",
+      "α": "add",
+      "creates": "Task",
+      "confirmation": "form"
+    },
+    {
+      "id": "edit_task",
+      "α": "replace",
+      "target": "task.description",
+      "confirmation": "form"
+    },
+    {
+      "id": "cancel_task",
+      "α": "remove",
+      "target": "entities",
+      "confirmation": "click",
+      "irreversibility": "high"
+    },
+    {
+      "id": "filter_feed",
+      "α": "replace",
+      "target": "savedFilter.categories",
+      "confirmation": "click"
+    },
+    {
+      "id": "sort_feed",
+      "α": "replace",
+      "target": "savedFilter.sortBy",
+      "confirmation": "click"
+    },
+    {
+      "id": "submit_bid",
+      "α": "add",
+      "creates": "Bid",
+      "confirmation": "enter"
+    },
+    {
+      "id": "withdraw_bid",
+      "α": "replace",
+      "target": "bid.status",
+      "confirmation": "click"
+    },
+    {
+      "id": "select_performer",
+      "α": "replace",
+      "target": "task.selectedBidId",
+      "confirmation": "form",
+      "irreversibility": "high"
+    },
+    {
+      "id": "start_work",
+      "α": "replace",
+      "target": "safeDeal.state",
+      "confirmation": "click"
+    },
+    {
+      "id": "submit_for_review",
+      "α": "replace",
+      "target": "safeDeal.state",
+      "confirmation": "click"
+    },
+    {
+      "id": "accept_work",
+      "α": "replace",
+      "target": "safeDeal.state",
+      "confirmation": "click",
+      "irreversibility": "high"
+    },
+    {
+      "id": "request_revision",
+      "α": "replace",
+      "target": "safeDeal.state",
+      "confirmation": "form"
+    },
+    {
+      "id": "open_dispute",
+      "α": "add",
+      "creates": "Dispute",
+      "confirmation": "form",
+      "irreversibility": "high"
+    },
+    {
+      "id": "send_message",
+      "α": "add",
+      "creates": "ChatMessage",
+      "confirmation": "enter"
+    },
+    {
+      "id": "upload_attachment",
+      "α": "add",
+      "creates": "Attachment",
+      "confirmation": "click"
+    },
+    {
+      "id": "resolve_dispute",
+      "α": "replace",
+      "target": "dispute.status",
+      "confirmation": "form",
+      "irreversibility": "high"
+    },
+    {
+      "id": "auto_release_escrow",
+      "α": "replace",
+      "target": "safeDeal.state",
+      "confirmation": "click",
+      "irreversibility": "high"
+    },
+    {
+      "id": "leave_review",
+      "α": "add",
+      "creates": "Review",
+      "confirmation": "form"
+    },
+    {
+      "id": "view_performer_profile",
+      "α": "replace",
+      "target": "ui.route",
+      "confirmation": "click"
+    }
+  ],
+  "roles": [
+    "owner",
+    "viewer",
+    "agent",
+    "observer"
+  ],
+  "observations": [
+    "Feed с 4 сортировками (Новые / Дорогие / Срочные / По рейтингу автора) — sort-as-parameter, не separate-tabs",
+    "Карточка задачи в ленте имеет quick-apply inline-форму (composerEntry → Bid), не модалка",
+    "Бейджи заказчика (Верифицированный / Новый) — signal trust на уровне card, а не только в профиле",
+    "Супер-задача как булев бейдж повышенного доверия/бюджета — candidate для pattern highlight-important",
+    "Бюджет — polymorphic: fixed или range (budgetType discriminator + budgetMin/budgetMax)",
+    "Детали задачи — двухколоночный layout: описание слева, отклики справа (bids-as-sidebar, не subcollection-below)",
+    "Bid — single-select parent-child: выбор одного переводит остальные в rejected (workflow constraint)",
+    "select_performer irreversibility:high — confirmation-dialog с summary (escrow списание)",
+    "SafeDeal — явная state-machine с buttons-as-transitions, видимыми обеим сторонам с разными capabilities",
+    "Видимый countdown до auto-release — temporal scheduler (§4) с revokeOn=customer_response",
+    "Dispute активирует arbiter (observer+moderator) с read-access ко всей переписке и attachments",
+    "Tier-badge (Новичок/Специалист/Профи/Мастер) — derived from completedTasksCount threshold, не authored",
+    "Rating (4.92/5 + %positive) — aggregation-rule v1.5 поверх Review.rating",
+    "Фильтры левой колонкой (категории-checkboxes + budget-slider + 3 boolean) — классический catalog-filter pattern",
+    "Roles 4-way: customer (owner-заказчик), performer (owner-исполнитель), arbiter (moderator→agent по §5), observer"
+  ]
+}

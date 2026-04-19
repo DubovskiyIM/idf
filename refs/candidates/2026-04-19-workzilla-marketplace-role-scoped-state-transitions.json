@@ -1,0 +1,79 @@
+{
+  "id": "role-scoped-state-transitions",
+  "version": 1,
+  "status": "candidate",
+  "archetype": "detail",
+  "trigger": {
+    "requires": [
+      {
+        "kind": "entity-field",
+        "entity": "mainEntity",
+        "field": "state",
+        "statusValues": "≥4"
+      },
+      {
+        "kind": "has-role",
+        "base": "owner",
+        "minCount": 2
+      },
+      {
+        "kind": "intent-effect",
+        "α": "replace",
+        "target": "*.state",
+        "roleScope": "role-specific"
+      }
+    ]
+  },
+  "structure": {
+    "slot": "primaryCTA",
+    "description": "Когда один state-machine видим ≥2 owner-ролям (customer+performer), primary CTA фильтруется не только по phase, но и по role: в 'waiting_review' customer видит 'Принять/Запросить доработку', performer видит 'Ждём решение' (disabled / read-only). Расширение phase-aware-primary-cta ролевой осью."
+  },
+  "rationale": {
+    "hypothesis": "Двое участников в одной сделке с симметричным detail-view, но разными available-actions. Одинаковые buttons, но некоторые disabled — создают confusion ('почему у меня красная, а у него зелёная?'). Role-scoped CTA: каждая роль видит только свои transition'ы как actionable, чужие — как status-indicator.",
+    "evidence": [
+      {
+        "source": "workzilla-marketplace",
+        "description": "SafeDeal.waiting_review: customer=[accept, request_revision, open_dispute], performer=[wait-indicator]; в accepted наоборот",
+        "reliability": "high"
+      },
+      {
+        "source": "fiverr-order",
+        "description": "seller delivers → buyer review CTA only on buyer view",
+        "reliability": "high"
+      }
+    ],
+    "counterexample": [
+      {
+        "source": "single-owner-entity",
+        "description": "Когда только один owner (мой проект в lifequest) — role-ось избыточна, достаточно phase-aware",
+        "reliability": "high"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [
+      {
+        "domain": "sales",
+        "projection": "order_detail",
+        "reason": "buyer и seller видят разные transition-кнопки"
+      },
+      {
+        "domain": "delivery",
+        "projection": "delivery_detail",
+        "reason": "customer / courier / merchant — разные capabilities"
+      }
+    ],
+    "shouldNotMatch": [
+      {
+        "domain": "lifequest",
+        "projection": "goal_detail",
+        "reason": "single owner, phase-aware-primary-cta достаточен"
+      },
+      {
+        "domain": "reflect",
+        "projection": "mood_entry_detail",
+        "reason": "приватный, нет multi-role"
+      }
+    ]
+  }
+}

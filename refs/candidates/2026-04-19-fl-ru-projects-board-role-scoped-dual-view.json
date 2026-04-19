@@ -1,0 +1,75 @@
+{
+  "id": "role-scoped-dual-view",
+  "version": 1,
+  "status": "candidate",
+  "archetype": "detail",
+  "trigger": {
+    "requires": [
+      {
+        "kind": "sub-entity-exists",
+        "entity": "ProjectResponse",
+        "foreignKey": "projectId"
+      },
+      {
+        "kind": "has-role",
+        "role": "customer"
+      },
+      {
+        "kind": "has-role",
+        "role": "freelancer"
+      }
+    ]
+  },
+  "structure": {
+    "slot": "sections",
+    "description": "Sub-collection секция рендерится с разной cardinality для разных ролей: owner-view показывает полный list с sort/filter, participant-view показывает only-self + agg-counter ('ещё N откликов'). Фильтрация не на clientside, а через filterWorldForRole с role.scope."
+  },
+  "rationale": {
+    "hypothesis": "Если entity имеет owner-role и peer-participant-роль с доступом к одному sub-collection — UI-манифестация должна различаться: owner видит aggregate для решения, participant видит self для контекста. Show-all-to-all раскрывает конкурентную инфу (другие proposed prices); show-none-to-participant лишает его anchor'а ('много / мало откликнулось').",
+    "evidence": [
+      {
+        "source": "fl-ru",
+        "description": "Детал проекта: customer видит всех откликнувшихся с ценами, freelancer — только свой отклик + 'ещё 12 откликов'",
+        "reliability": "high"
+      },
+      {
+        "source": "upwork",
+        "description": "Customer видит proposals list; freelancer — только own proposal",
+        "reliability": "high"
+      }
+    ],
+    "counterexample": [
+      {
+        "source": "slack-channel",
+        "description": "Все участники канала видят все сообщения симметрично — peer-network, не owner-scoped",
+        "reliability": "high"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [
+      {
+        "domain": "sales",
+        "projection": "listing_detail",
+        "reason": "Seller видит все Bid'ы, bidder — только свой"
+      },
+      {
+        "domain": "planning",
+        "projection": "poll_detail",
+        "reason": "Poll-owner видит all votes, participant — свой + aggregate"
+      }
+    ],
+    "shouldNotMatch": [
+      {
+        "domain": "messenger",
+        "projection": "conversation_detail",
+        "reason": "Все participants равноправны в чтении messages"
+      },
+      {
+        "domain": "reflect",
+        "projection": "mood_entry_detail",
+        "reason": "Single-owner entity, нет peer-role"
+      }
+    ]
+  }
+}

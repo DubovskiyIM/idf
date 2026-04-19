@@ -1,0 +1,81 @@
+{
+  "id": "multi-step-wizard-with-progress",
+  "version": 1,
+  "status": "candidate",
+  "archetype": "catalog",
+  "trigger": {
+    "requires": [
+      {
+        "kind": "intent-creates",
+        "entity": "*Draft"
+      },
+      {
+        "kind": "entity-field",
+        "entity": "*Draft",
+        "field": "currentStep|draftStep",
+        "role": "progress"
+      },
+      {
+        "kind": "intent-effect",
+        "target": "orderDraft.currentStep|draftDraft.currentStep"
+      }
+    ]
+  },
+  "structure": {
+    "slot": "body",
+    "description": "Многошаговый wizard с progress-bar: start_*_draft → fill_*_step → advance_*_step → publish; каждый шаг renders as form-archetype инстанс с доступом к draft state"
+  },
+  "rationale": {
+    "hypothesis": "Крупный form (≥5 полей разнородных) лучше нарезать на шаги с progress-bar: снижается drop-off, юзер видит прогресс, draft сохраняется между шагами",
+    "evidence": [
+      {
+        "source": "profi.ru",
+        "description": "6-8 шагов для order creation с progress-bar сверху",
+        "reliability": "high"
+      },
+      {
+        "source": "stripe-checkout",
+        "description": "3-шаговый wizard с явной progress-полоской",
+        "reliability": "high"
+      },
+      {
+        "source": "turbotax",
+        "description": "Многошаговая декларация с progress",
+        "reliability": "high"
+      }
+    ],
+    "counterexample": [
+      {
+        "source": "google-form",
+        "description": "Длинный single-page form работает для коротких опросов",
+        "reliability": "medium"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [
+      {
+        "domain": "delivery",
+        "projection": "order_checkout",
+        "reason": "address → items → payment wizard"
+      },
+      {
+        "domain": "booking",
+        "projection": "booking_create",
+        "reason": "specialist → slot → details wizard"
+      }
+    ],
+    "shouldNotMatch": [
+      {
+        "domain": "reflect",
+        "projection": "mood_log",
+        "reason": "одношаговый лог без draft"
+      },
+      {
+        "domain": "messenger",
+        "projection": "send_message",
+        "reason": "single composer, нет draft-entity"
+      }
+    ]
+  }
+}

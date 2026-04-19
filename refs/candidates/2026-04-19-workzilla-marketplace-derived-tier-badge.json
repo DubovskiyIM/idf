@@ -1,0 +1,74 @@
+{
+  "id": "derived-tier-badge",
+  "version": 1,
+  "status": "candidate",
+  "archetype": "detail",
+  "trigger": {
+    "requires": [
+      {
+        "kind": "entity-field",
+        "entity": "User|Actor",
+        "field": "*Count|*Total",
+        "semanticRole": "cumulative"
+      },
+      {
+        "kind": "intent-effect",
+        "α": "replace",
+        "target": "*.tier|*.rank|*.level",
+        "basis": "threshold|aggregation"
+      }
+    ]
+  },
+  "structure": {
+    "slot": "header",
+    "description": "Tier-label (Новичок / Специалист / Профи / Мастер) — чисто derived-поле от threshold-правил над cumulative-метрикой. Визуализируется бейджем в header профиля + inline на карточках (см. trust-signal-badges)."
+  },
+  "rationale": {
+    "hypothesis": "Authored tier создаёт inflation (каждый продавец 'Gold'). Derived tier от прозрачного threshold даёт калиброванную шкалу доверия: и автор видит 'сколько до следующего', и viewer — что bar реальный.",
+    "evidence": [
+      {
+        "source": "workzilla-marketplace",
+        "description": "completedTasksCount + positiveReviewsPercent → tier ∈ {novice,specialist,pro,master}",
+        "reliability": "high"
+      },
+      {
+        "source": "stackoverflow",
+        "description": "reputation → derived privileges/badges",
+        "reliability": "high"
+      }
+    ],
+    "counterexample": [
+      {
+        "source": "enterprise-sales-badge",
+        "description": "'Partner Gold' часто authored-от-условий-контракта, не от метрики",
+        "reliability": "medium"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [
+      {
+        "domain": "sales",
+        "projection": "seller_profile",
+        "reason": "tier от completed-deals + rating"
+      },
+      {
+        "domain": "booking",
+        "projection": "specialist_profile",
+        "reason": "tier от completed-bookings + rating"
+      }
+    ],
+    "shouldNotMatch": [
+      {
+        "domain": "messenger",
+        "projection": "contact_profile",
+        "reason": "нет tier-концепции"
+      },
+      {
+        "domain": "lifequest",
+        "projection": "user_profile",
+        "reason": "приватная прогрессия — level, но не tier-для-других"
+      }
+    ]
+  }
+}

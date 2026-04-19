@@ -1,0 +1,67 @@
+{
+  "id": "dual-cta-branching",
+  "version": 1,
+  "status": "candidate",
+  "archetype": "detail",
+  "trigger": {
+    "requires": [
+      {
+        "kind": "intent-creates",
+        "entity": "<same>",
+        "min": 2
+      },
+      {
+        "kind": "intent-confirmation",
+        "distinct": true,
+        "min": 2
+      }
+    ]
+  },
+  "structure": {
+    "slot": "primaryCTA",
+    "description": "Два visually-equal primary CTA на detail, создающих одну и ту же сущность разными путями (internal wizard vs external redirect, form vs click). Разные confirmation-типы сигнализируют branch-decision пользователю до тапа."
+  },
+  "rationale": {
+    "hypothesis": "Наивный подход — один primary CTA — вынуждает лендить на disambiguating modal после тапа; branch-decision должен быть видим до commitment, потому что стоимость branch'ей ассиметрична (одно = 30s inline wizard, другое = 5 min external site + re-login).",
+    "evidence": [
+      {
+        "source": "linkedin-jobs-mobile",
+        "description": "Easy Apply (filled badge) + Apply on company site (outline) бок-о-бок; пользователь выбирает до commitment",
+        "reliability": "high"
+      },
+      {
+        "source": "github-pr-merge",
+        "description": "Merge / Squash / Rebase — три CTA с разной семантикой коммита",
+        "reliability": "high"
+      }
+    ],
+    "counterexample": [
+      {
+        "source": "stripe-checkout",
+        "description": "Один Pay Now CTA — ветвление метода оплаты скрыто под tab'ами выше CTA, потому что стоимость branch'ей симметрична",
+        "reliability": "medium"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [
+      {
+        "domain": "invest",
+        "projection": "asset_detail",
+        "reason": "Buy via advisor / Buy direct — два create-пути Position с разным confirmation"
+      }
+    ],
+    "shouldNotMatch": [
+      {
+        "domain": "messenger",
+        "projection": "conversation_detail",
+        "reason": "send_message — single CTA, нет branching create-пути"
+      },
+      {
+        "domain": "booking",
+        "projection": "service_detail",
+        "reason": "book_slot — один create-path"
+      }
+    ]
+  }
+}

@@ -1,0 +1,81 @@
+{
+  "id": "quick-apply-subentity-cta",
+  "version": 1,
+  "status": "candidate",
+  "archetype": "catalog",
+  "trigger": {
+    "requires": [
+      {
+        "kind": "intent-creates",
+        "entity": "sub-entity",
+        "foreignKeyToMainEntity": true
+      },
+      {
+        "kind": "intent-confirmation",
+        "value": "click"
+      },
+      {
+        "kind": "intent-count",
+        "min": 1,
+        "filter": "creates-sub-entity"
+      }
+    ]
+  },
+  "structure": {
+    "slot": "primaryCTA",
+    "description": "Intent, создающий sub-entity с FK на card-сущность (Application ↔ Vacancy, Bid ↔ Listing), вышивается прямой click-кнопкой на card — без перехода в detail. Если у intent есть optional form, он раскрывается в bottom-sheet modal по требованию."
+  },
+  "rationale": {
+    "hypothesis": "Основной conversion-action каталога — создание sub-entity относительно карточки. Перенос CTA на уровень карточки (а не detail) сокращает conversion-funnel: catalog→click→confirm вместо catalog→card→detail→CTA→confirm. Optional form не блокирует быстрый путь.",
+    "evidence": [
+      {
+        "source": "hh-ru-mobile",
+        "description": "'Откликнуться' — primary button на каждой vacancy-карточке, модалка с resume-select вторична",
+        "reliability": "high"
+      },
+      {
+        "source": "tinder-like",
+        "description": "Swipe / click 'Like' создаёт Match/Like sub-entity одним жестом",
+        "reliability": "high"
+      },
+      {
+        "source": "ebay-mobile",
+        "description": "'Buy it now' на листинг-карточке minuит detail-step",
+        "reliability": "medium"
+      }
+    ],
+    "counterexample": [
+      {
+        "source": "b2b-marketplace",
+        "description": "Когда sub-entity требует много полей (RFQ, контракт), прямой CTA на card повышает abandonment — нужен detail-scan",
+        "reliability": "medium"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [
+      {
+        "domain": "sales",
+        "projection": "listing_catalog",
+        "reason": "place_bid создаёт Bid с FK на Listing — применим как prominent card-CTA"
+      },
+      {
+        "domain": "booking",
+        "projection": "specialist_catalog",
+        "reason": "book_slot создаёт Booking с FK на Specialist — 'Записаться' прямо на карточке"
+      }
+    ],
+    "shouldNotMatch": [
+      {
+        "domain": "workflow",
+        "projection": "workflow_catalog",
+        "reason": "Execution создаётся сложным run-запросом, не quick-action"
+      },
+      {
+        "domain": "reflect",
+        "projection": "hypothesis_list",
+        "reason": "HypothesisEvidence требует контекста и не подходит для одноклика из каталога"
+      }
+    ]
+  }
+}

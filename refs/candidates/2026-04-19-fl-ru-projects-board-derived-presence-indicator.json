@@ -1,0 +1,71 @@
+{
+  "id": "derived-presence-indicator",
+  "version": 1,
+  "status": "candidate",
+  "archetype": "catalog",
+  "trigger": {
+    "requires": [
+      {
+        "kind": "entity-field",
+        "entity": "mainEntity",
+        "field": "lastSeenAt"
+      },
+      {
+        "kind": "field-role-present",
+        "role": "datetime"
+      }
+    ]
+  },
+  "structure": {
+    "slot": "body",
+    "description": "Derived boolean online = (now - lastSeenAt < N мин) рендерится как цветной dot на avatar + text-chip 'Онлайн' / 'Был N минут назад'; в toolbar добавляется filter-toggle 'Онлайн сейчас' и sort option 'По активности'."
+  },
+  "rationale": {
+    "hypothesis": "Presence — derived property, но UI должен трактовать её как first-class: пользователь фильтрует именно по 'сейчас доступен', не по абсолютному timestamp. Show-raw-datetime ломает сканирование (нужен mental-math), show-только-bool теряет nuance для долго-отсутствующих.",
+    "evidence": [
+      {
+        "source": "fl-ru",
+        "description": "Зелёная точка + 'Онлайн сейчас' фильтр в каталоге фрилансеров",
+        "reliability": "high"
+      },
+      {
+        "source": "telegram",
+        "description": "Last seen + online dot — same derived-from-timestamp механика",
+        "reliability": "high"
+      }
+    ],
+    "counterexample": [
+      {
+        "source": "github-commits",
+        "description": "lastCommitAt есть, но 'online' не выводится — developer-context не требует real-time presence",
+        "reliability": "medium"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [
+      {
+        "domain": "messenger",
+        "projection": "contact_list",
+        "reason": "User.lastSeenAt уже есть, presence — natural signal"
+      },
+      {
+        "domain": "booking",
+        "projection": "specialist_catalog",
+        "reason": "Specialist с lastSeenAt для 'активный сейчас' фильтра"
+      }
+    ],
+    "shouldNotMatch": [
+      {
+        "domain": "invest",
+        "projection": "position_list",
+        "reason": "Position не имеет presence — данные, не агенты"
+      },
+      {
+        "domain": "workflow",
+        "projection": "workflow_catalog",
+        "reason": "Workflow — статичный артефакт, presence не применима"
+      }
+    ]
+  }
+}

@@ -1,0 +1,343 @@
+{
+  "source": "fl-ru-freelance-marketplace",
+  "entities": [
+    {
+      "name": "Project",
+      "fields": [
+        "title",
+        "description",
+        "budget",
+        "budgetType",
+        "deadline",
+        "category",
+        "skills",
+        "attachments",
+        "status",
+        "isProOnly",
+        "isPromoted",
+        "isHighlighted",
+        "safeDealEnabled",
+        "prepaymentRequired",
+        "responseCount",
+        "customerId",
+        "assignedFreelancerId"
+      ],
+      "statusValues": [
+        "draft",
+        "moderation",
+        "open",
+        "in_progress",
+        "completed",
+        "cancelled"
+      ],
+      "foreignKey": "customerId→User"
+    },
+    {
+      "name": "ProjectResponse",
+      "fields": [
+        "projectId",
+        "freelancerId",
+        "proposedPrice",
+        "term",
+        "message",
+        "createdAt"
+      ],
+      "foreignKey": "projectId→Project"
+    },
+    {
+      "name": "Freelancer",
+      "fields": [
+        "name",
+        "avatar",
+        "specialization",
+        "location",
+        "rating",
+        "isPro",
+        "lastSeenAt",
+        "isOnline",
+        "contactsVisibility"
+      ]
+    },
+    {
+      "name": "PortfolioItem",
+      "fields": [
+        "freelancerId",
+        "title",
+        "image",
+        "description",
+        "tags",
+        "year",
+        "client"
+      ],
+      "foreignKey": "freelancerId→Freelancer"
+    },
+    {
+      "name": "ServicePrice",
+      "fields": [
+        "freelancerId",
+        "title",
+        "priceFrom",
+        "description"
+      ],
+      "foreignKey": "freelancerId→Freelancer"
+    },
+    {
+      "name": "Review",
+      "fields": [
+        "freelancerId",
+        "projectId",
+        "authorId",
+        "text",
+        "rating",
+        "createdAt"
+      ],
+      "foreignKey": "freelancerId→Freelancer"
+    },
+    {
+      "name": "Category",
+      "fields": [
+        "name",
+        "slug",
+        "parentId"
+      ]
+    },
+    {
+      "name": "SafeDeal",
+      "fields": [
+        "projectId",
+        "amount",
+        "blockedAt",
+        "releasedAt",
+        "state"
+      ],
+      "statusValues": [
+        "inactive",
+        "blocked",
+        "released",
+        "disputed"
+      ],
+      "foreignKey": "projectId→Project"
+    },
+    {
+      "name": "Dispute",
+      "fields": [
+        "projectId",
+        "initiatorId",
+        "arbiterId",
+        "reason",
+        "resolution",
+        "status"
+      ],
+      "statusValues": [
+        "open",
+        "under_review",
+        "resolved",
+        "rejected"
+      ],
+      "foreignKey": "projectId→Project"
+    },
+    {
+      "name": "Message",
+      "fields": [
+        "fromId",
+        "toId",
+        "projectId",
+        "content",
+        "createdAt"
+      ]
+    },
+    {
+      "name": "Invitation",
+      "fields": [
+        "projectId",
+        "freelancerId",
+        "customerId",
+        "message",
+        "status"
+      ],
+      "statusValues": [
+        "sent",
+        "accepted",
+        "declined"
+      ],
+      "foreignKey": "projectId→Project"
+    }
+  ],
+  "intents": [
+    {
+      "id": "create_project",
+      "α": "add",
+      "creates": "Project",
+      "confirmation": "form"
+    },
+    {
+      "id": "publish_project",
+      "α": "replace",
+      "target": "project.status",
+      "confirmation": "click"
+    },
+    {
+      "id": "toggle_safe_deal",
+      "α": "replace",
+      "target": "project.safeDealEnabled",
+      "confirmation": "click"
+    },
+    {
+      "id": "promote_project",
+      "α": "replace",
+      "target": "project.isPromoted",
+      "confirmation": "form"
+    },
+    {
+      "id": "highlight_project",
+      "α": "replace",
+      "target": "project.isHighlighted",
+      "confirmation": "click"
+    },
+    {
+      "id": "mark_pro_only",
+      "α": "replace",
+      "target": "project.isProOnly",
+      "confirmation": "click"
+    },
+    {
+      "id": "submit_response",
+      "α": "add",
+      "creates": "ProjectResponse",
+      "confirmation": "form"
+    },
+    {
+      "id": "edit_response",
+      "α": "replace",
+      "target": "projectResponse.message",
+      "confirmation": "form"
+    },
+    {
+      "id": "withdraw_response",
+      "α": "remove",
+      "target": "projectResponse",
+      "irreversibility": "high",
+      "confirmation": "click"
+    },
+    {
+      "id": "invite_freelancer",
+      "α": "add",
+      "creates": "Invitation",
+      "confirmation": "form"
+    },
+    {
+      "id": "accept_invitation",
+      "α": "replace",
+      "target": "invitation.status",
+      "confirmation": "click"
+    },
+    {
+      "id": "select_executor",
+      "α": "replace",
+      "target": "project.assignedFreelancerId",
+      "irreversibility": "high",
+      "confirmation": "form"
+    },
+    {
+      "id": "complete_project",
+      "α": "replace",
+      "target": "project.status",
+      "irreversibility": "high",
+      "confirmation": "form"
+    },
+    {
+      "id": "cancel_project",
+      "α": "replace",
+      "target": "project.status",
+      "irreversibility": "high",
+      "confirmation": "form"
+    },
+    {
+      "id": "block_escrow_funds",
+      "α": "replace",
+      "target": "safeDeal.state",
+      "irreversibility": "high",
+      "confirmation": "form"
+    },
+    {
+      "id": "release_escrow",
+      "α": "replace",
+      "target": "safeDeal.state",
+      "irreversibility": "high",
+      "confirmation": "form"
+    },
+    {
+      "id": "open_dispute",
+      "α": "add",
+      "creates": "Dispute",
+      "confirmation": "form"
+    },
+    {
+      "id": "resolve_dispute",
+      "α": "replace",
+      "target": "dispute.status",
+      "irreversibility": "high",
+      "confirmation": "form"
+    },
+    {
+      "id": "send_message",
+      "α": "add",
+      "creates": "Message",
+      "confirmation": "enter"
+    },
+    {
+      "id": "add_portfolio_item",
+      "α": "add",
+      "creates": "PortfolioItem",
+      "confirmation": "form"
+    },
+    {
+      "id": "remove_portfolio_item",
+      "α": "remove",
+      "target": "portfolioItem",
+      "irreversibility": "high",
+      "confirmation": "click"
+    },
+    {
+      "id": "add_service_price",
+      "α": "add",
+      "creates": "ServicePrice",
+      "confirmation": "form"
+    },
+    {
+      "id": "leave_review",
+      "α": "add",
+      "creates": "Review",
+      "confirmation": "form"
+    },
+    {
+      "id": "upgrade_to_pro",
+      "α": "replace",
+      "target": "freelancer.isPro",
+      "confirmation": "form"
+    }
+  ],
+  "roles": [
+    "customer",
+    "freelancer",
+    "pro_freelancer",
+    "moderator",
+    "observer"
+  ],
+  "observations": [
+    "Feed архетип с категориальной группировкой (Веб-разработка / Дизайн / Тексты / ...) как first-class partition",
+    "Реверс-хронологический порядок проектов — date-witness как signal для timeline-shape",
+    "Truncate-3-lines на описании в карточке — emphasisFields паттерн (title/budget/deadline приоритетнее описания)",
+    "Dual-view на response list: customer видит полный список откликов, freelancer — только свой + counter (role-based projection filtering, visibleFields по baseRole)",
+    "Promoted-projects (Проект дня) — bleed-через-фон + star icon, paid visibility boost как отдельный uplift-signal",
+    "PRO-бейдж как monetized tier-marker (visibility/leads/contacts-access gate)",
+    "Online-presence как derived boolean из lastSeenAt с UI-выразительностью (filter 'Онлайн сейчас', sort option) — первокласная derived property",
+    "Safe-deal toggle = опциональный escrow-контракт на проект; блокировка средств при select_executor, release при complete — классический irreversibility=high chain",
+    "Invite-freelancer reverse-flow: заказчик в каталоге → приглашение на конкретный проект → freelancer accept/decline (m2m через Invitation, не Response)",
+    "Grid-галерея портфолио с lightbox expansion — canvas-like deep-view на hero-entity",
+    "Contacts секция gated by role (только авторизованные / PRO-заказчики) — capability-based field visibility",
+    "Состояние проекта как FSM с 5 значениями; 'В работе с фрилансером X' — status+assignee compound phase",
+    "Платные UI-опции на create-form (поднять в топ / выделить / PRO-only) — paid-modifier controls внутри form архетипа",
+    "Модератор как арбитр в disputes — agent-role с ограниченным scope (dispute resolution only)"
+  ]
+}

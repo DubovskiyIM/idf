@@ -1,0 +1,76 @@
+{
+  "id": "related-entity-rating-chip",
+  "version": 1,
+  "status": "candidate",
+  "archetype": "catalog",
+  "trigger": {
+    "requires": [
+      {
+        "kind": "entity-kind",
+        "value": "internal"
+      },
+      {
+        "kind": "sub-entity-exists",
+        "role": "foreign-key-target",
+        "targetHasField": "overallRating"
+      }
+    ]
+  },
+  "structure": {
+    "slot": "body",
+    "description": "Embed aggregate rating (stars + count) from FK-referenced entity inline in each catalog card as clickable chip opening target detail, making reputation a first-class scan-time signal."
+  },
+  "rationale": {
+    "hypothesis": "Decisions in transactional catalogs (jobs, sellers, venues) depend on reputation of the related actor, not just the item itself. Surfacing aggregate rating at card level — before detail drill-in — shortens the trust-evaluation loop without inflating the card into a dashboard.",
+    "evidence": [
+      {
+        "source": "indeed-mobile-job-board",
+        "description": "Company rating (★4.4 · 4 reviews) embedded under company name in every job card; tap opens company profile, not job detail",
+        "reliability": "high"
+      },
+      {
+        "source": "glassdoor",
+        "description": "Same pattern: employer rating on job card",
+        "reliability": "medium"
+      },
+      {
+        "source": "airbnb",
+        "description": "Host rating shown on listing card before detail",
+        "reliability": "medium"
+      }
+    ],
+    "counterexample": [
+      {
+        "source": "amazon-search-results",
+        "description": "Product card shows rating of product itself, not of seller — when FK target is not the trust-bearing entity, embedding its rating adds noise",
+        "reliability": "medium"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [
+      {
+        "domain": "sales",
+        "projection": "listings_catalog",
+        "reason": "Listing→seller with seller rating is prime use case"
+      },
+      {
+        "domain": "booking",
+        "projection": "specialists_catalog",
+        "reason": "Specialist cards benefit from inline rating summary"
+      }
+    ],
+    "shouldNotMatch": [
+      {
+        "domain": "planning",
+        "projection": "polls_catalog",
+        "reason": "Poll FK to creator — creator rating is not a decision signal"
+      },
+      {
+        "domain": "workflow",
+        "projection": "workflows_catalog",
+        "reason": "No rating semantics on workflow authors"
+      }
+    ]
+  }
+}

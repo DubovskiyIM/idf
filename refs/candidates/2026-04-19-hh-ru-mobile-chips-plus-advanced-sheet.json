@@ -1,0 +1,80 @@
+{
+  "id": "chips-plus-advanced-sheet",
+  "version": 1,
+  "status": "candidate",
+  "archetype": "catalog",
+  "trigger": {
+    "requires": [
+      {
+        "kind": "intent-count",
+        "min": 2,
+        "filter": "replace-filter-simple"
+      },
+      {
+        "kind": "intent-effect",
+        "target": "searchFilter.extendedParams"
+      },
+      {
+        "kind": "intent-confirmation",
+        "value": "form"
+      }
+    ]
+  },
+  "structure": {
+    "slot": "toolbar",
+    "description": "Frequent-use фильтры (3-5 chip'ов) выносятся как scroll-row под search-bar в catalog-toolbar. Отдельная 'Все фильтры' кнопка / overflow-chip открывает bottom-sheet с полной формой (extendedParams: 10+ полей). Two-layer UX: quick vs deep."
+  },
+  "rationale": {
+    "hypothesis": "Flat-фильтр-форма с 15+ полями дорога: требует full-screen переход и scroll. Но 80% фильтрации — 3-5 ключевых параметров (salary, remote, experience). Two-layer разделяет быстрый path (chips) и редкий heavyweight path (advanced sheet), не заставляя пользователя открывать форму за одним toggle'ом.",
+    "evidence": [
+      {
+        "source": "hh-ru-mobile",
+        "description": "Chips 'От 100к', 'Удалёнка', 'Без опыта' + 'Все фильтры' → sheet с 15+ параметрами",
+        "reliability": "high"
+      },
+      {
+        "source": "airbnb-search",
+        "description": "Type/Dates/Guests chips + 'More filters' → modal с amenities, price-range, etc",
+        "reliability": "high"
+      },
+      {
+        "source": "booking-com",
+        "description": "Star-rating/meal/distance chips + polno 'Filters' sheet",
+        "reliability": "medium"
+      }
+    ],
+    "counterexample": [
+      {
+        "source": "linear-issues",
+        "description": "Power-user-инструмент — advanced-filter inline (faceted-search, без chip-layer) выигрывает у chips",
+        "reliability": "medium"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [
+      {
+        "domain": "sales",
+        "projection": "listing_catalog",
+        "reason": "Листинги имеют price/category/location + 10+ advanced полей — two-layer подходит"
+      },
+      {
+        "domain": "delivery",
+        "projection": "menuitem_catalog",
+        "reason": "Cuisine/price chips + advanced dietary/prep-time sheet"
+      }
+    ],
+    "shouldNotMatch": [
+      {
+        "domain": "lifequest",
+        "projection": "sphere_list",
+        "reason": "Sphere-фильтров мало, второго layer не нужно"
+      },
+      {
+        "domain": "workflow",
+        "projection": "node_palette",
+        "reason": "Nodes фильтруются по type через tabs, не chips+sheet"
+      }
+    ]
+  }
+}

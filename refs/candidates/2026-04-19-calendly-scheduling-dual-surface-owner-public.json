@@ -1,0 +1,79 @@
+{
+  "id": "dual-surface-owner-public",
+  "version": 1,
+  "status": "candidate",
+  "archetype": null,
+  "trigger": {
+    "requires": [
+      {
+        "kind": "has-role",
+        "role": "owner"
+      },
+      {
+        "kind": "has-role",
+        "role": "viewer-stateless"
+      },
+      {
+        "kind": "entity-field",
+        "pattern": "slug|publicUrl|shareId"
+      }
+    ]
+  },
+  "structure": {
+    "slot": "shell",
+    "description": "Два набора projection-bundles на одной ontology: authenticated dashboard для owner (catalog EventType + детали + аналитика) vs public-slug landing (detail + book_slot wizard) под /<slug>. Shell-layer выбирает bundle по auth-state + URL-shape, не по user-role preference."
+  },
+  "rationale": {
+    "hypothesis": "Симметричный dashboard для всех ролей даёт ложную модель: owner заходит управлять, визитёр — забронировать. Это разные jobs-to-be-done, разные information-density, разные primary CTAs. Один shell с role-scoped фильтрацией смешивает задачи.",
+    "evidence": [
+      {
+        "source": "calendly",
+        "description": "calendly.com/dashboard (owner) vs calendly.com/username/30min (public) — разные layouts, разный navigation",
+        "reliability": "high"
+      },
+      {
+        "source": "typeform",
+        "description": "Form editor vs filler-surface — разные applications по сути",
+        "reliability": "high"
+      },
+      {
+        "source": "notion-public-pages",
+        "description": "Editor vs public-page реально разные рендеры одного документа",
+        "reliability": "high"
+      }
+    ],
+    "counterexample": [
+      {
+        "source": "figma",
+        "description": "Viewer = editor с disabled actions — работает потому что read-only mode достаточно",
+        "reliability": "medium"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [
+      {
+        "domain": "sales",
+        "projection": "listing_public",
+        "reason": "Public listing surface vs seller dashboard — ту же модель"
+      },
+      {
+        "domain": "planning",
+        "projection": "poll_public_vote",
+        "reason": "Poll-creator vs vote-participant разделены"
+      }
+    ],
+    "shouldNotMatch": [
+      {
+        "domain": "invest",
+        "projection": "portfolio",
+        "reason": "Нет public-surface"
+      },
+      {
+        "domain": "messenger",
+        "projection": "conversation",
+        "reason": "Полностью authenticated"
+      }
+    ]
+  }
+}

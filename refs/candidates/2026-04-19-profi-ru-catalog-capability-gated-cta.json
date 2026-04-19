@@ -1,0 +1,77 @@
+{
+  "id": "capability-gated-cta",
+  "version": 1,
+  "status": "candidate",
+  "archetype": "detail",
+  "trigger": {
+    "requires": [
+      {
+        "kind": "entity-field",
+        "entity": "*",
+        "field": "phoneVerified|documentsVerified|kycCompleted",
+        "role": "boolean-capability"
+      },
+      {
+        "kind": "intent-creates",
+        "entity": "CallIntent|Bid|Payment"
+      }
+    ]
+  },
+  "structure": {
+    "slot": "primaryCTA",
+    "description": "CTA (позвонить / отправить bid / заплатить) активен только при entity.verifiedX=true; иначе показывается disabled-состояние с tooltip-объяснением или inline prompt-to-verify"
+  },
+  "rationale": {
+    "hypothesis": "Вместо прятать CTA — показать disabled с reason, чтобы юзер понимал capability model и знал, какое условие закрыть; скрытие порождает «почему не работает» конфуз",
+    "evidence": [
+      {
+        "source": "profi.ru",
+        "description": "«Позвонить» недоступен, пока specialist.phoneVerified=false; tooltip поясняет",
+        "reliability": "high"
+      },
+      {
+        "source": "revolut",
+        "description": "Payment disabled до KYC, с явным onboarding-path",
+        "reliability": "high"
+      },
+      {
+        "source": "github-actions",
+        "description": "«Run workflow» disabled, пока не включены permissions",
+        "reliability": "medium"
+      }
+    ],
+    "counterexample": [
+      {
+        "source": "google-docs",
+        "description": "Нет capability-gating на базовые действия",
+        "reliability": "medium"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [
+      {
+        "domain": "booking",
+        "projection": "specialist_profile",
+        "reason": "call gated на phoneVerified"
+      },
+      {
+        "domain": "invest",
+        "projection": "transaction_create",
+        "reason": "trade gated на kycCompleted"
+      }
+    ],
+    "shouldNotMatch": [
+      {
+        "domain": "reflect",
+        "projection": "mood_log",
+        "reason": "нет capability-полей на core-actions"
+      },
+      {
+        "domain": "lifequest",
+        "projection": "habit_log",
+        "reason": "нет verification-gating"
+      }
+    ]
+  }
+}

@@ -1,0 +1,84 @@
+{
+  "id": "derived-availability-overlay",
+  "version": 1,
+  "status": "candidate",
+  "archetype": "canvas",
+  "trigger": {
+    "requires": [
+      {
+        "kind": "entity-kind",
+        "value": "derived"
+      },
+      {
+        "kind": "field-role-present",
+        "role": "date"
+      },
+      {
+        "kind": "field-role-present",
+        "role": "time"
+      },
+      {
+        "kind": "intent-count",
+        "αAdd": 0,
+        "note": "derived entity не создаётся руками"
+      }
+    ]
+  },
+  "structure": {
+    "slot": "body",
+    "description": "Calendar-grid primitive: ячейки-слоты вычисляются как rule ∩ ¬busy ∩ date-override. Availability — не сущность в Φ, а выведенный overlay на time-grid. Пользователь кликает ячейку как select-intent, не видит underlying rules."
+  },
+  "rationale": {
+    "hypothesis": "Материализация каждого available slot в Φ создаёт combinatorial blow-up (N дней × M минут × K rules); вычисление на-лету из base-recurrence ∩ busy-times даёт ту же UX при O(rules+busy) storage. Рендер — canvas с overlay-слоями.",
+    "evidence": [
+      {
+        "source": "calendly",
+        "description": "Слоты в day-column не хранятся — появляются только после applying AvailabilityRule + overlay CalendarIntegration busy",
+        "reliability": "high"
+      },
+      {
+        "source": "cal.com",
+        "description": "Открытый код показывает compute-on-read availability",
+        "reliability": "high"
+      },
+      {
+        "source": "when2meet",
+        "description": "Grid показывает intersection множеств available-slots участников",
+        "reliability": "medium"
+      }
+    ],
+    "counterexample": [
+      {
+        "source": "airbnb-calendar",
+        "description": "Availability — хранимая per-day колонка, т.к. host вручную меняет каждый день",
+        "reliability": "medium"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [
+      {
+        "domain": "booking",
+        "projection": "specialist_calendar",
+        "reason": "TimeSlot как derived из schedule ∩ bookings"
+      },
+      {
+        "domain": "planning",
+        "projection": "meeting_availability_grid",
+        "reason": "Intersection TimeOptions участников"
+      }
+    ],
+    "shouldNotMatch": [
+      {
+        "domain": "sales",
+        "projection": "listing_board",
+        "reason": "Listing — stored entity, не derived"
+      },
+      {
+        "domain": "reflect",
+        "projection": "mood_timeline",
+        "reason": "Entries хранятся, не overlay"
+      }
+    ]
+  }
+}

@@ -1,0 +1,83 @@
+{
+  "id": "lateral-similar-items",
+  "version": 1,
+  "status": "candidate",
+  "archetype": "detail",
+  "trigger": {
+    "requires": [
+      {
+        "kind": "entity-kind",
+        "value": "internal"
+      },
+      {
+        "kind": "intent-count",
+        "where": {
+          "α": "replace",
+          "target": "feed.query"
+        },
+        "min": 1
+      },
+      {
+        "kind": "sub-entity-exists",
+        "self-reference": true
+      }
+    ]
+  },
+  "structure": {
+    "slot": "sections",
+    "description": "Secondary-секция 'Similar X' в detail с 3-5 карточек той же сущности, отобранных по similarity-метрике. Lateral navigation — переход в соседний detail без возврата в catalog."
+  },
+  "rationale": {
+    "hypothesis": "Пользователь в detail с negative-intent ('не тот'), но уже инвестировал в контекст (прочитал title, salary, requirements). Similar-секция дешевле, чем back→catalog→scroll→new-detail: сохраняет инвестицию контекста и ускоряет decision-flow.",
+    "evidence": [
+      {
+        "source": "linkedin-jobs-mobile",
+        "description": "Similar Jobs внизу job detail — 3 карточки с тем же layout, один-тап lateral nav",
+        "reliability": "high"
+      },
+      {
+        "source": "youtube",
+        "description": "Related videos sidebar",
+        "reliability": "high"
+      },
+      {
+        "source": "amazon",
+        "description": "Customers also viewed carousel",
+        "reliability": "high"
+      }
+    ],
+    "counterexample": [
+      {
+        "source": "medical-records-detail",
+        "description": "Lateral similar вреден — пациент не должен видеть похожие кейсы, это privacy breach",
+        "reliability": "medium"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [
+      {
+        "domain": "sales",
+        "projection": "listing_detail",
+        "reason": "Similar listings под detail — classic e-commerce lateral"
+      },
+      {
+        "domain": "invest",
+        "projection": "asset_detail",
+        "reason": "Similar assets по sector/cap"
+      }
+    ],
+    "shouldNotMatch": [
+      {
+        "domain": "lifequest",
+        "projection": "goal_detail",
+        "reason": "goals — personal, similar не имеет смысла"
+      },
+      {
+        "domain": "messenger",
+        "projection": "conversation_detail",
+        "reason": "conversation уникальна, lateral nav не релевантна"
+      }
+    ]
+  }
+}

@@ -1,0 +1,79 @@
+{
+  "id": "embeddable-distribution-surface",
+  "version": 1,
+  "status": "candidate",
+  "archetype": "detail",
+  "trigger": {
+    "requires": [
+      {
+        "kind": "intent-creates",
+        "creates": "EmbedEntity",
+        "note": "интент выпускает embed/snippet/public-link"
+      },
+      {
+        "kind": "entity-field",
+        "entity": "embedEntity",
+        "field": "kind",
+        "note": "kind: iframe/popup/inline/widget"
+      },
+      {
+        "kind": "entity-field",
+        "entity": "embedEntity",
+        "field": "snippet",
+        "note": "сгенерированный HTML/JS snippet"
+      }
+    ]
+  },
+  "structure": {
+    "slot": "toolbar",
+    "description": "Projection экспонируется наружу через embed-surface: detail имеет CTA 'Share/Embed', открывающее picker между форматами (iframe/popup/inline) с preview и copyable snippet. Embed — first-class distribution, не afterthought."
+  },
+  "rationale": {
+    "hypothesis": "Projection, которая ценна для внешних users (tenants of tenant), нуждается в распространении за пределы host-app. Embed делает это первоклассно: один artifact → много surface-реализаций (iframe/popup/inline). Это materialization в соседние веб-контексты.",
+    "evidence": [
+      {
+        "source": "cal-com",
+        "description": "Booker view embeddable iframe/popup/inline, Embed — entity",
+        "reliability": "high"
+      },
+      {
+        "source": "typeform",
+        "description": "Forms распространяются через embed widget/popup/inline",
+        "reliability": "high"
+      },
+      {
+        "source": "stripe-checkout",
+        "description": "Payment link + embed + hosted как три формата",
+        "reliability": "high"
+      }
+    ],
+    "counterexample": [
+      {
+        "source": "internal-admin-panel",
+        "description": "Admin projection не нужно embed-ить",
+        "reliability": "high"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [
+      {
+        "domain": "planning",
+        "projection": "poll_detail",
+        "reason": "Poll часто embed-ят как iframe в external сайт"
+      }
+    ],
+    "shouldNotMatch": [
+      {
+        "domain": "messenger",
+        "projection": "conversation_detail",
+        "reason": "приватный контент, не для embed"
+      },
+      {
+        "domain": "invest",
+        "projection": "portfolio_detail",
+        "reason": "финансовая приватность"
+      }
+    ]
+  }
+}

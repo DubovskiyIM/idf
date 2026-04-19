@@ -1,0 +1,83 @@
+{
+  "id": "hierarchy-tree-nav",
+  "version": 1,
+  "status": "candidate",
+  "archetype": "catalog",
+  "trigger": {
+    "requires": [
+      {
+        "kind": "entity-field",
+        "entity": "*",
+        "field": "parentId",
+        "role": "self-reference"
+      },
+      {
+        "kind": "entity-field",
+        "entity": "*",
+        "field": "specialistCount|itemCount|count",
+        "role": "aggregate"
+      },
+      {
+        "kind": "intent-effect",
+        "target": "session.activeCategoryId|session.activeTaxonomyId"
+      }
+    ]
+  },
+  "structure": {
+    "slot": "toolbar",
+    "description": "Render self-referencing taxonomy entity (parentId→self) as collapsible tree in sidebar with per-node aggregate counter; selecting node drives session.active*Id"
+  },
+  "rationale": {
+    "hypothesis": "Дерево в сайдбаре с числом элементов на каждом узле быстрее, чем нарезка каталога на плоские вкладки: юзер видит и иерархию, и распределение мощности одним взглядом",
+    "evidence": [
+      {
+        "source": "profi.ru",
+        "description": "Левая колонка с рубриками-узлами, каждый узел показывает число специалистов",
+        "reliability": "high"
+      },
+      {
+        "source": "avito.ru",
+        "description": "Та же схема для категорий объявлений",
+        "reliability": "high"
+      },
+      {
+        "source": "yandex.market",
+        "description": "Категории-дерево в листинге",
+        "reliability": "high"
+      }
+    ],
+    "counterexample": [
+      {
+        "source": "twitter",
+        "description": "Плоская лента без иерархии — дерево избыточно",
+        "reliability": "high"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [
+      {
+        "domain": "delivery",
+        "projection": "customer_menu_browse",
+        "reason": "MenuItem может иметь category→self-parent (если расширить)"
+      },
+      {
+        "domain": "sales",
+        "projection": "catalog_browse",
+        "reason": "Category/subcategory tree"
+      }
+    ],
+    "shouldNotMatch": [
+      {
+        "domain": "reflect",
+        "projection": "mood_entries_feed",
+        "reason": "сущности MoodEntry не иерархичны"
+      },
+      {
+        "domain": "invest",
+        "projection": "positions_dashboard",
+        "reason": "Position не имеет self-parent"
+      }
+    ]
+  }
+}

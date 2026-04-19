@@ -1,0 +1,82 @@
+{
+  "id": "saved-query-with-notify",
+  "version": 1,
+  "status": "candidate",
+  "archetype": "catalog",
+  "trigger": {
+    "requires": [
+      {
+        "kind": "intent-creates",
+        "entityKind": "SavedSearch-like",
+        "hasField": "notificationsEnabled"
+      },
+      {
+        "kind": "intent-effect",
+        "α": "replace",
+        "target": "savedX.notificationsEnabled"
+      },
+      {
+        "kind": "entity-field",
+        "entity": "SavedSearch-like",
+        "field": "newResultsCount"
+      }
+    ]
+  },
+  "structure": {
+    "slot": "header",
+    "description": "Named saved-query as first-class entity with (a) rename/delete row actions, (b) per-item notification toggle, (c) new-results badge promoted to tab/header of host catalog. Turns transient query into persistent subscription surface."
+  },
+  "rationale": {
+    "hypothesis": "When search is the dominant discovery mode, users oscillate between the same 2-5 query shapes. Materializing these as named, notifiable entities converts repeated manual re-runs into a push-driven inbox, and the unread badge on the catalog tab reuses the user's existing attention habits.",
+    "evidence": [
+      {
+        "source": "indeed-mobile-job-board",
+        "description": "Saved searches tab lists named queries with per-item bell toggle; 'Find Jobs' tab carries numeric badge for new matches across all subscribed searches",
+        "reliability": "high"
+      },
+      {
+        "source": "linkedin-jobs",
+        "description": "Job alerts with identical per-alert email/push toggles and new-results count",
+        "reliability": "high"
+      },
+      {
+        "source": "craigslist-rss",
+        "description": "Saved search as RSS — same idea, older medium",
+        "reliability": "low"
+      }
+    ],
+    "counterexample": [
+      {
+        "source": "google-search",
+        "description": "No saved-search entity — query history is ambient, not persistent. Pattern breaks when result space is unbounded/non-repeating",
+        "reliability": "medium"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [
+      {
+        "domain": "sales",
+        "projection": "saved_searches_catalog",
+        "reason": "SavedSearch with notify toggle already exists in domain ontology"
+      },
+      {
+        "domain": "invest",
+        "projection": "watchlist_catalog",
+        "reason": "Watchlist = saved filter over assets with price-change alerts"
+      }
+    ],
+    "shouldNotMatch": [
+      {
+        "domain": "messenger",
+        "projection": "conversations_catalog",
+        "reason": "Conversations are not derived from stored queries"
+      },
+      {
+        "domain": "workflow",
+        "projection": "workflows_catalog",
+        "reason": "Workflows are authored assets, not subscription endpoints"
+      }
+    ]
+  }
+}

@@ -1,0 +1,267 @@
+{
+  "source": "linkedin-jobs-mobile",
+  "entities": [
+    {
+      "name": "JobPosting",
+      "fields": [
+        "title",
+        "company",
+        "location",
+        "workMode",
+        "salaryMin",
+        "salaryMax",
+        "description",
+        "postedAt",
+        "easyApplyEnabled",
+        "promoted",
+        "activelyRecruiting",
+        "requiredSkills",
+        "recruiterId"
+      ],
+      "statusValues": [
+        "active",
+        "closed",
+        "filled"
+      ]
+    },
+    {
+      "name": "Company",
+      "fields": [
+        "name",
+        "logo",
+        "industry",
+        "size",
+        "about",
+        "employeesCount",
+        "followerCount"
+      ]
+    },
+    {
+      "name": "UserProfile",
+      "fields": [
+        "photo",
+        "fullName",
+        "headline",
+        "currentCompany",
+        "about",
+        "experience",
+        "education",
+        "skills",
+        "recommendations",
+        "completenessPercent",
+        "premiumTier"
+      ]
+    },
+    {
+      "name": "Application",
+      "fields": [
+        "jobId",
+        "userId",
+        "resumeFile",
+        "contactInfo",
+        "customAnswers",
+        "submittedAt",
+        "status"
+      ],
+      "foreignKey": "jobId→JobPosting",
+      "statusValues": [
+        "draft",
+        "submitted",
+        "viewed",
+        "interview",
+        "rejected",
+        "offer"
+      ]
+    },
+    {
+      "name": "SavedJob",
+      "fields": [
+        "jobId",
+        "userId",
+        "savedAt"
+      ],
+      "foreignKey": "jobId→JobPosting"
+    },
+    {
+      "name": "SavedSearch",
+      "fields": [
+        "query",
+        "filters",
+        "notifyEnabled",
+        "createdAt",
+        "userId"
+      ]
+    },
+    {
+      "name": "SkillMatch",
+      "fields": [
+        "jobId",
+        "userId",
+        "matchedSkills",
+        "requiredSkills",
+        "matchPercent"
+      ],
+      "foreignKey": "jobId→JobPosting"
+    },
+    {
+      "name": "SocialProof",
+      "fields": [
+        "jobId",
+        "connectionsCount",
+        "recruiterName",
+        "recruiterPhoto",
+        "topApplicantFlag"
+      ],
+      "foreignKey": "jobId→JobPosting"
+    },
+    {
+      "name": "CompanyFollow",
+      "fields": [
+        "companyId",
+        "userId",
+        "followedAt"
+      ],
+      "foreignKey": "companyId→Company"
+    },
+    {
+      "name": "Endorsement",
+      "fields": [
+        "skillName",
+        "endorserId",
+        "profileId",
+        "createdAt"
+      ],
+      "foreignKey": "profileId→UserProfile"
+    }
+  ],
+  "intents": [
+    {
+      "id": "search_jobs",
+      "α": "replace",
+      "target": "feed.query",
+      "confirmation": "enter"
+    },
+    {
+      "id": "toggle_filter_chip",
+      "α": "replace",
+      "target": "feed.filters",
+      "confirmation": "click"
+    },
+    {
+      "id": "apply_easy",
+      "α": "add",
+      "creates": "Application",
+      "confirmation": "form"
+    },
+    {
+      "id": "apply_external",
+      "α": "add",
+      "creates": "Application",
+      "confirmation": "click"
+    },
+    {
+      "id": "save_job",
+      "α": "add",
+      "creates": "SavedJob",
+      "confirmation": "click"
+    },
+    {
+      "id": "unsave_job",
+      "α": "remove",
+      "target": "savedJobs",
+      "confirmation": "click"
+    },
+    {
+      "id": "save_search",
+      "α": "add",
+      "creates": "SavedSearch",
+      "confirmation": "click"
+    },
+    {
+      "id": "enable_search_alert",
+      "α": "replace",
+      "target": "savedSearch.notifyEnabled",
+      "confirmation": "click"
+    },
+    {
+      "id": "follow_company",
+      "α": "add",
+      "creates": "CompanyFollow",
+      "confirmation": "click"
+    },
+    {
+      "id": "share_job",
+      "α": "add",
+      "creates": "ShareEvent",
+      "confirmation": "click"
+    },
+    {
+      "id": "report_job",
+      "α": "add",
+      "creates": "Report",
+      "confirmation": "form",
+      "irreversibility": "high"
+    },
+    {
+      "id": "withdraw_application",
+      "α": "remove",
+      "target": "applications",
+      "confirmation": "click",
+      "irreversibility": "high"
+    },
+    {
+      "id": "update_profile_section",
+      "α": "replace",
+      "target": "userProfile.section",
+      "confirmation": "form"
+    },
+    {
+      "id": "endorse_skill",
+      "α": "add",
+      "creates": "Endorsement",
+      "confirmation": "click"
+    },
+    {
+      "id": "view_applicant_insights",
+      "α": "replace",
+      "target": "jobPosting.insightsView",
+      "confirmation": "click"
+    },
+    {
+      "id": "send_inmail",
+      "α": "add",
+      "creates": "InMailMessage",
+      "confirmation": "form"
+    },
+    {
+      "id": "upgrade_premium",
+      "α": "replace",
+      "target": "userProfile.premiumTier",
+      "confirmation": "form"
+    }
+  ],
+  "roles": [
+    "owner",
+    "viewer",
+    "observer"
+  ],
+  "observations": [
+    "Five-tab bottom navigation (Home/Network/Post/Notifications/Jobs) — jobs — отдельный tab внутри социальной сети",
+    "Search input в hero верхней части feed + горизонтальный scrollable chip-bar фильтров с live-apply по tap",
+    "Feed карточек вакансий с mixed контентом (jobs + промо-посты + people-you-may-know) — feature bloat признан источником UX-трения",
+    "Карточка вакансии содержит inline social-proof secondary-роль: connections count, skill match %, recruiter photo+name",
+    "Multiple visibility-бейджи в карточке: Easy Apply / Promoted / Actively Recruiting / Top Applicant — последний Premium-gated",
+    "Primary CTA dual-branching: Easy Apply (internal 4-step wizard) vs Apply on company site (external redirect)",
+    "Easy Apply wizard = 4 step form (contact → resume → custom questions → review). Профиль = заполненная форма, шаг по умолчанию pre-filled",
+    "Skill match displayed как per-skill breakdown ('7 of 10 required skills') а не только агрегат %",
+    "About-the-company секция содержит embedded компанийскую ленту БЕЗ навигационного перехода — sub-collection inline",
+    "Detail содержит Similar Jobs secondary-секцию с lateral-navigation архетипом",
+    "My Jobs tab содержит 5 sub-tabs (My Jobs / Preferences / Saved searches / Applied / Interviews) — tab-explosion-антипаттерн",
+    "Saved Search = named query + notification toggle — конверсия ad-hoc search в subscribed feed",
+    "Profile = completeness-прогресс с gamification ('87% complete, add 2 skills to reach 95%')",
+    "Premium dark patterns: blurred data + unlock CTA, gated counters (Top Applicant), hover-cards с upgrade-prompt",
+    "Recruiter — отдельная base-role агентского типа (posts jobs, searches candidates) в параллельном UX-flow",
+    "Observer-role (не залогиненный) имеет ограниченный read-only доступ через role-capability invariant",
+    "Bookmark/Save/Report/Share — secondary action menu (overflow) а не primary toolbar"
+  ]
+}

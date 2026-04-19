@@ -1,0 +1,469 @@
+{
+  "source": "cal-com-scheduling-platform",
+  "entities": [
+    {
+      "name": "User",
+      "fields": [
+        "name",
+        "email",
+        "timeZone",
+        "locale",
+        "avatar",
+        "username",
+        "role"
+      ],
+      "statusValues": [
+        "active",
+        "invited",
+        "suspended"
+      ]
+    },
+    {
+      "name": "Organization",
+      "fields": [
+        "name",
+        "slug",
+        "logo",
+        "domain",
+        "plan"
+      ]
+    },
+    {
+      "name": "Team",
+      "fields": [
+        "name",
+        "slug",
+        "logo",
+        "organizationId",
+        "visibility"
+      ],
+      "foreignKey": "organizationId→Organization"
+    },
+    {
+      "name": "TeamMember",
+      "fields": [
+        "userId",
+        "teamId",
+        "role",
+        "acceptedAt"
+      ],
+      "foreignKey": "teamId→Team"
+    },
+    {
+      "name": "EventType",
+      "fields": [
+        "title",
+        "slug",
+        "duration",
+        "description",
+        "locationKind",
+        "locationValue",
+        "minNotice",
+        "dailyLimit",
+        "weeklyLimit",
+        "requireConfirmation",
+        "roundRobinEnabled",
+        "distributionAlgorithm",
+        "scheduleId",
+        "ownerId",
+        "teamId",
+        "hidden"
+      ],
+      "statusValues": [
+        "active",
+        "hidden",
+        "archived"
+      ],
+      "foreignKey": "ownerId→User"
+    },
+    {
+      "name": "EventHost",
+      "fields": [
+        "eventTypeId",
+        "userId",
+        "priority",
+        "isFixed"
+      ],
+      "foreignKey": "eventTypeId→EventType"
+    },
+    {
+      "name": "BookingQuestion",
+      "fields": [
+        "eventTypeId",
+        "label",
+        "kind",
+        "required",
+        "options",
+        "order"
+      ],
+      "foreignKey": "eventTypeId→EventType"
+    },
+    {
+      "name": "Schedule",
+      "fields": [
+        "name",
+        "ownerId",
+        "timeZone",
+        "isDefault"
+      ],
+      "foreignKey": "ownerId→User"
+    },
+    {
+      "name": "AvailabilityRule",
+      "fields": [
+        "scheduleId",
+        "dayOfWeek",
+        "startTime",
+        "endTime"
+      ],
+      "foreignKey": "scheduleId→Schedule"
+    },
+    {
+      "name": "AvailabilityOverride",
+      "fields": [
+        "scheduleId",
+        "date",
+        "startTime",
+        "endTime",
+        "unavailable"
+      ],
+      "foreignKey": "scheduleId→Schedule"
+    },
+    {
+      "name": "Booking",
+      "fields": [
+        "eventTypeId",
+        "hostId",
+        "bookerEmail",
+        "bookerName",
+        "startAt",
+        "endAt",
+        "status",
+        "timeZone",
+        "locationKind",
+        "meetingUrl",
+        "notes",
+        "createdAt"
+      ],
+      "statusValues": [
+        "pending",
+        "accepted",
+        "rejected",
+        "cancelled",
+        "past",
+        "rescheduled"
+      ],
+      "foreignKey": "eventTypeId→EventType"
+    },
+    {
+      "name": "BookingAnswer",
+      "fields": [
+        "bookingId",
+        "questionId",
+        "value"
+      ],
+      "foreignKey": "bookingId→Booking"
+    },
+    {
+      "name": "Workflow",
+      "fields": [
+        "name",
+        "ownerId",
+        "trigger",
+        "actions",
+        "active"
+      ],
+      "foreignKey": "ownerId→User"
+    },
+    {
+      "name": "WorkflowBinding",
+      "fields": [
+        "workflowId",
+        "eventTypeId"
+      ],
+      "foreignKey": "workflowId→Workflow"
+    },
+    {
+      "name": "AppInstallation",
+      "fields": [
+        "appSlug",
+        "userId",
+        "teamId",
+        "config",
+        "installedAt"
+      ],
+      "foreignKey": "userId→User"
+    },
+    {
+      "name": "RoutingForm",
+      "fields": [
+        "name",
+        "teamId",
+        "fields",
+        "rules",
+        "active"
+      ],
+      "foreignKey": "teamId→Team"
+    },
+    {
+      "name": "RoutingResponse",
+      "fields": [
+        "formId",
+        "answers",
+        "routedToUserId",
+        "submittedAt"
+      ],
+      "foreignKey": "formId→RoutingForm"
+    },
+    {
+      "name": "Embed",
+      "fields": [
+        "eventTypeId",
+        "kind",
+        "theme",
+        "snippet"
+      ],
+      "foreignKey": "eventTypeId→EventType"
+    },
+    {
+      "name": "ApiKey",
+      "fields": [
+        "ownerId",
+        "label",
+        "scopes",
+        "createdAt",
+        "lastUsedAt"
+      ],
+      "foreignKey": "ownerId→User"
+    },
+    {
+      "name": "Insight",
+      "fields": [
+        "scope",
+        "metric",
+        "value",
+        "periodStart",
+        "periodEnd"
+      ]
+    }
+  ],
+  "intents": [
+    {
+      "id": "create_event_type",
+      "α": "add",
+      "creates": "EventType",
+      "confirmation": "form"
+    },
+    {
+      "id": "configure_event_type",
+      "α": "replace",
+      "target": "eventType.*",
+      "confirmation": "form"
+    },
+    {
+      "id": "enable_round_robin",
+      "α": "replace",
+      "target": "eventType.roundRobinEnabled",
+      "confirmation": "click"
+    },
+    {
+      "id": "set_distribution_algorithm",
+      "α": "replace",
+      "target": "eventType.distributionAlgorithm",
+      "confirmation": "click"
+    },
+    {
+      "id": "add_booking_question",
+      "α": "add",
+      "creates": "BookingQuestion",
+      "confirmation": "form"
+    },
+    {
+      "id": "hide_event_type",
+      "α": "replace",
+      "target": "eventType.hidden",
+      "confirmation": "click"
+    },
+    {
+      "id": "archive_event_type",
+      "α": "remove",
+      "irreversibility": "high",
+      "confirmation": "click"
+    },
+    {
+      "id": "create_schedule",
+      "α": "add",
+      "creates": "Schedule",
+      "confirmation": "form"
+    },
+    {
+      "id": "set_availability_rule",
+      "α": "add",
+      "creates": "AvailabilityRule",
+      "confirmation": "form"
+    },
+    {
+      "id": "set_availability_override",
+      "α": "add",
+      "creates": "AvailabilityOverride",
+      "confirmation": "form"
+    },
+    {
+      "id": "assign_schedule_to_event_type",
+      "α": "replace",
+      "target": "eventType.scheduleId",
+      "confirmation": "click"
+    },
+    {
+      "id": "create_team",
+      "α": "add",
+      "creates": "Team",
+      "confirmation": "form"
+    },
+    {
+      "id": "invite_member",
+      "α": "add",
+      "creates": "TeamMember",
+      "confirmation": "form"
+    },
+    {
+      "id": "remove_member",
+      "α": "remove",
+      "irreversibility": "high",
+      "confirmation": "click"
+    },
+    {
+      "id": "add_event_host",
+      "α": "add",
+      "creates": "EventHost",
+      "confirmation": "form"
+    },
+    {
+      "id": "install_app",
+      "α": "add",
+      "creates": "AppInstallation",
+      "confirmation": "form"
+    },
+    {
+      "id": "uninstall_app",
+      "α": "remove",
+      "irreversibility": "high",
+      "confirmation": "click"
+    },
+    {
+      "id": "configure_app",
+      "α": "replace",
+      "target": "appInstallation.config",
+      "confirmation": "form"
+    },
+    {
+      "id": "create_workflow",
+      "α": "add",
+      "creates": "Workflow",
+      "confirmation": "form"
+    },
+    {
+      "id": "bind_workflow",
+      "α": "add",
+      "creates": "WorkflowBinding",
+      "confirmation": "click"
+    },
+    {
+      "id": "toggle_workflow",
+      "α": "replace",
+      "target": "workflow.active",
+      "confirmation": "click"
+    },
+    {
+      "id": "create_routing_form",
+      "α": "add",
+      "creates": "RoutingForm",
+      "confirmation": "form"
+    },
+    {
+      "id": "submit_routing_form",
+      "α": "add",
+      "creates": "RoutingResponse",
+      "confirmation": "form"
+    },
+    {
+      "id": "book_slot",
+      "α": "add",
+      "creates": "Booking",
+      "confirmation": "form"
+    },
+    {
+      "id": "confirm_booking",
+      "α": "replace",
+      "target": "booking.status",
+      "confirmation": "click"
+    },
+    {
+      "id": "reject_booking",
+      "α": "replace",
+      "target": "booking.status",
+      "irreversibility": "high",
+      "confirmation": "click"
+    },
+    {
+      "id": "reschedule_booking",
+      "α": "replace",
+      "target": "booking.startAt",
+      "confirmation": "form"
+    },
+    {
+      "id": "cancel_booking",
+      "α": "replace",
+      "target": "booking.status",
+      "irreversibility": "high",
+      "confirmation": "form"
+    },
+    {
+      "id": "share_embed",
+      "α": "add",
+      "creates": "Embed",
+      "confirmation": "form"
+    },
+    {
+      "id": "issue_api_key",
+      "α": "add",
+      "creates": "ApiKey",
+      "confirmation": "form"
+    },
+    {
+      "id": "revoke_api_key",
+      "α": "remove",
+      "irreversibility": "high",
+      "confirmation": "click"
+    },
+    {
+      "id": "fetch_insights",
+      "α": "replace",
+      "target": "insights.filter",
+      "confirmation": "click"
+    }
+  ],
+  "roles": [
+    "owner",
+    "viewer",
+    "agent",
+    "observer"
+  ],
+  "observations": [
+    "Bookings list partitioned by tabs (Upcoming/Past/Pending/Cancelled) — status-driven feed partitioning",
+    "Event Types presented as card-feed with per-type inline configuration entry",
+    "Availability uses multi-schedule model (working/on-call/vacation) with per-event-type schedule binding",
+    "Event Type config is deep nested form with sections Basic/Advanced/Apps/Workflows/Limits",
+    "Booking questions authored as form-builder — user constructs schema declaratively",
+    "Round-robin configured as sub-section with algorithm picker (load-balanced/optimal/custom)",
+    "App Store as marketplace feed with install/uninstall plugin lifecycle and per-app config screens",
+    "Routing forms with conditional rules map answers → host — pre-booking routing layer before slot picker",
+    "Booker view embeddable as iframe/popup/inline — embed is first-class distribution surface",
+    "Slot picker auto-detects booker timezone with manual override",
+    "Host-moderated confirmation flow: booking starts in pending, host confirms or rejects",
+    "Insights dashboard per team/member with funnel metrics (visit→slot→book→attend) and rate statistics",
+    "Teams nested inside organizations with collective (multi-host) event-types",
+    "Developer API key management as separate section with scoped credentials and last-used tracking",
+    "Workflows declarative — trigger + action list (SMS/email/webhook) bound to event-types via join entity"
+  ]
+}

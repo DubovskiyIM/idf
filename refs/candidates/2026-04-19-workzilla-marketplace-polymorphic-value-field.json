@@ -1,0 +1,75 @@
+{
+  "id": "polymorphic-value-field",
+  "version": 1,
+  "status": "candidate",
+  "archetype": "detail",
+  "trigger": {
+    "requires": [
+      {
+        "kind": "entity-field",
+        "entity": "mainEntity",
+        "field": "*Type",
+        "type": "enum",
+        "role": "discriminator"
+      },
+      {
+        "kind": "entity-field",
+        "entity": "mainEntity",
+        "field": "*Min|*Max|*Value",
+        "minCount": 2
+      }
+    ]
+  },
+  "structure": {
+    "slot": "body",
+    "description": "Discriminator-поле (*Type) переключает отображение связанного value: одно значение (fixed) vs диапазон (range). В form — switch input; в detail — adaptive label ('5 000₽' vs '5 000–10 000₽')."
+  },
+  "rationale": {
+    "hypothesis": "Отдельные поля budget_fixed/budget_min/budget_max ломают семантическую целостность. Discriminator + материализованная проекция сохраняют одну концепцию 'бюджет' с двумя формами, а UI адаптируется автоматически.",
+    "evidence": [
+      {
+        "source": "workzilla-marketplace",
+        "description": "budgetType={fixed|range} + budgetMin/budgetMax — form и card рендерят адаптивно",
+        "reliability": "high"
+      },
+      {
+        "source": "profi-ru-catalog",
+        "description": "цена как fixed/range/от с тем же discriminator-подходом",
+        "reliability": "medium"
+      }
+    ],
+    "counterexample": [
+      {
+        "source": "financial-reports",
+        "description": "Фиксированная структура (open/high/low/close) — discriminator излишен",
+        "reliability": "medium"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [
+      {
+        "domain": "sales",
+        "projection": "listing_detail",
+        "reason": "price fixed vs auction-range"
+      },
+      {
+        "domain": "booking",
+        "projection": "service_detail",
+        "reason": "стоимость услуги fixed или от/до"
+      }
+    ],
+    "shouldNotMatch": [
+      {
+        "domain": "invest",
+        "projection": "position_detail",
+        "reason": "quantity всегда скалярная"
+      },
+      {
+        "domain": "messenger",
+        "projection": "message_detail",
+        "reason": "нет polymorphic полей"
+      }
+    ]
+  }
+}

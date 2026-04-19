@@ -1,0 +1,77 @@
+{
+  "id": "faceted-filter-panel",
+  "version": 1,
+  "status": "candidate",
+  "archetype": "catalog",
+  "trigger": {
+    "requires": [
+      {
+        "kind": "intent-effect",
+        "target": "session.filters",
+        "min": 1
+      },
+      {
+        "kind": "intent-count",
+        "effectPrefix": "session.filters",
+        "min": 3
+      }
+    ]
+  },
+  "structure": {
+    "slot": "toolbar",
+    "description": "Sticky-панель справа (или drawer на мобильном) с группированными фасетами: numeric range (price from/to), multi-select (metro/tags), boolean toggles (выезд, безнал); каждая группа соответствует apply_filters intent-частице"
+  },
+  "rationale": {
+    "hypothesis": "Плотная фасетная панель лучше одного generic-поиска для catalog с разнородными предикатами — юзер видит ось фильтра и её дискретность",
+    "evidence": [
+      {
+        "source": "profi.ru",
+        "description": "Sticky-панель справа с 5-7 секциями фильтров",
+        "reliability": "high"
+      },
+      {
+        "source": "airbnb",
+        "description": "Расширенный фасет-модал с группами price/rooms/amenities",
+        "reliability": "high"
+      },
+      {
+        "source": "booking.com",
+        "description": "Левая панель фасетов с range sliders и checkbox-группами",
+        "reliability": "high"
+      }
+    ],
+    "counterexample": [
+      {
+        "source": "gmail",
+        "description": "Inbox фильтруется одним generic-поиском, фасеты избыточны",
+        "reliability": "medium"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [
+      {
+        "domain": "booking",
+        "projection": "specialists_browse",
+        "reason": "filters по цене/рейтингу/метро"
+      },
+      {
+        "domain": "sales",
+        "projection": "listings_browse",
+        "reason": "filters по цене/категории/локации"
+      }
+    ],
+    "shouldNotMatch": [
+      {
+        "domain": "messenger",
+        "projection": "conversations_list",
+        "reason": "нет fund. filter-intents на session.filters"
+      },
+      {
+        "domain": "reflect",
+        "projection": "mood_entries_feed",
+        "reason": "один temporal-диапазон, не ≥3 ортогональных фасета"
+      }
+    ]
+  }
+}

@@ -1,0 +1,78 @@
+{
+  "id": "single-select-siblings-reject",
+  "version": 1,
+  "status": "candidate",
+  "archetype": "detail",
+  "trigger": {
+    "requires": [
+      {
+        "kind": "entity-field",
+        "entity": "mainEntity",
+        "field": "selected*Id",
+        "role": "single-select-ref"
+      },
+      {
+        "kind": "sub-entity-exists",
+        "foreignKey": "mainEntity"
+      },
+      {
+        "kind": "entity-field",
+        "entity": "sub-entity",
+        "field": "status",
+        "statusValues": [
+          "pending",
+          "selected",
+          "rejected",
+          "*"
+        ]
+      }
+    ]
+  },
+  "structure": {
+    "slot": "primaryCTA",
+    "description": "Кнопка 'Выбрать' на sub-entity материализует не только replace(mainEntity.selectedId), но и cascade-replace(sibling.status='rejected'). Паттерн делает workflow-инвариант видимым в подтверждающем диалоге ('выбор одного отклонит остальные N')."
+  },
+  "rationale": {
+    "hypothesis": "Без явного показа cascade-эффекта пользователь не понимает, что его выбор — не mark, а transaction. Confirm-диалог без summary о rejected-siblings ведёт к недоумению у авторов отвергнутых bid'ов и претензиям к владельцу. Explicit cascade-summary снижает этот конфликт.",
+    "evidence": [
+      {
+        "source": "workzilla-marketplace",
+        "description": "select_performer confirm: 'выбрать Ивана, отклонить остальные 12 откликов, списать 5 000₽ в escrow'",
+        "reliability": "high"
+      }
+    ],
+    "counterexample": [
+      {
+        "source": "multi-winner-auction",
+        "description": "В multi-select сценариях cascade-reject неприменим",
+        "reliability": "high"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [
+      {
+        "domain": "sales",
+        "projection": "listing_detail",
+        "reason": "selected bid → остальные rejected"
+      },
+      {
+        "domain": "planning",
+        "projection": "poll_detail",
+        "reason": "финальный time pick → остальные options closed"
+      }
+    ],
+    "shouldNotMatch": [
+      {
+        "domain": "booking",
+        "projection": "booking_detail",
+        "reason": "один booking → один слот, нет siblings для reject"
+      },
+      {
+        "domain": "messenger",
+        "projection": "conversation_detail",
+        "reason": "нет select-semantics"
+      }
+    ]
+  }
+}

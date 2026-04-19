@@ -1,0 +1,76 @@
+{
+  "id": "draft-resume-entry",
+  "version": 1,
+  "status": "candidate",
+  "archetype": "feed",
+  "trigger": {
+    "requires": [
+      {
+        "kind": "entity-kind",
+        "entity": "*Draft",
+        "kind_value": "internal"
+      },
+      {
+        "kind": "intent-effect",
+        "target": "session.activeDraftId|session.activeSessionId"
+      }
+    ]
+  },
+  "structure": {
+    "slot": "hero",
+    "description": "Если у текущего user есть *Draft с updatedAt в лимите (или без лимита), на верху feed/catalog показывается «Незавершённое» entry-card с continue-CTA, восстанавливающий activeDraftId"
+  },
+  "rationale": {
+    "hypothesis": "Пользователь не помнит, что бросил черновик посреди wizard; явная точка возврата конвертирует незавершённые попытки в completed без давления",
+    "evidence": [
+      {
+        "source": "profi.ru",
+        "description": "Верхний блок «Незавершённое» с кнопкой «Продолжить» над каталогом",
+        "reliability": "high"
+      },
+      {
+        "source": "medium.com",
+        "description": "Draft-list с continue CTA в композере",
+        "reliability": "high"
+      },
+      {
+        "source": "stripe-checkout",
+        "description": "Recovery-email с ссылкой на брошенный checkout",
+        "reliability": "high"
+      }
+    ],
+    "counterexample": [
+      {
+        "source": "twitter-tweet",
+        "description": "Draft хранится локально, но не выдаётся отдельной entry-card",
+        "reliability": "medium"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [
+      {
+        "domain": "sales",
+        "projection": "my_listings",
+        "reason": "у Listing может быть draft-состояние"
+      },
+      {
+        "domain": "delivery",
+        "projection": "customer_orders",
+        "reason": "незавершённый cart-checkout"
+      }
+    ],
+    "shouldNotMatch": [
+      {
+        "domain": "messenger",
+        "projection": "conversations_list",
+        "reason": "draft-message session-scoped, нет *Draft entity"
+      },
+      {
+        "domain": "reflect",
+        "projection": "mood_entries_feed",
+        "reason": "запись фиксируется сразу, draft-flow нет"
+      }
+    ]
+  }
+}

@@ -24,6 +24,11 @@ export default function OntologyInspector({ world, domain, dark }) {
   const PROJECTIONS = domain?.PROJECTIONS || {};
   const [expandedEntity, setExpandedEntity] = useState(null);
 
+  // Schema-only mode: если world не передан/пуст (Studio design-time),
+  // не показываем счётчики экземпляров и секцию World(t) — иначе онтология
+  // визуально выглядит «незаполненной». Runtime-прототип передаёт живой world.
+  const schemaOnly = !world || Object.keys(world).length === 0;
+
   // Связи: какие намерения используют какую сущность
   const entityIntents = useMemo(() => {
     const map = {};
@@ -145,10 +150,12 @@ export default function OntologyInspector({ world, domain, dark }) {
                   background: `${TYPE_COLORS[entity.type]}15`, padding: "2px 6px", borderRadius: 4 }}>
                   {entity.type}
                 </span>
-                <span style={{ fontSize: 12, color: t.textSec, fontFamily: "system-ui, sans-serif", marginLeft: "auto" }}>
-                  {stats.count} экз.
-                </span>
-                {Object.keys(stats.byStatus).length > 0 && (
+                {!schemaOnly && (
+                  <span style={{ fontSize: 12, color: t.textSec, fontFamily: "system-ui, sans-serif", marginLeft: "auto" }}>
+                    {stats.count} экз.
+                  </span>
+                )}
+                {!schemaOnly && Object.keys(stats.byStatus).length > 0 && (
                   <div style={{ display: "flex", gap: 4 }}>
                     {Object.entries(stats.byStatus).map(([status, count]) => (
                       <span key={status} style={{ fontSize: 10, color: t.textSec, background: t.tagBg, padding: "1px 5px", borderRadius: 3 }}>
@@ -184,7 +191,7 @@ export default function OntologyInspector({ world, domain, dark }) {
                       <div style={{ display: "flex", gap: 4 }}>
                         {entity.statuses.map(s => (
                           <span key={s} style={{ fontSize: 11, color: "#6366f1", background: t.accentBg, padding: "2px 8px", borderRadius: 4 }}>
-                            {s} {stats.byStatus[s] ? `(${stats.byStatus[s]})` : ""}
+                            {s}{!schemaOnly && stats.byStatus[s] ? ` (${stats.byStatus[s]})` : ""}
                           </span>
                         ))}
                       </div>
@@ -251,29 +258,33 @@ export default function OntologyInspector({ world, domain, dark }) {
         })}
       </div>
 
-      {/* Статистика мира */}
-      <div style={{ fontSize: 11, color: t.textSec, textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 8, fontFamily: "system-ui, sans-serif" }}>
-        World(t) — живая статистика
-      </div>
-
-      <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
-        {Object.entries(worldStats).map(([name, stats]) => (
-          <div key={name} style={{
-            background: t.surface, borderRadius: 8, padding: "12px 16px",
-            border: `1px solid ${t.border}`, minWidth: 120, fontFamily: "system-ui, sans-serif",
-          }}>
-            <div style={{ fontSize: 22, fontWeight: 700, color: "#6366f1" }}>{stats.count}</div>
-            <div style={{ fontSize: 12, color: t.textSec }}>{name}</div>
-            {Object.keys(stats.byStatus).length > 0 && (
-              <div style={{ marginTop: 4, display: "flex", flexDirection: "column", gap: 1 }}>
-                {Object.entries(stats.byStatus).map(([s, c]) => (
-                  <div key={s} style={{ fontSize: 10, color: t.textMuted }}>{s}: {c}</div>
-                ))}
-              </div>
-            )}
+      {/* Статистика мира — только в runtime-режиме, в Studio скрываем */}
+      {!schemaOnly && (
+        <>
+          <div style={{ fontSize: 11, color: t.textSec, textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 8, fontFamily: "system-ui, sans-serif" }}>
+            World(t) — живая статистика
           </div>
-        ))}
-      </div>
+
+          <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
+            {Object.entries(worldStats).map(([name, stats]) => (
+              <div key={name} style={{
+                background: t.surface, borderRadius: 8, padding: "12px 16px",
+                border: `1px solid ${t.border}`, minWidth: 120, fontFamily: "system-ui, sans-serif",
+              }}>
+                <div style={{ fontSize: 22, fontWeight: 700, color: "#6366f1" }}>{stats.count}</div>
+                <div style={{ fontSize: 12, color: t.textSec }}>{name}</div>
+                {Object.keys(stats.byStatus).length > 0 && (
+                  <div style={{ marginTop: 4, display: "flex", flexDirection: "column", gap: 1 }}>
+                    {Object.entries(stats.byStatus).map(([s, c]) => (
+                      <div key={s} style={{ fontSize: 10, color: t.textMuted }}>{s}: {c}</div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        </>
+      )}
     </div>
   );
 }

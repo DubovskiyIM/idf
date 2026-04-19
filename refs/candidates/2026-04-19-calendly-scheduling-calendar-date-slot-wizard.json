@@ -1,0 +1,85 @@
+{
+  "id": "calendar-date-slot-wizard",
+  "version": 1,
+  "status": "candidate",
+  "archetype": "wizard",
+  "trigger": {
+    "requires": [
+      {
+        "kind": "intent-creates",
+        "entity": "mainEntity"
+      },
+      {
+        "kind": "field-role-present",
+        "role": "date",
+        "count": ">=1"
+      },
+      {
+        "kind": "field-role-present",
+        "role": "time",
+        "count": ">=1"
+      },
+      {
+        "kind": "timeslot-like",
+        "foreignKey": "toMainEntity"
+      }
+    ]
+  },
+  "structure": {
+    "slot": "body",
+    "description": "Разбивает booking-flow на линейные фазы: выбор даты на month-grid → выбор слота в day-column → форма контактов. Каждая фаза коммитит draft-replace, финальная — α:add."
+  },
+  "rationale": {
+    "hypothesis": "Ранняя фильтрация доступности (только даты → только слоты) резко снижает количество полей в видимости пользователя; form-with-all-fields-at-once не работает когда выбор слота требует пересчёта availability.",
+    "evidence": [
+      {
+        "source": "calendly",
+        "description": "3-шаговый booker flow: месячный календарь → слоты справа → форма с кастомными вопросами",
+        "reliability": "high"
+      },
+      {
+        "source": "cal.com",
+        "description": "Та же структура, даже визуально идентична",
+        "reliability": "high"
+      },
+      {
+        "source": "google-calendar-appointments",
+        "description": "Идентичный паттерн в бесплатном booking",
+        "reliability": "medium"
+      }
+    ],
+    "counterexample": [
+      {
+        "source": "opentable",
+        "description": "Одномоментный выбор даты+времени+party-size в одной форме — работает потому что слоты дискретны и заранее известны",
+        "reliability": "medium"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [
+      {
+        "domain": "booking",
+        "projection": "book_service",
+        "reason": "TimeSlot + date-field + startTime-field — идеальный триггер для 3-step wizard"
+      },
+      {
+        "domain": "planning",
+        "projection": "vote_on_meeting",
+        "reason": "TimeOption с date+time, финальная форма — но здесь антагонист — vote-group, проверить приоритет"
+      }
+    ],
+    "shouldNotMatch": [
+      {
+        "domain": "sales",
+        "projection": "place_bid",
+        "reason": "Нет temporal-selection на availability grid"
+      },
+      {
+        "domain": "delivery",
+        "projection": "place_order",
+        "reason": "Selection в корзине, не по слотам"
+      }
+    ]
+  }
+}

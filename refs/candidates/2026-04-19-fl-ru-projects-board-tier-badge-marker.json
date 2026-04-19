@@ -1,0 +1,71 @@
+{
+  "id": "tier-badge-marker",
+  "version": 1,
+  "status": "candidate",
+  "archetype": "catalog",
+  "trigger": {
+    "requires": [
+      {
+        "kind": "entity-field",
+        "entity": "mainEntity",
+        "field": "isPro"
+      },
+      {
+        "kind": "has-role",
+        "role": "pro_*"
+      }
+    ]
+  },
+  "structure": {
+    "slot": "body",
+    "description": "Inline tier-бейдж в header карточки (PRO, Verified, Premium) с distinct цветом; опционально — filter-toggle 'Только PRO' в toolbar; tier-атрибут прокидывается в sort/filter API."
+  },
+  "rationale": {
+    "hypothesis": "Tier-маркер работает как trust signal + capability gate одновременно; без явного бейджа пользователь не различает monetized vs free tier, и capability-gating (например, hidden contacts для non-PRO) становится сюрпризом. Boolean tier_field + matching role — достаточный signal для паттерна.",
+    "evidence": [
+      {
+        "source": "fl-ru",
+        "description": "PRO-бейдж рядом с именем фрилансера, фильтр 'Только PRO'",
+        "reliability": "high"
+      },
+      {
+        "source": "github",
+        "description": "Verified badge на org-профилях — та же механика trust marker",
+        "reliability": "high"
+      }
+    ],
+    "counterexample": [
+      {
+        "source": "wikipedia-editors",
+        "description": "Tier system (autoconfirmed / admin) существует, но бейдж не показывается в ленте — community-norm против коммерциализации",
+        "reliability": "medium"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [
+      {
+        "domain": "booking",
+        "projection": "specialist_catalog",
+        "reason": "Specialist с verified/pro — trust signal и фильтр"
+      },
+      {
+        "domain": "sales",
+        "projection": "seller_profile",
+        "reason": "User с seller-tier бейджем"
+      }
+    ],
+    "shouldNotMatch": [
+      {
+        "domain": "messenger",
+        "projection": "conversation_list",
+        "reason": "Participant не имеет tier — flat peer-to-peer модель"
+      },
+      {
+        "domain": "lifequest",
+        "projection": "goal_catalog",
+        "reason": "Goal — personal entity, tier-понятие не применимо"
+      }
+    ]
+  }
+}

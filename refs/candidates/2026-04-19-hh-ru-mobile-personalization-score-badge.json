@@ -1,0 +1,80 @@
+{
+  "id": "personalization-score-badge",
+  "version": 1,
+  "status": "candidate",
+  "archetype": "catalog",
+  "trigger": {
+    "requires": [
+      {
+        "kind": "entity-field",
+        "entity": "mainEntity",
+        "field": "matchPercent"
+      },
+      {
+        "kind": "field-role-present",
+        "role": "percentage"
+      },
+      {
+        "kind": "intent-effect",
+        "target": "matchView"
+      }
+    ]
+  },
+  "structure": {
+    "slot": "body",
+    "description": "Производный per-user сигнал (match %, fit score) выносится отдельным prominent badge в верх карточки catalog/feed, до основного тела, как главный relevance-якорь для сканирования."
+  },
+  "rationale": {
+    "hypothesis": "Derived персонализированный signal работает сильнее, чем любая single-entity-property: пользователь сканирует ленту по 'насколько это для меня', а не по алфавиту полей. Выделение этого поля редуцирует cognitive load и повышает relevance-perception.",
+    "evidence": [
+      {
+        "source": "hh-ru-mobile",
+        "description": "'Подходит вам на 82%' — крупный зелёный badge в верхней трети карточки, раньше salary/company",
+        "reliability": "high"
+      },
+      {
+        "source": "linkedin-jobs",
+        "description": "'Top match' / '% match' marker above job title",
+        "reliability": "medium"
+      },
+      {
+        "source": "netflix",
+        "description": "'% match' в hover-карточке фильма — тот же приём в recommendation feed",
+        "reliability": "high"
+      }
+    ],
+    "counterexample": [
+      {
+        "source": "ebay-search",
+        "description": "Нет персонализации — листинги универсальны, score-badge был бы шумом",
+        "reliability": "medium"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [
+      {
+        "domain": "invest",
+        "projection": "asset_catalog",
+        "reason": "Если Asset имеет recommendationScore (user fit), паттерн должен вынести его в hero-badge"
+      },
+      {
+        "domain": "sales",
+        "projection": "listing_feed",
+        "reason": "При добавлении matchPercent на Listing — тот же UX"
+      }
+    ],
+    "shouldNotMatch": [
+      {
+        "domain": "messenger",
+        "projection": "conversation_list",
+        "reason": "Нет derived per-user score — Conversation равнозначны"
+      },
+      {
+        "domain": "lifequest",
+        "projection": "habit_catalog",
+        "reason": "Привычки пользователя сами, percentage completeness — не per-item relevance"
+      }
+    ]
+  }
+}

@@ -1,0 +1,296 @@
+{
+  "source": "kwork-ru-catalog",
+  "entities": [
+    {
+      "name": "Category",
+      "fields": [
+        "name",
+        "slug",
+        "parentId",
+        "iconUrl"
+      ],
+      "foreignKey": "parentId→Category"
+    },
+    {
+      "name": "Kwork",
+      "fields": [
+        "title",
+        "categoryId",
+        "sellerId",
+        "basePrice",
+        "baseDurationDays",
+        "description",
+        "previewImages",
+        "tags",
+        "language",
+        "status",
+        "rating",
+        "ordersCount",
+        "viewsCount",
+        "isTop",
+        "createdAt"
+      ],
+      "statusValues": [
+        "draft",
+        "on_moderation",
+        "approved",
+        "rejected",
+        "paused",
+        "vacation"
+      ],
+      "foreignKey": "categoryId→Category"
+    },
+    {
+      "name": "KworkExtra",
+      "fields": [
+        "kworkId",
+        "title",
+        "price",
+        "additionalDays"
+      ],
+      "foreignKey": "kworkId→Kwork"
+    },
+    {
+      "name": "SellerProfile",
+      "fields": [
+        "userId",
+        "displayName",
+        "avatarUrl",
+        "rating",
+        "responseTime",
+        "verified",
+        "completedOrders",
+        "vacationMode"
+      ],
+      "foreignKey": "userId→User"
+    },
+    {
+      "name": "Order",
+      "fields": [
+        "kworkId",
+        "buyerId",
+        "sellerId",
+        "orderNumber",
+        "selectedExtras",
+        "totalPrice",
+        "dueDate",
+        "status",
+        "revisionsUsed",
+        "progressNote",
+        "lastUpdate",
+        "createdAt"
+      ],
+      "statusValues": [
+        "new",
+        "accepted_by_seller",
+        "in_progress",
+        "delivered",
+        "revision_requested",
+        "completed",
+        "cancelled",
+        "disputed"
+      ],
+      "foreignKey": "kworkId→Kwork"
+    },
+    {
+      "name": "Review",
+      "fields": [
+        "orderId",
+        "kworkId",
+        "authorId",
+        "rating",
+        "text",
+        "photos",
+        "createdAt",
+        "sentiment"
+      ],
+      "foreignKey": "kworkId→Kwork"
+    },
+    {
+      "name": "ModerationDecision",
+      "fields": [
+        "kworkId",
+        "moderatorId",
+        "verdict",
+        "reason",
+        "decidedAt"
+      ],
+      "statusValues": [
+        "approved",
+        "rejected"
+      ],
+      "foreignKey": "kworkId→Kwork"
+    }
+  ],
+  "intents": [
+    {
+      "id": "filter_catalog",
+      "α": "replace",
+      "target": "catalog.filters",
+      "confirmation": "click"
+    },
+    {
+      "id": "sort_catalog",
+      "α": "replace",
+      "target": "catalog.sort",
+      "confirmation": "click"
+    },
+    {
+      "id": "open_kwork_detail",
+      "α": "replace",
+      "target": "session.currentKwork",
+      "confirmation": "click"
+    },
+    {
+      "id": "select_extras",
+      "α": "replace",
+      "target": "order.selectedExtras",
+      "confirmation": "click"
+    },
+    {
+      "id": "place_order",
+      "α": "add",
+      "creates": "Order",
+      "confirmation": "form"
+    },
+    {
+      "id": "accept_order",
+      "α": "replace",
+      "target": "order.status",
+      "confirmation": "click"
+    },
+    {
+      "id": "mark_in_progress",
+      "α": "replace",
+      "target": "order.status",
+      "confirmation": "click"
+    },
+    {
+      "id": "deliver_order",
+      "α": "replace",
+      "target": "order.status",
+      "confirmation": "form"
+    },
+    {
+      "id": "request_revision",
+      "α": "replace",
+      "target": "order.status",
+      "confirmation": "form"
+    },
+    {
+      "id": "complete_order",
+      "α": "replace",
+      "target": "order.status",
+      "confirmation": "click",
+      "irreversibility": "high"
+    },
+    {
+      "id": "cancel_order",
+      "α": "replace",
+      "target": "order.status",
+      "confirmation": "form",
+      "irreversibility": "high"
+    },
+    {
+      "id": "open_dispute",
+      "α": "replace",
+      "target": "order.status",
+      "confirmation": "form",
+      "irreversibility": "high"
+    },
+    {
+      "id": "leave_review",
+      "α": "add",
+      "creates": "Review",
+      "confirmation": "form"
+    },
+    {
+      "id": "filter_reviews",
+      "α": "replace",
+      "target": "reviews.filter",
+      "confirmation": "click"
+    },
+    {
+      "id": "create_kwork",
+      "α": "add",
+      "creates": "Kwork",
+      "confirmation": "form"
+    },
+    {
+      "id": "save_kwork_draft",
+      "α": "replace",
+      "target": "kwork.description",
+      "confirmation": "click"
+    },
+    {
+      "id": "add_kwork_extra",
+      "α": "add",
+      "creates": "KworkExtra",
+      "confirmation": "form"
+    },
+    {
+      "id": "submit_for_moderation",
+      "α": "replace",
+      "target": "kwork.status",
+      "confirmation": "click"
+    },
+    {
+      "id": "moderate_kwork",
+      "α": "add",
+      "creates": "ModerationDecision",
+      "confirmation": "form"
+    },
+    {
+      "id": "pause_kwork",
+      "α": "replace",
+      "target": "kwork.status",
+      "confirmation": "click"
+    },
+    {
+      "id": "resume_kwork",
+      "α": "replace",
+      "target": "kwork.status",
+      "confirmation": "click"
+    },
+    {
+      "id": "toggle_vacation_mode",
+      "α": "replace",
+      "target": "sellerProfile.vacationMode",
+      "confirmation": "click"
+    },
+    {
+      "id": "delete_kwork",
+      "α": "remove",
+      "target": "entities",
+      "confirmation": "form",
+      "irreversibility": "high"
+    }
+  ],
+  "roles": [
+    "owner",
+    "viewer",
+    "observer",
+    "agent"
+  ],
+  "observations": [
+    "Catalog is a hierarchical feed grouped by two-level Category (section → subsection)",
+    "Kwork card composes preview image, title, price-from, seller rating, delivery time, and promo TOP badge",
+    "Hover-preview reveals additional images + short description — lightweight detail peek without navigation",
+    "Filters include price, deadline, seller rating, language, verification — filter surface mirrors seller-quality signals",
+    "Sort offers algorithmic default plus freshness/price/rating — marketplace-style ranking",
+    "Detail hero shows large gallery + title + price-from; markdown-formatted description with что-входит/не-входит/требуется",
+    "KworkExtra is a first-class entity: multi-select checkboxes recompute total price live before order placement",
+    "Seller mini-card surfaces response-time as trust signal",
+    "Review list has secondary filters (with-photo, negative-only) — decision-support for buyers",
+    "CTA 'Заказать за X ₽' embeds dynamic total — price is derived state from base + selected extras",
+    "Kwork creation is a multi-step wizard with auto-save draft and moderation gate",
+    "Moderation is an explicit state machine: draft → on_moderation → approved/rejected — ModerationDecision carries reason",
+    "Orders tabbed by status: В работе / На проверке / Завершённые / Отменённые",
+    "Order workflow has a bounded revision buffer (≤3) between delivered and completed — revision_requested is a first-class state, not a sub-field",
+    "Due-date chip turns red when overdue — temporal witness surfaced in card",
+    "Seller dashboard: stats (day/week/month), balance, conversion views→orders, per-kwork micro-stats",
+    "Vacation toggle is a bulk operation over all active kworks — single switch on SellerProfile",
+    "Order completion and cancellation are irreversible transitions (release of escrow, rating impact)",
+    "Buyer and seller share the Orders screen but see role-scoped actions (buyer: request_revision, open_dispute; seller: deliver_order, mark_in_progress)"
+  ]
+}

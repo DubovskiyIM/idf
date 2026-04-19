@@ -1,0 +1,72 @@
+{
+  "id": "temporal-witness-chip",
+  "version": 1,
+  "status": "candidate",
+  "archetype": null,
+  "trigger": {
+    "requires": [
+      {
+        "kind": "entity-field",
+        "entity": "*",
+        "field": "dueDate"
+      },
+      {
+        "kind": "field-role-present",
+        "entity": "*",
+        "role": "date-witness"
+      }
+    ]
+  },
+  "structure": {
+    "slot": "body",
+    "description": "Поле dueDate/deadline рендерится в card/row как chip с цветовым состоянием: neutral (>24h), warning (<24h), critical (overdue). Цвет — производное от now vs dueDate, вычисляется в renderer на каждом ре-рендере."
+  },
+  "rationale": {
+    "hypothesis": "Relative-time ('через 3 дня', '2 часа просрочки') — единственный способ сделать temporal urgency перцептивно очевидной в списке. Absolute timestamp не масштабируется на сканируемость.",
+    "evidence": [
+      {
+        "source": "kwork.ru",
+        "description": "Срок сдачи заказа — chip, краснеет при просрочке",
+        "reliability": "high"
+      },
+      {
+        "source": "linear.app",
+        "description": "Due-date с colored urgency",
+        "reliability": "high"
+      },
+      {
+        "source": "asana.com",
+        "description": "Tasks с due-chip",
+        "reliability": "high"
+      }
+    ],
+    "counterexample": [
+      {
+        "source": "archive list",
+        "description": "Историческая сущность без live urgency — chip бесполезен",
+        "reliability": "high"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [
+      {
+        "domain": "delivery",
+        "projection": "orders_feed",
+        "reason": "Order.eta — temporal witness"
+      },
+      {
+        "domain": "lifequest",
+        "projection": "tasks_feed",
+        "reason": "Task.dueDate"
+      }
+    ],
+    "shouldNotMatch": [
+      {
+        "domain": "messenger",
+        "projection": "messages_feed",
+        "reason": "createdAt — не due-date urgency"
+      }
+    ]
+  }
+}

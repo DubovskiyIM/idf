@@ -1,0 +1,77 @@
+{
+  "id": "promo-banner-injection",
+  "version": 1,
+  "status": "candidate",
+  "archetype": "feed",
+  "trigger": {
+    "requires": [
+      {
+        "kind": "intent-effect",
+        "target": "mainEntity.isBoosted",
+        "irreversibility": "high"
+      },
+      {
+        "kind": "entity-field",
+        "entity": "mainEntity",
+        "field": "isBoosted"
+      }
+    ]
+  },
+  "structure": {
+    "slot": "body",
+    "description": "В потоке catalog/feed каждые N карточек (N=5-10) вставляется promotional banner — CTA для boost-intent самого owner'а. Banner визуально отличим от card (full-bleed, иконка crown/zap), но использует ту же композитную сетку."
+  },
+  "rationale": {
+    "hypothesis": "Monetization через отдельный screen ('Premium' tab) имеет низкий discover-rate: пользователь не заходит туда намеренно. In-feed injection показывает value-prop в моменте, когда релевантность максимальна (смотришь чужие резюме — видишь 'Подними своё'). Баланс aggressive-vs-useful регулируется частотой N.",
+    "evidence": [
+      {
+        "source": "hh-ru-mobile",
+        "description": "Баннеры 'Premium' / 'Поднять резюме' injected в feed резюме и applications",
+        "reliability": "high"
+      },
+      {
+        "source": "linkedin-feed",
+        "description": "'Try Premium' cards каждые ~7 feed-items",
+        "reliability": "high"
+      },
+      {
+        "source": "spotify-free",
+        "description": "Ad-interstitial между треками в playlist",
+        "reliability": "medium"
+      }
+    ],
+    "counterexample": [
+      {
+        "source": "enterprise-saas",
+        "description": "Paid-by-seat продукты не имеют in-feed monetization — upsell через admin-setting",
+        "reliability": "high"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [
+      {
+        "domain": "sales",
+        "projection": "listing_feed",
+        "reason": "Listing.isBoosted / isFeatured — estimated seller промо-CTA в feed"
+      }
+    ],
+    "shouldNotMatch": [
+      {
+        "domain": "booking",
+        "projection": "booking_list",
+        "reason": "Owner-view bookings не имеет self-boost intent"
+      },
+      {
+        "domain": "lifequest",
+        "projection": "goal_catalog",
+        "reason": "Non-monetized личный домен — banner injection неуместен"
+      },
+      {
+        "domain": "workflow",
+        "projection": "workflow_list",
+        "reason": "Инструментальный UI без boost-ladder"
+      }
+    ]
+  }
+}

@@ -1,0 +1,84 @@
+{
+  "id": "plugin-marketplace-feed",
+  "version": 1,
+  "status": "candidate",
+  "archetype": "catalog",
+  "trigger": {
+    "requires": [
+      {
+        "kind": "reference",
+        "entity": "mainEntity",
+        "note": "каталог ссылается на внешний реестр"
+      },
+      {
+        "kind": "intent-creates",
+        "creates": "InstallationEntity",
+        "note": "install = add с конфигом для конкретного tenant"
+      },
+      {
+        "kind": "intent-effect",
+        "target": "installation.config",
+        "α": "replace",
+        "note": "per-app configure screen"
+      },
+      {
+        "kind": "intent-effect",
+        "α": "remove",
+        "irreversibility": "high",
+        "note": "uninstall как irreversible effect"
+      }
+    ]
+  },
+  "structure": {
+    "slot": "body",
+    "description": "Catalog-feed референсной сущности (каталог приложений/плагинов) с install/uninstall lifecycle. Каждая карточка показывает installed-state + быстрый install-CTA; detail-экран раскрывает per-installation config. Uninstall проходит через irreversible-confirm."
+  },
+  "rationale": {
+    "hypothesis": "Plugin-marketplace объединяет 3 разные поверхности (каталог, инсталляция, конфиг-per-инстанс) в единый lifecycle. Наивно это три разных разделa; маркетплейс компрессирует всё в card-feed с состояниями.",
+    "evidence": [
+      {
+        "source": "cal-com",
+        "description": "App Store как marketplace feed с install/uninstall и config per app",
+        "reliability": "high"
+      },
+      {
+        "source": "slack-app-directory",
+        "description": "Каталог + install + per-workspace config",
+        "reliability": "high"
+      },
+      {
+        "source": "shopify-app-store",
+        "description": "Тот же паттерн для торговых плагинов",
+        "reliability": "high"
+      }
+    ],
+    "counterexample": [
+      {
+        "source": "npm-packages-list",
+        "description": "npm list — не marketplace UX, нет lifecycle карточки",
+        "reliability": "medium"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [
+      {
+        "domain": "workflow",
+        "projection": "integrations_catalog",
+        "reason": "каталог внешних integrations с install + config per-integration"
+      }
+    ],
+    "shouldNotMatch": [
+      {
+        "domain": "sales",
+        "projection": "listings_catalog",
+        "reason": "нет install/uninstall lifecycle, это транзакционный каталог"
+      },
+      {
+        "domain": "delivery",
+        "projection": "menu_catalog",
+        "reason": "добавление в корзину ≠ install"
+      }
+    ]
+  }
+}

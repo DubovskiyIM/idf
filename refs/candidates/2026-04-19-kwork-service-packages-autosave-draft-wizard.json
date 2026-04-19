@@ -1,0 +1,72 @@
+{
+  "id": "autosave-draft-wizard",
+  "version": 1,
+  "status": "candidate",
+  "archetype": "wizard",
+  "trigger": {
+    "requires": [
+      {
+        "kind": "intent-creates",
+        "entity": "*"
+      },
+      {
+        "kind": "intent-effect",
+        "intent": "save_*_draft",
+        "α": "replace"
+      },
+      {
+        "kind": "entity-field",
+        "entity": "*",
+        "field": "status",
+        "hasValue": "draft"
+      }
+    ]
+  },
+  "structure": {
+    "slot": "composer",
+    "description": "Create-intent для сложной mainEntity (≥5 полей, требует moderation) разворачивается в multi-step wizard с авто-сохранением черновика на каждый шаг (status=draft). Exit/reload восстанавливает состояние; финальный шаг — submit_for_moderation."
+  },
+  "rationale": {
+    "hypothesis": "Long-form creation (≥5 шагов, включая загрузку изображений и описаний) ломается в single-form: пользователи уходят и теряют данные. Wizard + autosave черновика декомпозирует когнитивную нагрузку и гарантирует resumability.",
+    "evidence": [
+      {
+        "source": "kwork.ru",
+        "description": "Создание kwork'а — 5 шагов с автосохранением; 'Продолжить редактирование' позже",
+        "reliability": "high"
+      },
+      {
+        "source": "fiverr.com",
+        "description": "Gig creation wizard с draft state",
+        "reliability": "high"
+      },
+      {
+        "source": "notion.so",
+        "description": "Page autosave (не wizard, но draft-философия)",
+        "reliability": "medium"
+      }
+    ],
+    "counterexample": [
+      {
+        "source": "twitter compose",
+        "description": "Short-form — wizard избыточен",
+        "reliability": "high"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [
+      {
+        "domain": "sales",
+        "projection": "create_listing",
+        "reason": "Listing с moderation + draft state"
+      }
+    ],
+    "shouldNotMatch": [
+      {
+        "domain": "messenger",
+        "projection": "compose_message",
+        "reason": "Short-form, нет moderation gate"
+      }
+    ]
+  }
+}

@@ -1,0 +1,81 @@
+{
+  "id": "sponsored-segregated-feed",
+  "version": 1,
+  "status": "candidate",
+  "archetype": "feed",
+  "trigger": {
+    "requires": [
+      {
+        "kind": "entity-field",
+        "field": "sponsored",
+        "fieldTypes": [
+          "boolean"
+        ]
+      },
+      {
+        "kind": "intent-count",
+        "minMatching": 1,
+        "where": {
+          "archetype": "feed|catalog"
+        }
+      }
+    ]
+  },
+  "structure": {
+    "slot": "body",
+    "description": "Split feed body into labeled sponsored band (compact, with 'Sponsored' tag per item) followed by organic 'For you' band. Sponsored items never interleave into organic ranking — preserves algorithmic trust."
+  },
+  "rationale": {
+    "hypothesis": "Mixing paid and organic placements without visual segregation erodes user trust in the ranking algorithm and violates disclosure norms in commerce/job markets. Explicit segregation lets the platform monetize without contaminating the 'for-you' signal.",
+    "evidence": [
+      {
+        "source": "indeed-mobile-job-board",
+        "description": "Home feed has 'Sponsored Jobs' horizontal strip with tag on each card, separate from 'Jobs for you' vertical list below",
+        "reliability": "high"
+      },
+      {
+        "source": "google-search",
+        "description": "'Sponsored' label above ads block, separate from organic results",
+        "reliability": "high"
+      },
+      {
+        "source": "amazon-search",
+        "description": "Sponsored products labeled but interleaved — weaker form of same pattern",
+        "reliability": "medium"
+      }
+    ],
+    "counterexample": [
+      {
+        "source": "instagram-feed",
+        "description": "Ads interleaved without structural band — works in infinite-scroll where segregation would break flow rhythm",
+        "reliability": "high"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [
+      {
+        "domain": "sales",
+        "projection": "listings_feed",
+        "reason": "Listing.promoted/featured is the canonical sponsor flag"
+      },
+      {
+        "domain": "delivery",
+        "projection": "merchants_feed",
+        "reason": "Merchant.featured drives segregated promoted band"
+      }
+    ],
+    "shouldNotMatch": [
+      {
+        "domain": "planning",
+        "projection": "polls_feed",
+        "reason": "No paid-placement semantics in polls"
+      },
+      {
+        "domain": "lifequest",
+        "projection": "goals_catalog",
+        "reason": "Personal goals — monetization is out of scope"
+      }
+    ]
+  }
+}

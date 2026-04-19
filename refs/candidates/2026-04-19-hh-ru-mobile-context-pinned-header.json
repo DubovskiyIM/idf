@@ -1,0 +1,82 @@
+{
+  "id": "context-pinned-header",
+  "version": 1,
+  "status": "candidate",
+  "archetype": "detail",
+  "trigger": {
+    "requires": [
+      {
+        "kind": "entity-kind",
+        "value": "internal"
+      },
+      {
+        "kind": "entity-field",
+        "entity": "mainEntity",
+        "foreignKey": true,
+        "referencesDetail": true
+      },
+      {
+        "kind": "intent-count",
+        "min": 1,
+        "filter": "content-append"
+      }
+    ]
+  },
+  "structure": {
+    "slot": "header",
+    "description": "На detail-проекции сущности, имеющей FK на другую сущность с собственной detail-проекцией, FK-entity рендерится как компактный pinned-header (sticky top) с её ключевыми полями. Header остаётся видимым при скролле/ввода, поддерживая контекст."
+  },
+  "rationale": {
+    "hypothesis": "Conversation/Application не самодостаточны — они всегда относительно 'чего-то' (vacancy, order, listing). При длинной прокрутке диалога контекст FK-entity теряется. Pinning сохраняет его как постоянный anchor, предотвращая 'о чём мы тут говорим' и упрощая переход к FK detail.",
+    "evidence": [
+      {
+        "source": "hh-ru-mobile",
+        "description": "В чате с работодателем header с vacancy-title + company + salary закреплён сверху",
+        "reliability": "high"
+      },
+      {
+        "source": "avito-chats",
+        "description": "Объявление pinned at top of chat: 'Продам велосипед, 15000₽' — постоянный контекст сделки",
+        "reliability": "high"
+      },
+      {
+        "source": "github-pr-review",
+        "description": "PR header sticky при scroll через comment-thread",
+        "reliability": "medium"
+      }
+    ],
+    "counterexample": [
+      {
+        "source": "whatsapp-personal",
+        "description": "Personal chats не имеют FK-context — header был бы лишним (имя собеседника уже в top-bar)",
+        "reliability": "high"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [
+      {
+        "domain": "delivery",
+        "projection": "delivery_detail",
+        "reason": "Delivery имеет FK на Order — Order header с items/price должен быть pinned при scroll по courier events"
+      },
+      {
+        "domain": "sales",
+        "projection": "conversation_detail",
+        "reason": "Сообщения про Listing — pin listing-header сверху (title, price, photo)"
+      }
+    ],
+    "shouldNotMatch": [
+      {
+        "domain": "lifequest",
+        "projection": "habit_detail",
+        "reason": "Habit самодостаточна, не имеет внешнего FK-context"
+      },
+      {
+        "domain": "invest",
+        "projection": "portfolio_detail",
+        "reason": "Portfolio — корневая сущность, ей некого 'pin'"
+      }
+    ]
+  }
+}

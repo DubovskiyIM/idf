@@ -1,0 +1,82 @@
+{
+  "id": "status-segmented-tabs",
+  "version": 1,
+  "status": "candidate",
+  "archetype": "catalog",
+  "trigger": {
+    "requires": [
+      {
+        "kind": "entity-field",
+        "entity": "mainEntity",
+        "field": "status"
+      },
+      {
+        "kind": "intent-count",
+        "statusValues": {
+          "min": 3
+        }
+      },
+      {
+        "kind": "has-role",
+        "role": "owner"
+      }
+    ]
+  },
+  "structure": {
+    "slot": "toolbar",
+    "description": "Статусы mainEntity (≥3 value) проецируются в segmented top-bar над catalog-body как predefined views-фильтры. Дополнительно добавляется 'All' как дефолт. Переключение = replace filter.status без сетевого round-trip."
+  },
+  "rationale": {
+    "hypothesis": "Status-enum с operational-семантикой (sent/viewed/invited/rejected) — самая частая ось группировки для owner-роли. Сегментирование через tabs делает mental-model 'воронка процесса' явной и избавляет от chip-фильтров, которые требуют отдельного UX-акта.",
+    "evidence": [
+      {
+        "source": "hh-ru-mobile",
+        "description": "Applications section: tabs 'Все / Приглашения / Отказы / Архив'",
+        "reliability": "high"
+      },
+      {
+        "source": "gmail",
+        "description": "Primary / Social / Promotions / Updates — status-like segmentation",
+        "reliability": "medium"
+      },
+      {
+        "source": "trello-mobile",
+        "description": "Status columns as swipe-segments в mobile-view",
+        "reliability": "high"
+      }
+    ],
+    "counterexample": [
+      {
+        "source": "inbox-catch-all",
+        "description": "Когда статусов 10+, tabs становятся overflow, превращаются в dropdown",
+        "reliability": "medium"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [
+      {
+        "domain": "sales",
+        "projection": "order_catalog",
+        "reason": "Order.status: pending/paid/shipped/delivered/cancelled — классический funnel для seller/buyer"
+      },
+      {
+        "domain": "delivery",
+        "projection": "order_catalog",
+        "reason": "Order.status для dispatcher-view: placed/assigned/picked/delivered"
+      }
+    ],
+    "shouldNotMatch": [
+      {
+        "domain": "lifequest",
+        "projection": "habit_list",
+        "reason": "Habit не имеет status-axis достаточной rich-семантики (active/archived — 2 value)"
+      },
+      {
+        "domain": "workflow",
+        "projection": "execution_list",
+        "reason": "Execution status — per-run technical state, не owner-facing funnel"
+      }
+    ]
+  }
+}

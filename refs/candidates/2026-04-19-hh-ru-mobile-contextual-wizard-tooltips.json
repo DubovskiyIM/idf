@@ -1,0 +1,83 @@
+{
+  "id": "contextual-wizard-tooltips",
+  "version": 1,
+  "status": "candidate",
+  "archetype": "form",
+  "trigger": {
+    "requires": [
+      {
+        "kind": "intent-creates",
+        "entity": "ComplexEntity",
+        "stepCount": {
+          "min": 4
+        }
+      },
+      {
+        "kind": "intent-confirmation",
+        "value": "form"
+      },
+      {
+        "kind": "entity-field",
+        "entity": "targetEntity",
+        "field": "completeness"
+      }
+    ]
+  },
+  "structure": {
+    "slot": "body",
+    "description": "Multi-step wizard (≥4 шага) с высокой размерностью полей рендерит per-field inline-tooltip (info-icon next to label, expanding на tap в 2-3 строки контекстной подсказки). Completeness-поле даёт progress-indicator, усиливающий completion-pressure."
+  },
+  "rationale": {
+    "hypothesis": "Complex-form-creation (resume, profile, listing) — abandonment-prone из-за полевой неопределённости ('что именно сюда писать?'). Инлайновые tooltips, доступные opt-in, снимают эту неопределённость без засорения формы помощью, и progress-meter укрепляет commitment.",
+    "evidence": [
+      {
+        "source": "hh-ru-mobile",
+        "description": "Resume wizard 6 шагов, каждый field имеет '?' с раскрывающейся подсказкой",
+        "reliability": "high"
+      },
+      {
+        "source": "linkedin-profile-builder",
+        "description": "'Add your headline' + tip 'Describe what you do in 10 words'",
+        "reliability": "high"
+      },
+      {
+        "source": "stripe-onboarding",
+        "description": "Business-info wizard с per-field compliance-подсказками",
+        "reliability": "medium"
+      }
+    ],
+    "counterexample": [
+      {
+        "source": "signup-form",
+        "description": "Короткая форма (email/password) — tooltips избыточны и тормозят happy path",
+        "reliability": "high"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [
+      {
+        "domain": "sales",
+        "projection": "listing_create",
+        "reason": "Listing creation — многошаговый wizard с tricky полями (категория, состояние, доставка)"
+      },
+      {
+        "domain": "invest",
+        "projection": "portfolio_setup",
+        "reason": "Risk-profile + goals + rules — wizard с non-obvious finance-полями"
+      }
+    ],
+    "shouldNotMatch": [
+      {
+        "domain": "messenger",
+        "projection": "send_message",
+        "reason": "Single-field form, не wizard"
+      },
+      {
+        "domain": "lifequest",
+        "projection": "habit_create",
+        "reason": "Habit — простая 2-3 поля форма, tooltips лишни"
+      }
+    ]
+  }
+}

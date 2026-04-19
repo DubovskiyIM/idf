@@ -1,0 +1,72 @@
+{
+  "id": "gallery-hero-detail",
+  "version": 1,
+  "status": "candidate",
+  "archetype": "detail",
+  "trigger": {
+    "requires": [
+      {
+        "kind": "entity-field",
+        "entity": "*",
+        "field": "previewImages"
+      },
+      {
+        "kind": "entity-field",
+        "entity": "*",
+        "field": "description"
+      }
+    ]
+  },
+  "structure": {
+    "slot": "hero",
+    "description": "Hero detail-страницы делится на 2/3 визуальной галереи + 1/3 essence-панели (title, price-from, primary CTA). Description ниже hero, с markdown-секциями 'что входит / не входит / требуется' как структурированным блоком."
+  },
+  "rationale": {
+    "hypothesis": "Визуальный товар коммуницирует через изображения, а решение — через essence-панель (цена + CTA). Разделение экрана даёт обе функции одновременно выше fold'а и снимает необходимость скроллить для primary action.",
+    "evidence": [
+      {
+        "source": "kwork.ru",
+        "description": "Detail kwork'а: слева большая галерея, справа колонка с ценой и 'Заказать'",
+        "reliability": "high"
+      },
+      {
+        "source": "etsy.com",
+        "description": "Тот же pattern: gallery+essence",
+        "reliability": "high"
+      },
+      {
+        "source": "airbnb.com",
+        "description": "Listing detail: photo-grid + booking-card",
+        "reliability": "high"
+      }
+    ],
+    "counterexample": [
+      {
+        "source": "github issue",
+        "description": "Text-centric detail — галерея не нужна",
+        "reliability": "high"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [
+      {
+        "domain": "sales",
+        "projection": "listing_detail",
+        "reason": "Listing с previewImages + description"
+      },
+      {
+        "domain": "delivery",
+        "projection": "menu_item_detail",
+        "reason": "MenuItem с photos + description"
+      }
+    ],
+    "shouldNotMatch": [
+      {
+        "domain": "planning",
+        "projection": "poll_detail",
+        "reason": "Poll не визуален"
+      }
+    ]
+  }
+}

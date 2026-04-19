@@ -1,0 +1,76 @@
+{
+  "id": "undo-toast-irreversible",
+  "version": 1,
+  "status": "candidate",
+  "archetype": null,
+  "trigger": {
+    "requires": [
+      {
+        "kind": "intent-effect",
+        "alpha": "replace",
+        "irreversibility": "high"
+      },
+      {
+        "kind": "has-role",
+        "role": "owner"
+      }
+    ]
+  },
+  "structure": {
+    "slot": "overlay",
+    "description": "После подтверждения irreversible-replace (reject_bid / delete_draft) показывается toast с undo-кнопкой на короткое окно (5-10s), откатывающий эффект до фактического `confirmed`. Сам эффект остаётся `proposed` это окно"
+  },
+  "rationale": {
+    "hypothesis": "Полный modal-confirm перед отменой отклика создаёт friction; undo-toast конвертирует «подтверждение заранее» в «отмена постфактум» — снижает cost регулярных операций, сохраняя rollback",
+    "evidence": [
+      {
+        "source": "profi.ru",
+        "description": "Toast «Отклик отклонён · Отменить» после reject_bid",
+        "reliability": "high"
+      },
+      {
+        "source": "gmail",
+        "description": "«Undo send» toast после send",
+        "reliability": "high"
+      },
+      {
+        "source": "trello",
+        "description": "Undo-toast при archive карточки",
+        "reliability": "high"
+      }
+    ],
+    "counterexample": [
+      {
+        "source": "bank-transfer",
+        "description": "Undo-window неуместен — нужен явный confirm-modal с принудительной паузой",
+        "reliability": "high"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [
+      {
+        "domain": "sales",
+        "projection": "bid_detail",
+        "reason": "reject bid с undo-toast"
+      },
+      {
+        "domain": "messenger",
+        "projection": "message_detail",
+        "reason": "delete message с undo-window"
+      }
+    ],
+    "shouldNotMatch": [
+      {
+        "domain": "delivery",
+        "projection": "payment_capture",
+        "reason": "capture_payment — irrevocable, undo не имеет смысла"
+      },
+      {
+        "domain": "invest",
+        "projection": "transaction_commit",
+        "reason": "trade settled — undo нарушит integrity"
+      }
+    ]
+  }
+}

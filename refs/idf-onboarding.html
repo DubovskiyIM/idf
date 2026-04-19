@@ -1,0 +1,805 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>IDF — онбординг в 5 слайдов</title>
+<style>
+  /* ============================================================
+     Тема. Инструментальный стиль — тёмный фон, монохром + акцент.
+     Акцент #7dd3fc (небесный), вторичный #f0abfc (сирень).
+     ============================================================ */
+  :root {
+    --bg:        #0b1020;
+    --bg-2:     #0f172a;
+    --fg:       #e5e7eb;
+    --fg-dim:   #94a3b8;
+    --line:     #1f2937;
+    --line-2:   #334155;
+    --accent:   #7dd3fc;
+    --accent-2: #f0abfc;
+    --ok:       #4ade80;
+    --warn:     #fbbf24;
+    --code-bg:  #0a0f1c;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; height: 100%; }
+  body {
+    background: radial-gradient(ellipse at top, #0f172a 0%, #0b1020 60%, #050812 100%);
+    color: var(--fg);
+    font-family: ui-sans-serif, -apple-system, "SF Pro Text", "Helvetica Neue", Arial, sans-serif;
+    overflow: hidden;
+    font-size: 16px;
+    line-height: 1.55;
+  }
+  code, pre, .mono {
+    font-family: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  }
+
+  /* ============================================================
+     Шелл слайдов. Один viewport — один слайд за раз; transform
+     по оси X; плавный ease.
+     ============================================================ */
+  .deck {
+    position: relative;
+    width: 100vw;
+    height: 100vh;
+    overflow: hidden;
+  }
+  .rail {
+    display: flex;
+    width: 500vw;          /* 5 слайдов × 100vw */
+    height: 100%;
+    transition: transform 700ms cubic-bezier(.7,.0,.2,1);
+    will-change: transform;
+  }
+  .slide {
+    width: 100vw;
+    height: 100vh;
+    padding: 48px 72px 96px;
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+    overflow-y: auto;
+  }
+
+  /* Активный слайд: fade-in/up дочерних блоков */
+  .slide .fade {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  .slide.active .fade {
+    animation: rise 620ms cubic-bezier(.2,.7,.2,1) forwards;
+  }
+  .slide.active .fade:nth-child(1) { animation-delay: 80ms; }
+  .slide.active .fade:nth-child(2) { animation-delay: 180ms; }
+  .slide.active .fade:nth-child(3) { animation-delay: 280ms; }
+  .slide.active .fade:nth-child(4) { animation-delay: 380ms; }
+  .slide.active .fade:nth-child(5) { animation-delay: 480ms; }
+  .slide.active .fade:nth-child(6) { animation-delay: 580ms; }
+  @keyframes rise {
+    to { opacity: 1; transform: none; }
+  }
+
+  /* ============================================================
+     Типографика и хедеры.
+     ============================================================ */
+  .eyebrow {
+    font-size: 12px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--accent);
+    display: flex;
+    gap: 12px;
+    align-items: center;
+  }
+  .eyebrow .dot {
+    width: 6px; height: 6px; background: var(--accent); border-radius: 50%;
+    box-shadow: 0 0 12px var(--accent);
+  }
+  h1 {
+    margin: 0;
+    font-size: 44px;
+    line-height: 1.1;
+    letter-spacing: -0.02em;
+    font-weight: 600;
+  }
+  h2 {
+    margin: 0 0 12px;
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--fg);
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+  }
+  p { margin: 0; color: var(--fg-dim); }
+  p.lead { color: var(--fg); font-size: 18px; max-width: 960px; }
+
+  /* ============================================================
+     Сетки и карточки.
+     ============================================================ */
+  .grid {
+    display: grid;
+    gap: 20px;
+  }
+  .grid.cols-2 { grid-template-columns: 1fr 1fr; }
+  .grid.cols-3 { grid-template-columns: repeat(3, 1fr); }
+  .grid.cols-4 { grid-template-columns: repeat(4, 1fr); }
+  .grid.cols-5 { grid-template-columns: repeat(5, 1fr); }
+
+  .card {
+    background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.00));
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    padding: 18px 20px;
+    position: relative;
+  }
+  .card .tag {
+    font-size: 11px;
+    color: var(--accent);
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+  }
+  .card h3 {
+    margin: 4px 0 6px;
+    font-size: 17px;
+    color: var(--fg);
+  }
+  .card p {
+    font-size: 14px;
+    color: var(--fg-dim);
+  }
+  .card code { color: var(--accent-2); font-size: 13px; }
+
+  /* Коды и чанки */
+  pre.code {
+    background: var(--code-bg);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    padding: 16px 18px;
+    font-size: 13px;
+    overflow: auto;
+    color: #cbd5e1;
+    max-height: 340px;
+  }
+  pre.code .k { color: #c4b5fd; }    /* keyword */
+  pre.code .s { color: #86efac; }    /* string */
+  pre.code .n { color: #fcd34d; }    /* number */
+  pre.code .c { color: #64748b; font-style: italic; } /* comment */
+  pre.code .t { color: var(--accent); } /* type / intent */
+  pre.code .p { color: var(--accent-2); } /* prop */
+
+  /* ============================================================
+     Навигация: точки + стрелки. Клавиши ← / →, Space.
+     ============================================================ */
+  .nav {
+    position: fixed;
+    left: 0; right: 0; bottom: 24px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 16px;
+    z-index: 20;
+  }
+  .dots { display: flex; gap: 10px; }
+  .dots button {
+    width: 9px; height: 9px; border-radius: 50%;
+    border: 1px solid var(--line-2);
+    background: transparent;
+    cursor: pointer;
+    padding: 0;
+    transition: all 200ms;
+  }
+  .dots button.on {
+    background: var(--accent);
+    border-color: var(--accent);
+    box-shadow: 0 0 10px var(--accent);
+    transform: scale(1.1);
+  }
+  .arrow {
+    background: rgba(255,255,255,0.04);
+    border: 1px solid var(--line-2);
+    color: var(--fg);
+    width: 36px; height: 36px;
+    border-radius: 50%;
+    cursor: pointer;
+    font-size: 18px;
+    line-height: 1;
+    display: grid; place-items: center;
+  }
+  .arrow:hover { background: rgba(255,255,255,0.08); border-color: var(--accent); color: var(--accent); }
+  .arrow:disabled { opacity: 0.35; cursor: default; }
+
+  .counter {
+    position: fixed;
+    top: 20px; right: 28px;
+    font-size: 12px;
+    color: var(--fg-dim);
+    letter-spacing: 0.14em;
+    z-index: 20;
+  }
+  .counter span { color: var(--accent); }
+
+  /* ============================================================
+     SVG — общие штрихи.
+     ============================================================ */
+  svg.diagram { width: 100%; height: auto; display: block; }
+  .stroke { stroke: var(--line-2); fill: none; stroke-width: 1.2; }
+  .stroke-acc { stroke: var(--accent); fill: none; stroke-width: 1.4; }
+  .node-bg { fill: #111a2e; stroke: var(--line-2); stroke-width: 1; }
+  .node-acc { fill: rgba(125,211,252,0.1); stroke: var(--accent); stroke-width: 1.2; }
+  .node-lbl { fill: var(--fg); font-size: 12px; font-family: ui-monospace, monospace; }
+  .node-sub { fill: var(--fg-dim); font-size: 10px; font-family: ui-monospace, monospace; }
+
+  /* Пульс на линиях (эффект "движется по проводу") */
+  @keyframes dash {
+    to { stroke-dashoffset: -240; }
+  }
+  .pulse {
+    stroke-dasharray: 4 6;
+    animation: dash 3.2s linear infinite;
+  }
+
+  /* "Пульсирующая точка" бегущая по пути */
+  @keyframes travel {
+    to { offset-distance: 100%; }
+  }
+  .traveler {
+    offset-rotate: 0deg;
+    fill: var(--accent);
+    animation: travel 3.4s linear infinite;
+    filter: drop-shadow(0 0 6px var(--accent));
+  }
+
+  /* Мягкое "дыхание" */
+  @keyframes breathe {
+    0%,100% { opacity: 0.95; transform: scale(1); }
+    50%     { opacity: 1;    transform: scale(1.02); }
+  }
+  .breathe { animation: breathe 3.2s ease-in-out infinite; transform-origin: center; }
+
+  /* Орбита (слайд 5) */
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .orbit { animation: spin 22s linear infinite; transform-origin: 260px 170px; }
+
+  /* Badge */
+  .badge {
+    display: inline-block;
+    font-size: 11px;
+    padding: 2px 8px;
+    border: 1px solid var(--line-2);
+    border-radius: 999px;
+    color: var(--fg-dim);
+    margin-right: 6px;
+  }
+  .badge.acc { color: var(--accent); border-color: var(--accent); }
+
+  /* Футер слайда — «тезис» крупно */
+  .footer-line {
+    margin-top: auto;
+    padding-top: 24px;
+    border-top: 1px dashed var(--line);
+    font-size: 14px;
+    color: var(--fg-dim);
+  }
+  .footer-line b { color: var(--fg); }
+
+  /* Список-шаги (слайд 4) */
+  ol.steps {
+    counter-reset: step;
+    list-style: none;
+    padding: 0; margin: 0;
+    display: grid;
+    gap: 10px;
+  }
+  ol.steps li {
+    counter-increment: step;
+    position: relative;
+    padding: 12px 16px 12px 58px;
+    background: rgba(255,255,255,0.02);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+  }
+  ol.steps li::before {
+    content: counter(step);
+    position: absolute;
+    left: 14px; top: 50%;
+    transform: translateY(-50%);
+    width: 30px; height: 30px;
+    border-radius: 50%;
+    background: rgba(125,211,252,0.1);
+    border: 1px solid var(--accent);
+    color: var(--accent);
+    display: grid;
+    place-items: center;
+    font-family: ui-monospace, monospace;
+    font-size: 13px;
+  }
+  ol.steps li b { color: var(--fg); }
+  ol.steps li code { color: var(--accent-2); font-size: 13px; }
+
+  /* Адаптивность до 1100px — компактнее */
+  @media (max-width: 1100px) {
+    .slide { padding: 32px 28px 96px; }
+    h1 { font-size: 34px; }
+    .grid.cols-4, .grid.cols-5 { grid-template-columns: 1fr 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<!-- Счётчик слайдов в правом верхнем углу -->
+<div class="counter"><span id="cur">1</span> / 5</div>
+
+<div class="deck">
+  <div class="rail" id="rail">
+
+    <!-- ======================================================
+         СЛАЙД 1 — Что такое IDF
+         Цель: зафиксировать позиционирование (формат, не фреймворк),
+         4 материализации, Φ как source of truth.
+         ====================================================== -->
+    <section class="slide active" data-idx="0">
+      <div class="eyebrow fade"><span class="dot"></span>Слайд 1 · Позиционирование</div>
+      <h1 class="fade">IDF — <span style="color:var(--accent)">формат</span>, не фреймворк</h1>
+      <p class="lead fade">
+        Intent-Driven Frontend описывает приложение декларативно: онтология, намерения, проекции, роли.
+        Это тип данных — уровня OpenAPI или JSON-LD. Адаптеры и материализаторы <i>читают</i> формат.
+      </p>
+
+      <!-- Схема: один артефакт → четыре материализации -->
+      <div class="fade card" style="padding: 28px 32px">
+        <h2>Один артефакт · четыре читателя</h2>
+        <svg class="diagram" viewBox="0 0 1100 320" aria-label="artifact-four-materializations">
+          <!-- Центральный узел: Артефакт IDF -->
+          <g class="breathe">
+            <rect x="470" y="120" width="160" height="80" rx="12" class="node-acc"/>
+            <text x="550" y="150" text-anchor="middle" class="node-lbl" style="font-size:14px">Артефакт IDF</text>
+            <text x="550" y="172" text-anchor="middle" class="node-sub">ontology · intents · projections · roles</text>
+          </g>
+
+          <!-- 4 конечные материализации -->
+          <g>
+            <rect x="70"  y="40" width="200" height="60" rx="10" class="node-bg"/>
+            <text x="170" y="65" text-anchor="middle" class="node-lbl">Пиксели · UI</text>
+            <text x="170" y="82" text-anchor="middle" class="node-sub">4 адаптера: Mantine / shadcn / Apple / AntD</text>
+          </g>
+          <g>
+            <rect x="830" y="40" width="200" height="60" rx="10" class="node-bg"/>
+            <text x="930" y="65" text-anchor="middle" class="node-lbl">Голос</text>
+            <text x="930" y="82" text-anchor="middle" class="node-sub">/api/voice · SSML · plain</text>
+          </g>
+          <g>
+            <rect x="70"  y="230" width="200" height="60" rx="10" class="node-bg"/>
+            <text x="170" y="255" text-anchor="middle" class="node-lbl">Агент · JSON API</text>
+            <text x="170" y="272" text-anchor="middle" class="node-sub">/api/agent · preapproval</text>
+          </g>
+          <g>
+            <rect x="830" y="230" width="200" height="60" rx="10" class="node-bg"/>
+            <text x="930" y="255" text-anchor="middle" class="node-lbl">Документ</text>
+            <text x="930" y="272" text-anchor="middle" class="node-sub">/api/document · HTML/JSON</text>
+          </g>
+
+          <!-- Линии с пульсом (анимированные dash) -->
+          <path class="stroke-acc pulse" d="M470,140 C380,120 320,90 270,80"/>
+          <path class="stroke-acc pulse" d="M630,140 C720,120 780,90 830,80"/>
+          <path class="stroke-acc pulse" d="M470,180 C380,210 320,240 270,252"/>
+          <path class="stroke-acc pulse" d="M630,180 C720,210 780,240 830,252"/>
+        </svg>
+      </div>
+
+      <!-- Фундаментальные ноты -->
+      <div class="grid cols-3 fade">
+        <div class="card">
+          <div class="tag">§2 · Φ</div>
+          <h3>Source of truth — история намерений</h3>
+          <p>Мир = <code>fold(Φ_confirmed)</code>. Мир не хранится — он перевычисляется. Каждое намерение проходит жизнь: <code>proposed → confirmed | rejected</code>.</p>
+        </div>
+        <div class="card">
+          <div class="tag">§17 · адаптеры</div>
+          <h3>UI-кит — поздняя привязка</h3>
+          <p>Проекции не знают про React-компоненты. Адаптер подставляет <code>Button</code>, <code>Text</code>, <code>Card</code> в runtime через capability-surface.</p>
+        </div>
+        <div class="card">
+          <div class="tag">§15 · анкеринг</div>
+          <h3>LLM — на этапе авторства</h3>
+          <p>Модель помогает конструировать артефакт и кристаллизовать UI. В рантайме решения принимает детерминированное ядро.</p>
+        </div>
+      </div>
+
+      <div class="footer-line fade">
+        <b>Главный тезис:</b> сначала описываем смысл приложения, потом материализуем — в пиксели, голос, агента, документ.
+      </div>
+    </section>
+
+    <!-- ======================================================
+         СЛАЙД 2 — Жизненный цикл намерения
+         ====================================================== -->
+    <section class="slide" data-idx="1">
+      <div class="eyebrow fade"><span class="dot"></span>Слайд 2 · Как это работает в рантайме</div>
+      <h1 class="fade">Намерение → эффекты → <span style="color:var(--accent)">мир</span></h1>
+      <p class="lead fade">
+        Пользователь (или агент) формирует <b>intent</b>. Валидатор проверяет онтологию, инварианты и гварды.
+        На подтверждении рождаются эффекты — они попадают в Φ. Мир пересобирается свёрткой.
+      </p>
+
+      <!-- Flow-диаграмма с движущейся точкой -->
+      <div class="card fade" style="padding: 28px 32px">
+        <h2>Конвейер одного намерения</h2>
+        <svg class="diagram" viewBox="0 0 1100 220" aria-label="intent-pipeline">
+          <!-- путь (видимый) -->
+          <path id="wire" d="M80,110 L220,110 L220,60 L420,60 L420,110 L560,110 L560,160 L760,160 L760,110 L1020,110"
+                class="stroke-acc pulse"/>
+
+          <!-- бегущая частица (offset-path) -->
+          <circle r="5" class="traveler" style="offset-path: path('M80,110 L220,110 L220,60 L420,60 L420,110 L560,110 L560,160 L760,160 L760,110 L1020,110');"/>
+
+          <!-- узлы -->
+          <g>
+            <rect x="40"   y="80" width="80" height="60" rx="8" class="node-acc"/>
+            <text x="80"   y="108" text-anchor="middle" class="node-lbl">intent</text>
+            <text x="80"   y="125" text-anchor="middle" class="node-sub">particles</text>
+          </g>
+          <g>
+            <rect x="160"  y="30" width="120" height="60" rx="8" class="node-bg"/>
+            <text x="220"  y="58" text-anchor="middle" class="node-lbl">validator</text>
+            <text x="220"  y="75" text-anchor="middle" class="node-sub">ontology · guards</text>
+          </g>
+          <g>
+            <rect x="360"  y="30" width="120" height="60" rx="8" class="node-bg"/>
+            <text x="420"  y="58" text-anchor="middle" class="node-lbl">invariants</text>
+            <text x="420"  y="75" text-anchor="middle" class="node-sub">5 kinds · §14.1</text>
+          </g>
+          <g>
+            <rect x="500"  y="80" width="120" height="60" rx="8" class="node-bg"/>
+            <text x="560"  y="108" text-anchor="middle" class="node-lbl">buildEffects</text>
+            <text x="560"  y="125" text-anchor="middle" class="node-sub">generic + custom</text>
+          </g>
+          <g>
+            <rect x="700"  y="130" width="120" height="60" rx="8" class="node-bg"/>
+            <text x="760"  y="158" text-anchor="middle" class="node-lbl">Φ · effects</text>
+            <text x="760"  y="175" text-anchor="middle" class="node-sub">proposed→confirmed</text>
+          </g>
+          <g>
+            <rect x="960"  y="80" width="100" height="60" rx="8" class="node-acc"/>
+            <text x="1010" y="108" text-anchor="middle" class="node-lbl">fold(Φ)</text>
+            <text x="1010" y="125" text-anchor="middle" class="node-sub">world</text>
+          </g>
+        </svg>
+      </div>
+
+      <!-- Две колонки: исходник intent vs. эффекты -->
+      <div class="grid cols-2 fade">
+        <div class="card">
+          <h3 style="margin-top:0">Intent (декларация)</h3>
+<pre class="code"><code><span class="c">// src/domains/freelance/intents.js</span>
+<span class="p">confirm_deal</span>: {
+  <span class="p">params</span>: [<span class="s">"executorId"</span>,<span class="s">"taskId"</span>,<span class="s">"responseId"</span>,<span class="s">"amount"</span>],
+  <span class="p">roles</span>: [<span class="s">"customer"</span>],
+  <span class="p">effects</span>: [
+    { <span class="p">alpha</span>: <span class="s">"create"</span>, <span class="p">entity</span>: <span class="s">"Deal"</span>,       <span class="c">/* +escrow */</span> },
+    { <span class="p">alpha</span>: <span class="s">"create"</span>, <span class="p">entity</span>: <span class="s">"Transaction"</span>,<span class="p">kind</span>:<span class="s">"escrow-hold"</span> },
+    { <span class="p">alpha</span>: <span class="s">"replace"</span>,<span class="p">entity</span>: <span class="s">"Wallet"</span>,      <span class="c">/* balance-=, reserved+= */</span> }
+  ],
+  <span class="p">context</span>: { <span class="p">__irr</span>: { <span class="p">point</span>: <span class="s">"high"</span> } }  <span class="c">// §23 irreversibility</span>
+}</code></pre>
+        </div>
+        <div class="card">
+          <h3 style="margin-top:0">После confirm — что появилось в Φ</h3>
+<pre class="code"><code><span class="c">// engine · fold · применяет α-операции к миру</span>
+Φ.push({ <span class="p">tau</span>:<span class="s">"effect"</span>, <span class="p">alpha</span>:<span class="s">"create"</span>, <span class="p">entity</span>:<span class="s">"Deal"</span>, <span class="p">data</span>:{
+  <span class="p">id</span>:<span class="s">"d_42"</span>, <span class="p">status</span>:<span class="s">"in_progress"</span>, <span class="p">amount</span>:<span class="n">9000</span>, <span class="p">commission</span>:<span class="n">900</span>
+}})
+Φ.push({ <span class="p">tau</span>:<span class="s">"effect"</span>, <span class="p">alpha</span>:<span class="s">"replace"</span>, <span class="p">entity</span>:<span class="s">"Wallet"</span>,
+  <span class="p">patch</span>: { <span class="p">balance</span>: -<span class="n">9000</span>, <span class="p">reserved</span>: +<span class="n">9000</span> }})
+
+<span class="c">// мир после fold:</span>
+world.Deal.d_42 = { <span class="p">status</span>: <span class="s">"in_progress"</span>, ... }
+world.Wallet.w_a = { <span class="p">balance</span>: <span class="n">11000</span>, <span class="p">reserved</span>: <span class="n">9000</span> }</code></pre>
+        </div>
+      </div>
+
+      <div class="footer-line fade">
+        <b>Ключевое:</b> декларация → валидация → эффекты → Φ → мир. Ни один шаг не «додумывает» — всё следует из артефакта.
+      </div>
+    </section>
+
+    <!-- ======================================================
+         СЛАЙД 3 — Кристаллизация UI
+         ====================================================== -->
+    <section class="slide" data-idx="2">
+      <div class="eyebrow fade"><span class="dot"></span>Слайд 3 · Кристаллизация UI</div>
+      <h1 class="fade">Проекция → 7 архетипов → <span style="color:var(--accent)">6 слотов</span></h1>
+      <p class="lead fade">
+        Кристаллизатор v2 — чистая функция. На входе: проекция + онтология + намерения + адаптер. На выходе: артефакт с архетипом, слотами и селекторами данных. UI-кит подставляется последним.
+      </p>
+
+      <!-- Левая схема: pipeline crystallize. Правая — 7 архетипов -->
+      <div class="grid cols-2 fade">
+        <div class="card">
+          <h2>Pipeline кристаллизации</h2>
+          <svg class="diagram" viewBox="0 0 560 320" aria-label="crystallize-pipeline">
+            <!-- вертикальная труба из 5 стадий -->
+            <g>
+              <rect x="40"  y="20" width="480" height="44" rx="8" class="node-acc"/>
+              <text x="60"  y="48" class="node-lbl">1 · chooseArchetype</text>
+              <text x="420" y="48" class="node-sub">feed / catalog / detail / form / canvas / dashboard / wizard</text>
+
+              <rect x="40"  y="80" width="480" height="44" rx="8" class="node-bg"/>
+              <text x="60"  y="108" class="node-lbl">2 · pickControls</text>
+              <text x="420" y="108" class="node-sub">auto · composerEntry · formModal · confirmDialog</text>
+
+              <rect x="40"  y="140" width="480" height="44" rx="8" class="node-bg"/>
+              <text x="60"  y="168" class="node-lbl">3a-c · assignToSlots</text>
+              <text x="420" y="168" class="node-sub">hero · toolbar · body · aside · footer · meta</text>
+
+              <rect x="40"  y="200" width="480" height="44" rx="8" class="node-acc"/>
+              <text x="60"  y="228" class="node-lbl">3d · applyStructuralPatterns</text>
+              <text x="420" y="228" class="node-sub">subcollections · grid-card · footer-inline-setter</text>
+
+              <rect x="40"  y="260" width="480" height="44" rx="8" class="node-bg"/>
+              <text x="60"  y="288" class="node-lbl">4 · deriveShape · R8 hub-absorption</text>
+              <text x="420" y="288" class="node-sub">timeline · directory · default</text>
+            </g>
+            <!-- соединители -->
+            <path d="M280,64 L280,80 M280,124 L280,140 M280,184 L280,200 M280,244 L280,260"
+                  class="stroke-acc" stroke-dasharray="3 4"/>
+          </svg>
+        </div>
+
+        <div class="card">
+          <h2>Архетип → слоты</h2>
+          <svg class="diagram" viewBox="0 0 560 320" aria-label="archetype-slots">
+            <!-- каркас экрана -->
+            <rect x="30" y="20" width="500" height="280" rx="14" class="node-bg"/>
+
+            <!-- hero -->
+            <rect x="50"  y="40"  width="460" height="54" rx="8" class="node-acc breathe"/>
+            <text x="60"  y="72"  class="node-lbl">hero · create_task</text>
+
+            <!-- toolbar -->
+            <rect x="50"  y="110" width="460" height="28" rx="6" class="node-bg"/>
+            <text x="60"  y="128" class="node-sub">toolbar · publish · close · edit</text>
+
+            <!-- body -->
+            <rect x="50"  y="150" width="300" height="130" rx="8" class="node-bg"/>
+            <text x="60"  y="172" class="node-lbl">body · grid-card-layout</text>
+            <rect x="68"  y="184" width="80" height="80" rx="6" fill="rgba(255,255,255,0.04)" stroke="var(--line-2)"/>
+            <rect x="160" y="184" width="80" height="80" rx="6" fill="rgba(255,255,255,0.04)" stroke="var(--line-2)"/>
+            <rect x="252" y="184" width="80" height="80" rx="6" fill="rgba(255,255,255,0.04)" stroke="var(--line-2)"/>
+
+            <!-- aside -->
+            <rect x="360" y="150" width="150" height="90" rx="8" class="node-bg"/>
+            <text x="370" y="172" class="node-lbl">aside · фильтры</text>
+
+            <!-- footer / meta -->
+            <rect x="360" y="250" width="150" height="30" rx="6" class="node-bg"/>
+            <text x="370" y="270" class="node-sub">footer · pagination</text>
+          </svg>
+          <p style="margin-top:10px; font-size:13px">
+            <span class="badge acc">Pattern Bank</span>
+            Три паттерна с <code>structure.apply</code> обогащают слоты внутри pipeline — обзор превращается в карточную сетку автоматически.
+          </p>
+        </div>
+      </div>
+
+      <!-- Адаптеры -->
+      <div class="grid cols-4 fade">
+        <div class="card">
+          <div class="tag">Mantine</div><h3>Corporate</h3>
+          <p>Dense-data дефолт. booking / planning / workflow / messenger / sales / freelance.</p>
+        </div>
+        <div class="card">
+          <div class="tag">shadcn</div><h3>Doodle</h3>
+          <p>Handcrafted sketch. lifequest mobile-first.</p>
+        </div>
+        <div class="card">
+          <div class="tag">Apple</div><h3>visionOS-glass</h3>
+          <p>Premium / minimal. reflect + Mood Meter.</p>
+        </div>
+        <div class="card">
+          <div class="tag">AntD</div><h3>Fintech</h3>
+          <p>Statistic, charts. invest dashboard.</p>
+        </div>
+      </div>
+
+      <div class="footer-line fade">
+        <b>Принцип поздней привязки:</b> проекция не знает про UI-кит — адаптер решается в <code>ProjectionRendererV2</code>, кит переключается на лету.
+      </div>
+    </section>
+
+    <!-- ======================================================
+         СЛАЙД 4 — Как разрабатывать домен
+         ====================================================== -->
+    <section class="slide" data-idx="3">
+      <div class="eyebrow fade"><span class="dot"></span>Слайд 4 · Как разрабатывать</div>
+      <h1 class="fade">Рецепт домена — <span style="color:var(--accent)">пять шагов</span></h1>
+      <p class="lead fade">
+        От онтологии к живому приложению. Цикл занимает от часа (smoke) до пары дней (Cycle 1 с escrow).
+        Референс: <code>src/domains/freelance</code> — биржа услуг, Cycle 1 + escrow core.
+      </p>
+
+      <!-- Две колонки: слева — 5 шагов, справа — структура файлов -->
+      <div class="grid cols-2 fade">
+        <ol class="steps">
+          <li><b>Онтология.</b> <code>ontology.js</code>: entities (internal / reference / mirror / assignment), роли с <code>base</code>, ownerField, <code>role.scope</code> для m2m, инварианты (<code>invariants[]</code> — 5 kinds).</li>
+          <li><b>Намерения.</b> <code>intents.js</code>: params, roles, effects (<code>α: create | replace | remove</code>), context (<code>__irr</code> для irreversibility §23). Guards — чистые функции.</li>
+          <li><b>Проекции.</b> <code>projections.js</code>: 4–8 проекций, 4 из них ROOT. Архетип можно не указывать — кристаллизатор выведет сам.</li>
+          <li><b>Правила.</b> <code>rules.js</code>: event-condition-action. Расширения v1.5 — aggregation / threshold / schedule / condition. Scheduler хранит таймеры в Φ.</li>
+          <li><b>Seed + тесты.</b> <code>seed.js</code> + <code>*.test.js</code>: ontology, intents, projections, filterworld, escrow. Ручной smoke в <code>MANUAL_SMOKE.md</code>.</li>
+        </ol>
+
+        <div class="card">
+          <h2>Структура домена</h2>
+<pre class="code"><code><span class="c">// src/domains/freelance/</span>
+ontology.js     <span class="c">// 388 LOC — 12 entities, 3 roles, 6 invariants</span>
+intents.js      <span class="c">// 848 LOC — 46 intents, 8 категорий</span>
+projections.js  <span class="c">// 158 LOC — 8 projections, 4 ROOT</span>
+domain.js       <span class="c">// 252 LOC — generic + 6 custom buildEffects</span>
+rules.js        <span class="c">// 37  LOC — auto_accept_after_3d, recalc_rating</span>
+seed.js         <span class="c">// 225 LOC — 5 users · 10 tasks · 20 responses · 3 deals</span>
+
+ontology.test.js              <span class="c">// ∀-свойства онтологии</span>
+intents.test.js               <span class="c">// структура + irreversibility markers</span>
+projections.test.js           <span class="c">// архетипы · ROOT · subCollections</span>
+filterworld-multi-role.test.js<span class="c">// viewer-scoping по ролям</span>
+escrow.test.js                <span class="c">// кастомный buildEffects: 65 тестов</span>
+MANUAL_SMOKE.md               <span class="c">// 7 happy + 4 negative шага</span>
+README.md                     <span class="c">// working-state · границы · open items</span>
+</code></pre>
+        </div>
+      </div>
+
+      <!-- Команды запуска -->
+      <div class="card fade">
+        <h2>Команды</h2>
+        <div class="grid cols-4" style="gap:12px">
+          <div><span class="badge acc">:3001</span> <code>npm run server</code></div>
+          <div><span class="badge acc">:5173</span> <code>npm run dev</code></div>
+          <div><span class="badge">vitest</span> <code>npm test src/domains/freelance</code></div>
+          <div><span class="badge">e2e</span> <code>npm run agent-smoke</code> · 75 шагов</div>
+        </div>
+        <p style="margin-top:12px; font-size:13px">
+          Для нового домена достаточно добавить пункт в переключатель в <code>prototype.jsx</code> — один движок, N определений.
+        </p>
+      </div>
+
+      <div class="footer-line fade">
+        <b>Принцип:</b> код переиспользуется между доменами. Кастомные <code>buildEffects</code>-ветки — только для money / escrow / multi-effect инвариантов.
+      </div>
+    </section>
+
+    <!-- ======================================================
+         СЛАЙД 5 — Студия, инструменты, следующий шаг
+         ====================================================== -->
+    <section class="slide" data-idx="4">
+      <div class="eyebrow fade"><span class="dot"></span>Слайд 5 · Студия и экосистема</div>
+      <h1 class="fade">Авторская среда, <span style="color:var(--accent)">SDK</span> и следующий шаг</h1>
+      <p class="lead fade">
+        IDF живёт в двух репозиториях: прототип (host + 9 доменов) и SDK-монорепо (<code>@intent-driven/core · renderer · adapter-* · canvas-kit · cli</code>).
+        Студия даёт авторский инструментарий: Graph3D, Pattern Inspector, explain-match.
+      </p>
+
+      <!-- Орбита инструментов вокруг "ядра" -->
+      <div class="grid cols-2 fade">
+        <div class="card" style="position:relative; min-height:340px">
+          <h2>Экосистема инструментов</h2>
+          <svg class="diagram" viewBox="0 0 520 340" aria-label="ecosystem">
+            <!-- ядро -->
+            <g class="breathe">
+              <circle cx="260" cy="170" r="46" class="node-acc"/>
+              <text x="260" y="167" text-anchor="middle" class="node-lbl">@intent-driven</text>
+              <text x="260" y="184" text-anchor="middle" class="node-sub">core · 0.9.0</text>
+            </g>
+
+            <!-- орбитальная группа -->
+            <g class="orbit">
+              <g><circle cx="260" cy="50"  r="28" class="node-bg"/>
+                 <text x="260" y="48"  text-anchor="middle" class="node-lbl">renderer</text>
+                 <text x="260" y="62"  text-anchor="middle" class="node-sub">v2</text></g>
+              <g><circle cx="400" cy="170" r="28" class="node-bg"/>
+                 <text x="400" y="168" text-anchor="middle" class="node-lbl">adapters</text>
+                 <text x="400" y="182" text-anchor="middle" class="node-sub">×4</text></g>
+              <g><circle cx="260" cy="290" r="28" class="node-bg"/>
+                 <text x="260" y="288" text-anchor="middle" class="node-lbl">canvas-kit</text>
+                 <text x="260" y="302" text-anchor="middle" class="node-sub">SVG</text></g>
+              <g><circle cx="120" cy="170" r="28" class="node-bg"/>
+                 <text x="120" y="168" text-anchor="middle" class="node-lbl">cli</text>
+                 <text x="120" y="182" text-anchor="middle" class="node-sub">scaffold</text></g>
+            </g>
+          </svg>
+        </div>
+
+        <div class="card">
+          <h2>Студия (§27)</h2>
+          <ul style="list-style:none; padding:0; margin:0; display:grid; gap:10px;">
+            <li><span class="badge acc">Graph3D</span> — визуализация онтологии и связей m2m</li>
+            <li><span class="badge acc">Pattern Inspector</span> — <code>Cmd+Shift+P</code>: Off / Preview / Commit для structural patterns</li>
+            <li><span class="badge acc">explainMatch</span> — единая SDK-surface: per-requirement breakdown триггера</li>
+            <li><span class="badge">Claude proxy</span> — dev-time :4000, роль — автор, не рантайм</li>
+            <li><span class="badge">Researcher</span> — <code>scripts/pattern-researcher.mjs</code>, self-improving Pattern Bank</li>
+          </ul>
+          <p style="margin-top:14px; font-size:13px">
+            Банк паттернов — 13 stable, из них 3 с <code>structure.apply</code>. Остальные 10 в roadmap v1.13+.
+          </p>
+        </div>
+      </div>
+
+      <!-- Следующие шаги -->
+      <div class="grid cols-3 fade">
+        <div class="card">
+          <div class="tag">Делай сегодня</div>
+          <h3>Изучи референс</h3>
+          <p>Склонируй, запусти freelance, прогони <code>MANUAL_SMOKE.md</code>. Это быстрее, чем читать манифест.</p>
+        </div>
+        <div class="card">
+          <div class="tag">На этой неделе</div>
+          <h3>Свой smoke-домен</h3>
+          <p><code>npx @intent-driven/cli init my-app</code> — CLI проводит 5-шаговый LLM-диалог и скаффолдит каталог.</p>
+        </div>
+        <div class="card">
+          <div class="tag">Дальше</div>
+          <h3>Читай манифест v2</h3>
+          <p><code>docs/manifesto-v2.md</code> — 26 глав. Timeless-документ о формате. Живой статус — в <code>docs/implementation-status.md</code>.</p>
+        </div>
+      </div>
+
+      <div class="footer-line fade">
+        <b>Итог:</b> опиши смысл приложения в четырёх объектах — и получи UI, голос, агента и документ из одного артефакта.
+      </div>
+    </section>
+
+  </div>
+</div>
+
+<!-- Навигация внизу: стрелки + точки -->
+<div class="nav">
+  <button class="arrow" id="prev" aria-label="предыдущий">‹</button>
+  <div class="dots" id="dots"></div>
+  <button class="arrow" id="next" aria-label="следующий">›</button>
+</div>
+
+<script>
+  /* ==============================================================
+     Навигация. Клавиши ← / → / Space. Клик по точкам и стрелкам.
+     Обновляем класс .active для старта CSS-анимаций.
+     ============================================================== */
+  const rail   = document.getElementById('rail');
+  const prev   = document.getElementById('prev');
+  const next   = document.getElementById('next');
+  const dotsEl = document.getElementById('dots');
+  const cur    = document.getElementById('cur');
+  const slides = [...document.querySelectorAll('.slide')];
+  const N = slides.length;
+  let i = 0;
+
+  // точки-навигаторы
+  slides.forEach((_, idx) => {
+    const b = document.createElement('button');
+    b.addEventListener('click', () => go(idx));
+    dotsEl.appendChild(b);
+  });
+
+  function go(target) {
+    i = Math.max(0, Math.min(N - 1, target));
+    rail.style.transform = `translateX(-${i * 100}vw)`;
+    slides.forEach((s, k) => s.classList.toggle('active', k === i));
+    [...dotsEl.children].forEach((d, k) => d.classList.toggle('on', k === i));
+    prev.disabled = i === 0;
+    next.disabled = i === N - 1;
+    cur.textContent = i + 1;
+  }
+  prev.addEventListener('click', () => go(i - 1));
+  next.addEventListener('click', () => go(i + 1));
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'ArrowRight' || e.key === ' ' || e.key === 'PageDown') { e.preventDefault(); go(i + 1); }
+    if (e.key === 'ArrowLeft'  || e.key === 'PageUp')                   { e.preventDefault(); go(i - 1); }
+    if (e.key === 'Home') go(0);
+    if (e.key === 'End')  go(N - 1);
+  });
+
+  // инициализация
+  go(0);
+</script>
+</body>
+</html>

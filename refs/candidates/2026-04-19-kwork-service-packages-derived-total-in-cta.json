@@ -1,0 +1,76 @@
+{
+  "id": "derived-total-in-cta",
+  "version": 1,
+  "status": "candidate",
+  "archetype": "detail",
+  "trigger": {
+    "requires": [
+      {
+        "kind": "field-role-present",
+        "entity": "*",
+        "role": "money"
+      },
+      {
+        "kind": "sub-entity-exists",
+        "parent": "*",
+        "child": "*Extra*"
+      },
+      {
+        "kind": "intent-creates",
+        "entity": "Order"
+      }
+    ]
+  },
+  "structure": {
+    "slot": "primaryCTA",
+    "description": "Primary CTA в detail-проекции не просто 'Заказать', а 'Заказать за {computed.total} ₽' — метка кнопки включает derived-total из базовой цены + выбранных extras. Total пересчитывается реактивно; отсутствие selection → базовая цена."
+  },
+  "rationale": {
+    "hypothesis": "Цена — ключевой friction-фактор покупки. Встроив её в label кнопки мы (а) подтверждаем фактическую сумму списания и (б) делаем кнопку price-witness, устраняя шаг 'а сколько же на самом деле?'.",
+    "evidence": [
+      {
+        "source": "kwork.ru",
+        "description": "Кнопка 'Заказать за 1 500 ₽' с живым обновлением при изменении extras",
+        "reliability": "high"
+      },
+      {
+        "source": "airbnb.com",
+        "description": "Book-кнопка показывает total за stay на основе dates",
+        "reliability": "high"
+      },
+      {
+        "source": "uber",
+        "description": "Request-кнопка показывает estimated fare",
+        "reliability": "high"
+      }
+    ],
+    "counterexample": [
+      {
+        "source": "subscription pricing page",
+        "description": "Там CTA — plain 'Subscribe', цена отдельно в карточке",
+        "reliability": "medium"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [
+      {
+        "domain": "delivery",
+        "projection": "cart_detail",
+        "reason": "Total вычисляется из line-items + fees"
+      },
+      {
+        "domain": "booking",
+        "projection": "service_detail",
+        "reason": "Price = base + duration-adjustment"
+      }
+    ],
+    "shouldNotMatch": [
+      {
+        "domain": "planning",
+        "projection": "poll_detail",
+        "reason": "Vote — не денежная операция"
+      }
+    ]
+  }
+}

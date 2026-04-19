@@ -1,0 +1,79 @@
+{
+  "id": "trust-attribute-badges",
+  "version": 1,
+  "status": "candidate",
+  "archetype": "catalog",
+  "trigger": {
+    "requires": [
+      {
+        "kind": "intent-count",
+        "entity": "mainEntity",
+        "booleanFields": {
+          "min": 2
+        },
+        "semanticHint": "verification|status-attribute"
+      },
+      {
+        "kind": "entity-kind",
+        "value": "internal"
+      }
+    ]
+  },
+  "structure": {
+    "slot": "body",
+    "description": "Boolean-атрибуты доверия (isVerified, isOpenEmployer, isRemote) рендерятся как компактный ряд icon-badges под заголовком карточки, выступая как trust-signal layer до чтения описания."
+  },
+  "rationale": {
+    "hypothesis": "Boolean-поля с trust-семантикой малоинформативны отдельными словами, но сильны как visual shorthand. Ряд из 2-4 иконок позволяет за 200мс оценить соответствие базовым критериям до detail-чтения.",
+    "evidence": [
+      {
+        "source": "hh-ru-mobile",
+        "description": "'Открытый работодатель' / 'Готов к удалёнке' — цветные chips-badges на vacancy-карточке",
+        "reliability": "high"
+      },
+      {
+        "source": "airbnb",
+        "description": "'Superhost' / 'Self-check-in' — iconic badges на listing-карточке",
+        "reliability": "high"
+      },
+      {
+        "source": "amazon",
+        "description": "'Amazon's Choice' / 'Prime' — бинарные доверительные маркеры в search-результате",
+        "reliability": "high"
+      }
+    ],
+    "counterexample": [
+      {
+        "source": "messenger-apps",
+        "description": "В чат-листе boolean-поля (isTyping, isOnline) — presence, а не trust, рендерятся иначе (индикатор, не badge)",
+        "reliability": "medium"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [
+      {
+        "domain": "sales",
+        "projection": "listing_catalog",
+        "reason": "Listing с isVerifiedSeller / isReturnable — прямая аналогия trust-chips"
+      },
+      {
+        "domain": "booking",
+        "projection": "specialist_catalog",
+        "reason": "Specialist с верификацией и insurance-маркерами должен показывать badge-ряд"
+      }
+    ],
+    "shouldNotMatch": [
+      {
+        "domain": "lifequest",
+        "projection": "habit_catalog",
+        "reason": "Habit isCompleted — сугубо personal state, не trust"
+      },
+      {
+        "domain": "workflow",
+        "projection": "node_list",
+        "reason": "Nodes — technical объекты, boolean-поля конфигурационные, не доверительные"
+      }
+    ]
+  }
+}

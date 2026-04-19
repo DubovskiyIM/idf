@@ -1,0 +1,361 @@
+{
+  "source": "profi-ru-marketplace",
+  "entities": [
+    {
+      "name": "Category",
+      "fields": [
+        "name",
+        "parentId",
+        "path",
+        "specialistCount",
+        "slug"
+      ],
+      "foreignKey": "parentId→Category"
+    },
+    {
+      "name": "Specialist",
+      "fields": [
+        "displayName",
+        "avatar",
+        "age",
+        "experienceMonths",
+        "bio",
+        "verificationLevel",
+        "tier",
+        "rating",
+        "reviewCount",
+        "responseRateHour",
+        "repeatClientCount",
+        "videoGreeting",
+        "phoneVerified",
+        "documentsVerified",
+        "status"
+      ],
+      "statusValues": [
+        "active",
+        "vacation",
+        "suspended",
+        "banned"
+      ]
+    },
+    {
+      "name": "SpecialistService",
+      "fields": [
+        "specialistId",
+        "categoryId",
+        "title",
+        "tags",
+        "priceFrom",
+        "priceUnit",
+        "format"
+      ],
+      "foreignKey": "specialistId→Specialist"
+    },
+    {
+      "name": "Portfolio",
+      "fields": [
+        "specialistId",
+        "images",
+        "caption"
+      ],
+      "foreignKey": "specialistId→Specialist"
+    },
+    {
+      "name": "Order",
+      "fields": [
+        "clientId",
+        "categoryId",
+        "title",
+        "details",
+        "requirements",
+        "budget",
+        "location",
+        "format",
+        "contactPhone",
+        "draftStep",
+        "publishedAt",
+        "status"
+      ],
+      "statusValues": [
+        "draft",
+        "published",
+        "in_progress",
+        "completed",
+        "cancelled",
+        "expired"
+      ],
+      "foreignKey": "clientId→Client"
+    },
+    {
+      "name": "OrderDraft",
+      "fields": [
+        "clientId",
+        "categoryId",
+        "stepAnswers",
+        "currentStep",
+        "updatedAt"
+      ],
+      "foreignKey": "clientId→Client"
+    },
+    {
+      "name": "Bid",
+      "fields": [
+        "orderId",
+        "specialistId",
+        "message",
+        "proposedPrice",
+        "proposedPriceRange",
+        "status",
+        "isInteresting",
+        "createdAt"
+      ],
+      "statusValues": [
+        "new",
+        "viewed",
+        "interesting",
+        "rejected",
+        "hired"
+      ],
+      "foreignKey": "orderId→Order"
+    },
+    {
+      "name": "Conversation",
+      "fields": [
+        "orderId",
+        "clientId",
+        "specialistId",
+        "lastMessageAt",
+        "unreadCount"
+      ],
+      "foreignKey": "orderId→Order"
+    },
+    {
+      "name": "Message",
+      "fields": [
+        "conversationId",
+        "senderId",
+        "content",
+        "attachments",
+        "createdAt"
+      ],
+      "foreignKey": "conversationId→Conversation"
+    },
+    {
+      "name": "Review",
+      "fields": [
+        "specialistId",
+        "clientId",
+        "orderId",
+        "rating",
+        "text",
+        "createdAt",
+        "moderationStatus"
+      ],
+      "statusValues": [
+        "pending",
+        "approved",
+        "rejected"
+      ],
+      "foreignKey": "specialistId→Specialist"
+    },
+    {
+      "name": "PromotionSlot",
+      "fields": [
+        "specialistId",
+        "categoryId",
+        "position",
+        "expiresAt",
+        "tier"
+      ],
+      "foreignKey": "specialistId→Specialist"
+    },
+    {
+      "name": "Client",
+      "fields": [
+        "name",
+        "phone",
+        "email",
+        "verifiedPhone"
+      ]
+    }
+  ],
+  "intents": [
+    {
+      "id": "browse_category",
+      "α": "replace",
+      "target": "session.activeCategoryId",
+      "confirmation": "click"
+    },
+    {
+      "id": "apply_filters",
+      "α": "replace",
+      "target": "session.filters",
+      "confirmation": "click"
+    },
+    {
+      "id": "switch_format_facet",
+      "α": "replace",
+      "target": "session.filters.format",
+      "confirmation": "click"
+    },
+    {
+      "id": "change_sort",
+      "α": "replace",
+      "target": "session.sort",
+      "confirmation": "click"
+    },
+    {
+      "id": "view_specialist_profile",
+      "α": "replace",
+      "target": "session.viewedSpecialistId",
+      "confirmation": "click"
+    },
+    {
+      "id": "start_order_draft",
+      "α": "add",
+      "creates": "OrderDraft",
+      "confirmation": "click"
+    },
+    {
+      "id": "fill_order_step",
+      "α": "replace",
+      "target": "orderDraft.stepAnswers",
+      "confirmation": "form"
+    },
+    {
+      "id": "advance_order_step",
+      "α": "replace",
+      "target": "orderDraft.currentStep",
+      "confirmation": "click"
+    },
+    {
+      "id": "resume_order_draft",
+      "α": "replace",
+      "target": "session.activeDraftId",
+      "confirmation": "click"
+    },
+    {
+      "id": "preview_order",
+      "α": "replace",
+      "target": "orderDraft.previewMode",
+      "confirmation": "click"
+    },
+    {
+      "id": "publish_order",
+      "α": "add",
+      "creates": "Order",
+      "confirmation": "form",
+      "irreversibility": "high"
+    },
+    {
+      "id": "cancel_order",
+      "α": "replace",
+      "target": "order.status",
+      "confirmation": "click",
+      "irreversibility": "high"
+    },
+    {
+      "id": "submit_bid",
+      "α": "add",
+      "creates": "Bid",
+      "confirmation": "form"
+    },
+    {
+      "id": "mark_bid_interesting",
+      "α": "replace",
+      "target": "bid.isInteresting",
+      "confirmation": "click"
+    },
+    {
+      "id": "reject_bid",
+      "α": "replace",
+      "target": "bid.status",
+      "confirmation": "click",
+      "irreversibility": "high"
+    },
+    {
+      "id": "hire_specialist",
+      "α": "replace",
+      "target": "bid.status",
+      "confirmation": "form",
+      "irreversibility": "high"
+    },
+    {
+      "id": "start_conversation",
+      "α": "add",
+      "creates": "Conversation",
+      "confirmation": "click"
+    },
+    {
+      "id": "send_message",
+      "α": "add",
+      "creates": "Message",
+      "confirmation": "enter"
+    },
+    {
+      "id": "call_specialist",
+      "α": "add",
+      "creates": "CallIntent",
+      "confirmation": "click"
+    },
+    {
+      "id": "leave_review",
+      "α": "add",
+      "creates": "Review",
+      "confirmation": "form",
+      "irreversibility": "high"
+    },
+    {
+      "id": "moderate_review",
+      "α": "replace",
+      "target": "review.moderationStatus",
+      "confirmation": "click"
+    },
+    {
+      "id": "buy_promotion_slot",
+      "α": "add",
+      "creates": "PromotionSlot",
+      "confirmation": "form",
+      "irreversibility": "high"
+    },
+    {
+      "id": "verify_documents",
+      "α": "replace",
+      "target": "specialist.documentsVerified",
+      "confirmation": "form",
+      "irreversibility": "high"
+    },
+    {
+      "id": "set_vacation_mode",
+      "α": "replace",
+      "target": "specialist.status",
+      "confirmation": "click"
+    }
+  ],
+  "roles": [
+    "owner",
+    "viewer",
+    "agent",
+    "observer"
+  ],
+  "observations": [
+    "Hierarchical category tree in left sidebar with specialist counters at each node",
+    "Top 2-4 feed positions are paid-promotion slots with TOP/Рекомендуем badges — ranking blended with paid-tier",
+    "Specialist card is a dense composite: avatar + identity + rating + price-from + tier badge + verification + 2-3 specialization tags + CTA",
+    "Discrete tier badges (Профессионал / Топ-мастер / Проверен документами) — categorical trust signal, not continuous score",
+    "Sticky right-side filter panel with numeric ranges (price from/to, rating threshold), multi-select (metro), booleans (выезд, безнал)",
+    "Format facet (Онлайн / Очно / Выезд) as quick toggle above other filters — high-traffic switch elevated",
+    "Default sort is composite 'Оптимально' — explicit alternatives reveal that ranking is multi-factor",
+    "Multi-step form wizard with progress bar for order creation (~6-8 steps)",
+    "Conditional form fields per category (class for tutor, area for repair, problem for psychologist) — details step is polymorphic by categoryId",
+    "Draft auto-save across wizard steps with 'Незавершённое' resume entry-point",
+    "Preview step before publishing — shows mastering view of the task as persuasive confirmation",
+    "Post-publish inbox-like bid feed with summary header (count, new, average price)",
+    "Bid actions: write, mark interesting, reject — reject is irreversible with undo-toast affordance",
+    "Specialist profile as tabbed detail (О себе / Цены / Отзывы / Портфолио / Видео) with sticky bottom CTA bar",
+    "Reputation surfaced as breakdown (experience months, response-rate-within-hour %, repeat-client count) — not a single score",
+    "Phone CTA gated by verification — capability depends on specialist.phoneVerified",
+    "Observer (unauthenticated) can browse catalog and view profiles but cannot publish order or bid — read-only tier",
+    "Moderator role operates on reviews/compliance surface, orthogonal to client/specialist flows"
+  ]
+}

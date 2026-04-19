@@ -1,0 +1,79 @@
+{
+  "id": "temporal-offset-trigger-editor",
+  "version": 1,
+  "status": "candidate",
+  "archetype": "form",
+  "trigger": {
+    "requires": [
+      {
+        "kind": "intent-creates",
+        "entity": "automation-like"
+      },
+      {
+        "kind": "entity-field",
+        "pattern": "delay|offsetMs|triggerAt|afterMs"
+      },
+      {
+        "kind": "entity-field",
+        "pattern": "trigger.*type|event"
+      }
+    ]
+  },
+  "structure": {
+    "slot": "composer",
+    "description": "Form-архетип для workflow automation: trigger-select (event type) + offset-input (before/after N minutes/hours) + action-select + template-body. Offset рендерится как parameter.temporal-offset с pair-controls sign (before/after) × magnitude + unit."
+  },
+  "rationale": {
+    "hypothesis": "Абсолютные cron-выражения плохо ложатся на relative-to-entity events ('за 24ч до встречи'). UI должен первоклассно моделировать pair (anchor-event, signed-offset, unit) вместо cron-строки или datetime-picker.",
+    "evidence": [
+      {
+        "source": "calendly",
+        "description": "Workflow editor: '24 hours before start' — selector event + offset input + unit",
+        "reliability": "high"
+      },
+      {
+        "source": "hubspot-workflows",
+        "description": "Те же три контрола для delays",
+        "reliability": "high"
+      },
+      {
+        "source": "github-actions-schedule",
+        "description": "Cron-syntax — counterexample, хуже UX чем offset",
+        "reliability": "medium"
+      }
+    ],
+    "counterexample": [
+      {
+        "source": "cron-based-schedulers",
+        "description": "Absolute cron подходит для system-admin, не для end-user automation",
+        "reliability": "high"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [
+      {
+        "domain": "booking",
+        "projection": "reminder_workflow",
+        "reason": "Reminders относительно Booking.startTime"
+      },
+      {
+        "domain": "delivery",
+        "projection": "order_notification_rule",
+        "reason": "Если есть temporal-rules относительно Order events"
+      }
+    ],
+    "shouldNotMatch": [
+      {
+        "domain": "sales",
+        "projection": "price_alert",
+        "reason": "Threshold не temporal-offset"
+      },
+      {
+        "domain": "invest",
+        "projection": "price_signal_rule",
+        "reason": "Event-condition без time-offset"
+      }
+    ]
+  }
+}

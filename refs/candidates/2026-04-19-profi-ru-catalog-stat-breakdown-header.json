@@ -1,0 +1,77 @@
+{
+  "id": "stat-breakdown-header",
+  "version": 1,
+  "status": "candidate",
+  "archetype": "detail",
+  "trigger": {
+    "requires": [
+      {
+        "kind": "field-role-present",
+        "entity": "*",
+        "roles": [
+          "percentage",
+          "count",
+          "duration"
+        ],
+        "min": 3
+      }
+    ]
+  },
+  "structure": {
+    "slot": "header",
+    "description": "В header detail вместо single-score (рейтинг) показывается раскладка из 3-5 ортогональных метрик репутации (опыт в месяцах, % ответов за час, повторные клиенты, сертификации), каждая — как отдельный stat-chip"
+  },
+  "rationale": {
+    "hypothesis": "Single-score скрывает механику доверия; разбивка на ортогональные факторы даёт юзеру решать, какая метрика важна именно ему — и снижает манипулируемость рейтингом",
+    "evidence": [
+      {
+        "source": "profi.ru",
+        "description": "Profile-header: «Опыт 7 лет · Отвечает за час 95% · 23 повторных клиента»",
+        "reliability": "high"
+      },
+      {
+        "source": "upwork",
+        "description": "Job Success Score + hours + earned — multi-stat header",
+        "reliability": "high"
+      },
+      {
+        "source": "github-user",
+        "description": "Contribution breakdown вместо single-score",
+        "reliability": "high"
+      }
+    ],
+    "counterexample": [
+      {
+        "source": "imdb-movie",
+        "description": "Single rating работает, потому что оценивают одну ось — фильм",
+        "reliability": "medium"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [
+      {
+        "domain": "sales",
+        "projection": "seller_profile",
+        "reason": "rating + sales-count + response-time"
+      },
+      {
+        "domain": "delivery",
+        "projection": "merchant_detail",
+        "reason": "rating + avg-time + cancel-rate"
+      }
+    ],
+    "shouldNotMatch": [
+      {
+        "domain": "reflect",
+        "projection": "mood_entry_detail",
+        "reason": "личная запись без репутационных метрик"
+      },
+      {
+        "domain": "messenger",
+        "projection": "conversation_detail",
+        "reason": "нет stat-полей в сущности"
+      }
+    ]
+  }
+}

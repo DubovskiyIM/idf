@@ -1,0 +1,63 @@
+{
+  "id": "conditional-sub-section-reveal",
+  "version": 1,
+  "status": "candidate",
+  "archetype": "detail",
+  "trigger": {
+    "requires": [
+      {
+        "kind": "intent-effect",
+        "target": "mainEntity.<flag>",
+        "α": "replace",
+        "note": "boolean-toggle на главной сущности"
+      },
+      {
+        "kind": "intent-count",
+        "min": 2,
+        "note": "≥2 дополнительных intent-effect зависят от этого toggle"
+      }
+    ]
+  },
+  "structure": {
+    "slot": "sections",
+    "description": "Boolean toggle (e.g. roundRobinEnabled) управляет visibility зависимой sub-section (algorithm picker + host priorities). Когда toggle=false — sub-section скрыта; когда true — expand с дополнительными controls. Conditional disclosure внутри одного detail."
+  },
+  "rationale": {
+    "hypothesis": "Опциональные подсистемы не должны занимать место в UI по умолчанию. Conditional reveal держит default-configuration простой, раскрывая сложность только когда toggle явно включён. Это progressive disclosure внутри формы.",
+    "evidence": [
+      {
+        "source": "cal-com",
+        "description": "Round-robin toggle раскрывает algorithm picker + host priorities",
+        "reliability": "high"
+      },
+      {
+        "source": "stripe-invoice-settings",
+        "description": "'Send reminders' toggle раскрывает schedule subsection",
+        "reliability": "high"
+      }
+    ],
+    "counterexample": [
+      {
+        "source": "always-visible-sections",
+        "description": "Если зависимая секция имеет default-value — reveal избыточен",
+        "reliability": "medium"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [
+      {
+        "domain": "booking",
+        "projection": "service_detail",
+        "reason": "'Requires confirmation' toggle раскрывает confirmation-timeout settings"
+      }
+    ],
+    "shouldNotMatch": [
+      {
+        "domain": "messenger",
+        "projection": "conversation_detail",
+        "reason": "нет зависимых sub-sections от toggles"
+      }
+    ]
+  }
+}
