@@ -133,6 +133,31 @@ function buildCustomEffects(intentId, ctx, world) {
     ];
   }
 
+  if (intentId === "select_executor") {
+    const selectedResponse = world.responses?.find((r) => r.id === ctx.id);
+    if (!selectedResponse) return null;
+    const taskId = ctx.taskId || selectedResponse.taskId;
+
+    const siblings = (world.responses || []).filter(
+      (r) => r.taskId === taskId && r.id !== ctx.id
+    );
+
+    return [
+      mkEffect({
+        alpha: "replace", target: "response.status", scope: "account",
+        value: "selected",
+        context: { id: ctx.id },
+        desc: `select_executor: replace response.status=selected`,
+      }),
+      ...siblings.map((r) => mkEffect({
+        alpha: "replace", target: "response.status", scope: "account",
+        value: "not_chosen",
+        context: { id: r.id },
+        desc: `select_executor: replace response.status=not_chosen (sibling)`,
+      })),
+    ];
+  }
+
   if (intentId === "cancel_deal_mutual") {
     const deal = world.deals?.find((d) => d.id === ctx.id);
     if (!deal) return null;

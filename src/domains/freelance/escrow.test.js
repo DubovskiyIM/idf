@@ -173,4 +173,30 @@ describe("escrow / buildEffects", () => {
       expect(reserved.value).toBe(0);
     });
   });
+
+  describe("select_executor", () => {
+    it("selected + не выбранные отклики становятся not_chosen", () => {
+      const world = {
+        responses: [
+          { id: "r_1", taskId: "t_1", executorId: "e_1", status: "pending" },
+          { id: "r_2", taskId: "t_1", executorId: "e_2", status: "pending" },
+          { id: "r_3", taskId: "t_1", executorId: "e_3", status: "pending" },
+          { id: "r_other", taskId: "t_2", executorId: "e_4", status: "pending" },
+        ],
+      };
+      const ctx = { userId: "u_customer", id: "r_2", taskId: "t_1" };
+      const effects = buildEffects("select_executor", ctx, world, []);
+      expect(effects).toHaveLength(3);
+
+      const selected = effects.find((e) => e.context.id === "r_2");
+      expect(selected.value).toBe("selected");
+
+      const others = effects.filter((e) => e.context.id !== "r_2");
+      expect(others).toHaveLength(2);
+      others.forEach((e) => expect(e.value).toBe("not_chosen"));
+
+      const touchesOther = effects.find((e) => e.context.id === "r_other");
+      expect(touchesOther).toBeUndefined();
+    });
+  });
 });
