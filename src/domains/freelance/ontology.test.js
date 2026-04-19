@@ -127,6 +127,48 @@ describe("freelance ontology — roles", () => {
       expect(Array.isArray(ONTOLOGY.roles[r].canExecute)).toBe(true);
     }
   });
+
+  it("customer может инициировать deal/wallet/review intents", () => {
+    const customerIntents = ONTOLOGY.roles.customer.canExecute;
+    expect(customerIntents).toContain("select_executor");
+    expect(customerIntents).toContain("confirm_deal");
+    expect(customerIntents).toContain("accept_result");
+    expect(customerIntents).toContain("request_revision");
+    expect(customerIntents).toContain("cancel_deal_mutual");
+    expect(customerIntents).toContain("top_up_wallet_by_card");
+    expect(customerIntents).toContain("view_wallet_balance");
+    expect(customerIntents).toContain("view_transaction_history");
+    expect(customerIntents).toContain("leave_review");
+    expect(customerIntents).toContain("reply_to_review");
+  });
+
+  it("customer видит Deal / Wallet / Transaction / Review", () => {
+    const vf = ONTOLOGY.roles.customer.visibleFields;
+    expect(vf.Deal).toBeDefined();
+    expect(vf.Wallet).toBeDefined();
+    expect(vf.Transaction).toBeDefined();
+    expect(vf.Review).toBeDefined();
+  });
+
+  it("executor может инициировать deal/wallet/review intents", () => {
+    const executorIntents = ONTOLOGY.roles.executor.canExecute;
+    expect(executorIntents).toContain("submit_work_result");
+    expect(executorIntents).toContain("submit_revision");
+    expect(executorIntents).toContain("cancel_deal_mutual");
+    expect(executorIntents).toContain("top_up_wallet_by_card");
+    expect(executorIntents).toContain("view_wallet_balance");
+    expect(executorIntents).toContain("view_transaction_history");
+    expect(executorIntents).toContain("leave_review");
+    expect(executorIntents).toContain("reply_to_review");
+  });
+
+  it("executor видит Deal / Wallet / Transaction / Review", () => {
+    const vf = ONTOLOGY.roles.executor.visibleFields;
+    expect(vf.Deal).toBeDefined();
+    expect(vf.Wallet).toBeDefined();
+    expect(vf.Transaction).toBeDefined();
+    expect(vf.Review).toBeDefined();
+  });
 });
 
 describe("freelance ontology — invariants", () => {
