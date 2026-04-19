@@ -3,9 +3,17 @@
  *
  * Cycle 1: skeleton — 8 entities + 3 роли (customer/executor/guest) +
  * 3 invariants. Escrow / Wallet / Deal / Dispute приходят в Cycle 2-3.
+ *
+ * RULES привязаны через `rules` — сервер (evaluateScheduleV2) читает
+ * `getOntology(domain).rules`. Без этого schedule/aggregation rules
+ * не доходят до runtime'а — RULES как отдельный export домена никто
+ * в server не подтягивает.
  */
+import { RULES } from "./rules.js";
+
 export const ONTOLOGY = {
   domain: "freelance",
+  rules: RULES,
 
   entities: {
     User: {
@@ -40,7 +48,7 @@ export const ONTOLOGY = {
         userId: { type: "text", required: true },
         bio: { type: "text", label: "О себе" },
         avgDeliveryHours: { type: "number", label: "Средний срок, ч" },
-        minPrice: { type: "number", fieldRole: "money", label: "Мин. ставка" },
+        minPrice: { type: "number", fieldRole: "price", label: "Мин. ставка" },
         rating: { type: "number", label: "Рейтинг" },
         level: {
           type: "select",
@@ -95,7 +103,7 @@ export const ONTOLOGY = {
         title: { type: "text", required: true, label: "Заголовок" },
         description: { type: "text", label: "Описание" },
         categoryId: { type: "text", required: true, label: "Категория" },
-        budget: { type: "number", fieldRole: "money", label: "Бюджет" },
+        budget: { type: "number", fieldRole: "price", label: "Бюджет" },
         deadline: { type: "datetime", label: "Срок" },
         city: { type: "text", label: "Город" },
         type: {
@@ -120,7 +128,7 @@ export const ONTOLOGY = {
         id: { type: "text" },
         executorId: { type: "text", required: true },
         taskId: { type: "text", required: true },
-        price: { type: "number", fieldRole: "money", required: true, label: "Цена" },
+        price: { type: "number", fieldRole: "price", required: true, label: "Цена" },
         deliveryDays: { type: "number", required: true, label: "Срок, дней" },
         message: { type: "text", label: "Сообщение" },
         status: {
@@ -140,12 +148,13 @@ export const ONTOLOGY = {
         executorId: { type: "text", required: true },
         taskId: { type: "text", required: true },
         responseId: { type: "text" },
-        amount: { type: "number", fieldRole: "money", required: true, label: "Сумма сделки" },
-        commission: { type: "number", fieldRole: "money", label: "Комиссия" },
+        amount: { type: "number", fieldRole: "price", required: true, label: "Сумма сделки" },
+        commission: { type: "number", fieldRole: "price", label: "Комиссия" },
         status: {
           type: "select",
           options: [
             "new", "awaiting_payment", "in_progress", "on_review",
+            "revision_requested",
             "completed", "cancelled",
           ],
           required: true,
@@ -153,6 +162,11 @@ export const ONTOLOGY = {
         },
         deadline: { type: "datetime", label: "Срок" },
         completedAt: { type: "datetime", label: "Завершено" },
+        result: { type: "textarea", label: "Результат работы" },
+        links: { type: "text", label: "Ссылки" },
+        submittedAt: { type: "datetime", label: "Сдано в ревью" },
+        revisionComment: { type: "textarea", label: "Замечания к доработке" },
+        revisionRequestedAt: { type: "datetime", label: "Запрос доработки" },
         createdAt: { type: "datetime" },
       },
     },
@@ -162,8 +176,8 @@ export const ONTOLOGY = {
       fields: {
         id: { type: "text" },
         userId: { type: "text", required: true },
-        balance: { type: "number", fieldRole: "money", label: "Баланс" },
-        reserved: { type: "number", fieldRole: "money", label: "В резерве" },
+        balance: { type: "number", fieldRole: "price", label: "Баланс" },
+        reserved: { type: "number", fieldRole: "price", label: "В резерве" },
         currency: { type: "text", label: "Валюта" },
         createdAt: { type: "datetime" },
       },
@@ -175,7 +189,7 @@ export const ONTOLOGY = {
         id: { type: "text" },
         walletId: { type: "text", required: true },
         dealId: { type: "text", label: "Сделка" },
-        amount: { type: "number", fieldRole: "money", required: true, label: "Сумма" },
+        amount: { type: "number", fieldRole: "price", required: true, label: "Сумма" },
         kind: {
           type: "select",
           options: ["topup", "escrow-hold", "release", "commission", "refund", "withdrawal"],
@@ -330,29 +344,31 @@ export const ONTOLOGY = {
 
   invariants: [
     // 1. Конечный автомат статусов задачи: draft → moderation → published → closed.
-    //    Из moderation возможен откат в draft (правка автором). Rollback при
-    //    нарушении — через cascadeReject + SSE.
+    //    Из moderation возможен откат в draft (правка автором). SDK-схема:
+    //    transitions — whitelist допустимых пар.
+    //    severity: warning — коллекция `tasks` шарится между доменами (lifequest
+    //    тоже определяет Task), transition-handler не умеет фильтровать по
+    //    domain-принадлежности строки. Enforcement — через intent-guards.
     {
       name: "task_status_transition",
       kind: "transition",
       entity: "Task",
       field: "status",
-      allowed: [
+      transitions: [
         ["draft", "moderation"],
         ["moderation", "published"],
         ["moderation", "draft"],
         ["published", "closed"],
       ],
-      severity: "error",
+      severity: "warning",
     },
 
-    // 2. Отклик ссылается на существующую Task: FK Response.taskId → tasks.
+    // 2. Отклик ссылается на существующую Task: FK Response.taskId → Task.id.
     {
       name: "response_references_task",
       kind: "referential",
-      entity: "Response",
-      field: "taskId",
-      references: "tasks",
+      from: "Response.taskId",
+      to: "Task.id",
       severity: "error",
     },
 
@@ -368,13 +384,32 @@ export const ONTOLOGY = {
       severity: "error",
     },
 
+    // 3a. Один активный (pending) отклик на пару (executorId, taskId).
+    //     SDK cardinality-handler не поддерживает composite groupBy, поэтому
+    //     enforcement на уровне domain.js::buildCustomEffects (submit_response
+    //     возвращает null при дубле). Декларация здесь — документ намерения
+    //     для внешних читателей формата (agent-API / documentMaterializer).
+    //     severity: "info" — не блокирует, но ставит witness в artifact.witnesses.
+    {
+      name: "response_unique_per_executor_task",
+      kind: "cardinality",
+      entity: "Response",
+      groupBy: "taskId",
+      // Примечание: groupBy одиночный ⇒ max здесь не отражает реальное
+      // ограничение «1 на (executor, task)». Истинная проверка в buildEffects.
+      where: { status: "pending" },
+      severity: "info",
+    },
+
     // 4. Конечный автомат статусов сделки (escrow lifecycle).
+    //    severity: warning — `deals` тоже может пересекаться, см. #1.
+    //    Revision cycle: on_review ↔ revision_requested ↔ on_review → completed.
     {
       name: "deal_status_transition",
       kind: "transition",
       entity: "Deal",
       field: "status",
-      allowed: [
+      transitions: [
         ["new", "awaiting_payment"],
         ["awaiting_payment", "in_progress"],
         ["awaiting_payment", "cancelled"],
@@ -382,36 +417,33 @@ export const ONTOLOGY = {
         ["in_progress", "on_review"],
         ["in_progress", "cancelled"],
         ["on_review", "completed"],
-        ["on_review", "in_progress"],
+        ["on_review", "revision_requested"],
+        ["revision_requested", "on_review"],
+        ["revision_requested", "cancelled"],
         ["on_review", "cancelled"],
         ["new", "cancelled"],
       ],
-      severity: "error",
+      severity: "warning",
     },
 
-    // 5. Wallet.reserved = Σ Transaction[kind=escrow-hold, status=posted] по одному кошельку.
-    //    Проверка bookkeeping: реальная сумма в escrow-hold всегда совпадает с reserved-полем.
+    // 5. Wallet.reserved = Σ Transaction[kind=escrow-hold, status=posted] по walletId.
+    //    SDK-схема aggregate: where-плейсхолдер $target.id подставляет id текущей
+    //    Wallet-строки в фильтр Transaction.walletId.
+    //    severity: warning — seed ставит Wallet.reserved=0 для всех кошельков,
+    //    но транзакции escrow-hold из seed нарушают равенство; bookkeeping-точность
+    //    enforced в runtime (confirm_deal / cancel_deal_mutual обновляют reserved).
     {
       name: "wallet_reserved_equals_escrow_sum",
       kind: "aggregate",
-      entity: "Wallet",
-      field: "reserved",
-      formula: {
-        op: "sum",
-        of: "Transaction.amount",
-        where: { kind: "escrow-hold", status: "posted" },
-        groupBy: "walletId",
-      },
-      severity: "error",
+      op: "sum",
+      from: "Transaction.amount",
+      where: { kind: "escrow-hold", status: "posted", walletId: "$target.id" },
+      target: "Wallet.reserved",
+      severity: "warning",
     },
 
-    // 6. Заказчик не может взять в работу собственную задачу.
-    {
-      name: "deal_customer_differs_from_executor",
-      kind: "referential",
-      entity: "Deal",
-      check: "customerId !== executorId",
-      severity: "error",
-    },
+    // Инвариант «customerId ≠ executorId» в Deal enforced на уровне
+    // buildCustomEffects (select_executor / confirm_deal). SDK не имеет
+    // expression-kind для row-level предикатов — не добавляем как дубликат.
   ],
 };

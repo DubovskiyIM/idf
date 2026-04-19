@@ -12,7 +12,11 @@ export const PROJECTIONS = {
     kind: "catalog",
     mainEntity: "Task",
     entities: ["Task", "Category"],
-    filter: "item.status === 'published'",
+    // Guests / executor видят только опубликованные НЕ свои (универсальный
+    // пользователь в роли executor'а не должен видеть свои задачи) и без
+    // selected-отклика (customer уже выбрал исполнителя — новые отклики
+    // не нужны; task факт-но out of market, пока не cancel/complete).
+    filter: "item.status === 'published' && item.customerId !== viewer.id && !(world.responses || []).some(r => r.taskId === item.id && r.status === 'selected')",
     sort: "createdAt:desc",
     witnesses: ["title", "budget", "deadline", "city", "categoryId", "type"],
     onItemClick: {
@@ -100,7 +104,7 @@ export const PROJECTIONS = {
     mainEntity: "Deal",
     entities: ["Deal", "Transaction", "Task", "ExecutorProfile"],
     idParam: "dealId",
-    witnesses: ["amount", "commission", "status", "deadline", "completedAt"],
+    witnesses: ["amount", "commission", "status", "deadline", "completedAt", "result", "links", "revisionComment"],
     subCollections: [
       {
         entity: "Transaction",
@@ -110,6 +114,11 @@ export const PROJECTIONS = {
       },
     ],
     toolbar: ["accept_result", "request_revision", "cancel_deal_mutual"],
+    // SDK footer-inline-setter-pattern матчит single-replace-effect intents
+    // и переносит их из toolbar в footer как inline-setter'ы. Для наших
+    // accept/request_revision/submit_work_result это неверно — там textarea-
+    // параметры + confirm-dialog нужны. Отключаем на deal-детали.
+    patterns: { disabled: ["footer-inline-setter"] },
   },
 
   deal_detail_executor: {
@@ -118,7 +127,7 @@ export const PROJECTIONS = {
     mainEntity: "Deal",
     entities: ["Deal", "Transaction", "Task"],
     idParam: "dealId",
-    witnesses: ["amount", "status", "deadline", "completedAt"],
+    witnesses: ["amount", "status", "deadline", "completedAt", "result", "links", "revisionComment"],
     subCollections: [
       {
         entity: "Transaction",
@@ -128,6 +137,7 @@ export const PROJECTIONS = {
       },
     ],
     toolbar: ["submit_work_result", "submit_revision", "cancel_deal_mutual"],
+    patterns: { disabled: ["footer-inline-setter"] },
   },
 
   wallet: {
@@ -148,11 +158,27 @@ export const PROJECTIONS = {
     toolbar: ["top_up_wallet_by_card", "view_transaction_history"],
   },
 
+  my_responses: {
+    name: "Мои отклики",
+    kind: "catalog",
+    mainEntity: "Response",
+    entities: ["Response", "Task"],
+    filter: "item.executorId === viewer.id",
+    sort: "createdAt:desc",
+    witnesses: ["taskId", "price", "deliveryDays", "status", "createdAt"],
+    onItemClick: {
+      action: "navigate",
+      to: "task_detail_public",
+      params: { taskId: "item.taskId" },
+    },
+  },
+
 };
 
 export const ROOT_PROJECTIONS = [
   "task_catalog_public",
   "my_tasks",
+  "my_responses",
   "my_deals",
   "wallet",
 ];

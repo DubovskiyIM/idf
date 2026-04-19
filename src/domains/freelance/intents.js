@@ -86,76 +86,87 @@ export const INTENTS = {
   // ─── Response (5) ─────────────────────────────────────────────────────────
 
   submit_response: {
-    name: "Откликнуться на задачу",
-    description: "Executor публикует Response на Task в статусе published",
+    name: "Откликнуться",
+    description: "Executor публикует Response на Task в status=published; Response.status=pending; +1 в Task.responsesCount",
     α: "add",
     irreversibility: "low",
+    // Top-level parameters короткозамыкают inferParameters. Только
+    // пользовательский ввод; executorId инжектится через OWNERSHIP_INJECT,
+    // taskId — через SubCollectionAdd из target.id родительской Task.
+    parameters: [
+      { name: "price", type: "number", fieldRole: "price", required: true, label: "Цена" },
+      { name: "deliveryDays", type: "number", required: true, label: "Срок, дней" },
+      { name: "message", type: "textarea", label: "Сообщение" },
+    ],
+    // entities: [task, response] — требуется SDK assignToSlotsDetail::buildSection
+    // для генерации addControl в Task.subCollections.Response.
+    // conditions task.status = 'published' — canAdd в SubCollectionSection
+    // скрывает форму на draft/moderation/closed.
     particles: {
-      parameters: [
-        { name: "executorId", type: "id", required: true },
-        { name: "taskId", type: "id", required: true },
-        { name: "price", type: "number", required: true },
-        { name: "deliveryDays", type: "number", required: true },
-        { name: "message", type: "text" },
-      ],
+      entities: ["task: Task", "response: Response"],
+      conditions: ["task.status = 'published'"],
+      confirmation: "form",
+      witnesses: ["price", "deliveryDays"],
       effects: [
         { α: "add", target: "responses", σ: "account" },
       ],
     },
-    creates: "Response",
-    confirmation: "auto",
+    creates: "Response(pending)",
   },
 
   edit_response: {
     name: "Изменить отклик",
-    description: "Правка цены / срока / сообщения — пока status=pending",
+    description: "Правка price/deliveryDays/message; guard: response.status=pending И response.executorId=me.id",
     α: "replace",
     irreversibility: "low",
+    parameters: [
+      { name: "price", type: "number", fieldRole: "price", label: "Цена" },
+      { name: "deliveryDays", type: "number", label: "Срок, дней" },
+      { name: "message", type: "textarea", label: "Сообщение" },
+    ],
     particles: {
-      parameters: [
-        { name: "id", type: "id", required: true },
-        { name: "price", type: "number" },
-        { name: "deliveryDays", type: "number" },
-        { name: "message", type: "text" },
-      ],
+      entities: ["response: Response"],
+      conditions: ["response.status = 'pending'", "response.executorId = me.id"],
+      confirmation: "form",
+      witnesses: ["price", "deliveryDays"],
       effects: [
         { α: "replace", target: "response" },
       ],
     },
-    confirmation: "auto",
   },
 
   withdraw_response: {
-    name: "Отозвать отклик",
-    description: "Удалить Response до select_executor",
-    α: "remove",
+    name: "Отозвать",
+    description: "Response.status → withdrawn; guard: status=pending И executorId=me.id; −1 в Task.responsesCount",
+    α: "replace",
     irreversibility: "low",
+    // Без parameters — id берётся из per-item контекста (SubCollectionItem)
     particles: {
-      parameters: [
-        { name: "id", type: "id", required: true },
-      ],
+      entities: ["response: Response"],
+      conditions: ["response.status = 'pending'", "response.executorId = me.id"],
+      confirmation: "click",
       effects: [
-        { α: "remove", target: "responses" },
+        { α: "replace", target: "response.status", value: "withdrawn" },
       ],
     },
-    confirmation: "auto",
   },
 
   select_executor: {
-    name: "Выбрать исполнителя",
-    description: "Customer выбирает Response → status=selected; остальные Response этой задачи → not_chosen",
+    name: "Выбрать",
+    description: "Customer выбирает Response → status=selected; siblings (pending/selected) → not_chosen. Реализация cascade в buildCustomEffects: демотирует siblings ПЕРВЫМ, затем повышает выбранного, чтобы инвариант task_has_at_most_one_selected_response не срабатывал на транзитном состоянии 2-selected.",
     α: "replace",
-    irreversibility: "low",
+    irreversibility: "medium",
+    // conditions на Response (item) — SDK SubCollectionItem скрывает
+    // кнопку для не-pending откликов. taskId резолвится из response в
+    // buildCustomEffects, customer-ownership — там же.
     particles: {
-      parameters: [
-        { name: "id", type: "id", required: true, label: "ID выбранного отклика" },
-        { name: "taskId", type: "id", required: true, label: "ID задачи" },
-      ],
+      entities: ["response: Response", "task: Task"],
+      conditions: ["response.status = 'pending'"],
+      confirmation: "click",
       effects: [
         { α: "replace", target: "response.status", value: "selected" },
       ],
     },
-    confirmation: "auto",
   },
 
   view_responses: {
@@ -179,14 +190,39 @@ export const INTENTS = {
     description: "Customer создаёт Task в статусе draft через form modal (customerId auto-injected из viewer)",
     α: "add",
     irreversibility: "low",
-    confirmation: "form",
+    // top-level `parameters` короткозамыкает SDK::inferParameters (который
+    // смотрит именно сюда) — без него SDK добавил бы `responsesCount`
+    // из Task.fields и другие auto-inferred поля. Эти же параметры
+    // продублированы в particles.parameters для domain-internal-анализа
+    // (intents.test, projections.test).
+    //
+    // categoryId — control:"select" + name endsWith "Id" → FormModal
+    // (SDK renderer) автоматически подхватывает options из world.categories.
+    // budget — fieldRole:"money" → AntdNumber добавляет префикс "₽" и
+    // форматирование тысяч.
+    parameters: [
+      { name: "title", type: "text", required: true, label: "Заголовок" },
+      { name: "categoryId", type: "select", required: true, label: "Категория", entity: "Category" },
+      { name: "budget", type: "number", fieldRole: "price", required: true, label: "Бюджет" },
+      { name: "type", type: "select", options: [
+          { value: "remote", label: "Удалённо" },
+          { value: "on-site", label: "На месте" },
+        ], required: true, label: "Формат" },
+      { name: "description", type: "textarea", label: "Описание" },
+      { name: "deadline", type: "datetime", label: "Срок" },
+      { name: "city", type: "text", label: "Город" },
+    ],
+    // particles.confirmation + witnesses ≥2 блокируют heroCreate-матчер
+    // в SDK (controlArchetypes::heroCreate) и направляют интент в formModal.
     particles: {
       entities: ["task: Task"],
+      confirmation: "form",
+      witnesses: ["title", "categoryId", "budget", "type"],
       parameters: [
         { name: "title", type: "text", required: true, label: "Заголовок" },
         { name: "description", type: "textarea", label: "Описание" },
         { name: "categoryId", type: "entityRef", required: true, label: "Категория", entity: "Category" },
-        { name: "budget", type: "number", required: true, label: "Бюджет, ₽" },
+        { name: "budget", type: "number", fieldRole: "price", required: true, label: "Бюджет" },
         { name: "deadline", type: "datetime", label: "Срок" },
         { name: "type", type: "select", options: ["remote", "on-site"], required: true, label: "Формат" },
         { name: "city", type: "text", label: "Город" },
@@ -195,7 +231,7 @@ export const INTENTS = {
         { α: "add", target: "tasks", σ: "account" },
       ],
     },
-    creates: "Task",
+    creates: "Task(draft)",
   },
 
   submit_task_for_moderation: {
@@ -571,23 +607,36 @@ export const INTENTS = {
   // ─── Wallet (7) ───────────────────────────────────────────────────────────
 
   top_up_wallet_by_card: {
-    name: "Пополнить баланс картой",
-    description: "Mock-gateway — создаёт Transaction.kind=topup, увеличивает Wallet.balance",
+    name: "Пополнить баланс",
+    description: "Mock-gateway — Transaction(kind=topup,status=posted) + Wallet.balance += amount. walletId резолвится из viewer в buildCustomEffects.",
     α: "add",
     irreversibility: "medium",
+    // Explicit control override: при irreversibility:"medium" SDK по дефолту
+    // обернул бы в confirmDialog (раньше formModal по порядку регистрации
+    // в controlArchetypes.js). Явно указываем formModal — после submit
+    // параметры известны, confirm-dialog избыточен.
+    control: "formModal",
+    // Top-level parameters: только пользовательский ввод. walletId
+    // auto-resolve'ится из viewer.userId в buildCustomEffects (один кошелёк
+    // на пользователя в Cycle 1).
+    parameters: [
+      { name: "amount", type: "number", fieldRole: "price", required: true, min: 1, label: "Сумма пополнения" },
+      { name: "cardLastFour", type: "text", required: true, maxLength: 4, minLength: 4, pattern: "^\\d{4}$", placeholder: "1234", label: "Последние 4 цифры" },
+    ],
+    // creates опущен осознанно: основной эффект — Wallet.balance (replace),
+    // Transaction создаётся как audit-trail side-effect. Если объявить
+    // creates:"Transaction", SDK assignToSlotsDetail (line 100:
+    // creates !== mainEntity) отсечёт intent от Wallet.toolbar.
     particles: {
-      parameters: [
-        { name: "walletId", type: "id", required: true },
-        { name: "amount", type: "number", required: true },
-        { name: "cardLastFour", type: "text" },
-      ],
+      entities: ["wallet: Wallet"],
+      conditions: ["wallet.userId = me.id"],
+      confirmation: "form",
+      witnesses: ["balance", "currency"],
       effects: [
         { α: "add", target: "transactions", σ: "account" },
         { α: "replace", target: "wallet.balance" },
       ],
     },
-    creates: "Transaction",
-    confirmation: "auto",
   },
 
   view_transaction_history: {
@@ -702,55 +751,62 @@ export const INTENTS = {
 
   confirm_deal: {
     name: "Подтвердить сделку",
-    description: "Customer выбирает исполнителя и резервирует escrow — деньги замораживаются",
+    description: "Customer резервирует escrow по выбранному отклику — создаётся Deal(in_progress), Transaction(escrow-hold), wallet.balance -= amount, wallet.reserved += amount. Вызывается per-item на Response.status=selected; id = response.id, всё остальное derive'ится в buildCustomEffects.",
     α: "add",
     irreversibility: "high",
     __irr: {
       point: "high",
       reason: "Сумма резервируется в escrow — отмена возможна только через спор или mutual-cancel",
     },
+    // creates:"Deal" опущен — иначе my_deals-catalog добавил бы heroCreate-
+    // форму с 6 required-params. Deal создаётся только как следствие
+    // select_executor + confirm_deal, на странице Response.
     particles: {
-      entities: ["deal: Deal"],
-      parameters: [
-        { name: "customerId", type: "id", required: true },
-        { name: "executorId", type: "id", required: true },
-        { name: "taskId", type: "id", required: true },
-        { name: "responseId", type: "id", required: true },
-        { name: "amount", type: "number", required: true },
-        { name: "deadline", type: "datetime" },
-      ],
+      // Deal исключён из entities — иначе SDK дублирует кнопку на
+      // deal_detail_customer (appliesToMainEntity=Deal). Per-item на Response
+      // в task_detail_customer — единственное корректное место.
+      entities: ["response: Response", "task: Task"],
+      conditions: ["response.status = 'selected'"],
+      confirmation: "click",
       effects: [
         { α: "add", target: "deals", σ: "account" },
         { α: "add", target: "transactions", σ: "account" },
         { α: "replace", target: "wallet.reserved" },
       ],
     },
-    creates: "Deal",
-    confirmation: "auto",
   },
 
   submit_work_result: {
     name: "Сдать работу",
-    description: "Executor передаёт результат — Deal.status переходит в on_review",
+    description: "Executor передаёт результат — Deal.status: in_progress → on_review.",
     α: "replace",
-    irreversibility: "low",
+    // irreversibility:"high" здесь — UI-трюк, а не семантика: SDK assignToSlotsDetail:135
+    // направляет phase-transition intents в primaryCTA, только если irreversibility
+    // !== "high". primaryCTA не умеет рендерить form — пробрасывает только id.
+    // "high" исключает из primaryCTA → попадает в toolbar с formModal-overlay.
+    // Контроль над архетипом через control:"formModal" (иначе confirmDialog
+    // матчит high раньше).
+    irreversibility: "high",
+    control: "formModal",
+    icon: "⚡",
+    parameters: [
+      { name: "result", type: "textarea", required: true, label: "Описание результата" },
+      { name: "links", type: "text", label: "Ссылки (репо, превью)" },
+    ],
     particles: {
       entities: ["deal: Deal"],
-      parameters: [
-        { name: "id", type: "id", required: true },
-        { name: "result", type: "text", required: true },
-        { name: "links", type: "text" },
-      ],
+      conditions: ["deal.status = 'in_progress'", "deal.executorId = me.id"],
+      confirmation: "form",
+      witnesses: ["result", "links"],
       effects: [
         { α: "replace", target: "deal.status", value: "on_review" },
       ],
     },
-    confirmation: "auto",
   },
 
   accept_result: {
     name: "Принять работу",
-    description: "Customer принимает результат — escrow-перевод исполнителю",
+    description: "Customer принимает результат — Deal.status → completed, escrow release executor'у (payout), commission платформе.",
     α: "replace",
     irreversibility: "high",
     __irr: {
@@ -759,20 +815,20 @@ export const INTENTS = {
     },
     particles: {
       entities: ["deal: Deal"],
-      parameters: [
-        { name: "id", type: "id", required: true },
-      ],
+      // Guard: только customer своей сделки, только из on_review (не из
+      // completed/cancelled — чтобы toolbar исчезал после подтверждения).
+      conditions: ["deal.status = 'on_review'", "deal.customerId = me.id"],
+      confirmation: "click",
       effects: [
         { α: "replace", target: "deal.status", value: "completed" },
         { α: "add", target: "transactions", σ: "account" },
       ],
     },
-    confirmation: "auto",
   },
 
   auto_accept_result: {
     name: "Авто-приёмка (72h)",
-    description: "Scheduler-fired: если customer не принял за 72h, результат auto-accept с теми же последствиями",
+    description: "Scheduler-fired: если customer не принял за 72h, результат auto-accept с теми же последствиями. Не user-invokable — particles.entities пуст, SDK не добавит в toolbar.",
     α: "replace",
     irreversibility: "high",
     __irr: {
@@ -780,10 +836,12 @@ export const INTENTS = {
       reason: "Автоматическая приёмка через 72h после on_review — та же finality что и ручная",
     },
     particles: {
-      entities: ["deal: Deal"],
-      parameters: [
-        { name: "id", type: "id", required: true },
-      ],
+      // entities пуст → SDK assignToSlotsDetail::appliesToMainEntity = false →
+      // auto_accept_result не появится в Deal.toolbar. Фаер через rules.js
+      // (schedule v2: after 72h от submit_work_result → emit auto_accept_result
+      // по intentId, не через UI).
+      entities: [],
+      conditions: ["deal.status = 'on_review'"],
       effects: [
         { α: "replace", target: "deal.status", value: "completed" },
         { α: "add", target: "transactions", σ: "account" },
@@ -793,34 +851,46 @@ export const INTENTS = {
   },
 
   request_revision: {
-    name: "Запросить доработку",
-    description: "Customer возвращает deal из on_review в in_progress с комментарием",
+    name: "Вернуть на доработку",
+    description: "Customer возвращает deal из on_review в revision_requested с комментарием (причиной). Revision-cycle: request_revision ↔ submit_revision может повторяться.",
     α: "replace",
-    irreversibility: "low",
+    // high + control:"formModal" — UI-трюк для обхода primaryCTA-routing.
+    irreversibility: "high",
+    control: "formModal",
+    // Explicit icon — иначе SDK getIntentIcon fallback'нёт на ⚡, и
+    // collapseToolbar схлопнёт с submit_work_result/submit_revision в
+    // overflow (dedup по иконке при >3 toolbar items).
+    icon: "↩",
+    parameters: [
+      { name: "comment", type: "textarea", required: true, label: "Что доработать" },
+    ],
     particles: {
       entities: ["deal: Deal"],
-      parameters: [
-        { name: "id", type: "id", required: true },
-        { name: "comment", type: "text", required: true },
-      ],
+      conditions: ["deal.status = 'on_review'", "deal.customerId = me.id"],
+      confirmation: "form",
+      witnesses: ["comment"],
       effects: [
-        { α: "replace", target: "deal.status", value: "in_progress" },
+        { α: "replace", target: "deal.status", value: "revision_requested" },
       ],
     },
-    confirmation: "auto",
   },
 
   submit_revision: {
     name: "Сдать правки",
-    description: "Executor сдаёт версию после revision — Deal возвращается в on_review",
+    description: "Executor сдаёт версию после revision — Deal возвращается в on_review. Доступно только из revision_requested.",
     α: "replace",
-    irreversibility: "low",
+    irreversibility: "high",
+    control: "formModal",
+    icon: "📤",
+    parameters: [
+      { name: "result", type: "textarea", required: true, label: "Что изменено" },
+      { name: "links", type: "text", label: "Обновлённые ссылки" },
+    ],
     particles: {
       entities: ["deal: Deal"],
-      parameters: [
-        { name: "id", type: "id", required: true },
-        { name: "result", type: "text", required: true },
-      ],
+      conditions: ["deal.status = 'revision_requested'", "deal.executorId = me.id"],
+      confirmation: "form",
+      witnesses: ["result"],
       effects: [
         { α: "replace", target: "deal.status", value: "on_review" },
       ],
@@ -829,21 +899,23 @@ export const INTENTS = {
   },
 
   cancel_deal_mutual: {
-    name: "Отменить сделку (обоюдно)",
-    description: "Обе стороны согласны — escrow refund customer'у",
+    name: "Отменить сделку",
+    description: "Обе стороны согласны — Deal.status → cancelled, escrow refund customer'у. Доступно до completed/cancelled.",
     α: "replace",
     irreversibility: "medium",
+    control: "formModal",
+    parameters: [
+      { name: "reason", type: "textarea", required: true, label: "Причина отмены" },
+    ],
     particles: {
       entities: ["deal: Deal"],
-      parameters: [
-        { name: "id", type: "id", required: true },
-        { name: "reason", type: "text", required: true },
-      ],
+      conditions: ["deal.status IN ('in_progress', 'on_review')"],
+      confirmation: "form",
+      witnesses: ["reason"],
       effects: [
         { α: "replace", target: "deal.status", value: "cancelled" },
         { α: "add", target: "transactions", σ: "account" },
       ],
     },
-    confirmation: "auto",
   },
 };
