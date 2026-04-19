@@ -71,10 +71,18 @@ function parseParticleEntities(particleEntities) {
 }
 
 function inferParameters(intent, ontology) {
-  // 1. Явный parameters — победитель (даже пустой массив — автор
-  // сознательно подавляет inference для click-action intents)
+  // 1. Явный top-level parameters — победитель (даже пустой массив —
+  // автор сознательно подавляет inference для click-action intents)
   if (Array.isArray(intent.parameters)) {
     return intent.parameters;
+  }
+
+  // 2. particles.parameters — fallback на легаси declaration формат
+  // (freelance.reply_to_review, freelance.leave_review и др.). Закрывает
+  // MCP-gap: без этого inferParameters возвращал [] для intents с
+  // явно объявленными parameters внутри particles.
+  if (Array.isArray(intent.particles?.parameters)) {
+    return intent.particles.parameters;
   }
 
   const witnesses = intent.particles?.witnesses || [];
