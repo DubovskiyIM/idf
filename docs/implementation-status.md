@@ -22,19 +22,22 @@
 | sales | 225 | 11 сущностей, 4 роли | Масштаб 225 интентов, чисто-кристаллизационный (нет ManualUI.jsx) |
 | lifequest | 56 | 10 сущностей | Mobile-first, shadcn/ui doodle, 6 custom canvas |
 | reflect | 47 | 10 сущностей | Apple visionOS-glass, Yale RULER mood meter, Rules engine extensions |
-| invest | 58 | 14 сущностей | AntD enterprise-fintech, 4 роли (investor/advisor/agent/observer), 7 rules, 3 внешних ML-сервиса |
+| invest | 61 | 14 сущностей | AntD enterprise-fintech, 4 роли (investor/advisor/agent/observer), 7 rules, 3 внешних ML-сервиса |
 | delivery | 45 | 14 сущностей | 5 ролей, map-primitive, dispatcher m2m, irreversibility в `capture_payment` |
+| freelance | 46 | Task, Response, Deal, Wallet, Transaction, Review, Category | Биржа услуг, multi-owner (customerId + executorId) на Deal, escrow через hold/release, revision loop, комиссия платформы |
 
-**Итого:** 585 намерений, 9 доменов, один движок кристаллизации.
+**Итого:** 634 намерения, 10 доменов, один движок кристаллизации.
+
+Freelance (12-й полевой тест) выявил 40+ конкретных SDK gap'ов в процессе авторинга — см. [`sdk-improvements-backlog.md`](sdk-improvements-backlog.md). Backlog классифицирован P0/P1/P2 и адресован `@intent-driven/core`, `@intent-driven/renderer`, `@intent-driven/adapter-antd`.
 
 ### Тестовое покрытие
 
-- **idf (прототип)**: 497 unit-тестов в 42 файлах
+- **idf (прототип)**: 716 unit-тестов в 50 файлах
 - **@intent-driven/core**: 483 unit-теста
 - **@intent-driven/renderer**: 95 тестов
 - **@intent-driven/canvas-kit**: 36 тестов
 - **4× `@intent-driven/adapter-*`**: 12 тестов суммарно
-- **Итого:** 1123 теста в SDK + прототипе
+- **Итого:** ~1342 теста в SDK + прототипе
 - **agent-smoke**: 75-шаговый integration-тест, покрывает все домены
 
 ---
@@ -103,14 +106,28 @@ Invest использует все четыре в одном домене.
 Первое применение: `booking.auto_cancel_pending_booking` (5min — актуальное значение в коде).
 
 ### Pattern Bank
-- **13 stable patterns** с формальным trigger/structure/rationale triple
-- **3 паттерна с `structure.apply`**: `subcollections`, `grid-card-layout`, `footer-inline-setter`
-- **10 matching-only**: hero-create, phase-aware-primary-cta, irreversible-confirm, inline-search, composer-entry, vote-group, antagonist-toggle, hierarchy-tree-nav, discriminator-wizard, m2m-attach-dialog
-- **Falsification framework**: каждый паттерн имеет shouldMatch / shouldNotMatch fixtures
-- **Studio viewer** `/studio/patterns` + prototype `PatternInspector` drawer (toggle `Cmd+Shift+P`)
+- **20 stable patterns** с формальным trigger/structure/rationale triple. Физическая раскладка в `idf-sdk/packages/core/src/patterns/stable/`:
+  - `detail/` (8): `footer-inline-setter`, `keyboard-property-popover`, `lifecycle-locked-parameters`, `m2m-attach-dialog`, `observer-readonly-escape`, `phase-aware-primary-cta`, `subcollections`, `vote-group`
+  - `catalog/` (4): `discriminator-wizard`, `grid-card-layout`, `hero-create`, `kanban-phase-column-board`
+  - `cross/` (6): `bulk-action-toolbar`, `global-command-palette`, `hierarchy-tree-nav`, `inline-search`, `irreversible-confirm`, `optimistic-replace-with-undo`
+  - `feed/` (2): `antagonist-toggle`, `composer-entry`
+- **3 паттерна с `structure.apply`**: `subcollections`, `grid-card-layout`, `footer-inline-setter`. Остальные 17 — matching-only (witness-of-crystallization без mutate-слотов).
+- **Falsification framework**: каждый паттерн имеет shouldMatch / shouldNotMatch fixtures.
+- **Studio viewer** `/studio/patterns` + prototype `PatternInspector` drawer (toggle `Cmd+Shift+P`).
+
+### Pattern research pipeline (двухступенчатый)
+
+- **Ступень 1 — research candidate**: `scripts/pattern-researcher.mjs` + domain-specific batch'и (`freelance-pattern-batch.mjs`, `jobboard-pattern-batch.mjs`, `uncovered-domains-pattern-batch.mjs`) извлекают кандидатов из реальных приложений (avito, profi и т.п.) в `idf/pattern-bank/candidate/` как JSON с `trigger.requires`, `rationale.evidence`, `falsification.shouldMatch/shouldNotMatch`.
+- **Ступень 2 — SDK candidate**: прошедшие human-review кандидаты переносятся в `idf-sdk/packages/core/src/patterns/candidate/` (на 2026-04-19 пусто — все review'ы либо сразу в `stable`, либо отклонены).
+- **Ступень 3 — stable**: после добавления apply-функции (optional) и falsification fixtures — в `idf-sdk/packages/core/src/patterns/stable/`.
+- `anti/` директория в SDK зарезервирована под anti-patterns (пусто).
 
 ### Invariants (5 kinds)
 `role-capability`, `referential`, `transition`, `cardinality`, `aggregate`. Dispatch через `server/schema/invariantChecker.cjs`; handlers в `@intent-driven/core/invariants/*.js`. Проверяются в `onConfirmed`; на violation — rollback через `cascadeReject` + SSE `effect:rejected`. Декларации: invest (5), sales (3), delivery (3).
+
+**Известный дефект (backlog 1.1, P0):** handler'ы `referential`/`aggregate`/`transition` бросают `TypeError` при альтернативных формах декларации (`{entity, field, references}` вместо канонического `{from, to}`). Исключение трактуется как `severity:"error"` и cascade-rejects подтверждённый эффект. Freelance пришлось даунгрейдить 3 инварианта в `severity:"warning"`. См. [`sdk-improvements-backlog.md §1`](sdk-improvements-backlog.md).
+
+**Domain scoping — отсутствует (backlog 1.4, P0):** `lifequest.tasks` и `freelance.tasks` мапятся в одну SQL-таблицу `tasks`. Freelance transition-инвариант на `Task.status` ловит lifequest row'ы и ломает каскад. `filterWorldForRole` параметризован viewer'ом, но не доменом. Требует `entity.domain` в Φ-context или `invariant.where`/`invariant.domain` filter.
 
 ---
 
@@ -122,22 +139,40 @@ Invest использует все четыре в одном домене.
 - **Adapter capability checks at startup** — новый primitive kind без уведомления адаптеров
 - **`@intent-driven/server` extraction (Phase 3)** — после стабилизации scheduler'а
 - **Server-rendered PDF / DOCX** поверх documentMaterializer
-- **Pattern Bank: `structure.apply` для оставшихся 10 stable паттернов** — hero-create первый кандидат
+- **Pattern Bank: `structure.apply` для оставшихся 17 stable паттернов** — hero-create первый кандидат
 - **Role-specific FK convention** — sales/seller_profile не матчится через findSubEntities (seller/targetUser vs userId)
 - **PatternInspector component test** — требует `@testing-library/react` + `jsdom`
 - **Studio PatternBank URL write-back** — domain change не пишет в URL
 - **X1: удаление 9 explicit `subCollections` overrides** — после ≥1 релиза с apply в проде
-- **Pattern Bank candidate/ + anti/** — директории зарезервированы, пустые
+- **Pattern Bank anti/** — директория зарезервирована под anti-patterns, пусто
 - **Pattern Bank: ML / auto-learning** паттернов из приложений
 - **Cluster-friendly scheduler** — single-leader TimerQueue не distributed-ready
+
+### Из freelance field-test (2026-04-19, freelance/sdk-backlog PR #44)
+
+Полный классифицированный список (40+ пунктов, P0/P1/P2) — в [`sdk-improvements-backlog.md`](sdk-improvements-backlog.md). Ключевое из P0:
+
+- **Invariant handler schema drift** (1.1) — TypeError на альтернативных формах декларации cascade-rejects эффект
+- **Domain scoping инвариантов** (1.4) — cross-domain name collision (`lifequest.tasks` ↔ `freelance.tasks`)
+- **`AntdButton` label vs children** (2.1), **`AntdDateTime` без времени** (2.2), **`AntdNumber` не видит `fieldRole:"price"`** (2.3), **`AntdTextInput` игнорирует `maxLength`/`pattern`** (2.4) — 3 runtime-патча в `DomainRuntime.jsx` обходят это
+- **`PrimaryCTAList` не рендерит форму** (3.1) для multi-param phase-transitions
+- **`ownershipConditionFor` single-owner** (3.2) — multi-owner сущности (Deal с customerId + executorId) требуют OR-логики
+- **`inferParameters` читает только top-level** (4.1), **`heroCreate` matcher читает только `particles.confirmation`** (4.2) — нормализация top-level ↔ particles
+- **`footer-inline-setter` слишком агрессивен** (4.3) — матчит textarea-параметры, UX ломается
+
+### Cross-cutting инсайты, не привязанные к тикету
+
+- **Intent salience** — design-spec в `~/WebstormProjects/idf-manifest-v2.1/docs/design/intent-salience-spec.md`. Закрывает «alphabetical-fallback» witness из функториального фикса. PoC: `salience.js` в SDK core, аннотация `edit_listing.salience: "primary"` в sales. `scripts/functoriality-spec-debt.mjs` даёт метрику: 16 alphabetical-fallback witnesses в 9 доменах (target: 0).
+- **SDK утекает в host** — 3 patch-wrapper'а в `src/runtime/DomainRuntime.jsx` подменяют поведение адаптеров. Формально §15 манифеста (runtime не импортирует UI-kit) соблюдён, но де-факто хост пишет shim-слой поверх SDK.
+- **Particle uniformity деградирует со сложностью** — 5/10 доменов используют custom `buildCustomEffects` (freelance имеет ~9 custom ветвей). Тренд ухудшается: freelance привнёс большой custom блок из-за отсутствующих SDK-абстракций (multi-owner, composite cardinality, expression invariant).
 
 ### Известные прототип-специфичные проблемы
 
 - **`vite build` периодически падает** с ENOTEMPTY + ошибкой порядка CSS `@import` — ручной fix, не блокирует dev-server и тесты
 - **entity.kind `mirror`** — маркер зарезервирован, в коде не применяется; `internal` — implicit default
 - **fieldRoles `money` / `percentage` / `trend` / `ticker`** — полностью рендерятся только в AntD; остальные адаптеры используют text-fallback
-- **Particle uniformity** — 6 из 9 доменов используют generic `buildEffects`; 3 имеют custom-handlers (messenger/workflow/booking)
-- **5/9 доменов — legacy** (имеют ManualUI.jsx); 4/9 — чисто-кристаллизационные (артефакт рендерится только через кристаллизатор + рендерер)
+- **Particle uniformity** — 5 из 10 доменов используют generic `buildEffects`; 5 имеют custom-handlers (messenger / workflow / booking / freelance / частично invest)
+- **5/10 доменов — legacy** (имеют ManualUI.jsx); 5/10 — чисто-кристаллизационные (артефакт рендерится только через кристаллизатор + рендерер)
 
 ---
 
@@ -150,14 +185,50 @@ npm run dev          # Vite :5173 UI
 npm run invest-ml    # :3003 мок ML-сигналов (опц.)
 npm run invest-fuzzy # :3004 fuzzy-scoring (опц.)
 npm run market-data  # :3006 price-tick feed (опц.)
-npm test             # vitest (1123 теста через SDK+прототип)
+npm test             # vitest (716 тестов в прототипе, ~1342 суммарно с SDK)
 npm run agent-smoke  # 75-шаговый integration
 npm run build        # prod-сборка (периодически падает, см. §6)
 ```
 
 ---
 
-## 8. История эволюции
+## 8. Cross-stack реализации
+
+Помимо референсной (React/Node), формат валидируется **тремя параллельными реализациями** на альтернативных стеках. Каждая пишется в изоляции: единственный input — `~/WebstormProjects/idf-spec/`, чтение исходников idf / idf-sdk / чужих реализаций запрещено.
+
+| Репо | Стек | Scope | Состояние |
+|---|---|---|---|
+| `~/WebstormProjects/idf-go/` | Go 1.22+, `xeipuuv/gojsonschema` | L1 + L2 | conformance на library fixtures, feedback для спеки |
+| `~/WebstormProjects/idf-rust/` | Rust 1.95+, `serde`, `jsonschema` | L1 + L2 | conformance на library + events fixtures |
+| `~/WebstormProjects/idf-swift/` | Swift (Package.swift) | L1 + L2 (в работе) | скелет репо с изоляционной политикой |
+
+Эти реализации — структурный стресс-тест формата: если все четыре стека `fold(Φ)` одинакового фикстура дают одинаковый world, формат decoupled от языка. Расхождение — прямой баг-репорт к спеке.
+
+Манифест §26 называет «второй reference implementation» направлением развития. Фактически уже идут три; §26 следует переформулировать в следующей ревизии манифеста.
+
+---
+
+## 9. Спецификация
+
+**Репо:** `~/WebstormProjects/idf-spec/`
+
+Нормативная спецификация формата v0.1 — отдельный проект, пишется по `source/manifesto-v2.snapshot.md` (frozen snapshot + SHA-256), без чтения кода референсной реализации.
+
+**Структура:**
+- `spec/00-introduction.md`, `01-conformance.md`, `02-axioms.md`
+- `spec/03-objects/` — JSON Schema для ontology / intent / effect / projection / artifact
+- `spec/04-algebra/` — fold, crystallize, viewer-scoping
+- `spec/05-materializations/` — pixel / voice / agent API / document
+- `spec/schemas/` — machine-readable JSON Schema
+- `spec/fixtures/` — library (L1+L2), events (L2+) эталонные test vectors
+
+Scope v0.1: L1 + L2. L3 и L4 резервируются для v0.2+.
+
+Манифест §3 и §22 описывают спеку как «запланированную». Фактически спека в активной разработке — Go/Rust реализации уже проходят conformance против её fixtures.
+
+---
+
+## 10. История эволюции
 
 Хронология реализации документирована по версиям в `docs/archive/manifesto-v1.3.md` … `manifesto-v1.12.md`.
 

@@ -15,10 +15,12 @@
 ## Ключевые документы
 
 - **Манифест v2** (`docs/manifesto-v2.md`) — timeless-документ о формате IDF: 26 глав в 8 частях (I. Тезис · II. Объекты формата · III. Алгебра · IV. Четыре читателя формата · V. Авторство · VI. Conformance набросок · VII. Границы · VIII. Перспектива). Читай перед работой над ядром формата.
-- **Имплементационный статус** (`docs/implementation-status.md`) — живой документ о состоянии референсной реализации: 9 доменов, SDK пакеты (версии/лицензии), 1123 теста, open items. Обновляется как README вместе с кодом.
+- **Имплементационный статус** (`docs/implementation-status.md`) — живой документ о состоянии референсной реализации: 10 доменов, SDK пакеты (версии/лицензии), ~1342 теста (716 в прототипе), open items. Обновляется как README вместе с кодом.
+- **SDK backlog** (`docs/sdk-improvements-backlog.md`) — 40+ конкретных gap'ов в SDK, выявленных при авторинге freelance-домена. Классификация P0/P1/P2, адресаты: `@intent-driven/core`, `@intent-driven/renderer`, `@intent-driven/adapter-antd`.
 - **Архив манифестов v1.3–v1.12** (`docs/archive/`) — исторические версии с change-log тоном, сохранены как снимок эволюции. Актуальные факты — в v2, актуальные счётчики — в implementation-status.
-- **Спецификация формата v0.1** (`docs/spec-v0.1/`) — **нормативный** документ, **запланирован к реализации** (отдельный проект). Когда появится: JSON Schema для artifact/intent/effect/ontology/projection + conformance matrix (L1–L4) + test fixtures. Сейчас не существует.
-- **Полевые тесты 1–11** (`docs/field-test-*.md`) — от очереди чтения до delivery (food/groceries last-mile). История развёртывания формата через 11 домен-проверок.
+- **Спецификация формата v0.1** — нормативный документ в отдельном репо `~/WebstormProjects/idf-spec/`. Содержит JSON Schema для core-объектов, conformance classes L1–L2 и test fixtures. L3–L4 резервируются для v0.2+. Манифест §3/§22 упоминает спеку как «запланированную» — на 2026-04-19 она в активной разработке, и cross-stack реализации (Go/Rust) уже проходят conformance против её fixtures.
+- **Cross-stack реализации** — `~/WebstormProjects/idf-{go,rust,swift}/` — три независимые реализации формата (L1+L2) против `idf-spec`, пишутся в изоляции от референсной реализации. Структурный стресс-тест «формат decoupled от языка».
+- **Полевые тесты 1–11** (`docs/field-test-*.md`) — от очереди чтения до delivery. Файлы `field-test-8`, `field-test-9`, `field-test-12` (freelance) отсутствуют в docs; частичное покрытие numbering'а.
 - **Дизайн-спек M1–M5** (`docs/superpowers/specs/2026-04-10-intent-ui-generation-design.md`)
 
 ## Архитектура
@@ -34,10 +36,11 @@
 | sales | 225 | User, Listing, Bid, Category, Order, Review, Dispute, Watchlist, Message, SavedSearch, Notification | 4 роли, **чисто-кристаллизационный** (нет ManualUI.jsx) |
 | lifequest | 56 | User, Sphere, Goal, Habit, HabitLog, Task, SphereAssessment, VisionItem, Badge, Quote | **боевой домен**, shadcn/ui адаптер, doodle-стилистика, mobile-first (BottomTabs), 6 custom canvas |
 | reflect | 47 | User, MoodEntry, Activity, EntryActivity, Hypothesis, HypothesisEvidence, Insight, Reminder, Tag, EntryTag | **9-й полевой тест**, **Apple visionOS-glass** адаптер, Mood Meter (Yale RULER), 6 analytical canvas, **Rules engine extensions** (aggregation/threshold/schedule/condition) |
-| invest | 58 | User, Portfolio, Position, Asset, Transaction, Goal, RiskProfile, Recommendation, Alert, Watchlist, MarketSignal, Assignment, AgentPreapproval, Rule | **10-й полевой тест**, **AntD enterprise-fintech** адаптер. 4 роли (investor/advisor/agent/observer), 7 правил Rules Engine (все 4 v1.5 ext), 3 внешних ML-сервиса. Закрыл 6 §26 open items. |
+| invest | 61 | User, Portfolio, Position, Asset, Transaction, Goal, RiskProfile, Recommendation, Alert, Watchlist, MarketSignal, Assignment, AgentPreapproval, Rule | **10-й полевой тест**, **AntD enterprise-fintech** адаптер. 4 роли (investor/advisor/agent/observer), 7 правил Rules Engine (все 4 v1.5 ext), 3 внешних ML-сервиса. Закрыл 6 §26 open items. |
 | delivery | 45 | User, Merchant, MenuItem, Zone, DispatcherAssignment, Order, OrderItem, Delivery, Address, CourierLocation, Payment, Notification, Review, AgentPreapproval | **11-й полевой тест**, food/groceries last-mile. 5 ролей (customer/courier/merchant/dispatcher/agent), dispatcher m2m через DispatcherAssignment. 8 правил (5 temporal schedule v2, 1 threshold, 1 condition, 1 aggregation), 3 canvas с map-primitive, `capture_payment` с `__irr`. Применяет все 3 paradigm additions v1.7 совместно. |
+| freelance | 46 | User, Task, Response, Deal, Wallet, Transaction, Review, Category | **12-й полевой тест**, биржа услуг. Multi-owner (customerId + executorId) на Deal, escrow (hold/release), revision-loop (`on_review ↔ revision_requested`), комиссия платформы. `__irr.high` на `confirm_deal`. Выявил 40+ SDK gap'ов — см. `docs/sdk-improvements-backlog.md`. |
 
-Переключатель доменов в `prototype.jsx`. Один движок, **девять** наборов определений.
+Переключатель доменов в `prototype.jsx`. Один движок, **десять** наборов определений.
 
 ### UI-адаптеры (§17)
 
@@ -55,7 +58,7 @@
 ```
 # Прототип (host-слой, минимальный после SDK Phase 2 extraction)
 src/
-  domains/{booking,planning,workflow,messenger,sales,lifequest,reflect,invest,delivery}/
+  domains/{booking,planning,workflow,messenger,sales,lifequest,reflect,invest,delivery,freelance}/
   studio/           # §27 Authoring environment — Graph3D + Claude proxy (dev-time, port :4000)
   runtime/
     # engine / fold / intentAlgebra / crystallize_v2 / primitives / adapters
@@ -111,7 +114,7 @@ scripts/    # agent-login, agent-smoke (75 шагов)
 
 **Глобальные инварианты (§14, v1.6.1)** — `ontology.invariants[]` с 5 kind'ами (`role-capability` / `referential` / `transition` / `cardinality` / `aggregate`). Dispatch через `server/schema/invariantChecker.cjs` (thin re-export), handlers в `@intent-driven/core/invariants/*.js` (5 файлов в SDK). Интеграция — `validator.js::checkInvariantsForDomain` вызывается в `routes/effects.js::onConfirmed`; на error — rollback через `cascadeReject` + SSE `effect:rejected` с violations. Observer-invariant (§5) — частный случай `role-capability`. Декларации в invest (5 шт), sales (3 шт), delivery (3 шт).
 
-**Базовые роли (§5, v1.6 post-release)** — `role.base: "owner" | "viewer" | "agent" | "observer"` как таксономический маркер. Helpers в `server/schema/baseRoles.cjs`: `getRolesByBase`, `isAgentRole`, `auditOntologyRoles`. Все 9 доменов аннотированы. Moderator → agent. Domain-имена не заменяются — база даёт cross-domain инструментам и SDK узнавание паттерна.
+**Базовые роли (§5, v1.6 + admin-post-v2)** — `role.base: "owner" | "viewer" | "agent" | "observer" | "admin"` как таксономический маркер. Пятый класс `admin` добавлен post-v2.0 (PR #45) после стресс-теста spec-v0.1 на library-домене (librarian не вписался в четыре). Спецификация: `admin` — row-override в `filterWorldForRole` (видит все записи независимо от `ownerField`). Открытое множество прецедентов, не closed enum. Helpers в `server/schema/baseRoles.cjs`: `getRolesByBase`, `isAgentRole`, `auditOntologyRoles`. Все 10 доменов аннотированы. Moderator → agent.
 
 **Агентский слой (§17, v1.6)** — `/api/agent/:domain/{schema,world,exec}`, JWT + `roles.agent.canExecute` + `visibleFields` (single-owner + m2m). **Preapproval guard** (v1.6): `roles.agent.preapproval` с 5 типами предикатов (active/notExpired/maxAmount/csvInclude/dailySum). `server/schema/*` — чистые функции.
 
@@ -119,9 +122,11 @@ scripts/    # agent-login, agent-smoke (75 шагов)
 
 **Voice materialization (§1/§17, v1.6.2)** — все 4 материализации §1 теперь реализованы. `GET /api/voice/:domain/:projection?format=json|ssml|plain`. `voiceMaterializer.cjs` превращает projection в speech-script (`turns: [{role, text, items}]`). Brevity: top-3 для catalog, money читается «2.5 миллионов рублей». 3 формата: json (для voice-agent / Claude Voice / OpenAI realtime), SSML (для TTS), plain (debug).
 
-**UX Pattern Layer (v1.8)** — два ортогональных измерения: **архетип** (структура: feed/catalog/detail/...) × **паттерн** (поведение: monitoring/triage/execution/exploration/configuration). Signal Classifier выводит behavioral pattern из intent-группы через weighted scoring. Rendering Strategy определяет itemLayout, emphasisFields, preferControl. Pattern Bank — 13 stable structural patterns с формальным trigger/structure/rationale triple и falsification framework. Claude Researcher Pipeline (`scripts/pattern-researcher.mjs`) — extraction паттернов из реальных продуктов + self-improving loop.
+**UX Pattern Layer (v1.8)** — два ортогональных измерения: **архетип** (структура: feed/catalog/detail/...) × **паттерн** (поведение: monitoring/triage/execution/exploration/configuration). Signal Classifier выводит behavioral pattern из intent-группы через weighted scoring. Rendering Strategy определяет itemLayout, emphasisFields, preferControl. **Pattern Bank — 20 stable structural patterns** (detail 8, catalog 4, cross 6, feed 2) с формальным trigger/structure/rationale triple и falsification framework. **Двухступенчатый research pipeline**: `scripts/pattern-researcher.mjs` + domain-batch'и извлекают кандидатов из реальных продуктов (avito, profi) в `idf/pattern-bank/candidate/`; после human review — в `idf-sdk/packages/core/src/patterns/candidate/` → `stable/`.
 
-**Pattern Bank execution (§16, v1.12)** — от matching-only к executable rules. 3 паттерна с `structure.apply(slots, context)` — чистые функции, обогащают slots внутри crystallize pipeline (фаза `3d` после `assignToSlots*`, до `wrapByConfirmation`): **`subcollections`** (detail, FK-based sub-entity discovery + pluralization), **`grid-card-layout`** (catalog, layout+cardSpec), **`footer-inline-setter`** (detail, single-replace → inline-setter). Author-override: apply respects authored state (existing sections, any body.layout, existing footer items). `projection.patterns: { enabled, disabled }` — author-level preference, управляет applied set; `POST /api/patterns/preference` пишет через AST-safe codemod (recast). Feature-flag `ontology.features.structureApply` как kill-switch. `artifact.witnesses[]` — pattern matching как first-class §15 finding с `basis: "pattern-bank"`, `reliability: "rule-based"`. `explainMatch(intents, ontology, projection, options)` — единая SDK-surface для Studio viewer (`/studio/patterns`) и prototype `PatternInspector` drawer (§27 host-extension, toggle `Cmd+Shift+P`, три режима Off/Preview/Commit). Renderer props `artifactOverride` + `previewPatternId` + primitive `PatternPreviewOverlay` (dashed-border + badge) для §27 preview. 5 server endpoints `/api/patterns/{catalog,falsification,explain,projections,preference}`. 3 из 13 паттернов имеют apply; остальные 10 matching-only, roadmap v1.13+.
+**Pattern Bank execution (§16, v1.12)** — от matching-only к executable rules. 3 паттерна с `structure.apply(slots, context)` — чистые функции, обогащают slots внутри crystallize pipeline (фаза `3d` после `assignToSlots*`, до `wrapByConfirmation`): **`subcollections`** (detail, FK-based sub-entity discovery + pluralization), **`grid-card-layout`** (catalog, layout+cardSpec), **`footer-inline-setter`** (detail, single-replace → inline-setter). Author-override: apply respects authored state (existing sections, any body.layout, existing footer items). `projection.patterns: { enabled, disabled }` — author-level preference, управляет applied set; `POST /api/patterns/preference` пишет через AST-safe codemod (recast). Feature-flag `ontology.features.structureApply` как kill-switch. `artifact.witnesses[]` — pattern matching как first-class §15 finding с `basis: "pattern-bank"`, `reliability: "rule-based"`. `explainMatch(intents, ontology, projection, options)` — единая SDK-surface для Studio viewer (`/studio/patterns`) и prototype `PatternInspector` drawer (§27 host-extension, toggle `Cmd+Shift+P`, три режима Off/Preview/Commit). Renderer props `artifactOverride` + `previewPatternId` + primitive `PatternPreviewOverlay` (dashed-border + badge) для §27 preview. 5 server endpoints `/api/patterns/{catalog,falsification,explain,projections,preference}`. 3 из 20 stable паттернов имеют apply; остальные 17 matching-only, roadmap v1.13+.
+
+**Functoriality & salience (2026-04-18 research)** — `feat/crystallize-functoriality` ветка: sort-on-entry в `crystallizeV2` делает результат **детерминированным** относительно порядка входных intent'ов. Но детерминизм ≠ семантическая устойчивость: tied salience разрешается алфавитным tiebreak'ом (`apply_template` опережает `edit_listing` по id). Решение — `intent.salience` (explicit label `primary|secondary|tertiary|utility` или число; computed fallback из `particles.effects`). Design-spec: `~/WebstormProjects/idf-manifest-v2.1/docs/design/intent-salience-spec.md`. PoC в SDK core (`crystallize_v2/salience.js`), demo-аннотация в `sales/intents.js` (`edit_listing.salience: "primary"`). Метрика spec-debt: `scripts/functoriality-spec-debt.mjs` — 16 `alphabetical-fallback` witness'ов в 9 доменах, target 0.
 
 **Reactive Rules Engine (§22)** — event-condition-action, правила в `ontology.rules`. **Extensions v1.5:** aggregation (counter), threshold (lookback predicate), schedule (cron-like), condition (JS expression). Invest использует все 4 в одном домене. Таблица `rule_state` per (rule, user).
 
@@ -186,26 +191,28 @@ Postmortem'ы: `docs/superpowers/specs/2026-04-14-sdk-core-postmortem.md` (Phase
 
 - **§15 Анкеринг** — конструктивные частицы блокируют через `AnchoringError` (v1.8). Witness-of-proof filled (v1.9: `reliability`/`basis`). Pattern labeling + zazor #3 phase 1 analyzer (v1.10: `witness.pattern` + `scripts/zazor3-candidates.mjs`). Promotion writer, counterexample-search — open.
 - **Voice** — `voiceMaterializer` + `/api/voice/` route реализованы (v1.6.2). Нет integration с реальным TTS / voice-agent.
-- **UX Pattern Layer** — behavioral + structural matching + **`structure.apply` для 3 паттернов** (v1.12: subcollections, grid-card-layout, footer-inline-setter). Остальные 10 stable — matching-only. Pattern Bank: 13 stable, falsification framework работает, `explainMatch` SDK-surface + Studio viewer + prototype PatternInspector реализованы.
+- **UX Pattern Layer** — behavioral + structural matching + **`structure.apply` для 3 паттернов** (subcollections, grid-card-layout, footer-inline-setter). Остальные **17 stable** — matching-only. Falsification framework работает, `explainMatch` SDK-surface + Studio viewer + prototype PatternInspector реализованы.
+- **IrreversibleBadge auto-placement** — primitive создан в SDK renderer, но `buildDetailBody` не инжектит badge в header-row и ConfirmDialog его не рендерит (backlog 3.3). Домены с `__irr:{high}` (invest, delivery, freelance) не показывают badge автоматически.
 
-### Open items v1.12
+### Open items v1.12 + freelance backlog
 
 - **Composite/polymorphic entities** — union-типы не в `entity.kind` (переносится)
-- **Adapter capability checks at startup** — новый primitive kind без уведомления адаптеров (переносится)
+- **Adapter capability checks at startup** — новый primitive kind без уведомления адаптеров
 - **`@intent-driven/server` extraction (Phase 3)** — после стабилизации scheduler'а
 - **Server-rendered PDF / DOCX** поверх documentMaterializer
-- **Pattern Bank: `structure.apply` для оставшихся 10 stable паттернов** — hero-create / phase-aware-primary-cta / irreversible-confirm / inline-search / composer-entry / vote-group / antagonist-toggle / hierarchy-tree-nav / discriminator-wizard / m2m-attach-dialog
-- **Role-specific FK convention** — `sales/seller_profile` не матчится через `findSubEntities` (sellerId / targetUserId vs userId). Нужен `ontology.entities.<E>.references: { User: ["seller", "target"] }` hint
-- **PatternInspector component test** — требует `@testing-library/react` + `jsdom` в idf devDeps
-- **Studio PatternBank URL write-back** — domain change не пишет в URL
-- **X1: удаление 9 explicit `subCollections` overrides** — после ≥1 релиза с apply в проде
-- **Pattern Bank candidate/ + anti/** — директории пустые, будущая expansion task
+- **Pattern Bank: `structure.apply` для оставшихся 17 stable паттернов** — hero-create первый кандидат
+- **Domain scoping инвариантов** (backlog 1.4, P0) — `lifequest.tasks` ↔ `freelance.tasks` cross-domain collision; `filterWorldForRole` не параметризован доменом
+- **Invariant handler schema drift** (backlog 1.1, P0) — TypeError на альтернативных формах декларации cascade-rejects эффект
+- **Multi-owner ownership** (backlog 3.2, P0) — `ownershipConditionFor` хардкод single ownerField; Deal с `customerId` + `executorId` требует OR-логики
+- **AntD adapter patches** (backlog 2.1–2.4, P0) — 3 workaround'а в `src/runtime/DomainRuntime.jsx`: `label` vs `children`, `AntdDateTime` без времени, `fieldRole:"price"` vs `money`, игнорирование `maxLength`/`pattern`
+- **Intent salience → ratify в v2.1** — design-spec в `idf-manifest-v2.1`, PoC в SDK
 - **Pattern Bank: ML/auto-learning** — автоматический анализ приложений для пополнения банка
 - **Cluster-friendly scheduler** — single-leader для TimerQueue
+- **Cross-stack conformance harness** — автоматический differential-test `fold(Φ)` через idf / idf-go / idf-rust / idf-swift на общих fixtures
 
 ## Приоритеты
 
 Roadmap: Часть VIII манифеста v2 `docs/manifesto-v2.md` (направления формата без дат) + GitHub issues (оперативные задачи).
 
-- **Ближайшее (1-2 мес)**: apply для оставшихся 10 паттернов (hero-create первый кандидат), invest visual polish для демо, публикация статьи, `@intent-driven/server` extraction (Phase 3)
-- **Среднесрочное (2-4 мес)**: production-ready invest, Pattern Bank → 50+ stable patterns через Researcher pipeline, X1-удаление explicit overrides, PatternInspector test-harness
+- **Ближайшее (1-2 мес)**: freelance SDK backlog P0 (invariants 1.1+1.4, antd 2.1–2.4, ownership 3.2), apply для оставшихся 17 паттернов (hero-create первый кандидат), invest visual polish для демо, публикация статьи, `@intent-driven/server` extraction (Phase 3), intent salience в v2.1
+- **Среднесрочное (2-4 мес)**: production-ready invest, Pattern Bank → 50+ stable patterns через Researcher pipeline, cross-stack conformance harness, X1-удаление explicit overrides, PatternInspector test-harness
