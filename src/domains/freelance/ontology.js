@@ -227,6 +227,40 @@ export const ONTOLOGY = {
     },
   },
 
+  // R9 compositions (v2.1): декларативные join-aliases для composite projections.
+  // crystallize_v2 обогащает artifact.compositions; renderer (List + ArchetypeDetail)
+  // auto-resolves в items/target через resolveItemCompositions(world).
+  //
+  // Spec: idf-manifest-v2.1/docs/design/rule-R9-cross-entity-spec.md
+  compositions: {
+    Deal: [
+      { entity: "Task",     as: "task",     via: "taskId",     mode: "one" },
+      { entity: "Response", as: "response", via: "responseId", mode: "one" },
+      { entity: "User",     as: "customer", via: "customerId", mode: "one" },
+      { entity: "User",     as: "executor", via: "executorId", mode: "one" },
+    ],
+    Wallet: [
+      { entity: "User",        as: "user",         via: "userId",   mode: "one" },
+      { entity: "Transaction", as: "transactions", via: "walletId", mode: "many" },
+    ],
+    Transaction: [
+      { entity: "Wallet", as: "wallet", via: "walletId", mode: "one" },
+      { entity: "Deal",   as: "deal",   via: "dealId",   mode: "one" },
+    ],
+    Review: [
+      { entity: "Deal", as: "deal", via: "dealId", mode: "one" },
+      { entity: "User", as: "target", via: "targetUserId", mode: "one" },
+    ],
+    Response: [
+      { entity: "Task", as: "task", via: "taskId", mode: "one" },
+      { entity: "User", as: "executor", via: "executorId", mode: "one" },
+    ],
+    Task: [
+      { entity: "Category", as: "category", via: "categoryId", mode: "one" },
+      { entity: "User",     as: "customer", via: "customerId", mode: "one" },
+    ],
+  },
+
   roles: {
     guest: {
       base: "viewer",

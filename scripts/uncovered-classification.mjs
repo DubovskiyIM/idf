@@ -54,6 +54,22 @@ function classify(domainId, authoredId, authored, derivedMap) {
     }
   }
 
+  // Composition-covered rename (v2.1): authored имеет multi-entity, но derived
+  // через ontology.compositions получает те же aliases. Ищем derived с
+  // совпадающим (kind, mainEntity) и compositions, покрывающими authored.entities.
+  const authoredEntitiesExtra = (authored.entities || []).filter(e => e !== mainEntity);
+  if (authoredEntitiesExtra.length > 0) {
+    for (const [dId, d] of Object.entries(derivedMap)) {
+      if (d.kind === kind && d.mainEntity === mainEntity && Array.isArray(d.compositions)) {
+        const derivedTargetEntities = new Set(d.compositions.map(c => c.entity));
+        const coverage = authoredEntitiesExtra.every(e => derivedTargetEntities.has(e));
+        if (coverage && !!d.filter === aHasFilter) {
+          return { layer: "L1", reason: "composition-rename", renamedFrom: dId };
+        }
+      }
+    }
+  }
+
   // Uncovered — extract signature
   return { layer: "U", reason: extractSignature(authored) };
 }
