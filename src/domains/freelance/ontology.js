@@ -141,9 +141,11 @@ export const ONTOLOGY = {
     },
 
     Deal: {
-      // R7b (core@0.24+): multi-ownerField → my_deal_list с disjunction-фильтром
-      // (customerId === me.id OR executorId === me.id) — автоматически.
-      ownerField: ["customerId", "executorId"],
+      // Multi-owner (backlog 3.2, core@0.33.1+ #100): owners[] — единственная
+      // декларация. R7b derivation + ownershipConditionFor оба читают owners.
+      // permittedFor на deal phase-transitions: accept_result/request_revision
+      // → customerId only, submit_work_result/submit_revision → executorId only.
+      owners: ["customerId", "executorId"],
       fields: {
         id: { type: "text" },
         customerId: { type: "text", required: true },

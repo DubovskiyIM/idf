@@ -54,11 +54,11 @@ describe("freelance ontology — entities", () => {
     expect(ONTOLOGY.entities.Response.fields.taskId).toBeDefined();
   });
 
-  it("Deal.ownerField = [customerId, executorId] (R7b multi-owner), имеет taskId, amount, status", () => {
+  it("Deal.owners = [customerId, executorId] (R7b multi-owner), имеет taskId, amount, status", () => {
     const d = ONTOLOGY.entities.Deal;
     // R7b: ownerField — массив для multi-owner disjunction
-    expect(Array.isArray(d.ownerField)).toBe(true);
-    expect(d.ownerField).toEqual(["customerId", "executorId"]);
+    expect(Array.isArray(d.owners)).toBe(true);
+    expect(d.owners).toEqual(["customerId", "executorId"]);
     expect(d.fields.customerId).toBeDefined();
     expect(d.fields.executorId).toBeDefined();
     expect(d.fields.taskId).toBeDefined();

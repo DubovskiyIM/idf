@@ -131,7 +131,7 @@ const { checkInvariants } = require('./server/schema/invariantChecker.cjs');
 |---|---|---|
 | 1 | Алиса на task_detail → selected response Виктора → «Подтвердить сделку» | Открывается ConfirmDialog (high-irreversibility, type-text-to-confirm). После подтверждения: 4 effects — `add deals` (status=in_progress, `__irr:{point:high, at:now, reason}`) + `add transactions` (escrow-hold) + `replace wallet.balance` (-amount) + `replace wallet.reserved` (+amount). Commission = 10% от amount. |
 | 2 | Алиса → «Кошелёк» | balance уменьшился, reserved вырос. |
-| 3 | Logout → Login Виктор → «Мои сделки» | Видна новая сделка in_progress (real-time SSE или после reload). Open → deal_detail_executor. |
+| 3 | Logout → Login Виктор → «Мои сделки» | Видна новая сделка in_progress (real-time SSE или после reload). Open → deal_detail. |
 | 4 | Toolbar Виктора: «Сдать работу» (submit_work_result) | formModal: result (textarea) + links (text). Submit → 2 effects: `replace deal` (result/links/submittedAt) + `replace deal.status` (in_progress→on_review). |
 | 5 | Logout → Login Алиса → «Мои сделки» → сделка | Status: on_review. Toolbar: «Принять работу» (accept_result). |
 | 6 | Клик «Принять работу» → ConfirmDialog → подтверждение | 5 effects: status→completed + 2× transactions (release amount-commission to executor + commission to platform) + executor.balance += payout + customer.reserved -= amount. |
@@ -151,7 +151,7 @@ const { checkInvariants } = require('./server/schema/invariantChecker.cjs');
 | 1 | Виктор submit_work_result → status=on_review | (см. сценарий 6 шаги 3-4). |
 | 2 | Алиса open deal → toolbar: «Вернуть на доработку» (request_revision, иконка ↩) | formModal: comment (textarea required). Заполнить «Шрифт мелковат», submit. |
 | 3 | Φ: 2 effects — `replace deal` (revisionComment + revisionRequestedAt) + `replace deal.status` (on_review → revision_requested). | |
-| 4 | Виктор → deal_detail_executor → видит status=revision_requested + comment в witnesses | Toolbar: «Сдать правки» (submit_revision, 📤). |
+| 4 | Виктор → deal_detail → видит status=revision_requested + comment в witnesses | Toolbar: «Сдать правки» (submit_revision, 📤). |
 | 5 | submit_revision form: result (textarea) + links — обновлённый results, submit → status revision_requested → on_review | |
 | 6 | Алиса снова request_revision (cycle 2) | OK, transition `[on_review, revision_requested]` allow'ится много раз. |
 | 7 | Алиса accept_result после N итераций | Завершение, escrow release как обычно. |
