@@ -130,6 +130,8 @@ export const ONTOLOGY = {
     },
 
     Insight: {
+      // R11 (core@0.27+): temporal → insight_feed с sort:"-createdAt" автоматически
+      temporal: true,
       fields: {
         id: { type: "id" },
         userId: { type: "entityRef", read: ["*"], label: "Пользователь" },
