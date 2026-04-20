@@ -268,13 +268,22 @@ export default function V2Shell({
   // из /api/patterns/explain?previewPatternId=...
   const [artifactOverride, setArtifactOverride] = useState(null);
   const [previewPatternId, setPreviewPatternId] = useState(null);
+  const [xrayState, setXrayState] = useState({
+    active: false, attribution: null, witnesses: null, domain: null,
+  });
+  const [pinnedPatternId, setPinnedPatternId] = useState(null);
   useEffect(() => {
     setArtifactOverride(null);
     setPreviewPatternId(null);
+    setXrayState({ active: false, attribution: null, witnesses: null, domain: null });
+    setPinnedPatternId(null);
   }, [current?.projectionId]);
   const handlePreviewChange = useCallback((artifact, patternId) => {
     setArtifactOverride(artifact);
     setPreviewPatternId(patternId || null);
+  }, []);
+  const handleXrayChange = useCallback((next) => {
+    setXrayState(next || { active: false, attribution: null, witnesses: null, domain: null });
   }, []);
 
   // LLM enrichment state
@@ -414,6 +423,11 @@ export default function V2Shell({
             artifact={currentArtifact}
             artifactOverride={artifactOverride}
             previewPatternId={previewPatternId}
+            xrayMode={xrayState.active}
+            slotAttribution={xrayState.attribution}
+            patternWitnesses={xrayState.witnesses}
+            xrayDomain={xrayState.domain}
+            onExpandPattern={setPinnedPatternId}
             activeView={currentActiveView}
             projection={currentProjectionDef}
             world={worldWithRoute}
@@ -467,7 +481,8 @@ export default function V2Shell({
               projectionId={current?.projectionId}
               onClose={() => setPref("patternInspector", false)}
               onPreviewChange={handlePreviewChange}
-              initialSelectedPatternId={initialInspectPattern}
+              onXrayChange={handleXrayChange}
+              initialSelectedPatternId={pinnedPatternId || initialInspectPattern}
             />
           )}
         </div>
@@ -521,6 +536,8 @@ export default function V2Shell({
             projectionId={current?.projectionId}
             onClose={() => setPref("patternInspector", false)}
             onPreviewChange={handlePreviewChange}
+            onXrayChange={handleXrayChange}
+            initialSelectedPatternId={pinnedPatternId}
           />
         )}
         </div>
@@ -580,6 +597,8 @@ export default function V2Shell({
           projectionId={current?.projectionId}
           onClose={() => setPref("patternInspector", false)}
           onPreviewChange={handlePreviewChange}
+          onXrayChange={handleXrayChange}
+          initialSelectedPatternId={pinnedPatternId}
         />
       )}
     </div>
