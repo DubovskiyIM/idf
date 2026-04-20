@@ -173,25 +173,28 @@ export function getSeedEffects() {
     status: "under_review", description: "" });
   JES.forEach(j => ef({ target: "journalentries", context: { createdAt: now, ...j } }));
 
-  // ── Approvals для approved JEs
+  // ── Approvals для approved JEs согласно threshold_approvals_required:
+  //   <$10k:       approver (1 подпись достаточно)
+  //   <$100k:      reviewer + approver (4-eyes)
+  //   ≥$100k:      reviewer + approver + cfo (SOX §302 personal accountability)
   let apCnt = 0;
   JES.filter(j => j.status === "approved").forEach(j => {
     const amount = j.amount;
-    // reviewer
+    // approver — всегда (required по всем tier'ам)
     ef({ target: "approvals", context: {
-      id: `ap-${++apCnt}`, entryId: j.id, role: "reviewer",
-      reviewerId: j.departmentId === "dept-fin" ? "rachel" : "bob",
+      id: `ap-${++apCnt}`, entryId: j.id, role: "approver",
+      approverId: j.departmentId === "dept-fin" ? "ana" : "dan",
       verdict: "approved", createdAt: now,
     }});
-    // approver (если amount ≥ 10k)
+    // reviewer — только при amount ≥ $10k (4-eyes kicks in)
     if (amount >= 10000) {
       ef({ target: "approvals", context: {
-        id: `ap-${++apCnt}`, entryId: j.id, role: "approver",
-        approverId: j.departmentId === "dept-fin" ? "ana" : "dan",
+        id: `ap-${++apCnt}`, entryId: j.id, role: "reviewer",
+        reviewerId: j.departmentId === "dept-fin" ? "rachel" : "bob",
         verdict: "approved", createdAt: now,
       }});
     }
-    // CFO sign-off (≥ 100k)
+    // CFO sign-off — только при amount ≥ $100k
     if (amount >= 100000) {
       ef({ target: "approvals", context: {
         id: `ap-${++apCnt}`, entryId: j.id, role: "cfo",
