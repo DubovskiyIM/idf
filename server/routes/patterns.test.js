@@ -134,6 +134,23 @@ describe("GET /api/patterns/explain", () => {
     expect(res.body.artifactAfter).not.toBeNull();
     expect(res.body.previewPatternId).toBe("subcollections");
   });
+
+  it("includes slotAttribution map in response", async () => {
+    const res = await request(app).get(
+      "/api/patterns/explain?domain=sales&projection=order_detail",
+    );
+    expect(res.status).toBe(200);
+    expect(res.body).toHaveProperty("slotAttribution");
+    expect(typeof res.body.slotAttribution).toBe("object");
+    // sales/order_detail имеет subcollections, добавляющие sections
+    // (Order + связанные Bid/Message/Dispute с FK на Order).
+    // invest/portfolio_detail тоже matched, но sections авторизованы вручную —
+    // attribution пуста для subcollections в этом случае by design.
+    const subEntry = Object.entries(res.body.slotAttribution).find(
+      ([, v]) => v.patternId === "subcollections",
+    );
+    expect(subEntry).toBeDefined();
+  });
 });
 
 describe("GET /api/patterns/projections", () => {

@@ -2,6 +2,7 @@ const path = require("path");
 const { pathToFileURL } = require("url");
 const { spawn } = require("child_process");
 const { checkAnchoring } = require("./anchoringCheck.js");
+const { buildPatternNodes } = require("./patternNodes.js");
 
 function normalizeFields(fields) {
   if (Array.isArray(fields)) {
@@ -199,6 +200,20 @@ async function buildGraph(domainName) {
   const warnings = [];
   for (const [intentId, intent] of Object.entries(INTENTS)) {
     warnings.push(...checkAnchoring(intentId, intent, ONTOLOGY));
+  }
+
+  // Pattern nodes + edges (applies-to / affects). Изолировано от subprocess —
+  // matchPatterns синхронен и работает на уже импортированном manifest.
+  try {
+    const { nodes: patNodes, edges: patEdges } = buildPatternNodes({
+      ontology: ONTOLOGY,
+      intents: INTENTS,
+      projections: PROJECTIONS,
+    });
+    nodes.push(...patNodes);
+    edges.push(...patEdges);
+  } catch (err) {
+    warnings.push({ severity: "warning", code: "pattern_nodes_failed", message: err.message });
   }
 
   return { domain: domainName, nodes, edges, warnings };
