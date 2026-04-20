@@ -45,7 +45,7 @@ export const ONTOLOGY = {
       ownerField: "merchantId",
       fields: {
         id: { type: "text" },
-        merchantId: { type: "text", required: true },
+        merchantId: { type: "entityRef", required: true },
         name: { type: "text", required: true, label: "Наименование" },
         price: { type: "number", fieldRole: "money", required: true, label: "Цена" },
         category: { type: "text", label: "Категория" },
@@ -71,7 +71,7 @@ export const ONTOLOGY = {
       fields: {
         id: { type: "text" },
         dispatcherId: { type: "text", required: true },
-        zoneId: { type: "text", required: true },
+        zoneId: { type: "entityRef", required: true },
         status: { type: "select", options: ["active", "ended"], required: true, label: "Статус" },
         shiftStart: { type: "datetime", label: "Начало смены" },
         shiftEnd: { type: "datetime", label: "Конец смены" },
@@ -84,7 +84,7 @@ export const ONTOLOGY = {
       fields: {
         id: { type: "text" },
         customerId: { type: "text", required: true },
-        merchantId: { type: "text", required: true },
+        merchantId: { type: "entityRef", required: true },
         assignedCourierId: { type: "text", label: "Курьер" },
         status: {
           type: "select",
@@ -97,8 +97,8 @@ export const ONTOLOGY = {
         },
         totalAmount: { type: "number", fieldRole: "money", label: "Сумма" },
         tip: { type: "number", fieldRole: "money", label: "Чаевые" },
-        addressId: { type: "text", required: true },
-        zoneId: { type: "text", label: "Зона доставки" },
+        addressId: { type: "entityRef", required: true },
+        zoneId: { type: "entityRef", label: "Зона доставки" },
         createdAt: { type: "datetime" },
         etaCook: { type: "datetime", label: "ETA приготовление" },
         etaDelivery: { type: "datetime", label: "ETA доставка" },
@@ -110,8 +110,8 @@ export const ONTOLOGY = {
       ownerField: "orderId",
       fields: {
         id: { type: "text" },
-        orderId: { type: "text", required: true },
-        menuItemId: { type: "text", required: true },
+        orderId: { type: "entityRef", required: true },
+        menuItemId: { type: "entityRef", required: true },
         quantity: { type: "number", required: true, label: "Количество" },
         price: { type: "number", fieldRole: "money", label: "Цена за ед." },
       },
@@ -122,7 +122,7 @@ export const ONTOLOGY = {
       ownerField: "courierId",
       fields: {
         id: { type: "text" },
-        orderId: { type: "text", required: true },
+        orderId: { type: "entityRef", required: true },
         courierId: { type: "text", required: true },
         pickupAt: { type: "datetime", label: "Принято у ресторана" },
         deliveredAt: { type: "datetime", label: "Вручено" },
@@ -165,7 +165,7 @@ export const ONTOLOGY = {
       ownerField: "customerId",
       fields: {
         id: { type: "text" },
-        orderId: { type: "text", required: true },
+        orderId: { type: "entityRef", required: true },
         customerId: { type: "text", required: true },
         amount: { type: "number", fieldRole: "money", required: true, label: "Сумма" },
         status: {
@@ -197,7 +197,7 @@ export const ONTOLOGY = {
       fields: {
         id: { type: "text" },
         customerId: { type: "text", required: true },
-        orderId: { type: "text", required: true },
+        orderId: { type: "entityRef", required: true },
         rating: { type: "number", required: true, label: "Оценка (1–5)" },
         comment: { type: "textarea", label: "Комментарий" },
         createdAt: { type: "datetime" },
@@ -209,7 +209,7 @@ export const ONTOLOGY = {
       ownerField: "userId",
       fields: {
         id: { type: "text" },
-        userId: { type: "text", required: true },
+        userId: { type: "entityRef", required: true },
         active: { type: "boolean", label: "Активен" },
         expiresAt: { type: "datetime", label: "Действует до" },
         allowedZones: { type: "text", label: "Допустимые зоны (CSV)" },
