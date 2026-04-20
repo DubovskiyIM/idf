@@ -12,9 +12,9 @@
 
 import { useState, useEffect, useCallback, useRef } from "react";
 
-export default function PatternInspector({ domain, projectionId, onClose, onPreviewChange, initialSelectedPatternId = null }) {
+export default function PatternInspector({ domain, projectionId, onClose, onPreviewChange, onXrayChange, initialSelectedPatternId = null }) {
   const [explain, setExplain] = useState(null);
-  const [mode, setMode] = useState("off"); // "off" | "preview"
+  const [mode, setMode] = useState("off"); // "off" | "preview" | "xray"
   // initialSelectedPatternId — deep-link seed из ?inspect=<patternId>. Применяется
   // только при первом mount; последующие смены пропа игнорируются, чтобы не
   // конкурировать с пользовательским выбором через radio.
@@ -71,6 +71,20 @@ export default function PatternInspector({ domain, projectionId, onClose, onPrev
       onPreviewChange?.(null, null);
     }
   }, [mode, explain, selectedPatternId, onPreviewChange]);
+
+  // X-ray: per-slot attribution map + witnesses → V2Shell → renderer.
+  useEffect(() => {
+    if (mode === "xray" && explain) {
+      onXrayChange?.({
+        active: true,
+        attribution: explain.slotAttribution || null,
+        witnesses: explain.witnesses || null,
+        domain,
+      });
+    } else {
+      onXrayChange?.({ active: false, attribution: null, witnesses: null, domain: null });
+    }
+  }, [mode, explain, domain, onXrayChange]);
 
   const commit = useCallback(async (action) => {
     if (!selectedPatternId) return;
@@ -130,6 +144,33 @@ export default function PatternInspector({ domain, projectionId, onClose, onPrev
 
       <div style={metaStyle}>projection: <code>{projectionId}</code></div>
       <div style={metaStyle}>archetype: <code>{explain.archetype || "—"}</code></div>
+
+      <section style={sectionStyle}>
+        <h4 style={h4Style}>X-ray (всегда доступен)</h4>
+        <div style={{ display: "flex", gap: 12, fontSize: 12 }}>
+          <label style={{ cursor: "pointer" }}>
+            <input
+              type="radio"
+              name="pi-mode-global"
+              checked={mode !== "xray"}
+              onChange={() => setMode("off")}
+              style={{ marginRight: 4 }}
+            /> Off
+          </label>
+          <label style={{ cursor: "pointer" }} title="Подсветить уже применённые derived sections с per-pattern attribution">
+            <input
+              type="radio"
+              name="pi-mode-global"
+              checked={mode === "xray"}
+              onChange={() => setMode("xray")}
+              style={{ marginRight: 4 }}
+            /> X-ray
+          </label>
+        </div>
+        <div style={{ fontSize: 11, color: "#aaa", marginTop: 6, lineHeight: 1.4 }}>
+          Включает overlay вокруг всех derived slots с patternId-badge и hover-trail.
+        </div>
+      </section>
 
       <section style={sectionStyle}>
         <h4 style={h4Style}>Behavioral</h4>

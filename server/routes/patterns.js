@@ -29,6 +29,7 @@ const {
   loadStablePatterns,
   evaluateTriggerExplained,
   explainMatch,
+  computeSlotAttribution,
 } = require("@intent-driven/core");
 const { writePatternPreference } = require("../patternPreferenceWriter.js");
 
@@ -271,7 +272,20 @@ function makePatternsRouter() {
       (result?.structural?.matched || []).forEach(annotateHasApply);
       (result?.structural?.nearMiss || []).forEach(annotateHasApply);
 
-      res.json(result);
+      // slotAttribution — карта { slotPath → { patternId, action } } для
+      // X-ray режима PatternInspector: какой паттерн породил/изменил каждый slot.
+      let slotAttribution = {};
+      try {
+        slotAttribution = computeSlotAttribution(
+          intents,
+          domain.ontology,
+          { ...projection, id: projectionId },
+        );
+      } catch (e) {
+        console.warn(`[patterns] computeSlotAttribution(${domainName}/${projectionId}) failed:`, e.message);
+      }
+
+      res.json({ ...result, slotAttribution });
     } catch (err) {
       console.warn(`[patterns] explainMatch(${domainName}/${projectionId}) failed:`, err.message);
       res.status(500).json({ error: "explain_failed", reason: err.message });

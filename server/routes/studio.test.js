@@ -34,4 +34,14 @@ describe("GET /api/studio/domain/:name/graph", () => {
     const res = await request(app).get("/api/studio/domain/nonexistent/graph");
     expect(res.status).toBe(404);
   });
+
+  it("includes pattern nodes for matched patterns in domain", async () => {
+    const res = await request(app).get("/api/studio/domain/sales/graph");
+    expect(res.status).toBe(200);
+    const patternNodes = res.body.nodes.filter(n => n.kind === "pattern");
+    expect(patternNodes.length).toBeGreaterThan(0);
+    expect(patternNodes.some(n => n.patternId === "subcollections")).toBe(true);
+    const appliesTo = res.body.edges.filter(e => e.kind === "applies-to");
+    expect(appliesTo.length).toBeGreaterThan(0);
+  });
 });
