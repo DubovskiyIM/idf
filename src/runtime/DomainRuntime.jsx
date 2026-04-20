@@ -73,6 +73,12 @@ import MarketLineCanvas from "../domains/invest/canvas/MarketLineCanvas.jsx";
 import RegulatorReportCanvas from "../domains/invest/canvas/RegulatorReportCanvas.jsx";
 import AdvisorReviewCanvas from "../domains/invest/canvas/AdvisorReviewCanvas.jsx";
 import DeliveryMapCanvas from "../domains/delivery/canvas/DeliveryMapCanvas.jsx";
+import MoodMeterCanvas from "../domains/reflect/canvas/MoodMeterCanvas.jsx";
+import MoodMeterClusterCanvas from "../domains/reflect/canvas/MoodMeterClusterCanvas.jsx";
+import MoodTrendsCanvas from "../domains/reflect/canvas/MoodTrendsCanvas.jsx";
+import TimelineCanvas from "../domains/reflect/canvas/TimelineCanvas.jsx";
+import CalendarHeatmapCanvas from "../domains/reflect/canvas/CalendarHeatmapCanvas.jsx";
+import ActivityCorrelationCanvas from "../domains/reflect/canvas/ActivityCorrelationCanvas.jsx";
 
 registerCanvas("today", TodayCanvas);
 registerCanvas("week_progress", WeekProgressCanvas);
@@ -87,6 +93,12 @@ registerCanvas("advisor_review", AdvisorReviewCanvas);
 registerCanvas("order_tracker", DeliveryMapCanvas);
 registerCanvas("active_delivery", DeliveryMapCanvas);
 registerCanvas("dispatcher_map", DeliveryMapCanvas);
+registerCanvas("checkin", MoodMeterCanvas);
+registerCanvas("mood_meter_cluster", MoodMeterClusterCanvas);
+registerCanvas("mood_trends", MoodTrendsCanvas);
+registerCanvas("timeline", TimelineCanvas);
+registerCanvas("calendar_heatmap", CalendarHeatmapCanvas);
+registerCanvas("activity_correlation", ActivityCorrelationCanvas);
 
 // Freelance-session workaround'ы для antd-адаптера (кнопки label/children,
 // DateTime без времени, fieldRole:"price", text-input maxLength/pattern)
