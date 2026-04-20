@@ -141,14 +141,10 @@ export const ONTOLOGY = {
     },
 
     Deal: {
-      // Multi-owner (backlog 3.2, core@0.32+). Дублируем ownerField + owners:
-      //   - ownerField: [array] → R7/R7b derivation читает для my_deal_list
-      //     (disjunction customerId || executorId).
-      //   - owners: [array] → ownershipConditionFor + intent.permittedFor для
-      //     per-intent override (accept_result → customerId only, submit_work_result
-      //     → executorId only).
-      // TODO: SDK R7b должен также читать `owners` — см. backlog follow-up.
-      ownerField: ["customerId", "executorId"],
+      // Multi-owner (backlog 3.2, core@0.33.1+ #100): owners[] — единственная
+      // декларация. R7b derivation + ownershipConditionFor оба читают owners.
+      // permittedFor на deal phase-transitions: accept_result/request_revision
+      // → customerId only, submit_work_result/submit_revision → executorId only.
       owners: ["customerId", "executorId"],
       fields: {
         id: { type: "text" },

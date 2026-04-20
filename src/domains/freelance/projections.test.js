@@ -236,8 +236,8 @@ describe("freelance intents — permittedFor (multi-owner Deal, backlog 3.2)", (
     expect(cancel?.condition).toContain("executorId === viewer.id");
   });
 
-  it("Deal.owners совпадает с ownerField — оба объявлены для R7b + ownershipCond", () => {
-    expect(ONTOLOGY.entities.Deal.ownerField).toEqual(["customerId", "executorId"]);
+  it("Deal.owners — единственная декларация multi-owner (core@0.33.1+)", () => {
+    expect(ONTOLOGY.entities.Deal.ownerField).toBeUndefined();
     expect(ONTOLOGY.entities.Deal.owners).toEqual(["customerId", "executorId"]);
   });
 });
