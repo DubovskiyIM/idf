@@ -21,6 +21,7 @@ const DEFAULTS = {
   uiKit: null, // null = использовать дефолт домена; "mantine" | "shadcn" — override
   patternInspector: false, // dev-only: оверлей инспектора паттернов (Pattern Bank)
   crystallizeInspector: false, // dev-only: оверлей explain(artifact) через witness trail (§28)
+  materializationsViewer: false, // dev-only: drawer с 4 материализациями projection'а (§1/§17)
 };
 
 function loadPrefs() {

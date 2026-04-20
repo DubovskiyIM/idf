@@ -5,6 +5,7 @@ import { crystallizeV2, generateEditProjections, deriveProjections } from "@inte
 import BottomTabs from "./BottomTabs.jsx";
 import PatternInspector from "./PatternInspector.jsx";
 import CrystallizeInspector from "./CrystallizeInspector.jsx";
+import MaterializationsViewer from "./MaterializationsViewer.jsx";
 
 const UI_KIT_OPTIONS = [
   { value: null, label: "авто" },
@@ -285,6 +286,19 @@ export default function V2Shell({
     return () => window.removeEventListener("keydown", onKey);
   }, [prefs.crystallizeInspector, setPref]);
 
+  // Hotkey Cmd+Shift+M / Ctrl+Shift+M — toggle Materializations Viewer drawer.
+  // §1 manifesto: одна projection как 4 reader'а (pixels / voice / document / agent).
+  useEffect(() => {
+    const onKey = (e) => {
+      if ((e.metaKey || e.ctrlKey) && e.shiftKey && e.key && e.key.toLowerCase() === "m") {
+        e.preventDefault();
+        setPref("materializationsViewer", !prefs.materializationsViewer);
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [prefs.materializationsViewer, setPref]);
+
   // Pattern Bank live preview (§27 authoring-env): override передаётся
   // в ProjectionRendererV2, заменяя currentArtifact на artifactAfter
   // из /api/patterns/explain?previewPatternId=...
@@ -513,6 +527,15 @@ export default function V2Shell({
               onClose={() => setPref("crystallizeInspector", false)}
             />
           )}
+          {prefs.materializationsViewer && (
+            <MaterializationsViewer
+              domainId={domainId}
+              projectionId={current?.projectionId}
+              artifact={currentArtifact}
+              role={activeRole || "owner"}
+              onClose={() => setPref("materializationsViewer", false)}
+            />
+          )}
         </div>
       );
     }
@@ -572,6 +595,15 @@ export default function V2Shell({
           <CrystallizeInspector
             artifact={currentArtifact}
             onClose={() => setPref("crystallizeInspector", false)}
+          />
+        )}
+        {prefs.materializationsViewer && (
+          <MaterializationsViewer
+            domainId={domainId}
+            projectionId={current?.projectionId}
+            artifact={currentArtifact}
+            role={activeRole || "owner"}
+            onClose={() => setPref("materializationsViewer", false)}
           />
         )}
         </div>
@@ -639,6 +671,15 @@ export default function V2Shell({
         <CrystallizeInspector
           artifact={currentArtifact}
           onClose={() => setPref("crystallizeInspector", false)}
+        />
+      )}
+      {prefs.materializationsViewer && (
+        <MaterializationsViewer
+          domainId={domainId}
+          projectionId={current?.projectionId}
+          artifact={currentArtifact}
+          role={activeRole || "owner"}
+          onClose={() => setPref("materializationsViewer", false)}
         />
       )}
     </div>
