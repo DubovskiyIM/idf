@@ -1,6 +1,6 @@
 # Domain audit — 2026-04-20
 
-**Generated:** 2026-04-20T10:18:39.141Z
+**Generated:** 2026-04-20T10:40:35.141Z
 **Total findings:** 171 (error: 0, warning: 95, info: 76)
 
 > Report-only. Regeneration: `node scripts/audit-report.mjs`. Design rationale — `docs/superpowers/specs/2026-04-20-domain-audit-design.md` (local).
@@ -37,7 +37,7 @@
 | sales | 15 | 24 | 39 | 0.385 | 0 | 0 | 0 | 39 | 137/220 | 0 | 0 |
 | lifequest | 12 | 19 | 31 | 0.387 | 0 | 0 | 0 | 31 | 98/81 | 0 | 0 |
 | reflect | 13 | 22 | 35 | 0.371 | 0 | 0 | 0 | 35 | 72/85 | 0 | 0 |
-| invest | 23 | 34 | 57 | 0.404 | 0 | 0 | 12 | 45 | 144/100 | 0 | 0 |
+| invest | 17 | 40 | 57 | 0.298 | 0 | 0 | 12 | 45 | 144/100 | 0 | 0 |
 | delivery | 25 | 32 | 57 | 0.439 | 0 | 0 | 12 | 45 | 139/100 | 0 | 0 |
 | freelance | 9 | 30 | 39 | 0.231 | 0 | 0 | 0 | 39 | 111/140 | 0 | 2 |
 
@@ -69,7 +69,7 @@
 | reflect | 0 | 0 | — |
 | invest | 0 | 0 | — |
 | delivery | 0 | 1 | — |
-| freelance | 6 | 3 | ✓ |
+| freelance | 7 | 3 | ✓ |
 
 ## Axis 5 — Cross-domain collisions
 
@@ -136,7 +136,7 @@
 | sales | 15 | 15 | 15 | 0 |
 | lifequest | 12 | 12 | 12 | 0 |
 | reflect | 13 | 13 | 0 | 0 |
-| invest | 23 | 23 | 23 | 0 |
+| invest | 17 | 17 | 17 | 0 |
 | delivery | 25 | 25 | 25 | 0 |
 | freelance | 9 | 9 | 9 | 0 |
 
@@ -151,7 +151,7 @@
 | sales | 11 | 225 | 15 | 50 | 1 |
 | lifequest | 10 | 56 | 12 | 6 | 6 |
 | reflect | 10 | 47 | 13 | 14 | 4 |
-| invest | 14 | 61 | 23 | 22 | 2 |
+| invest | 14 | 61 | 17 | 22 | 2 |
 | delivery | 14 | 45 | 25 | 0 | 6 |
 | freelance | 12 | 46 | 9 | 11 | 5 |
 
