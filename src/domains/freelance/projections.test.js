@@ -2,7 +2,18 @@ import { describe, it, expect } from "vitest";
 import { PROJECTIONS, ROOT_PROJECTIONS } from "./projections.js";
 import { INTENTS } from "./intents.js";
 import { ONTOLOGY } from "./ontology.js";
-import { crystallizeV2 } from "@intent-driven/core";
+import { crystallizeV2, deriveProjections } from "@intent-driven/core";
+
+// Merged как в V2Shell: derived задаёт каркас (kind/mainEntity/filter),
+// authored field-level override'ит отдельные поля.
+function mergedProjections() {
+  const derived = deriveProjections(INTENTS, ONTOLOGY);
+  const merged = { ...derived };
+  for (const [id, authored] of Object.entries(PROJECTIONS)) {
+    merged[id] = merged[id] ? { ...merged[id], ...authored } : authored;
+  }
+  return merged;
+}
 
 describe("freelance projections — task_catalog_public", () => {
   it("зарегистрирована как catalog", () => {
@@ -96,29 +107,46 @@ describe("freelance create_task_draft — formModal archetype (вместо wiza
   });
 });
 
-describe("freelance projections — my_tasks + my_deals (Cycle 2)", () => {
-  it("my_tasks — catalog mainEntity Task с фильтром по customerId (own)", () => {
-    const p = PROJECTIONS.my_tasks;
+describe("freelance projections — my_* lists (Cycle 2, derived R7/R7b)", () => {
+  it("my_task_list — derived R7 (customerId filter) + authored witnesses", () => {
+    const merged = mergedProjections();
+    const p = merged.my_task_list;
     expect(p.kind).toBe("catalog");
     expect(p.mainEntity).toBe("Task");
-    expect(p.filter).toContain("customerId");
+    // filter derived structurally: { field:"customerId", op:"=", value:"me.id" }
+    expect(p.filter).toMatchObject({ field: "customerId" });
+    // authored override: display-witnesses (не derivable из particles)
+    expect(p.witnesses).toEqual(["title", "status", "budget", "deadline", "responsesCount"]);
   });
 
-  it("my_deals — catalog mainEntity Deal, роль-agnostic (customer + executor видят свои)", () => {
-    const p = PROJECTIONS.my_deals;
+  it("my_deal_list — derived R7b (multi-owner disjunction customerId||executorId)", () => {
+    const merged = mergedProjections();
+    const p = merged.my_deal_list;
     expect(p.kind).toBe("catalog");
     expect(p.mainEntity).toBe("Deal");
+    expect(p.filter).toMatchObject({ kind: "disjunction" });
+    expect(p.filter.fields).toEqual(expect.arrayContaining(["customerId", "executorId"]));
     expect(p.witnesses).toEqual(expect.arrayContaining(["amount", "status", "deadline"]));
   });
 
-  it("ROOT_PROJECTIONS содержит my_tasks и my_deals", () => {
-    expect(ROOT_PROJECTIONS).toEqual(expect.arrayContaining(["my_tasks", "my_deals"]));
+  it("my_response_list — derived R7 + authored onItemClick", () => {
+    const merged = mergedProjections();
+    const p = merged.my_response_list;
+    expect(p.kind).toBe("catalog");
+    expect(p.mainEntity).toBe("Response");
+    expect(p.onItemClick).toMatchObject({ to: "task_detail_public" });
   });
 
-  it("обе кристаллизуются как catalog", () => {
-    const artifacts = crystallizeV2(INTENTS, PROJECTIONS, ONTOLOGY, "freelance");
-    expect(artifacts.my_tasks.archetype).toBe("catalog");
-    expect(artifacts.my_deals.archetype).toBe("catalog");
+  it("ROOT_PROJECTIONS содержит my_task_list и my_deal_list", () => {
+    expect(ROOT_PROJECTIONS).toEqual(expect.arrayContaining(["my_task_list", "my_deal_list"]));
+  });
+
+  it("все кристаллизуются как catalog через merged projections", () => {
+    const merged = mergedProjections();
+    const artifacts = crystallizeV2(INTENTS, merged, ONTOLOGY, "freelance");
+    expect(artifacts.my_task_list.archetype).toBe("catalog");
+    expect(artifacts.my_deal_list.archetype).toBe("catalog");
+    expect(artifacts.my_response_list.archetype).toBe("catalog");
   });
 });
 
@@ -151,21 +179,31 @@ describe("freelance projections — detail (customer + executor)", () => {
   });
 });
 
-describe("freelance projections — wallet", () => {
-  it("wallet — detail mainEntity Wallet с subCollection Transaction", () => {
-    const p = PROJECTIONS.wallet;
+describe("freelance projections — my_wallet_detail (derived R3b singleton)", () => {
+  it("derived — detail mainEntity Wallet c userId filter + singleton", () => {
+    const merged = mergedProjections();
+    const p = merged.my_wallet_detail;
     expect(p.kind).toBe("detail");
     expect(p.mainEntity).toBe("Wallet");
-    expect(p.subCollections.find(s => s.entity === "Transaction")).toBeDefined();
+    expect(p.singleton).toBe(true);
+    expect(p.filter).toMatchObject({ field: "userId" });
   });
 
-  it("wallet доступен в ROOT_PROJECTIONS", () => {
-    expect(ROOT_PROJECTIONS).toContain("wallet");
+  it("доступен в ROOT_PROJECTIONS", () => {
+    expect(ROOT_PROJECTIONS).toContain("my_wallet_detail");
   });
 
-  it("wallet кристаллизуется как detail", () => {
-    const arts = crystallizeV2(INTENTS, PROJECTIONS, ONTOLOGY, "freelance");
-    expect(arts.wallet.archetype).toBe("detail");
+  it("authored override добавляет toolbar + reserved в witnesses", () => {
+    const merged = mergedProjections();
+    const p = merged.my_wallet_detail;
+    expect(p.toolbar).toEqual(expect.arrayContaining(["top_up_wallet_by_card"]));
+    expect(p.witnesses).toEqual(expect.arrayContaining(["balance", "reserved", "currency"]));
+  });
+
+  it("кристаллизуется как detail через merged", () => {
+    const merged = mergedProjections();
+    const arts = crystallizeV2(INTENTS, merged, ONTOLOGY, "freelance");
+    expect(arts.my_wallet_detail.archetype).toBe("detail");
   });
 });
 

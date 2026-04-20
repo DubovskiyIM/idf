@@ -31,15 +31,15 @@ node scripts/freelance-accounts.mjs
 
 ## 1. Создание задачи (customer)
 
-**Кейс.** task_catalog_public виден гостю без create; `my_tasks` для customer'а; create_task_draft → status=draft.
+**Кейс.** task_catalog_public виден гостю без create; `my_task_list` для customer'а; create_task_draft → status=draft.
 
 | # | Действие | Ожидание |
 |---|---|---|
 | 1 | Login как **alisa@freelance.local** | Входим, видим вкладку «Каталог задач», «Мои задачи», «Мои отклики», «Мои сделки», «Кошелёк». Toolbar сверху: «Роль: Заказчик» + «Слой: авто/Mantine/Doodle/Apple/AntD». |
 | 2 | Открыть «Мои задачи» → кнопка **«Опубликовать задачу»** в toolbar | Открывается formModal с 7 полями: Заголовок (text), Категория (dropdown 3 опции из seed), Бюджет (number с ₽ префиксом и форматом тысяч), Формат (Удалённо/На месте), Описание (textarea), Срок (datetime с временем, шаг 5 мин), Город (text). |
-| 3 | Заполнить «Починить утюг», 5000₽, Разработка, Удалённо, описание любое, срок завтра 18:00, Город Москва → **Создать** | В Φ-логе: `add tasks ● confirmed`. В `my_tasks`-каталоге появляется новая задача со status=draft. |
+| 3 | Заполнить «Починить утюг», 5000₽, Разработка, Удалённо, описание любое, срок завтра 18:00, Город Москва → **Создать** | В Φ-логе: `add tasks ● confirmed`. В `my_task_list`-каталоге появляется новая задача со status=draft. |
 | 4 | Проверить что в публичном каталоге («Каталог задач») задача **не видна** | Filter `status === 'published'` отсекает draft. |
-| 5 | Открыть task_detail_customer (клик по карточке в my_tasks) | Видны все witnesses, в т.ч. status: «draft». Toolbar: edit_task / publish_task / cancel_task_before_deal. Секция «Отклики» пуста. |
+| 5 | Открыть task_detail_customer (клик по карточке в my_task_list) | Видны все witnesses, в т.ч. status: «draft». Toolbar: edit_task / publish_task / cancel_task_before_deal. Секция «Отклики» пуста. |
 | 6 | Клик **«Опубликовать»** (publish_task) | Φ: `replace task.status` value=published. Карточка обновляется. Задача появляется в публичном каталоге у Виктора. |
 
 **Если что-то идёт не так — debug-команды:**
