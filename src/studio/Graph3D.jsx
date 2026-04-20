@@ -25,6 +25,7 @@ const COLOR = {
   intent: "#10b981",
   role: "#a855f7",
   projection: "#eab308",
+  pattern: "#fbbf24",
   collection: "#64748b",
   unresolved: "#f87171",
 };
@@ -37,6 +38,9 @@ const EDGE_COLOR = {
   "role-capability": "#a855f7",
   "projection-source": "#eab308",
   "m2m": "#a855f7",
+  "applies-to": "#34d399",
+  "affects": "#fb923c",
+  "triggered-by": "#60a5fa",
 };
 
 function nodeSize(node) {
@@ -50,6 +54,7 @@ function makeGeometry(node, size) {
   if (node.kind === "intent") return new THREE.SphereGeometry(size * 0.6, 16, 16);
   if (node.kind === "role") return new THREE.OctahedronGeometry(size * 0.6);
   if (node.kind === "projection") return new THREE.PlaneGeometry(size * 1.2, size * 0.8);
+  if (node.kind === "pattern") return new THREE.IcosahedronGeometry(size * 0.65, 0);
   return new THREE.SphereGeometry(size * 0.5, 8, 8);
 }
 

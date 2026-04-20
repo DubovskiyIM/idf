@@ -159,6 +159,7 @@ export default function App() {
   const prevGraphRef = useRef(null);
   const pingTimerRef = useRef(null);
   const [flyToken, setFlyToken] = useState(0);
+  const [graphFocusId, setGraphFocusId] = useState(null);
   const [chatBusy, setChatBusy] = useState(false);
   const [progress, setProgress] = useState({ lastTool: null, toolCount: 0 });
   const [readyDomain, setReadyDomain] = useState(null);
@@ -174,6 +175,29 @@ export default function App() {
 
   useEffect(() => {
     fetchStudioStatus().then(setStudioStatus).catch(() => {});
+  }, []);
+
+  // Hash-router: #graph/focus?domain=&pattern=&projection=
+  // Открывается из X-ray overlay в prototype через target=_blank.
+  // Переключает view на graph, выставляет домен и подсвечивает pattern-узел.
+  useEffect(() => {
+    function handleHash() {
+      const hash = (window.location.hash || "").slice(1);
+      if (!hash.startsWith("graph/focus")) return;
+      const qIdx = hash.indexOf("?");
+      const params = new URLSearchParams(qIdx >= 0 ? hash.slice(qIdx + 1) : "");
+      const focusDomain = params.get("domain");
+      const focusPattern = params.get("pattern");
+      if (focusDomain) setDomain(focusDomain);
+      setView("graph");
+      if (focusPattern) {
+        setGraphFocusId(`pattern:${focusPattern}`);
+        setFlyToken(Date.now());
+      }
+    }
+    handleHash();
+    window.addEventListener("hashchange", handleHash);
+    return () => window.removeEventListener("hashchange", handleHash);
   }, []);
   // Personal layer §17: глобальные UI-prefs + auth. Одни и те же hooks
   // используются внутри V2Shell (где есть своя кнопка ⚙), но благодаря
@@ -323,7 +347,7 @@ export default function App() {
             </>
           )}
         </div>
-        <Graph3D graph={graph} onNodeClick={setSelected} pings={pings} selectedId={selected?.id} flyToken={flyToken} />
+        <Graph3D graph={graph} onNodeClick={(n) => { setSelected(n); setGraphFocusId(null); }} pings={pings} selectedId={graphFocusId || selected?.id} flyToken={flyToken} />
         <ProgressOverlay
           busy={chatBusy}
           toolCount={progress.toolCount}
