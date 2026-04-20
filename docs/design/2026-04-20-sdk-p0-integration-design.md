@@ -21,6 +21,9 @@
 | `projection.patterns.disabled:["footer-inline-setter"]` в `deal_detail_executor` | `freelance/projections.js:140` | ⛔ стоит |
 | `creates:"Deal"` опущен в `confirm_deal` | `freelance/intents.js:761` | ⛔ workaround |
 | `creates:"Transaction"` опущен в `top_up_wallet_by_card` | `freelance/intents.js:626` | ⛔ workaround (но связан не с P0, а с `assignToSlotsDetail::creates !== mainEntity` логикой) |
+| `irreversibility:"high"` как UI-трюк на `submit_work_result` | `freelance/intents.js:789` | ⛔ workaround (§3.1 backlog закрыт) |
+| `irreversibility:"high"` как UI-трюк на `request_revision` | `freelance/intents.js:859` | ⛔ workaround (§3.1 backlog закрыт) |
+| `irreversibility:"high"` на `submit_revision` (без комментария, но та же причина) | `freelance/intents.js:883` | ⛔ workaround (§3.1 backlog закрыт) |
 
 Зависимости в `package.json` свежие: `^0.33.0` core, `^1.3.0` для всех адаптеров.
 
