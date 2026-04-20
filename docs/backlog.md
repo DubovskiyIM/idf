@@ -90,6 +90,27 @@
 **Action:** По одному — от простых к сложным. Hero-create исключён (см. 1.7 — blocked). Next candidates: `bulk-action-toolbar`, `global-command-palette`, `m2m-attach-dialog`.
 **Owner:** `@intent-driven/core/patterns/stable/`
 
+### 1.9 Domain audit findings — baseline 2026-04-20 (187 findings)
+
+**Дата:** 2026-04-20
+**Контекст:** `node scripts/audit-report.mjs` сгенерировал baseline (`docs/domain-audit.md` + `.json`). 0 error, 103 warning, 84 info. Ключевые clusters:
+**Actions (по убыванию импакта):**
+- **Salience coverage ≈0%** во всех 10 доменах (55 idiom findings). Intent-salience v2.1 ratify (backlog §2.3 manifest) остаётся — но также нужна **massовая аннотация в доменах**. Sales (225 intents, 1%), messenger (100, 0%), invest (61, 0%), lifequest (56, 2%). Можно начать с primary actions в sales/messenger.
+- **Override-coefficient 1.0** во всех 10 доменах (derivation findings). `deriveProjections` не вызывается в crystallize pipeline → R1–R8 witnesses не добавляются. Blocker от `debugging-derived-ui-spec.md` baseline 2026-04-20 остаётся — решение через `ontology.features.autoDerive` opt-in.
+- **Test coverage gap** — 8 из 10 доменов не имеют domain-local `.test.js`. Freelance лидирует (6 files), остальные 0-1. Priority: добавить интеграционные тесты для invest (61 intent, самый сложный), sales (225), lifequest (56).
+- **Cross-domain collisions** — 42 shared entity-names. Legit (User везде) + некоторые warning ("Task" — lifequest + freelance; "Category" — sales + freelance). Нужен namespacing либо явное declarative allowlist.
+- **Format findings (45)** — legacy fields string-array в некоторых доменах (`entity.fields: ["a", "b"]` vs object-shape), FK-поля не типизированные как entityRef.
+**Owner:** Per-domain стабилизация (следующие сессии), не single-PR scope.
+**Regen:** `npm run audit-report` (idempotent, commits report в docs/).
+
+### 1.10 Studio integration: audit report viewer
+
+**Дата:** 2026-04-20
+**Контекст:** `docs/domain-audit.json` имеет structured schema (axes + perDomain + summary). Текущий consumer — human через markdown.
+**Action:** Studio tab «Audit» — UI над JSON-report'ом. Severity badges per domain, per-axis filter, drill-down per finding. Либо fixture-driven (consume committed JSON), либо live через server endpoint `/api/studio/audit`.
+**Owner:** host + SDK renderer
+**Depends on:** stable schema `domain-audit.json` (этот PR даёт baseline)
+
 ---
 
 ## 2. Architectural research / insights
