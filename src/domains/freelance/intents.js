@@ -800,13 +800,9 @@ export const INTENTS = {
     // этот intent только для executor'а (backlog 3.2). SDK derived deal_detail
     // поместит в toolbar только когда viewer.id === deal.executorId.
     permittedFor: "executorId",
-    // irreversibility:"high" здесь — UI-трюк, а не семантика: SDK assignToSlotsDetail:135
-    // направляет phase-transition intents в primaryCTA, только если irreversibility
-    // !== "high". primaryCTA не умеет рендерить form — пробрасывает только id.
-    // "high" исключает из primaryCTA → попадает в toolbar с formModal-overlay.
-    // Контроль над архетипом через control:"formModal" (иначе confirmDialog
-    // матчит high раньше).
-    irreversibility: "high",
+    // Medium семантически верно: submit_work_result обратим через revision-loop
+    // (customer может request_revision → executor submit_revision).
+    irreversibility: "medium",
     control: "formModal",
     icon: "⚡",
     parameters: [
@@ -878,8 +874,8 @@ export const INTENTS = {
     description: "Customer возвращает deal из on_review в revision_requested с комментарием (причиной). Revision-cycle: request_revision ↔ submit_revision может повторяться.",
     α: "replace",
     permittedFor: "customerId",
-    // high + control:"formModal" — UI-трюк для обхода primaryCTA-routing.
-    irreversibility: "high",
+    // Medium: request_revision — часть revision-loop, полностью обратима.
+    irreversibility: "medium",
     control: "formModal",
     // Explicit icon — иначе SDK getIntentIcon fallback'нёт на ⚡, и
     // collapseToolbar схлопнёт с submit_work_result/submit_revision в
@@ -904,7 +900,8 @@ export const INTENTS = {
     description: "Executor сдаёт версию после revision — Deal возвращается в on_review. Доступно только из revision_requested.",
     α: "replace",
     permittedFor: "executorId",
-    irreversibility: "high",
+    // Medium: submit_revision — часть revision-loop, обратим через request_revision.
+    irreversibility: "medium",
     control: "formModal",
     icon: "📤",
     parameters: [
