@@ -215,15 +215,20 @@ export default function MoodMeterCanvas({ world, viewer, exec, ctx }) {
 
           <div style={{
             marginTop: 12, padding: "12px 16px", ...GLASS,
-            display: "flex", alignItems: "center", justifyContent: "space-between",
+            display: "flex", alignItems: "center", justifyContent: "center",
             minHeight: 48,
           }}>
-            <div style={{ fontSize: 15, color: textColor }}>
+            <div style={{ fontSize: 15, color: textColor, textAlign: "center", lineHeight: 1.4 }}>
               {preview ? (
                 <>
-                  Текущий выбор:{" "}
-                  <strong>{previewEmotion?.label}</strong>{" "}
-                  <span style={{ fontSize: 18 }}>{previewEmotion?.emoji}</span>{" "}
+                  <span style={{ color: textSecondary }}>Текущий выбор:</span>{" "}
+                  {/* min-width фиксирует зону bold-label, чтобы при hover'е
+                      по разным квадрантам (Спокоен → Воодушевлён → Одинок)
+                      emoji и quadrant-подпись не прыгали по горизонтали. */}
+                  <strong style={{ display: "inline-block", minWidth: "7em", textAlign: "center" }}>
+                    {previewEmotion?.label}{" "}
+                    <span style={{ fontSize: 18 }}>{previewEmotion?.emoji}</span>
+                  </strong>{" "}
                   <span style={{ color: textSecondary, fontSize: 13 }}>
                     ({QUADRANT_LABELS[previewQuadrant]})
                   </span>
