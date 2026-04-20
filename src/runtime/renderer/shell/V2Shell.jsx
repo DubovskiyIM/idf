@@ -6,6 +6,7 @@ import BottomTabs from "./BottomTabs.jsx";
 import PatternInspector from "./PatternInspector.jsx";
 import CrystallizeInspector from "./CrystallizeInspector.jsx";
 import MaterializationsViewer from "./MaterializationsViewer.jsx";
+import { humanizeProjectionId } from "./humanizeProjectionId.js";
 
 const UI_KIT_OPTIONS = [
   { value: null, label: "авто" },
@@ -90,7 +91,9 @@ export default function V2Shell({
   const projectionNames = useMemo(() => {
     const names = {};
     for (const [id, proj] of Object.entries(allProjections)) {
-      names[id] = proj.name || id;
+      // Derived projections (R1/R3/R7/R7b/R3b/R11/R11 v2) не имеют
+      // proj.name — humanize id по паттернам (my_*_feed → «Мои инсайты»).
+      names[id] = proj.name || humanizeProjectionId(id);
     }
     return names;
   }, [allProjections]);
@@ -389,6 +392,10 @@ export default function V2Shell({
   // Адаптированная реализация root-табов (Mantine Tabs через адаптер).
   // Если адаптер не предоставляет shell.tabs — fallback на inline-версию.
   const AdaptedTabs = getAdaptedComponent("shell", "tabs");
+  // shell.sidebar — опциональная adapter-surface. Если адаптер реализует
+  // свой sidebar — делегируем ему (у каждого UI-kit может быть своя
+  // визуальная логика). Иначе fallback на inline SectionedSidebar.
+  const AdaptedSidebar = getAdaptedComponent("shell", "sidebar");
   const tabItems = rootProjections.map(projId => ({
     value: projId,
     label: projectionNames[projId] || projId,
@@ -569,12 +576,21 @@ export default function V2Shell({
               />
             )}
             <div style={isMobile ? { position: "fixed", top: 0, left: 0, bottom: 0, zIndex: 45, width: 280 } : {}}>
-              <SectionedSidebar
-                sections={sections}
-                active={current?.projectionId}
-                onSelect={(id) => { onSelectTab(id); if (isMobile) setSidebarOpen(false); }}
-                projectionNames={projectionNames}
-              />
+              {AdaptedSidebar ? (
+                <AdaptedSidebar
+                  sections={sections}
+                  active={current?.projectionId}
+                  onSelect={(id) => { onSelectTab(id); if (isMobile) setSidebarOpen(false); }}
+                  projectionNames={projectionNames}
+                />
+              ) : (
+                <SectionedSidebar
+                  sections={sections}
+                  active={current?.projectionId}
+                  onSelect={(id) => { onSelectTab(id); if (isMobile) setSidebarOpen(false); }}
+                  projectionNames={projectionNames}
+                />
+              )}
             </div>
           </>
         )}
