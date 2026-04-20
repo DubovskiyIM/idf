@@ -1,0 +1,3166 @@
+{
+  "generatedAt": "2026-04-20T08:16:15.692Z",
+  "domains": [
+    "booking",
+    "planning",
+    "workflow",
+    "messenger",
+    "sales",
+    "lifequest",
+    "reflect",
+    "invest",
+    "delivery",
+    "freelance"
+  ],
+  "summary": {
+    "totalFindings": 187,
+    "bySeverity": {
+      "error": 0,
+      "warning": 103,
+      "info": 84
+    },
+    "byAxis": {
+      "derivation": 16,
+      "idiom": 55,
+      "testing": 7,
+      "structural": 19,
+      "patterns": 3,
+      "format": 45,
+      "collision": 42
+    },
+    "topDomains": [
+      [
+        "<cross>",
+        42
+      ],
+      [
+        "invest",
+        37
+      ],
+      [
+        "delivery",
+        28
+      ],
+      [
+        "freelance",
+        23
+      ],
+      [
+        "sales",
+        11
+      ]
+    ]
+  },
+  "perDomain": {
+    "booking": {
+      "ok": true,
+      "axes": {
+        "formatConformance": {
+          "findings": []
+        },
+        "derivationHealth": {
+          "findings": [
+            {
+              "severity": "info",
+              "axis": "derivation",
+              "message": "Override-coefficient 100% (6/6 authored)",
+              "details": {
+                "authored": 6,
+                "derived": 0,
+                "total": 6,
+                "coefficient": 1
+              }
+            },
+            {
+              "severity": "warning",
+              "axis": "derivation",
+              "message": "2 alphabetical-fallback witness'ов (intent.salience не объявлена)",
+              "details": {
+                "count": 2
+              }
+            }
+          ],
+          "metrics": {
+            "authored": 6,
+            "derived": 0,
+            "total": 6,
+            "overrideCoefficient": 1,
+            "histogramMatched": [
+              0,
+              0,
+              0,
+              6
+            ],
+            "patternsWithApply": 19,
+            "patternsMatchingOnly": 18,
+            "alphabeticalFallbacks": 2,
+            "disabledDeclarations": 0
+          }
+        },
+        "sdkIdiom": {
+          "findings": [
+            {
+              "severity": "warning",
+              "axis": "idiom",
+              "message": "Intent \"cancel_booking\" — legacy irreversibility:\"high\" без context.__irr",
+              "details": {
+                "intentId": "cancel_booking"
+              }
+            },
+            {
+              "severity": "warning",
+              "axis": "idiom",
+              "message": "Intent \"bulk_cancel_day\" — legacy irreversibility:\"high\" без context.__irr",
+              "details": {
+                "intentId": "bulk_cancel_day"
+              }
+            },
+            {
+              "severity": "warning",
+              "axis": "idiom",
+              "message": "Intent \"cancel_client_booking\" — legacy irreversibility:\"high\" без context.__irr",
+              "details": {
+                "intentId": "cancel_client_booking"
+              }
+            }
+          ],
+          "metrics": {
+            "intentCount": 22,
+            "salienceDeclared": 1,
+            "salienceCoverage": 0.045,
+            "plainEntities": 0
+          }
+        },
+        "testCoverage": {
+          "findings": [
+            {
+              "severity": "warning",
+              "axis": "testing",
+              "message": "Домен booking без тестов/smoke/e2e-docs",
+              "details": {}
+            }
+          ],
+          "metrics": {
+            "testFiles": 0,
+            "smokeScripts": 0,
+            "hasE2EDoc": false
+          }
+        },
+        "patternApplication": {
+          "findings": [],
+          "perProjection": [
+            {
+              "projectionId": "service_catalog",
+              "archetype": "catalog",
+              "behavioral": "configuration",
+              "matchedCount": 6,
+              "applyCount": 3
+            },
+            {
+              "projectionId": "specialist_schedule",
+              "archetype": "catalog",
+              "behavioral": "configuration",
+              "matchedCount": 5,
+              "applyCount": 2
+            },
+            {
+              "projectionId": "my_bookings",
+              "archetype": "catalog",
+              "behavioral": "configuration",
+              "matchedCount": 7,
+              "applyCount": 4
+            },
+            {
+              "projectionId": "booking_detail",
+              "archetype": "detail",
+              "behavioral": "configuration",
+              "matchedCount": 8,
+              "applyCount": 4
+            },
+            {
+              "projectionId": "service_detail",
+              "archetype": "detail",
+              "behavioral": "configuration",
+              "matchedCount": 7,
+              "applyCount": 4
+            },
+            {
+              "projectionId": "booking_wizard",
+              "archetype": "wizard",
+              "behavioral": "configuration",
+              "matchedCount": 4,
+              "applyCount": 2
+            }
+          ]
+        },
+        "structuralHealth": {
+          "findings": [
+            {
+              "severity": "info",
+              "axis": "structural",
+              "message": "3 intents без creates/mutator classification",
+              "details": {
+                "count": 3
+              }
+            },
+            {
+              "severity": "info",
+              "axis": "structural",
+              "message": "Возможно dead entities: ServiceCategory, Specialist, Review",
+              "details": {
+                "dead": [
+                  "ServiceCategory",
+                  "Specialist",
+                  "Review"
+                ]
+              }
+            }
+          ],
+          "metrics": {
+            "archetypeHistogram": {
+              "catalog": 3,
+              "detail": 2,
+              "wizard": 1
+            },
+            "entityCount": 6,
+            "intentCount": 22,
+            "projectionCount": 6,
+            "unclassifiedIntents": 3,
+            "deadEntities": 3
+          }
+        }
+      }
+    },
+    "planning": {
+      "ok": true,
+      "axes": {
+        "formatConformance": {
+          "findings": []
+        },
+        "derivationHealth": {
+          "findings": [
+            {
+              "severity": "warning",
+              "axis": "derivation",
+              "message": "1 alphabetical-fallback witness'ов (intent.salience не объявлена)",
+              "details": {
+                "count": 1
+              }
+            }
+          ],
+          "metrics": {
+            "authored": 3,
+            "derived": 0,
+            "total": 3,
+            "overrideCoefficient": 1,
+            "histogramMatched": [
+              0,
+              0,
+              0,
+              3
+            ],
+            "patternsWithApply": 10,
+            "patternsMatchingOnly": 10,
+            "alphabeticalFallbacks": 1,
+            "disabledDeclarations": 0
+          }
+        },
+        "sdkIdiom": {
+          "findings": [
+            {
+              "severity": "warning",
+              "axis": "idiom",
+              "message": "Intent \"cancel_poll\" — legacy irreversibility:\"high\" без context.__irr",
+              "details": {
+                "intentId": "cancel_poll"
+              }
+            },
+            {
+              "severity": "warning",
+              "axis": "idiom",
+              "message": "Intent \"cancel_meeting\" — legacy irreversibility:\"high\" без context.__irr",
+              "details": {
+                "intentId": "cancel_meeting"
+              }
+            }
+          ],
+          "metrics": {
+            "intentCount": 17,
+            "salienceDeclared": 0,
+            "salienceCoverage": 0,
+            "plainEntities": 0
+          }
+        },
+        "testCoverage": {
+          "findings": [
+            {
+              "severity": "warning",
+              "axis": "testing",
+              "message": "Домен planning без тестов/smoke/e2e-docs",
+              "details": {}
+            }
+          ],
+          "metrics": {
+            "testFiles": 0,
+            "smokeScripts": 0,
+            "hasE2EDoc": false
+          }
+        },
+        "patternApplication": {
+          "findings": [
+            {
+              "severity": "info",
+              "axis": "patterns",
+              "message": "3/3 проекций без behavioral-pattern",
+              "details": {
+                "count": 3,
+                "total": 3
+              }
+            }
+          ],
+          "perProjection": [
+            {
+              "projectionId": "my_polls",
+              "archetype": "catalog",
+              "behavioral": null,
+              "matchedCount": 8,
+              "applyCount": 4
+            },
+            {
+              "projectionId": "poll_overview",
+              "archetype": "detail",
+              "behavioral": null,
+              "matchedCount": 8,
+              "applyCount": 4
+            },
+            {
+              "projectionId": "voting_matrix",
+              "archetype": "canvas",
+              "behavioral": null,
+              "matchedCount": 4,
+              "applyCount": 2
+            }
+          ]
+        },
+        "structuralHealth": {
+          "findings": [
+            {
+              "severity": "info",
+              "axis": "structural",
+              "message": "4 intents без creates/mutator classification",
+              "details": {
+                "count": 4
+              }
+            },
+            {
+              "severity": "info",
+              "axis": "structural",
+              "message": "Возможно dead entities: TimeOption, Participant, Vote, Meeting",
+              "details": {
+                "dead": [
+                  "TimeOption",
+                  "Participant",
+                  "Vote",
+                  "Meeting"
+                ]
+              }
+            }
+          ],
+          "metrics": {
+            "archetypeHistogram": {
+              "catalog": 1,
+              "detail": 1,
+              "canvas": 1
+            },
+            "entityCount": 5,
+            "intentCount": 17,
+            "projectionCount": 3,
+            "unclassifiedIntents": 4,
+            "deadEntities": 4
+          }
+        }
+      }
+    },
+    "workflow": {
+      "ok": true,
+      "axes": {
+        "formatConformance": {
+          "findings": []
+        },
+        "derivationHealth": {
+          "findings": [
+            {
+              "severity": "warning",
+              "axis": "derivation",
+              "message": "1 alphabetical-fallback witness'ов (intent.salience не объявлена)",
+              "details": {
+                "count": 1
+              }
+            }
+          ],
+          "metrics": {
+            "authored": 4,
+            "derived": 0,
+            "total": 4,
+            "overrideCoefficient": 1,
+            "histogramMatched": [
+              0,
+              0,
+              0,
+              4
+            ],
+            "patternsWithApply": 9,
+            "patternsMatchingOnly": 11,
+            "alphabeticalFallbacks": 1,
+            "disabledDeclarations": 0
+          }
+        },
+        "sdkIdiom": {
+          "findings": [
+            {
+              "severity": "warning",
+              "axis": "idiom",
+              "message": "Intent \"delete_workflow\" — legacy irreversibility:\"high\" без context.__irr",
+              "details": {
+                "intentId": "delete_workflow"
+              }
+            }
+          ],
+          "metrics": {
+            "intentCount": 15,
+            "salienceDeclared": 0,
+            "salienceCoverage": 0,
+            "plainEntities": 0
+          }
+        },
+        "testCoverage": {
+          "findings": [
+            {
+              "severity": "warning",
+              "axis": "testing",
+              "message": "Домен workflow без тестов/smoke/e2e-docs",
+              "details": {}
+            }
+          ],
+          "metrics": {
+            "testFiles": 0,
+            "smokeScripts": 0,
+            "hasE2EDoc": false
+          }
+        },
+        "patternApplication": {
+          "findings": [
+            {
+              "severity": "info",
+              "axis": "patterns",
+              "message": "4/4 проекций без behavioral-pattern",
+              "details": {
+                "count": 4,
+                "total": 4
+              }
+            }
+          ],
+          "perProjection": [
+            {
+              "projectionId": "workflow_list",
+              "archetype": "catalog",
+              "behavioral": null,
+              "matchedCount": 7,
+              "applyCount": 3
+            },
+            {
+              "projectionId": "workflow_canvas",
+              "archetype": "canvas",
+              "behavioral": null,
+              "matchedCount": 4,
+              "applyCount": 1
+            },
+            {
+              "projectionId": "node_inspector",
+              "archetype": "detail",
+              "behavioral": null,
+              "matchedCount": 5,
+              "applyCount": 3
+            },
+            {
+              "projectionId": "execution_log",
+              "archetype": "detail",
+              "behavioral": null,
+              "matchedCount": 4,
+              "applyCount": 2
+            }
+          ]
+        },
+        "structuralHealth": {
+          "findings": [
+            {
+              "severity": "info",
+              "axis": "structural",
+              "message": "1 intents без creates/mutator classification",
+              "details": {
+                "count": 1
+              }
+            },
+            {
+              "severity": "info",
+              "axis": "structural",
+              "message": "Возможно dead entities: Edge, NodeResult",
+              "details": {
+                "dead": [
+                  "Edge",
+                  "NodeResult"
+                ]
+              }
+            }
+          ],
+          "metrics": {
+            "archetypeHistogram": {
+              "catalog": 1,
+              "canvas": 1,
+              "detail": 2
+            },
+            "entityCount": 6,
+            "intentCount": 15,
+            "projectionCount": 4,
+            "unclassifiedIntents": 1,
+            "deadEntities": 2
+          }
+        }
+      }
+    },
+    "messenger": {
+      "ok": true,
+      "axes": {
+        "formatConformance": {
+          "findings": []
+        },
+        "derivationHealth": {
+          "findings": [
+            {
+              "severity": "info",
+              "axis": "derivation",
+              "message": "Override-coefficient 100% (5/5 authored)",
+              "details": {
+                "authored": 5,
+                "derived": 0,
+                "total": 5,
+                "coefficient": 1
+              }
+            },
+            {
+              "severity": "warning",
+              "axis": "derivation",
+              "message": "1 alphabetical-fallback witness'ов (intent.salience не объявлена)",
+              "details": {
+                "count": 1
+              }
+            }
+          ],
+          "metrics": {
+            "authored": 5,
+            "derived": 0,
+            "total": 5,
+            "overrideCoefficient": 1,
+            "histogramMatched": [
+              0,
+              0,
+              0,
+              5
+            ],
+            "patternsWithApply": 16,
+            "patternsMatchingOnly": 21,
+            "alphabeticalFallbacks": 1,
+            "disabledDeclarations": 0
+          }
+        },
+        "sdkIdiom": {
+          "findings": [
+            {
+              "severity": "warning",
+              "axis": "idiom",
+              "message": "Intent \"report_message\" — legacy irreversibility:\"high\" без context.__irr",
+              "details": {
+                "intentId": "report_message"
+              }
+            },
+            {
+              "severity": "warning",
+              "axis": "idiom",
+              "message": "Intent \"delete_conversation\" — legacy irreversibility:\"high\" без context.__irr",
+              "details": {
+                "intentId": "delete_conversation"
+              }
+            },
+            {
+              "severity": "warning",
+              "axis": "idiom",
+              "message": "Intent \"clear_history\" — legacy irreversibility:\"high\" без context.__irr",
+              "details": {
+                "intentId": "clear_history"
+              }
+            },
+            {
+              "severity": "warning",
+              "axis": "idiom",
+              "message": "Intent \"delete_account\" — legacy irreversibility:\"high\" без context.__irr",
+              "details": {
+                "intentId": "delete_account"
+              }
+            },
+            {
+              "severity": "warning",
+              "axis": "idiom",
+              "message": "Intent \"transfer_ownership\" — legacy irreversibility:\"high\" без context.__irr",
+              "details": {
+                "intentId": "transfer_ownership"
+              }
+            }
+          ],
+          "metrics": {
+            "intentCount": 100,
+            "salienceDeclared": 0,
+            "salienceCoverage": 0,
+            "plainEntities": 0
+          }
+        },
+        "testCoverage": {
+          "findings": [
+            {
+              "severity": "warning",
+              "axis": "testing",
+              "message": "Домен messenger без тестов/smoke/e2e-docs",
+              "details": {}
+            }
+          ],
+          "metrics": {
+            "testFiles": 0,
+            "smokeScripts": 0,
+            "hasE2EDoc": false
+          }
+        },
+        "patternApplication": {
+          "findings": [],
+          "perProjection": [
+            {
+              "projectionId": "conversation_list",
+              "archetype": "catalog",
+              "behavioral": "triage",
+              "matchedCount": 8,
+              "applyCount": 4
+            },
+            {
+              "projectionId": "chat_view",
+              "archetype": "feed",
+              "behavioral": "triage",
+              "matchedCount": 7,
+              "applyCount": 2
+            },
+            {
+              "projectionId": "contact_list",
+              "archetype": "catalog",
+              "behavioral": "triage",
+              "matchedCount": 7,
+              "applyCount": 3
+            },
+            {
+              "projectionId": "user_profile",
+              "archetype": "detail",
+              "behavioral": "triage",
+              "matchedCount": 8,
+              "applyCount": 4
+            },
+            {
+              "projectionId": "people_list",
+              "archetype": "catalog",
+              "behavioral": "triage",
+              "matchedCount": 7,
+              "applyCount": 3
+            }
+          ]
+        },
+        "structuralHealth": {
+          "findings": [
+            {
+              "severity": "info",
+              "axis": "structural",
+              "message": "14 intents без creates/mutator classification",
+              "details": {
+                "count": 14
+              }
+            },
+            {
+              "severity": "info",
+              "axis": "structural",
+              "message": "Возможно dead entities: Participant, Reaction",
+              "details": {
+                "dead": [
+                  "Participant",
+                  "Reaction"
+                ]
+              }
+            }
+          ],
+          "metrics": {
+            "archetypeHistogram": {
+              "catalog": 3,
+              "feed": 1,
+              "detail": 1
+            },
+            "entityCount": 6,
+            "intentCount": 100,
+            "projectionCount": 5,
+            "unclassifiedIntents": 14,
+            "deadEntities": 2
+          }
+        }
+      }
+    },
+    "sales": {
+      "ok": true,
+      "axes": {
+        "formatConformance": {
+          "findings": [
+            {
+              "severity": "info",
+              "axis": "format",
+              "message": "Order single ownerField=\"buyerId\"; возможно multi-owner с sellerId",
+              "details": {
+                "entity": "Order",
+                "ownerField": "buyerId",
+                "candidates": [
+                  "sellerId"
+                ]
+              }
+            }
+          ]
+        },
+        "derivationHealth": {
+          "findings": [
+            {
+              "severity": "info",
+              "axis": "derivation",
+              "message": "Override-coefficient 100% (15/15 authored)",
+              "details": {
+                "authored": 15,
+                "derived": 0,
+                "total": 15,
+                "coefficient": 1
+              }
+            },
+            {
+              "severity": "warning",
+              "axis": "derivation",
+              "message": "7 alphabetical-fallback witness'ов (intent.salience не объявлена)",
+              "details": {
+                "count": 7
+              }
+            }
+          ],
+          "metrics": {
+            "authored": 15,
+            "derived": 0,
+            "total": 15,
+            "overrideCoefficient": 1,
+            "histogramMatched": [
+              0,
+              0,
+              0,
+              15
+            ],
+            "patternsWithApply": 57,
+            "patternsMatchingOnly": 86,
+            "alphabeticalFallbacks": 7,
+            "disabledDeclarations": 0
+          }
+        },
+        "sdkIdiom": {
+          "findings": [
+            {
+              "severity": "warning",
+              "axis": "idiom",
+              "message": "Intent \"remove_listing\" — legacy irreversibility:\"high\" без context.__irr",
+              "details": {
+                "intentId": "remove_listing"
+              }
+            },
+            {
+              "severity": "warning",
+              "axis": "idiom",
+              "message": "Intent \"suspend_user\" — legacy irreversibility:\"high\" без context.__irr",
+              "details": {
+                "intentId": "suspend_user"
+              }
+            },
+            {
+              "severity": "warning",
+              "axis": "idiom",
+              "message": "Intent \"ban_user\" — legacy irreversibility:\"high\" без context.__irr",
+              "details": {
+                "intentId": "ban_user"
+              }
+            },
+            {
+              "severity": "warning",
+              "axis": "idiom",
+              "message": "Intent \"bulk_delete_listings\" — legacy irreversibility:\"high\" без context.__irr",
+              "details": {
+                "intentId": "bulk_delete_listings"
+              }
+            },
+            {
+              "severity": "warning",
+              "axis": "idiom",
+              "message": "Intent \"delete_category\" — legacy irreversibility:\"high\" без context.__irr",
+              "details": {
+                "intentId": "delete_category"
+              }
+            },
+            {
+              "severity": "warning",
+              "axis": "idiom",
+              "message": "Intent \"delete_account\" — legacy irreversibility:\"high\" без context.__irr",
+              "details": {
+                "intentId": "delete_account"
+              }
+            }
+          ],
+          "metrics": {
+            "intentCount": 225,
+            "salienceDeclared": 2,
+            "salienceCoverage": 0.009,
+            "plainEntities": 0
+          }
+        },
+        "testCoverage": {
+          "findings": [],
+          "metrics": {
+            "testFiles": 0,
+            "smokeScripts": 1,
+            "hasE2EDoc": false
+          }
+        },
+        "patternApplication": {
+          "findings": [],
+          "perProjection": [
+            {
+              "projectionId": "listing_feed",
+              "archetype": "catalog",
+              "behavioral": "triage",
+              "matchedCount": 13,
+              "applyCount": 6
+            },
+            {
+              "projectionId": "listing_detail",
+              "archetype": "detail",
+              "behavioral": "triage",
+              "matchedCount": 12,
+              "applyCount": 4
+            },
+            {
+              "projectionId": "listing_detail_edit",
+              "archetype": "form",
+              "behavioral": "triage",
+              "matchedCount": 7,
+              "applyCount": 2
+            },
+            {
+              "projectionId": "my_listings",
+              "archetype": "catalog",
+              "behavioral": "triage",
+              "matchedCount": 13,
+              "applyCount": 6
+            },
+            {
+              "projectionId": "my_bids",
+              "archetype": "catalog",
+              "behavioral": "triage",
+              "matchedCount": 10,
+              "applyCount": 4
+            },
+            {
+              "projectionId": "order_list",
+              "archetype": "catalog",
+              "behavioral": "triage",
+              "matchedCount": 10,
+              "applyCount": 4
+            },
+            {
+              "projectionId": "order_detail",
+              "archetype": "detail",
+              "behavioral": "triage",
+              "matchedCount": 10,
+              "applyCount": 4
+            },
+            {
+              "projectionId": "watchlist",
+              "archetype": "catalog",
+              "behavioral": "triage",
+              "matchedCount": 8,
+              "applyCount": 4
+            },
+            {
+              "projectionId": "inbox",
+              "archetype": "feed",
+              "behavioral": "triage",
+              "matchedCount": 8,
+              "applyCount": 2
+            },
+            {
+              "projectionId": "seller_profile",
+              "archetype": "detail",
+              "behavioral": "triage",
+              "matchedCount": 11,
+              "applyCount": 5
+            },
+            {
+              "projectionId": "category_browse",
+              "archetype": "catalog",
+              "behavioral": "triage",
+              "matchedCount": 9,
+              "applyCount": 3
+            },
+            {
+              "projectionId": "dispute_detail",
+              "archetype": "detail",
+              "behavioral": "triage",
+              "matchedCount": 9,
+              "applyCount": 3
+            },
+            {
+              "projectionId": "notifications",
+              "archetype": "catalog",
+              "behavioral": "triage",
+              "matchedCount": 8,
+              "applyCount": 4
+            },
+            {
+              "projectionId": "saved_searches",
+              "archetype": "catalog",
+              "behavioral": "triage",
+              "matchedCount": 9,
+              "applyCount": 4
+            },
+            {
+              "projectionId": "sales_home",
+              "archetype": "dashboard",
+              "behavioral": "triage",
+              "matchedCount": 6,
+              "applyCount": 2
+            }
+          ]
+        },
+        "structuralHealth": {
+          "findings": [
+            {
+              "severity": "info",
+              "axis": "structural",
+              "message": "50 intents без creates/mutator classification",
+              "details": {
+                "count": 50
+              }
+            },
+            {
+              "severity": "info",
+              "axis": "structural",
+              "message": "Возможно dead entities: Review",
+              "details": {
+                "dead": [
+                  "Review"
+                ]
+              }
+            }
+          ],
+          "metrics": {
+            "archetypeHistogram": {
+              "catalog": 8,
+              "detail": 4,
+              "form": 1,
+              "feed": 1,
+              "dashboard": 1
+            },
+            "entityCount": 11,
+            "intentCount": 225,
+            "projectionCount": 15,
+            "unclassifiedIntents": 50,
+            "deadEntities": 1
+          }
+        }
+      }
+    },
+    "lifequest": {
+      "ok": true,
+      "axes": {
+        "formatConformance": {
+          "findings": []
+        },
+        "derivationHealth": {
+          "findings": [
+            {
+              "severity": "info",
+              "axis": "derivation",
+              "message": "Override-coefficient 100% (12/12 authored)",
+              "details": {
+                "authored": 12,
+                "derived": 0,
+                "total": 12,
+                "coefficient": 1
+              }
+            },
+            {
+              "severity": "warning",
+              "axis": "derivation",
+              "message": "4 alphabetical-fallback witness'ов (intent.salience не объявлена)",
+              "details": {
+                "count": 4
+              }
+            }
+          ],
+          "metrics": {
+            "authored": 12,
+            "derived": 0,
+            "total": 12,
+            "overrideCoefficient": 1,
+            "histogramMatched": [
+              0,
+              0,
+              0,
+              12
+            ],
+            "patternsWithApply": 36,
+            "patternsMatchingOnly": 32,
+            "alphabeticalFallbacks": 4,
+            "disabledDeclarations": 0
+          }
+        },
+        "sdkIdiom": {
+          "findings": [
+            {
+              "severity": "warning",
+              "axis": "idiom",
+              "message": "Intent \"reset_progress\" — legacy irreversibility:\"high\" без context.__irr",
+              "details": {
+                "intentId": "reset_progress"
+              }
+            },
+            {
+              "severity": "warning",
+              "axis": "idiom",
+              "message": "Intent \"delete_account\" — legacy irreversibility:\"high\" без context.__irr",
+              "details": {
+                "intentId": "delete_account"
+              }
+            }
+          ],
+          "metrics": {
+            "intentCount": 56,
+            "salienceDeclared": 1,
+            "salienceCoverage": 0.018,
+            "plainEntities": 0
+          }
+        },
+        "testCoverage": {
+          "findings": [
+            {
+              "severity": "warning",
+              "axis": "testing",
+              "message": "Домен lifequest без тестов/smoke/e2e-docs",
+              "details": {}
+            }
+          ],
+          "metrics": {
+            "testFiles": 0,
+            "smokeScripts": 0,
+            "hasE2EDoc": false
+          }
+        },
+        "patternApplication": {
+          "findings": [],
+          "perProjection": [
+            {
+              "projectionId": "dashboard",
+              "archetype": "dashboard",
+              "behavioral": "configuration",
+              "matchedCount": 4,
+              "applyCount": 2
+            },
+            {
+              "projectionId": "today",
+              "archetype": "canvas",
+              "behavioral": "configuration",
+              "matchedCount": 4,
+              "applyCount": 2
+            },
+            {
+              "projectionId": "week_progress",
+              "archetype": "canvas",
+              "behavioral": "configuration",
+              "matchedCount": 4,
+              "applyCount": 2
+            },
+            {
+              "projectionId": "habit_list",
+              "archetype": "catalog",
+              "behavioral": "configuration",
+              "matchedCount": 7,
+              "applyCount": 4
+            },
+            {
+              "projectionId": "habit_detail",
+              "archetype": "detail",
+              "behavioral": "configuration",
+              "matchedCount": 8,
+              "applyCount": 4
+            },
+            {
+              "projectionId": "goal_list",
+              "archetype": "catalog",
+              "behavioral": "configuration",
+              "matchedCount": 7,
+              "applyCount": 4
+            },
+            {
+              "projectionId": "calendar",
+              "archetype": "canvas",
+              "behavioral": "configuration",
+              "matchedCount": 4,
+              "applyCount": 2
+            },
+            {
+              "projectionId": "point_a",
+              "archetype": "canvas",
+              "behavioral": "configuration",
+              "matchedCount": 4,
+              "applyCount": 2
+            },
+            {
+              "projectionId": "vision_board",
+              "archetype": "canvas",
+              "behavioral": "configuration",
+              "matchedCount": 4,
+              "applyCount": 2
+            },
+            {
+              "projectionId": "goal_detail",
+              "archetype": "detail",
+              "behavioral": "configuration",
+              "matchedCount": 8,
+              "applyCount": 4
+            },
+            {
+              "projectionId": "all_time_stats",
+              "archetype": "detail",
+              "behavioral": "configuration",
+              "matchedCount": 9,
+              "applyCount": 5
+            },
+            {
+              "projectionId": "badge_list",
+              "archetype": "catalog",
+              "behavioral": "configuration",
+              "matchedCount": 5,
+              "applyCount": 3
+            }
+          ]
+        },
+        "structuralHealth": {
+          "findings": [
+            {
+              "severity": "info",
+              "axis": "structural",
+              "message": "6 intents без creates/mutator classification",
+              "details": {
+                "count": 6
+              }
+            },
+            {
+              "severity": "info",
+              "axis": "structural",
+              "message": "Возможно dead entities: Sphere, HabitLog, Task, SphereAssessment, VisionItem, Quote",
+              "details": {
+                "dead": [
+                  "Sphere",
+                  "HabitLog",
+                  "Task",
+                  "SphereAssessment",
+                  "VisionItem",
+                  "Quote"
+                ]
+              }
+            }
+          ],
+          "metrics": {
+            "archetypeHistogram": {
+              "dashboard": 1,
+              "canvas": 5,
+              "catalog": 3,
+              "detail": 3
+            },
+            "entityCount": 10,
+            "intentCount": 56,
+            "projectionCount": 12,
+            "unclassifiedIntents": 6,
+            "deadEntities": 6
+          }
+        }
+      }
+    },
+    "reflect": {
+      "ok": true,
+      "axes": {
+        "formatConformance": {
+          "findings": []
+        },
+        "derivationHealth": {
+          "findings": [
+            {
+              "severity": "info",
+              "axis": "derivation",
+              "message": "Override-coefficient 100% (13/13 authored)",
+              "details": {
+                "authored": 13,
+                "derived": 0,
+                "total": 13,
+                "coefficient": 1
+              }
+            },
+            {
+              "severity": "warning",
+              "axis": "derivation",
+              "message": "1 alphabetical-fallback witness'ов (intent.salience не объявлена)",
+              "details": {
+                "count": 1
+              }
+            }
+          ],
+          "metrics": {
+            "authored": 13,
+            "derived": 0,
+            "total": 13,
+            "overrideCoefficient": 1,
+            "histogramMatched": [
+              0,
+              0,
+              0,
+              13
+            ],
+            "patternsWithApply": 23,
+            "patternsMatchingOnly": 31,
+            "alphabeticalFallbacks": 1,
+            "disabledDeclarations": 0
+          }
+        },
+        "sdkIdiom": {
+          "findings": [
+            {
+              "severity": "warning",
+              "axis": "idiom",
+              "message": "Intent \"reset_progress\" — legacy irreversibility:\"high\" без context.__irr",
+              "details": {
+                "intentId": "reset_progress"
+              }
+            },
+            {
+              "severity": "warning",
+              "axis": "idiom",
+              "message": "Intent \"delete_account\" — legacy irreversibility:\"high\" без context.__irr",
+              "details": {
+                "intentId": "delete_account"
+              }
+            }
+          ],
+          "metrics": {
+            "intentCount": 47,
+            "salienceDeclared": 1,
+            "salienceCoverage": 0.021,
+            "plainEntities": 0
+          }
+        },
+        "testCoverage": {
+          "findings": [
+            {
+              "severity": "warning",
+              "axis": "testing",
+              "message": "Домен reflect без тестов/smoke/e2e-docs",
+              "details": {}
+            }
+          ],
+          "metrics": {
+            "testFiles": 0,
+            "smokeScripts": 0,
+            "hasE2EDoc": false
+          }
+        },
+        "patternApplication": {
+          "findings": [
+            {
+              "severity": "info",
+              "axis": "patterns",
+              "message": "13/13 проекций без behavioral-pattern",
+              "details": {
+                "count": 13,
+                "total": 13
+              }
+            }
+          ],
+          "perProjection": [
+            {
+              "projectionId": "checkin",
+              "archetype": "canvas",
+              "behavioral": null,
+              "matchedCount": 3,
+              "applyCount": 1
+            },
+            {
+              "projectionId": "timeline",
+              "archetype": "canvas",
+              "behavioral": null,
+              "matchedCount": 3,
+              "applyCount": 1
+            },
+            {
+              "projectionId": "calendar_heatmap",
+              "archetype": "canvas",
+              "behavioral": null,
+              "matchedCount": 3,
+              "applyCount": 1
+            },
+            {
+              "projectionId": "mood_trends",
+              "archetype": "canvas",
+              "behavioral": null,
+              "matchedCount": 3,
+              "applyCount": 1
+            },
+            {
+              "projectionId": "activity_correlation",
+              "archetype": "canvas",
+              "behavioral": null,
+              "matchedCount": 3,
+              "applyCount": 1
+            },
+            {
+              "projectionId": "mood_meter_cluster",
+              "archetype": "canvas",
+              "behavioral": null,
+              "matchedCount": 3,
+              "applyCount": 1
+            },
+            {
+              "projectionId": "entry_detail",
+              "archetype": "detail",
+              "behavioral": null,
+              "matchedCount": 4,
+              "applyCount": 1
+            },
+            {
+              "projectionId": "weekly_summary",
+              "archetype": "detail",
+              "behavioral": null,
+              "matchedCount": 7,
+              "applyCount": 3
+            },
+            {
+              "projectionId": "hypothesis_detail",
+              "archetype": "detail",
+              "behavioral": null,
+              "matchedCount": 7,
+              "applyCount": 3
+            },
+            {
+              "projectionId": "hypothesis_list",
+              "archetype": "catalog",
+              "behavioral": null,
+              "matchedCount": 5,
+              "applyCount": 3
+            },
+            {
+              "projectionId": "activity_list",
+              "archetype": "catalog",
+              "behavioral": null,
+              "matchedCount": 5,
+              "applyCount": 3
+            },
+            {
+              "projectionId": "tag_list",
+              "archetype": "catalog",
+              "behavioral": null,
+              "matchedCount": 5,
+              "applyCount": 3
+            },
+            {
+              "projectionId": "insights_feed",
+              "archetype": "feed",
+              "behavioral": null,
+              "matchedCount": 3,
+              "applyCount": 1
+            }
+          ]
+        },
+        "structuralHealth": {
+          "findings": [
+            {
+              "severity": "info",
+              "axis": "structural",
+              "message": "14 intents без creates/mutator classification",
+              "details": {
+                "count": 14
+              }
+            },
+            {
+              "severity": "info",
+              "axis": "structural",
+              "message": "Возможно dead entities: EntryActivity, HypothesisEvidence, Reminder, EntryTag",
+              "details": {
+                "dead": [
+                  "EntryActivity",
+                  "HypothesisEvidence",
+                  "Reminder",
+                  "EntryTag"
+                ]
+              }
+            }
+          ],
+          "metrics": {
+            "archetypeHistogram": {
+              "canvas": 6,
+              "detail": 3,
+              "catalog": 3,
+              "feed": 1
+            },
+            "entityCount": 10,
+            "intentCount": 47,
+            "projectionCount": 13,
+            "unclassifiedIntents": 14,
+            "deadEntities": 4
+          }
+        }
+      }
+    },
+    "invest": {
+      "ok": true,
+      "axes": {
+        "formatConformance": {
+          "findings": [
+            {
+              "severity": "warning",
+              "axis": "format",
+              "message": "Entity User без entity.type (kind)",
+              "details": {
+                "kind": "entity-no-type",
+                "entity": "User"
+              }
+            },
+            {
+              "severity": "warning",
+              "axis": "format",
+              "message": "Entity Portfolio без entity.type (kind)",
+              "details": {
+                "kind": "entity-no-type",
+                "entity": "Portfolio"
+              }
+            },
+            {
+              "severity": "warning",
+              "axis": "format",
+              "message": "Entity Position без entity.type (kind)",
+              "details": {
+                "kind": "entity-no-type",
+                "entity": "Position"
+              }
+            },
+            {
+              "severity": "warning",
+              "axis": "format",
+              "message": "Entity Asset без entity.type (kind)",
+              "details": {
+                "kind": "entity-no-type",
+                "entity": "Asset"
+              }
+            },
+            {
+              "severity": "warning",
+              "axis": "format",
+              "message": "Entity Transaction без entity.type (kind)",
+              "details": {
+                "kind": "entity-no-type",
+                "entity": "Transaction"
+              }
+            },
+            {
+              "severity": "warning",
+              "axis": "format",
+              "message": "Entity Goal без entity.type (kind)",
+              "details": {
+                "kind": "entity-no-type",
+                "entity": "Goal"
+              }
+            },
+            {
+              "severity": "warning",
+              "axis": "format",
+              "message": "Entity RiskProfile без entity.type (kind)",
+              "details": {
+                "kind": "entity-no-type",
+                "entity": "RiskProfile"
+              }
+            },
+            {
+              "severity": "warning",
+              "axis": "format",
+              "message": "Entity Recommendation без entity.type (kind)",
+              "details": {
+                "kind": "entity-no-type",
+                "entity": "Recommendation"
+              }
+            },
+            {
+              "severity": "warning",
+              "axis": "format",
+              "message": "Entity Alert без entity.type (kind)",
+              "details": {
+                "kind": "entity-no-type",
+                "entity": "Alert"
+              }
+            },
+            {
+              "severity": "warning",
+              "axis": "format",
+              "message": "Entity Watchlist без entity.type (kind)",
+              "details": {
+                "kind": "entity-no-type",
+                "entity": "Watchlist"
+              }
+            },
+            {
+              "severity": "warning",
+              "axis": "format",
+              "message": "Entity MarketSignal без entity.type (kind)",
+              "details": {
+                "kind": "entity-no-type",
+                "entity": "MarketSignal"
+              }
+            },
+            {
+              "severity": "warning",
+              "axis": "format",
+              "message": "Entity AgentPreapproval без entity.type (kind)",
+              "details": {
+                "kind": "entity-no-type",
+                "entity": "AgentPreapproval"
+              }
+            },
+            {
+              "severity": "warning",
+              "axis": "format",
+              "message": "Entity Rule без entity.type (kind)",
+              "details": {
+                "kind": "entity-no-type",
+                "entity": "Rule"
+              }
+            },
+            {
+              "severity": "warning",
+              "axis": "format",
+              "message": "Entity Assignment без entity.type (kind)",
+              "details": {
+                "kind": "entity-no-type",
+                "entity": "Assignment"
+              }
+            },
+            {
+              "severity": "info",
+              "axis": "format",
+              "message": "Assignment single ownerField=\"advisorId\"; возможно multi-owner с clientId",
+              "details": {
+                "entity": "Assignment",
+                "ownerField": "advisorId",
+                "candidates": [
+                  "clientId"
+                ]
+              }
+            }
+          ]
+        },
+        "derivationHealth": {
+          "findings": [
+            {
+              "severity": "info",
+              "axis": "derivation",
+              "message": "Override-coefficient 100% (23/23 authored)",
+              "details": {
+                "authored": 23,
+                "derived": 0,
+                "total": 23,
+                "coefficient": 1
+              }
+            }
+          ],
+          "metrics": {
+            "authored": 23,
+            "derived": 0,
+            "total": 23,
+            "overrideCoefficient": 1,
+            "histogramMatched": [
+              0,
+              0,
+              9,
+              14
+            ],
+            "patternsWithApply": 46,
+            "patternsMatchingOnly": 38,
+            "alphabeticalFallbacks": 0,
+            "disabledDeclarations": 0
+          }
+        },
+        "sdkIdiom": {
+          "findings": [
+            {
+              "severity": "warning",
+              "axis": "idiom",
+              "message": "Intent \"close_goal\" — legacy irreversibility:\"high\" без context.__irr",
+              "details": {
+                "intentId": "close_goal"
+              }
+            },
+            {
+              "severity": "warning",
+              "axis": "idiom",
+              "message": "Intent \"archive_portfolio\" — legacy irreversibility:\"high\" без context.__irr",
+              "details": {
+                "intentId": "archive_portfolio"
+              }
+            },
+            {
+              "severity": "warning",
+              "axis": "idiom",
+              "message": "Intent \"delete_watchlist\" — legacy irreversibility:\"high\" без context.__irr",
+              "details": {
+                "intentId": "delete_watchlist"
+              }
+            },
+            {
+              "severity": "warning",
+              "axis": "idiom",
+              "message": "Intent \"delete_rule\" — legacy irreversibility:\"high\" без context.__irr",
+              "details": {
+                "intentId": "delete_rule"
+              }
+            },
+            {
+              "severity": "info",
+              "axis": "idiom",
+              "message": "Field Portfolio.totalValue fieldRole:\"money\" (v1.6+ \"price\")",
+              "details": {
+                "entity": "Portfolio",
+                "field": "totalValue"
+              }
+            },
+            {
+              "severity": "info",
+              "axis": "idiom",
+              "message": "Field Portfolio.pnl fieldRole:\"money\" (v1.6+ \"price\")",
+              "details": {
+                "entity": "Portfolio",
+                "field": "pnl"
+              }
+            },
+            {
+              "severity": "info",
+              "axis": "idiom",
+              "message": "Field Position.avgPrice fieldRole:\"money\" (v1.6+ \"price\")",
+              "details": {
+                "entity": "Position",
+                "field": "avgPrice"
+              }
+            },
+            {
+              "severity": "info",
+              "axis": "idiom",
+              "message": "Field Position.currentPrice fieldRole:\"money\" (v1.6+ \"price\")",
+              "details": {
+                "entity": "Position",
+                "field": "currentPrice"
+              }
+            },
+            {
+              "severity": "info",
+              "axis": "idiom",
+              "message": "Field Position.unrealizedPnL fieldRole:\"money\" (v1.6+ \"price\")",
+              "details": {
+                "entity": "Position",
+                "field": "unrealizedPnL"
+              }
+            },
+            {
+              "severity": "info",
+              "axis": "idiom",
+              "message": "Field Position.stopLoss fieldRole:\"money\" (v1.6+ \"price\")",
+              "details": {
+                "entity": "Position",
+                "field": "stopLoss"
+              }
+            },
+            {
+              "severity": "info",
+              "axis": "idiom",
+              "message": "Field Position.takeProfit fieldRole:\"money\" (v1.6+ \"price\")",
+              "details": {
+                "entity": "Position",
+                "field": "takeProfit"
+              }
+            },
+            {
+              "severity": "info",
+              "axis": "idiom",
+              "message": "Field Transaction.price fieldRole:\"money\" (v1.6+ \"price\")",
+              "details": {
+                "entity": "Transaction",
+                "field": "price"
+              }
+            },
+            {
+              "severity": "info",
+              "axis": "idiom",
+              "message": "Field Transaction.fee fieldRole:\"money\" (v1.6+ \"price\")",
+              "details": {
+                "entity": "Transaction",
+                "field": "fee"
+              }
+            },
+            {
+              "severity": "info",
+              "axis": "idiom",
+              "message": "Field Transaction.total fieldRole:\"money\" (v1.6+ \"price\")",
+              "details": {
+                "entity": "Transaction",
+                "field": "total"
+              }
+            },
+            {
+              "severity": "info",
+              "axis": "idiom",
+              "message": "Field Goal.targetAmount fieldRole:\"money\" (v1.6+ \"price\")",
+              "details": {
+                "entity": "Goal",
+                "field": "targetAmount"
+              }
+            },
+            {
+              "severity": "info",
+              "axis": "idiom",
+              "message": "Field Goal.currentAmount fieldRole:\"money\" (v1.6+ \"price\")",
+              "details": {
+                "entity": "Goal",
+                "field": "currentAmount"
+              }
+            },
+            {
+              "severity": "info",
+              "axis": "idiom",
+              "message": "Field AgentPreapproval.maxOrderAmount fieldRole:\"money\" (v1.6+ \"price\")",
+              "details": {
+                "entity": "AgentPreapproval",
+                "field": "maxOrderAmount"
+              }
+            },
+            {
+              "severity": "info",
+              "axis": "idiom",
+              "message": "Field AgentPreapproval.dailyLimit fieldRole:\"money\" (v1.6+ \"price\")",
+              "details": {
+                "entity": "AgentPreapproval",
+                "field": "dailyLimit"
+              }
+            }
+          ],
+          "metrics": {
+            "intentCount": 61,
+            "salienceDeclared": 0,
+            "salienceCoverage": 0,
+            "plainEntities": 0
+          }
+        },
+        "testCoverage": {
+          "findings": [
+            {
+              "severity": "warning",
+              "axis": "testing",
+              "message": "Домен invest без тестов/smoke/e2e-docs",
+              "details": {}
+            }
+          ],
+          "metrics": {
+            "testFiles": 0,
+            "smokeScripts": 0,
+            "hasE2EDoc": false
+          }
+        },
+        "patternApplication": {
+          "findings": [],
+          "perProjection": [
+            {
+              "projectionId": "portfolios_root",
+              "archetype": "catalog",
+              "behavioral": "triage",
+              "matchedCount": 6,
+              "applyCount": 4
+            },
+            {
+              "projectionId": "goals_root",
+              "archetype": "catalog",
+              "behavioral": "triage",
+              "matchedCount": 7,
+              "applyCount": 5
+            },
+            {
+              "projectionId": "watchlists_root",
+              "archetype": "catalog",
+              "behavioral": "triage",
+              "matchedCount": 3,
+              "applyCount": 2
+            },
+            {
+              "projectionId": "recommendations_inbox",
+              "archetype": "catalog",
+              "behavioral": "triage",
+              "matchedCount": 6,
+              "applyCount": 3
+            },
+            {
+              "projectionId": "alerts_feed",
+              "archetype": "catalog",
+              "behavioral": "triage",
+              "matchedCount": 4,
+              "applyCount": 3
+            },
+            {
+              "projectionId": "transactions_history",
+              "archetype": "catalog",
+              "behavioral": "triage",
+              "matchedCount": 5,
+              "applyCount": 4
+            },
+            {
+              "projectionId": "portfolio_detail",
+              "archetype": "detail",
+              "behavioral": "triage",
+              "matchedCount": 5,
+              "applyCount": 3
+            },
+            {
+              "projectionId": "goal_detail",
+              "archetype": "detail",
+              "behavioral": "triage",
+              "matchedCount": 4,
+              "applyCount": 2
+            },
+            {
+              "projectionId": "transaction_detail",
+              "archetype": "detail",
+              "behavioral": "triage",
+              "matchedCount": 3,
+              "applyCount": 1
+            },
+            {
+              "projectionId": "recommendation_detail",
+              "archetype": "detail",
+              "behavioral": "triage",
+              "matchedCount": 6,
+              "applyCount": 2
+            },
+            {
+              "projectionId": "alert_detail",
+              "archetype": "detail",
+              "behavioral": "triage",
+              "matchedCount": 4,
+              "applyCount": 2
+            },
+            {
+              "projectionId": "asset_detail",
+              "archetype": "detail",
+              "behavioral": "triage",
+              "matchedCount": 4,
+              "applyCount": 2
+            },
+            {
+              "projectionId": "watchlist_detail",
+              "archetype": "detail",
+              "behavioral": "triage",
+              "matchedCount": 4,
+              "applyCount": 2
+            },
+            {
+              "projectionId": "performance_dashboard",
+              "archetype": "dashboard",
+              "behavioral": "triage",
+              "matchedCount": 2,
+              "applyCount": 1
+            },
+            {
+              "projectionId": "allocation_breakdown",
+              "archetype": "canvas",
+              "behavioral": "triage",
+              "matchedCount": 2,
+              "applyCount": 1
+            },
+            {
+              "projectionId": "market_trends",
+              "archetype": "canvas",
+              "behavioral": "triage",
+              "matchedCount": 2,
+              "applyCount": 1
+            },
+            {
+              "projectionId": "advisor_clients",
+              "archetype": "catalog",
+              "behavioral": "triage",
+              "matchedCount": 5,
+              "applyCount": 2
+            },
+            {
+              "projectionId": "advisor_client_dashboard",
+              "archetype": "canvas",
+              "behavioral": "triage",
+              "matchedCount": 2,
+              "applyCount": 1
+            },
+            {
+              "projectionId": "regulator_report",
+              "archetype": "canvas",
+              "behavioral": "triage",
+              "matchedCount": 2,
+              "applyCount": 1
+            },
+            {
+              "projectionId": "assets_catalog",
+              "archetype": "catalog",
+              "behavioral": "triage",
+              "matchedCount": 2,
+              "applyCount": 1
+            },
+            {
+              "projectionId": "rules_list",
+              "archetype": "catalog",
+              "behavioral": "triage",
+              "matchedCount": 2,
+              "applyCount": 1
+            },
+            {
+              "projectionId": "risk_questionnaire",
+              "archetype": "wizard",
+              "behavioral": "triage",
+              "matchedCount": 2,
+              "applyCount": 1
+            },
+            {
+              "projectionId": "portfolio_onboarding",
+              "archetype": "wizard",
+              "behavioral": "triage",
+              "matchedCount": 2,
+              "applyCount": 1
+            }
+          ]
+        },
+        "structuralHealth": {
+          "findings": [
+            {
+              "severity": "info",
+              "axis": "structural",
+              "message": "22 intents без creates/mutator classification",
+              "details": {
+                "count": 22
+              }
+            },
+            {
+              "severity": "info",
+              "axis": "structural",
+              "message": "Возможно dead entities: Position, AgentPreapproval",
+              "details": {
+                "dead": [
+                  "Position",
+                  "AgentPreapproval"
+                ]
+              }
+            }
+          ],
+          "metrics": {
+            "archetypeHistogram": {
+              "catalog": 9,
+              "detail": 7,
+              "dashboard": 1,
+              "canvas": 4,
+              "wizard": 2
+            },
+            "entityCount": 14,
+            "intentCount": 61,
+            "projectionCount": 23,
+            "unclassifiedIntents": 22,
+            "deadEntities": 2
+          }
+        }
+      }
+    },
+    "delivery": {
+      "ok": true,
+      "axes": {
+        "formatConformance": {
+          "findings": [
+            {
+              "severity": "warning",
+              "axis": "format",
+              "message": "Entity User без entity.type (kind)",
+              "details": {
+                "kind": "entity-no-type",
+                "entity": "User"
+              }
+            },
+            {
+              "severity": "warning",
+              "axis": "format",
+              "message": "Entity Merchant без entity.type (kind)",
+              "details": {
+                "kind": "entity-no-type",
+                "entity": "Merchant"
+              }
+            },
+            {
+              "severity": "warning",
+              "axis": "format",
+              "message": "Entity MenuItem без entity.type (kind)",
+              "details": {
+                "kind": "entity-no-type",
+                "entity": "MenuItem"
+              }
+            },
+            {
+              "severity": "warning",
+              "axis": "format",
+              "message": "Entity Zone без entity.type (kind)",
+              "details": {
+                "kind": "entity-no-type",
+                "entity": "Zone"
+              }
+            },
+            {
+              "severity": "warning",
+              "axis": "format",
+              "message": "Entity DispatcherAssignment без entity.type (kind)",
+              "details": {
+                "kind": "entity-no-type",
+                "entity": "DispatcherAssignment"
+              }
+            },
+            {
+              "severity": "warning",
+              "axis": "format",
+              "message": "Entity Order без entity.type (kind)",
+              "details": {
+                "kind": "entity-no-type",
+                "entity": "Order"
+              }
+            },
+            {
+              "severity": "warning",
+              "axis": "format",
+              "message": "Entity OrderItem без entity.type (kind)",
+              "details": {
+                "kind": "entity-no-type",
+                "entity": "OrderItem"
+              }
+            },
+            {
+              "severity": "warning",
+              "axis": "format",
+              "message": "Entity Delivery без entity.type (kind)",
+              "details": {
+                "kind": "entity-no-type",
+                "entity": "Delivery"
+              }
+            },
+            {
+              "severity": "warning",
+              "axis": "format",
+              "message": "Entity Address без entity.type (kind)",
+              "details": {
+                "kind": "entity-no-type",
+                "entity": "Address"
+              }
+            },
+            {
+              "severity": "warning",
+              "axis": "format",
+              "message": "Entity CourierLocation без entity.type (kind)",
+              "details": {
+                "kind": "entity-no-type",
+                "entity": "CourierLocation"
+              }
+            },
+            {
+              "severity": "warning",
+              "axis": "format",
+              "message": "Entity Payment без entity.type (kind)",
+              "details": {
+                "kind": "entity-no-type",
+                "entity": "Payment"
+              }
+            },
+            {
+              "severity": "warning",
+              "axis": "format",
+              "message": "Entity Notification без entity.type (kind)",
+              "details": {
+                "kind": "entity-no-type",
+                "entity": "Notification"
+              }
+            },
+            {
+              "severity": "warning",
+              "axis": "format",
+              "message": "Entity Review без entity.type (kind)",
+              "details": {
+                "kind": "entity-no-type",
+                "entity": "Review"
+              }
+            },
+            {
+              "severity": "warning",
+              "axis": "format",
+              "message": "Entity AgentPreapproval без entity.type (kind)",
+              "details": {
+                "kind": "entity-no-type",
+                "entity": "AgentPreapproval"
+              }
+            },
+            {
+              "severity": "info",
+              "axis": "format",
+              "message": "Order single ownerField=\"customerId\"; возможно multi-owner с merchantId",
+              "details": {
+                "entity": "Order",
+                "ownerField": "customerId",
+                "candidates": [
+                  "merchantId"
+                ]
+              }
+            },
+            {
+              "severity": "warning",
+              "axis": "format",
+              "message": "Invariant \"order_item_references_order\" referential в alt-shape {entity,field,references}",
+              "details": {
+                "name": "order_item_references_order"
+              }
+            }
+          ]
+        },
+        "derivationHealth": {
+          "findings": [
+            {
+              "severity": "info",
+              "axis": "derivation",
+              "message": "Override-coefficient 100% (25/25 authored)",
+              "details": {
+                "authored": 25,
+                "derived": 0,
+                "total": 25,
+                "coefficient": 1
+              }
+            }
+          ],
+          "metrics": {
+            "authored": 25,
+            "derived": 0,
+            "total": 25,
+            "overrideCoefficient": 1,
+            "histogramMatched": [
+              0,
+              0,
+              12,
+              13
+            ],
+            "patternsWithApply": 48,
+            "patternsMatchingOnly": 39,
+            "alphabeticalFallbacks": 0,
+            "disabledDeclarations": 0
+          }
+        },
+        "sdkIdiom": {
+          "findings": [
+            {
+              "severity": "warning",
+              "axis": "idiom",
+              "message": "Intent \"cancel_order\" — legacy irreversibility:\"high\" без context.__irr",
+              "details": {
+                "intentId": "cancel_order"
+              }
+            },
+            {
+              "severity": "warning",
+              "axis": "idiom",
+              "message": "Intent \"request_refund\" — legacy irreversibility:\"high\" без context.__irr",
+              "details": {
+                "intentId": "request_refund"
+              }
+            },
+            {
+              "severity": "warning",
+              "axis": "idiom",
+              "message": "Intent \"reject_order\" — legacy irreversibility:\"high\" без context.__irr",
+              "details": {
+                "intentId": "reject_order"
+              }
+            },
+            {
+              "severity": "warning",
+              "axis": "idiom",
+              "message": "Intent \"confirm_pickup\" — legacy irreversibility:\"high\" без context.__irr",
+              "details": {
+                "intentId": "confirm_pickup"
+              }
+            },
+            {
+              "severity": "warning",
+              "axis": "idiom",
+              "message": "Intent \"confirm_delivery\" — legacy irreversibility:\"high\" без context.__irr",
+              "details": {
+                "intentId": "confirm_delivery"
+              }
+            },
+            {
+              "severity": "info",
+              "axis": "idiom",
+              "message": "Field MenuItem.price fieldRole:\"money\" (v1.6+ \"price\")",
+              "details": {
+                "entity": "MenuItem",
+                "field": "price"
+              }
+            },
+            {
+              "severity": "info",
+              "axis": "idiom",
+              "message": "Field Order.totalAmount fieldRole:\"money\" (v1.6+ \"price\")",
+              "details": {
+                "entity": "Order",
+                "field": "totalAmount"
+              }
+            },
+            {
+              "severity": "info",
+              "axis": "idiom",
+              "message": "Field Order.tip fieldRole:\"money\" (v1.6+ \"price\")",
+              "details": {
+                "entity": "Order",
+                "field": "tip"
+              }
+            },
+            {
+              "severity": "info",
+              "axis": "idiom",
+              "message": "Field OrderItem.price fieldRole:\"money\" (v1.6+ \"price\")",
+              "details": {
+                "entity": "OrderItem",
+                "field": "price"
+              }
+            },
+            {
+              "severity": "info",
+              "axis": "idiom",
+              "message": "Field Payment.amount fieldRole:\"money\" (v1.6+ \"price\")",
+              "details": {
+                "entity": "Payment",
+                "field": "amount"
+              }
+            }
+          ],
+          "metrics": {
+            "intentCount": 45,
+            "salienceDeclared": 0,
+            "salienceCoverage": 0,
+            "plainEntities": 0
+          }
+        },
+        "testCoverage": {
+          "findings": [],
+          "metrics": {
+            "testFiles": 0,
+            "smokeScripts": 1,
+            "hasE2EDoc": false
+          }
+        },
+        "patternApplication": {
+          "findings": [],
+          "perProjection": [
+            {
+              "projectionId": "customer_home",
+              "archetype": "catalog",
+              "behavioral": "execution",
+              "matchedCount": 6,
+              "applyCount": 3
+            },
+            {
+              "projectionId": "merchant_catalog",
+              "archetype": "catalog",
+              "behavioral": "execution",
+              "matchedCount": 3,
+              "applyCount": 2
+            },
+            {
+              "projectionId": "menu_detail",
+              "archetype": "detail",
+              "behavioral": "execution",
+              "matchedCount": 3,
+              "applyCount": 1
+            },
+            {
+              "projectionId": "cart",
+              "archetype": "detail",
+              "behavioral": "execution",
+              "matchedCount": 7,
+              "applyCount": 3
+            },
+            {
+              "projectionId": "checkout",
+              "archetype": "wizard",
+              "behavioral": "execution",
+              "matchedCount": 2,
+              "applyCount": 1
+            },
+            {
+              "projectionId": "order_tracker",
+              "archetype": "canvas",
+              "behavioral": "execution",
+              "matchedCount": 2,
+              "applyCount": 1
+            },
+            {
+              "projectionId": "order_history",
+              "archetype": "catalog",
+              "behavioral": "execution",
+              "matchedCount": 6,
+              "applyCount": 4
+            },
+            {
+              "projectionId": "order_detail",
+              "archetype": "detail",
+              "behavioral": "execution",
+              "matchedCount": 7,
+              "applyCount": 3
+            },
+            {
+              "projectionId": "courier_lobby",
+              "archetype": "catalog",
+              "behavioral": "execution",
+              "matchedCount": 6,
+              "applyCount": 4
+            },
+            {
+              "projectionId": "active_delivery",
+              "archetype": "canvas",
+              "behavioral": "execution",
+              "matchedCount": 2,
+              "applyCount": 1
+            },
+            {
+              "projectionId": "delivery_history",
+              "archetype": "catalog",
+              "behavioral": "execution",
+              "matchedCount": 6,
+              "applyCount": 4
+            },
+            {
+              "projectionId": "earnings_dashboard",
+              "archetype": "dashboard",
+              "behavioral": "execution",
+              "matchedCount": 2,
+              "applyCount": 1
+            },
+            {
+              "projectionId": "kds_board",
+              "archetype": "dashboard",
+              "behavioral": "execution",
+              "matchedCount": 2,
+              "applyCount": 1
+            },
+            {
+              "projectionId": "menu_management",
+              "archetype": "catalog",
+              "behavioral": "execution",
+              "matchedCount": 3,
+              "applyCount": 2
+            },
+            {
+              "projectionId": "stop_list",
+              "archetype": "catalog",
+              "behavioral": "execution",
+              "matchedCount": 3,
+              "applyCount": 2
+            },
+            {
+              "projectionId": "merchant_analytics",
+              "archetype": "dashboard",
+              "behavioral": "execution",
+              "matchedCount": 2,
+              "applyCount": 1
+            },
+            {
+              "projectionId": "dispatcher_map",
+              "archetype": "canvas",
+              "behavioral": "execution",
+              "matchedCount": 2,
+              "applyCount": 1
+            },
+            {
+              "projectionId": "orders_feed",
+              "archetype": "catalog",
+              "behavioral": "execution",
+              "matchedCount": 6,
+              "applyCount": 4
+            },
+            {
+              "projectionId": "couriers_list",
+              "archetype": "catalog",
+              "behavioral": "execution",
+              "matchedCount": 2,
+              "applyCount": 1
+            },
+            {
+              "projectionId": "zones_catalog",
+              "archetype": "catalog",
+              "behavioral": "execution",
+              "matchedCount": 3,
+              "applyCount": 1
+            },
+            {
+              "projectionId": "assignments_form",
+              "archetype": "wizard",
+              "behavioral": "execution",
+              "matchedCount": 2,
+              "applyCount": 1
+            },
+            {
+              "projectionId": "settings",
+              "archetype": "form",
+              "behavioral": "execution",
+              "matchedCount": 2,
+              "applyCount": 1
+            },
+            {
+              "projectionId": "preapprovals_list",
+              "archetype": "catalog",
+              "behavioral": "execution",
+              "matchedCount": 4,
+              "applyCount": 3
+            },
+            {
+              "projectionId": "preapproval_form",
+              "archetype": "wizard",
+              "behavioral": "execution",
+              "matchedCount": 2,
+              "applyCount": 1
+            },
+            {
+              "projectionId": "scheduled_timers_debug",
+              "archetype": "catalog",
+              "behavioral": "execution",
+              "matchedCount": 2,
+              "applyCount": 1
+            }
+          ]
+        },
+        "structuralHealth": {
+          "findings": [
+            {
+              "severity": "info",
+              "axis": "structural",
+              "message": "Возможно dead entities: DispatcherAssignment, OrderItem, CourierLocation, Payment, Notification, Review",
+              "details": {
+                "dead": [
+                  "DispatcherAssignment",
+                  "OrderItem",
+                  "CourierLocation",
+                  "Payment",
+                  "Notification",
+                  "Review"
+                ]
+              }
+            }
+          ],
+          "metrics": {
+            "archetypeHistogram": {
+              "catalog": 12,
+              "detail": 3,
+              "wizard": 3,
+              "canvas": 3,
+              "dashboard": 3,
+              "form": 1
+            },
+            "entityCount": 14,
+            "intentCount": 45,
+            "projectionCount": 25,
+            "unclassifiedIntents": 0,
+            "deadEntities": 6
+          }
+        }
+      }
+    },
+    "freelance": {
+      "ok": true,
+      "axes": {
+        "formatConformance": {
+          "findings": [
+            {
+              "severity": "warning",
+              "axis": "format",
+              "message": "Entity User без entity.type (kind)",
+              "details": {
+                "kind": "entity-no-type",
+                "entity": "User"
+              }
+            },
+            {
+              "severity": "warning",
+              "axis": "format",
+              "message": "Entity CustomerProfile без entity.type (kind)",
+              "details": {
+                "kind": "entity-no-type",
+                "entity": "CustomerProfile"
+              }
+            },
+            {
+              "severity": "warning",
+              "axis": "format",
+              "message": "Entity ExecutorProfile без entity.type (kind)",
+              "details": {
+                "kind": "entity-no-type",
+                "entity": "ExecutorProfile"
+              }
+            },
+            {
+              "severity": "warning",
+              "axis": "format",
+              "message": "Entity Skill без entity.type (kind)",
+              "details": {
+                "kind": "entity-no-type",
+                "entity": "Skill"
+              }
+            },
+            {
+              "severity": "warning",
+              "axis": "format",
+              "message": "Entity ExecutorSkill без entity.type (kind)",
+              "details": {
+                "kind": "entity-no-type",
+                "entity": "ExecutorSkill"
+              }
+            },
+            {
+              "severity": "warning",
+              "axis": "format",
+              "message": "Entity Category без entity.type (kind)",
+              "details": {
+                "kind": "entity-no-type",
+                "entity": "Category"
+              }
+            },
+            {
+              "severity": "warning",
+              "axis": "format",
+              "message": "Entity Task без entity.type (kind)",
+              "details": {
+                "kind": "entity-no-type",
+                "entity": "Task"
+              }
+            },
+            {
+              "severity": "warning",
+              "axis": "format",
+              "message": "Entity Response без entity.type (kind)",
+              "details": {
+                "kind": "entity-no-type",
+                "entity": "Response"
+              }
+            },
+            {
+              "severity": "warning",
+              "axis": "format",
+              "message": "Entity Deal без entity.type (kind)",
+              "details": {
+                "kind": "entity-no-type",
+                "entity": "Deal"
+              }
+            },
+            {
+              "severity": "warning",
+              "axis": "format",
+              "message": "Entity Wallet без entity.type (kind)",
+              "details": {
+                "kind": "entity-no-type",
+                "entity": "Wallet"
+              }
+            },
+            {
+              "severity": "warning",
+              "axis": "format",
+              "message": "Entity Transaction без entity.type (kind)",
+              "details": {
+                "kind": "entity-no-type",
+                "entity": "Transaction"
+              }
+            },
+            {
+              "severity": "warning",
+              "axis": "format",
+              "message": "Entity Review без entity.type (kind)",
+              "details": {
+                "kind": "entity-no-type",
+                "entity": "Review"
+              }
+            },
+            {
+              "severity": "info",
+              "axis": "format",
+              "message": "Deal single ownerField=\"customerId,executorId\"; возможно multi-owner с customerId, executorId",
+              "details": {
+                "entity": "Deal",
+                "ownerField": [
+                  "customerId",
+                  "executorId"
+                ],
+                "candidates": [
+                  "customerId",
+                  "executorId"
+                ]
+              }
+            }
+          ]
+        },
+        "derivationHealth": {
+          "findings": [
+            {
+              "severity": "info",
+              "axis": "derivation",
+              "message": "Override-coefficient 100% (9/9 authored)",
+              "details": {
+                "authored": 9,
+                "derived": 0,
+                "total": 9,
+                "coefficient": 1
+              }
+            },
+            {
+              "severity": "warning",
+              "axis": "derivation",
+              "message": "2 alphabetical-fallback witness'ов (intent.salience не объявлена)",
+              "details": {
+                "count": 2
+              }
+            }
+          ],
+          "metrics": {
+            "authored": 9,
+            "derived": 0,
+            "total": 9,
+            "overrideCoefficient": 1,
+            "histogramMatched": [
+              0,
+              0,
+              0,
+              9
+            ],
+            "patternsWithApply": 27,
+            "patternsMatchingOnly": 41,
+            "alphabeticalFallbacks": 2,
+            "disabledDeclarations": 2
+          }
+        },
+        "sdkIdiom": {
+          "findings": [
+            {
+              "severity": "warning",
+              "axis": "idiom",
+              "message": "Intent \"confirm_deal\" — legacy irreversibility:\"high\" без context.__irr",
+              "details": {
+                "intentId": "confirm_deal"
+              }
+            },
+            {
+              "severity": "warning",
+              "axis": "idiom",
+              "message": "Intent \"submit_work_result\" — legacy irreversibility:\"high\" без context.__irr",
+              "details": {
+                "intentId": "submit_work_result"
+              }
+            },
+            {
+              "severity": "warning",
+              "axis": "idiom",
+              "message": "Intent \"accept_result\" — legacy irreversibility:\"high\" без context.__irr",
+              "details": {
+                "intentId": "accept_result"
+              }
+            },
+            {
+              "severity": "warning",
+              "axis": "idiom",
+              "message": "Intent \"auto_accept_result\" — legacy irreversibility:\"high\" без context.__irr",
+              "details": {
+                "intentId": "auto_accept_result"
+              }
+            },
+            {
+              "severity": "warning",
+              "axis": "idiom",
+              "message": "Intent \"request_revision\" — legacy irreversibility:\"high\" без context.__irr",
+              "details": {
+                "intentId": "request_revision"
+              }
+            },
+            {
+              "severity": "warning",
+              "axis": "idiom",
+              "message": "Intent \"submit_revision\" — legacy irreversibility:\"high\" без context.__irr",
+              "details": {
+                "intentId": "submit_revision"
+              }
+            }
+          ],
+          "metrics": {
+            "intentCount": 46,
+            "salienceDeclared": 0,
+            "salienceCoverage": 0,
+            "plainEntities": 0
+          }
+        },
+        "testCoverage": {
+          "findings": [],
+          "metrics": {
+            "testFiles": 6,
+            "smokeScripts": 3,
+            "hasE2EDoc": true
+          }
+        },
+        "patternApplication": {
+          "findings": [],
+          "perProjection": [
+            {
+              "projectionId": "task_catalog_public",
+              "archetype": "catalog",
+              "behavioral": "exploration",
+              "matchedCount": 9,
+              "applyCount": 4
+            },
+            {
+              "projectionId": "task_detail_public",
+              "archetype": "detail",
+              "behavioral": "exploration",
+              "matchedCount": 8,
+              "applyCount": 3
+            },
+            {
+              "projectionId": "my_tasks",
+              "archetype": "catalog",
+              "behavioral": "exploration",
+              "matchedCount": 9,
+              "applyCount": 4
+            },
+            {
+              "projectionId": "my_deals",
+              "archetype": "catalog",
+              "behavioral": "exploration",
+              "matchedCount": 5,
+              "applyCount": 2
+            },
+            {
+              "projectionId": "task_detail_customer",
+              "archetype": "detail",
+              "behavioral": "exploration",
+              "matchedCount": 8,
+              "applyCount": 3
+            },
+            {
+              "projectionId": "deal_detail_customer",
+              "archetype": "detail",
+              "behavioral": "exploration",
+              "matchedCount": 8,
+              "applyCount": 3
+            },
+            {
+              "projectionId": "deal_detail_executor",
+              "archetype": "detail",
+              "behavioral": "exploration",
+              "matchedCount": 8,
+              "applyCount": 3
+            },
+            {
+              "projectionId": "wallet",
+              "archetype": "detail",
+              "behavioral": "exploration",
+              "matchedCount": 6,
+              "applyCount": 2
+            },
+            {
+              "projectionId": "my_responses",
+              "archetype": "catalog",
+              "behavioral": "exploration",
+              "matchedCount": 7,
+              "applyCount": 3
+            }
+          ]
+        },
+        "structuralHealth": {
+          "findings": [
+            {
+              "severity": "info",
+              "axis": "structural",
+              "message": "11 intents без creates/mutator classification",
+              "details": {
+                "count": 11
+              }
+            },
+            {
+              "severity": "info",
+              "axis": "structural",
+              "message": "Возможно dead entities: CustomerProfile, ExecutorProfile, ExecutorSkill, Transaction, Review",
+              "details": {
+                "dead": [
+                  "CustomerProfile",
+                  "ExecutorProfile",
+                  "ExecutorSkill",
+                  "Transaction",
+                  "Review"
+                ]
+              }
+            }
+          ],
+          "metrics": {
+            "archetypeHistogram": {
+              "catalog": 4,
+              "detail": 5
+            },
+            "entityCount": 12,
+            "intentCount": 46,
+            "projectionCount": 9,
+            "unclassifiedIntents": 11,
+            "deadEntities": 5
+          }
+        }
+      }
+    }
+  },
+  "crossDomain": {
+    "sharedEntities": [
+      {
+        "entity": "Review",
+        "domains": [
+          "booking",
+          "sales",
+          "delivery",
+          "freelance"
+        ]
+      },
+      {
+        "entity": "Participant",
+        "domains": [
+          "planning",
+          "messenger"
+        ]
+      },
+      {
+        "entity": "User",
+        "domains": [
+          "messenger",
+          "sales",
+          "lifequest",
+          "reflect",
+          "invest",
+          "delivery",
+          "freelance"
+        ]
+      },
+      {
+        "entity": "Message",
+        "domains": [
+          "messenger",
+          "sales"
+        ]
+      },
+      {
+        "entity": "Category",
+        "domains": [
+          "sales",
+          "freelance"
+        ]
+      },
+      {
+        "entity": "Order",
+        "domains": [
+          "sales",
+          "delivery"
+        ]
+      },
+      {
+        "entity": "Watchlist",
+        "domains": [
+          "sales",
+          "invest"
+        ]
+      },
+      {
+        "entity": "Notification",
+        "domains": [
+          "sales",
+          "delivery"
+        ]
+      },
+      {
+        "entity": "Goal",
+        "domains": [
+          "lifequest",
+          "invest"
+        ]
+      },
+      {
+        "entity": "Task",
+        "domains": [
+          "lifequest",
+          "freelance"
+        ]
+      },
+      {
+        "entity": "Transaction",
+        "domains": [
+          "invest",
+          "freelance"
+        ]
+      },
+      {
+        "entity": "AgentPreapproval",
+        "domains": [
+          "invest",
+          "delivery"
+        ]
+      }
+    ],
+    "sharedIntents": [
+      {
+        "intent": "leave_review",
+        "domains": [
+          "booking",
+          "sales",
+          "freelance"
+        ]
+      },
+      {
+        "intent": "delete_review",
+        "domains": [
+          "booking",
+          "sales"
+        ]
+      },
+      {
+        "intent": "edit_review",
+        "domains": [
+          "booking",
+          "sales"
+        ]
+      },
+      {
+        "intent": "respond_to_review",
+        "domains": [
+          "booking",
+          "sales"
+        ]
+      },
+      {
+        "intent": "close_poll",
+        "domains": [
+          "planning",
+          "messenger"
+        ]
+      },
+      {
+        "intent": "send_message",
+        "domains": [
+          "messenger",
+          "sales"
+        ]
+      },
+      {
+        "intent": "delete_message",
+        "domains": [
+          "messenger",
+          "sales"
+        ]
+      },
+      {
+        "intent": "reply_to_message",
+        "domains": [
+          "messenger",
+          "sales"
+        ]
+      },
+      {
+        "intent": "report_message",
+        "domains": [
+          "messenger",
+          "sales"
+        ]
+      },
+      {
+        "intent": "update_profile",
+        "domains": [
+          "messenger",
+          "sales",
+          "lifequest",
+          "reflect",
+          "invest",
+          "freelance"
+        ]
+      },
+      {
+        "intent": "set_avatar",
+        "domains": [
+          "messenger",
+          "sales",
+          "lifequest",
+          "reflect"
+        ]
+      },
+      {
+        "intent": "set_privacy_settings",
+        "domains": [
+          "messenger",
+          "sales"
+        ]
+      },
+      {
+        "intent": "set_language",
+        "domains": [
+          "messenger",
+          "sales"
+        ]
+      },
+      {
+        "intent": "enable_2fa",
+        "domains": [
+          "messenger",
+          "sales"
+        ]
+      },
+      {
+        "intent": "delete_account",
+        "domains": [
+          "messenger",
+          "sales",
+          "lifequest",
+          "reflect"
+        ]
+      },
+      {
+        "intent": "ban_user",
+        "domains": [
+          "messenger",
+          "sales"
+        ]
+      },
+      {
+        "intent": "unban_user",
+        "domains": [
+          "messenger",
+          "sales"
+        ]
+      },
+      {
+        "intent": "confirm_delivery",
+        "domains": [
+          "sales",
+          "delivery"
+        ]
+      },
+      {
+        "intent": "cancel_order",
+        "domains": [
+          "sales",
+          "delivery"
+        ]
+      },
+      {
+        "intent": "request_refund",
+        "domains": [
+          "sales",
+          "delivery"
+        ]
+      },
+      {
+        "intent": "add_to_watchlist",
+        "domains": [
+          "sales",
+          "invest"
+        ]
+      },
+      {
+        "intent": "remove_from_watchlist",
+        "domains": [
+          "sales",
+          "invest"
+        ]
+      },
+      {
+        "intent": "filter_by_category",
+        "domains": [
+          "sales",
+          "freelance"
+        ]
+      },
+      {
+        "intent": "set_price_alert",
+        "domains": [
+          "sales",
+          "invest"
+        ]
+      },
+      {
+        "intent": "create_goal",
+        "domains": [
+          "lifequest",
+          "invest"
+        ]
+      },
+      {
+        "intent": "edit_goal",
+        "domains": [
+          "lifequest",
+          "invest"
+        ]
+      },
+      {
+        "intent": "edit_task",
+        "domains": [
+          "lifequest",
+          "freelance"
+        ]
+      },
+      {
+        "intent": "update_streak",
+        "domains": [
+          "lifequest",
+          "reflect"
+        ]
+      },
+      {
+        "intent": "export_data",
+        "domains": [
+          "lifequest",
+          "reflect"
+        ]
+      },
+      {
+        "intent": "reset_progress",
+        "domains": [
+          "lifequest",
+          "reflect"
+        ]
+      }
+    ]
+  }
+}
