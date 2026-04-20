@@ -763,7 +763,7 @@ export const INTENTS = {
     // select_executor + confirm_deal, на странице Response.
     particles: {
       // Deal исключён из entities — иначе SDK дублирует кнопку на
-      // deal_detail_customer (appliesToMainEntity=Deal). Per-item на Response
+      // deal_detail (appliesToMainEntity=Deal). Per-item на Response
       // в task_detail_customer — единственное корректное место.
       entities: ["response: Response", "task: Task"],
       conditions: ["response.status = 'selected'"],

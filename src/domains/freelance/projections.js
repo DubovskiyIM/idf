@@ -12,9 +12,13 @@
  * Авторские overrides ниже — только поля, где derivation недостаточна:
  *  - display witnesses списков (R6 подмешивает intent-параметры типа
  *    comment/reason/result, не подходящие для list-view);
- *  - навигация onItemClick в role-specific detail (deal_detail_customer);
+ *  - навигация onItemClick в derived detail (task_detail / deal_detail);
  *  - ROOT market-filter (task_catalog_public): exclude-self +
  *    exclude-already-selected — не derivable.
+ *
+ * Role-specific wrapper'ы deal_detail_customer/_executor удалены после
+ * добавления intent.permittedFor на deal phase-transitions — derived
+ * deal_detail фильтрует toolbar per-role автоматически.
  */
 export const PROJECTIONS = {
 
@@ -82,7 +86,7 @@ export const PROJECTIONS = {
     witnesses: ["taskId", "amount", "status", "deadline"],
     onItemClick: {
       action: "navigate",
-      to: "deal_detail_customer",
+      to: "deal_detail",
       params: { dealId: "item.id" },
     },
   },
@@ -92,12 +96,24 @@ export const PROJECTIONS = {
     toolbar: ["top_up_wallet_by_card", "view_transaction_history"],
   },
 
-  // ─── Role-specific detail overrides — toolbar whitelist ───
-  // TODO (Stage 2): добавить intent.permittedFor: "customerId" | "executorId"
-  // на deal-phase-transitions (accept_result, request_revision,
-  // submit_work_result, submit_revision) → derived deal_detail даст per-role
-  // toolbar автоматически, эти wrapper'ы можно удалить.
+  // ─── Field-level override на derived deal_detail ───
+  // Role-specific wrapper'ы (deal_detail_customer/_executor) удалены: single
+  // derived deal_detail с per-intent permittedFor фильтрует toolbar по роли
+  // автоматически. Authored override добавляет display-witnesses (R6 union
+  // подмешивает phase-params comment/reason/result, не подходящие для detail)
+  // + disables footer-inline-setter-pattern (textarea-setter скрыл бы
+  // request_revision из toolbar).
 
+  deal_detail: {
+    witnesses: ["amount", "commission", "status", "deadline", "completedAt", "result", "links", "revisionComment"],
+    patterns: { disabled: ["footer-inline-setter"] },
+  },
+
+  // Task-detail для customer'а с пользовательским toolbar whitelist.
+  // Не консолидируем с derived task_detail: authored toolbar жёстко задаёт
+  // порядок edit_task/publish_task/cancel/select_executor + в derived
+  // task_detail R6 union witnesses содержит price/deliveryDays из
+  // submit_response (не нужны customer'у).
   task_detail_customer: {
     name: "Задача (автор)",
     kind: "detail",
@@ -117,48 +133,6 @@ export const PROJECTIONS = {
       },
     ],
     toolbar: ["edit_task", "publish_task", "cancel_task_before_deal", "select_executor"],
-  },
-
-  deal_detail_customer: {
-    name: "Сделка (заказчик)",
-    kind: "detail",
-    mainEntity: "Deal",
-    entities: ["Deal", "Transaction", "Task", "ExecutorProfile"],
-    idParam: "dealId",
-    witnesses: ["amount", "commission", "status", "deadline", "completedAt", "result", "links", "revisionComment"],
-    subCollections: [
-      {
-        entity: "Transaction",
-        foreignKey: "dealId",
-        title: "Операции",
-        addable: false,
-      },
-    ],
-    toolbar: ["accept_result", "request_revision", "cancel_deal_mutual"],
-    // SDK footer-inline-setter-pattern матчит single-replace-effect intents
-    // и переносит их из toolbar в footer как inline-setter'ы. Для наших
-    // accept/request_revision/submit_work_result это неверно — там textarea-
-    // параметры + confirm-dialog нужны. Отключаем на deal-детали.
-    patterns: { disabled: ["footer-inline-setter"] },
-  },
-
-  deal_detail_executor: {
-    name: "Сделка (исполнитель)",
-    kind: "detail",
-    mainEntity: "Deal",
-    entities: ["Deal", "Transaction", "Task"],
-    idParam: "dealId",
-    witnesses: ["amount", "status", "deadline", "completedAt", "result", "links", "revisionComment"],
-    subCollections: [
-      {
-        entity: "Transaction",
-        foreignKey: "dealId",
-        title: "Операции",
-        addable: false,
-      },
-    ],
-    toolbar: ["submit_work_result", "submit_revision", "cancel_deal_mutual"],
-    patterns: { disabled: ["footer-inline-setter"] },
   },
 
 };
