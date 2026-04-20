@@ -82,11 +82,11 @@
 
 ## 3. `@intent-driven/renderer` — `ArchetypeDetail`, `FormModal`, `PrimaryCTA`
 
-### 3.1 ⛔ `PrimaryCTAList` не рендерит форму для multi-param phase-transitions
-**Файл:** `packages/renderer/src/archetypes/ArchetypeDetail.jsx:267-320`
-**Проблема.** `onClick={() => ctx.exec(spec.intentId, {id: target.id})}` — параметры `spec.parameters` **никогда** не собираются. Для `submit_work_result` с `result`/`links` — параметры теряются.
-**Workaround в idf.** Форсировал `irreversibility:"high"` на submit_work_result/submit_revision/request_revision, чтобы их исключил фильтр `primaryCTA` (line 135: `!== "high"`). С `control:"formModal"` попадают в toolbar.
-**Что сделать.** PrimaryCTAList должен рендерить overlay-form, если `spec.parameters.length > 0`. Или assignToSlotsDetail не должен класть intents с параметрами в primaryCTA.
+### 3.1 ✅ `PrimaryCTAList` не рендерит форму для multi-param phase-transitions
+**Статус:** закрыто в idf-sdk PR #50 (merged 2026-04-19). Phase-transitions с параметрами идут через `wrapByConfirmation` → toolbar-overlay независимо от irreversibility. Host-workaround `irreversibility:"high"` на `submit_work_result` / `request_revision` / `submit_revision` снят в idf PR `feat/sdk-p0-integration` (2026-04-20) — вернули семантически корректный `medium`.
+
+**Исходная проблема (для истории):** `packages/renderer/src/archetypes/ArchetypeDetail.jsx:267-320` — `onClick={() => ctx.exec(spec.intentId, {id: target.id})}` параметры `spec.parameters` никогда не собирались.
+**Workaround в idf был:** форсирован `irreversibility:"high"` на submit_work_result/submit_revision/request_revision, чтобы их исключил фильтр `primaryCTA` (line 135: `!== "high"`). С `control:"formModal"` попадали в toolbar.
 
 ### 3.2 ⛔ `ownershipConditionFor` хардкод одного ownerField
 **Файл:** `packages/core/src/crystallize_v2/assignToSlotsDetail.js:265-282`
@@ -117,27 +117,17 @@
 
 ## 4. Control Archetypes & Pattern Bank
 
-### 4.1 ⛔ `inferParameters` не читает `intent.particles.parameters`
-**Файл:** `packages/core/src/crystallize_v2/inferParameters.js:37-39`
-**Проблема.** `if (Array.isArray(intent.parameters)) return intent.parameters` — smart-short-circuit работает только для top-level. Но IDF-convention (planning/sales/freelance) часто пишет в `particles.parameters` для декларативной группировки. В результате SDK добавляет inferred поля (например `responsesCount` для `create_task_draft` из Task ontology fields).
-**Workaround в idf.** Дублирование — `parameters` на top-level + `particles.parameters` для декларативной read-by-domain-tooling.
-**Что сделать.** Проверять оба:
-```js
-if (Array.isArray(intent.parameters)) return intent.parameters;
-if (Array.isArray(intent.particles?.parameters)) return intent.particles.parameters;
-```
+### 4.1 ✅ `inferParameters` не читает `intent.particles.parameters`
+**Статус:** закрыто в idf-sdk PR #50 (merged 2026-04-19). Fallback на `intent.particles.parameters` добавлен. Совокупно с §4.2 закрыло my_deals-heroCreate edge-case, что позволило вернуть `creates:"Deal"` в `confirm_deal` (idf PR `feat/sdk-p0-integration`, 2026-04-20).
 
-### 4.2 ⛔ `heroCreate` матчер читает `intent.particles.confirmation`, но IDF-авторы часто ставят top-level
-**Файл:** `packages/core/src/crystallize_v2/controlArchetypes.js:281-286`
-**Проблема.** Guard `if (c === "form" && witnesses.length > 1) return false` читает `intent.particles?.confirmation`. Freelance изначально имел `confirmation:"form"` на top-level — heroCreate активировался для multi-param creator'а, форма сводилась к одиночному inline title-input.
-**Workaround в idf.** Перенесли в `particles.confirmation` везде.
-**Что сделать.** `selectArchetype` нормализует: `intent.confirmation ?? intent.particles?.confirmation`.
+### 4.2 ✅ `heroCreate` матчер нормализует top-level confirmation
+**Статус:** закрыто в idf-sdk PR #50 (merged 2026-04-19). `selectArchetype` нормализует `intent.confirmation ?? intent.particles?.confirmation`.
 
-### 4.3 ⛔ `footer-inline-setter` слишком агрессивен
-**Файл:** `packages/core/src/patterns/stable/detail/footer-inline-setter.js`
-**Проблема.** Матчер: `effects.length === 1 && α === "replace"`. НЕ проверяет parameters. Мои `request_revision` (1 effect + textarea-param `comment`) попал — переведён из toolbar в footer как `{label: [textarea] Установить}`. UX для textarea-setter сомнителен, плюс скрыл кнопку из toolbar.
-**Workaround в idf.** `projection.patterns: { disabled: ["footer-inline-setter"] }` на deal-деталях.
-**Что сделать.** Добавить второе условие матчера: `parameters.every(p => p.control ∈ {"text", "number", "select", "date", "datetime"})`. Textarea/file/multiImage → skip.
+### 4.3 ✅ `footer-inline-setter` слишком агрессивен
+**Статус:** закрыто в idf-sdk PR #50 (merged 2026-04-19). Matcher теперь отсекает `parameters` с `control ∈ {textarea, file, multiImage}`. Host-workaround `projection.patterns.disabled:["footer-inline-setter"]` снят в idf PR `feat/sdk-p0-integration` (2026-04-20) на `deal_detail_customer` / `deal_detail_executor`.
+
+**Исходная проблема (для истории):** матчер `effects.length === 1 && α === "replace"` не проверял parameters. `request_revision` (1 effect + textarea `comment`) попадал — переведён из toolbar в footer.
+**Workaround в idf был:** `projection.patterns: { disabled: ["footer-inline-setter"] }` на двух deal-проекциях.
 
 ### 4.4 🟡 `collapseToolbar` dedup по `icon`
 **Файл:** `packages/core/src/crystallize_v2/assignToSlotsDetail.js:217-228`
