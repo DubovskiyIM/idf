@@ -282,10 +282,12 @@ export default function V2Shell({
     return () => window.removeEventListener("keydown", onKey);
   }, [prefs.patternInspector, setPref]);
 
-  // Hotkey Cmd+Shift+C / Ctrl+Shift+C — toggle Crystallize Inspector drawer.
+  // Hotkey Cmd+Shift+D / Ctrl+Shift+D — toggle Crystallize Inspector drawer.
+  // D = Derivation. Был Cmd+Shift+C, но это конфликтует с Chrome DevTools
+  // Inspect Element в браузере.
   useEffect(() => {
     const onKey = (e) => {
-      if ((e.metaKey || e.ctrlKey) && e.shiftKey && e.key && e.key.toLowerCase() === "c") {
+      if ((e.metaKey || e.ctrlKey) && e.shiftKey && e.key && e.key.toLowerCase() === "d") {
         e.preventDefault();
         setPref("crystallizeInspector", !prefs.crystallizeInspector);
       }

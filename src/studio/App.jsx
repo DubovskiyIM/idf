@@ -45,7 +45,7 @@ function computeDiff(oldGraph, newGraph) {
 // Верхний tab-strip: переключатель между Graph (структура) / Прототип
 // (runtime-UI того же домена) / Patterns (Pattern Bank). Высота 44px
 // фиксирована, вложенные view рассчитывают через calc(100vh - 44px).
-function TabStrip({ view, setView, domainName, onTogglePhi, phiOpen, onToggleChat, chatOpen, onOpenPrefs, readonly }) {
+function TabStrip({ view, setView, domainName, onTogglePhi, phiOpen, onToggleChat, chatOpen, onToggleCrystallize, crystallizeOpen, onOpenPrefs, readonly }) {
   const hasDomain = !!domainName;
   const tabStyle = (active, disabled = false) => ({
     padding: "10px 20px",
@@ -118,6 +118,11 @@ function TabStrip({ view, setView, domainName, onTogglePhi, phiOpen, onToggleCha
               title={readonly ? "Chat недоступен — Claude CLI не установлен" : "Chat с Claude · ⌘K"}
             >⌘K Chat</button>
             <button onClick={onTogglePhi} style={actionStyle(phiOpen)} title="Φ-журнал · ⌘J">⌘J Φ</button>
+            <button
+              onClick={onToggleCrystallize}
+              style={actionStyle(crystallizeOpen)}
+              title="Crystallize Inspector (artifact + derivedBy witnesses) · ⌘⇧D"
+            >⌘⇧D 💎</button>
             <button
               onClick={onOpenPrefs}
               title="Настройки UI"
@@ -437,6 +442,14 @@ export default function App() {
         phiOpen={phiOpen}
         onToggleChat={() => setChatOpen((v) => !v)}
         chatOpen={chatOpen}
+        onToggleCrystallize={() => {
+          // Drawer рендерится внутри V2Shell (prototype view). Если мы на
+          // графе — переключаемся, чтобы увидеть drawer. Pref persists через
+          // localStorage — V2Shell подхватит состояние при монтировании.
+          if (view !== "prototype") setView("prototype");
+          setPref("crystallizeInspector", !prefs.crystallizeInspector);
+        }}
+        crystallizeOpen={!!prefs.crystallizeInspector}
         onOpenPrefs={() => setPrefsOpen(true)}
         readonly={readonly}
       />
