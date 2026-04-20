@@ -1,7 +1,7 @@
 # Domain audit — 2026-04-20
 
-**Generated:** 2026-04-20T08:51:06.500Z
-**Total findings:** 180 (error: 0, warning: 96, info: 84)
+**Generated:** 2026-04-20T09:12:25.896Z
+**Total findings:** 179 (error: 0, warning: 95, info: 84)
 
 > Report-only. Regeneration: `node scripts/audit-report.mjs`. Design rationale — `docs/superpowers/specs/2026-04-20-domain-audit-design.md` (local).
 
@@ -13,7 +13,7 @@
 | format | 45 |
 | collision | 42 |
 | structural | 19 |
-| derivation | 9 |
+| derivation | 8 |
 | testing | 7 |
 | patterns | 3 |
 
@@ -25,7 +25,7 @@
 | invest | 37 |
 | delivery | 28 |
 | freelance | 22 |
-| sales | 11 |
+| sales | 10 |
 
 ## Axis 2 — Derivation health
 
@@ -35,7 +35,7 @@
 | planning | 3 | 0 | 3 | 1 | 0 | 0 | 0 | 3 | 10/10 | 0 | 0 |
 | workflow | 4 | 0 | 4 | 1 | 0 | 0 | 0 | 4 | 9/11 | 0 | 0 |
 | messenger | 5 | 0 | 5 | 1 | 0 | 0 | 0 | 5 | 16/21 | 0 | 0 |
-| sales | 15 | 0 | 15 | 1 | 0 | 0 | 0 | 15 | 57/86 | 4 | 0 |
+| sales | 15 | 0 | 15 | 1 | 0 | 0 | 0 | 15 | 57/86 | 0 | 0 |
 | lifequest | 12 | 0 | 12 | 1 | 0 | 0 | 0 | 12 | 36/32 | 0 | 0 |
 | reflect | 13 | 0 | 13 | 1 | 0 | 0 | 0 | 13 | 23/31 | 0 | 0 |
 | invest | 23 | 0 | 23 | 1 | 0 | 0 | 9 | 14 | 46/38 | 0 | 0 |
@@ -216,7 +216,6 @@
 
 ### sales
 
-- ⚠️ **derivationHealth** — 4 alphabetical-fallback witness'ов (intent.salience не объявлена)
 - ⚠️ **sdkIdiom** — Intent "remove_listing" — legacy irreversibility:"high" без context.__irr
 - ⚠️ **sdkIdiom** — Intent "suspend_user" — legacy irreversibility:"high" без context.__irr
 - ⚠️ **sdkIdiom** — Intent "ban_user" — legacy irreversibility:"high" без context.__irr
