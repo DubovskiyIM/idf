@@ -38,7 +38,7 @@ npm run dev       # terminal 2 — :5173
 
 ### 4. Customer A выбирает исполнителя
 
-1. В A: открыть «Тест-задача escrow» (my_task_list или task_detail_customer)
+1. В A: открыть «Тест-задача escrow» (my_task_list или task_detail)
 2. В subCollection «Отклики» → действие `select_executor`: id=<отклик B>, taskId=<задача>
 3. **Verify:** отклик B status=selected; остальные отклики → not_chosen
 

@@ -17,7 +17,7 @@
   - Review (3): leave / reply / view
 - **6 invariants**: task FSM, response FK, cardinality (1 selected per task), deal FSM, aggregate (wallet.reserved = Σ escrow-hold), referential (customerId ≠ executorId)
 - **2 Rules**: auto_accept_after_3d (schedule), recalc_rating (aggregation, weightedAvg с halfLife 180d)
-- **8 projections** (5 в ROOT): task_catalog_public (authored market-filter), my_task_list / my_response_list / my_deal_list / my_wallet_detail (derived R7/R7b/R3b + field-level authored overrides), + task_detail_*, deal_detail_*, task_detail_customer (role-specific toolbar)
+- **7 projections** (5 в ROOT): task_catalog_public (authored market-filter), my_task_list / my_response_list / my_deal_list / my_wallet_detail (derived R7/R7b/R3b + field-level authored overrides), + task_detail / deal_detail (derived + field-level override с `toolbar` whitelist — per-role через ownership cond + permittedFor, role-specific wrapper'ы удалены в Stage 5)
 - **Escrow computation layer** (custom `buildEffects`): 6 custom branches
   - `top_up_wallet_by_card` — Transaction(topup) + replace wallet.balance
   - `confirm_deal` — Deal(in_progress) + Transaction(escrow-hold) + replace customer.balance/reserved; guard: balance >= amount

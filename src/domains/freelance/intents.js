@@ -263,8 +263,8 @@ export const INTENTS = {
     particles: {
       entities: ["task: Task"],
       conditions: ["task.status = 'draft'"],
+      // id — implicit из per-item context (target.id), не user-input.
       parameters: [
-        { name: "id", type: "id", required: true },
         { name: "title", type: "text" },
         { name: "description", type: "text" },
         { name: "budget", type: "number" },
@@ -276,8 +276,8 @@ export const INTENTS = {
         { α: "replace", target: "task.budget" },
         { α: "replace", target: "task.deadline" },
       ],
+      confirmation: "form",
     },
-    confirmation: "auto",
   },
 
   publish_task: {
@@ -289,14 +289,11 @@ export const INTENTS = {
     particles: {
       entities: ["task: Task"],
       conditions: ["task.status = 'draft'"],
-      parameters: [
-        { name: "id", type: "id", required: true },
-      ],
       effects: [
         { α: "replace", target: "task.status", value: "published" },
       ],
+      confirmation: "click",
     },
-    confirmation: "auto",
   },
 
   cancel_task_before_deal: {
@@ -308,14 +305,11 @@ export const INTENTS = {
     particles: {
       entities: ["task: Task"],
       conditions: ["task.status = 'published'"],
-      parameters: [
-        { name: "id", type: "id", required: true },
-      ],
       effects: [
         { α: "replace", target: "task.status", value: "closed" },
       ],
+      confirmation: "click",
     },
-    confirmation: "auto",
   },
 
   search_tasks: {
@@ -780,7 +774,7 @@ export const INTENTS = {
     particles: {
       // Deal исключён из entities — иначе SDK дублирует кнопку на
       // deal_detail (appliesToMainEntity=Deal). Per-item на Response
-      // в task_detail_customer — единственное корректное место.
+      // в task_detail — единственное корректное место.
       entities: ["response: Response", "task: Task"],
       conditions: ["response.status = 'selected'"],
       confirmation: "click",
