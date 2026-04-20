@@ -146,6 +146,28 @@
 **Owner:** `idf-spec/` + 4 implementations
 **Связано:** Манифест §26 «Нормативная спека» + «Второй reference implementation»
 
+### 2.5 Salience declaration-order → numeric sub-ranks
+
+**Дата:** 2026-04-20
+**Контекст:** Declaration-order ladder (SDK #88 + #90) довёл alpha-fb witnesses до 0 во всех 10 доменах. Open direction из manifesto §26 — **numeric salience для fine-ranking внутри одного tier** (e.g. несколько primary intents требуют явного ordering). Сейчас поверх discrete labels `{primary|secondary|tertiary|utility}` работает declaration-order; numeric (100, 110, 120) даёт автору explicit fine-rank без reorder.
+**Action:** Design в `idf-manifest-v2.1` — примеры use cases, heuristics для computed numeric из particles, migration path от labels → numbers. Implementation — уже поддерживается в SDK (computeSalience принимает numbers).
+**Owner:** `idf-manifest-v2.1/docs/design/` + SDK core documentation
+
+### 2.6 Pattern bank promotion heuristics — computed defaults
+
+**Дата:** 2026-04-20
+**Контекст:** При нехватке explicit salience, computed fallback в `salience.js` даёт 80/70/60/40/30/10 на основе effect shape. Но не покрывает все cases (например: phase-transition с `revokeOn` → больший salience? intent с `preapproval` → меньший visibility?). Эти правила — implicit heuristics, накапливаются в SDK без формальной спеки.
+**Action:** Собрать все правила computed в § design-spec; задокументировать «когда computed mispredict'ает» на реальных доменах (можно через audit tool — detection pattern).
+**Owner:** `idf-manifest-v2.1/docs/design/intent-salience-spec.md` extension
+
+### 2.7 Manifesto ↔ code drift как first-class metric
+
+**Дата:** 2026-04-20
+**Контекст:** Сегодняшняя ревизия `manifesto-v2.md` vs `implementation-status.md` vs реальный код показала: манифест §26 говорил «Цель довести alpha-fb до 0» как aspiration, а код уже это достиг. Implementation-status отставал на 2+ версии SDK. README — на 4 домена. Это sample of §24 methodological note в действии.
+**Observation:** Нужен auto-link между manifest claim и concrete state. Один из подходов — manifest теги `[impl-status: ...]` с regex-probe from implementation-status. Drift-protection detector-0. Но это инструментальный слой, не blocking.
+**Action:** Deferred — требует design о semantic-tag format.
+**Owner:** `idf-manifest-v2.1/docs/design/` (будущий `manifest-drift-linking-spec.md`)
+
 ---
 
 ## 3. Cross-cutting observations
@@ -169,6 +191,18 @@
 **Дата:** 2026-04-20
 **Контекст:** За сегодняшнюю сессию создано 4+ worktree'ев (derivation-xray в idf + idf-sdk, drift-protection в manifest, session-backlog в idf). Изоляция помогает.
 **Observation:** Конвенция: один worktree = один coherent PR workstream. Cleanup через `git worktree remove` после merge.
+
+### 3.4 Runtime↔manifest drift — отдельный класс от docs↔code drift
+
+**Дата:** 2026-04-20
+**Контекст:** Reflect имел 6 canvas-проекций и 6 canvas-компонентов, типизированных корректно в `projections.js` (kind:"canvas"), но ни один не зарегистрирован в `DomainRuntime.jsx::registerCanvas()`. Baг жил с v1.6.2 (9-й полевой тест). Ревизия manifesto↔implementation-status не поймала бы этот bug — все три authoritative документа говорили правду, но runtime mapping отсутствовал. См. PR #75.
+**Observation:** Помимо documentation↔code drift есть **runtime-registry drift**: декларации в ontology/projections корректны, но host забыл прописать соответствующий impl-bridge (registerCanvas, registerUIAdapter, registerCustomCapture). Документация про это не знает — она описывает namespace, не runtime wiring.
+**Action:** Automatic checker в host startup или unit-test:
+- Scan all `src/domains/*/projections.js` на `kind: "canvas"` entries
+- Сверить с списком `registerCanvas()` calls в `DomainRuntime.jsx`
+- Warning/error на unmatched entries
+**Owner:** `src/runtime/DomainRuntime.jsx` или отдельный `DomainRuntime.test.jsx`
+**Meta:** Паттерн session-docs-revision (memory) нужно расширить до «docs↔code↔runtime-registry» три-пунктовой ревизии.
 
 ### 1.X Renderer-support для новых filter-форматов (R7b / R10 / R11 v2)
 

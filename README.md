@@ -7,7 +7,7 @@
 [![spec Apache 2.0](https://img.shields.io/badge/spec-Apache%202.0-green)](./spec/LICENSE)
 [![core BSL 1.1](https://img.shields.io/badge/%40intent--driven%2Fcore-BSL%201.1-orange)](https://github.com/DubovskiyIM/idf-sdk/blob/main/packages/core/LICENSE)
 [![clients MIT](https://img.shields.io/badge/clients-MIT-blue)](./LICENSE-CODE)
-[![tests 426+356](https://img.shields.io/badge/tests-426%20prototype%20%2B%20356%20SDK-brightgreen)](./docs/field-test-11.md)
+[![tests 744+1160](https://img.shields.io/badge/tests-744%20prototype%20%2B%201160%20SDK-brightgreen)](./docs/implementation-status.md)
 
 Приложения **выводятся** из формального описания намерений (intents) и проекций (projections). Автор — режиссёр, ведущий диалог с моделью о том, *что* должно произойти; модель — соавтор, кристаллизующий это в исполнимый интерфейс. Рантайм — детерминированный: никаких запросов к API моделей во время использования приложения.
 
@@ -84,17 +84,18 @@ npm run dev                 # → переключить домен на deliver
 
 ---
 
-## Девятидоменный прототип — 572 намерения в одном потоке Φ
+## Десятидоменный прототип — 634 намерения в одном потоке Φ
 
 | Домен | Намерений | Особенность |
 |-------|-----------|-------------|
-| **Sales** | 223 | Аукционная барахолка, 4 роли, чисто-кристаллизационный (без ManualUI) |
-| **Messenger** | 99 | WebSocket + WebRTC, real-time, 15 custom canvas |
+| **Sales** | 225 | Аукционная барахолка, 4 роли, чисто-кристаллизационный (без ManualUI) |
+| **Messenger** | 100 | WebSocket + WebRTC, real-time, 15 custom canvas |
+| **Invest** | 61 | Fintech, 4 роли, 7 правил Rules Engine, 3 ML-сервиса, AntD enterprise-fintech |
 | **LifeQuest** | 56 | Цели + привычки, shadcn/doodle, mobile-first, 6 canvas |
-| **Invest** | 49 | Fintech, 4 роли, 7 правил Rules Engine, 3 ML-сервиса |
 | **Reflect** | 47 | Дневник эмоций (Yale RULER), Apple visionOS-glass, analytical canvas |
+| **Freelance** | 46 | Биржа услуг, multi-owner (Deal с customer+executor), escrow, revision-loop |
 | **Delivery** | 45 | Food last-mile, 5 ролей, три paradigm-additions (scheduler+map+irreversibility) |
-| **Booking** | 21 | Онлайн-запись, темпоральные предикаты, wizard |
+| **Booking** | 22 | Онлайн-запись, темпоральные предикаты, wizard |
 | **Planning** | 17 | Коллективные опросы, кворум, phase-aware CTA |
 | **Workflow** | 15 | Визуальный редактор процессов, React Flow canvas |
 
@@ -167,15 +168,16 @@ npm run dev                 # → переключить домен на deliver
 ## Тесты, сборка, демо-скрипты
 
 ```bash
-npm test                  # 426 unit-тестов прототипа
+npm test                  # 744 unit-теста прототипа
 npm run build             # production-сборка
-npm run agent-smoke       # 75-шаговый integration test (9 доменов)
+npm run agent-smoke       # 75-шаговый integration test (10 доменов)
+npm run audit-report      # 7-осевой аудит доменов → docs/domain-audit.{md,json}
 npm run sales-demo        # walkthrough аукциона (12 шагов)
 npm run delivery-seed     # bootstrap demo для delivery
 npm run crystallize-llm   # LLM enrichment (опц., требует ANTHROPIC_API_KEY)
 ```
 
-SDK monorepo живёт в sibling репозитории [DubovskiyIM/idf-sdk](https://github.com/DubovskiyIM/idf-sdk) — 7 пакетов, 356 тестов, tsup + vitest.
+SDK monorepo живёт в sibling репозитории [DubovskiyIM/idf-sdk](https://github.com/DubovskiyIM/idf-sdk) — 8 пакетов, ~1160 тестов, tsup + vitest.
 
 ---
 
@@ -190,7 +192,9 @@ SDK monorepo живёт в sibling репозитории [DubovskiyIM/idf-sdk](
 
 ## Статус
 
-**v1.7 — production-ready research-prototype.** Четвёртый релиз подряд с пустой аспирационной категорией §26 манифеста. Все декларации манифеста подтверждены кодом (426 + 356 тестов). Все три paradigm additions v1.7 (scheduler, map, irreversibility) интегрированы в live-домен delivery.
+**v1.13 — production-ready research-prototype.** 10 доменов, ~1904 теста (744 прототип + 1160 SDK), все декларации манифеста v2 подтверждены кодом. Три paradigm additions v1.7 (scheduler, map, irreversibility) интегрированы в live-домен delivery. Pattern Bank execution (3 паттерна с apply), Derivation X-ray (§27 authoring observability), drift-protection spec с reader-equivalence invariant §23.
+
+**Salience declaration-order ladder** закрыл `alphabetical-fallback` witness-basis полностью (19 → 0 в 10 доменах) без массовых доменных аннотаций — через authorial `Object.entries(INTENTS)` index в tie-break ladder.
 
 SDK на публичном npm: https://www.npmjs.com/org/intent-driven
 
