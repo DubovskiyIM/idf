@@ -39,8 +39,9 @@
 | invest | 61 | User, Portfolio, Position, Asset, Transaction, Goal, RiskProfile, Recommendation, Alert, Watchlist, MarketSignal, Assignment, AgentPreapproval, Rule | **10-й полевой тест**, **AntD enterprise-fintech** адаптер. 4 роли (investor/advisor/agent/observer), 7 правил Rules Engine (все 4 v1.5 ext), 3 внешних ML-сервиса. Закрыл 6 §26 open items. |
 | delivery | 45 | User, Merchant, MenuItem, Zone, DispatcherAssignment, Order, OrderItem, Delivery, Address, CourierLocation, Payment, Notification, Review, AgentPreapproval | **11-й полевой тест**, food/groceries last-mile. 5 ролей (customer/courier/merchant/dispatcher/agent), dispatcher m2m через DispatcherAssignment. 8 правил (5 temporal schedule v2, 1 threshold, 1 condition, 1 aggregation), 3 canvas с map-primitive, `capture_payment` с `__irr`. Применяет все 3 paradigm additions v1.7 совместно. |
 | freelance | 46 | User, Task, Response, Deal, Wallet, Transaction, Review, Category | **12-й полевой тест**, биржа услуг. Multi-owner (customerId + executorId) на Deal, escrow (hold/release), revision-loop (`on_review ↔ revision_requested`), комиссия платформы. `__irr.high` на `confirm_deal`. Выявил 40+ SDK gap'ов — см. `docs/sdk-improvements-backlog.md`. |
+| compliance | 38 | User, Department, Control, JournalEntry, Approval, AttestationCycle, Attestation, Finding, Evidence, Amendment | **13-й полевой тест**, SOX ICFR / «provable UI». 6 ролей (preparer/reviewer/approver/controlOwner/auditor/cfo), 15 invariants (5 expression-kind — SoD triplet + dynamic threshold + cycle-close), 7 правил (все 4 v1.5 ext), 5 `__irr:high` intents (approve_je / submit_attestation / amend_attestation / sign_off_cycle_404 / file_amendment). **Первый домен со всеми 5 behavioral patterns** signal-classifier'а. AntD reuse. Закрыл backlog §1.1 (expression-kind). |
 
-Переключатель доменов в `prototype.jsx`. Один движок, **десять** наборов определений.
+Переключатель доменов в `prototype.jsx`. Один движок, **одиннадцать** наборов определений.
 
 ### UI-адаптеры (§17)
 
@@ -58,7 +59,7 @@
 ```
 # Прототип (host-слой, минимальный после SDK Phase 2 extraction)
 src/
-  domains/{booking,planning,workflow,messenger,sales,lifequest,reflect,invest,delivery,freelance}/
+  domains/{booking,planning,workflow,messenger,sales,lifequest,reflect,invest,delivery,freelance,compliance}/
   studio/           # §27 Authoring environment — Graph3D + Claude proxy (dev-time, port :4000)
   runtime/
     # engine / fold / intentAlgebra / crystallize_v2 / primitives / adapters
@@ -112,9 +113,9 @@ scripts/    # agent-login, agent-smoke (75 шагов)
 
 **Онтология (§14, v1.6)** — типизированные поля с read/write matrix. `entity.kind` таксономия: `internal` / `reference` (v1.6) / `mirror` / `assignment`. `ownerField` для single-owner, `role.scope` для m2m (v1.6). `inferFieldRole` → семантические роли (v1.6: +money/percentage/trend/ticker).
 
-**Глобальные инварианты (§14, v1.6.1)** — `ontology.invariants[]` с 5 kind'ами (`role-capability` / `referential` / `transition` / `cardinality` / `aggregate`). Dispatch через `server/schema/invariantChecker.cjs` (thin re-export), handlers в `@intent-driven/core/invariants/*.js` (5 файлов в SDK). Интеграция — `validator.js::checkInvariantsForDomain` вызывается в `routes/effects.js::onConfirmed`; на error — rollback через `cascadeReject` + SSE `effect:rejected` с violations. Observer-invariant (§5) — частный случай `role-capability`. Декларации в invest (5 шт), sales (3 шт), delivery (3 шт).
+**Глобальные инварианты (§14, v1.6.1 + expression-kind v2.1)** — `ontology.invariants[]` с 6 kind'ами (`role-capability` / `referential` / `transition` / `cardinality` / `aggregate` / **`expression`**). Dispatch через `server/schema/invariantChecker.cjs` (thin re-export), handlers в `@intent-driven/core/invariants/*.js` (6 файлов в SDK). `expression` — row-level predicate с доступом к `world`/`viewer`/`context` (core@0.32+, compliance 13-го теста); закрывает backlog §1.1 и даёт декларативное выражение cross-entity SoD и dynamic thresholds. Интеграция — `validator.js::checkInvariantsForDomain` вызывается в `routes/effects.js::onConfirmed`; на error — rollback через `cascadeReject` + SSE `effect:rejected` с violations. Observer-invariant (§5) — частный случай `role-capability`. Декларации в invest (5 шт), sales (3 шт), delivery (3 шт), compliance (15 шт, из них 5 expression).
 
-**Базовые роли (§5, v1.6 + admin-post-v2)** — `role.base: "owner" | "viewer" | "agent" | "observer" | "admin"` как таксономический маркер. Пятый класс `admin` добавлен post-v2.0 (PR #45) после стресс-теста spec-v0.1 на library-домене (librarian не вписался в четыре). Спецификация: `admin` — row-override в `filterWorldForRole` (видит все записи независимо от `ownerField`). Открытое множество прецедентов, не closed enum. Helpers в `server/schema/baseRoles.cjs`: `getRolesByBase`, `isAgentRole`, `auditOntologyRoles`. Все 10 доменов аннотированы. Moderator → agent.
+**Базовые роли (§5, v1.6 + admin-post-v2)** — `role.base: "owner" | "viewer" | "agent" | "observer" | "admin"` как таксономический маркер. Пятый класс `admin` добавлен post-v2.0 (PR #45) после стресс-теста spec-v0.1 на library-домене (librarian не вписался в четыре). Спецификация: `admin` — row-override в `filterWorldForRole` (видит все записи независимо от `ownerField`). Открытое множество прецедентов, не closed enum. Helpers в `server/schema/baseRoles.cjs`: `getRolesByBase`, `isAgentRole`, `auditOntologyRoles`. Все 11 доменов аннотированы. Moderator → agent. Compliance CFO — специальный `agent` с cycle-level scope (candidate на 6-й base `sponsor`/`attestor`, не MVP).
 
 **Агентский слой (§17, v1.6)** — `/api/agent/:domain/{schema,world,exec}`, JWT + `roles.agent.canExecute` + `visibleFields` (single-owner + m2m). **Preapproval guard** (v1.6): `roles.agent.preapproval` с 5 типами предикатов (active/notExpired/maxAmount/csvInclude/dailySum). `server/schema/*` — чистые функции.
 
@@ -202,7 +203,9 @@ Postmortem'ы: `docs/superpowers/specs/2026-04-14-sdk-core-postmortem.md` (Phase
 - **Server-rendered PDF / DOCX** поверх documentMaterializer
 - **Pattern Bank: `structure.apply` для оставшихся 17 stable паттернов** — hero-create первый кандидат
 - **Domain scoping инвариантов** (backlog 1.4, P0) — `lifequest.tasks` ↔ `freelance.tasks` cross-domain collision; `filterWorldForRole` не параметризован доменом
-- **Invariant handler schema drift** (backlog 1.1, P0) — TypeError на альтернативных формах декларации cascade-rejects эффект
+- ~~**`invariant.kind: "expression"` row-level predicate** (backlog §1.1, P0)~~ — **ЗАКРЫТО 2026-04-20**: SDK @intent-driven/core@0.32.0 (PR #96), extended в core@0.33.0 (PR #98, predicate получает world/viewer/context); использовано в compliance-домене (13-й тест, 5 expression-invariants)
+- **Invariant handler schema drift** — TypeError на альтернативных формах декларации cascade-rejects эффект (отдельная проблема, не связанная с §1.1)
+- **Polymorphic Evidence.attachedTo** (compliance §7.2) — в MVP использованы 3 sparse-column FK; union-kind таксономия остаётся open
 - **Multi-owner ownership** (backlog 3.2, P0) — `ownershipConditionFor` хардкод single ownerField; Deal с `customerId` + `executorId` требует OR-логики
 - **AntD adapter patches** (backlog 2.1–2.4, P0) — 3 workaround'а в `src/runtime/DomainRuntime.jsx`: `label` vs `children`, `AntdDateTime` без времени, `fieldRole:"price"` vs `money`, игнорирование `maxLength`/`pattern`
 - **Intent salience → ratify в v2.1** — design-spec в `idf-manifest-v2.1`, PoC в SDK

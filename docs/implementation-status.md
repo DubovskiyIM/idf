@@ -25,19 +25,22 @@
 | invest | 61 | 14 сущностей | AntD enterprise-fintech, 4 роли (investor/advisor/agent/observer), 7 rules, 3 внешних ML-сервиса |
 | delivery | 45 | 14 сущностей | 5 ролей, map-primitive, dispatcher m2m, irreversibility в `capture_payment` |
 | freelance | 46 | Task, Response, Deal, Wallet, Transaction, Review, Category | Биржа услуг, multi-owner (customerId + executorId) на Deal, escrow через hold/release, revision loop, комиссия платформы |
+| compliance | 38 | User, Department, Control, JournalEntry, Approval, AttestationCycle, Attestation, Finding, Evidence, Amendment | **13-й полевой тест**, SOX ICFR / «provable UI». 6 ролей, 15 invariants (5 expression-kind), 7 rules (все 4 v1.5 ext), 5 `__irr:high` intents. Первый домен со всеми 5 behavioral patterns signal-classifier'а. Reuse AntD. Закрыл backlog §1.1. |
 
-**Итого:** 634 намерения, 10 доменов, один движок кристаллизации.
+**Итого:** 672 намерения, 11 доменов, один движок кристаллизации.
 
 Freelance (12-й полевой тест) выявил 40+ конкретных SDK gap'ов в процессе авторинга — см. [`sdk-improvements-backlog.md`](sdk-improvements-backlog.md). Backlog классифицирован P0/P1/P2 и адресован `@intent-driven/core`, `@intent-driven/renderer`, `@intent-driven/adapter-antd`.
 
+Compliance (13-й полевой тест) закрыл backlog §1.1 (`invariant.kind: "expression"` — расширен до `(row, world, viewer, context)` сигнатуры), добавил 5-ю производную материализацию (`materializeAuditLog` над Φ для observer-role) и зафиксировал три открытых design-gap: polymorphic Evidence.attachedTo (sparse-columns в MVP), computed ownerField для Attestation, `role.scope: {kind: "expression"}` support.
+
 ### Тестовое покрытие
 
-- **idf (прототип)**: 744 unit-тестов в 52 файлах
-- **@intent-driven/core**: 895 unit-тестов
+- **idf (прототип)**: 799 unit-тестов в 56 файлах (+31 compliance после 13-го теста)
+- **@intent-driven/core**: 916 unit-тестов (+21 после PR #96 + #98: expression world/viewer/context + audit materializer)
 - **@intent-driven/renderer**: 175 тестов
 - **@intent-driven/canvas-kit**: 36 тестов
 - **4× `@intent-driven/adapter-*`**: 34 теста суммарно (adapter-antd 22, apple 3, shadcn 3, mantine 6)
-- **Итого:** ~1904 теста в SDK + прототипе
+- **Итого:** ~1960 тестов в SDK + прототипе
 - **agent-smoke**: 75-шаговый integration-тест, покрывает все домены
 - **domain-audit**: `npm run audit-report` — 7 осей × 10 доменов, baseline в `docs/domain-audit.{md,json}`
 
@@ -51,7 +54,7 @@ Freelance (12-й полевой тест) выявил 40+ конкретных 
 
 | Пакет | Версия | Лицензия | Назначение |
 |---|---|---|---|
-| `@intent-driven/core` | 0.31.2 | BSL 1.1 | engine, fold, crystallize_v2, invariants, materializers, Pattern Bank, salience declaration-order ladder |
+| `@intent-driven/core` | 0.33.0 | BSL 1.1 | engine, fold, crystallize_v2, invariants (6 kinds incl. **expression** с world/viewer/context), materializers (document / voice / **auditLog**), Pattern Bank, salience declaration-order ladder |
 | `@intent-driven/renderer` | 0.12.0 | BSL 1.1 | ProjectionRendererV2, 7 архетипов, 11 controls, primitives (atoms/containers/chart/map + IrreversibleBadge + PatternPreviewOverlay), 6 parameters, adapter registry |
 | `@intent-driven/adapter-mantine` | 1.1.0+ | BSL 1.1 | Mantine UI-kit (corporate) |
 | `@intent-driven/adapter-shadcn` | 1.1.1+ | BSL 1.1 | shadcn/ui doodle |
