@@ -172,7 +172,7 @@ export const INTENTS = {
     ["entry.userId = me.id"],
     [ef("add", "entryTags")],
     [],
-    "click"),
+    "click", { salience: "primary" }),
 
   remove_tag_from_entry: intent("Открепить тег", ["link: EntryTag"],
     ["link.userId = me.id"],

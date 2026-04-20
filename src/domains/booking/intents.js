@@ -31,6 +31,7 @@ export const INTENTS = {
     }, antagonist: "cancel_booking", creates: "Booking(confirmed)"
   },
   cancel_booking: {
+    salience: "primary",
     name: "Отменить запись", particles: {
       entities: ["booking: Booking", "slot: TimeSlot"],
       conditions: ["booking.status = 'confirmed'", "booking.clientId = me.id"],
@@ -193,6 +194,7 @@ export const INTENTS = {
     }, antagonist: null, creates: null
   },
   update_service: {
+    salience: "primary",
     name: "Изменить услугу", particles: {
       entities: ["service: Service"],
       conditions: ["service.specialistId = me.id"],

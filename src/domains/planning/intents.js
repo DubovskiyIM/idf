@@ -80,6 +80,7 @@ export const INTENTS = {
     }, antagonist: null, creates: null
   },
   close_poll: {
+    salience: "primary",
     name: "Закрыть голосование",
     parameters: [
       { name: "pollId", type: "entityRef", entity: "Poll", required: true }
