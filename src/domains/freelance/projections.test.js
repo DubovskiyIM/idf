@@ -350,8 +350,8 @@ describe("freelance Stage 6 — UI-gap integration", () => {
     const p = PROJECTIONS.task_catalog_public;
     expect(Array.isArray(p.sidebar)).toBe(true);
     expect(p.sidebar.length).toBeGreaterThan(0);
-    // UI-gap #5: carousel в начале sidebar (hero-workaround).
-    expect(p.sidebar[0].type).toBe("carousel");
+    // UI-gap #5: carousel теперь в projection.hero (#130, core@0.40+).
+    expect(p.hero?.type).toBe("carousel");
     // UI-gap #6: onboarding gating.
     expect(p.gating?.steps?.length).toBeGreaterThanOrEqual(2);
     // UI-gap #8: empty state.
@@ -400,10 +400,9 @@ describe("freelance Stage 6 — UI-gap integration", () => {
   it("merged projections: все UI-gap декларации проходят crystallize → артефакты", () => {
     const merged = mergedProjections();
     const arts = crystallizeV2(INTENTS, merged, ONTOLOGY, "freelance");
-    // sidebar (carousel + 4 cards — carousel, tutorial, promo, 3rd intro, etc.).
-    // Length gated на «≥4» чтобы бампы SDK с новыми стандартными cards
-    // не ломали assertion. Точный состав проверяется выше через type/id.
-    expect(arts.task_catalog_public.slots.sidebar.length).toBeGreaterThanOrEqual(4);
+    // sidebar — 3 authored cards (carousel переехал в projection.hero после
+    // #130). Length ≥3 чтобы пропускать будущие pattern-bank additions.
+    expect(arts.task_catalog_public.slots.sidebar.length).toBeGreaterThanOrEqual(3);
     // gating.
     expect(arts.task_catalog_public.slots.gating?.steps).toHaveLength(2);
     // tabs на my_task_list.
