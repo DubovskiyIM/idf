@@ -344,3 +344,69 @@ describe("freelance seed", () => {
     expect(reviews.length).toBeGreaterThanOrEqual(3);
   });
 });
+
+describe("freelance Stage 6 — UI-gap integration", () => {
+  it("task_catalog_public объявляет sidebar + gating + emptyState", () => {
+    const p = PROJECTIONS.task_catalog_public;
+    expect(Array.isArray(p.sidebar)).toBe(true);
+    expect(p.sidebar.length).toBeGreaterThan(0);
+    // UI-gap #5: carousel в начале sidebar (hero-workaround).
+    expect(p.sidebar[0].type).toBe("carousel");
+    // UI-gap #6: onboarding gating.
+    expect(p.gating?.steps?.length).toBeGreaterThanOrEqual(2);
+    // UI-gap #8: empty state.
+    expect(p.emptyState?.title).toBeTruthy();
+  });
+
+  it("my_task_list имеет tabs + emptyState с CTA", () => {
+    const p = PROJECTIONS.my_task_list;
+    const tabIds = (p.tabs || []).map(t => t.id);
+    expect(tabIds).toEqual(expect.arrayContaining(["draft", "open", "history"]));
+    expect(p.defaultTab).toBe("open");
+    expect(p.emptyState?.cta?.intentId).toBe("create_task_draft");
+  });
+
+  it("my_response_list и my_deal_list имеют tabs", () => {
+    expect(PROJECTIONS.my_response_list.tabs?.length).toBeGreaterThan(0);
+    expect(PROJECTIONS.my_deal_list.tabs?.length).toBeGreaterThan(0);
+  });
+
+  it("create_task_draft.budget имеет presets + help", () => {
+    const params = INTENTS.create_task_draft.parameters;
+    const budget = params.find(p => p.name === "budget");
+    expect(budget.presets).toEqual(expect.arrayContaining([
+      expect.objectContaining({ value: 500 }),
+      expect.objectContaining({ value: 1500 }),
+    ]));
+    expect(budget.help?.title).toBe("Какую стоимость поставить?");
+  });
+
+  it("create_task_draft.deadline имеет 3 presets (+ ISO value)", () => {
+    const params = INTENTS.create_task_draft.parameters;
+    const deadline = params.find(p => p.name === "deadline");
+    expect(deadline.presets?.length).toBe(3);
+    expect(deadline.presets[0].value).toMatch(/^\d{4}-\d{2}-\d{2}T/);
+  });
+
+  it("top_up_wallet_by_card.method — methodSelect с 4 опциями в 3 группах", () => {
+    const params = INTENTS.top_up_wallet_by_card.parameters;
+    const method = params.find(p => p.name === "method");
+    expect(method.control).toBe("methodSelect");
+    expect(method.options).toHaveLength(4);
+    const groups = new Set(method.options.map(o => o.group));
+    expect(groups.size).toBe(3);
+  });
+
+  it("merged projections: все UI-gap декларации проходят crystallize → артефакты", () => {
+    const merged = mergedProjections();
+    const arts = crystallizeV2(INTENTS, merged, ONTOLOGY, "freelance");
+    // sidebar (carousel + 3 cards).
+    expect(arts.task_catalog_public.slots.sidebar).toHaveLength(4);
+    // gating.
+    expect(arts.task_catalog_public.slots.gating?.steps).toHaveLength(2);
+    // tabs на my_task_list.
+    expect(arts.my_task_list.slots.body.tabs).toHaveLength(3);
+    // rich empty state (не дефолтный text "Пусто").
+    expect(arts.my_task_list.slots.body.empty.type).toBe("emptyState");
+  });
+});

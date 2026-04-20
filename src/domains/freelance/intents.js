@@ -207,13 +207,39 @@ export const INTENTS = {
     parameters: [
       { name: "title", type: "text", required: true, label: "Заголовок" },
       { name: "categoryId", type: "select", required: true, label: "Категория", entity: "Category" },
-      { name: "budget", type: "number", fieldRole: "price", required: true, label: "Бюджет" },
+      {
+        name: "budget", type: "number", fieldRole: "price", required: true, label: "Бюджет",
+        // UI-gap #3: quick-value chips под input'ом.
+        presets: [
+          { label: "500 ₽", value: 500 },
+          { label: "1500 ₽", value: 1500 },
+          { label: "5000 ₽", value: 5000 },
+        ],
+        // UI-gap #7: contextual hint (workzilla-стиль: «Какую стоимость поставить?»).
+        help: {
+          title: "Какую стоимость поставить?",
+          text: "Укажите стоимость, которую готовы заплатить за задание. Важно, чтобы цена соответствовала объёму работы.",
+          icon: "💰",
+        },
+      },
       { name: "type", type: "select", options: [
           { value: "remote", label: "Удалённо" },
           { value: "on-site", label: "На месте" },
         ], required: true, label: "Формат" },
-      { name: "description", type: "textarea", label: "Описание" },
-      { name: "deadline", type: "datetime", label: "Срок" },
+      { name: "description", type: "textarea", label: "Описание",
+        help: "Чем подробнее описано задание, тем легче исполнителю выполнить правильно." },
+      {
+        name: "deadline", type: "datetime", label: "Срок",
+        // presets как функции-геттеры: host host-side compute перед submit.
+        // Здесь — ISO-строки с offset'ами от момента crystallize; в runtime
+        // обновляются dev-refresh'ем. Для демо ок; production — подключить
+        // renderer-side compute через spec.presetsBuilder (future SDK API).
+        presets: [
+          { label: "Через 2 часа", value: new Date(Date.now() + 2 * 3600 * 1000).toISOString() },
+          { label: "Через 6 часов", value: new Date(Date.now() + 6 * 3600 * 1000).toISOString() },
+          { label: "Завтра 18:00", value: new Date(new Date().setHours(18, 0, 0, 0) + 24 * 3600 * 1000).toISOString() },
+        ],
+      },
       { name: "city", type: "text", label: "Город" },
     ],
     // particles.confirmation + witnesses ≥2 блокируют heroCreate-матчер
@@ -630,7 +656,32 @@ export const INTENTS = {
     // auto-resolve'ится из viewer.userId в buildCustomEffects (один кошелёк
     // на пользователя в Cycle 1).
     parameters: [
-      { name: "amount", type: "number", fieldRole: "price", required: true, min: 1, label: "Сумма пополнения" },
+      {
+        name: "amount", type: "number", fieldRole: "price", required: true, min: 1,
+        label: "Сумма пополнения",
+        // UI-gap #3: quick-fill amounts (workzilla top-up: 700 / 1000 / 1500).
+        presets: [
+          { label: "700", value: 700 },
+          { label: "1000", value: 1000 },
+          { label: "1500", value: 1500 },
+        ],
+      },
+      {
+        // UI-gap #4: radio-card grid с группами (workzilla Банковская карта /
+        // Электронные деньги / Другое).
+        name: "method", control: "methodSelect", required: true,
+        label: "Способ оплаты",
+        options: [
+          { id: "kassa",  label: "Мир/Visa/Mastercard", sublabel: "Kassa",
+            icon: "💳", group: "Банковская карта" },
+          { id: "sbp",    label: "СБП", sublabel: "Система быстрых платежей",
+            icon: "⚡",  group: "Банковская карта" },
+          { id: "paypal", label: "PayPal", icon: "💰",
+            group: "Электронные деньги" },
+          { id: "stripe", label: "Visa/Mastercard", sublabel: "Stripe",
+            icon: "💳", group: "Другое" },
+        ],
+      },
       { name: "cardLastFour", type: "text", required: true, maxLength: 4, minLength: 4, pattern: "^\\d{4}$", placeholder: "1234", label: "Последние 4 цифры" },
     ],
     // creates опущен осознанно: основной эффект — Wallet.balance (replace),
