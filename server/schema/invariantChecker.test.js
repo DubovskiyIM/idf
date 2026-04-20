@@ -14,16 +14,18 @@ describe("checkInvariants — dispatch", () => {
   });
 
   it("unknown kind → violation с reason:unknown_kind", () => {
+    // SDK core@0.22+ defensive: unknown kind → warning, не ломает ok.
+    // Поведение: добавить handler через registerKind, чтобы strictность вернулась.
     const ontology = { invariants: [{ name: "x", kind: "wtf" }] };
     const result = checkInvariants({}, ontology);
-    expect(result.ok).toBe(false);
     expect(result.violations[0].details.reason).toBe("unknown_kind");
   });
 
-  it("severity по умолчанию 'error'", () => {
+  it("unknown kind — severity:warning (не ломает ok)", () => {
     const ontology = { invariants: [{ name: "x", kind: "wtf" }] };
     const result = checkInvariants({}, ontology);
-    expect(result.violations[0].severity).toBe("error");
+    expect(result.violations[0].severity).toBe("warning");
+    expect(result.ok).toBe(true);
   });
 
   it("severity:warning не ломает ok если errors нет", () => {

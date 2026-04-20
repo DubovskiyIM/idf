@@ -11,56 +11,10 @@
  * Активируется Cmd+Shift+C / Ctrl+Shift+C в V2Shell.
  *
  * Не требует server-вызова — работает с artifact целиком.
- *
- * TODO: после merge PR #66 переключить import на "@intent-driven/core".
  */
 
 import { useMemo } from "react";
-
-// Inlined reduction `explainCrystallize` — зеркалит SDK @intent-driven/core@0.17+.
-// TODO: после merge PR #66 и npm-publish заменить на `import { explainCrystallize } from "@intent-driven/core"`.
-const BASIS_ORDER = [
-  "crystallize-rule", "polymorphic-variant", "temporal-section",
-  "pattern-bank", "alphabetical-fallback", "authored",
-];
-const ORIGIN_RULES = new Set(["R1", "R1b", "R2", "R3", "R7", "R10"]);
-const ENRICH_RULES = new Set(["R4", "R6", "R9"]);
-
-function explainCrystallize(artifact) {
-  if (!artifact || typeof artifact !== "object") throw new TypeError("artifact required");
-  const witnesses = Array.isArray(artifact.witnesses) ? artifact.witnesses : [];
-  const witnessesByBasis = {};
-  for (const w of witnesses) {
-    const b = w.basis || "unknown";
-    if (!witnessesByBasis[b]) witnessesByBasis[b] = [];
-    witnessesByBasis[b].push(w);
-  }
-  const ruleIds = (witnessesByBasis["crystallize-rule"] || []).map(w => w.ruleId).filter(Boolean);
-  const patternIds = (witnessesByBasis["pattern-bank"] || []).map(w => w.pattern).filter(Boolean);
-  const hasOrigin = ruleIds.some(r => ORIGIN_RULES.has(r));
-  const hasEnrich = ruleIds.some(r => ENRICH_RULES.has(r));
-  const origin = hasOrigin
-    ? (hasEnrich ? "derived+enriched" : "derived")
-    : (hasEnrich ? "authored+enriched" : "authored");
-  let step = 0;
-  const trace = [];
-  for (const basis of BASIS_ORDER) {
-    for (const w of witnessesByBasis[basis] || []) {
-      step++;
-      trace.push({ step, basis, ruleId: w.ruleId, pattern: w.pattern, rationale: w.rationale });
-    }
-  }
-  const parts = [`${artifact.archetype || "?"} "${artifact.projection}"`];
-  parts.push({ derived: "выведена правилами", "derived+enriched": "выведена + обогащена",
-               "authored+enriched": "авторская + обогащена правилами", authored: "авторская без derivation origin" }[origin]);
-  if (ruleIds.length > 0) parts.push(`правила: ${[...new Set(ruleIds)].sort().join(", ")}`);
-  if (patternIds.length > 0) parts.push(`паттерны: ${[...new Set(patternIds)].sort().join(", ")}`);
-  return {
-    projection: artifact.projection, archetype: artifact.archetype,
-    origin, witnessesByBasis, ruleIds, patternIds, trace,
-    summary: parts.join(" · "),
-  };
-}
+import { explainCrystallize } from "@intent-driven/core";
 
 const BASIS_LABEL = {
   "crystallize-rule":     "Crystallize rules",
