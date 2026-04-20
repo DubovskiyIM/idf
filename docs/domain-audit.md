@@ -1,7 +1,7 @@
 # Domain audit — 2026-04-20
 
-**Generated:** 2026-04-20T08:16:15.692Z
-**Total findings:** 187 (error: 0, warning: 103, info: 84)
+**Generated:** 2026-04-20T08:51:06.500Z
+**Total findings:** 180 (error: 0, warning: 96, info: 84)
 
 > Report-only. Regeneration: `node scripts/audit-report.mjs`. Design rationale — `docs/superpowers/specs/2026-04-20-domain-audit-design.md` (local).
 
@@ -13,7 +13,7 @@
 | format | 45 |
 | collision | 42 |
 | structural | 19 |
-| derivation | 16 |
+| derivation | 9 |
 | testing | 7 |
 | patterns | 3 |
 
@@ -24,38 +24,38 @@
 | <cross> | 42 |
 | invest | 37 |
 | delivery | 28 |
-| freelance | 23 |
+| freelance | 22 |
 | sales | 11 |
 
 ## Axis 2 — Derivation health
 
 | Domain | Authored | Derived | Total | Override | 0-patt | 1-patt | 2-patt | 3+patt | Apply/MatchOnly | Alpha-fb | Disabled |
 |--------|----------|---------|-------|----------|--------|--------|--------|--------|------------------|----------|----------|
-| booking | 6 | 0 | 6 | 1 | 0 | 0 | 0 | 6 | 19/18 | 2 | 0 |
-| planning | 3 | 0 | 3 | 1 | 0 | 0 | 0 | 3 | 10/10 | 1 | 0 |
-| workflow | 4 | 0 | 4 | 1 | 0 | 0 | 0 | 4 | 9/11 | 1 | 0 |
-| messenger | 5 | 0 | 5 | 1 | 0 | 0 | 0 | 5 | 16/21 | 1 | 0 |
-| sales | 15 | 0 | 15 | 1 | 0 | 0 | 0 | 15 | 57/86 | 7 | 0 |
-| lifequest | 12 | 0 | 12 | 1 | 0 | 0 | 0 | 12 | 36/32 | 4 | 0 |
-| reflect | 13 | 0 | 13 | 1 | 0 | 0 | 0 | 13 | 23/31 | 1 | 0 |
+| booking | 6 | 0 | 6 | 1 | 0 | 0 | 0 | 6 | 19/18 | 0 | 0 |
+| planning | 3 | 0 | 3 | 1 | 0 | 0 | 0 | 3 | 10/10 | 0 | 0 |
+| workflow | 4 | 0 | 4 | 1 | 0 | 0 | 0 | 4 | 9/11 | 0 | 0 |
+| messenger | 5 | 0 | 5 | 1 | 0 | 0 | 0 | 5 | 16/21 | 0 | 0 |
+| sales | 15 | 0 | 15 | 1 | 0 | 0 | 0 | 15 | 57/86 | 4 | 0 |
+| lifequest | 12 | 0 | 12 | 1 | 0 | 0 | 0 | 12 | 36/32 | 0 | 0 |
+| reflect | 13 | 0 | 13 | 1 | 0 | 0 | 0 | 13 | 23/31 | 0 | 0 |
 | invest | 23 | 0 | 23 | 1 | 0 | 0 | 9 | 14 | 46/38 | 0 | 0 |
 | delivery | 25 | 0 | 25 | 1 | 0 | 0 | 12 | 13 | 48/39 | 0 | 0 |
-| freelance | 9 | 0 | 9 | 1 | 0 | 0 | 0 | 9 | 27/41 | 2 | 2 |
+| freelance | 9 | 0 | 9 | 1 | 0 | 0 | 0 | 9 | 27/41 | 0 | 2 |
 
 ## Axis 3 — SDK idiom currency
 
 | Domain | Intents | Salience | Plain entities |
 |--------|---------|----------|----------------|
-| booking | 22 | 5% (1/22) | 0 |
-| planning | 17 | 0% (0/17) | 0 |
-| workflow | 15 | 0% (0/15) | 0 |
-| messenger | 100 | 0% (0/100) | 0 |
-| sales | 225 | 1% (2/225) | 0 |
-| lifequest | 56 | 2% (1/56) | 0 |
-| reflect | 47 | 2% (1/47) | 0 |
+| booking | 22 | 14% (3/22) | 0 |
+| planning | 17 | 6% (1/17) | 0 |
+| workflow | 15 | 7% (1/15) | 0 |
+| messenger | 100 | 1% (1/100) | 0 |
+| sales | 225 | 4% (8/225) | 0 |
+| lifequest | 56 | 9% (5/56) | 0 |
+| reflect | 47 | 4% (2/47) | 0 |
 | invest | 61 | 0% (0/61) | 0 |
 | delivery | 45 | 0% (0/45) | 0 |
-| freelance | 46 | 0% (0/46) | 0 |
+| freelance | 46 | 2% (1/46) | 0 |
 
 ## Axis 4 — Test coverage proxy
 
@@ -177,7 +177,6 @@
 
 ### booking
 
-- ⚠️ **derivationHealth** — 2 alphabetical-fallback witness'ов (intent.salience не объявлена)
 - ⚠️ **sdkIdiom** — Intent "cancel_booking" — legacy irreversibility:"high" без context.__irr
 - ⚠️ **sdkIdiom** — Intent "bulk_cancel_day" — legacy irreversibility:"high" без context.__irr
 - ⚠️ **sdkIdiom** — Intent "cancel_client_booking" — legacy irreversibility:"high" без context.__irr
@@ -188,7 +187,6 @@
 
 ### planning
 
-- ⚠️ **derivationHealth** — 1 alphabetical-fallback witness'ов (intent.salience не объявлена)
 - ⚠️ **sdkIdiom** — Intent "cancel_poll" — legacy irreversibility:"high" без context.__irr
 - ⚠️ **sdkIdiom** — Intent "cancel_meeting" — legacy irreversibility:"high" без context.__irr
 - ⚠️ **testCoverage** — Домен planning без тестов/smoke/e2e-docs
@@ -198,7 +196,6 @@
 
 ### workflow
 
-- ⚠️ **derivationHealth** — 1 alphabetical-fallback witness'ов (intent.salience не объявлена)
 - ⚠️ **sdkIdiom** — Intent "delete_workflow" — legacy irreversibility:"high" без context.__irr
 - ⚠️ **testCoverage** — Домен workflow без тестов/smoke/e2e-docs
 - ℹ️ **patternApplication** — 4/4 проекций без behavioral-pattern
@@ -207,7 +204,6 @@
 
 ### messenger
 
-- ⚠️ **derivationHealth** — 1 alphabetical-fallback witness'ов (intent.salience не объявлена)
 - ⚠️ **sdkIdiom** — Intent "report_message" — legacy irreversibility:"high" без context.__irr
 - ⚠️ **sdkIdiom** — Intent "delete_conversation" — legacy irreversibility:"high" без context.__irr
 - ⚠️ **sdkIdiom** — Intent "clear_history" — legacy irreversibility:"high" без context.__irr
@@ -220,7 +216,7 @@
 
 ### sales
 
-- ⚠️ **derivationHealth** — 7 alphabetical-fallback witness'ов (intent.salience не объявлена)
+- ⚠️ **derivationHealth** — 4 alphabetical-fallback witness'ов (intent.salience не объявлена)
 - ⚠️ **sdkIdiom** — Intent "remove_listing" — legacy irreversibility:"high" без context.__irr
 - ⚠️ **sdkIdiom** — Intent "suspend_user" — legacy irreversibility:"high" без context.__irr
 - ⚠️ **sdkIdiom** — Intent "ban_user" — legacy irreversibility:"high" без context.__irr
@@ -234,7 +230,6 @@
 
 ### lifequest
 
-- ⚠️ **derivationHealth** — 4 alphabetical-fallback witness'ов (intent.salience не объявлена)
 - ⚠️ **sdkIdiom** — Intent "reset_progress" — legacy irreversibility:"high" без context.__irr
 - ⚠️ **sdkIdiom** — Intent "delete_account" — legacy irreversibility:"high" без context.__irr
 - ⚠️ **testCoverage** — Домен lifequest без тестов/smoke/e2e-docs
@@ -244,7 +239,6 @@
 
 ### reflect
 
-- ⚠️ **derivationHealth** — 1 alphabetical-fallback witness'ов (intent.salience не объявлена)
 - ⚠️ **sdkIdiom** — Intent "reset_progress" — legacy irreversibility:"high" без context.__irr
 - ⚠️ **sdkIdiom** — Intent "delete_account" — legacy irreversibility:"high" без context.__irr
 - ⚠️ **testCoverage** — Домен reflect без тестов/smoke/e2e-docs
@@ -338,7 +332,6 @@
 - ⚠️ **formatConformance** — Entity Wallet без entity.type (kind)
 - ⚠️ **formatConformance** — Entity Transaction без entity.type (kind)
 - ⚠️ **formatConformance** — Entity Review без entity.type (kind)
-- ⚠️ **derivationHealth** — 2 alphabetical-fallback witness'ов (intent.salience не объявлена)
 - ⚠️ **sdkIdiom** — Intent "confirm_deal" — legacy irreversibility:"high" без context.__irr
 - ⚠️ **sdkIdiom** — Intent "submit_work_result" — legacy irreversibility:"high" без context.__irr
 - ⚠️ **sdkIdiom** — Intent "accept_result" — legacy irreversibility:"high" без context.__irr
