@@ -213,30 +213,44 @@ export default function MoodMeterCanvas({ world, viewer, exec, ctx }) {
             </svg>
           </div>
 
+          {/*
+            Трёхстрочный centered-layout. Каждая строка занимает 100% ширины
+            pill, текст в ней центрирован. При смене эмоции меняется
+            middle-строка — её ширина растёт/сжимается симметрично
+            относительно вертикальной оси, не толкая соседние элементы
+            по горизонтали.
+
+            Первый фикс (min-width: 7em на strong) был недостаточен: длинные
+            labels («Воодушевлён», «Разочарован», «Умиротворён») перерастали
+            7em и всё равно двигали emoji/quadrant вбок.
+          */}
           <div style={{
-            marginTop: 12, padding: "12px 16px", ...GLASS,
-            display: "flex", alignItems: "center", justifyContent: "center",
-            minHeight: 48,
+            marginTop: 12, padding: "14px 16px", ...GLASS,
+            display: "flex", flexDirection: "column", alignItems: "center", gap: 2,
+            minHeight: 80, textAlign: "center", width: "100%", boxSizing: "border-box",
           }}>
-            <div style={{ fontSize: 15, color: textColor, textAlign: "center", lineHeight: 1.4 }}>
-              {preview ? (
-                <>
-                  <span style={{ color: textSecondary }}>Текущий выбор:</span>{" "}
-                  {/* min-width фиксирует зону bold-label, чтобы при hover'е
-                      по разным квадрантам (Спокоен → Воодушевлён → Одинок)
-                      emoji и quadrant-подпись не прыгали по горизонтали. */}
-                  <strong style={{ display: "inline-block", minWidth: "7em", textAlign: "center" }}>
-                    {previewEmotion?.label}{" "}
-                    <span style={{ fontSize: 18 }}>{previewEmotion?.emoji}</span>
-                  </strong>{" "}
-                  <span style={{ color: textSecondary, fontSize: 13 }}>
-                    ({QUADRANT_LABELS[previewQuadrant]})
-                  </span>
-                </>
-              ) : (
-                <span style={{ color: textSecondary }}>Наведи курсор на плоскость...</span>
-              )}
-            </div>
+            {preview ? (
+              <>
+                <div style={{ fontSize: 12, color: textSecondary, lineHeight: 1.2 }}>
+                  Текущий выбор
+                </div>
+                <div style={{
+                  fontSize: 18, fontWeight: 600, color: textColor,
+                  lineHeight: 1.2,
+                  display: "inline-flex", alignItems: "center", gap: 8,
+                }}>
+                  <span>{previewEmotion?.label}</span>
+                  <span style={{ fontSize: 22 }}>{previewEmotion?.emoji}</span>
+                </div>
+                <div style={{ fontSize: 12, color: textSecondary, lineHeight: 1.2 }}>
+                  {QUADRANT_LABELS[previewQuadrant]}
+                </div>
+              </>
+            ) : (
+              <div style={{ color: textSecondary, fontSize: 14, padding: "12px 0" }}>
+                Наведи курсор на плоскость...
+              </div>
+            )}
           </div>
 
           <div style={{ display: "flex", gap: 8, marginTop: 16, justifyContent: "center" }}>
