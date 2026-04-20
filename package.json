@@ -35,6 +35,7 @@
     "conformance": "node scripts/conformance-runner.mjs",
     "test:core": "cd packages/core && npx vitest run",
     "agent-smoke": "node scripts/agent-smoke.mjs",
+    "smoke-compliance": "node scripts/smoke-compliance.mjs",
     "audit-domains": "node scripts/domain-audit.mjs --all",
     "audit-report": "node scripts/audit-report.mjs",
     "crystallize-llm": "node scripts/crystallize-llm.mjs",
