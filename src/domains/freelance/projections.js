@@ -1,9 +1,20 @@
 /**
- * Freelance projections — 3 проекции в Cycle 1:
- *   task_catalog_public (guest/executor) — публичный каталог задач
- *   task_detail_public (guest/executor/customer) — деталка задачи
- *   create_task_wizard (customer) — wizard создания задачи
- * Остальные (my_tasks, wallet, deal_detail, etc.) — Cycle 2-4.
+ * Freelance projections — authored overrides поверх derived.
+ *
+ * Derived SDK-правилами (V2Shell merge { ...derived, ...authored }):
+ *   R7  → my_task_list / my_response_list (customerId / executorId filter)
+ *   R7b → my_deal_list (multi-owner disjunction customerId||executorId)
+ *   R3b → my_wallet_detail (singleton + userId filter)
+ *   R3  → task_detail / deal_detail (detail из mutators)
+ *   R4  → subCollections по FK-графу
+ *   R6  → witnesses как union intent.particles.witnesses
+ *
+ * Авторские overrides ниже — только поля, где derivation недостаточна:
+ *  - display witnesses списков (R6 подмешивает intent-параметры типа
+ *    comment/reason/result, не подходящие для list-view);
+ *  - навигация onItemClick в role-specific detail (deal_detail_customer);
+ *  - ROOT market-filter (task_catalog_public): exclude-self +
+ *    exclude-already-selected — не derivable.
  */
 export const PROJECTIONS = {
 
@@ -47,13 +58,9 @@ export const PROJECTIONS = {
     ],
   },
 
-  my_tasks: {
-    name: "Мои задачи",
-    kind: "catalog",
-    mainEntity: "Task",
-    entities: ["Task"],
-    filter: "item.customerId === viewer.id",
-    sort: "createdAt:desc",
+  // ─── ROOT my_* lists — field-level overrides поверх derived R7/R7b/R3b ───
+
+  my_task_list: {
     witnesses: ["title", "status", "budget", "deadline", "responsesCount"],
     onItemClick: {
       action: "navigate",
@@ -62,13 +69,16 @@ export const PROJECTIONS = {
     },
   },
 
-  my_deals: {
-    name: "Мои сделки",
-    kind: "catalog",
-    mainEntity: "Deal",
-    entities: ["Deal", "Task"],
-    filter: "item.customerId === viewer.id || item.executorId === viewer.id",
-    sort: "createdAt:desc",
+  my_response_list: {
+    witnesses: ["taskId", "price", "deliveryDays", "status", "createdAt"],
+    onItemClick: {
+      action: "navigate",
+      to: "task_detail_public",
+      params: { taskId: "item.taskId" },
+    },
+  },
+
+  my_deal_list: {
     witnesses: ["taskId", "amount", "status", "deadline"],
     onItemClick: {
       action: "navigate",
@@ -76,6 +86,17 @@ export const PROJECTIONS = {
       params: { dealId: "item.id" },
     },
   },
+
+  my_wallet_detail: {
+    witnesses: ["balance", "reserved", "currency"],
+    toolbar: ["top_up_wallet_by_card", "view_transaction_history"],
+  },
+
+  // ─── Role-specific detail overrides — toolbar whitelist ───
+  // TODO (Stage 2): добавить intent.permittedFor: "customerId" | "executorId"
+  // на deal-phase-transitions (accept_result, request_revision,
+  // submit_work_result, submit_revision) → derived deal_detail даст per-role
+  // toolbar автоматически, эти wrapper'ы можно удалить.
 
   task_detail_customer: {
     name: "Задача (автор)",
@@ -140,45 +161,12 @@ export const PROJECTIONS = {
     patterns: { disabled: ["footer-inline-setter"] },
   },
 
-  wallet: {
-    name: "Кошелёк",
-    kind: "detail",
-    mainEntity: "Wallet",
-    entities: ["Wallet", "Transaction"],
-    filter: "item.userId === viewer.id",
-    witnesses: ["balance", "reserved", "currency"],
-    subCollections: [
-      {
-        entity: "Transaction",
-        foreignKey: "walletId",
-        title: "История операций",
-        addable: false,
-      },
-    ],
-    toolbar: ["top_up_wallet_by_card", "view_transaction_history"],
-  },
-
-  my_responses: {
-    name: "Мои отклики",
-    kind: "catalog",
-    mainEntity: "Response",
-    entities: ["Response", "Task"],
-    filter: "item.executorId === viewer.id",
-    sort: "createdAt:desc",
-    witnesses: ["taskId", "price", "deliveryDays", "status", "createdAt"],
-    onItemClick: {
-      action: "navigate",
-      to: "task_detail_public",
-      params: { taskId: "item.taskId" },
-    },
-  },
-
 };
 
 export const ROOT_PROJECTIONS = [
   "task_catalog_public",
-  "my_tasks",
-  "my_responses",
-  "my_deals",
-  "wallet",
+  "my_task_list",
+  "my_response_list",
+  "my_deal_list",
+  "my_wallet_detail",
 ];
