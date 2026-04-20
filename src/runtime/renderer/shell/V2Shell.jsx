@@ -51,12 +51,17 @@ export default function V2Shell({
   useBottomTabs = false,
 }) {
   // Derived projections (R1..R8 / R10 / R11 / R11 v2 / R3b / R7b) сливаем с
-  // authored. Authored имеют приоритет — если author задекларировал my_deals
-  // вручную, derived my_deal_list не перезапишет его. Derived же пополняют
-  // набор артефактов owner-scoped видами, которые автор мог не писать явно.
+  // authored на field-level. Если author задекларировал тот же id — его поля
+  // переопределяют derived field-by-field, но derived-поля без override
+  // сохраняются (включая `derivedBy` witness). Это ключ к композиционной
+  // авторингу: автор пишет только override, derivation поставляет остальное.
   const mergedProjections = useMemo(() => {
     const derived = deriveProjections(domain.INTENTS, domain.ONTOLOGY);
-    return { ...derived, ...domain.PROJECTIONS };
+    const merged = { ...derived };
+    for (const [id, authored] of Object.entries(domain.PROJECTIONS || {})) {
+      merged[id] = merged[id] ? { ...merged[id], ...authored } : authored;
+    }
+    return merged;
   }, [domain]);
 
   const artifacts = useMemo(

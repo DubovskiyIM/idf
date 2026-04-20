@@ -103,6 +103,24 @@
 **Owner:** Per-domain стабилизация (следующие сессии), не single-PR scope.
 **Regen:** `npm run audit-report` (idempotent, commits report в docs/).
 
+### 1.11 Invest Phase 3 — custom-id feeds → composeProjections rename
+
+**Дата:** 2026-04-20
+**Контекст:** После PR #83 invest authored-проекций: 23 → 17. Оставшиеся 17 включают 10 custom-id feed'ов (`portfolios_root`, `goals_root`, `watchlists_root`, `recommendations_inbox`, `alerts_feed`, `transactions_history`, `advisor_clients`, `assets_catalog`, `rules_list`, `market_trends`), на которые ссылается `ROOT_PROJECTIONS` как навигация.
+
+Derivation даёт им канонические имена (`portfolio_list`, `goal_list` и т.д.), но UI нужны осмысленные ids для URL-маршрутов и табов. Прямой removal = breaking UI.
+
+**Action:** Workstream после V2Shell smart-merge:
+1. SDK добавляет `composeProjections(derived, authored, { renames: { portfolio_list: "portfolios_root" } })` — rename semantic без изменения derived metadata.
+2. `src/domains/invest/projections.js` использует `OVERRIDES` + `RENAMES` + `EXTRA` паттерн вместо плоского `PROJECTIONS`.
+3. `ROOT_PROJECTIONS` остаётся стабильным.
+4. Derivation-coefficient invest: 0.44 → 0.05-0.10 (остаются только dashboards/wizards/canvas, которые реально custom).
+
+**Blocker:** V2Shell.jsx сейчас принимает `domain.PROJECTIONS` как flat dict. Refactor требует либо (a) domain экспортирует function `getProjections(derived)` и V2Shell вызывает после derive, либо (b) SDK экспортирует `composeProjections` с renames и V2Shell использует явно.
+
+**Owner:** host V2Shell + `@intent-driven/core/crystallize_v2/composeProjections.js` + `src/domains/invest/projections.js`
+**Связано:** PR #83 (6 invest detail derived), этот PR (smart-merge сохраняет `derivedBy`), backlog §2.3 (deriveProjections в production)
+
 ### 1.10 Studio integration: audit report viewer
 
 **Дата:** 2026-04-20
