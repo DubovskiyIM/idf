@@ -1,0 +1,967 @@
+{
+  "generatedAt": "2026-04-20T08:29:13.057Z",
+  "totalWitnesses": 21,
+  "byDomain": {
+    "booking": 1,
+    "planning": 0,
+    "workflow": 0,
+    "messenger": 0,
+    "sales": 11,
+    "lifequest": 5,
+    "reflect": 2,
+    "invest": 0,
+    "delivery": 0,
+    "freelance": 2
+  },
+  "witnesses": [
+    {
+      "domain": "booking",
+      "projectionId": "booking_detail",
+      "mainEntity": "Booking",
+      "witness": {
+        "basis": "alphabetical-fallback",
+        "reliability": "heuristic",
+        "slot": "toolbar",
+        "projection": "booking_detail",
+        "salience": 100,
+        "chosen": "cancel_booking",
+        "peers": [
+          "reschedule_booking"
+        ],
+        "recommendation": "Проставьте intent.salience одному из [cancel_booking, reschedule_booking] чтобы зафиксировать порядок явно."
+      },
+      "tiedIds": [
+        "cancel_booking",
+        "reschedule_booking"
+      ]
+    },
+    {
+      "domain": "sales",
+      "projectionId": "listing_feed",
+      "mainEntity": "Listing",
+      "witness": {
+        "basis": "alphabetical-fallback",
+        "reliability": "heuristic",
+        "slot": "toolbar",
+        "projection": "listing_feed",
+        "salience": 100,
+        "chosen": "bulk_relist",
+        "peers": [
+          "create_listing"
+        ],
+        "recommendation": "Проставьте intent.salience одному из [bulk_relist, create_listing] чтобы зафиксировать порядок явно."
+      },
+      "tiedIds": [
+        "bulk_relist",
+        "create_listing"
+      ]
+    },
+    {
+      "domain": "sales",
+      "projectionId": "listing_feed",
+      "mainEntity": "Listing",
+      "witness": {
+        "basis": "alphabetical-fallback",
+        "reliability": "heuristic",
+        "slot": "toolbar",
+        "projection": "listing_feed",
+        "salience": 80,
+        "chosen": "bulk_relist_expired",
+        "peers": [
+          "duplicate_listing",
+          "relist_item"
+        ],
+        "recommendation": "Проставьте intent.salience одному из [bulk_relist_expired, duplicate_listing, relist_item] чтобы зафиксировать порядок явно."
+      },
+      "tiedIds": [
+        "bulk_relist_expired",
+        "duplicate_listing",
+        "relist_item"
+      ]
+    },
+    {
+      "domain": "sales",
+      "projectionId": "listing_detail",
+      "mainEntity": "Listing",
+      "witness": {
+        "basis": "alphabetical-fallback",
+        "reliability": "heuristic",
+        "slot": "toolbar",
+        "projection": "listing_detail",
+        "salience": 100,
+        "chosen": "add_to_watchlist",
+        "peers": [
+          "edit_listing",
+          "feature_listing"
+        ],
+        "recommendation": "Проставьте intent.salience одному из [add_to_watchlist, edit_listing, feature_listing] чтобы зафиксировать порядок явно."
+      },
+      "tiedIds": [
+        "add_to_watchlist",
+        "edit_listing",
+        "feature_listing"
+      ]
+    },
+    {
+      "domain": "sales",
+      "projectionId": "listing_detail",
+      "mainEntity": "Listing",
+      "witness": {
+        "basis": "alphabetical-fallback",
+        "reliability": "heuristic",
+        "slot": "toolbar",
+        "projection": "listing_detail",
+        "salience": 60,
+        "chosen": "add_listing_image",
+        "peers": [
+          "add_to_bundle",
+          "apply_template",
+          "archive_listing",
+          "cancel_promotion",
+          "certify_listing",
+          "disable_international_shipping",
+          "edit_template",
+          "extend_auction",
+          "like_listing",
+          "lower_start_price",
+          "move_to_category",
+          "promote_listing",
+          "remove_from_bundle",
+          "rename_template",
+          "schedule_listing",
+          "set_buy_now_price",
+          "set_free_shipping",
+          "set_international_shipping",
+          "set_listing_category",
+          "set_listing_condition",
+          "set_minimum_bid_increment",
+          "set_reserve_price",
+          "set_shipping_cost",
+          "set_shipping_from",
+          "set_subcategory",
+          "set_template_defaults",
+          "snipe_protect",
+          "unarchive_listing",
+          "unfeature_listing",
+          "unlike_listing"
+        ],
+        "recommendation": "Проставьте intent.salience одному из [add_listing_image, add_to_bundle, apply_template, archive_listing, cancel_promotion, certify_listing, disable_international_shipping, edit_template, extend_auction, like_listing, lower_start_price, move_to_category, promote_listing, remove_from_bundle, rename_template, schedule_listing, set_buy_now_price, set_free_shipping, set_international_shipping, set_listing_category, set_listing_condition, set_minimum_bid_increment, set_reserve_price, set_shipping_cost, set_shipping_from, set_subcategory, set_template_defaults, snipe_protect, unarchive_listing, unfeature_listing, unlike_listing] чтобы зафиксировать порядок явно."
+      },
+      "tiedIds": [
+        "add_listing_image",
+        "add_to_bundle",
+        "apply_template",
+        "archive_listing",
+        "cancel_promotion",
+        "certify_listing",
+        "disable_international_shipping",
+        "edit_template",
+        "extend_auction",
+        "like_listing",
+        "lower_start_price",
+        "move_to_category",
+        "promote_listing",
+        "remove_from_bundle",
+        "rename_template",
+        "schedule_listing",
+        "set_buy_now_price",
+        "set_free_shipping",
+        "set_international_shipping",
+        "set_listing_category",
+        "set_listing_condition",
+        "set_minimum_bid_increment",
+        "set_reserve_price",
+        "set_shipping_cost",
+        "set_shipping_from",
+        "set_subcategory",
+        "set_template_defaults",
+        "snipe_protect",
+        "unarchive_listing",
+        "unfeature_listing",
+        "unlike_listing"
+      ]
+    },
+    {
+      "domain": "sales",
+      "projectionId": "listing_detail",
+      "mainEntity": "Listing",
+      "witness": {
+        "basis": "alphabetical-fallback",
+        "reliability": "heuristic",
+        "slot": "toolbar",
+        "projection": "listing_detail",
+        "salience": 40,
+        "chosen": "add_to_collection",
+        "peers": [
+          "block_bidder",
+          "delete_template",
+          "remove_from_collection",
+          "remove_listing",
+          "remove_tag",
+          "report_counterfeit",
+          "report_listing",
+          "request_authenticity_check",
+          "subscribe_to_listing",
+          "unblock_bidder",
+          "unsubscribe_from_listing"
+        ],
+        "recommendation": "Проставьте intent.salience одному из [add_to_collection, block_bidder, delete_template, remove_from_collection, remove_listing, remove_tag, report_counterfeit, report_listing, request_authenticity_check, subscribe_to_listing, unblock_bidder, unsubscribe_from_listing] чтобы зафиксировать порядок явно."
+      },
+      "tiedIds": [
+        "add_to_collection",
+        "block_bidder",
+        "delete_template",
+        "remove_from_collection",
+        "remove_listing",
+        "remove_tag",
+        "report_counterfeit",
+        "report_listing",
+        "request_authenticity_check",
+        "subscribe_to_listing",
+        "unblock_bidder",
+        "unsubscribe_from_listing"
+      ]
+    },
+    {
+      "domain": "sales",
+      "projectionId": "my_listings",
+      "mainEntity": "Listing",
+      "witness": {
+        "basis": "alphabetical-fallback",
+        "reliability": "heuristic",
+        "slot": "toolbar",
+        "projection": "my_listings",
+        "salience": 100,
+        "chosen": "bulk_relist",
+        "peers": [
+          "create_listing"
+        ],
+        "recommendation": "Проставьте intent.salience одному из [bulk_relist, create_listing] чтобы зафиксировать порядок явно."
+      },
+      "tiedIds": [
+        "bulk_relist",
+        "create_listing"
+      ]
+    },
+    {
+      "domain": "sales",
+      "projectionId": "my_listings",
+      "mainEntity": "Listing",
+      "witness": {
+        "basis": "alphabetical-fallback",
+        "reliability": "heuristic",
+        "slot": "toolbar",
+        "projection": "my_listings",
+        "salience": 80,
+        "chosen": "bulk_relist_expired",
+        "peers": [
+          "duplicate_listing",
+          "relist_item"
+        ],
+        "recommendation": "Проставьте intent.salience одному из [bulk_relist_expired, duplicate_listing, relist_item] чтобы зафиксировать порядок явно."
+      },
+      "tiedIds": [
+        "bulk_relist_expired",
+        "duplicate_listing",
+        "relist_item"
+      ]
+    },
+    {
+      "domain": "sales",
+      "projectionId": "order_detail",
+      "mainEntity": "Order",
+      "witness": {
+        "basis": "alphabetical-fallback",
+        "reliability": "heuristic",
+        "slot": "toolbar",
+        "projection": "order_detail",
+        "salience": 60,
+        "chosen": "add_order_note",
+        "peers": [
+          "apply_coupon",
+          "apply_store_credit",
+          "choose_payment_method",
+          "combine_shipping",
+          "issue_partial_refund",
+          "mark_as_gift",
+          "request_pickup",
+          "set_shipping_address"
+        ],
+        "recommendation": "Проставьте intent.salience одному из [add_order_note, apply_coupon, apply_store_credit, choose_payment_method, combine_shipping, issue_partial_refund, mark_as_gift, request_pickup, set_shipping_address] чтобы зафиксировать порядок явно."
+      },
+      "tiedIds": [
+        "add_order_note",
+        "apply_coupon",
+        "apply_store_credit",
+        "choose_payment_method",
+        "combine_shipping",
+        "issue_partial_refund",
+        "mark_as_gift",
+        "request_pickup",
+        "set_shipping_address"
+      ]
+    },
+    {
+      "domain": "sales",
+      "projectionId": "seller_profile",
+      "mainEntity": "User",
+      "witness": {
+        "basis": "alphabetical-fallback",
+        "reliability": "heuristic",
+        "slot": "toolbar",
+        "projection": "seller_profile",
+        "salience": 100,
+        "chosen": "follow_seller",
+        "peers": [
+          "update_profile"
+        ],
+        "recommendation": "Проставьте intent.salience одному из [follow_seller, update_profile] чтобы зафиксировать порядок явно."
+      },
+      "tiedIds": [
+        "follow_seller",
+        "update_profile"
+      ]
+    },
+    {
+      "domain": "sales",
+      "projectionId": "seller_profile",
+      "mainEntity": "User",
+      "witness": {
+        "basis": "alphabetical-fallback",
+        "reliability": "heuristic",
+        "slot": "toolbar",
+        "projection": "seller_profile",
+        "salience": 60,
+        "chosen": "approve_verification",
+        "peers": [
+          "reject_verification",
+          "verify_identity"
+        ],
+        "recommendation": "Проставьте intent.salience одному из [approve_verification, reject_verification, verify_identity] чтобы зафиксировать порядок явно."
+      },
+      "tiedIds": [
+        "approve_verification",
+        "reject_verification",
+        "verify_identity"
+      ]
+    },
+    {
+      "domain": "sales",
+      "projectionId": "seller_profile",
+      "mainEntity": "User",
+      "witness": {
+        "basis": "alphabetical-fallback",
+        "reliability": "heuristic",
+        "slot": "toolbar",
+        "projection": "seller_profile",
+        "salience": 40,
+        "chosen": "block_user",
+        "peers": [
+          "report_user",
+          "subscribe_to_seller",
+          "unblock_user",
+          "unfollow_seller",
+          "unsubscribe_from_seller",
+          "warn_user"
+        ],
+        "recommendation": "Проставьте intent.salience одному из [block_user, report_user, subscribe_to_seller, unblock_user, unfollow_seller, unsubscribe_from_seller, warn_user] чтобы зафиксировать порядок явно."
+      },
+      "tiedIds": [
+        "block_user",
+        "report_user",
+        "subscribe_to_seller",
+        "unblock_user",
+        "unfollow_seller",
+        "unsubscribe_from_seller",
+        "warn_user"
+      ]
+    },
+    {
+      "domain": "lifequest",
+      "projectionId": "habit_detail",
+      "mainEntity": "Habit",
+      "witness": {
+        "basis": "alphabetical-fallback",
+        "reliability": "heuristic",
+        "slot": "toolbar",
+        "projection": "habit_detail",
+        "salience": 100,
+        "chosen": "check_habit",
+        "peers": [
+          "edit_habit"
+        ],
+        "recommendation": "Проставьте intent.salience одному из [check_habit, edit_habit] чтобы зафиксировать порядок явно."
+      },
+      "tiedIds": [
+        "check_habit",
+        "edit_habit"
+      ]
+    },
+    {
+      "domain": "lifequest",
+      "projectionId": "habit_detail",
+      "mainEntity": "Habit",
+      "witness": {
+        "basis": "alphabetical-fallback",
+        "reliability": "heuristic",
+        "slot": "toolbar",
+        "projection": "habit_detail",
+        "salience": 60,
+        "chosen": "change_habit_frequency",
+        "peers": [
+          "move_habit_sphere",
+          "reset_streak"
+        ],
+        "recommendation": "Проставьте intent.salience одному из [change_habit_frequency, move_habit_sphere, reset_streak] чтобы зафиксировать порядок явно."
+      },
+      "tiedIds": [
+        "change_habit_frequency",
+        "move_habit_sphere",
+        "reset_streak"
+      ]
+    },
+    {
+      "domain": "lifequest",
+      "projectionId": "habit_detail",
+      "mainEntity": "Habit",
+      "witness": {
+        "basis": "alphabetical-fallback",
+        "reliability": "heuristic",
+        "slot": "toolbar",
+        "projection": "habit_detail",
+        "salience": 40,
+        "chosen": "delete_habit",
+        "peers": [
+          "log_habit_value"
+        ],
+        "recommendation": "Проставьте intent.salience одному из [delete_habit, log_habit_value] чтобы зафиксировать порядок явно."
+      },
+      "tiedIds": [
+        "delete_habit",
+        "log_habit_value"
+      ]
+    },
+    {
+      "domain": "lifequest",
+      "projectionId": "goal_detail",
+      "mainEntity": "Goal",
+      "witness": {
+        "basis": "alphabetical-fallback",
+        "reliability": "heuristic",
+        "slot": "toolbar",
+        "projection": "goal_detail",
+        "salience": 100,
+        "chosen": "edit_goal",
+        "peers": [
+          "update_goal_progress"
+        ],
+        "recommendation": "Проставьте intent.salience одному из [edit_goal, update_goal_progress] чтобы зафиксировать порядок явно."
+      },
+      "tiedIds": [
+        "edit_goal",
+        "update_goal_progress"
+      ]
+    },
+    {
+      "domain": "lifequest",
+      "projectionId": "goal_detail",
+      "mainEntity": "Goal",
+      "witness": {
+        "basis": "alphabetical-fallback",
+        "reliability": "heuristic",
+        "slot": "toolbar",
+        "projection": "goal_detail",
+        "salience": 60,
+        "chosen": "add_goal_note",
+        "peers": [
+          "move_goal_sphere",
+          "set_goal_deadline"
+        ],
+        "recommendation": "Проставьте intent.salience одному из [add_goal_note, move_goal_sphere, set_goal_deadline] чтобы зафиксировать порядок явно."
+      },
+      "tiedIds": [
+        "add_goal_note",
+        "move_goal_sphere",
+        "set_goal_deadline"
+      ]
+    },
+    {
+      "domain": "reflect",
+      "projectionId": "entry_detail",
+      "mainEntity": "MoodEntry",
+      "witness": {
+        "basis": "alphabetical-fallback",
+        "reliability": "heuristic",
+        "slot": "toolbar",
+        "projection": "entry_detail",
+        "salience": 100,
+        "chosen": "add_tag_to_entry",
+        "peers": [
+          "edit_entry_note"
+        ],
+        "recommendation": "Проставьте intent.salience одному из [add_tag_to_entry, edit_entry_note] чтобы зафиксировать порядок явно."
+      },
+      "tiedIds": [
+        "add_tag_to_entry",
+        "edit_entry_note"
+      ]
+    },
+    {
+      "domain": "reflect",
+      "projectionId": "entry_detail",
+      "mainEntity": "MoodEntry",
+      "witness": {
+        "basis": "alphabetical-fallback",
+        "reliability": "heuristic",
+        "slot": "toolbar",
+        "projection": "entry_detail",
+        "salience": 40,
+        "chosen": "add_activity_to_entry",
+        "peers": [
+          "delete_entry"
+        ],
+        "recommendation": "Проставьте intent.salience одному из [add_activity_to_entry, delete_entry] чтобы зафиксировать порядок явно."
+      },
+      "tiedIds": [
+        "add_activity_to_entry",
+        "delete_entry"
+      ]
+    },
+    {
+      "domain": "freelance",
+      "projectionId": "deal_detail_customer",
+      "mainEntity": "Deal",
+      "witness": {
+        "basis": "alphabetical-fallback",
+        "reliability": "heuristic",
+        "slot": "toolbar",
+        "projection": "deal_detail_customer",
+        "salience": 70,
+        "chosen": "cancel_deal_mutual",
+        "peers": [
+          "request_revision",
+          "submit_revision",
+          "submit_work_result"
+        ],
+        "recommendation": "Проставьте intent.salience одному из [cancel_deal_mutual, request_revision, submit_revision, submit_work_result] чтобы зафиксировать порядок явно."
+      },
+      "tiedIds": [
+        "cancel_deal_mutual",
+        "request_revision",
+        "submit_revision",
+        "submit_work_result"
+      ]
+    },
+    {
+      "domain": "freelance",
+      "projectionId": "deal_detail_executor",
+      "mainEntity": "Deal",
+      "witness": {
+        "basis": "alphabetical-fallback",
+        "reliability": "heuristic",
+        "slot": "toolbar",
+        "projection": "deal_detail_executor",
+        "salience": 70,
+        "chosen": "cancel_deal_mutual",
+        "peers": [
+          "request_revision",
+          "submit_revision",
+          "submit_work_result"
+        ],
+        "recommendation": "Проставьте intent.salience одному из [cancel_deal_mutual, request_revision, submit_revision, submit_work_result] чтобы зафиксировать порядок явно."
+      },
+      "tiedIds": [
+        "cancel_deal_mutual",
+        "request_revision",
+        "submit_revision",
+        "submit_work_result"
+      ]
+    }
+  ],
+  "suggestions": [
+    {
+      "domain": "booking",
+      "projectionId": "booking_detail",
+      "mainEntity": "Booking",
+      "slot": "toolbar",
+      "salienceScore": 100,
+      "tiedCount": 2,
+      "chosenByAlpha": "cancel_booking",
+      "tied": [
+        "cancel_booking",
+        "reschedule_booking"
+      ],
+      "recommendation": [],
+      "needsManual": true
+    },
+    {
+      "domain": "sales",
+      "projectionId": "listing_feed",
+      "mainEntity": "Listing",
+      "slot": "toolbar",
+      "salienceScore": 100,
+      "tiedCount": 2,
+      "chosenByAlpha": "bulk_relist",
+      "tied": [
+        "bulk_relist",
+        "create_listing"
+      ],
+      "recommendation": [],
+      "needsManual": true
+    },
+    {
+      "domain": "sales",
+      "projectionId": "listing_feed",
+      "mainEntity": "Listing",
+      "slot": "toolbar",
+      "salienceScore": 80,
+      "tiedCount": 3,
+      "chosenByAlpha": "bulk_relist_expired",
+      "tied": [
+        "bulk_relist_expired",
+        "duplicate_listing",
+        "relist_item"
+      ],
+      "recommendation": [],
+      "needsManual": true
+    },
+    {
+      "domain": "sales",
+      "projectionId": "listing_detail",
+      "mainEntity": "Listing",
+      "slot": "toolbar",
+      "salienceScore": 100,
+      "tiedCount": 3,
+      "chosenByAlpha": "add_to_watchlist",
+      "tied": [
+        "add_to_watchlist",
+        "edit_listing",
+        "feature_listing"
+      ],
+      "recommendation": [
+        {
+          "id": "edit_listing",
+          "suggested": "primary",
+          "tier": 1,
+          "reason": "canonical edit listing"
+        }
+      ],
+      "needsManual": false
+    },
+    {
+      "domain": "sales",
+      "projectionId": "listing_detail",
+      "mainEntity": "Listing",
+      "slot": "toolbar",
+      "salienceScore": 60,
+      "tiedCount": 31,
+      "chosenByAlpha": "add_listing_image",
+      "tied": [
+        "add_listing_image",
+        "add_to_bundle",
+        "apply_template",
+        "archive_listing",
+        "cancel_promotion",
+        "certify_listing",
+        "disable_international_shipping",
+        "edit_template",
+        "extend_auction",
+        "like_listing",
+        "lower_start_price",
+        "move_to_category",
+        "promote_listing",
+        "remove_from_bundle",
+        "rename_template",
+        "schedule_listing",
+        "set_buy_now_price",
+        "set_free_shipping",
+        "set_international_shipping",
+        "set_listing_category",
+        "set_listing_condition",
+        "set_minimum_bid_increment",
+        "set_reserve_price",
+        "set_shipping_cost",
+        "set_shipping_from",
+        "set_subcategory",
+        "set_template_defaults",
+        "snipe_protect",
+        "unarchive_listing",
+        "unfeature_listing",
+        "unlike_listing"
+      ],
+      "recommendation": [
+        {
+          "id": "edit_template",
+          "suggested": "primary",
+          "tier": 2,
+          "reason": "edit-like action"
+        }
+      ],
+      "needsManual": false
+    },
+    {
+      "domain": "sales",
+      "projectionId": "listing_detail",
+      "mainEntity": "Listing",
+      "slot": "toolbar",
+      "salienceScore": 40,
+      "tiedCount": 12,
+      "chosenByAlpha": "add_to_collection",
+      "tied": [
+        "add_to_collection",
+        "block_bidder",
+        "delete_template",
+        "remove_from_collection",
+        "remove_listing",
+        "remove_tag",
+        "report_counterfeit",
+        "report_listing",
+        "request_authenticity_check",
+        "subscribe_to_listing",
+        "unblock_bidder",
+        "unsubscribe_from_listing"
+      ],
+      "recommendation": [],
+      "needsManual": true
+    },
+    {
+      "domain": "sales",
+      "projectionId": "order_detail",
+      "mainEntity": "Order",
+      "slot": "toolbar",
+      "salienceScore": 60,
+      "tiedCount": 9,
+      "chosenByAlpha": "add_order_note",
+      "tied": [
+        "add_order_note",
+        "apply_coupon",
+        "apply_store_credit",
+        "choose_payment_method",
+        "combine_shipping",
+        "issue_partial_refund",
+        "mark_as_gift",
+        "request_pickup",
+        "set_shipping_address"
+      ],
+      "recommendation": [],
+      "needsManual": true
+    },
+    {
+      "domain": "sales",
+      "projectionId": "seller_profile",
+      "mainEntity": "User",
+      "slot": "toolbar",
+      "salienceScore": 100,
+      "tiedCount": 2,
+      "chosenByAlpha": "follow_seller",
+      "tied": [
+        "follow_seller",
+        "update_profile"
+      ],
+      "recommendation": [
+        {
+          "id": "update_profile",
+          "suggested": "primary",
+          "tier": 2,
+          "reason": "edit-like action"
+        }
+      ],
+      "needsManual": false
+    },
+    {
+      "domain": "sales",
+      "projectionId": "seller_profile",
+      "mainEntity": "User",
+      "slot": "toolbar",
+      "salienceScore": 60,
+      "tiedCount": 3,
+      "chosenByAlpha": "approve_verification",
+      "tied": [
+        "approve_verification",
+        "reject_verification",
+        "verify_identity"
+      ],
+      "recommendation": [
+        {
+          "id": "approve_verification",
+          "suggested": "primary",
+          "tier": 3,
+          "reason": "promotion action"
+        }
+      ],
+      "needsManual": false
+    },
+    {
+      "domain": "sales",
+      "projectionId": "seller_profile",
+      "mainEntity": "User",
+      "slot": "toolbar",
+      "salienceScore": 40,
+      "tiedCount": 7,
+      "chosenByAlpha": "block_user",
+      "tied": [
+        "block_user",
+        "report_user",
+        "subscribe_to_seller",
+        "unblock_user",
+        "unfollow_seller",
+        "unsubscribe_from_seller",
+        "warn_user"
+      ],
+      "recommendation": [],
+      "needsManual": true
+    },
+    {
+      "domain": "lifequest",
+      "projectionId": "habit_detail",
+      "mainEntity": "Habit",
+      "slot": "toolbar",
+      "salienceScore": 100,
+      "tiedCount": 2,
+      "chosenByAlpha": "check_habit",
+      "tied": [
+        "check_habit",
+        "edit_habit"
+      ],
+      "recommendation": [
+        {
+          "id": "edit_habit",
+          "suggested": "primary",
+          "tier": 1,
+          "reason": "canonical edit habit"
+        }
+      ],
+      "needsManual": false
+    },
+    {
+      "domain": "lifequest",
+      "projectionId": "habit_detail",
+      "mainEntity": "Habit",
+      "slot": "toolbar",
+      "salienceScore": 60,
+      "tiedCount": 3,
+      "chosenByAlpha": "change_habit_frequency",
+      "tied": [
+        "change_habit_frequency",
+        "move_habit_sphere",
+        "reset_streak"
+      ],
+      "recommendation": [],
+      "needsManual": true
+    },
+    {
+      "domain": "lifequest",
+      "projectionId": "habit_detail",
+      "mainEntity": "Habit",
+      "slot": "toolbar",
+      "salienceScore": 40,
+      "tiedCount": 2,
+      "chosenByAlpha": "delete_habit",
+      "tied": [
+        "delete_habit",
+        "log_habit_value"
+      ],
+      "recommendation": [],
+      "needsManual": true
+    },
+    {
+      "domain": "lifequest",
+      "projectionId": "goal_detail",
+      "mainEntity": "Goal",
+      "slot": "toolbar",
+      "salienceScore": 100,
+      "tiedCount": 2,
+      "chosenByAlpha": "edit_goal",
+      "tied": [
+        "edit_goal",
+        "update_goal_progress"
+      ],
+      "recommendation": [
+        {
+          "id": "edit_goal",
+          "suggested": "primary",
+          "tier": 1,
+          "reason": "canonical edit goal"
+        }
+      ],
+      "needsManual": false
+    },
+    {
+      "domain": "lifequest",
+      "projectionId": "goal_detail",
+      "mainEntity": "Goal",
+      "slot": "toolbar",
+      "salienceScore": 60,
+      "tiedCount": 3,
+      "chosenByAlpha": "add_goal_note",
+      "tied": [
+        "add_goal_note",
+        "move_goal_sphere",
+        "set_goal_deadline"
+      ],
+      "recommendation": [],
+      "needsManual": true
+    },
+    {
+      "domain": "reflect",
+      "projectionId": "entry_detail",
+      "mainEntity": "MoodEntry",
+      "slot": "toolbar",
+      "salienceScore": 100,
+      "tiedCount": 2,
+      "chosenByAlpha": "add_tag_to_entry",
+      "tied": [
+        "add_tag_to_entry",
+        "edit_entry_note"
+      ],
+      "recommendation": [
+        {
+          "id": "edit_entry_note",
+          "suggested": "primary",
+          "tier": 2,
+          "reason": "edit-like action"
+        }
+      ],
+      "needsManual": false
+    },
+    {
+      "domain": "reflect",
+      "projectionId": "entry_detail",
+      "mainEntity": "MoodEntry",
+      "slot": "toolbar",
+      "salienceScore": 40,
+      "tiedCount": 2,
+      "chosenByAlpha": "add_activity_to_entry",
+      "tied": [
+        "add_activity_to_entry",
+        "delete_entry"
+      ],
+      "recommendation": [],
+      "needsManual": true
+    },
+    {
+      "domain": "freelance",
+      "projectionId": "deal_detail_customer",
+      "mainEntity": "Deal",
+      "slot": "toolbar",
+      "salienceScore": 70,
+      "tiedCount": 4,
+      "chosenByAlpha": "cancel_deal_mutual",
+      "tied": [
+        "cancel_deal_mutual",
+        "request_revision",
+        "submit_revision",
+        "submit_work_result"
+      ],
+      "recommendation": [
+        {
+          "id": "submit_revision",
+          "suggested": "primary",
+          "tier": 3,
+          "reason": "promotion action"
+        }
+      ],
+      "needsManual": false
+    }
+  ]
+}

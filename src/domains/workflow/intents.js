@@ -103,6 +103,7 @@ export const INTENTS = {
     }, antagonist: null, creates: null
   },
   rename_node: {
+    salience: "primary",
     name: "Переименовать узел", particles: {
       entities: ["node: Node"],
       conditions: ["workflow.status IN ('draft','saved')"],

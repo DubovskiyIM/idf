@@ -108,7 +108,7 @@ export const INTENTS = {
   feature_listing: intent("В рекомендуемые", ["listing: Listing"],
     ["listing.status = 'active'", "listing.moderatorOnly = true"],
     [ef("replace", "listing.featured", "account", { value: true })],
-    [], "click", { antagonist: "unfeature_listing" }),
+    [], "click", { antagonist: "unfeature_listing", salience: "primary" }),
 
   unfeature_listing: intent("Убрать из рекомендуемых", ["listing: Listing"],
     ["listing.featured = true", "listing.moderatorOnly = true"],
@@ -228,7 +228,7 @@ export const INTENTS = {
     ["order.sellerId = me.id"],
     [ef("replace", "order.trackingNumber")],
     ["trackingNumber"],
-    "click"),
+    "click", { salience: "primary" }),
 
   confirm_delivery: intent("Подтвердить получение", ["order: Order"],
     ["order.status = 'shipped'", "order.buyerId = me.id"],
@@ -394,7 +394,7 @@ export const INTENTS = {
     ["listing.status = 'active'"],
     [ef("add", "watchlists")],
     ["listing.title"], "click",
-    { antagonist: "remove_from_watchlist", parameters: [] }),
+    { antagonist: "remove_from_watchlist", parameters: [], salience: "primary" }),
 
   remove_from_watchlist: intent("Убрать из избранного", ["watchlist: Watchlist"],
     ["watchlist.userId = me.id"],
@@ -473,7 +473,7 @@ export const INTENTS = {
     ["user.id = me.id"],
     [ef("replace", "user.name"), ef("replace", "user.bio"), ef("replace", "user.location")],
     ["user.name", "user.bio", "user.location"],
-    "click", { phase: "investigation" }),
+    "click", { phase: "investigation", salience: "primary" }),
 
   set_avatar: intent("Установить аватар", ["user: User"],
     ["user.id = me.id"],
@@ -520,7 +520,7 @@ export const INTENTS = {
     [],
     [ef("add", "follows")],
     ["user.name"],
-    "click", { antagonist: "unfollow_seller", parameters: [] }),
+    "click", { antagonist: "unfollow_seller", parameters: [], salience: "primary" }),
 
   unfollow_seller: intent("Отписаться от продавца", ["user: User"],
     [],
@@ -637,7 +637,7 @@ export const INTENTS = {
   bulk_relist: intent("Массовое перевыставление", ["listing: Listing"],
     [],
     [ef("add", "listings")],
-    [], "click", { extended: true, creates: "Listing(draft)" }),
+    [], "click", { extended: true, creates: "Listing(draft)", salience: "primary" }),
 
   export_listings: intent("Экспорт лотов", [],
     [],
