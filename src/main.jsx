@@ -59,6 +59,7 @@ function Root() {
           <Route path="/invest" element={<StandaloneApp domainId="invest" />} />
           <Route path="/delivery" element={<StandaloneApp domainId="delivery" />} />
           <Route path="/freelance" element={<StandaloneApp domainId="freelance" />} />
+          <Route path="/compliance" element={<StandaloneApp domainId="compliance" />} />
           <Route path="/*" element={<StudioRedirect />} />
         </Routes>
       </BrowserRouter>
