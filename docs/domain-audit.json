@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-04-20T08:51:06.500Z",
+  "generatedAt": "2026-04-20T09:12:25.896Z",
   "domains": [
     "booking",
     "planning",
@@ -13,14 +13,14 @@
     "freelance"
   ],
   "summary": {
-    "totalFindings": 180,
+    "totalFindings": 179,
     "bySeverity": {
       "error": 0,
-      "warning": 96,
+      "warning": 95,
       "info": 84
     },
     "byAxis": {
-      "derivation": 9,
+      "derivation": 8,
       "idiom": 55,
       "testing": 7,
       "structural": 19,
@@ -47,7 +47,7 @@
       ],
       [
         "sales",
-        11
+        10
       ]
     ]
   },
@@ -712,14 +712,6 @@
                 "total": 15,
                 "coefficient": 1
               }
-            },
-            {
-              "severity": "warning",
-              "axis": "derivation",
-              "message": "4 alphabetical-fallback witness'ов (intent.salience не объявлена)",
-              "details": {
-                "count": 4
-              }
             }
           ],
           "metrics": {
@@ -735,7 +727,7 @@
             ],
             "patternsWithApply": 57,
             "patternsMatchingOnly": 86,
-            "alphabeticalFallbacks": 4,
+            "alphabeticalFallbacks": 0,
             "disabledDeclarations": 0
           }
         },
