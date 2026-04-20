@@ -8,7 +8,7 @@
  *   2. «какой input запустил правило?» (witness.input)
  *   3. «какой паттерн обогатил слоты?» (patternIds, temporal, polymorphic)
  *
- * Активируется Cmd+Shift+C / Ctrl+Shift+C в V2Shell.
+ * Активируется Cmd+Shift+D / Ctrl+Shift+D в V2Shell или кнопкой в Studio.
  *
  * Не требует server-вызова — работает с artifact целиком.
  */
@@ -178,7 +178,7 @@ function Header({ title, onClose }) {
           fontSize: 11, cursor: "pointer",
         }}
       >
-        Cmd+Shift+C / Close
+        Cmd+Shift+D / Close
       </button>
     </div>
   );
