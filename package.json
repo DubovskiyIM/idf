@@ -44,7 +44,7 @@
     "@ant-design/icons": "^6.1.1",
     "@ant-design/plots": "^2.6.8",
     "@anthropic-ai/sdk": "^0.88.0",
-    "@intent-driven/adapter-antd": "^1.1.0",
+    "@intent-driven/adapter-antd": "^1.2.0",
     "@intent-driven/adapter-apple": "^1.1.2",
     "@intent-driven/adapter-mantine": "^1.1.0",
     "@intent-driven/adapter-shadcn": "^1.1.1",
