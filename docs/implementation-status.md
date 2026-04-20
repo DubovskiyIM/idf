@@ -2,7 +2,7 @@
 
 Живой документ об имплементационном состоянии референсной реализации IDF (прототип + SDK). Формат (`docs/manifesto-v2.md`) определяет аксиомы; этот документ фиксирует, что из формата **реализовано** и **валидировано на практике**.
 
-**Последнее обновление:** 2026-04-19
+**Последнее обновление:** 2026-04-20
 
 ---
 
@@ -32,13 +32,14 @@ Freelance (12-й полевой тест) выявил 40+ конкретных 
 
 ### Тестовое покрытие
 
-- **idf (прототип)**: 716 unit-тестов в 50 файлах
-- **@intent-driven/core**: 483 unit-теста
-- **@intent-driven/renderer**: 95 тестов
+- **idf (прототип)**: 744 unit-тестов в 52 файлах
+- **@intent-driven/core**: 895 unit-тестов
+- **@intent-driven/renderer**: 175 тестов
 - **@intent-driven/canvas-kit**: 36 тестов
-- **4× `@intent-driven/adapter-*`**: 12 тестов суммарно
-- **Итого:** ~1342 теста в SDK + прототипе
+- **4× `@intent-driven/adapter-*`**: 34 теста суммарно (adapter-antd 22, apple 3, shadcn 3, mantine 6)
+- **Итого:** ~1904 теста в SDK + прототипе
 - **agent-smoke**: 75-шаговый integration-тест, покрывает все домены
+- **domain-audit**: `npm run audit-report` — 7 осей × 10 доменов, baseline в `docs/domain-audit.{md,json}`
 
 ---
 
@@ -50,14 +51,14 @@ Freelance (12-й полевой тест) выявил 40+ конкретных 
 
 | Пакет | Версия | Лицензия | Назначение |
 |---|---|---|---|
-| `@intent-driven/core` | 0.9.0 | BSL 1.1 | engine, fold, crystallize_v2, invariants, materializers, Pattern Bank |
-| `@intent-driven/renderer` | 0.5.0 | BSL 1.1 | ProjectionRendererV2, 7 архетипов, 11 controls, primitives (atoms/containers/chart/map), 6 parameters, adapter registry |
+| `@intent-driven/core` | 0.31.2 | BSL 1.1 | engine, fold, crystallize_v2, invariants, materializers, Pattern Bank, salience declaration-order ladder |
+| `@intent-driven/renderer` | 0.12.0 | BSL 1.1 | ProjectionRendererV2, 7 архетипов, 11 controls, primitives (atoms/containers/chart/map + IrreversibleBadge + PatternPreviewOverlay), 6 parameters, adapter registry |
 | `@intent-driven/adapter-mantine` | 1.1.0+ | BSL 1.1 | Mantine UI-kit (corporate) |
-| `@intent-driven/adapter-shadcn` | 1.1.0+ | BSL 1.1 | shadcn/ui doodle |
-| `@intent-driven/adapter-apple` | 1.1.0+ | BSL 1.1 | Apple visionOS-glass |
-| `@intent-driven/adapter-antd` | 1.1.0+ | BSL 1.1 | AntD enterprise-fintech |
+| `@intent-driven/adapter-shadcn` | 1.1.1+ | BSL 1.1 | shadcn/ui doodle |
+| `@intent-driven/adapter-apple` | 1.1.2+ | BSL 1.1 | Apple visionOS-glass |
+| `@intent-driven/adapter-antd` | 1.2.0+ | BSL 1.1 | AntD enterprise-fintech (button label/children, DateTime withTime, fieldRole price, maxLength/pattern — все patches from freelance field-test закрыты) |
 | `@intent-driven/canvas-kit` | 0.2.0 | BSL 1.1 | SVG/canvas утилиты (9 helpers) |
-| `@intent-driven/cli` | 1.0.7 | MIT | `npx @intent-driven/cli init <name>` — 5-шаговый LLM-диалог через Claude |
+| `@intent-driven/cli` | 1.0.32+ | MIT | `npx @intent-driven/cli init <name>` — 5-шаговый LLM-диалог через Claude |
 
 **Release pipeline:** changesets-bot автоматически создаёт «Version Packages» PR при merge в main; публикация в npm при merge release PR.
 
@@ -126,9 +127,11 @@ Invest использует все четыре в одном домене.
 ### Invariants (5 kinds)
 `role-capability`, `referential`, `transition`, `cardinality`, `aggregate`. Dispatch через `server/schema/invariantChecker.cjs`; handlers в `@intent-driven/core/invariants/*.js`. Проверяются в `onConfirmed`; на violation — rollback через `cascadeReject` + SSE `effect:rejected`. Декларации: invest (5), sales (3), delivery (3).
 
-**Известный дефект (backlog 1.1, P0):** handler'ы `referential`/`aggregate`/`transition` бросают `TypeError` при альтернативных формах декларации (`{entity, field, references}` вместо канонического `{from, to}`). Исключение трактуется как `severity:"error"` и cascade-rejects подтверждённый эффект. Freelance пришлось даунгрейдить 3 инварианта в `severity:"warning"`. См. [`sdk-improvements-backlog.md §1`](sdk-improvements-backlog.md).
+**Handler schema drift (backlog 1.1, ЗАКРЫТ 2026-04-20):** `invariants/normalize.js` + try/catch в `invariants/index.js` — альтернативные формы (`{entity, field, references}`) нормализуются, unknown shapes → warning (не cascade-reject). Invariant.where поддерживается всеми 4 kinds (`referential`, `aggregate`, `transition`, `cardinality`).
 
-**Domain scoping — отсутствует (backlog 1.4, P0):** `lifequest.tasks` и `freelance.tasks` мапятся в одну SQL-таблицу `tasks`. Freelance transition-инвариант на `Task.status` ловит lifequest row'ы и ломает каскад. `filterWorldForRole` параметризован viewer'ом, но не доменом. Требует `entity.domain` в Φ-context или `invariant.where`/`invariant.domain` filter.
+**Domain scoping — частично закрыт (backlog 1.4):** `invariant.where` даёт автору способ фильтровать row-set. Полный auto-discriminator (`__domain` provenance в Φ) deferred — требует host server changes; автор сегодня использует existing fields или добавляет discriminator-поле вручную.
+
+**Multi-owner ownership (backlog 3.2, ЗАКРЫТ 2026-04-20):** `entity.owners: ["customerId", "executorId"]` + `intent.permittedFor` override в SDK core. `filterWorldForRole` и `assignToSlotsDetail::ownershipConditionFor` генерируют OR-expression по всем owner-полям. Legacy `ownerField` остаётся backward-compat через `getOwnerFields()` util. Host freelance ожидает миграцию на `Deal.owners`.
 
 ---
 
@@ -151,21 +154,24 @@ Invest использует все четыре в одном домене.
 
 ### Из freelance field-test (2026-04-19, freelance/sdk-backlog PR #44)
 
-Полный классифицированный список (40+ пунктов, P0/P1/P2) — в [`sdk-improvements-backlog.md`](sdk-improvements-backlog.md). Ключевое из P0:
+Полный классифицированный список (40+ пунктов, P0/P1/P2) — в [`sdk-improvements-backlog.md`](sdk-improvements-backlog.md). Статус P0 (2026-04-20):
 
-- **Invariant handler schema drift** (1.1) — TypeError на альтернативных формах декларации cascade-rejects эффект
-- **Domain scoping инвариантов** (1.4) — cross-domain name collision (`lifequest.tasks` ↔ `freelance.tasks`)
-- **`AntdButton` label vs children** (2.1), **`AntdDateTime` без времени** (2.2), **`AntdNumber` не видит `fieldRole:"price"`** (2.3), **`AntdTextInput` игнорирует `maxLength`/`pattern`** (2.4) — 3 runtime-патча в `DomainRuntime.jsx` обходят это
-- **`PrimaryCTAList` не рендерит форму** (3.1) для multi-param phase-transitions
-- **`ownershipConditionFor` single-owner** (3.2) — multi-owner сущности (Deal с customerId + executorId) требуют OR-логики
-- **`inferParameters` читает только top-level** (4.1), **`heroCreate` matcher читает только `particles.confirmation`** (4.2) — нормализация top-level ↔ particles
-- **`footer-inline-setter` слишком агрессивен** (4.3) — матчит textarea-параметры, UX ломается
+- ✅ **Invariant handler schema drift** (1.1) — ЗАКРЫТ (`normalize.js` + try/catch)
+- ✅ **`AntdButton` label vs children** (2.1), **`AntdDateTime` без времени** (2.2), **`AntdNumber` fieldRole** (2.3), **`AntdTextInput` maxLength/pattern** (2.4) — ЗАКРЫТЫ в adapter-antd@1.2.0, host workarounds удалены
+- ✅ **`ownershipConditionFor` single-owner** (3.2) — ЗАКРЫТ (`entity.owners` + `intent.permittedFor` + `getOwnerFields` util)
+- ⏳ **Domain scoping инвариантов** (1.4) — частично (invariant.where; auto-discriminator deferred)
+- ⏳ **`PrimaryCTAList` не рендерит форму** (3.1) для multi-param phase-transitions
+- ⏳ **`inferParameters` читает только top-level** (4.1), **`heroCreate` matcher читает только `particles.confirmation`** (4.2)
+- ⏳ **`footer-inline-setter` слишком агрессивен** (4.3) — матчит textarea-параметры
 
-### Cross-cutting инсайты, не привязанные к тикету
+### Cross-cutting инсайты
 
-- **Intent salience** — design-spec в `~/WebstormProjects/idf-manifest-v2.1/docs/design/intent-salience-spec.md`. Закрывает «alphabetical-fallback» witness из функториального фикса. PoC: `salience.js` в SDK core, аннотация `edit_listing.salience: "primary"` в sales. `scripts/functoriality-spec-debt.mjs` даёт метрику: 16 alphabetical-fallback witnesses в 9 доменах (target: 0).
-- **SDK утекает в host** — 3 patch-wrapper'а в `src/runtime/DomainRuntime.jsx` подменяют поведение адаптеров. Формально §15 манифеста (runtime не импортирует UI-kit) соблюдён, но де-факто хост пишет shim-слой поверх SDK.
-- **Particle uniformity деградирует со сложностью** — 5/10 доменов используют custom `buildCustomEffects` (freelance имеет ~9 custom ветвей). Тренд ухудшается: freelance привнёс большой custom блок из-за отсутствующих SDK-абстракций (multi-owner, composite cardinality, expression invariant).
+- **Intent salience — alpha-fb → 0 (ЗАКРЫТ 2026-04-20)**: SDK `bySalienceDesc` расширен ladder'ом `salience desc → declarationOrder asc → alphabetical (last resort)`. `declarationOrder` автоматически из `Object.entries(INTENTS)` index в `assignToSlotsDetail` + `assignToSlotsCatalog`. Witness-basis `declaration-order` — authorial signal, `alphabetical-fallback` — practically unreachable. Baseline 19 witnesses в 8 доменах → **0 во всех 10 доменах** без массовой доменной аннотации. 17 ручных `salience: "primary"` (sales/messenger/lifequest/reflect/booking/planning/workflow/freelance) — explicit-better-than-implicit для primary semantic roles, но не обязательны.
+- **Derivation X-ray (v1.13)**: добавлен observability слой над pattern-bank apply. `computeSlotAttribution` — per-slot провенанс, `PatternPreviewOverlay` mode `"xray"` — warm-yellow overlay с hover-popover trail, Studio `#graph/focus` deep-link + pattern-узлы в Graph3D. Сняло «uncanny valley» для автора.
+- **Drift-protection spec (v1.13)**: формализованы три detector'а поверх §24 methodological note — conformance-drift (Layer 1), override-coefficient (Layer 2), reader-equivalence-drift (Layer 3). §23 получил аксиому 5 (reader-equivalence). Spec в `idf-manifest-v2.1/docs/design/drift-protection-spec.md`.
+- **Host antd cleanup (ЗАКРЫТ 2026-04-20)**: 4 workaround'а в `DomainRuntime.jsx` удалены после SDK `@intent-driven/adapter-antd@1.2.0`. `patchedAntd` chain заменён прямым `antdAdapter`.
+- **SDK утекает в host** — после antd-cleanup shim-слой практически исчез. Host использует SDK напрямую; исключения точечные (e.g. auth-flow).
+- **Particle uniformity деградирует со сложностью** — 5/10 доменов используют custom `buildCustomEffects` (freelance имеет ~9 custom ветвей). Тренд ухудшается: freelance привнёс большой custom блок из-за отсутствующих SDK-абстракций (composite cardinality, expression invariant deferred).
 
 ### Известные прототип-специфичные проблемы
 
