@@ -18,7 +18,7 @@
  */
 import { useState, useEffect, useMemo } from "react";
 import { useMantineColorScheme, MantineProvider } from "@mantine/core";
-import { useEngine } from "@intent-driven/core";
+import { useEngine, deriveProjections } from "@intent-driven/core";
 import { v4 as uuid } from "uuid";
 import { registerUIAdapter, registerCanvas } from "@intent-driven/renderer";
 import { mantineAdapter } from "@intent-driven/adapter-mantine";
@@ -274,10 +274,16 @@ export default function DomainRuntime({ domainId, embedded = false, initialProje
   useEffect(() => {
     if (!domain || domain.DOMAIN_ID === "__loading__") return;
     const did = domain.DOMAIN_ID;
+    // Publish ontology + projections (authored + derived) на сервер.
+    // Без projections — /api/voice, /api/document вернут projection_not_found
+    // для authored проекций; без derived — не увидят my_*_list/detail/feed,
+    // сгенерированные R-правилами. В одном typemap-объекте.
+    const derivedProjections = deriveProjections(domain.INTENTS, domain.ONTOLOGY);
+    const mergedProjections = { ...derivedProjections, ...(domain.PROJECTIONS || {}) };
     fetch(`/api/typemap?domain=${did}`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(domain.ONTOLOGY),
+      body: JSON.stringify({ ...domain.ONTOLOGY, projections: mergedProjections }),
     }).catch(() => {});
     fetch(`/api/intents?domain=${did}`, {
       method: "POST",

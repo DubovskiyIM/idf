@@ -7,7 +7,7 @@
  * пользователь из auth_users, не hardcoded "client".
  */
 import { useState, useEffect, useMemo } from "react";
-import { useEngine } from "@intent-driven/core";
+import { useEngine, deriveProjections } from "@intent-driven/core";
 import { useAuth } from "./runtime/renderer/auth/useAuth.js";
 import AuthGate from "./runtime/renderer/auth/AuthGate.jsx";
 
@@ -174,11 +174,17 @@ export default function StandaloneApp({ domainId }) {
       headers: { "Content-Type": "application/json" },
       // projections публикуются вместе с ontology — их читает
       // documentMaterializer (/api/document/:domain/:projection, §26.3).
+      // derived (R-правила) мёрджатся с authored, authored имеют приоритет —
+      // тот же подход, что в V2Shell::mergedProjections.
       body: JSON.stringify({
         ...domain.ONTOLOGY,
-        projections: Object.fromEntries(
-          Object.entries(domain.PROJECTIONS || {}).map(([id, p]) => [id, { id, ...p }])
-        ),
+        projections: (() => {
+          const derived = deriveProjections(domain.INTENTS, domain.ONTOLOGY);
+          const merged = { ...derived, ...(domain.PROJECTIONS || {}) };
+          return Object.fromEntries(
+            Object.entries(merged).map(([id, p]) => [id, { id, ...p }])
+          );
+        })(),
       }),
     }).catch(() => {});
     fetch(`/api/intents?domain=${domainId.replace("-v2", "")}`, {

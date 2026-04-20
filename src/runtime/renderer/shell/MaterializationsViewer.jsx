@@ -265,7 +265,11 @@ function DocumentTab({ domain, projection, token, role }) {
         current={format} onChange={setFormat}
       />
       {status === "loading" && <Spinner />}
-      {status === "error" && <ErrorBox>{String(data)}</ErrorBox>}
+      {status === "error" && (
+        <ErrorBox>
+          {typeof data === "string" ? data : JSON.stringify(data, null, 2)}
+        </ErrorBox>
+      )}
       {status === "ok" && format === "html" && (
         <iframe
           title="document preview"
