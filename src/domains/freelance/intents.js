@@ -763,7 +763,7 @@ export const INTENTS = {
     // select_executor + confirm_deal, на странице Response.
     particles: {
       // Deal исключён из entities — иначе SDK дублирует кнопку на
-      // deal_detail_customer (appliesToMainEntity=Deal). Per-item на Response
+      // deal_detail (appliesToMainEntity=Deal). Per-item на Response
       // в task_detail_customer — единственное корректное место.
       entities: ["response: Response", "task: Task"],
       conditions: ["response.status = 'selected'"],
@@ -780,6 +780,10 @@ export const INTENTS = {
     name: "Сдать работу",
     description: "Executor передаёт результат — Deal.status: in_progress → on_review.",
     α: "replace",
+    // permittedFor: "executorId" — Deal multi-owner (customerId/executorId),
+    // этот intent только для executor'а (backlog 3.2). SDK derived deal_detail
+    // поместит в toolbar только когда viewer.id === deal.executorId.
+    permittedFor: "executorId",
     // irreversibility:"high" здесь — UI-трюк, а не семантика: SDK assignToSlotsDetail:135
     // направляет phase-transition intents в primaryCTA, только если irreversibility
     // !== "high". primaryCTA не умеет рендерить form — пробрасывает только id.
@@ -809,6 +813,8 @@ export const INTENTS = {
     name: "Принять работу",
     description: "Customer принимает результат — Deal.status → completed, escrow release executor'у (payout), commission платформе.",
     α: "replace",
+    // permittedFor: "customerId" — customer-only action (backlog 3.2).
+    permittedFor: "customerId",
     irreversibility: "high",
     __irr: {
       point: "high",
@@ -855,6 +861,7 @@ export const INTENTS = {
     name: "Вернуть на доработку",
     description: "Customer возвращает deal из on_review в revision_requested с комментарием (причиной). Revision-cycle: request_revision ↔ submit_revision может повторяться.",
     α: "replace",
+    permittedFor: "customerId",
     // high + control:"formModal" — UI-трюк для обхода primaryCTA-routing.
     irreversibility: "high",
     control: "formModal",
@@ -880,6 +887,7 @@ export const INTENTS = {
     name: "Сдать правки",
     description: "Executor сдаёт версию после revision — Deal возвращается в on_review. Доступно только из revision_requested.",
     α: "replace",
+    permittedFor: "executorId",
     irreversibility: "high",
     control: "formModal",
     icon: "📤",
