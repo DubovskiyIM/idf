@@ -769,14 +769,12 @@ export const INTENTS = {
     name: "Подтвердить сделку",
     description: "Customer резервирует escrow по выбранному отклику — создаётся Deal(in_progress), Transaction(escrow-hold), wallet.balance -= amount, wallet.reserved += amount. Вызывается per-item на Response.status=selected; id = response.id, всё остальное derive'ится в buildCustomEffects.",
     α: "add",
+    creates: "Deal",
     irreversibility: "high",
     __irr: {
       point: "high",
       reason: "Сумма резервируется в escrow — отмена возможна только через спор или mutual-cancel",
     },
-    // creates:"Deal" опущен — иначе my_deals-catalog добавил бы heroCreate-
-    // форму с 6 required-params. Deal создаётся только как следствие
-    // select_executor + confirm_deal, на странице Response.
     particles: {
       // Deal исключён из entities — иначе SDK дублирует кнопку на
       // deal_detail (appliesToMainEntity=Deal). Per-item на Response

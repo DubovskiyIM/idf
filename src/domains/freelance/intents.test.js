@@ -154,11 +154,10 @@ describe("freelance intents — deal details + __irr декларация", () =
   }
 
   it("confirm_deal — particles.effects создают Deal + escrow Transaction + reserve wallet", () => {
-    // `creates:"Deal"` снят осознанно — иначе my_deals-catalog получает
-    // heroCreate-форму с 6 required-params (customerId/executorId/...),
-    // которые должны derive'иться из selected Response. confirm_deal — это
-    // per-item действие на task_detail_customer → Response section.
-    expect(INTENTS.confirm_deal.creates).toBeUndefined();
+    // `creates:"Deal"` семантически верно — intent действительно создаёт Deal.
+    // SDK §4.1+§4.2 (PR #50) закрыл my_deals-heroCreate edge-case через
+    // нормализацию confirmation + particles.parameters fallback.
+    expect(INTENTS.confirm_deal.creates).toBe("Deal");
     const effs = INTENTS.confirm_deal.particles.effects;
     expect(effs.some(e => e.α === "add" && e.target === "deals")).toBe(true);
     expect(effs.some(e => e.α === "add" && e.target === "transactions")).toBe(true);
