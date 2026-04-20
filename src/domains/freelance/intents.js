@@ -104,7 +104,11 @@ export const INTENTS = {
     // скрывает форму на draft/moderation/closed.
     particles: {
       entities: ["task: Task", "response: Response"],
-      conditions: ["task.status = 'published'"],
+      // customerId != me.id (семантический guard): customer не должен
+      // откликаться на собственную задачу. Был filter-only в task_catalog_public,
+      // теперь — intent-level condition (Stage 4), чтобы derived task_detail
+      // не показывал Respond-форму customer'у его собственной задачи.
+      conditions: ["task.status = 'published'", "task.customerId != me.id"],
       confirmation: "form",
       witnesses: ["price", "deliveryDays"],
       effects: [
@@ -255,7 +259,10 @@ export const INTENTS = {
     description: "Правка полей Task (только в draft / moderation)",
     α: "replace",
     irreversibility: "low",
+    icon: "✎",
     particles: {
+      entities: ["task: Task"],
+      conditions: ["task.status = 'draft'"],
       parameters: [
         { name: "id", type: "id", required: true },
         { name: "title", type: "text" },
@@ -264,7 +271,10 @@ export const INTENTS = {
         { name: "deadline", type: "datetime" },
       ],
       effects: [
-        { α: "replace", target: "task" },
+        { α: "replace", target: "task.title" },
+        { α: "replace", target: "task.description" },
+        { α: "replace", target: "task.budget" },
+        { α: "replace", target: "task.deadline" },
       ],
     },
     confirmation: "auto",
@@ -275,7 +285,10 @@ export const INTENTS = {
     description: "Переход Task.status moderation → published (выполняется модератором в Cycle 3; в Cycle 1 — placeholder для customer-flow)",
     α: "replace",
     irreversibility: "low",
+    icon: "📢",
     particles: {
+      entities: ["task: Task"],
+      conditions: ["task.status = 'draft'"],
       parameters: [
         { name: "id", type: "id", required: true },
       ],
@@ -291,7 +304,10 @@ export const INTENTS = {
     description: "Закрыть Task (status → closed) до выбора исполнителя",
     α: "replace",
     irreversibility: "low",
+    icon: "🗑",
     particles: {
+      entities: ["task: Task"],
+      conditions: ["task.status = 'published'"],
       parameters: [
         { name: "id", type: "id", required: true },
       ],
