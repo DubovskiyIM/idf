@@ -31,6 +31,12 @@ export const PROJECTIONS = {
     kind: "catalog",
     mainEntity: "Task",
     entities: ["Task", "Category"],
+    // freelance — маркет-каталог, не hierarchical resource browser.
+    // Отключаем pattern-bank-autoderivation'ы, которые нам не подходят:
+    //   - hierarchy-tree-nav: freelance ontology имеет deep FK-chain (Task
+    //     → Response → Deal → Transaction) — ложно срабатывает, добавляя
+    //     schema-tree в sidebar, который workzilla-референс не имеет.
+    patterns: { disabled: ["hierarchy-tree-nav"] },
     // Guests / executor видят только опубликованные НЕ свои (универсальный
     // пользователь в роли executor'а не должен видеть свои задачи) и без
     // selected-отклика (customer уже выбрал исполнителя — новые отклики
@@ -60,22 +66,23 @@ export const PROJECTIONS = {
           cta: { label: "Пройти", intentId: "submit_response" } },
       ],
     },
-    // UI-gap #2 + #5: sidebar — hero-carousel сверху + tutorial / promo /
-    // examples. SDK slots.hero зарезервирован под heroCreate intent archetype,
-    // авторский hero-node не рендерится — кладём carousel в начало sidebar.
+    // UI-gap #5: horizontal hero-carousel (core@0.40+ — projection.hero
+    // accepts authored node, #130). Workzilla-скриншот 4: "Наши преимущества
+    // — Новое задание каждые 28 секунд" horizontal rotating banner.
+    hero: {
+      type: "carousel",
+      slides: [
+        { eyebrow: "Наши преимущества", title: "Новое задание каждые 28 секунд",
+          subtitle: "Исполнители подключаются моментально" },
+        { eyebrow: "Безопасность", title: "Escrow на сумму сделки",
+          subtitle: "Платёж замораживается до приёмки работы" },
+        { eyebrow: "Тысячи задач", title: "Разные категории — от быта до IT" },
+      ],
+      intervalMs: 5000,
+      height: 140,
+    },
+    // UI-gap #2: sidebar — tutorial / promo / examples (workzilla слева).
     sidebar: [
-      {
-        type: "carousel",
-        slides: [
-          { eyebrow: "Наши преимущества", title: "Новое задание каждые 28 секунд",
-            subtitle: "Исполнители подключаются моментально" },
-          { eyebrow: "Безопасность", title: "Escrow на сумму сделки",
-            subtitle: "Платёж замораживается до приёмки работы" },
-          { eyebrow: "Тысячи задач", title: "Разные категории — от быта до IT" },
-        ],
-        intervalMs: 5000,
-        height: 120,
-      },
       {
         type: "card",
         children: [
