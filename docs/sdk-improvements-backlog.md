@@ -96,6 +96,17 @@
 - `intent.permittedFor: ["executor"]` — override per-intent, подменяет ownershipCond.
 - Читать `particles.conditions` и мёрджить с ownershipCond (если в conditions уже есть ownership-check, не добавлять).
 
+### 3.6 ⛔ Singleton-detail empty-state без creator-toolbar
+**Обнаружено:** 2026-04-20 при интеграции SDK P0-backlog (freelance my_wallet_detail).
+**Файл:** `packages/renderer/src/archetypes/ArchetypeDetail.jsx:75-105`
+**Проблема.** При `!target` (singleton detail, запись ещё не существует) SDK делает early return с `<EmptyState title="X ещё не создан" hint="Создайте запись..." />` и больше ничего не рендерит. `top_up_wallet_by_card` (α:"add", toolbar-intent) не доступен — пользователь уткнулся в dead-end: видит сообщение «создайте запись», но кнопки создания нет.
+**Что сделать (один из):**
+- `ArchetypeDetail` при `!target` (singleton): отфильтровать `slots.toolbar` по `spec.α === "add" && spec.creates === mainEntity` и отрендерить creator-row ниже EmptyState.
+- Новый stable pattern `singleton-empty-creator` в Pattern Bank с `structure.apply(slots, context)` — inject `{type:"emptyStateCreator", intent:creatorIntentId}` в detail.header для singleton без target.
+- Host-level workaround: в host `ArchetypeDetail` override или domain-level UI — но это затягивает обратно overrides, противоречит drift-protection v2.1.
+**Priority:** P0 — wallet-flow полностью сломан без creator-affordance в empty-state.
+**Workaround сейчас:** нет (SDK-level, не обходится декларативно).
+
 ### 3.3 🟡 `IrreversibleBadge` не auto-placed
 **Файлы:** `packages/core/src/crystallize_v2/assignToSlotsDetail.js::buildDetailBody` + `packages/renderer/src/controls/ConfirmDialog.jsx`.
 **Проблема.** Entity с `__irr:{point:"high", at}` получает поле данных, но SDK `buildDetailBody` не инжектит `{type:"irreversibleBadge"}` node в children. ConfirmDialog тоже не рендерит badge (`controls/ConfirmDialog.jsx`).
@@ -152,6 +163,12 @@
 ### 4.8 🟡 subCollection: нет status-aware item styling
 **Кейс.** not_chosen/withdrawn responses должны быть dimmed или badge'нуты.
 **Что сделать.** SDK `SubCollectionItem` применяет opacity/className по item[statusField], если entity имеет enum-status field с «terminal» states.
+
+### 4.9 🟡 Role-switcher UX: проекции идентичны для ролей, пользователь не понимает, работает ли тоггл
+**Обнаружено:** 2026-04-20 при интеграции SDK P0-backlog (freelance).
+**Файл:** `idf/src/runtime/renderer/shell/V2Shell.jsx:142-148` (host).
+**Проблема.** При клике на «Исполнитель» из «Заказчика» вся видимая шапка проекций («Каталог задач», «Мои задачи», «Мои сделки», «Мой кошелёк») идентична — R3b + R8 выдают те же ROOT_PROJECTIONS для обеих ролей. Content фильтруется внутри (filterWorldForRole), но пользователь видит стабильный tab-bar и думает, что тоггл не работает. Нужна визуальная affordance смены роли: либо меняющиеся tab-labels («Мои заказы» vs «Мои исполнения»), либо role-badge в header, либо меняющийся primary-accent адаптера.
+**Что сделать:** host-feature / SDK-новый паттерн. Нужен brainstorming.
 
 ---
 
