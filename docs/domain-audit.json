@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-04-20T10:18:39.141Z",
+  "generatedAt": "2026-04-20T10:40:35.141Z",
   "domains": [
     "booking",
     "planning",
@@ -1465,10 +1465,10 @@
         "derivationHealth": {
           "findings": [],
           "metrics": {
-            "authored": 23,
-            "derived": 34,
+            "authored": 17,
+            "derived": 40,
             "total": 57,
-            "overrideCoefficient": 0.404,
+            "overrideCoefficient": 0.298,
             "histogramMatched": [
               0,
               0,
@@ -1710,49 +1710,7 @@
               "applyCount": 4
             },
             {
-              "projectionId": "portfolio_detail",
-              "archetype": "detail",
-              "behavioral": "triage",
-              "matchedCount": 5,
-              "applyCount": 3
-            },
-            {
-              "projectionId": "goal_detail",
-              "archetype": "detail",
-              "behavioral": "triage",
-              "matchedCount": 4,
-              "applyCount": 2
-            },
-            {
-              "projectionId": "transaction_detail",
-              "archetype": "detail",
-              "behavioral": "triage",
-              "matchedCount": 3,
-              "applyCount": 1
-            },
-            {
-              "projectionId": "recommendation_detail",
-              "archetype": "detail",
-              "behavioral": "triage",
-              "matchedCount": 6,
-              "applyCount": 2
-            },
-            {
-              "projectionId": "alert_detail",
-              "archetype": "detail",
-              "behavioral": "triage",
-              "matchedCount": 4,
-              "applyCount": 2
-            },
-            {
               "projectionId": "asset_detail",
-              "archetype": "detail",
-              "behavioral": "triage",
-              "matchedCount": 4,
-              "applyCount": 2
-            },
-            {
-              "projectionId": "watchlist_detail",
               "archetype": "detail",
               "behavioral": "triage",
               "matchedCount": 4,
@@ -1855,14 +1813,14 @@
           "metrics": {
             "archetypeHistogram": {
               "catalog": 9,
-              "detail": 7,
+              "detail": 1,
               "dashboard": 1,
               "canvas": 4,
               "wizard": 2
             },
             "entityCount": 14,
             "intentCount": 61,
-            "projectionCount": 23,
+            "projectionCount": 17,
             "unclassifiedIntents": 22,
             "deadEntities": 2
           }
@@ -2571,7 +2529,7 @@
         "testCoverage": {
           "findings": [],
           "metrics": {
-            "testFiles": 6,
+            "testFiles": 7,
             "smokeScripts": 3,
             "hasE2EDoc": true
           }
