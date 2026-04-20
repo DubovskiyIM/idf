@@ -1,7 +1,7 @@
 # Domain audit — 2026-04-20
 
-**Generated:** 2026-04-20T09:12:25.896Z
-**Total findings:** 179 (error: 0, warning: 95, info: 84)
+**Generated:** 2026-04-20T10:18:39.141Z
+**Total findings:** 171 (error: 0, warning: 95, info: 76)
 
 > Report-only. Regeneration: `node scripts/audit-report.mjs`. Design rationale — `docs/superpowers/specs/2026-04-20-domain-audit-design.md` (local).
 
@@ -13,7 +13,6 @@
 | format | 45 |
 | collision | 42 |
 | structural | 19 |
-| derivation | 8 |
 | testing | 7 |
 | patterns | 3 |
 
@@ -22,25 +21,25 @@
 | Domain | Findings |
 |--------|----------|
 | <cross> | 42 |
-| invest | 37 |
-| delivery | 28 |
-| freelance | 22 |
-| sales | 10 |
+| invest | 36 |
+| delivery | 27 |
+| freelance | 21 |
+| sales | 9 |
 
 ## Axis 2 — Derivation health
 
 | Domain | Authored | Derived | Total | Override | 0-patt | 1-patt | 2-patt | 3+patt | Apply/MatchOnly | Alpha-fb | Disabled |
 |--------|----------|---------|-------|----------|--------|--------|--------|--------|------------------|----------|----------|
-| booking | 6 | 0 | 6 | 1 | 0 | 0 | 0 | 6 | 19/18 | 0 | 0 |
-| planning | 3 | 0 | 3 | 1 | 0 | 0 | 0 | 3 | 10/10 | 0 | 0 |
-| workflow | 4 | 0 | 4 | 1 | 0 | 0 | 0 | 4 | 9/11 | 0 | 0 |
-| messenger | 5 | 0 | 5 | 1 | 0 | 0 | 0 | 5 | 16/21 | 0 | 0 |
-| sales | 15 | 0 | 15 | 1 | 0 | 0 | 0 | 15 | 57/86 | 0 | 0 |
-| lifequest | 12 | 0 | 12 | 1 | 0 | 0 | 0 | 12 | 36/32 | 0 | 0 |
-| reflect | 13 | 0 | 13 | 1 | 0 | 0 | 0 | 13 | 23/31 | 0 | 0 |
-| invest | 23 | 0 | 23 | 1 | 0 | 0 | 9 | 14 | 46/38 | 0 | 0 |
-| delivery | 25 | 0 | 25 | 1 | 0 | 0 | 12 | 13 | 48/39 | 0 | 0 |
-| freelance | 9 | 0 | 9 | 1 | 0 | 0 | 0 | 9 | 27/41 | 0 | 2 |
+| booking | 6 | 8 | 14 | 0.429 | 0 | 0 | 0 | 14 | 47/39 | 0 | 0 |
+| planning | 3 | 10 | 13 | 0.231 | 0 | 0 | 0 | 13 | 46/39 | 0 | 0 |
+| workflow | 4 | 9 | 13 | 0.308 | 0 | 0 | 0 | 13 | 26/34 | 0 | 0 |
+| messenger | 5 | 14 | 19 | 0.263 | 0 | 0 | 0 | 19 | 64/77 | 0 | 0 |
+| sales | 15 | 24 | 39 | 0.385 | 0 | 0 | 0 | 39 | 137/220 | 0 | 0 |
+| lifequest | 12 | 19 | 31 | 0.387 | 0 | 0 | 0 | 31 | 98/81 | 0 | 0 |
+| reflect | 13 | 22 | 35 | 0.371 | 0 | 0 | 0 | 35 | 72/85 | 0 | 0 |
+| invest | 23 | 34 | 57 | 0.404 | 0 | 0 | 12 | 45 | 144/100 | 0 | 0 |
+| delivery | 25 | 32 | 57 | 0.439 | 0 | 0 | 12 | 45 | 139/100 | 0 | 0 |
+| freelance | 9 | 30 | 39 | 0.231 | 0 | 0 | 0 | 39 | 111/140 | 0 | 2 |
 
 ## Axis 3 — SDK idiom currency
 
@@ -181,7 +180,6 @@
 - ⚠️ **sdkIdiom** — Intent "bulk_cancel_day" — legacy irreversibility:"high" без context.__irr
 - ⚠️ **sdkIdiom** — Intent "cancel_client_booking" — legacy irreversibility:"high" без context.__irr
 - ⚠️ **testCoverage** — Домен booking без тестов/smoke/e2e-docs
-- ℹ️ **derivationHealth** — Override-coefficient 100% (6/6 authored)
 - ℹ️ **structuralHealth** — 3 intents без creates/mutator classification
 - ℹ️ **structuralHealth** — Возможно dead entities: ServiceCategory, Specialist, Review
 
@@ -210,7 +208,6 @@
 - ⚠️ **sdkIdiom** — Intent "delete_account" — legacy irreversibility:"high" без context.__irr
 - ⚠️ **sdkIdiom** — Intent "transfer_ownership" — legacy irreversibility:"high" без context.__irr
 - ⚠️ **testCoverage** — Домен messenger без тестов/smoke/e2e-docs
-- ℹ️ **derivationHealth** — Override-coefficient 100% (5/5 authored)
 - ℹ️ **structuralHealth** — 14 intents без creates/mutator classification
 - ℹ️ **structuralHealth** — Возможно dead entities: Participant, Reaction
 
@@ -223,7 +220,6 @@
 - ⚠️ **sdkIdiom** — Intent "delete_category" — legacy irreversibility:"high" без context.__irr
 - ⚠️ **sdkIdiom** — Intent "delete_account" — legacy irreversibility:"high" без context.__irr
 - ℹ️ **formatConformance** — Order single ownerField="buyerId"; возможно multi-owner с sellerId
-- ℹ️ **derivationHealth** — Override-coefficient 100% (15/15 authored)
 - ℹ️ **structuralHealth** — 50 intents без creates/mutator classification
 - ℹ️ **structuralHealth** — Возможно dead entities: Review
 
@@ -232,7 +228,6 @@
 - ⚠️ **sdkIdiom** — Intent "reset_progress" — legacy irreversibility:"high" без context.__irr
 - ⚠️ **sdkIdiom** — Intent "delete_account" — legacy irreversibility:"high" без context.__irr
 - ⚠️ **testCoverage** — Домен lifequest без тестов/smoke/e2e-docs
-- ℹ️ **derivationHealth** — Override-coefficient 100% (12/12 authored)
 - ℹ️ **structuralHealth** — 6 intents без creates/mutator classification
 - ℹ️ **structuralHealth** — Возможно dead entities: Sphere, HabitLog, Task, SphereAssessment, VisionItem, Quote
 
@@ -241,7 +236,6 @@
 - ⚠️ **sdkIdiom** — Intent "reset_progress" — legacy irreversibility:"high" без context.__irr
 - ⚠️ **sdkIdiom** — Intent "delete_account" — legacy irreversibility:"high" без context.__irr
 - ⚠️ **testCoverage** — Домен reflect без тестов/smoke/e2e-docs
-- ℹ️ **derivationHealth** — Override-coefficient 100% (13/13 authored)
 - ℹ️ **patternApplication** — 13/13 проекций без behavioral-pattern
 - ℹ️ **structuralHealth** — 14 intents без creates/mutator classification
 - ℹ️ **structuralHealth** — Возможно dead entities: EntryActivity, HypothesisEvidence, Reminder, EntryTag
@@ -268,7 +262,6 @@
 - ⚠️ **sdkIdiom** — Intent "delete_rule" — legacy irreversibility:"high" без context.__irr
 - ⚠️ **testCoverage** — Домен invest без тестов/smoke/e2e-docs
 - ℹ️ **formatConformance** — Assignment single ownerField="advisorId"; возможно multi-owner с clientId
-- ℹ️ **derivationHealth** — Override-coefficient 100% (23/23 authored)
 - ℹ️ **sdkIdiom** — Field Portfolio.totalValue fieldRole:"money" (v1.6+ "price")
 - ℹ️ **sdkIdiom** — Field Portfolio.pnl fieldRole:"money" (v1.6+ "price")
 - ℹ️ **sdkIdiom** — Field Position.avgPrice fieldRole:"money" (v1.6+ "price")
@@ -309,7 +302,6 @@
 - ⚠️ **sdkIdiom** — Intent "confirm_pickup" — legacy irreversibility:"high" без context.__irr
 - ⚠️ **sdkIdiom** — Intent "confirm_delivery" — legacy irreversibility:"high" без context.__irr
 - ℹ️ **formatConformance** — Order single ownerField="customerId"; возможно multi-owner с merchantId
-- ℹ️ **derivationHealth** — Override-coefficient 100% (25/25 authored)
 - ℹ️ **sdkIdiom** — Field MenuItem.price fieldRole:"money" (v1.6+ "price")
 - ℹ️ **sdkIdiom** — Field Order.totalAmount fieldRole:"money" (v1.6+ "price")
 - ℹ️ **sdkIdiom** — Field Order.tip fieldRole:"money" (v1.6+ "price")
@@ -338,6 +330,5 @@
 - ⚠️ **sdkIdiom** — Intent "request_revision" — legacy irreversibility:"high" без context.__irr
 - ⚠️ **sdkIdiom** — Intent "submit_revision" — legacy irreversibility:"high" без context.__irr
 - ℹ️ **formatConformance** — Deal single ownerField="customerId,executorId"; возможно multi-owner с customerId, executorId
-- ℹ️ **derivationHealth** — Override-coefficient 100% (9/9 authored)
 - ℹ️ **structuralHealth** — 11 intents без creates/mutator classification
 - ℹ️ **structuralHealth** — Возможно dead entities: CustomerProfile, ExecutorProfile, ExecutorSkill, Transaction, Review
