@@ -29,6 +29,7 @@ import fs from "node:fs";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import {
   crystallizeV2,
+  deriveProjections,
   getDefaultRegistry,
   loadStablePatterns,
   resolvePattern,
@@ -167,7 +168,19 @@ function auditDerivationHealth(domain, registry) {
   const findings = [];
   const { ontology, intents, projections } = domain;
   const intentsArr = intentsAsArray(intents);
-  const projectionIds = Object.keys(projections);
+
+  // Host runtime (V2Shell) merges deriveProjections + authored через
+  // spread-merge { ...derived, ...authored } — authored-wins, но derived-only
+  // ids сохраняют derivedBy metadata и дают R-rule witnesses в artifact.
+  // Повторяем ту же логику для аудита — иначе override-coefficient всегда 1.0.
+  let derivedProjections = {};
+  try {
+    derivedProjections = deriveProjections(intentsArr, ontology);
+  } catch {
+    // Deriva failed — fallback на authored-only, override-coefficient → 1.0.
+  }
+  const composedProjections = { ...derivedProjections, ...projections };
+  const projectionIds = Object.keys(composedProjections);
 
   let authored = 0;
   let derived = 0;
@@ -177,7 +190,7 @@ function auditDerivationHealth(domain, registry) {
   let totalPatternsMatchingOnly = 0;
   let disabledDeclarations = 0;
 
-  for (const [projId, projection] of Object.entries(projections)) {
+  for (const [projId, projection] of Object.entries(composedProjections)) {
     const projFullId = { ...projection, id: projId };
 
     let matched = [];

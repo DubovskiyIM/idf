@@ -17,7 +17,18 @@
  * node_modules в idf/ (SDK 0.16.0+derivedBy ещё не published).
  */
 // Требует @intent-driven/core >= 0.17 (PR #61) с witness trail.
-import { crystallizeV2 } from "@intent-driven/core";
+import { crystallizeV2, deriveProjections } from "@intent-driven/core";
+
+/**
+ * Повторяет host V2Shell merge: derived + authored, authored wins.
+ * Derived-only ids сохраняют derivedBy metadata → R-rule witnesses видны.
+ */
+function composedProjections(I, O, authored) {
+  const intentsArr = Object.entries(I).map(([id, i]) => ({ id, ...i }));
+  let derived = {};
+  try { derived = deriveProjections(intentsArr, O); } catch {}
+  return { ...derived, ...authored };
+}
 
 import { INTENTS as bookingI, PROJECTIONS as bookingP, ONTOLOGY as bookingO } from "../src/domains/booking/domain.js";
 import { INTENTS as planningI, PROJECTIONS as planningP, ONTOLOGY as planningO } from "../src/domains/planning/domain.js";
@@ -54,7 +65,7 @@ console.log(`${"domain".padEnd(12)} ${"proj".padStart(4)} ${"derived".padStart(8
 console.log("-".repeat(80));
 
 for (const d of DOMAINS) {
-  const art = crystallizeV2(d.I, d.P, d.O, d.id);
+  const art = crystallizeV2(d.I, composedProjections(d.I, d.O, d.P), d.O, d.id);
   const projIds = Object.keys(art);
   const perRule = Object.fromEntries(RULE_IDS.map(r => [r, 0]));
   let derivedProjCount = 0;
@@ -109,7 +120,7 @@ console.log(`# Скачок вверх при добавлении домена 
 console.log(`\n## Top проекции по числу crystallize-rule witnesses:\n`);
 const topByWitnesses = [];
 for (const d of DOMAINS) {
-  const art = crystallizeV2(d.I, d.P, d.O, d.id);
+  const art = crystallizeV2(d.I, composedProjections(d.I, d.O, d.P), d.O, d.id);
   for (const [projId, a] of Object.entries(art)) {
     if (!a?.witnesses) continue;
     const count = a.witnesses.filter(w => w.basis === "crystallize-rule").length;
