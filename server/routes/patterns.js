@@ -30,6 +30,7 @@ const {
   evaluateTriggerExplained,
   explainMatch,
   computeSlotAttribution,
+  deriveProjections,
 } = require("@intent-driven/core");
 const { writePatternPreference } = require("../patternPreferenceWriter.js");
 
@@ -55,11 +56,19 @@ async function loadDomain(domainName) {
     const mod = await import(pathToFileURL(domainFile).href);
     const ontology = mod.ONTOLOGY || null;
     const intents = mod.INTENTS || {};
-    const projections = mod.PROJECTIONS || {};
+    const authoredProjections = mod.PROJECTIONS || {};
     if (!ontology) {
       DOMAIN_CACHE.set(domainName, null);
       return null;
     }
+    // Зеркалим host V2Shell: derived + authored с authored-wins. Server-routes
+    // должны видеть тот же совокупный набор projections, что и runtime.
+    let derived = {};
+    try {
+      const intentsArr = Object.entries(intents).map(([id, i]) => ({ id, ...i }));
+      derived = deriveProjections(intentsArr, ontology);
+    } catch {}
+    const projections = { ...derived, ...authoredProjections };
     const domain = { id: domainName, ontology, intents, projections };
     DOMAIN_CACHE.set(domainName, domain);
     return domain;

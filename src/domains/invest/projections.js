@@ -55,59 +55,23 @@ export const PROJECTIONS = {
   },
 
   // ─── DETAIL ───
-
-  portfolio_detail: {
-    name: "Портфель", kind: "detail", mainEntity: "Portfolio",
-    idParam: "portfolioId",
-    entities: ["Portfolio"],
-    witnesses: ["name", "baseCurrency", "totalValue", "pnl", "riskProfile",
-                "targetStocks", "targetBonds", "targetCrypto", "targetExotic"],
-    subCollections: [
-      { collection: "positions", entity: "Position", foreignKey: "portfolioId", title: "Позиции", addable: false },
-      { collection: "transactions", entity: "Transaction", foreignKey: "portfolioId", title: "Последние сделки", addable: false },
-    ],
-  },
-
-  goal_detail: {
-    name: "Цель", kind: "detail", mainEntity: "Goal",
-    idParam: "goalId",
-    entities: ["Goal"],
-    witnesses: ["name", "targetAmount", "currentAmount", "progress", "deadline", "priority"],
-  },
-
-  transaction_detail: {
-    name: "Сделка", kind: "detail", mainEntity: "Transaction",
-    idParam: "transactionId",
-    entities: ["Transaction"],
-    witnesses: ["α", "quantity", "price", "fee", "total", "initiatedBy", "ruleId", "timestamp", "assetId", "portfolioId"],
-  },
-
-  recommendation_detail: {
-    name: "Рекомендация", kind: "detail", mainEntity: "Recommendation",
-    idParam: "recommendationId",
-    entities: ["Recommendation"],
-    witnesses: ["type", "source", "confidence", "status", "rationale", "payload", "createdAt"],
-  },
-
-  alert_detail: {
-    name: "Сигнал", kind: "detail", mainEntity: "Alert",
-    idParam: "alertId",
-    entities: ["Alert"],
-    witnesses: ["severity", "message", "triggeredAt", "acknowledged", "ruleId"],
-  },
+  //
+  // 6 detail-проекций удалены — R3 (detail from mutators) + R4 (sub-collections
+  // из FK) генерируют их автоматически:
+  //   portfolio_detail, goal_detail, transaction_detail, recommendation_detail,
+  //   alert_detail, watchlist_detail
+  //
+  // Host V2Shell merge { ...derived, ...authored } при authored=undefined
+  // для этих id даёт derived-версию с derivedBy metadata. Body собирается
+  // из ontology entity.fields; subCollections — из FK graph.
+  //
+  // Asset detail сохранён — Asset kind:"reference", R3 не fires (нет mutators).
 
   asset_detail: {
     name: "Актив", kind: "detail", mainEntity: "Asset",
     idParam: "assetId",
     entities: ["Asset"],
     witnesses: ["ticker", "name", "type", "exchange", "currency"],
-  },
-
-  watchlist_detail: {
-    name: "Список наблюдения", kind: "detail", mainEntity: "Watchlist",
-    idParam: "watchlistId",
-    entities: ["Watchlist"],
-    witnesses: ["name", "assetIds"],
   },
 
   // ─── DASHBOARD ───

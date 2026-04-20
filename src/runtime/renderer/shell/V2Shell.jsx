@@ -54,9 +54,23 @@ export default function V2Shell({
   // authored. Authored имеют приоритет — если author задекларировал my_deals
   // вручную, derived my_deal_list не перезапишет его. Derived же пополняют
   // набор артефактов owner-scoped видами, которые автор мог не писать явно.
+  //
+  // Smart merge: при совпадении id (authored partial-override на derived)
+  // делаем field-level merge вместо full replace — сохраняем derivedBy
+  // metadata (R-rule witnesses видны в Studio X-ray). Authored fields
+  // всё равно wins — override не теряется.
   const mergedProjections = useMemo(() => {
     const derived = deriveProjections(domain.INTENTS, domain.ONTOLOGY);
-    return { ...derived, ...domain.PROJECTIONS };
+    const merged = { ...derived };
+    for (const [id, authored] of Object.entries(domain.PROJECTIONS || {})) {
+      if (merged[id]) {
+        // Partial-override: merge authored поля поверх derived, сохраняем derivedBy.
+        merged[id] = { ...merged[id], ...authored };
+      } else {
+        merged[id] = authored;
+      }
+    }
+    return merged;
   }, [domain]);
 
   const artifacts = useMemo(
