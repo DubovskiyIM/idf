@@ -207,6 +207,42 @@ describe("freelance projections — my_wallet_detail (derived R3b singleton)", (
   });
 });
 
+describe("freelance intents — permittedFor (multi-owner Deal, backlog 3.2)", () => {
+  it("accept_result / request_revision — permittedFor: 'customerId' → customer-only в derived deal_detail", () => {
+    const merged = mergedProjections();
+    const arts = crystallizeV2(INTENTS, merged, ONTOLOGY, "freelance");
+    const toolbar = arts.deal_detail.slots.toolbar;
+    const accept = toolbar.find(x => x.intentId === "accept_result");
+    expect(accept?.condition).toBe("customerId === viewer.id");
+  });
+
+  it("submit_work_result / submit_revision — permittedFor: 'executorId' → executor-only", () => {
+    const merged = mergedProjections();
+    const arts = crystallizeV2(INTENTS, merged, ONTOLOGY, "freelance");
+    // submit_revision уходит в overflow (irreversibility:"high" + >3 intents)
+    const toolbarAll = [
+      ...arts.deal_detail.slots.toolbar,
+      ...(arts.deal_detail.slots.toolbar.find(x => x.type === "overflow")?.children || []),
+    ];
+    const submitRev = toolbarAll.find(x => x.intentId === "submit_revision");
+    expect(submitRev?.condition).toBe("executorId === viewer.id");
+  });
+
+  it("cancel_deal_mutual — без permittedFor → both owners (OR-disjunction)", () => {
+    const merged = mergedProjections();
+    const arts = crystallizeV2(INTENTS, merged, ONTOLOGY, "freelance");
+    const toolbar = arts.deal_detail.slots.toolbar;
+    const cancel = toolbar.find(x => x.intentId === "cancel_deal_mutual");
+    expect(cancel?.condition).toContain("customerId === viewer.id");
+    expect(cancel?.condition).toContain("executorId === viewer.id");
+  });
+
+  it("Deal.owners совпадает с ownerField — оба объявлены для R7b + ownershipCond", () => {
+    expect(ONTOLOGY.entities.Deal.ownerField).toEqual(["customerId", "executorId"]);
+    expect(ONTOLOGY.entities.Deal.owners).toEqual(["customerId", "executorId"]);
+  });
+});
+
 describe("freelance crystallize — irreversible-confirm matching (__irr intents)", () => {
   it("confirm_deal/accept_result/auto_accept_result имеют irreversibility=high — матчатся patternом", () => {
     const irrHigh = Object.values(INTENTS).filter(i => i.irreversibility === "high");
