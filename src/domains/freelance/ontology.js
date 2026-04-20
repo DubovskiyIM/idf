@@ -34,7 +34,7 @@ export const ONTOLOGY = {
       ownerField: "userId",
       fields: {
         id: { type: "text" },
-        userId: { type: "text", required: true },
+        userId: { type: "entityRef", required: true },
         displayName: { type: "text", label: "Отображаемое имя" },
         city: { type: "text", label: "Город" },
         createdAt: { type: "datetime" },
@@ -45,7 +45,7 @@ export const ONTOLOGY = {
       ownerField: "userId",
       fields: {
         id: { type: "text" },
-        userId: { type: "text", required: true },
+        userId: { type: "entityRef", required: true },
         bio: { type: "text", label: "О себе" },
         avgDeliveryHours: { type: "number", label: "Средний срок, ч" },
         minPrice: { type: "number", fieldRole: "price", label: "Мин. ставка" },
@@ -70,7 +70,7 @@ export const ONTOLOGY = {
       fields: {
         id: { type: "text" },
         name: { type: "text", required: true, label: "Навык" },
-        categoryId: { type: "text", label: "Категория" },
+        categoryId: { type: "entityRef", label: "Категория" },
       },
     },
 
@@ -80,7 +80,7 @@ export const ONTOLOGY = {
       fields: {
         id: { type: "text" },
         executorId: { type: "text", required: true },
-        skillId: { type: "text", required: true },
+        skillId: { type: "entityRef", required: true },
         createdAt: { type: "datetime" },
       },
     },
@@ -102,7 +102,7 @@ export const ONTOLOGY = {
         customerId: { type: "text", required: true },
         title: { type: "text", required: true, label: "Заголовок" },
         description: { type: "text", label: "Описание" },
-        categoryId: { type: "text", required: true, label: "Категория" },
+        categoryId: { type: "entityRef", required: true, label: "Категория" },
         budget: { type: "number", fieldRole: "price", label: "Бюджет" },
         deadline: { type: "datetime", label: "Срок" },
         city: { type: "text", label: "Город" },
@@ -127,7 +127,7 @@ export const ONTOLOGY = {
       fields: {
         id: { type: "text" },
         executorId: { type: "text", required: true },
-        taskId: { type: "text", required: true },
+        taskId: { type: "entityRef", required: true },
         price: { type: "number", fieldRole: "price", required: true, label: "Цена" },
         deliveryDays: { type: "number", required: true, label: "Срок, дней" },
         message: { type: "text", label: "Сообщение" },
@@ -148,8 +148,8 @@ export const ONTOLOGY = {
         id: { type: "text" },
         customerId: { type: "text", required: true },
         executorId: { type: "text", required: true },
-        taskId: { type: "text", required: true },
-        responseId: { type: "text" },
+        taskId: { type: "entityRef", required: true },
+        responseId: { type: "entityRef" },
         amount: { type: "number", fieldRole: "price", required: true, label: "Сумма сделки" },
         commission: { type: "number", fieldRole: "price", label: "Комиссия" },
         status: {
@@ -180,7 +180,7 @@ export const ONTOLOGY = {
       singleton: true,
       fields: {
         id: { type: "text" },
-        userId: { type: "text", required: true },
+        userId: { type: "entityRef", required: true },
         balance: { type: "number", fieldRole: "price", label: "Баланс" },
         reserved: { type: "number", fieldRole: "price", label: "В резерве" },
         currency: { type: "text", label: "Валюта" },
@@ -192,8 +192,8 @@ export const ONTOLOGY = {
       ownerField: "walletId",
       fields: {
         id: { type: "text" },
-        walletId: { type: "text", required: true },
-        dealId: { type: "text", label: "Сделка" },
+        walletId: { type: "entityRef", required: true },
+        dealId: { type: "entityRef", label: "Сделка" },
         amount: { type: "number", fieldRole: "price", required: true, label: "Сумма" },
         kind: {
           type: "select",
@@ -217,7 +217,7 @@ export const ONTOLOGY = {
       fields: {
         id: { type: "text" },
         authorId: { type: "text", required: true },
-        dealId: { type: "text", required: true },
+        dealId: { type: "entityRef", required: true },
         targetUserId: { type: "text", required: true },
         role: {
           type: "select",
