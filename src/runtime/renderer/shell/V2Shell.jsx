@@ -1,7 +1,7 @@
 import { useMemo, useState, useCallback, useEffect } from "react";
 import { usePersonalPrefs, prefsToStyle } from "../personal/usePersonalPrefs.js";
 import { ProjectionRendererV2, useProjectionRoute, Breadcrumbs, getAdaptedComponent, ViewSwitcher } from "@intent-driven/renderer";
-import { crystallizeV2, generateEditProjections } from "@intent-driven/core";
+import { crystallizeV2, generateEditProjections, deriveProjections } from "@intent-driven/core";
 import BottomTabs from "./BottomTabs.jsx";
 import PatternInspector from "./PatternInspector.jsx";
 import CrystallizeInspector from "./CrystallizeInspector.jsx";
@@ -48,9 +48,18 @@ export default function V2Shell({
   onLogout,
   useBottomTabs = false,
 }) {
+  // Derived projections (R1..R8 / R10 / R11 / R11 v2 / R3b / R7b) сливаем с
+  // authored. Authored имеют приоритет — если author задекларировал my_deals
+  // вручную, derived my_deal_list не перезапишет его. Derived же пополняют
+  // набор артефактов owner-scoped видами, которые автор мог не писать явно.
+  const mergedProjections = useMemo(() => {
+    const derived = deriveProjections(domain.INTENTS, domain.ONTOLOGY);
+    return { ...derived, ...domain.PROJECTIONS };
+  }, [domain]);
+
   const artifacts = useMemo(
-    () => crystallizeV2(domain.INTENTS, domain.PROJECTIONS, domain.ONTOLOGY, domainId),
-    [domain, domainId]
+    () => crystallizeV2(domain.INTENTS, mergedProjections, domain.ONTOLOGY, domainId),
+    [domain, domainId, mergedProjections]
   );
 
   // R8 (core ≥ 0.11.0): projection.absorbedBy !== null → катал абсорбирован
@@ -66,7 +75,7 @@ export default function V2Shell({
   const sections = isSectioned
     ? rawRootProjections.map(s => ({ ...s, items: s.items.filter(id => !isAbsorbed(id)) })).filter(s => s.items.length > 0)
     : null;
-  const initial = initialProjection || rootProjections[0] || Object.keys(domain.PROJECTIONS)[0];
+  const initial = initialProjection || rootProjections[0] || Object.keys(mergedProjections)[0];
 
   const {
     current, history, navigate, back, reset, canGoBack,
@@ -74,8 +83,8 @@ export default function V2Shell({
 
   const allProjections = useMemo(() => {
     const edits = generateEditProjections(domain.INTENTS, domain.PROJECTIONS, domain.ONTOLOGY);
-    return { ...domain.PROJECTIONS, ...edits };
-  }, [domain]);
+    return { ...mergedProjections, ...edits };
+  }, [domain, mergedProjections]);
 
   const projectionNames = useMemo(() => {
     const names = {};
