@@ -39,7 +39,7 @@ node scripts/freelance-accounts.mjs
 | 2 | Открыть «Мои задачи» → кнопка **«Опубликовать задачу»** в toolbar | Открывается formModal с 7 полями: Заголовок (text), Категория (dropdown 3 опции из seed), Бюджет (number с ₽ префиксом и форматом тысяч), Формат (Удалённо/На месте), Описание (textarea), Срок (datetime с временем, шаг 5 мин), Город (text). |
 | 3 | Заполнить «Починить утюг», 5000₽, Разработка, Удалённо, описание любое, срок завтра 18:00, Город Москва → **Создать** | В Φ-логе: `add tasks ● confirmed`. В `my_task_list`-каталоге появляется новая задача со status=draft. |
 | 4 | Проверить что в публичном каталоге («Каталог задач») задача **не видна** | Filter `status === 'published'` отсекает draft. |
-| 5 | Открыть task_detail_customer (клик по карточке в my_task_list) | Видны все witnesses, в т.ч. status: «draft». Toolbar: edit_task / publish_task / cancel_task_before_deal. Секция «Отклики» пуста. |
+| 5 | Открыть task_detail (клик по карточке в my_task_list) | Видны все witnesses, в т.ч. status: «draft». Toolbar: edit_task / publish_task / cancel_task_before_deal. Секция «Отклики» пуста. |
 | 6 | Клик **«Опубликовать»** (publish_task) | Φ: `replace task.status` value=published. Карточка обновляется. Задача появляется в публичном каталоге у Виктора. |
 
 **Если что-то идёт не так — debug-команды:**
@@ -88,7 +88,7 @@ const { checkInvariants } = require('./server/schema/invariantChecker.cjs');
 | 4 | Logout → Login Алиса → Мои задачи → клик задачу | responsesCount = +1, секция «Отклики» содержит запись Виктора. |
 | 5 | Logout → Login Виктор обратно → попытка повторно откликнуться на **ту же** задачу | buildCustomEffects guard — silent reject. Форма submit'нулась но эффекта нет. (UX-improvement: добавить toast/error — см. SDK backlog.) |
 | 6 | Открыть «Мои отклики» (новая projection) | Виктор видит свои отклики catalog-view: `taskId`, цена, срок, status. |
-| 7 | Открыть `task_detail_public` для draft-задачи (не published) | Inline-форма «Откликнуться» **скрыта** (`canAdd` false из-за `task.status = 'published'` condition). |
+| 7 | Открыть `task_detail` для draft-задачи (не published) | Inline-форма «Откликнуться» **скрыта** (`canAdd` false из-за `task.status = 'published'` condition). |
 | 8 | Edit/Withdraw на pending-отклике | Кнопки видны только на своих pending-откликах (per-item conditions). После select_executor — скрыты. |
 
 ---
@@ -196,7 +196,7 @@ node -e "
   const { crystallizeV2 } = await import('@intent-driven/core');
   const dom = await import('./src/domains/freelance/domain.js');
   const arts = crystallizeV2(dom.INTENTS, dom.PROJECTIONS, dom.ONTOLOGY, 'freelance');
-  console.log(JSON.stringify(arts.task_detail_customer.slots, null, 2));
+  console.log(JSON.stringify(arts.task_detail.slots, null, 2));
 })();
 "
 

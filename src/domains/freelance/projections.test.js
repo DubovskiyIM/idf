@@ -32,10 +32,10 @@ describe("freelance projections — task_catalog_public", () => {
     expect(PROJECTIONS.task_catalog_public.filter).toContain("published");
   });
 
-  it("onItemClick navigates → task_detail_public", () => {
+  it("onItemClick navigates → task_detail (derived, после Stage 5 консолидации)", () => {
     expect(PROJECTIONS.task_catalog_public.onItemClick).toMatchObject({
       action: "navigate",
-      to: "task_detail_public",
+      to: "task_detail",
     });
   });
 
@@ -46,36 +46,42 @@ describe("freelance projections — task_catalog_public", () => {
   });
 });
 
-describe("freelance projections — task_detail_public", () => {
-  it("зарегистрирована как detail", () => {
-    const p = PROJECTIONS.task_detail_public;
-    expect(p).toBeDefined();
-    expect(p.kind).toBe("detail");
-    expect(p.mainEntity).toBe("Task");
+describe("freelance projections — task_detail (derived + field-level override, Stage 5)", () => {
+  it("task_detail consolidated (single projection для customer/guest/executor)", () => {
+    // Role-specific wrapper'ы (task_detail_public/_customer) удалены —
+    // derived task_detail с per-intent conditions фильтрует toolbar.
+    expect(PROJECTIONS.task_detail_public).toBeUndefined();
+    expect(PROJECTIONS.task_detail_customer).toBeUndefined();
   });
 
-  it("idParam = 'taskId'", () => {
-    expect(PROJECTIONS.task_detail_public.idParam).toBe("taskId");
-  });
-
-  it("witnesses содержат полное описание", () => {
-    const w = PROJECTIONS.task_detail_public.witnesses;
-    expect(w).toEqual(expect.arrayContaining([
+  it("task_detail authored override имеет display witnesses + toolbar whitelist", () => {
+    const p = PROJECTIONS.task_detail;
+    expect(p.witnesses).toEqual(expect.arrayContaining([
       "title", "description", "budget", "deadline", "city", "type",
+      "status", "createdAt",
     ]));
+    expect(p.toolbar).toEqual(["edit_task", "publish_task", "cancel_task_before_deal"]);
   });
 
-  it("subCollections объявляет responses (FK taskId)", () => {
-    const sc = PROJECTIONS.task_detail_public.subCollections;
-    expect(sc).toBeDefined();
-    const resp = sc.find(s => s.entity === "Response");
-    expect(resp).toBeDefined();
-    expect(resp.foreignKey).toBe("taskId");
+  it("кристаллизуется как detail (merged derived + authored)", () => {
+    const merged = mergedProjections();
+    const artifacts = crystallizeV2(INTENTS, merged, ONTOLOGY, "freelance");
+    expect(artifacts.task_detail.archetype).toBe("detail");
   });
 
-  it("кристаллизуется как detail", () => {
-    const artifacts = crystallizeV2(INTENTS, PROJECTIONS, ONTOLOGY, "freelance");
-    expect(artifacts.task_detail_public.archetype).toBe("detail");
+  it("все 3 Task customer-intents в toolbar через whitelist + ownership cond", () => {
+    const merged = mergedProjections();
+    const artifacts = crystallizeV2(INTENTS, merged, ONTOLOGY, "freelance");
+    const toolbar = artifacts.task_detail.slots.toolbar;
+    const ids = toolbar.map(x => x.intentId).filter(Boolean);
+    expect(ids).toEqual(expect.arrayContaining([
+      "edit_task", "publish_task", "cancel_task_before_deal",
+    ]));
+    // Все три имеют customer-ownership condition (Task.ownerField="customerId").
+    for (const id of ["edit_task", "publish_task", "cancel_task_before_deal"]) {
+      const btn = toolbar.find(x => x.intentId === id);
+      expect(btn.condition).toBe("customerId === viewer.id");
+    }
   });
 });
 
@@ -129,12 +135,12 @@ describe("freelance projections — my_* lists (Cycle 2, derived R7/R7b)", () =>
     expect(p.witnesses).toEqual(expect.arrayContaining(["amount", "status", "deadline"]));
   });
 
-  it("my_response_list — derived R7 + authored onItemClick", () => {
+  it("my_response_list — derived R7 + authored onItemClick (→ task_detail после Stage 5)", () => {
     const merged = mergedProjections();
     const p = merged.my_response_list;
     expect(p.kind).toBe("catalog");
     expect(p.mainEntity).toBe("Response");
-    expect(p.onItemClick).toMatchObject({ to: "task_detail_public" });
+    expect(p.onItemClick).toMatchObject({ to: "task_detail" });
   });
 
   it("ROOT_PROJECTIONS содержит my_task_list и my_deal_list", () => {
@@ -150,30 +156,21 @@ describe("freelance projections — my_* lists (Cycle 2, derived R7/R7b)", () =>
   });
 });
 
-describe("freelance projections — detail (task authored + deal derived)", () => {
-  it("task_detail_customer — authored wrapper (role-specific toolbar whitelist)", () => {
-    const p = PROJECTIONS.task_detail_customer;
-    expect(p.kind).toBe("detail");
-    expect(p.mainEntity).toBe("Task");
-    expect(p.subCollections.find(s => s.entity === "Response")).toBeDefined();
-    expect(p.toolbar).toContain("select_executor");
-  });
-
-  it("deal_detail — derived detail + authored field-level override (witnesses + patterns)", () => {
+describe("freelance projections — deal_detail (derived + whitelist)", () => {
+  it("deal_detail — derived detail + authored field-level override", () => {
     const merged = mergedProjections();
     const p = merged.deal_detail;
     expect(p.kind).toBe("detail");
     expect(p.mainEntity).toBe("Deal");
-    // authored witnesses (display-поля, не R6 phase-params)
     expect(p.witnesses).toEqual(expect.arrayContaining(["amount", "status", "completedAt"]));
-    // disabled footer-inline-setter — иначе request_revision уйдёт в footer
-    expect(p.patterns?.disabled).toContain("footer-inline-setter");
+    expect(p.toolbar).toEqual(expect.arrayContaining([
+      "accept_result", "request_revision", "submit_work_result",
+    ]));
   });
 
-  it("оба кристаллизуются как detail через merged", () => {
+  it("кристаллизуется как detail через merged", () => {
     const merged = mergedProjections();
     const arts = crystallizeV2(INTENTS, merged, ONTOLOGY, "freelance");
-    expect(arts.task_detail_customer.archetype).toBe("detail");
     expect(arts.deal_detail.archetype).toBe("detail");
   });
 });

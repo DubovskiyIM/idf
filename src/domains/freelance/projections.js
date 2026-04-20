@@ -14,11 +14,15 @@
  *    comment/reason/result, не подходящие для list-view);
  *  - навигация onItemClick в derived detail (task_detail / deal_detail);
  *  - ROOT market-filter (task_catalog_public): exclude-self +
- *    exclude-already-selected — не derivable.
+ *    exclude-already-selected — не derivable;
+ *  - toolbar whitelist на task_detail / deal_detail: принуждает phase-
+ *    transition intents в toolbar (минуя primaryCTA / footer-inline-setter
+ *    routing) — core@0.34.0+ Stage 5.
  *
- * Role-specific wrapper'ы deal_detail_customer/_executor удалены после
- * добавления intent.permittedFor на deal phase-transitions — derived
- * deal_detail фильтрует toolbar per-role автоматически.
+ * Role-specific wrapper'ы (task_detail_public/_customer,
+ * deal_detail_customer/_executor) удалены: single derived detail
+ * с per-intent condition'ами (permittedFor + ownership) фильтрует
+ * toolbar per-role автоматически.
  */
 export const PROJECTIONS = {
 
@@ -36,30 +40,9 @@ export const PROJECTIONS = {
     witnesses: ["title", "budget", "deadline", "city", "categoryId", "type"],
     onItemClick: {
       action: "navigate",
-      to: "task_detail_public",
+      to: "task_detail",
       params: { taskId: "item.id" },
     },
-  },
-
-  task_detail_public: {
-    name: "Задача",
-    kind: "detail",
-    mainEntity: "Task",
-    entities: ["Task", "Response", "Category", "CustomerProfile"],
-    idParam: "taskId",
-    witnesses: [
-      "title", "description", "budget", "deadline", "city", "type",
-      "categoryId", "responsesCount", "status", "createdAt",
-    ],
-    subCollections: [
-      {
-        entity: "Response",
-        foreignKey: "taskId",
-        title: "Отклики",
-        addable: true,
-        addIntent: "submit_response",
-      },
-    ],
   },
 
   // ─── ROOT my_* lists — field-level overrides поверх derived R7/R7b/R3b ───
@@ -68,7 +51,7 @@ export const PROJECTIONS = {
     witnesses: ["title", "status", "budget", "deadline", "responsesCount"],
     onItemClick: {
       action: "navigate",
-      to: "task_detail_customer",
+      to: "task_detail",
       params: { taskId: "item.id" },
     },
   },
@@ -77,7 +60,7 @@ export const PROJECTIONS = {
     witnesses: ["taskId", "price", "deliveryDays", "status", "createdAt"],
     onItemClick: {
       action: "navigate",
-      to: "task_detail_public",
+      to: "task_detail",
       params: { taskId: "item.taskId" },
     },
   },
@@ -96,43 +79,47 @@ export const PROJECTIONS = {
     toolbar: ["top_up_wallet_by_card", "view_transaction_history"],
   },
 
-  // ─── Field-level override на derived deal_detail ───
-  // Role-specific wrapper'ы (deal_detail_customer/_executor) удалены: single
-  // derived deal_detail с per-intent permittedFor фильтрует toolbar по роли
-  // автоматически. Authored override добавляет display-witnesses (R6 union
-  // подмешивает phase-params comment/reason/result, не подходящие для detail)
-  // + disables footer-inline-setter-pattern (textarea-setter скрыл бы
-  // request_revision из toolbar).
+  // ─── Field-level overrides на derived detail'ях ───
 
-  deal_detail: {
-    witnesses: ["amount", "commission", "status", "deadline", "completedAt", "result", "links", "revisionComment"],
-    patterns: { disabled: ["footer-inline-setter"] },
-  },
-
-  // Task-detail для customer'а с пользовательским toolbar whitelist.
-  // Не консолидируем с derived task_detail: authored toolbar жёстко задаёт
-  // порядок edit_task/publish_task/cancel/select_executor + в derived
-  // task_detail R6 union witnesses содержит price/deliveryDays из
-  // submit_response (не нужны customer'у).
-  task_detail_customer: {
-    name: "Задача (автор)",
-    kind: "detail",
-    mainEntity: "Task",
-    entities: ["Task", "Response", "Category"],
-    idParam: "taskId",
+  // task_detail: единый для customer / guest / executor. Per-intent
+  // ownership condition (task.customerId = me.id) фильтрует edit/publish/
+  // cancel для customer'а. submit_response (в subCollection Response)
+  // активен для executor'а и guest'а — customer-exclude guard на
+  // intent-level.
+  //
+  // toolbar whitelist (core@0.34.0+, SDK #102): принуждает Task
+  // phase-transitions в toolbar, минуя primaryCTA routing (phase-
+  // transition без params → обычно в primaryCTA). До whitelist
+  // single-replace intents без inline-capable параметров уходили
+  // в footer через footer-inline-setter pattern.
+  //
+  // select_executor — per-item на Response в subCollection Response
+  // (не в toolbar parent'а), но в whitelist как nominal — SDK
+  // игнорирует intents которые applicable только к sub-entity.
+  task_detail: {
     witnesses: [
       "title", "description", "budget", "deadline", "city", "type",
       "categoryId", "responsesCount", "status", "createdAt",
     ],
-    subCollections: [
-      {
-        entity: "Response",
-        foreignKey: "taskId",
-        title: "Отклики",
-        addable: false,
-      },
+    toolbar: ["edit_task", "publish_task", "cancel_task_before_deal"],
+  },
+
+  // deal_detail: single projection с per-intent permittedFor фильтрует
+  // toolbar по роли (accept_result/request_revision → customer,
+  // submit_work_result/submit_revision → executor, cancel_deal_mutual —
+  // both).
+  //
+  // toolbar whitelist: принуждает phase-transitions в toolbar
+  // (accept_result с irreversibility:"high" + confirmation:"click" —
+  // обычно в primaryCTA). patterns:{disabled:[footer-inline-setter]}
+  // больше не требуется после whitelist — сохраняем как dual-safety.
+  deal_detail: {
+    witnesses: ["amount", "commission", "status", "deadline", "completedAt", "result", "links", "revisionComment"],
+    toolbar: [
+      "accept_result", "request_revision", "cancel_deal_mutual",
+      "submit_work_result", "submit_revision",
     ],
-    toolbar: ["edit_task", "publish_task", "cancel_task_before_deal", "select_executor"],
+    patterns: { disabled: ["footer-inline-setter"] },
   },
 
 };
