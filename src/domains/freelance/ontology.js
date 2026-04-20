@@ -141,7 +141,9 @@ export const ONTOLOGY = {
     },
 
     Deal: {
-      ownerField: "customerId",
+      // R7b (core@0.24+): multi-ownerField → my_deal_list с disjunction-фильтром
+      // (customerId === me.id OR executorId === me.id) — автоматически.
+      ownerField: ["customerId", "executorId"],
       fields: {
         id: { type: "text" },
         customerId: { type: "text", required: true },
@@ -172,7 +174,10 @@ export const ONTOLOGY = {
     },
 
     Wallet: {
+      // R3b (core@0.25+): singleton + ownerField → my_wallet_detail без idParam,
+      // с owner-фильтром. Один кошелёк на пользователя.
       ownerField: "userId",
+      singleton: true,
       fields: {
         id: { type: "text" },
         userId: { type: "text", required: true },
