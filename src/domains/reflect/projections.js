@@ -93,6 +93,9 @@ export const ROOT_PROJECTIONS = [
   { section: "Дневник", icon: "📖", items: ["timeline", "calendar_heatmap"] },
   { section: "Аналитика", icon: "📊", items: ["mood_trends", "activity_correlation", "mood_meter_cluster", "weekly_summary"] },
   { section: "Гипотезы", icon: "🔬", items: ["hypothesis_list"] },
-  { section: "Открытия", icon: "💡", items: ["insights_feed"] },
+  // my_insight_feed — derived R11 v2 owner-scoped temporal feed (idf-sdk
+  // core ≥ 0.28). Появляется рядом с authored insights_feed как прямое
+  // доказательство работы структурированного filter+sort в рендерере.
+  { section: "Открытия", icon: "💡", items: ["insights_feed", "my_insight_feed"] },
   { section: "Настройки", icon: "⚙️", items: ["activity_list", "tag_list"] },
 ];
