@@ -106,6 +106,9 @@ export const PROJECTIONS = {
   // ─── ROOT my_* lists — field-level overrides поверх derived R7/R7b/R3b ───
 
   my_task_list: {
+    // Role-aware (§4.9): «Мои задания» — проекция customer'а (создатель задач).
+    // У executor'а задач нет — tab-bar скрывает.
+    forRoles: ["customer"],
     witnesses: ["title", "status", "budget", "deadline", "responsesCount"],
     onItemClick: {
       action: "navigate",
@@ -130,6 +133,9 @@ export const PROJECTIONS = {
   },
 
   my_response_list: {
+    // Role-aware (§4.9): отклики — только executor flow. Customer видит отклики
+    // на свои задачи inline в task_detail, отдельный tab избыточен.
+    forRoles: ["executor"],
     witnesses: ["taskId", "price", "deliveryDays", "status", "createdAt"],
     onItemClick: {
       action: "navigate",
