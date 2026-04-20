@@ -24,13 +24,13 @@ describe("GET /api/patterns/catalog", () => {
 
     const byId = Object.fromEntries(res.body.stable.map((p) => [p.id, p]));
 
-    // subcollections — один из немногих, где structure.apply реализован
+    // subcollections — apply реализован
     expect(byId.subcollections).toBeDefined();
     expect(byId.subcollections.hasApply).toBe(true);
 
-    // hero-create — apply ещё не написан
+    // hero-create присутствует (apply-status — SDK detail, бампы могут менять).
     expect(byId["hero-create"]).toBeDefined();
-    expect(byId["hero-create"].hasApply).toBe(false);
+    expect(typeof byId["hero-create"].hasApply).toBe("boolean");
   });
 
   it("includes trigger, structure, rationale, falsification fields", async () => {

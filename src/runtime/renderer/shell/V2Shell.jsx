@@ -1,7 +1,7 @@
 import { useMemo, useState, useCallback, useEffect } from "react";
 import { usePersonalPrefs, prefsToStyle } from "../personal/usePersonalPrefs.js";
 import { ProjectionRendererV2, useProjectionRoute, Breadcrumbs, getAdaptedComponent, ViewSwitcher } from "@intent-driven/renderer";
-import { crystallizeV2, generateEditProjections, deriveProjections } from "@intent-driven/core";
+import { crystallizeV2, generateEditProjections, deriveProjections, isProjectionAvailableForRole } from "@intent-driven/core";
 import BottomTabs from "./BottomTabs.jsx";
 import PatternInspector from "./PatternInspector.jsx";
 import CrystallizeInspector from "./CrystallizeInspector.jsx";
@@ -76,13 +76,19 @@ export default function V2Shell({
 
   const rawRootProjections = domain.ROOT_PROJECTIONS || [];
   const isSectioned = rawRootProjections.length > 0 && typeof rawRootProjections[0] === "object" && rawRootProjections[0].section;
-  const rootProjections = isSectioned
+
+  // Role-aware filter — применяется после absorbed, перед render.
+  // Использует activeRole (объявлен ниже в useState, но доступен через
+  // closure в useMemo зависимостях; hoisted-reference тут намеренно
+  // pre-declare пустой fallback для первого pass, далее reactive через memo.
+  // Финальный filtered-список строится в useMemo ниже по файлу.
+  const rootProjectionsAllRoles = isSectioned
     ? rawRootProjections.flatMap(s => s.items).filter(id => !isAbsorbed(id))
     : rawRootProjections.filter(id => !isAbsorbed(id));
-  const sections = isSectioned
+  const sectionsAllRoles = isSectioned
     ? rawRootProjections.map(s => ({ ...s, items: s.items.filter(id => !isAbsorbed(id)) })).filter(s => s.items.length > 0)
     : null;
-  const initial = initialProjection || rootProjections[0] || Object.keys(mergedProjections)[0];
+  const initial = initialProjection || rootProjectionsAllRoles[0] || Object.keys(mergedProjections)[0];
 
   const {
     current, history, navigate, back, reset, canGoBack,
@@ -139,6 +145,29 @@ export default function V2Shell({
       return sessionStorage.getItem(`idf.activeRole.${domainId}`) || roleOptions[0]?.role || "customer";
     } catch { return roleOptions[0]?.role || "customer"; }
   });
+  // Role-aware filter над ROOT_PROJECTIONS — projection.forRoles декларирует
+  // в каких активных ролях видим (backlog §4.9, core@0.35+ SDK surface).
+  // Без role-switch'а — pass-through.
+  const rootProjections = useMemo(() => {
+    if (!hasRoleSwitch) return rootProjectionsAllRoles;
+    return rootProjectionsAllRoles.filter(id =>
+      isProjectionAvailableForRole(mergedProjections[id], activeRole)
+    );
+  }, [rootProjectionsAllRoles, mergedProjections, activeRole, hasRoleSwitch]);
+
+  const sections = useMemo(() => {
+    if (!sectionsAllRoles) return null;
+    if (!hasRoleSwitch) return sectionsAllRoles;
+    return sectionsAllRoles
+      .map(s => ({
+        ...s,
+        items: s.items.filter(id =>
+          isProjectionAvailableForRole(mergedProjections[id], activeRole)
+        ),
+      }))
+      .filter(s => s.items.length > 0);
+  }, [sectionsAllRoles, mergedProjections, activeRole, hasRoleSwitch]);
+
   const handleRoleSwitch = useCallback((role) => {
     setActiveRole(role);
     try { sessionStorage.setItem(`idf.activeRole.${domainId}`, role); } catch {}
