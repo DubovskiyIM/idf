@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-04-20T08:16:15.692Z",
+  "generatedAt": "2026-04-20T08:51:06.500Z",
   "domains": [
     "booking",
     "planning",
@@ -13,14 +13,14 @@
     "freelance"
   ],
   "summary": {
-    "totalFindings": 187,
+    "totalFindings": 180,
     "bySeverity": {
       "error": 0,
-      "warning": 103,
+      "warning": 96,
       "info": 84
     },
     "byAxis": {
-      "derivation": 16,
+      "derivation": 9,
       "idiom": 55,
       "testing": 7,
       "structural": 19,
@@ -43,7 +43,7 @@
       ],
       [
         "freelance",
-        23
+        22
       ],
       [
         "sales",
@@ -70,14 +70,6 @@
                 "total": 6,
                 "coefficient": 1
               }
-            },
-            {
-              "severity": "warning",
-              "axis": "derivation",
-              "message": "2 alphabetical-fallback witness'ов (intent.salience не объявлена)",
-              "details": {
-                "count": 2
-              }
             }
           ],
           "metrics": {
@@ -93,7 +85,7 @@
             ],
             "patternsWithApply": 19,
             "patternsMatchingOnly": 18,
-            "alphabeticalFallbacks": 2,
+            "alphabeticalFallbacks": 0,
             "disabledDeclarations": 0
           }
         },
@@ -126,8 +118,8 @@
           ],
           "metrics": {
             "intentCount": 22,
-            "salienceDeclared": 1,
-            "salienceCoverage": 0.045,
+            "salienceDeclared": 3,
+            "salienceCoverage": 0.136,
             "plainEntities": 0
           }
         },
@@ -238,16 +230,7 @@
           "findings": []
         },
         "derivationHealth": {
-          "findings": [
-            {
-              "severity": "warning",
-              "axis": "derivation",
-              "message": "1 alphabetical-fallback witness'ов (intent.salience не объявлена)",
-              "details": {
-                "count": 1
-              }
-            }
-          ],
+          "findings": [],
           "metrics": {
             "authored": 3,
             "derived": 0,
@@ -261,7 +244,7 @@
             ],
             "patternsWithApply": 10,
             "patternsMatchingOnly": 10,
-            "alphabeticalFallbacks": 1,
+            "alphabeticalFallbacks": 0,
             "disabledDeclarations": 0
           }
         },
@@ -286,8 +269,8 @@
           ],
           "metrics": {
             "intentCount": 17,
-            "salienceDeclared": 0,
-            "salienceCoverage": 0,
+            "salienceDeclared": 1,
+            "salienceCoverage": 0.059,
             "plainEntities": 0
           }
         },
@@ -388,16 +371,7 @@
           "findings": []
         },
         "derivationHealth": {
-          "findings": [
-            {
-              "severity": "warning",
-              "axis": "derivation",
-              "message": "1 alphabetical-fallback witness'ов (intent.salience не объявлена)",
-              "details": {
-                "count": 1
-              }
-            }
-          ],
+          "findings": [],
           "metrics": {
             "authored": 4,
             "derived": 0,
@@ -411,7 +385,7 @@
             ],
             "patternsWithApply": 9,
             "patternsMatchingOnly": 11,
-            "alphabeticalFallbacks": 1,
+            "alphabeticalFallbacks": 0,
             "disabledDeclarations": 0
           }
         },
@@ -428,8 +402,8 @@
           ],
           "metrics": {
             "intentCount": 15,
-            "salienceDeclared": 0,
-            "salienceCoverage": 0,
+            "salienceDeclared": 1,
+            "salienceCoverage": 0.067,
             "plainEntities": 0
           }
         },
@@ -546,14 +520,6 @@
                 "total": 5,
                 "coefficient": 1
               }
-            },
-            {
-              "severity": "warning",
-              "axis": "derivation",
-              "message": "1 alphabetical-fallback witness'ов (intent.salience не объявлена)",
-              "details": {
-                "count": 1
-              }
             }
           ],
           "metrics": {
@@ -569,7 +535,7 @@
             ],
             "patternsWithApply": 16,
             "patternsMatchingOnly": 21,
-            "alphabeticalFallbacks": 1,
+            "alphabeticalFallbacks": 0,
             "disabledDeclarations": 0
           }
         },
@@ -618,8 +584,8 @@
           ],
           "metrics": {
             "intentCount": 100,
-            "salienceDeclared": 0,
-            "salienceCoverage": 0,
+            "salienceDeclared": 1,
+            "salienceCoverage": 0.01,
             "plainEntities": 0
           }
         },
@@ -750,9 +716,9 @@
             {
               "severity": "warning",
               "axis": "derivation",
-              "message": "7 alphabetical-fallback witness'ов (intent.salience не объявлена)",
+              "message": "4 alphabetical-fallback witness'ов (intent.salience не объявлена)",
               "details": {
-                "count": 7
+                "count": 4
               }
             }
           ],
@@ -769,7 +735,7 @@
             ],
             "patternsWithApply": 57,
             "patternsMatchingOnly": 86,
-            "alphabeticalFallbacks": 7,
+            "alphabeticalFallbacks": 4,
             "disabledDeclarations": 0
           }
         },
@@ -826,8 +792,8 @@
           ],
           "metrics": {
             "intentCount": 225,
-            "salienceDeclared": 2,
-            "salienceCoverage": 0.009,
+            "salienceDeclared": 8,
+            "salienceCoverage": 0.036,
             "plainEntities": 0
           }
         },
@@ -1005,14 +971,6 @@
                 "total": 12,
                 "coefficient": 1
               }
-            },
-            {
-              "severity": "warning",
-              "axis": "derivation",
-              "message": "4 alphabetical-fallback witness'ов (intent.salience не объявлена)",
-              "details": {
-                "count": 4
-              }
             }
           ],
           "metrics": {
@@ -1028,7 +986,7 @@
             ],
             "patternsWithApply": 36,
             "patternsMatchingOnly": 32,
-            "alphabeticalFallbacks": 4,
+            "alphabeticalFallbacks": 0,
             "disabledDeclarations": 0
           }
         },
@@ -1053,8 +1011,8 @@
           ],
           "metrics": {
             "intentCount": 56,
-            "salienceDeclared": 1,
-            "salienceCoverage": 0.018,
+            "salienceDeclared": 5,
+            "salienceCoverage": 0.089,
             "plainEntities": 0
           }
         },
@@ -1222,14 +1180,6 @@
                 "total": 13,
                 "coefficient": 1
               }
-            },
-            {
-              "severity": "warning",
-              "axis": "derivation",
-              "message": "1 alphabetical-fallback witness'ов (intent.salience не объявлена)",
-              "details": {
-                "count": 1
-              }
             }
           ],
           "metrics": {
@@ -1245,7 +1195,7 @@
             ],
             "patternsWithApply": 23,
             "patternsMatchingOnly": 31,
-            "alphabeticalFallbacks": 1,
+            "alphabeticalFallbacks": 0,
             "disabledDeclarations": 0
           }
         },
@@ -1270,8 +1220,8 @@
           ],
           "metrics": {
             "intentCount": 47,
-            "salienceDeclared": 1,
-            "salienceCoverage": 0.021,
+            "salienceDeclared": 2,
+            "salienceCoverage": 0.043,
             "plainEntities": 0
           }
         },
@@ -2646,14 +2596,6 @@
                 "total": 9,
                 "coefficient": 1
               }
-            },
-            {
-              "severity": "warning",
-              "axis": "derivation",
-              "message": "2 alphabetical-fallback witness'ов (intent.salience не объявлена)",
-              "details": {
-                "count": 2
-              }
             }
           ],
           "metrics": {
@@ -2669,7 +2611,7 @@
             ],
             "patternsWithApply": 27,
             "patternsMatchingOnly": 41,
-            "alphabeticalFallbacks": 2,
+            "alphabeticalFallbacks": 0,
             "disabledDeclarations": 2
           }
         },
@@ -2726,8 +2668,8 @@
           ],
           "metrics": {
             "intentCount": 46,
-            "salienceDeclared": 0,
-            "salienceCoverage": 0,
+            "salienceDeclared": 1,
+            "salienceCoverage": 0.022,
             "plainEntities": 0
           }
         },
