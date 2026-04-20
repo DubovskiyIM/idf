@@ -16,14 +16,6 @@
 
 Задачи, где scope / timing вытеснил их из текущего PR.
 
-### 1.1 `invariant.kind: "expression"` — custom row-level predicate
-
-**Дата:** 2026-04-20
-**Контекст:** Freelance session — `Deal.customerId !== Deal.executorId` нельзя выразить как простой kind. Сейчас enforce вручную в `buildCustomEffects::submit_response`.
-**Action:** Добавить `kind: "expression"` с evaluator'ом JS-выражения над row. Документировать `registerKind` API.
-**Owner:** `@intent-driven/core/invariants/`
-**Связано:** `docs/sdk-improvements-backlog.md` §1.2
-
 ### 1.2 Composite `groupBy` в `cardinality`
 
 **Дата:** 2026-04-20
@@ -279,3 +271,17 @@ Derivation даёт им канонические имена (`portfolio_list`, 
 ## History — completed items
 
 *(здесь накапливаются пункты, которые были закрыты; для истории и чтобы видно прогресс. По достижении большого объёма — архивировать в `docs/archive/backlog-YYYY-MM.md`.)*
+
+### ✅ 1.1 `invariant.kind: "expression"` — custom row-level predicate
+
+**Дата начала:** 2026-04-20. **Дата закрытия:** 2026-04-20.
+**Контекст:** Freelance `Deal.customerId !== Deal.executorId` нельзя было выразить простым kind'ом.
+**Закрытие:** параллельный агент добавил handler `expression` на origin/main (core@0.32.0, single-arg `(row)`). В рамках 13-го полевого теста (compliance/SOX ICFR) расширен до `(row, world, viewer, context)` — PR idf-sdk#96, затем PR idf-sdk#98 (`materializeAuditLog` + `buildAuditContext`) → core@0.33.0. Использовано в compliance-домене как 5 expression-invariants (SoD reviewer/approver/CFO + dynamic threshold approvals + cycle-close guard). Backward-compat сохранён: старые single-arg predicate'ы продолжают работать.
+
+### ✅ 13-й полевой тест — compliance-домен (SOX ICFR)
+
+**Дата:** 2026-04-20. **Merge:** PR idf#86.
+**Scope:** 10 сущностей, 6 ролей, 15 invariants (5 expression-kind), 7 rules (все 4 v1.5 ext), 38 intents (5 с `__irr:high`), 20 projections. Первый домен, задействующий все 5 behavioral patterns signal-classifier'а. Reuse AntD enterprise-fintech адаптер.
+**Выходные artifact'ы:** dev-route `/compliance`, 31 domain-local тест, 799/799 host tests pass. SDK bumps 0.31.2 → 0.33.0 (PR idf-sdk#96 + #98).
+**Spec:** `docs/superpowers/specs/2026-04-20-compliance-domain-design.md` (local). **Investor pitch:** `docs/superpowers/specs/2026-04-20-compliance-investor-pitch.md` (local).
+**Открытые follow-up'ы (новые backlog-items):** polymorphic Evidence.attachedTo (sparse-columns в MVP); computed ownerField для Attestation через Control FK; `role.scope: {kind: "expression"}` support в filterWorldForRole; audit-log pagination; CFO как 6-й base role `sponsor`/`attestor` — отдельный design.
