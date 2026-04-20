@@ -149,6 +149,70 @@
 **Контекст:** За сегодняшнюю сессию создано 4+ worktree'ев (derivation-xray в idf + idf-sdk, drift-protection в manifest, session-backlog в idf). Изоляция помогает.
 **Observation:** Конвенция: один worktree = один coherent PR workstream. Cleanup через `git worktree remove` после merge.
 
+### 1.X Renderer-support для новых filter-форматов (R7b / R10 / R11 v2)
+
+**Дата:** 2026-04-20
+**Контекст:** SDK правила R7b (multi-owner disjunction), R10 (m2m-via scope), R11 v2 (owner-scoped temporal feed) выводят structured-filter поля новых форм:
+- `{ kind: "disjunction", fields: [...], op, value }` — R7b
+- `{ kind: "m2m-via", via, viewerField, joinField, localField, ... }` — R10
+- `{ field, op: "=", value: "me.id" }` + `sort: "-<ts>"` — R11 v2
+
+`List` primitive сейчас интерпретирует только простой `evalCondition` string-filter.
+Новые форматы игнорируются → projection генерируется, но в UI не фильтруется.
+**Action:** обновить `@intent-driven/renderer/primitives/containers.jsx::List` (и аналоги в ArchetypeDetail) чтобы распознавать `filter.kind` и применять соответствующую логику.
+**Owner:** `@intent-driven/renderer` + adapter (возможно server-side `filterWorldForRole` уже знает эту семантику — shared helper).
+**Связано:** SDK PR'ы #73, #64 (merged), #84 (open).
+
+### 1.Y Renderer-support для singleton-detail без idParam (R3b)
+
+**Дата:** 2026-04-20
+**Контекст:** R3b генерирует `my_<entity>_detail` без idParam + `singleton: true`. Сейчас `ArchetypeDetail` требует routeParams[idParam]. Для singleton нужно fallback на `world[entity].find(e => e[ownerField] === viewer.id)`.
+**Action:** `ArchetypeDetail` читает `projection.singleton`, resolve target через ownerField+viewer.
+**Owner:** `@intent-driven/renderer/archetypes/ArchetypeDetail.jsx`
+**Связано:** SDK PR #76 (merged), idf#60 (merged).
+
+### 1.Z R11b — multi-owner disjunction feed (future)
+
+**Дата:** 2026-04-20
+**Контекст:** R11 v2 поддерживает только single-string `ownerField`. Array ownerField (multi-owner) — не триггерит `my_*_feed`. Аналог R7b для temporal streams. Пока не было реального domain case, но будет: shared-stream с множественными ownership (e.g. `Notification.recipientIds`).
+**Action:** extend R11 witness builder `disjunction` mode по образцу `witnessR7bMultiOwnerFilter`.
+**Owner:** `@intent-driven/core/crystallize_v2/`
+
+### 1.W Near-miss witnesses для R11/R11 v2
+
+**Дата:** 2026-04-20
+**Контекст:** `collectNearMissWitnesses` покрывает R3/R1b/R7/R10. Не покрывает R11 (entity с `createdAt` полем, но без `temporal:true`).
+**Action:** heuristic — если entity имеет field с суффиксом `-At` или fieldRole `datetime`, но без `temporal` флага — emit near-miss с suggestion добавить `temporal:true`.
+**Owner:** `@intent-driven/core/crystallize_v2/nearMissWitnesses.js`
+
+## 2. Architectural insights (не задачи, а наблюдения)
+
+### 2.5 R-rule evolution — deep-fix effect
+
+**Дата:** 2026-04-20
+**Контекст:** R7 v2 (relax precondition R1→R3 fallback) — **7-строчный patch** закрыл 8 uncovered cases across 4 доменов. R9 (cross-entity composite, 45 LOC + 16 тестов) — 0 cases до filter refinement.
+**Observation:** **audit existing rules for internal coupling перед добавлением новых**. Implicit design-constraints (R7 требует R1) пряли большие impact pockets. Surfaces через один домен (freelance.Deal), но latent impact был скрыт в sales/invest/delivery тоже.
+**Template:** при добавлении нового R-правила — проверять, есть ли pre-existing правило с precondition, которое избыточно для semantic'а (как R1 catalog для R7 был избыточен — нужен только для witnesses, не для фильтра).
+
+### 2.6 Classifier heuristic filter-presence bit
+
+**Дата:** 2026-04-20
+**Контекст:** `uncovered-classification.mjs` heuristic match по `!!authored.filter === !!derived.filter` — бинарный filter-presence. Блокирует rename когда filter semantics совпадают но format отличается (R11 public vs authored owner-scoped).
+**Observation:** Heuristic достаточен для первичной классификации, но не для fine-grained Δ measurement. Будущие finding'и могут скрываться за "derived не matched из-за filter mismatch" — проверять прямо через probe script, не полагаться только на classifier.
+
+### 2.7 R-rule roadmap finalized — 13 правил
+
+**Дата:** 2026-04-20
+**Контекст:** Debugging-derived-ui workstream завершён. Итог: 13 правил деривации (R1, R1b, R2, R3, R3b, R4, R6, R7 v2, R7b, R8, R9, R10, R11 v2) + composeProjections + explainCrystallize + resolveCompositions + near-miss witnesses + CrystallizeInspector (§27 host).
+
+**Metrics финальные:**
+- Baseline: U = 24 (21%) при 88.5% authored.
+- После всех правил + ontology audit + R11 v2 activation: **U = 11 (9.5%)** (predicted).
+- Realization: **100% от spec-predicted -13**.
+- Остающиеся 11 — **genuine edge cases** (admin-only, 3-level composite, cross-role scope, complex OR filter, специфические patterns без universal rule).
+
+**Observation:** Format подошёл к natural ceiling R-правил. Следующие 5% gap (от 9.5% до 5%) потребуют либо очень узкие rules (diminishing returns), либо пересмотр фундаментальных допущений (composable filter DSL). Не urgent.
+
 ---
 
 ## History — completed items
