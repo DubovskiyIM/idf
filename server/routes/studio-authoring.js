@@ -9,10 +9,14 @@
  * Sessions in-memory. При рестарте сервера теряются (acceptable для demo).
  */
 
+const path = require("node:path");
 const { Router } = require("express");
 const { initAuthoring, applyTurn, canFinalize } = require("../schema/authoringStateMachine.cjs");
 const { buildMessages } = require("../schema/authoringPrompts.cjs");
 const { callClaude } = require("../schema/claudeClient.cjs");
+const { finalizeDomain } = require("../schema/authoringCommit.cjs");
+const { registerOntology } = require("../ontologyRegistry.cjs");
+const intentsModule = require("../intents.js");
 
 const sessions = new Map(); // domainId -> state
 
@@ -115,6 +119,56 @@ function makeStudioAuthoringRouter({ claudeClient } = {}) {
     const id = String(req.params.id || "");
     sessions.delete(id);
     res.json({ ok: true });
+  });
+
+  router.post("/:id/author/commit", async (req, res) => {
+    const id = String(req.params.id || "");
+    const state = sessions.get(id);
+    if (!state) return res.status(404).json({ error: "no_session", domainId: id });
+    if (!canFinalize(state)) {
+      return res.status(400).json({
+        error: "not_finalizable",
+        state: state.state,
+        validationIssues: state.validationIssues,
+        message: "Нужны хотя бы 1 intent и 1 entity, и state preview или ontology_detail",
+      });
+    }
+
+    const targetDir = req.body?.targetDir
+      ? path.resolve(req.body.targetDir)
+      : path.resolve(__dirname, "../../src/domains", id);
+
+    let result;
+    try {
+      result = await finalizeDomain(state.spec, { targetDir });
+    } catch (err) {
+      return res.status(500).json({ error: "commit_failed", detail: err.message });
+    }
+
+    // Hot-reload: регистрируем ontology + intents сразу — агент/voice/document
+    // endpoints начинают работать до рестарта сервера.
+    try {
+      registerOntology(id, state.spec.ONTOLOGY || {});
+      intentsModule.registerIntents(state.spec.INTENTS || {}, id);
+    } catch (err) {
+      // commit файла прошёл, hot-reload нет — возвращаем ok=true + warning
+      return res.json({
+        ok: true,
+        path: result.path,
+        hotReloadWarning: err.message,
+      });
+    }
+
+    // Перевести session в committed state
+    sessions.set(id, { ...state, state: "committed" });
+
+    res.json({
+      ok: true,
+      path: result.path,
+      domainId: id,
+      entityCount: Object.keys(state.spec.ONTOLOGY?.entities || {}).length,
+      intentCount: Object.keys(state.spec.INTENTS || {}).length,
+    });
   });
 
   // test-only: очистка всех сессий
