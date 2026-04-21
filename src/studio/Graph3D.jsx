@@ -198,11 +198,26 @@ export default function Graph3D({ graph, onNodeClick, pings, selectedId, flyToke
     if (charge) charge.strength(-60);
   }, []);
 
+  // flyTo при смене selectedId / flyToken / появлении узла в data.
+  // Race condition deep-link'а: hash-handler ставит selectedId+flyToken
+  // ДО того, как fetchGraph завершился — data.nodes ещё пусто. Без
+  // data.nodes в deps useEffect не перезапускался, когда граф приходил
+  // позже. Добавляем — теперь flyTo догоняет node, когда тот появится.
+  // Дополнительно ждём, пока force-layout прогреется и node получит
+  // координаты (node.x !== undefined).
   useEffect(() => {
     if (!fgRef.current || !selectedId) return;
     const node = data.nodes.find((n) => n.id === selectedId);
-    if (!node || typeof node.x !== "number") return;
-    const id = requestAnimationFrame(() => {
+    if (!node) return;
+    // Poll пока node получит координаты (force-layout tick'и).
+    let attempts = 0;
+    const tryFly = () => {
+      if (typeof node.x !== "number") {
+        if (attempts++ < 30) {
+          rafId = requestAnimationFrame(tryFly);
+        }
+        return;
+      }
       try {
         const dist = 110;
         const r = Math.hypot(node.x, node.y, node.z) || 1;
@@ -214,9 +229,10 @@ export default function Graph3D({ graph, onNodeClick, pings, selectedId, flyToke
       } catch (e) {
         console.warn("[studio] cameraPosition failed", e);
       }
-    });
-    return () => cancelAnimationFrame(id);
-  }, [selectedId, flyToken]);
+    };
+    let rafId = requestAnimationFrame(tryFly);
+    return () => cancelAnimationFrame(rafId);
+  }, [selectedId, flyToken, data.nodes]);
 
   return (
     <div ref={wrapperRef} style={{ width: "100%", height: "100%", overflow: "hidden" }}>
