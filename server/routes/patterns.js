@@ -61,14 +61,21 @@ async function loadDomain(domainName) {
       DOMAIN_CACHE.set(domainName, null);
       return null;
     }
-    // Зеркалим host V2Shell: derived + authored с authored-wins. Server-routes
-    // должны видеть тот же совокупный набор projections, что и runtime.
+    // Зеркалим host V2Shell: derived + authored с field-level merge.
+    // Top-level merge ({ ...derived, ...authored }) перезаписывал бы derived.X
+    // целиком, теряя kind/mainEntity/derivedBy, если authored.X декларирует
+    // только overrides (witnesses/toolbar/patterns) — без этих полей
+    // explainMatch деградирует до archetype="catalog" и computeSlotAttribution
+    // возвращает {}. Per-projection spread сохраняет derived-поля без override.
     let derived = {};
     try {
       const intentsArr = Object.entries(intents).map(([id, i]) => ({ id, ...i }));
       derived = deriveProjections(intentsArr, ontology);
     } catch {}
-    const projections = { ...derived, ...authoredProjections };
+    const projections = { ...derived };
+    for (const [id, authored] of Object.entries(authoredProjections)) {
+      projections[id] = projections[id] ? { ...projections[id], ...authored } : authored;
+    }
     const domain = { id: domainName, ontology, intents, projections };
     DOMAIN_CACHE.set(domainName, domain);
     return domain;
