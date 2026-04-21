@@ -6,6 +6,7 @@ import BottomTabs from "./BottomTabs.jsx";
 import PatternInspector from "./PatternInspector.jsx";
 import CrystallizeInspector from "./CrystallizeInspector.jsx";
 import MaterializationsViewer from "./MaterializationsViewer.jsx";
+import XrayHUD from "./XrayHUD.jsx";
 import { humanizeProjectionId } from "./humanizeProjectionId.js";
 
 const UI_KIT_OPTIONS = [
@@ -525,6 +526,7 @@ export default function V2Shell({
             Проекция "{current?.projectionId}" не найдена или не поддерживается архетипом v2
           </div>
         )}
+        <XrayHUD xrayState={xrayState} />
       </div>
     </>
   );
