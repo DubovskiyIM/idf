@@ -53,7 +53,7 @@ export default function XrayHUD({ xrayState }) {
               <code style={{ fontSize: 11, fontWeight: 600 }}>{patternId}</code>
               {xrayState.domain && (
                 <a
-                  href={`/studio#graph/focus?domain=${encodeURIComponent(xrayState.domain)}&pattern=${encodeURIComponent(patternId)}`}
+                  href={`/studio.html#graph/focus?domain=${encodeURIComponent(xrayState.domain)}&pattern=${encodeURIComponent(patternId)}`}
                   target="_blank"
                   rel="noopener noreferrer"
                   style={linkStyle}

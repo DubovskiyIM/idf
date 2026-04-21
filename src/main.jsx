@@ -28,6 +28,12 @@ function StudioRedirect() {
     if (!target.searchParams.has("view") && target.searchParams.has("domain")) {
       target.searchParams.set("view", "prototype");
     }
+    // Сохраняем hash — Studio hash-router использует #graph/focus?...
+    // для deep-link'ов из X-ray HUD и SDK renderer-генерируемых ссылок.
+    // URL-копирование через `new URL` не переносит hash автоматически.
+    if (window.location.hash) {
+      target.hash = window.location.hash;
+    }
     window.location.replace(target.toString());
   }, []);
   return (
