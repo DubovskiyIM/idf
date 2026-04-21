@@ -16,13 +16,14 @@ const { getOntology } = require("../ontologyRegistry.cjs");
 const { getDomainIntents } = require("../intents.js");
 const { filterWorldForRole } = require("../schema/filterWorld.cjs");
 const { materializeAsVoice, renderVoiceSsml, renderVoicePlain } = require("../schema/voiceMaterializer.cjs");
+const { synthesize: synthesizeTts } = require("../schema/ttsAdapter.cjs");
 const { foldWorld } = require("../validator.js");
 
 function makeVoiceRouter() {
   const router = Router({ mergeParams: true });
   router.use(authMiddleware);
 
-  router.get("/:projection", (req, res) => {
+  router.get("/:projection", async (req, res) => {
     const domain = req.params.domain;
     const projectionId = req.params.projection;
     const formatQuery = (req.query.format || "").toLowerCase();
@@ -30,6 +31,7 @@ function makeVoiceRouter() {
       || (req.accepts(["json", "xml", "text"]) === "json" ? "json"
           : req.accepts(["json", "xml", "text"]) === "xml" ? "ssml"
           : "plain");
+    const voice = req.query.voice || process.env.IDF_TTS_VOICE || "alloy";
     const role = (req.query.as || "owner").toLowerCase();
 
     const ontology = getOntology(domain);
@@ -82,6 +84,25 @@ function makeVoiceRouter() {
     if (format === "ssml" || format === "xml") {
       res.setHeader("Content-Type", "application/ssml+xml; charset=utf-8");
       return res.send(renderVoiceSsml(script));
+    }
+    if (format === "audio") {
+      const apiKey = process.env.OPENAI_API_KEY;
+      if (!apiKey) {
+        return res.status(501).json({
+          error: "tts_not_configured",
+          detail: "OPENAI_API_KEY не задан в окружении. TTS отключён.",
+        });
+      }
+      try {
+        const ssml = renderVoiceSsml(script);
+        const { contentType, audio } = await synthesizeTts(ssml, { apiKey, voice });
+        res.setHeader("Content-Type", contentType);
+        res.setHeader("Cache-Control", "public, max-age=3600");
+        return res.end(audio);
+      } catch (err) {
+        console.error(`[voice] TTS upstream error: ${err.message}`);
+        return res.status(502).json({ error: "tts_upstream", detail: err.message });
+      }
     }
     res.setHeader("Content-Type", "text/plain; charset=utf-8");
     return res.send(renderVoicePlain(script));
