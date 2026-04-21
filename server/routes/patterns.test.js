@@ -136,20 +136,22 @@ describe("GET /api/patterns/explain", () => {
   });
 
   it("includes slotAttribution map in response", async () => {
+    // freelance/deal_detail: irreversible-confirm.apply обогащает overlay
+    // warning-полями из intent.__irr.reason (confirm_deal imeet __irr.high).
+    // Этот pattern работает независимо от авторских curation'ов subCollections,
+    // поэтому attribution map стабильно содержит хотя бы одну запись.
     const res = await request(app).get(
-      "/api/patterns/explain?domain=sales&projection=order_detail",
+      "/api/patterns/explain?domain=freelance&projection=deal_detail",
     );
     expect(res.status).toBe(200);
     expect(res.body).toHaveProperty("slotAttribution");
     expect(typeof res.body.slotAttribution).toBe("object");
-    // sales/order_detail имеет subcollections, добавляющие sections
-    // (Order + связанные Bid/Message/Dispute с FK на Order).
-    // invest/portfolio_detail тоже matched, но sections авторизованы вручную —
-    // attribution пуста для subcollections в этом случае by design.
-    const subEntry = Object.entries(res.body.slotAttribution).find(
-      ([, v]) => v.patternId === "subcollections",
+    const entries = Object.entries(res.body.slotAttribution);
+    expect(entries.length).toBeGreaterThan(0);
+    const irrEntry = entries.find(
+      ([, v]) => v.patternId === "irreversible-confirm",
     );
-    expect(subEntry).toBeDefined();
+    expect(irrEntry).toBeDefined();
   });
 });
 
