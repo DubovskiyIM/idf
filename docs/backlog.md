@@ -262,8 +262,8 @@ Bump `@intent-driven/enricher-claude` → `0.2.1`. После release — пер
 
 | Stage | Capability | PR | Статус |
 |-------|-----------|----|----|
-| 1 | Bootstrap + baseline render + gap-каталог | [#105](https://github.com/DubovskiyIM/idf/pull/105) | draft |
-| 2 | Deep tree nav + breadcrumbs | — | pending |
+| 1 | Bootstrap + baseline render + gap-каталог | [idf#105](https://github.com/DubovskiyIM/idf/pull/105) | draft, 14+ commits |
+| 2 | Deep tree nav + breadcrumbs | [idf#105](https://github.com/DubovskiyIM/idf/pull/105) (продолжение) | in-progress |
 | 3 | Composite / nested types | — | pending |
 | 4 | Advanced data-grid | — | pending |
 | 5 | Permission matrix | — | pending |
@@ -271,9 +271,19 @@ Bump `@intent-driven/enricher-claude` → `0.2.1`. После release — пер
 | 7 | Property popover + associations | — | pending |
 | 8 | Polish + demo | — | pending |
 
-**Gap-каталог:** `docs/gravitino-gaps.md` (12 gap'ов на Stage 1 baseline).
+**SDK PRs от Gravitino dogfood:**
 
-**Stage 2 pre-work (required):** авторировать minimal ROOT_PROJECTIONS для 12 canonical entities ИЛИ починить §1.12 enricher. Без этого crystallize деривирует 3 artifact'а из 120 intents — Stage 2 работы негде проверять.
+| PR | Контент | Статус |
+|----|---------|--------|
+| [idf-sdk#186](https://github.com/DubovskiyIM/idf-sdk/pull/186) | enricher-claude@0.2.1: structured_output wire-format | merged ✓ |
+| [idf-sdk#188](https://github.com/DubovskiyIM/idf-sdk/pull/188) | importer-openapi@0.5.0: path-derived FK synthesis | merged ✓ |
+| [idf-sdk#190](https://github.com/DubovskiyIM/idf-sdk/pull/190) | renderer@0.29.0: Breadcrumbs primitive | merged ✓ |
+| [idf-sdk#192](https://github.com/DubovskiyIM/idf-sdk/pull/192) | core: subcollections.apply render-ready shape (G14) | open |
+| [idf-sdk#193](https://github.com/DubovskiyIM/idf-sdk/pull/193) | adapter-antd: Breadcrumb capability | open |
+
+**Gap-каталог:** `docs/gravitino-gaps.md`. **Закрыто:** G1 (tree-nav pattern apply); **G14** (subcollections render-ready) — ждёт merge SDK#192 + host bump. **Open:** G13 (TreeNav runtime-mode) — deferred в отдельный sprint. G15/G16/G17/G11/G2/G3/G12 — в SDK backlog / Stage 8 polish.
+
+**UX pattern bank кандидаты** (`docs/gravitino-ux-patterns-notes.md`): P-1 path-derived hierarchy, P-2 absolute-rooted hierarchy nav, P-3 auto-sections title inference.
 
 ---
 
