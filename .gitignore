@@ -31,3 +31,6 @@ docs/superpowers/
 .superpowers.worktrees/
 .superpowers/
 .npm-cache/
+
+# Pre-enrich snapshots (scaffold-путь diff-reference, не commit'им)
+src/domains/*/.fixtures/*.pre-enrich.js
