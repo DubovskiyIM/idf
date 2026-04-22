@@ -250,6 +250,31 @@ Bump `@intent-driven/enricher-claude` → `0.2.1`. После release — пер
 
 **Memory sync:** запись `feedback_claude_subprocess_over_sdk` (встроенные Claude-агенты = subprocess к локальному `claude` CLI) остаётся корректной по подходу; регрессия — на wire-format уровне, не архитектурном. Запись `project_m1_2_authoring_port_progress` (Blocker smoke: Anthropic $0 credit) — **неверная гипотеза**: credit тут ни при чём, OAuth keychain subprocess работает без billing; реальный root cause — wire-format.
 
+### 1.13 Gravitino dogfood-спринт — tracker
+
+**Дата начала:** 2026-04-22. **Source:** локальный spec `docs/superpowers/specs/2026-04-22-gravitino-dogfood-design.md` (8 стадий, horizontal-slice).
+
+**Цель:** довести SDK + AntD-адаптер до уровня, на котором derived UI Apache Gravitino metadata-catalog (12 модулей) рендерится как «золотое» demo. Horizontal slice по capability (не per-модуль Gravitino). Каждая стадия — draft PR, не мёрджим до финального approve в конце спринта.
+
+**Контуры dogfood:** (a) scaffold-путь Этап 1-3 на реальном enterprise OpenAPI, (b) SDK/adapter polish для enterprise-UX.
+
+**Stages.**
+
+| Stage | Capability | PR | Статус |
+|-------|-----------|----|----|
+| 1 | Bootstrap + baseline render + gap-каталог | [#105](https://github.com/DubovskiyIM/idf/pull/105) | draft |
+| 2 | Deep tree nav + breadcrumbs | — | pending |
+| 3 | Composite / nested types | — | pending |
+| 4 | Advanced data-grid | — | pending |
+| 5 | Permission matrix | — | pending |
+| 6 | Wizard dynamics + test-connection | — | pending |
+| 7 | Property popover + associations | — | pending |
+| 8 | Polish + demo | — | pending |
+
+**Gap-каталог:** `docs/gravitino-gaps.md` (12 gap'ов на Stage 1 baseline).
+
+**Stage 2 pre-work (required):** авторировать minimal ROOT_PROJECTIONS для 12 canonical entities ИЛИ починить §1.12 enricher. Без этого crystallize деривирует 3 artifact'а из 120 intents — Stage 2 работы негде проверять.
+
 ---
 
 ## 2. Architectural research / insights
