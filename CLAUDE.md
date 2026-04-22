@@ -16,7 +16,8 @@
 
 - **Манифест v2** (`docs/manifesto-v2.md`) — timeless-документ о формате IDF: 26 глав в 8 частях (I. Тезис · II. Объекты формата · III. Алгебра · IV. Четыре читателя формата · V. Авторство · VI. Conformance набросок · VII. Границы · VIII. Перспектива). Читай перед работой над ядром формата.
 - **Имплементационный статус** (`docs/implementation-status.md`) — живой документ: 11 доменов (672 намерения), SDK пакеты, ~1960 тестов (799 host + 916 core + 175 renderer + 36 canvas-kit + 34 adapters), open items. Обновляется вместе с кодом и часто опережает этот CLAUDE.md.
-- **SDK backlog** (`docs/sdk-improvements-backlog.md`) — 40+ gap'ов из freelance field-test'а. P0-блок закрыт 2026-04-20 (antd 2.1–2.4, invariants 1.1, multi-owner 3.2). Остаются §3.1 (PrimaryCTAList multi-param), §4.1–4.3 (inferParameters / heroCreate / footer-inline-setter).
+- **SDK backlog** (`docs/sdk-improvements-backlog.md`) — 40+ gap'ов из freelance field-test'а. P0-блок закрыт 2026-04-20 (antd 2.1–2.4, invariants 1.1, multi-owner 3.2). Остаются §3.1 (PrimaryCTAList multi-param), §4.1–4.3 (inferParameters / heroCreate / footer-inline-setter). **§9 добавлен 2026-04-21** (Workzilla post-bump): 9.1 `type:"string"` не мапится, 9.2 detail без автоматического `idParam`, 9.3 onItemClick picks wrong detail из nav-graph.
+- **Ontology authoring checklist** (`~/WebstormProjects/idf-sdk/docs/ontology-authoring-checklist.md`) — 12 пунктов для host-автора: canonical types, fieldRole, entityRef+relations, labels, valueLabels, idParam на detail, onItemClick на list, compositions для dotted-witnesses, forRoles, semantic grouping (singleton-detail + subCollections), host-integration props. **Claude должен проактивно применять при работе с любой ontology** — см. feedback-memory `feedback_ontology_completeness.md`.
 - **Session backlog** (`docs/backlog.md`) — cross-cutting очередь между сессиями (inbox для deferred items, insights, находок; не дублирует sdk-improvements-backlog).
 - **Design-спеки** (`docs/design/`) — `intent-salience-spec.md`, `2026-04-20-sdk-p0-integration-design.md`.
 - **Архив манифестов v1.3–v1.12** (`docs/archive/`) — исторические версии с change-log тоном. Актуальные факты — в v2 + implementation-status.
@@ -76,7 +77,7 @@ src/
 # SDK monorepo: ~/WebstormProjects/idf-sdk/packages/
 #   core/            # engine, fold, intentAlgebra, crystallize_v2, invariants/* (6 kinds),
 #                    # filterWorld, filterProjectionsByRole, baseRoles, preapprovalGuard,
-#                    # materializers (document/voice/auditLog), patterns/ (31 stable, 28 с apply),
+#                    # materializers (document/voice/auditLog), patterns/ (32 stable, 30 apply, 2 matching-only),
 #                    # salience, causalSort, conditionParser, anchoring, irreversibility
 #   renderer/        # ProjectionRendererV2 + archetypes + primitives (atoms, containers, chart,
 #                    # map, IrreversibleBadge, PatternPreviewOverlay, TreeNav, KanbanBoard,
@@ -146,11 +147,11 @@ external-calendar/ :3002
 
 **Voice materialization (§1/§17, v1.6.2)** — все 4 материализации §1 теперь реализованы. `GET /api/voice/:domain/:projection?format=json|ssml|plain`. `voiceMaterializer.cjs` превращает projection в speech-script (`turns: [{role, text, items}]`). Brevity: top-3 для catalog, money читается «2.5 миллионов рублей». 3 формата: json (для voice-agent / Claude Voice / OpenAI realtime), SSML (для TTS), plain (debug).
 
-**UX Pattern Layer (§16, двухосевая)** — **архетип** (структура: feed/catalog/detail/...) × **паттерн** (поведение: monitoring/triage/execution/exploration/configuration). Signal Classifier выводит behavioral pattern из intent-группы через weighted scoring. Rendering Strategy → itemLayout, emphasisFields, preferControl. **Pattern Bank — 31 stable structural patterns** (см. «Pattern Bank execution» ниже) с формальным `trigger/structure/rationale` triple и falsification fixtures (`shouldMatch` / `shouldNotMatch`). **Research pipeline** (двухступенчатый): `scripts/pattern-researcher.mjs` + domain-batch'и (`freelance-pattern-batch.mjs`, `jobboard-pattern-batch.mjs`, `uncovered-domains-pattern-batch.mjs`) извлекают кандидатов из реальных продуктов (avito, profi, kwork, fl.ru, workzilla, linkedin-jobs, hh.ru, linear, notion, height, stripe) в `idf/pattern-bank/candidate/` (~49+ кандидатов на 2026-04-21); после human review — в `idf-sdk/packages/core/src/patterns/stable/` (candidate/ в SDK на текущий момент пусто — review'ы идут напрямую в stable или отклоняются). `anti/` зарезервирован.
+**UX Pattern Layer (§16, двухосевая)** — **архетип** (структура: feed/catalog/detail/...) × **паттерн** (поведение: monitoring/triage/execution/exploration/configuration). Signal Classifier выводит behavioral pattern из intent-группы через weighted scoring. Rendering Strategy → itemLayout, emphasisFields, preferControl. **Pattern Bank — 32 stable structural patterns** (см. «Pattern Bank execution» ниже) с формальным `trigger/structure/rationale` triple и falsification fixtures (`shouldMatch` / `shouldNotMatch`). **Research pipeline** (двухступенчатый): `scripts/pattern-researcher.mjs` + domain-batch'и (`freelance-pattern-batch.mjs`, `jobboard-pattern-batch.mjs`, `uncovered-domains-pattern-batch.mjs`) извлекают кандидатов из реальных продуктов (avito, profi, kwork, fl.ru, workzilla, linkedin-jobs, hh.ru, linear, notion, height, stripe) в `idf/pattern-bank/candidate/` (~49+ кандидатов на 2026-04-21); после human review — в `idf-sdk/packages/core/src/patterns/stable/` (candidate/ в SDK на текущий момент пусто — review'ы идут напрямую в stable или отклоняются). `anti/` зарезервирован.
 
-**Pattern Bank execution (§16)** — от matching-only к executable rules. **31 stable pattern в SDK, 28 с `structure.apply(slots, context)`** (на 2026-04-21). `applyStructuralPatterns` — фаза `3d` после `assignToSlots*`, до `wrapByConfirmation`. Matching-only (3): `optimistic-replace-with-undo`, `global-command-palette`, `keyboard-property-popover`. Раскладка по архетипу:
+**Pattern Bank execution (§16)** — от matching-only к executable rules. **32 stable pattern в SDK, 30 с `structure.apply(slots, context)`** (на 2026-04-22, после PR #154 `optimistic-replace-with-undo.apply` + PR #177 `catalog-action-cta`). `applyStructuralPatterns` — фаза `3d` после `assignToSlots*`, до `wrapByConfirmation`. Matching-only (2): `global-command-palette`, `keyboard-property-popover`. Раскладка по архетипу:
 - **detail/** (12): subcollections, footer-inline-setter, m2m-attach-dialog, observer-readonly-escape, lifecycle-locked-parameters, vote-group, phase-aware-primary-cta, computed-cta-label, rating-aggregate-hero, review-criterion-breakdown, timer-countdown-visible, keyboard-property-popover
-- **catalog/** (8): grid-card-layout, hero-create, kanban-phase-column-board, discriminator-wizard, faceted-filter-panel, paid-visibility-elevation, catalog-creator-toolbar, catalog-exclude-self-owned
+- **catalog/** (9): grid-card-layout, hero-create, kanban-phase-column-board, discriminator-wizard, faceted-filter-panel, paid-visibility-elevation, catalog-creator-toolbar, catalog-exclude-self-owned, catalog-action-cta (из §8.1 Workzilla)
 - **cross/** (8): bulk-action-toolbar, hierarchy-tree-nav, irreversible-confirm, inline-search, reputation-tier-badge, undo-toast-window, optimistic-replace-with-undo, global-command-palette
 - **feed/** (3): composer-entry, antagonist-toggle, response-cost-before-action
 
@@ -200,24 +201,42 @@ npm run build             # prod-сборка
 
 ## SDK
 
-Монорепо `~/WebstormProjects/idf-sdk/` (pnpm workspace, tsup, vitest). 8 пакетов. **Версии на 2026-04-21 (actual, не исторические):**
+Монорепо `~/WebstormProjects/idf-sdk/` (pnpm workspace, tsup, vitest). **18 пакетов** после Phase 2/3 extraction и scaffold-path ramp-up (2026-04-21). **Версии на 2026-04-22 (actual, не исторические):**
+
+### Ядро и UI
 
 | Пакет | Актуальная версия | Лицензия | Назначение |
 |---|---|---|---|
-| `@intent-driven/core` | **0.48.0** | BSL 1.1 | engine, fold, crystallize_v2, invariants (6 kinds incl. expression с `(row, world, viewer, context)`), materializers (document / voice / auditLog), salience ladder, 31 stable patterns с 28 apply, filterProjectionsByRole, getOwnerFields, anchoring, irreversibility |
-| `@intent-driven/renderer` | **0.25.0** | BSL 1.1 | ProjectionRendererV2, 7 архетипов, 11 controls, primitives (atoms/containers/chart/map + IrreversibleBadge + PatternPreviewOverlay + TreeNav + KanbanBoard + SubCollectionSection), xrayMode/slotAttribution props, ConfirmDialog с __irr |
+| `@intent-driven/core` | **0.52.0** | BSL 1.1 | crystallize_v2, fold, invariants (6 kinds incl. expression с `(row, world, viewer, context)`), materializers (document / voice / auditLog), salience ladder, 32 stable patterns с 30 apply, filterProjectionsByRole, getOwnerFields, anchoring, irreversibility |
+| `@intent-driven/renderer` | **0.28.0** | BSL 1.1 | ProjectionRendererV2, 7 архетипов, 11 controls, primitives (atoms/containers/chart/map + IrreversibleBadge + PatternPreviewOverlay + TreeNav + KanbanBoard + SubCollectionSection), xrayMode/slotAttribution props, ConfirmDialog с __irr, ArchetypeForm (synthesized create/edit) |
+| `@intent-driven/engine` | **0.3.0** | BSL 1.1 | **Φ-lifecycle extraction** (proposed/confirmed/rejected, fold, ruleEngine hooks, `rule.warnAt` secondary timers) — выделен из core для headless-хостов |
 | `@intent-driven/adapter-mantine` | **1.3.0** | BSL 1.1 | Mantine (corporate) + shell.sidebar |
 | `@intent-driven/adapter-shadcn` | **1.3.0** | BSL 1.1 | shadcn/ui doodle + shell.sidebar |
 | `@intent-driven/adapter-apple` | **1.3.0** | BSL 1.1 | Apple visionOS-glass + shell.sidebar |
-| `@intent-driven/adapter-antd` | **1.3.0** | BSL 1.1 | AntD enterprise-fintech. 4 freelance-workaround'а (label/children, DateTime withTime, fieldRole price, maxLength/pattern) закрыты в 1.2.0 |
+| `@intent-driven/adapter-antd` | **1.4.0** | BSL 1.1 | AntD enterprise-fintech. 4 freelance-workaround'а закрыты в 1.2.0; form-header adapter (§9.4) в 1.4.0 |
 | `@intent-driven/canvas-kit` | **0.2.0** | BSL 1.1 | 9 SVG/canvas утилит |
-| `@intent-driven/cli` | **1.0.53** | MIT | `npx @intent-driven/cli init <name>` — 5-шаговый LLM-диалог с кэшированием системного промпта |
 
-Host `package.json` использует semver: `^0.48.0` core, `^0.25.0` renderer, `^1.3.0` adapters, `^0.2.0` canvas-kit. Server/schema/*.cjs — **thin re-exports** из SDK core для CJS-совместимости (не дублируют логику). 
+### Scaffold-путь (Этапы 1-3, добавлен 2026-04-21)
 
-**Release pipeline:** changesets-bot создаёт «Version Packages» PR при merge в main → publish в npm при merge release PR. **SDK развивается быстрее host**: 26+ релизов core за 2026-04-20 один. Перед любым SDK-plan'ом — `git fetch origin main` в `~/WebstormProjects/idf-sdk/` + `npm view @intent-driven/core version`, иначе этот CLAUDE.md может быть позади.
+Новый maturation-slope для соло-фрилансеров / микростудий — «импорт из существующей схемы → enricher → effect-runner → BFF». Параллелен классическому «author ontology from scratch».
 
-**SDK test counts (реальные):** core ~92 test files, renderer ~37, canvas-kit 9, adapter-antd 2, apple/mantine/shadcn по 1.
+| Пакет | Версия | Лицензия | Назначение |
+|---|---|---|---|
+| `@intent-driven/create-idf-app` | **0.6.0** | MIT | `npx create-idf-app my-app` — scaffold-генератор (Этап 1 MVP) |
+| `@intent-driven/importer-postgres` | **0.4.0** | MIT | Postgres `information_schema` → ontology (CRUD + FK + role-inference) (Phase A) |
+| `@intent-driven/importer-openapi` | **0.3.0** | MIT | OpenAPI 3.x → ontology (`$ref` resolution, operationId override) (Phase D) |
+| `@intent-driven/importer-prisma` | **0.4.0** | MIT | `.prisma` → ontology через `@mrleebo/prisma-ast` (Phase E) |
+| `@intent-driven/enricher-claude` | **0.2.0** | MIT | AI-обогащение ontology через subprocess к локальному `claude` CLI (Phase B) |
+| `@intent-driven/effect-runner-http` | **0.3.0** | MIT | generic HTTP CRUD-runner + `useHttpEngine` React hook (Phase C) |
+| `@intent-driven/auth` | **0.2.0** | MIT | JWT + Supabase providers + `useAuth` hook (Phase F) |
+| `@intent-driven/server` | **0.2.0** | MIT | BFF handlers (document / voice / agent) для Vercel-style serverless (Phase G) |
+| `@intent-driven/cli` | **1.4.4** | MIT | `idf init`, `idf import postgres|openapi|prisma`, `idf enrich` |
+
+Host `package.json` использует semver: `^0.50.0` core, `^0.26.0` renderer, `^1.3.0` adapters, `^0.2.0` canvas-kit (в ветках проходят bump'ы вверх). Server/schema/*.cjs — **thin re-exports** из SDK core для CJS-совместимости (не дублируют логику).
+
+**Release pipeline:** changesets-bot создаёт «Version Packages» PR при merge в main → publish в npm при merge release PR. **SDK развивается быстрее host**: 15+ PR'ов 2026-04-21 (Phase A-I + Workzilla 8.1-8.7 + post-bump 9.1-9.6). Перед любым SDK-plan'ом — `git fetch origin main` в `~/WebstormProjects/idf-sdk/` + `npm view @intent-driven/core version`, иначе этот CLAUDE.md может быть позади.
+
+**SDK test counts (реальные, 2026-04-22):** core 99 test files, renderer 38, engine 10, canvas-kit 9, importer-postgres 8, importer-prisma 5, importer-openapi 4, enricher-claude 5, create-idf-app 5, effect-runner-http 4, server 3, auth 3, adapter-antd 2, cli 2, apple/mantine/shadcn по 1.
 
 Postmortem'ы: `docs/superpowers/specs/2026-04-14-sdk-core-postmortem.md` (Phase 1 extraction), `docs/superpowers/specs/2026-04-15-renderer-extraction-postmortem.md` (Phase 2).
 
@@ -238,37 +257,47 @@ Postmortem'ы: `docs/superpowers/specs/2026-04-14-sdk-core-postmortem.md` (Phase
 - **Reader-equivalence (§23 axiom 5)** — сформулирован в `drift-protection-spec.md` как Layer 3 detector. Runtime-check не существует; сейчас это аксиома, не проверяемое свойство.
 - **Drift-protection spec** — три detector'а формализованы, работает только alpha-fb / override-coefficient (Layer 1/2). Layer 3 — спецификация.
 - **IrreversibleBadge auto-placement** (backlog 3.3) — primitive есть в renderer, `ConfirmDialog` теперь поддерживает `__irr`/`confirmLabel`/tone, но `buildDetailBody` не инжектит badge в header-row для mainEntity с `__irr`.
-- **Pattern Bank (31 stable)** — 28 с `structure.apply`, 3 matching-only (optimistic-replace-with-undo, global-command-palette, keyboard-property-popover). Falsification fixtures, `explainMatch` SDK-surface, Studio `/studio/patterns`, prototype `PatternInspector` + X-ray radio — всё реализовано.
+- **Pattern Bank (32 stable)** — 30 с `structure.apply`, 2 matching-only (global-command-palette, keyboard-property-popover). Falsification fixtures, `explainMatch` SDK-surface, Studio `/studio/patterns`, prototype `PatternInspector` + X-ray radio — всё реализовано.
 
-### Закрытые backlog-items (за 2026-04-20 sprint)
+### Закрытые backlog-items
 
+**Sprint 2026-04-20:**
 - ✅ **invariant.kind: "expression"** (backlog 1.1) — core@0.32.0, extended @0.33.0 (predicate получает world/viewer/context); 5 шт в compliance
 - ✅ **Invariant handler schema drift** (backlog 1.1 extended) — `invariants/normalize.js` + try/catch; unknown shapes → warning, не cascade-reject
 - ✅ **Multi-owner ownership** (backlog 3.2) — `entity.owners: [...]` + `intent.permittedFor` + OR-expression в `filterWorldForRole` / `ownershipConditionFor`
-- ✅ **AntD adapter patches** (backlog 2.1–2.4) — все 4 P0 закрыты в adapter-antd@1.2.0, host workarounds удалены из `DomainRuntime.jsx`
+- ✅ **AntD adapter patches** (backlog 2.1–2.4) — все 4 P0 закрыты в adapter-antd@1.2.0
 - ✅ **Alpha-fb salience → 0** — ladder `salience desc → declarationOrder → alphabetical`, baseline 19 → 0 witness'ов во всех 10 доменах
 - ✅ **Domain scoping — частично** (backlog 1.4) — `invariant.where` для 4 kinds; full auto-discriminator (`__domain` provenance) deferred
 
-### Open items (актуально на 2026-04-21)
+**Sprint 2026-04-21 (SDK ramp-up Phase A-I + Workzilla dogfood):**
+- ✅ **`@intent-driven/server` extraction (Phase 3)** — package@0.2.0 с BFF handlers (document/voice/agent) для Vercel-style serverless
+- ✅ **`@intent-driven/engine` extraction** — package@0.3.0 с Φ-lifecycle (fold + proposed/confirmed/rejected + rule.warnAt secondary timers) выделен из core
+- ✅ **Scaffold-путь Этап 1-3** — create-idf-app, importer-{postgres,openapi,prisma}, enricher-claude, effect-runner-http, auth — 11 новых npm-пакетов
+- ✅ **Workzilla dogfood 8.1-8.7** — action-CTA pattern, form-archetype synthesis, witnesses strict, inline primitives, toneMap/toneBind, importer enrich
+- ✅ **Workzilla post-bump 9.1-9.6** — canonical type map, default idParam, onItemClick edge-preference, form-header adapter surface, synthesized projections export
+- ✅ **PrimaryCTAList multi-param phase-transitions** (backlog 3.1) — idf-sdk PR #50
+- ✅ **inferParameters / heroCreate / footer-inline-setter** (backlog 4.1–4.3) — idf-sdk PR #50
+- ✅ **optimistic-replace-with-undo.apply** — idf-sdk PR #154 (closed one more matching-only slot)
+
+### Open items (актуально на 2026-04-22)
 
 - **Domain scoping full** (backlog 1.4) — auto-discriminator `__domain` provenance в Φ deferred; сейчас автор использует `invariant.where` или discriminator-поле вручную
-- **PrimaryCTAList multi-param phase-transitions** (backlog 3.1) — параметры `spec.parameters` теряются на `onClick`, renderer не рендерит overlay-form при `parameters.length > 0`
-- **inferParameters top-level** (backlog 4.1), **heroCreate matcher** (backlog 4.2), **footer-inline-setter агрессивен** (backlog 4.3) — P1 из freelance field-test'а
 - **Composite groupBy в cardinality** (session-backlog 1.2) — «один активный Response на пару (executorId, taskId)» сейчас в host
 - **IrreversibleBadge auto-placement** (session-backlog 1.6) — primitive ждёт инжекта в buildDetailBody
 - **Composite / polymorphic entities** — union-типы не выражаются через `entity.kind`; Evidence.attachedTo в compliance обходится 3 sparse-FK
 - **Adapter capability checks at startup** — новый primitive kind без уведомления адаптеров
-- **`@intent-driven/server` extraction (Phase 3)** — после стабилизации scheduler'а
 - **Server-rendered PDF / DOCX** поверх documentMaterializer
 - **X1: удаление explicit overrides** — 9 ручных `subCollections` после ≥1 релиза с apply в проде
 - **PatternInspector component test** — требует `@testing-library/react` + `jsdom`
 - **Cluster-friendly scheduler** — single-leader TimerQueue не distributed
+- **Reader-equivalence runtime-check (§23 axiom 5)** — спека есть в `drift-protection-spec.md`, Layer 3 detector не реализован
 - **Cross-stack conformance harness** — автоматический differential-test `fold(Φ)` через idf / idf-go / idf-rust / idf-swift на общих fixtures
 - **Pattern Bank: ML/auto-learning** — автоматический анализ приложений для пополнения банка
+- **Pending merge:** idf-sdk `fix/heroCreate-badge-align-9.10-9.12` — heroCreate multi-param + Badge sx + witness alignSelf
 
 ## Приоритеты
 
 Roadmap: Часть VIII манифеста v2 `docs/manifesto-v2.md` (направления формата без дат) + GitHub issues (оперативные задачи) + `docs/backlog.md` (cross-cutting очередь между сессиями).
 
-- **Ближайшее (1-2 мес)**: freelance backlog P1 (§3.1 PrimaryCTAList multi-param, §4.1–4.3 inferParameters/heroCreate/footer), apply для 3 оставшихся matching-only паттернов, domain scoping (`__domain` provenance), IrreversibleBadge auto-placement, invest visual polish для демо, публикация статьи, `@intent-driven/server` extraction, reader-equivalence runtime-check (v2.1 axiom 5)
-- **Среднесрочное (2-4 мес)**: production-ready invest, Pattern Bank → 50+ stable patterns через Researcher pipeline (сейчас 31 + 49+ candidate'ов в bank/), cross-stack conformance harness (differential-test через idf/go/rust/swift), X1-удаление explicit overrides, PatternInspector test-harness, composite groupBy/polymorphic entity kind
+- **Ближайшее (1-2 мес)**: domain scoping (`__domain` provenance), IrreversibleBadge auto-placement, invest visual polish для демо, публикация статьи, reader-equivalence runtime-check (v2.1 axiom 5), apply для 2 оставшихся matching-only паттернов (keyboard-property-popover, global-command-palette), Workzilla dogfood продолжение (9.10-9.12 merge)
+- **Среднесрочное (2-4 мес)**: production-ready invest (первый pilot tenant), Pattern Bank → 50+ stable patterns через Researcher pipeline (сейчас 32 + 49+ candidate'ов в bank/), cross-stack conformance harness (differential-test через idf/go/rust/swift), X1-удаление explicit overrides, PatternInspector test-harness, composite groupBy/polymorphic entity kind, `@intent-driven/cli` → 2.0 с scaffold-path как дефолтный путь

@@ -32,25 +32,15 @@
 **Owner:** Host `server/routes/effects.js` + SDK `fold.js`
 **Связано:** `docs/sdk-improvements-backlog.md` §1.4 (partial fix in Cluster A PR)
 
-### 1.4 Antd adapter patches — Cluster B (четыре P0 бага)
+### ✅ 1.4 Antd adapter patches — Cluster B (четыре P0 бага)
 
-**Дата:** 2026-04-20
-**Контекст:** Freelance field-test выявил 4 workaround'а в `idf/src/runtime/DomainRuntime.jsx`. Cluster B — самостоятельный PR.
-**Action:** Отдельная сессия:
-- **2.1** Button `label` vs `children` API mismatch — принимать оба, label приоритет
-- **2.2** `AntdDateTime` без времени — respect `spec.withTime` / `spec.precision: "minute"`
-- **2.3** `AntdNumber` не видит `fieldRole:"price"` — `isMoney = fieldRole ∈ {money, price}`
-- **2.4** `AntdTextInput` игнорирует `maxLength`/`minLength`/`pattern` — пробросить в `<Input>`
-**Owner:** `@intent-driven/adapter-antd`
-**Связано:** `docs/sdk-improvements-backlog.md` §2.1-2.4
+**Дата:** 2026-04-20. **Закрытие:** 2026-04-20 в adapter-antd@1.2.0 (2.1 label/children, 2.2 DateTime withTime, 2.3 fieldRole price, 2.4 maxLength/pattern). Host workarounds удалены.
+**Связано:** `docs/sdk-improvements-backlog.md` §2.1-2.4 (all ✅)
 
-### 1.5 `PrimaryCTAList` для multi-param phase-transitions
+### ✅ 1.5 `PrimaryCTAList` для multi-param phase-transitions
 
-**Дата:** 2026-04-20
-**Контекст:** `onClick={() => ctx.exec(spec.intentId, {id: target.id})}` — параметры `spec.parameters` теряются. Workaround: форсировать `irreversibility:"high"` на `submit_work_result`.
-**Action:** PrimaryCTAList рендерит overlay-form когда `spec.parameters.length > 0`. Или `assignToSlotsDetail` не кладёт multi-param intents в primaryCTA slot.
-**Owner:** `@intent-driven/renderer/archetypes/ArchetypeDetail.jsx`
-**Связано:** `docs/sdk-improvements-backlog.md` §3.1
+**Дата:** 2026-04-20. **Закрытие:** idf-sdk PR #50 — `wrapByConfirmation` → overlay-form для phase-transitions с параметрами. Host `irreversibility:"high"` workaround снят.
+**Связано:** `docs/sdk-improvements-backlog.md` §3.1 (✅)
 
 ### 1.6 `IrreversibleBadge` auto-placement
 
@@ -75,12 +65,11 @@
 **Owner:** `@intent-driven/core/crystallize_v2/` + `@intent-driven/core/patterns/`
 **Связано:** Open items v1.12 — «Pattern Bank: structure.apply для оставшихся 17 stable паттернов»
 
-### 1.8 Remaining 16 of 17 matching-only patterns — structure.apply
+### ~~1.8~~ Remaining matching-only patterns — structure.apply
 
-**Дата:** 2026-04-20
-**Контекст:** В v1.12 SDK три паттерна имеют apply (`subcollections`, `grid-card-layout`, `footer-inline-setter`). Остальные 16 stable — matching-only.
-**Action:** По одному — от простых к сложным. Hero-create исключён (см. 1.7 — blocked). Next candidates: `bulk-action-toolbar`, `global-command-palette`, `m2m-attach-dialog`.
-**Owner:** `@intent-driven/core/patterns/stable/`
+**Дата:** 2026-04-20. **Почти закрыт 2026-04-22:** из 17 matching-only осталось **2** (`global-command-palette`, `keyboard-property-popover`). Batch'и применены через idf-sdk PR #154 (`optimistic-replace-with-undo.apply`) + #177 (`catalog-action-cta` и др.). Из 17 stable → 32 stable → 30 apply.
+**Остающиеся 2:** оба — cross-cutting UI-affordance (shortcut-handling), apply не semantic-driven. By design matching-only (witness-of-crystallization).
+**Owner:** `@intent-driven/core/patterns/stable/` (closed для этого трека)
 
 ### 1.9 Domain audit findings — baseline 2026-04-20 (187 findings)
 
