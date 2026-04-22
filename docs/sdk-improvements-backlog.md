@@ -276,6 +276,60 @@
 
 ---
 
+## 8. Workzilla-clone dogfood findings (2026-04-21)
+
+**Источник:** `~/WebstormProjects/workzilla-clone/docs/findings.md`. Dogfood-сессия на scaffold-пути (Этапы 1-3 SDK + W1-W4 walkthrough).
+
+### 8.1 ⛔ Action-CTA не автогенерятся в catalog/detail (P0 систематический blocker)
+
+**Файлы:** `packages/core/src/crystallize_v2/assignToSlotsCatalog.js`, `assignToSlotsDetail.js`, `packages/core/src/patterns/stable/`.
+
+**Проблема.** `intent.permittedFor + target === mainEntity` декларируется, но UI **не получает action-кнопок**. Scaffold производит read-only UI. Все write-actions требуют manual JSX через `run(intentName, params)`.
+
+**Что сделать.**
+1. Pattern `catalog-action-cta` — item-slot trailing action-button для replace-intent'ов, фильтр по `permittedFor` + current role.
+2. Pattern `detail-phase-aware-cta` — detail читает `current.status` и показывает buttons для allowed transitions (из `transition` invariant).
+3. Synthetic form-projection (см. 8.2).
+
+### 8.2 ⛔ Form-archetype не синтезируется из insert-intent (P0)
+
+**Файл:** `packages/core/src/crystallize_v2/index.js:generateEditProjections` — только replace, не insert.
+
+**Что сделать.** Scan'ить insert-intent'ы, генерить `{entity}_create` с `kind: "form"`. Renderer ArchetypeForm рендерит по `intent.parameters`.
+
+### 8.3 ⛔ `projection.witnesses[]` на catalog игнорируется (P0)
+
+**Файл:** `packages/core/src/crystallize_v2/assignToSlotsCatalog.js:buildItemCard`.
+
+**Что сделать.** Если `projection.witnesses` задан — strict использовать + ontology field.role для выбора primitive (money / datetime / contact / status-flag).
+
+### 8.4 🟡 Inline primitives не в item-children (P1)
+
+**Файл:** `packages/renderer/src/SlotRenderer.jsx`. `statistic / sparkline / chart / map / countdown / badge` → `Unknown type` inline. Расширить child-resolver на полный primitive-registry.
+
+### 8.5 🟡 `text.style` vocabulary неполный (P2)
+
+Добавить `money / money-positive / badge-info / badge-success / etc` во всех text-adapter'ах.
+
+### 8.6 🟡 `toneMap` / `toneBind` в badge-primitive (P1)
+
+Badge хардкодит tone. Нужно либо `toneMap: { status→tone }`, либо `toneBind: "_tone"` (client-computed). Default: если bind = enum + в ontology есть optional `tone` per value — использовать.
+
+### 8.7 🟡 Native-format importer'ы ≠ полный семантический output (P1)
+
+Import-generated ontology не имеет: compositions (R9), invariants (transition из enum), authored projections, `__irr`. Требует manual дополнение. Enricher-claude частично закрывает, но heuristic-importer тоже может больше.
+
+### Порядок работ для unlock scaffold → production
+
+1. **8.3** (witnesses) — ~1 день
+2. **8.1** (action-CTA patterns) — ~3 дня
+3. **8.2** (form synthesis) — ~3-5 дней
+4. 8.4 + 8.6 — параллельно, по дню
+
+**После 8.1-8.3:** Workzilla-clone пройдёт 13 UX-step happy-path без manual JSX.
+
+---
+
 ## Приоритет
 
 **P0 (блокирует нативные domain-authoring):**
@@ -283,14 +337,95 @@
 - 2.1, 2.2, 2.3, 2.4 (antd-адаптер)
 - 3.1, 3.2 (primaryCTA + ownership)
 - 4.1, 4.2, 4.3 (archetype matching)
+- **8.1, 8.2, 8.3** (Workzilla — action-CTA / form / witnesses — systematic)
 
 **P1 (существенно улучшает DX):**
 - 1.2, 1.3 (expression kind + composite groupBy)
 - 4.4, 4.6, 4.7, 4.8 (collapseToolbar + subCollection)
 - 6.1, 6.2, 6.3, 6.4 (новые patterns)
+- **8.4, 8.6, 8.7** (Workzilla — inline primitives / toneMap / importer-enrich)
 
 **P2 (nice-to-have):**
 - 2.5, 2.6, 3.3, 3.4, 3.5
 - 5.2, 5.3
 - 6.5, 6.6, 6.7
 - 7.* (docs)
+- **8.5** (Workzilla — text.style vocabulary)
+
+---
+
+## 9. Workzilla-clone post-bump findings (2026-04-21)
+
+**Источник:** session после релиза 8.1-8.7 — интеграция workzilla-clone с SDK 0.50.0/0.26.0. Часть проблем лежит между SDK и host'ом; здесь — только SDK-fixable.
+
+**Статус закрытия (2026-04-22):** 9.1-9.4 + 9.6 ЗАКРЫТЫ в idf-sdk PR #179 (core 0.52.0 / renderer 0.28.0 / adapter-antd 1.4.0). Workzilla-clone bumped до SDK 0.52/0.28. 9.5 (guard на projection.name), 9.7 (legacy `role:` warning), 9.8 (checklist в docs) — остаются. 9.10-9.12 открыты в ветке `fix/heroCreate-badge-align-9.10-9.12` (heroCreate multi-param + Badge sx + witness alignSelf), pending merge.
+
+### 9.1 ✅ `type: "string"` в parameters роняет validateArtifact
+**Файл:** `packages/core/src/crystallize_v2/inferControlType.js:65` + `mapOntologyTypeToControl`.
+**Проблема.** `inferControlType` возвращает `param.type` напрямую, без map. Native-format importer + manual ontology авторы часто пишут `type: "string"` (Prisma/OpenAPI vocabulary). validateArtifact эмитит `unknown parameter control type: "string" in overlay overlay_X`.
+**Что сделать.**
+- В `mapOntologyTypeToControl` добавить `string: "text", int: "number", float: "number", integer: "number"`.
+- В `inferControlType` line 65: прогонять `param.type` через `mapOntologyTypeToControl` (не возвращать raw).
+- Опционально: `normalizeIntentNative` из 8.1 должен мапить parameters type → canonical.
+
+### 9.2 ✅ `deriveProjections` не ставит `idParam` на standalone detail
+**Файл:** `packages/core/src/crystallize_v2/deriveProjections.js`.
+**Проблема.** detail-проекции без parent-FK scope получают `idParam: undefined`. ArchetypeDetail требует `idParam`, иначе не резолвит target из routeParams → EmptyState. Автор вынужден authored:`idParam: "taskId"` на каждую detail.
+**Что сделать.** Default `idParam = <entityLower>Id` для всех detail без singleton. Singleton — оставить без idParam.
+
+### 9.3 ✅ `onItemClick` для list выбирает wrong detail из nav-graph
+**Файл:** `packages/core/src/crystallize_v2/index.js:19711` (первый edge → slots.body.onItemClick).
+**Проблема.** Для task_list edge-list содержит и task_detail, и response_detail; первый-по-алфавиту = `response_detail`. Клик по task открывает response EmptyState.
+**Что сделать.** Предпочитать edge, где `to.mainEntity === from.mainEntity`. Fallback — первый.
+
+### 9.4 ✅ `ArchetypeForm` header Apple-specific, не адаптирован
+**Файл:** `packages/renderer/src/archetypes/ArchetypeForm.jsx:158+`.
+**Проблема.** Навигационный бар (←Отмена / title / Сохранить) hardcoded iOS-style (`backdrop-filter`, SF-style fonts, blue `#007aff`). Для AntD/Mantine-хоста — Apple-glass смотрится чужеродно.
+**Что сделать.**
+- Вынести навбар в `getAdaptedComponent("shell", "formHeader")`.
+- Дефолт — нейтральный `<header>` через CSS-vars (`--idf-primary`).
+- AntD/Mantine адаптеры предоставляют свой.
+
+### 9.5 🟡 `ArchetypeForm` bare `projection.name` access
+**Файл:** `packages/renderer/src/archetypes/ArchetypeForm.jsx` (h1 title).
+**Проблема.** Когда host не передаёт `projection` prop (только artifact) — крэш `Cannot read properties of undefined (reading 'name')`. Должен быть `projection?.name ?? artifact.name ?? "Форма"`.
+**Что сделать.** Guard везде + fallback. + документировать что host обязан передавать `projection` вместе с `artifact` (см. authoring-checklist §11).
+
+### 9.6 ✅ Synthesized projections не попадают в host'овский allProjections
+**Файл:** `packages/core/src/crystallize_v2/index.js::generateCreateProjections` (внутри).
+**Проблема.** `generateCreateProjections` / `generateEditProjections` вызываются **внутри** crystallizeV2; создают `task_create / task_edit` projection'ы — но возвращаются только в artifact map. Host получает artifact, не projection definition.
+**Что сделать (один из).**
+- Вернуть из `crystallizeV2` объект `{ artifacts, allProjections }` (breaking — нужно major bump).
+- Или expose `generateCreateProjections` / `generateEditProjections` в top-level exports.
+- Или присвоить `artifact.projection` = projectionDef (не projId string как сейчас).
+
+### 9.7 🟢 `inferFieldRole` ignores legacy `role:`
+**Файл:** `packages/core/src/crystallize_v2/ontologyHelpers.js::inferFieldRole`.
+**Проблема.** Autor пишет `role: "money"` (legacy + естественная интуиция) — игнорируется, считывается только `fieldRole`. Тихий drift: budget рендерится plain number без ₽.
+**Что сделать.** Либо warning на `field.role` c hint'ом "use `fieldRole`". Либо принимать оба (с warning).
+
+### 9.8 🟢 Ontology-authoring-checklist не в docs
+**Файл:** нет — должен быть в `packages/core/docs/ontology-authoring-checklist.md` или `idf-sdk/docs/`.
+**Что сделать.** Создать документ c пунктами 1-12 (см. `idf-sdk/docs/ontology-authoring-checklist.md`).
+
+### Эффект патчей
+
+**ЗАКРЫТО в PR #179 (2026-04-22):** 9.1+9.2+9.3 + 9.4 + 9.6 — scaffold-ontology без authored projections на top-level работает:
+- Detail projections получают автоматический idParam.
+- List → item-click → правильный detail.
+- `type: "string"` не роняет UI.
+- Form header адаптивный per UI-kit.
+- Synthesized create/edit projections доступны host'у.
+
+Остальное (9.5 guard, 9.7 legacy role warning, 9.8 docs) — DX-polish.
+
+---
+
+## Приоритет (обновлённый)
+
+**P0 (блокирует scaffold workflow):** всё ЗАКРЫТО в PR #177 + #179.
+
+**P1 (pending merge):** 9.10-9.12 (heroCreate multi-param + Badge sx + witness alignSelf) в ветке `fix/heroCreate-badge-align-9.10-9.12`.
+
+**P2 (нет блокеров):**
+- 9.5 (bare `projection.name` guard), 9.7 (legacy `role:` warning), 9.8 (ontology-authoring-checklist → sdk/docs/)

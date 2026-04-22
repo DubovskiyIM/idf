@@ -7,7 +7,7 @@
 [![spec Apache 2.0](https://img.shields.io/badge/spec-Apache%202.0-green)](./spec/LICENSE)
 [![core BSL 1.1](https://img.shields.io/badge/%40intent--driven%2Fcore-BSL%201.1-orange)](https://github.com/DubovskiyIM/idf-sdk/blob/main/packages/core/LICENSE)
 [![clients MIT](https://img.shields.io/badge/clients-MIT-blue)](./LICENSE-CODE)
-[![tests 744+1160](https://img.shields.io/badge/tests-744%20prototype%20%2B%201160%20SDK-brightgreen)](./docs/implementation-status.md)
+[![tests 799+1161](https://img.shields.io/badge/tests-799%20prototype%20%2B%20~1160%20SDK-brightgreen)](./docs/implementation-status.md)
 
 Приложения **выводятся** из формального описания намерений (intents) и проекций (projections). Автор — режиссёр, ведущий диалог с моделью о том, *что* должно произойти; модель — соавтор, кристаллизующий это в исполнимый интерфейс. Рантайм — детерминированный: никаких запросов к API моделей во время использования приложения.
 
@@ -25,7 +25,7 @@ World(t) = fold(Φ_confirmed)
 
 Состояние не хранится — вычисляется из причинно-упорядоченного потока эффектов. Все высокоуровневые конструкции (проекции, алгебра связей, интегритет) определены над этой основой.
 
-Парадигма **фальсифицируема**: формальная модель в [спецификации](./spec/idf-v1.0-part1-core.md), проверяемая граница применимости в [одиннадцати полевых тестах](./docs/), жёсткие инвариантные правила через 54 conformance-теста.
+Парадигма **фальсифицируема**: формальная модель в [спецификации](./spec/idf-v1.0-part1-core.md), проверяемая граница применимости в [тринадцати полевых тестах](./docs/), жёсткие инвариантные правила через 54 conformance-теста.
 
 ---
 
@@ -84,7 +84,7 @@ npm run dev                 # → переключить домен на deliver
 
 ---
 
-## Десятидоменный прототип — 634 намерения в одном потоке Φ
+## Одиннадцатидоменный прототип — 672 намерения в одном потоке Φ
 
 | Домен | Намерений | Особенность |
 |-------|-----------|-------------|
@@ -95,11 +95,12 @@ npm run dev                 # → переключить домен на deliver
 | **Reflect** | 47 | Дневник эмоций (Yale RULER), Apple visionOS-glass, analytical canvas |
 | **Freelance** | 46 | Биржа услуг, multi-owner (Deal с customer+executor), escrow, revision-loop |
 | **Delivery** | 45 | Food last-mile, 5 ролей, три paradigm-additions (scheduler+map+irreversibility) |
+| **Compliance** | 38 | SOX ICFR / «provable UI», 6 ролей, 15 invariants (5 expression-kind), 5 `__irr:high` intents |
 | **Booking** | 22 | Онлайн-запись, темпоральные предикаты, wizard |
 | **Planning** | 17 | Коллективные опросы, кворум, phase-aware CTA |
 | **Workflow** | 15 | Визуальный редактор процессов, React Flow canvas |
 
-Один движок, один рантайм, один валидатор — **девять наборов определений**. **426 unit-тестов прототипа + 356 тестов SDK monorepo**, 75-шаговый agent-smoke.
+Один движок, один рантайм, один валидатор — **одиннадцать наборов определений**. **~1960 тестов** (799 host + 916 core + 175 renderer + 36 canvas-kit + 34 adapters), 75-шаговый agent-smoke.
 
 ### Четыре UI-адаптера на одной онтологии (валидация §17)
 
@@ -136,7 +137,7 @@ npm run dev                 # → переключить домен на deliver
 
 ## Агентский слой
 
-Демонстрация тезиса «LLM — равноправный пользователь намерений». REST endpoint'ы (`/api/agent/:domain/{schema,world,exec}`) под JWT превращают агента в обычного клиента intent-API. Все 9 доменов имеют agent layer с декларативным role-based доступом через `ontology.roles.agent`.
+Демонстрация тезиса «LLM — равноправный пользователь намерений». REST endpoint'ы (`/api/agent/:domain/{schema,world,exec}`) под JWT превращают агента в обычного клиента intent-API. Все 11 доменов имеют agent layer с декларативным role-based доступом через `ontology.roles.agent`.
 
 - Агент читает схему, фильтрует мир по роли (`filterWorldForRole`), вызывает намерения
 - Конфликт-rejection работает естественно (два клиента → один 409)
@@ -144,7 +145,7 @@ npm run dev                 # → переключить домен на deliver
 - **Preapproval guard**: `roles.agent.preapproval` с 5 типами предикатов (`active`, `notExpired`, `maxAmount`, `csvInclude`, `dailySum`) — агентские лимиты декларативно
 - **4 материализации**: агентский API — одна из четырёх равноправных (вместе с pixels / voice / document)
 
-75-шаговый integration smoke проверяет happy path + rejection + 403 forbidden на всех 9 доменах.
+75-шаговый integration smoke проверяет happy path + rejection + 403 forbidden на всех 11 доменах.
 
 ---
 
@@ -159,6 +160,8 @@ npm run dev                 # → переключить домен на deliver
 | `/reflect` | Дневник эмоций (Mood Meter + analytics, Apple glass) |
 | `/invest` | Портфель + робо-эдвайзер (AntD fintech, 3 ML-сервиса) |
 | `/delivery` | Food last-mile (5 ролей, живая карта, 4 внешних сервиса) |
+| `/freelance` | Биржа услуг (multi-owner Deal + escrow + revision-loop) |
+| `/compliance` | SOX ICFR / provable UI (6 ролей, 15 invariants, 5 `__irr:high`) |
 | `/booking-v2` | Бронирование услуг |
 | `/planning-v2` | Совместное планирование встреч |
 | `/workflow` | Workflow-редактор |
@@ -168,16 +171,16 @@ npm run dev                 # → переключить домен на deliver
 ## Тесты, сборка, демо-скрипты
 
 ```bash
-npm test                  # 744 unit-теста прототипа
+npm test                  # 799 unit-тестов прототипа
 npm run build             # production-сборка
-npm run agent-smoke       # 75-шаговый integration test (10 доменов)
+npm run agent-smoke       # 75-шаговый integration test (11 доменов)
 npm run audit-report      # 7-осевой аудит доменов → docs/domain-audit.{md,json}
 npm run sales-demo        # walkthrough аукциона (12 шагов)
 npm run delivery-seed     # bootstrap demo для delivery
 npm run crystallize-llm   # LLM enrichment (опц., требует ANTHROPIC_API_KEY)
 ```
 
-SDK monorepo живёт в sibling репозитории [DubovskiyIM/idf-sdk](https://github.com/DubovskiyIM/idf-sdk) — 8 пакетов, ~1160 тестов, tsup + vitest.
+SDK monorepo живёт в sibling репозитории [DubovskiyIM/idf-sdk](https://github.com/DubovskiyIM/idf-sdk) — **18 пакетов** (ядро + 4 UI-адаптера + canvas-kit + engine + scaffold-путь Этап 1-3: create-idf-app, 3 importer'а, enricher-claude, effect-runner-http, auth, server, cli), ~1160 тестов, tsup + vitest.
 
 ---
 
@@ -192,9 +195,15 @@ SDK monorepo живёт в sibling репозитории [DubovskiyIM/idf-sdk](
 
 ## Статус
 
-**v1.13 — production-ready research-prototype.** 10 доменов, ~1904 теста (744 прототип + 1160 SDK), все декларации манифеста v2 подтверждены кодом. Три paradigm additions v1.7 (scheduler, map, irreversibility) интегрированы в live-домен delivery. Pattern Bank execution (3 паттерна с apply), Derivation X-ray (§27 authoring observability), drift-protection spec с reader-equivalence invariant §23.
+**v1.13 — production-ready research-prototype.** 11 доменов (672 намерения), ~1960 тестов (799 host + ~1160 SDK), все декларации манифеста v2 подтверждены кодом. Три paradigm additions v1.7 (scheduler, map, irreversibility) интегрированы в live-домен delivery; все пять behavioral patterns signal-classifier'а задействованы в compliance. Pattern Bank execution (**32 stable, 30 с `structure.apply`**, 2 matching-only), Derivation X-ray (§27 authoring observability), drift-protection spec с reader-equivalence invariant §23.
 
-**Salience declaration-order ladder** закрыл `alphabetical-fallback` witness-basis полностью (19 → 0 в 10 доменах) без массовых доменных аннотаций — через authorial `Object.entries(INTENTS)` index в tie-break ladder.
+**Scaffold-путь (2026-04-21):** новый maturation-slope — `npx create-idf-app` → importer (postgres / openapi / prisma) → enricher-claude → effect-runner-http → BFF (document/voice/agent). 11 новых npm-пакетов; Workzilla-clone — первый dogfood проект.
+
+**Cross-stack (2026-04-21):** idf-go / idf-rust / idf-swift добавили `materializeAsDocument` (L3 partial) синхронно с `idf-spec@0.2.0`. Все три реализации L1+L2+L3 conformant (16/16 documents).
+
+**Salience declaration-order ladder** закрыл `alphabetical-fallback` witness-basis полностью (19 → 0 во всех доменах) без массовых доменных аннотаций — через authorial `Object.entries(INTENTS)` index в tie-break ladder.
+
+**Три live-плейна** на VPS (M1.1, 2026-04-21): `auth.intent-design.tech` (JWT + Supabase magic-link), `runtime.intent-design.tech` (V2Shell + SQLite), `studio.intent-design.tech` (Claude SSE authoring).
 
 SDK на публичном npm: https://www.npmjs.com/org/intent-driven
 
@@ -217,9 +226,9 @@ SDK на публичном npm: https://www.npmjs.com/org/intent-driven
 - **Фронтенд:** React 19, Vite 8, Tailwind CSS 4, **4 UI-адаптера** (Mantine + shadcn + Apple + AntD), Lucide + React Flow
 - **Бэкенд:** Node.js + Express, SQLite (better-sqlite3), WebSocket, JWT + bcrypt
 - **Кристаллизатор:** чистые функции JavaScript, 7 архетипов, Custom Canvas registry, TypeScript типы
-- **Scheduler:** `server/timeEngine.js` — in-memory priority queue + hydrate-from-Φ + tick-loop
+- **Scheduler:** `server/timeEngine.js` — in-memory priority queue + hydrate-from-Φ + tick-loop + `rule.warnAt` secondary
 - **Rules Engine:** event-condition-action + 4 extensions v1.5 + schedule v2 (after/at/revokeOn)
-- **Агентский слой:** 9 доменов, REST API, JWT + preapproval guard, 75-шаговый smoke
+- **Агентский слой:** 11 доменов, REST API, JWT + preapproval guard, 75-шаговый smoke
 - **LLM enrichment:** Claude API через `@anthropic-ai/sdk` (опционально, design-time only)
 - **CI:** GitHub Actions (vitest + vite build)
 
