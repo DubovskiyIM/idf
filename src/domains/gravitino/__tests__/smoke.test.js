@@ -65,7 +65,33 @@ describe("gravitino domain — Stage 1 baseline", () => {
     expect(md.projection).toBe("metalake_detail");
   });
 
-  it("getSeedEffects() возвращает пустой array (Stage 1)", () => {
-    expect(getSeedEffects()).toEqual([]);
+  it("getSeedEffects() возвращает demo seed для hierarchical navigation (Stage 2 Task 3)", () => {
+    const effects = getSeedEffects();
+    expect(Array.isArray(effects)).toBe(true);
+    expect(effects.length).toBeGreaterThan(20);
+    // Покрытие canonical entities: хотя бы по одному instance для top-6.
+    const byTarget = {};
+    for (const e of effects) byTarget[e.target] = (byTarget[e.target] || 0) + 1;
+    for (const t of ["metalakes", "catalogs", "schemas", "tables", "users", "roles"]) {
+      expect(byTarget[t], `seed для ${t} отсутствует`).toBeGreaterThan(0);
+    }
+  });
+
+  it("seed FK chain consistent — каждый child ссылается на существующего parent", () => {
+    const effects = getSeedEffects();
+    const byTarget = {};
+    for (const e of effects) (byTarget[e.target] ||= []).push(e.context);
+    const metalakeIds = new Set((byTarget.metalakes || []).map(m => m.id));
+    const catalogIds = new Set((byTarget.catalogs || []).map(c => c.id));
+    const schemaIds = new Set((byTarget.schemas || []).map(s => s.id));
+    for (const c of byTarget.catalogs || []) {
+      expect(metalakeIds.has(c.metalakeId), `Catalog ${c.id} → несуществующий metalake ${c.metalakeId}`).toBe(true);
+    }
+    for (const s of byTarget.schemas || []) {
+      expect(catalogIds.has(s.catalogId), `Schema ${s.id} → несуществующий catalog ${s.catalogId}`).toBe(true);
+    }
+    for (const t of byTarget.tables || []) {
+      expect(schemaIds.has(t.schemaId), `Table ${t.id} → несуществующий schema ${t.schemaId}`).toBe(true);
+    }
   });
 });
