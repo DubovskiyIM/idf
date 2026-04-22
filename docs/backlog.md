@@ -230,6 +230,26 @@ Derivation даёт им канонические имена (`portfolio_list`, 
 **Owner:** host + SDK renderer
 **Depends on:** stable schema `domain-audit.json` (этот PR даёт baseline)
 
+### 1.12 enricher-claude — structured_output wire-format регрессия
+
+**Дата:** 2026-04-22 (Gravitino dogfood Stage 1 Task 3).
+**Контекст:** `enricher-claude@0.2.0` вызывает `claude -p --output-format json` и читает `wrapper.result ?? wrapper.content ?? stdout` (`~/WebstormProjects/idf-sdk/packages/enricher-claude/src/subprocess.js:51`). Claude CLI 2.1.117 изменил wire-format: структурированный JSON теперь в `wrapper.structured_output`, а `wrapper.result` — пустая строка. Enricher падает с `Structured response не JSON: ` (пустой stdin в extractJson).
+
+**Action:** Добавить fallback в `subprocess.js`:
+```js
+if (wrapper.structured_output && typeof wrapper.structured_output === "object") {
+  return wrapper.structured_output;
+}
+```
+Bump `@intent-driven/enricher-claude` → `0.2.1`. После release — переиграть enrich на Gravitino imported.js идемпотентно (pre-enrich snapshot уже зафиксирован в `.fixtures/imported.pre-enrich.js`).
+
+**Owner:** `~/WebstormProjects/idf-sdk/packages/enricher-claude/`
+**Блокирует:** enrichment layer scaffold-пути (Этап 2). Importer работает без него, но ontology остаётся literal (~200 DTO envelope'ов не коллапсируются, роли/valueLabels/labels не добавляются).
+**Severity:** P1 — scaffold-путь в v0.2 формально closed (4 releases), но для real-world OpenAPI (Gravitino) критичен для UX.
+**Workaround на Stage 1:** продолжаем на pre-enrich ontology (120 intents / 218 entities достаточно для baseline render). Дополнительные enricher-gap'ы см. session-observation ниже.
+
+**Memory sync:** запись `feedback_claude_subprocess_over_sdk` (встроенные Claude-агенты = subprocess к локальному `claude` CLI) остаётся корректной по подходу; регрессия — на wire-format уровне, не архитектурном. Запись `project_m1_2_authoring_port_progress` (Blocker smoke: Anthropic $0 credit) — **неверная гипотеза**: credit тут ни при чём, OAuth keychain subprocess работает без billing; реальный root cause — wire-format.
+
 ---
 
 ## 2. Architectural research / insights
