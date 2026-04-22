@@ -8,18 +8,17 @@
  *
  * Авторство через helper'ы — compliance-pattern (src/domains/compliance/projections.js).
  *
- * FK-chain замечание. Gravitino REST API идентифицирует parent entity через URL
- * path (`/metalakes/{m}/catalogs/{c}/schemas/{s}/tables/{t}`), а не через
- * скалярные FK поля (см. `ontology.entities[X].fields`). Поэтому:
- *   - subCollections.foreignKey указан на *имя-родителя* (`metalakeName`,
- *     `catalogName`, `schemaName`) как hint для будущей Stage 2/3 интеграции —
- *     actual FK-field нет в ontology, subCollection не получит runtime-items
- *     пока мы не добавим path-aware fetch в host/renderer;
- *   - pattern `hierarchy-tree-nav` не triggerit'ся (ищет `<parent>Id` по
- *     convention, см. SDK `patterns/stable/cross/hierarchy-tree-nav.js`).
- *     Это discovery для отчёта Stage 2 Task 0 — либо в Task N добавим
- *     синтетические FK в enricher, либо расширим hierarchy-tree-nav для
- *     работы по `name`-convention.
+ * FK-chain. Gravitino REST API идентифицирует parent entity через URL path
+ * (`/metalakes/{m}/catalogs/{c}/schemas/{s}/tables/{t}`), а не скалярные
+ * FK-поля. После `importer-openapi@0.5.0` (PR idf-sdk#188) importer
+ * автоматически синтезирует `<parent>Id` FK-поля с metadata
+ * `kind:"foreignKey" + references + synthetic:"openapi-path"`. Это
+ * унлочило `hierarchy-tree-nav` pattern и R8 hub-absorption.
+ *
+ * subCollections.foreignKey используют convention `<parent>Id` —
+ * синтетический FK от importer'а. idParam для detail'а использует ту же
+ * convention (`metalakeId` ссылка на `item.name`, т.к. Gravitino
+ * identifier = name, синтетический FK хранит родительское name).
  *
  * X1-debt: удалить после SDK `@intent-driven/projection-generator`
  * (docs/gravitino-gaps.md G1).
@@ -59,7 +58,7 @@ export const PROJECTIONS = {
     ["name", "comment", "audit"]),
   metalake_detail: detail("Metalake", "Metalake",
     ["name", "comment", "properties", "audit"],
-    [{ entity: "Catalog", foreignKey: "metalakeName", title: "Catalogs" }]),
+    [{ entity: "Catalog", foreignKey: "metalakeId", title: "Catalogs" }]),
 
   // ═══ Catalog ═══════════════════════════════════════════════════════════════
   // type: relational/fileset/messaging/model; provider: hive/iceberg/...
@@ -67,7 +66,7 @@ export const PROJECTIONS = {
     ["name", "type", "provider", "comment"]),
   catalog_detail: detail("Catalog", "Catalog",
     ["name", "type", "provider", "comment", "properties", "audit"],
-    [{ entity: "Schema", foreignKey: "catalogName", title: "Schemas" }]),
+    [{ entity: "Schema", foreignKey: "catalogId", title: "Schemas" }]),
 
   // ═══ Schema ════════════════════════════════════════════════════════════════
   // Schema — child Catalog; сам является parent'ом для Table/Fileset/Topic/Model.
@@ -76,10 +75,10 @@ export const PROJECTIONS = {
   schema_detail: detail("Schema", "Schema",
     ["name", "comment", "properties", "audit"],
     [
-      { entity: "Table", foreignKey: "schemaName", title: "Tables" },
-      { entity: "Fileset", foreignKey: "schemaName", title: "Filesets" },
-      { entity: "Topic", foreignKey: "schemaName", title: "Topics" },
-      { entity: "Model", foreignKey: "schemaName", title: "Models" },
+      { entity: "Table", foreignKey: "schemaId", title: "Tables" },
+      { entity: "Fileset", foreignKey: "schemaId", title: "Filesets" },
+      { entity: "Topic", foreignKey: "schemaId", title: "Topics" },
+      { entity: "Model", foreignKey: "schemaId", title: "Models" },
     ]),
 
   // ═══ Table ═════════════════════════════════════════════════════════════════
@@ -108,7 +107,7 @@ export const PROJECTIONS = {
     ["name", "latestVersion", "comment", "audit"]),
   model_detail: detail("Model", "Model",
     ["name", "latestVersion", "comment", "properties", "audit"],
-    [{ entity: "ModelVersion", foreignKey: "modelName", title: "Versions" }]),
+    [{ entity: "ModelVersion", foreignKey: "modelId", title: "Versions" }]),
 
   // ═══ User ══════════════════════════════════════════════════════════════════
   // roles — json array (имена Role entities).
