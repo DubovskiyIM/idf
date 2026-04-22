@@ -17,16 +17,23 @@ describe("gravitino domain — Stage 1 baseline", () => {
     expect(Array.isArray(RULES)).toBe(true);
   });
 
-  it("ontology.entities covers 12 Gravitino модулей", () => {
+  it("ontology.entities содержит 12 canonical Gravitino модулей (exact match)", () => {
     const entities = Object.keys(ONTOLOGY.entities);
     const required = [
       "Metalake", "Catalog", "Schema", "Table", "Fileset",
       "Topic", "Model", "User", "Group", "Role", "Tag", "Policy",
     ];
     for (const name of required) {
-      const match = entities.find(e => e.toLowerCase().includes(name.toLowerCase()));
-      expect(match, `Entity matching "${name}" не найден в imported ontology`).toBeTruthy();
+      expect(entities, `Canonical entity "${name}" не найден в imported ontology`).toContain(name);
     }
+  });
+
+  it("imported ontology содержит полный counterpart Gravitino OpenAPI", () => {
+    // Lower bound — не хрупкий к минорным изменениям upstream OpenAPI, но
+    // ловит regression importer'а (например, $ref resolution ломается и
+    // entities схлопываются до ~30). Baseline: 218 entities, 120 intents.
+    expect(Object.keys(ONTOLOGY.entities).length).toBeGreaterThanOrEqual(150);
+    expect(Object.keys(INTENTS).length).toBeGreaterThanOrEqual(100);
   });
 
   it("intents покрывают CRUD хотя бы для Metalake", () => {
