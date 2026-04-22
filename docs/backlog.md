@@ -2,6 +2,15 @@
 
 **Назначение.** Отдельная очередь задач, инсайтов и находок, отложенных между сессиями. В отличие от `sdk-improvements-backlog.md` (специфичен для SDK и дискавери freelance'а), этот файл — cross-cutting: всё, что всплыло при работе, но не попало в текущий PR.
 
+**Структура.**
+
+- **§0 SaaS packaging (M1.2→M1.6)** — shippable path к первому paying PM. **Критический путь.** Всё, что блокирует упаковку для первых клиентов.
+- **§1 Format / SDK deferred implementation** — format maturity, идёт параллельно, не блокирует первых клиентов.
+- **§2 Architectural research / insights** — design-research для v2.1 манифеста.
+- **§3 Cross-cutting observations** — наблюдения, не привязанные к workstream.
+
+**Критерий разделения.** Если item блокирует деплой первого PM — §0. Если item улучшает format expressiveness без impact на PM end-user — §1-2.
+
 **Контракт.**
 
 - При завершении сессии — пройтись по «что хотел сделать но отложил» и записать сюда.
@@ -9,6 +18,117 @@
 - Пункты с датой находки, коротким контекстом, предлагаемым action'ом.
 - Когда пункт взят в работу — удалить из backlog'а и перевести в плановый workstream.
 - Если пункт устарел (решён параллельно, отменён решением) — удалить, не оставлять как «исторический».
+
+---
+
+## 0. SaaS packaging — путь к первому paying PM
+
+**Источник истины:** `docs/superpowers/specs/2026-04-21-pm-autonomy-roadmap-design.md` (Variant D, 6 мес план).
+**Текущая фаза:** M1.1 закрыт (2026-04-21), M1.2 начинается. План на месяц — `~/.claude/plans/deep-humming-nova.md`.
+
+### 0.1 M1.1 tail (закрыть в первые 1-2 дня)
+
+**A1. Resend wire-up в production (`idf-auth`).**
+**Контекст:** Сейчас `EMAIL_DEV_MODE=true` на VPS — magic-link уходит в `docker compose logs`. Для реальных PM нужен Resend с DNS verification для `intent-design.tech`.
+**Action:** User создаёт Resend account + DNS-records; я ставлю `RESEND_API_KEY` + `EMAIL_DEV_MODE=false` в `/opt/idf-auth/.env`, redeploy.
+**Blocker:** user (API key).
+
+**A2. Re-deploy runtime с full V2Shell bundle.**
+**Контекст:** commit `72703b2` в idf-runtime содержит собранный V2Shell (6.3 MB) в `static/`, но prod пока отдаёт placeholder index.html (`94a89cf`).
+**Action:** `docker buildx build --platform linux/amd64` → scp на VPS → docker load + tag → docker compose up -d в `/opt/idf-runtime/demo/`.
+
+**A3. ANTHROPIC_API_KEY в control plane.**
+**Контекст:** Без ключа SSE authoring session падает на `createClaude` init.
+**Action:** user → `ANTHROPIC_API_KEY=sk-ant-...` → `/opt/idf-studio/.env` + restart.
+**Blocker:** user (API key).
+
+**A4. Cross-plane E2E smoke.**
+**Action:** signup incognito → login → create project → deploy demo tenant → открыть iframe, убедиться что V2Shell отдаёт 4-channel UI.
+**Dep:** A1-A3.
+
+**A5. Verify daily backup cron.**
+**Контекст:** `/etc/cron.daily/idf-backup` создан 2026-04-21, rotation 14 дней. Надо убедиться что `/var/backups/idf/` реально наполняется.
+**Action:** ssh → `bash /etc/cron.daily/idf-backup` → `ls -la /var/backups/idf/` → assert ≥3 файла (auth / studio / runtime-demo).
+
+**A6. Auto-nginx/certbot helper в orchestrator.**
+**Контекст:** `/opt/idf-runtime/register-tenant.sh` на VPS работает полу-автоматически. Сейчас deploy flow оставляет nginx/certbot на user'е.
+**Action:** `idf-studio/server/src/vps/vps-client.ts::createTenant` вызывает `register-tenant.sh <slug> <port>` через docker-exec или ssh. Первая итерация: keep manual fallback для первых 3-5 tenant'ов.
+
+### 0.2 M1.2 (месяц 1, следующий спринт): Studio as control plane
+
+**B1. Port 7-state authoring machine из `.worktrees/pm-demo/` в multi-tenant studio.**
+Состояния: `landing → describe → entities → intents → roles → projections → rules → preview → commit`.
+Место: `idf-studio/server/src/sessions/*` + `idf-studio/web/src/pages/project-detail.tsx`.
+
+**B2. System prompts из pm-demo в `idf-studio/server/src/sessions/prompts.ts`** (cache-friendly, skeleton уже есть).
+
+**B3. Turn-log first-class:** append-only `sessions.turns[]` persist в Postgres, resume через GET `/api/sessions/:id`.
+
+**B4. Rollback to turn N UI.**
+
+**B5. Live 4-channel preview panel:** pixels (iframe) / voice (audio `?format=audio`) / document (HTML) / agent (JSON). Debounce 300ms.
+
+**C1. Dry-run validator:** `foldWorld` на sample fixtures до push'а в data plane. Блокирует deploy при ошибке.
+
+**C2. Integrity check ↔ studio UI diff:** если `/admin/reload` вернул rejected effects — показать diff в Studio, не просто 500.
+
+**C3. Deploy history tab** — читает `deploys` table.
+
+**C4. Snapshot Φ кнопка в studio UI** (использует `/admin/snapshot` skeleton из runtime commit `482e8bb`).
+
+### 0.3 M1.3 (месяц 2): Data safety
+
+- Change classifier safe/caution/breaking в deploy preview UI.
+- Rename как first-class op (`domain.json.renames: [{entity, from, to}]`, idempotent JSONB update).
+- Φ snapshot / restore UI.
+- Audit log viewer с фильтрами (actor/entity/time-range/intent).
+- Per-field diff между deploy'ами.
+
+### 0.4 M1.4 (месяц 3): Governance & team
+
+- Team tab: invite UI, role assignment, revocation, agent tokens (long-lived JWT с preapproval limits, copy-once UX).
+- Rejected effects monitor.
+- «Explain why» rejection modal с suggested actions.
+- Export audit package (ZIP: domain.json + snapshots + rejected + members + optional Φ JSONL).
+
+### 0.5 M1.5 (месяц 4, RISKY — 60% frontend effort): Direct-manipulation editors
+
+- Role matrix editor (entities × roles, checkbox read/write/canExecute).
+- Projection palette (Pattern Bank user-facing, toggle enabled/disabled с live preview).
+- Rules builder no-code (drag-drop предикаты, schedule/threshold/aggregation).
+- Polish Graph3D editing mode (уже есть в Studio §27, нужен user-facing wrapper).
+
+**Degradable:** если timeline жмёт — сдвигать в M1.7, оставить LLM-only authoring в M1.
+
+### 0.6 M1.6 (месяц 5-6): Handoff + beta launch
+
+- Export tarball builder: `my-domain.tar.gz` с README / package.json / domain.json / extensions.ts-stub / Dockerfile / docker-compose.yml / Φ snapshot.
+- CLI dev-mode (`idf dev`, `idf test`, `idf publish` deferred в M2).
+- `domain.extensions.ts` typed interface (`DomainExtensions<T>` генерит TS-типы из domain.json).
+- Landing + pricing page + minimal Stripe (14-day trial, paid-only).
+- Beta cohort 3-5 PM → первый paying customer.
+
+### 0.7 Operational (continuous)
+
+- **Sentry** free tier на auth/runtime/studio (3 environments). Email alert на unhandled rejection.
+- **S3 off-site backup** (сейчас только local `/var/backups/idf/` на VPS — single point of failure).
+- **Security audit:** CSRF, cookie flags (Secure/HttpOnly/SameSite), rate-limit tuning, CORS policies.
+- **PG migrate runner → drizzle migrator** (все 3 плана имеют не-идемпотентный runner; второй прогон упадёт).
+- **Resend deliverability metrics** после wire-up (bounce rate, DMARC alignment).
+- **Port allocation race** в studio orchestrator (`allocatePort` без mutex, два параллельных deploy'я → collision).
+- **Persistent `hostPort` column в `tenants`** (сейчас port reuse из deploys history — хрупко).
+- **`docs/legal/dpa-template.pdf`** — минимальный processor-controller DPA для beta PM.
+- **`docs/ops/backup-recovery.md`** — runbook восстановления tenant из backup.
+- **Daily cron `/etc/cron.daily/idf-backup`** — healthcheck alert если за 24h не было нового файла.
+
+### 0.8 Open decisions (до beta)
+
+- **Product name.** «IDF» не маркетится. Варианты из roadmap: Folio / Crystallizer / Phi / Fold / Tacit.
+- **Licensing.** Studio/control plane — BSL или closed-source? Рекомендация roadmap: commercial SaaS поверх BSL SDK (Sentry/GitLab модель).
+- **LLM cost absorption.** M1 — в SaaS price; M2 — transactional billing.
+- **Freemium vs paid-only.** Roadmap рекомендует paid-only с 14-day trial.
+- **Ownership transfer в M1.** Manual через support email; automated в M2.
+- **Product demos.** M1: golden domain (Client Onboarding Tracker) + 2 templates (retro, project tasks). Vertical library — M2.
 
 ---
 
