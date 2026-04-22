@@ -24,30 +24,27 @@
 
 ## Gap'ы
 
-### G1 — Crystallize деривирует 3 artifact'а даже после enrich
+### ✅ G1 — Crystallize деривация + tree-nav (ЗАКРЫТО 2026-04-23)
 
-**Severity:** P0 (остаётся после enricher fix)
-**Module:** global (crystallize pipeline)
-**Observation:** `crystallizeV2(INTENTS, {}, ONTOLOGY, "gravitino")` → `{ lineage_create, metalake_create, run_create }`. Никаких catalog/detail/dashboard проекций для Metalake/Catalog/Schema/Table.
+**Severity:** P0 → закрыт.
+**Final state:** 27 artifact'ов (12 catalog + 12 detail + 3 form); `hierarchy-tree-nav` pattern apply'ится на `metalake_detail` с полной Gravitino-иерархией в `sidebar[0]`.
 
-**Update 2026-04-23 (после enricher@0.2.1 replay):** enrich добавил +6 intents, +63 field-roles, +14 absorbedBy, +1 base role (admin). **Crystallize всё ещё даёт 3 artifact'а.** Enrich даёт семантику (roles / valueLabels / absorbedBy), но **не projections**. Compliance/invest демонстрируют ту же модель — projections авторятся вручную (~18-20 на домен), derived — косметика.
+**Тройной путь закрытия:**
 
-**Root-cause:** crystallize form-archetype триггерится только на α=insert intents (3 шт в Gravitino — `createLineage`/`createMetalake`/`run_create`). Catalog/detail архетипы требуют явные `projection.kind` в authored PROJECTIONS. Enricher не авторит projections — это не его ответственность.
+1. **Stage 2 Task 0 — авторирование 24 projections** (12 list + 12 detail) по шаблону compliance. Разблокировало catalog/detail архетипы.
+2. **PR idf-sdk#186 — enricher-claude@0.2.1** `structured_output` wire-format. Enrich теперь работает на Gravitino: +17 intents, +63 field-roles, +14 absorbedBy, 3 base roles (owner/admin/viewer).
+3. **PR idf-sdk#188 — importer-openapi@0.5.0** path-derived FK synthesis. 28 entities получили `<parent>Id: { kind: "foreignKey", references: ... }` из URL-структур. Это разблокировало `hierarchy-tree-nav.findChildEntities` и R8 hub-absorption на path-based REST API.
 
-**Reproduce:**
-```bash
-node -e "import('./src/domains/gravitino/domain.js').then(async m => {
-  const { crystallizeV2 } = await import('@intent-driven/core');
-  const arts = crystallizeV2(m.INTENTS, m.PROJECTIONS, m.ONTOLOGY, 'gravitino');
-  console.log(Object.keys(arts));
-})"
+**Tree-nav результат:**
 ```
-**Mitigation для Stage 2:**
-- ~~Вариант A: починить enricher-claude (§1.12 backlog)~~ — закрыто в PR idf-sdk#186, enricher@0.2.1; помогло для semantics, не для projections.
-- **Вариант B (выбран): авторировать ROOT_PROJECTIONS + PROJECTIONS** для 12 canonical Gravitino entities (Metalake_list / Metalake_detail / Catalog_list / Catalog_detail / Schema_list / Schema_detail / Table_list / Table_detail / + Fileset/Topic/Model/User/Group/Role/Tag/Policy lists). Паттерн compliance: `{kind:"catalog", mainEntity, witnesses, onItemClick}` + `{kind:"detail", mainEntity, idParam, witnesses, subCollections}`.
-- Вариант C (future): LLM pipeline «ontology → projections auto-author» — отдельный scaffold-путь package `@intent-driven/projection-generator`. Не в scope текущего спринта.
+Metalake → Tag, Catalog, User, Group, Role, Owner, Policy
+Catalog  → Schema
+Schema   → Table, Fileset, Topic, Model
+Tag      → Object
+...
+```
 
-**Action для Stage 2 plan:** первый Task стадии — «авторировать minimal projections». 24 projections (12 list + 12 detail) через compliance-шаблон.
+**Related memory:** `docs/gravitino-ux-patterns-notes.md` P-1 (path-derived hierarchy) — кандидат в pattern bank researcher.
 
 ### G2 — 200+ envelope-типов в ontology.entities
 
