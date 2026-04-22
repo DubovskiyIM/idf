@@ -278,6 +278,7 @@ Postmortem'ы: `docs/superpowers/specs/2026-04-14-sdk-core-postmortem.md` (Phase
 - ✅ **PrimaryCTAList multi-param phase-transitions** (backlog 3.1) — idf-sdk PR #50
 - ✅ **inferParameters / heroCreate / footer-inline-setter** (backlog 4.1–4.3) — idf-sdk PR #50
 - ✅ **optimistic-replace-with-undo.apply** — idf-sdk PR #154 (closed one more matching-only slot)
+- ✅ **§9.10–9.12 heroCreate / Badge sx / witness alignSelf** — idf-sdk PR #181 (merged 2026-04-21 22:06 UTC), бамп core@0.52.0 + renderer@0.28.0 через release PR #182, README refresh #183 (2026-04-22 07:01 UTC)
 
 ### Open items (актуально на 2026-04-22)
 
@@ -293,11 +294,10 @@ Postmortem'ы: `docs/superpowers/specs/2026-04-14-sdk-core-postmortem.md` (Phase
 - **Reader-equivalence runtime-check (§23 axiom 5)** — спека есть в `drift-protection-spec.md`, Layer 3 detector не реализован
 - **Cross-stack conformance harness** — автоматический differential-test `fold(Φ)` через idf / idf-go / idf-rust / idf-swift на общих fixtures
 - **Pattern Bank: ML/auto-learning** — автоматический анализ приложений для пополнения банка
-- **Pending merge:** idf-sdk `fix/heroCreate-badge-align-9.10-9.12` — heroCreate multi-param + Badge sx + witness alignSelf
 
 ## Приоритеты
 
 Roadmap: Часть VIII манифеста v2 `docs/manifesto-v2.md` (направления формата без дат) + GitHub issues (оперативные задачи) + `docs/backlog.md` (cross-cutting очередь между сессиями).
 
-- **Ближайшее (1-2 мес)**: domain scoping (`__domain` provenance), IrreversibleBadge auto-placement, invest visual polish для демо, публикация статьи, reader-equivalence runtime-check (v2.1 axiom 5), apply для 2 оставшихся matching-only паттернов (keyboard-property-popover, global-command-palette), Workzilla dogfood продолжение (9.10-9.12 merge)
+- **Ближайшее (1-2 мес)**: domain scoping (`__domain` provenance), IrreversibleBadge auto-placement, invest visual polish для демо, публикация статьи, reader-equivalence runtime-check (v2.1 axiom 5), apply для 2 оставшихся matching-only паттернов (keyboard-property-popover, global-command-palette)
 - **Среднесрочное (2-4 мес)**: production-ready invest (первый pilot tenant), Pattern Bank → 50+ stable patterns через Researcher pipeline (сейчас 32 + 49+ candidate'ов в bank/), cross-stack conformance harness (differential-test через idf/go/rust/swift), X1-удаление explicit overrides, PatternInspector test-harness, composite groupBy/polymorphic entity kind, `@intent-driven/cli` → 2.0 с scaffold-path как дефолтный путь
