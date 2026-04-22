@@ -48,6 +48,23 @@ describe("gravitino domain — Stage 1 baseline", () => {
     expect(() => crystallizeV2(INTENTS, PROJECTIONS, ONTOLOGY, DOMAIN_ID)).not.toThrow();
   });
 
+  it("crystallizeV2 деривирует ≥24 artifact'а (12 list + 12 detail minimum)", () => {
+    const artifacts = crystallizeV2(INTENTS, PROJECTIONS, ONTOLOGY, DOMAIN_ID);
+    expect(Object.keys(artifacts).length).toBeGreaterThanOrEqual(24);
+  });
+
+  it("metalake_detail дериввирован как archetype=detail", () => {
+    // subCollection Catalog → Metalake не подтянется в slots/hubSections пока
+    // FK-поле `metalakeId` не появится в Catalog.fields (Stage 2 gap — Gravitino
+    // использует URL-path parent, не scalar FK). Тест фиксирует только наличие
+    // artifact'а и его archetype; subCollection — авторский hint в projection.
+    const artifacts = crystallizeV2(INTENTS, PROJECTIONS, ONTOLOGY, DOMAIN_ID);
+    const md = artifacts.metalake_detail;
+    expect(md).toBeDefined();
+    expect(md.archetype).toBe("detail");
+    expect(md.projection).toBe("metalake_detail");
+  });
+
   it("getSeedEffects() возвращает пустой array (Stage 1)", () => {
     expect(getSeedEffects()).toEqual([]);
   });
