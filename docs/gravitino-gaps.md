@@ -162,6 +162,83 @@ node -e "import('./src/domains/gravitino/imported.js').then(m => {
 **Reproduce:** `grep "Job-2" src/domains/gravitino/imported.js`.
 **Mitigation:** importer-openapi эвристика «если entity без intents после всех путей — drop».
 
+## Stage 2 Discovery (2026-04-23)
+
+После закрытия G1 — полный server-side analysis 27 artifact'ов. Visual verification браузером: `https://localhost:5173/gravitino` (headless Chrome не сработал — version mismatch 147 vs 148).
+
+### G13 — TreeNav primitive — schema-preview, не runtime-tree
+
+**Severity:** P0 (Stage 2 cornerstone)
+**Observation:** `TreeNav.jsx` (renderer@0.26.0) рендерит **static hierarchy schema** (labeled buttons per entity level), НЕ runtime-instances с expand/collapse. Для Gravitino demo пользователь ожидает увидеть актуальные Metalake/Catalog/Schema/Table (instances), expand'ить их и drill-down — а не схему типов.
+**Target-stage:** Stage 2 Task 2 (primary SDK work).
+**Mitigation:**
+- (A) Расширить `TreeNav` с `mode: "runtime" | "schema"` — при `mode==="runtime"` читать `ctx.world[entity]`, рендерить lazy-expand list. Backward-compat с schema-mode.
+- (B) Новый primitive `RuntimeTree` — отдельный от TreeNav, delegate pattern-apply между ними (schema для preview, runtime для production demo).
+
+### G14 — Auto-derived sections имеют `undefined` title/entity
+
+**Severity:** P1
+**Observation:** Pattern `subcollections` (auto-fire на entity с back-FK) генерирует sections на user_detail / role_detail / group_detail **с `title: undefined` и `entity: undefined`**. Только `foreignKey` правильный (`userId` / `roleId` / `groupId`). При рендере это будет «пустые заголовки» + список unknown-entity items — визуальный регресс vs authored sections (где есть title).
+**Target-stage:** Stage 2 Task 3 или SDK backlog.
+**Reproduce:**
+```js
+arts.user_detail.slots.sections → [{title: undefined, entity: undefined, foreignKey: "userId"}, ...]
+```
+**Mitigation:** apply-функция `subcollections` pattern должна при auto-derive:
+- Подтянуть `title` из entity.name или plural-form;
+- Установить `entity` = найденный child-entity (уже есть в matchFn).
+Это SDK fix в `packages/core/src/patterns/stable/detail/subcollections.js`.
+
+### G15 — R8 hub-absorption не срабатывает несмотря на FK chain
+
+**Severity:** P1
+**Observation:** Все 12 detail projections имеют `hubSections: []` top-level, даже после path-derived FK synthesis. R8 absorb'ит child projections в parent, но не apply'ится здесь. Предположение: absorbedBy появляется в ontology.entities (14 штук), но не проецируется на `artifact.hubSections`.
+**Target-stage:** SDK backlog.
+**Reproduce:**
+```js
+arts.metalake_detail.hubSections // []
+// Хотя у Catalog/Schema entities: entity.absorbedBy: "Metalake_detail" (из enrich)
+```
+**Mitigation:** разобраться с `@intent-driven/core/src/crystallize_v2/absorbHubChildren.js` — почему absorbedBy-entities не складываются в `hubSections`. Возможно нужен runtime-level resolution после FK chain.
+
+### G16 — Detail slots перенасыщены (14 слотов на detail)
+
+**Severity:** P2 (наблюдение, не блокер)
+**Observation:** `metalake_detail.slots` имеет 14 slot'ов (header, toolbar, body, context, fab, overlay, sections, primaryCTA, progress, footer, voterSelector, hubSections, sidebar, gating). Многие из них пустые для Gravitino (no voting → voterSelector empty, no flow → progress empty). AntD-адаптер должен render'ить только непустые.
+**Target-stage:** Stage 8 polish (adapter cleanup).
+**Mitigation:** adapter-antd должен skip empty slots — это уже обычно делается, но проверить что нет пустых DOM-блоков.
+
+### G17 — list projections не имеют treeNav в собственных sidebar'ах
+
+**Severity:** P1
+**Observation:** `metalake_list.slots.sidebar[0] === treeNav` ✓ (на list тоже!), но `catalog_list / schema_list / table_list` — не имеют treeNav. Причина: pattern `hierarchy-tree-nav` triggers на `mainEntity` с FK-chain, но catalog_list имеет `mainEntity: "Catalog"` и Catalog→Schema→Table — 3 levels, должно match'иться.
+
+Wait — inspection показала что catalog_list ИМЕЕТ treeNav. Перепроверка:
+- metalake_list, catalog_list, schema_list, model_list, policy_list, tag_list — treeNav ✓
+- table_list, fileset_list, topic_list, user_list, group_list, role_list — треtNav ✗
+
+Последняя 5 — correct (no deep children). Первая 6 — все имеют ≥3 levels вниз.
+
+**Observation:** визуально на каждой из 6 treeNav-projections показывается tree от текущего entity + ниже. Пользователь хочет видеть ONE и тот же tree (absolute root, Metalake) на всех navigation points, не relative tree от `mainEntity`. Сейчас на `catalog_list` sidebar root=Catalog, а не Metalake.
+**Target-stage:** Stage 2 Task 4 (V2Shell integration + breadcrumbs).
+**Mitigation:** либо (a) V2Shell держит global tree состояние вне pattern'а, (b) pattern параметризуется флагом `rootEntity`.
+
+### Task 1 verdict: Stage 2 Tasks 2+ defined
+
+Реализация:
+- **Task 2** (SDK renderer, P0): `TreeNav` runtime-mode (G13) — primary deliverable. Либо прямое расширение existing, либо новый `RuntimeTree` primitive.
+- **Task 3** (SDK renderer, P1): `Breadcrumbs` primitive (оригинальный план Stage 2). Появится после Task 2 (нужен пройденный tree-path).
+- **Task 4** (host V2Shell): global tree state — tree absolute-rooted в Metalake, независимо от current projection (G17). Интеграция Breadcrumbs в shell header.
+- **Task 5** (SDK core, optional, может быть в SDK backlog): `subcollections` pattern — подтягивать title/entity для auto-derived sections (G14).
+- **Task 6** (SDK adapter-antd): capability entries для tree + breadcrumb + sections.
+- **Task 7** (tests): primitive-level + host smoke.
+- **Task 8**: SDK PR + changeset + release.
+- **Task 9**: host PR update после SDK release.
+
+Deferred в SDK backlog (не Stage 2 scope): G15 R8 absorb.
+
+---
+
 ## Сводка по стадиям
 
 | Stage | Gap IDs | Описание |
