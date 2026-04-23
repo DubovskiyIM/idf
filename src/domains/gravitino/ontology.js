@@ -96,6 +96,49 @@ function enrichFieldsWithPrimitives(entities) {
     }
   }
 
+  // Host-polish: entity.audit → propertyPopover.
+  // Gravitino.Audit = { creator, createTime, lastModifier, lastModifiedTime }
+  // nested object. Default text-atom пытается отрендерить как string →
+  // React "Objects are not valid as a child" error на catalog-list рендере.
+  // PropertyPopover показывает как dict (creator=alice, createTime=...).
+  for (const [entityName, ent] of Object.entries(enriched)) {
+    if (ent?.fields?.audit && ent.fields.audit.primitive !== "propertyPopover") {
+      enriched[entityName] = {
+        ...ent,
+        fields: {
+          ...ent.fields,
+          audit: {
+            ...ent.fields.audit,
+            primitive: "propertyPopover",
+            label: "Audit",
+          },
+        },
+      };
+    }
+  }
+
+  // Host-polish: Policy enrichment — importer G32 оставил только 'id' /
+  // 'objectId' / 'metalakeId' (не склеил PolicyBase/PolicyMetadata
+  // subtypes). Синтезируем visible fields из common Gravitino policy-shape.
+  // Поля readOnly — редактирование через custom intent workflow, не form.
+  if (enriched.Policy) {
+    enriched.Policy = {
+      ...enriched.Policy,
+      fields: {
+        ...enriched.Policy.fields,
+        name:     { type: "string", role: "primary-title", readOnly: true },
+        type:     { type: "string", role: "category", readOnly: true,
+                    values: ["data_masking","data_lifecycle","access_control","quality","custom"] },
+        enabled:  { type: "boolean", readOnly: true },
+        comment:  { type: "string", role: "long-text", readOnly: true },
+        content:  { type: "json", primitive: "propertyPopover", label: "Content",
+                    synthetic: "host-policy-enrichment" },
+        audit:    { type: "json", primitive: "propertyPopover", label: "Audit",
+                    synthetic: "host-policy-enrichment" },
+      },
+    };
+  }
+
   return enriched;
 }
 

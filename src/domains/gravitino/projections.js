@@ -51,11 +51,15 @@ const detail = (mainEntity, name, witnesses, subCollections = [], idParam = null
 });
 
 export const PROJECTIONS = {
+  // Host-polish: `audit` (nested object) НЕ включаем в catalog-list
+  // witnesses — list-card renderer пытается забиндить object как text →
+  // React "Objects are not valid as a child" error. Detail-projections
+  // могут включать audit, т.к. buildDetailBody уважает field.primitive
+  // hint (propertyPopover) из ontology.js.
+
   // ═══ Metalake ══════════════════════════════════════════════════════════════
-  // Metalake — root сущности Gravitino. Witness'ы: name (primary-title),
-  // comment (long-text), audit (creator/createTime nested).
   metalake_list: catalog("Metalake", "Metalakes",
-    ["name", "comment", "audit"]),
+    ["name", "comment"]),
   metalake_detail: detail("Metalake", "Metalake",
     ["name", "comment", "properties", "audit"],
     [{ entity: "Catalog", foreignKey: "metalakeId", title: "Catalogs" }]),
@@ -71,7 +75,7 @@ export const PROJECTIONS = {
   // ═══ Schema ════════════════════════════════════════════════════════════════
   // Schema — child Catalog; сам является parent'ом для Table/Fileset/Topic/Model.
   schema_list: catalog("Schema", "Schemas",
-    ["name", "comment", "audit"]),
+    ["name", "comment"]),
   schema_detail: detail("Schema", "Schema",
     ["name", "comment", "properties", "audit"],
     [
@@ -84,7 +88,7 @@ export const PROJECTIONS = {
   // ═══ Table ═════════════════════════════════════════════════════════════════
   // Table несёт columns (nested json), partitioning, distribution, indexes.
   table_list: catalog("Table", "Tables",
-    ["name", "comment", "audit"]),
+    ["name", "comment"]),
   table_detail: detail("Table", "Table",
     ["name", "comment", "columns", "partitioning", "distribution",
      "sortOrders", "indexes", "properties", "audit"]),
@@ -104,43 +108,46 @@ export const PROJECTIONS = {
   // ═══ Model ═════════════════════════════════════════════════════════════════
   // latestVersion — counter. Model содержит ModelVersion как children.
   model_list: catalog("Model", "Models",
-    ["name", "latestVersion", "comment", "audit"]),
+    ["name", "latestVersion", "comment"]),
   model_detail: detail("Model", "Model",
     ["name", "latestVersion", "comment", "properties", "audit"],
     [{ entity: "ModelVersion", foreignKey: "modelId", title: "Versions" }]),
 
   // ═══ User ══════════════════════════════════════════════════════════════════
-  // roles — json array (имена Role entities).
+  // roles — json array (имена Role entities). В list не показываем —
+  // catalog-archetype не уважает field.primitive hint (chipList), упадёт
+  // на object children. Видны на detail через ChipList.
   user_list: catalog("User", "Users",
-    ["name", "roles", "audit"]),
+    ["name"]),
   user_detail: detail("User", "User",
     ["name", "roles", "audit"]),
 
   // ═══ Group ═════════════════════════════════════════════════════════════════
   group_list: catalog("Group", "Groups",
-    ["name", "roles", "audit"]),
+    ["name"]),
   group_detail: detail("Group", "Group",
     ["name", "roles", "audit"]),
 
   // ═══ Role ══════════════════════════════════════════════════════════════════
-  // securableObjects — json, privileges matrix.
+  // securableObjects — matrix, только на detail. properties — json,
+  // popover только на detail.
   role_list: catalog("Role", "Roles",
-    ["name", "securableObjects", "properties"]),
+    ["name"]),
   role_detail: detail("Role", "Role",
     ["name", "securableObjects", "properties"]),
 
   // ═══ Tag ═══════════════════════════════════════════════════════════════════
   tag_list: catalog("Tag", "Tags",
-    ["name", "comment", "inherited", "audit"]),
+    ["name", "comment", "inherited"]),
   tag_detail: detail("Tag", "Tag",
     ["name", "comment", "inherited", "properties", "audit"]),
 
   // ═══ Policy ════════════════════════════════════════════════════════════════
-  // Policy в canonical ontology имеет только `id` (остальные атрибуты в
-  // PolicyBase/PolicyMetadata subtypes — не склеены importer'ом как single
-  // entity). Witness — минимальный.
-  policy_list: catalog("Policy", "Policies", ["id"]),
-  policy_detail: detail("Policy", "Policy", ["id"]),
+  // Importer G32 не склеил PolicyBase/PolicyMetadata — host ontology.js
+  // enrichment добавляет синтетические visible fields (name/type/enabled/
+  // comment/content/audit). Используем их в projections.
+  policy_list: catalog("Policy", "Policies", ["name", "type", "enabled", "comment"]),
+  policy_detail: detail("Policy", "Policy", ["name", "type", "enabled", "comment", "content", "audit"]),
 };
 
 export const ROOT_PROJECTIONS = [
