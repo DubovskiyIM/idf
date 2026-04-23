@@ -31,11 +31,30 @@ const CANONICAL_ENTITIES = [
  * вместо flat formBody. Автор управляет группировкой вручную — это
  * декларативная UX-декомпозиция, не автоматическая.
  */
-// G-K-16 host-fix: AdminShell (G-K-14) даёт persistent sidebar tree —
-// hierarchy-tree-nav apply внутри body становится дубликатом. Disable
-// через projection.patterns.disabled. Применяем ко ВСЕМ catalog'ам
-// keycloak'а (host знает что включил persistentSidebar в SHELL).
+// G-K-16 host-fix: AdminShell даёт persistent sidebar tree —
+// hierarchy-tree-nav в body дублирует. Disable через patterns.disabled.
 const SUPPRESS_TREE_IN_BODY = { disabled: ["hierarchy-tree-nav"] };
+
+// G-K-22 host-fix: catalog-default-datagrid pattern не apply'ится если
+// body.item.intents непустой (base assignToSlotsCatalog добавляет inline
+// CRUD intents — это base behavior, не pattern). bodyOverride с явным
+// type:"dataGrid" — обходим. Helper генерит columns из witnesses
+// (sortable+filterable дефолты).
+function dgColumns(witnesses, fieldDefs = {}) {
+  return witnesses.map(key => ({
+    key,
+    label: fieldDefs[key]?.label || key,
+    sortable: true,
+    filterable: true,
+  }));
+}
+function dataGridBody(mainEntity, witnesses, extraColumns = []) {
+  return {
+    type: "dataGrid",
+    source: mainEntity,  // world[mainEntity] — entities группируются по target=PascalCase
+    columns: [...dgColumns(witnesses), ...extraColumns],
+  };
+}
 
 export const PROJECTIONS = {
   // Stage 5b override: после G-K-10 fix derive назначает kind:"feed" для
@@ -48,7 +67,8 @@ export const PROJECTIONS = {
     kind: "catalog",
     mainEntity: "Realm",
     entities: ["Realm"],
-    witnesses: [],
+    witnesses: ["realm", "displayName", "enabled", "sslRequired"],
+    bodyOverride: dataGridBody("Realm", ["realm", "displayName", "enabled", "sslRequired"]),
     patterns: SUPPRESS_TREE_IN_BODY,
   },
   client_list: {
@@ -56,10 +76,9 @@ export const PROJECTIONS = {
     kind: "catalog",
     mainEntity: "Client",
     entities: ["Client"],
-    witnesses: [],
-    // G-K-17 host-fix: scope по routeParams.realmId (через worldWithRoute).
-    // Если на корневом list (без realm scope) — показываем все.
+    witnesses: ["clientId", "name", "enabled", "publicClient", "protocol"],
     filter: "!world.realmId || realmId === world.realmId",
+    bodyOverride: dataGridBody("Client", ["clientId", "name", "enabled", "publicClient", "protocol"]),
     patterns: SUPPRESS_TREE_IN_BODY,
   },
 
@@ -74,8 +93,9 @@ export const PROJECTIONS = {
     kind: "catalog",
     mainEntity: "User",
     entities: ["User"],
-    witnesses: [],
+    witnesses: ["username", "email", "firstName", "lastName", "enabled", "emailVerified"],
     filter: "!world.realmId || realmId === world.realmId",
+    bodyOverride: dataGridBody("User", ["username", "email", "firstName", "lastName", "enabled", "emailVerified"]),
     patterns: SUPPRESS_TREE_IN_BODY,
   },
   group_list: {
@@ -83,8 +103,9 @@ export const PROJECTIONS = {
     kind: "catalog",
     mainEntity: "Group",
     entities: ["Group"],
-    witnesses: [],
+    witnesses: ["name", "path", "subGroupCount"],
     filter: "!world.realmId || realmId === world.realmId",
+    bodyOverride: dataGridBody("Group", ["name", "path", "subGroupCount"]),
     patterns: SUPPRESS_TREE_IN_BODY,
   },
   role_list: {
@@ -92,8 +113,9 @@ export const PROJECTIONS = {
     kind: "catalog",
     mainEntity: "Role",
     entities: ["Role"],
-    witnesses: [],
+    witnesses: ["name", "description", "composite", "clientRole"],
     filter: "!world.realmId || realmId === world.realmId",
+    bodyOverride: dataGridBody("Role", ["name", "description", "composite", "clientRole"]),
     patterns: SUPPRESS_TREE_IN_BODY,
   },
   identityprovider_list: {
@@ -101,8 +123,9 @@ export const PROJECTIONS = {
     kind: "catalog",
     mainEntity: "IdentityProvider",
     entities: ["IdentityProvider"],
-    witnesses: [],
+    witnesses: ["alias", "displayName", "providerId", "enabled", "trustEmail"],
     filter: "!world.realmId || realmId === world.realmId",
+    bodyOverride: dataGridBody("IdentityProvider", ["alias", "displayName", "providerId", "enabled", "trustEmail"]),
     patterns: SUPPRESS_TREE_IN_BODY,
   },
   clientscope_list: {
@@ -110,8 +133,9 @@ export const PROJECTIONS = {
     kind: "catalog",
     mainEntity: "ClientScope",
     entities: ["ClientScope"],
-    witnesses: [],
+    witnesses: ["name", "protocol", "description"],
     filter: "!world.realmId || realmId === world.realmId",
+    bodyOverride: dataGridBody("ClientScope", ["name", "protocol", "description"]),
     patterns: SUPPRESS_TREE_IN_BODY,
   },
   component_list: {
@@ -119,8 +143,9 @@ export const PROJECTIONS = {
     kind: "catalog",
     mainEntity: "Component",
     entities: ["Component"],
-    witnesses: [],
+    witnesses: ["name", "providerType", "providerId"],
     filter: "!world.realmId || realmId === world.realmId",
+    bodyOverride: dataGridBody("Component", ["name", "providerType", "providerId"]),
     patterns: SUPPRESS_TREE_IN_BODY,
   },
   organization_list: {
@@ -128,8 +153,9 @@ export const PROJECTIONS = {
     kind: "catalog",
     mainEntity: "Organization",
     entities: ["Organization"],
-    witnesses: [],
+    witnesses: ["alias", "name", "description", "enabled"],
     filter: "!world.realmId || realmId === world.realmId",
+    bodyOverride: dataGridBody("Organization", ["alias", "name", "description", "enabled"]),
     patterns: SUPPRESS_TREE_IN_BODY,
   },
   workflow_list: {
@@ -137,8 +163,9 @@ export const PROJECTIONS = {
     kind: "catalog",
     mainEntity: "Workflow",
     entities: ["Workflow"],
-    witnesses: [],
+    witnesses: ["name", "description", "enabled"],
     filter: "!world.realmId || realmId === world.realmId",
+    bodyOverride: dataGridBody("Workflow", ["name", "description", "enabled"]),
     patterns: SUPPRESS_TREE_IN_BODY,
   },
   realm_create: {
