@@ -384,6 +384,18 @@ export const PROJECTIONS = {
       ],
     },
   },
+  /**
+   * Stage 7 (P-K-B): connection-test mid-wizard. IdP create имеет OAuth
+   * endpoints (authorizationUrl / tokenUrl / userInfoUrl) которые должны
+   * быть validated до submit — отдельный wizard-step с testConnection
+   * (Wizard primitive уже поддерживает `step.testConnection` через
+   * ctx.testConnection(intent, values) async handler).
+   *
+   * Flow: Type → Endpoints → Test Connection → Advanced → Submit.
+   * Test step вызывает ctx.testConnection("testIdentityProviderConnection",
+   * values) — host-runtime handler делает probe к OIDC discovery или
+   * SAML metadata URL, возвращает { ok, message? }.
+   */
   identityprovider_create: {
     name: "Создать identity provider",
     kind: "form",
@@ -404,8 +416,28 @@ export const PROJECTIONS = {
           ],
         },
         {
-          id: "config",
-          title: "Configuration",
+          id: "endpoints",
+          title: "Endpoints",
+          fields: [
+            { name: "authorizationUrl", label: "Authorization URL", type: "string",
+              placeholder: "https://provider.example.com/oauth/authorize" },
+            { name: "tokenUrl", label: "Token URL", type: "string",
+              placeholder: "https://provider.example.com/oauth/token" },
+            { name: "userInfoUrl", label: "User info URL", type: "string",
+              placeholder: "https://provider.example.com/oauth/userinfo" },
+            { name: "clientId", label: "Client ID", type: "string", required: true },
+            { name: "clientSecret", label: "Client secret", type: "string", fieldRole: "secret" },
+          ],
+          // P-K-B: Test connection перед advanced-step'ом. Wizard primitive
+          // рендерит button с async-validation, блокирует Next до OK.
+          testConnection: {
+            intent: "testIdentityProviderConnection",
+            label: "Проверить подключение",
+          },
+        },
+        {
+          id: "advanced",
+          title: "Advanced",
           fields: [
             { name: "enabled", label: "Включён", type: "boolean" },
             { name: "trustEmail", label: "Trust email", type: "boolean" },

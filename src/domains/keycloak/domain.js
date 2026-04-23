@@ -39,6 +39,46 @@ export const SHELL = {
 };
 
 /**
+ * Stage 7 (P-K-B): testConnection handlers для Wizard step.testConnection.
+ * V2Shell проксирует в ctx.testConnection через `handleTestConnection`.
+ * Async function(values) → Promise<{ok, message?}>.
+ *
+ * Keycloak IdP endpoints validation: authorizationUrl / tokenUrl / userInfoUrl
+ * для OIDC или metadata URL для SAML. В dogfood реальный probe заменён
+ * на format-check + fetch-HEAD (без full OIDC discovery) — достаточно для
+ * UX demonstration. Production probe с OIDC discovery + scope-detection —
+ * follow-up (требует server-side proxy из-за CORS).
+ */
+export const TEST_CONNECTION_HANDLERS = {
+  async testIdentityProviderConnection(values) {
+    const urls = [values?.authorizationUrl, values?.tokenUrl, values?.userInfoUrl]
+      .filter(Boolean);
+    if (urls.length === 0) {
+      return { ok: false, message: "Укажи хотя бы один endpoint URL" };
+    }
+    for (const url of urls) {
+      try {
+        new URL(url);
+      } catch {
+        return { ok: false, message: `Некорректный URL: ${url}` };
+      }
+      if (!/^https?:\/\//i.test(url)) {
+        return { ok: false, message: `URL должен начинаться с http(s)://: ${url}` };
+      }
+    }
+    if (!values?.clientId) {
+      return { ok: false, message: "Client ID обязателен" };
+    }
+    // Имитация round-trip (для dogfood без реального probe)
+    await new Promise(resolve => setTimeout(resolve, 400));
+    return {
+      ok: true,
+      message: `OK: ${urls.length} endpoint(s), clientId=${values.clientId}`,
+    };
+  },
+};
+
+/**
  * Generic buildEffects для useEngine. importer-openapi @0.6 не выставляет
  * intent.particles.effects (только entities), поэтому DomainRuntime'овский
  * makeGenericBuildEffects не подходит. Здесь напрямую читаем top-level

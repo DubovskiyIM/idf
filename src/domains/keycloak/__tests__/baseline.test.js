@@ -179,7 +179,34 @@ describe("keycloak Stage 1+2 baseline", () => {
     expect(PROJECTIONS.realm_create.bodyOverride?.type).toBe("wizard");
     expect(PROJECTIONS.realm_create.bodyOverride.steps).toHaveLength(3);
     expect(PROJECTIONS.client_create.bodyOverride.steps).toHaveLength(3);
-    expect(PROJECTIONS.identityprovider_create.bodyOverride.steps).toHaveLength(2);
+    // Stage 7 (P-K-B): idp wizard теперь 3 steps (type / endpoints+testConnection / advanced)
+    expect(PROJECTIONS.identityprovider_create.bodyOverride.steps).toHaveLength(3);
+    const endpointsStep = PROJECTIONS.identityprovider_create.bodyOverride.steps[1];
+    expect(endpointsStep.id).toBe("endpoints");
+    expect(endpointsStep.testConnection?.intent).toBe("testIdentityProviderConnection");
+  });
+
+  it("Stage 7: domain.TEST_CONNECTION_HANDLERS регистрирует testIdentityProviderConnection", async () => {
+    const { TEST_CONNECTION_HANDLERS } = await import("../domain.js");
+    expect(typeof TEST_CONNECTION_HANDLERS?.testIdentityProviderConnection).toBe("function");
+    // Format check: валидный URL → ok
+    const ok = await TEST_CONNECTION_HANDLERS.testIdentityProviderConnection({
+      authorizationUrl: "https://provider.com/oauth/authorize",
+      tokenUrl: "https://provider.com/oauth/token",
+      clientId: "my-client",
+    });
+    expect(ok.ok).toBe(true);
+    // Без clientId → error
+    const miss = await TEST_CONNECTION_HANDLERS.testIdentityProviderConnection({
+      authorizationUrl: "https://provider.com/oauth/authorize",
+    });
+    expect(miss.ok).toBe(false);
+    // Некорректный URL → error
+    const bad = await TEST_CONNECTION_HANDLERS.testIdentityProviderConnection({
+      authorizationUrl: "not-a-url",
+      clientId: "x",
+    });
+    expect(bad.ok).toBe(false);
   });
 
   it("Stage 5: crystallizeV2 рендерит wizard-body для authored form-projection'ов", () => {
