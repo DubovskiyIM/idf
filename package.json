@@ -99,6 +99,7 @@
   "devDependencies": {
     "@emnapi/core": "1.10.0",
     "@emnapi/runtime": "1.10.0",
+    "@types/react": "^19.2.14",
     "concurrently": "^9.2.1",
     "supertest": "^7.2.2",
     "typescript": "^5.5.3",
