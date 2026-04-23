@@ -160,6 +160,33 @@ node -e "import('./src/domains/keycloak/projections.js').then(m => console.log(m
 **Observation:** Под master и customer-app в sidebar — `Composite / Role / Clients / Group / Organization / Пользователи / ...` (одинаковые labels). При big workspace user может потеряться, какой realm активен.
 **Workaround (host):** prepend parent label в child label — `master / Пользователи` вместо просто `Пользователи`. Минимальный fix в `adminTree useMemo` builder в V2Shell.jsx. Альтернатива: оставить labels чистыми, но добавить sticky breadcrumb в sidebar header.
 
+### G-K-19 — Seed idempotency: getSeedEffects() даёт новые uuid каждый refresh — host-fix ✅
+
+**Severity:** P0 (БД накапливает дубликаты — 24 Realm при ожидаемых 3, 80 User при 10)
+**Module:** host (keycloak/seed.js + standalone.jsx existence check)
+**Observation:** `seed.js::getSeedEffects()` использовал `id: uuid()` — каждый refresh страницы создавал новые ids → existence check `existingIds.has(e.id)` всегда false → seed POST'ился заново. После 8 refresh'ей: 24 Realm, 80 User.
+**Stage 5b host-fix:** stable IDs `seed_keycloak_${target}_${context.id}` — детерминированы от content. Existence check срабатывает, повторный POST не вставит дубликаты.
+**Cleanup:** для удаления старых дубликатов — `DELETE FROM effects WHERE intent_id='_seed' AND target IN ('Realm','Client','User','Group','Role','IdentityProvider','ClientScope') AND id NOT LIKE 'seed_keycloak_%'`. Сделать manually либо через server SQL endpoint (DELETE /api/effects заблокирован — wipes all domains).
+
+### G-K-20 — Update form показывает только path-params (Stage 5b discovery)
+
+**Severity:** P1 (update-flow сломан UX-wise)
+**Module:** `@intent-driven/core` form-archetype + edit-projection generation
+**Observation:** Клик на «Сохранить» row-action в group_list → modal `updateGroup` показывает 3 поля: `Realm` / `Group Id` / `Realm Id` (все path-params, не editable). Нет реальных editable полей Group entity (`name`, `path`, `description`, `attributes`). Group.fields имеет 11 полей — должны быть в form.
+
+Edit-projection генерируется из `intent.parameters`, не из `entity.fields`. Это правильно для CREATE (где parameters могут быть subset), но для UPDATE — должны read entity.fields с pre-fill values из current world[mainEntity][id].
+
+**Target-stage:** SDK PR — для intent с α="replace" form-archetype читает entity.fields (excluding identifier-fields like idParam) + pre-fills values. parameters остаются для path-binding (URL), не как editable form fields.
+**Workaround (host):** authored update_group projection с явным `fields` list. Не делал в Stage 5b — отложено.
+
+### G-K-21 — Breadcrumb non-consecutive duplicates (Stage 5b deep-nav smoke) — host aggressive dedup ⚠️
+
+**Severity:** P1 (UX-мусор в deep nav)
+**Module:** SDK Breadcrumbs primitive + host useProjectionRoute
+**Observation:** G-K-13 (consecutive dedup) решил `Realms / Realms / Realms`, но не покрыл deep-nav: `Группы / Organizations / Группы / Group` (non-consecutive duplicates от tree navigation back-forward).
+**Stage 5b host-fix:** aggressive dedup через `seenIndex.set(key, i)` — оставляем только ПОСЛЕДНЕЕ occurrence каждого `(projectionId+params)`. Back-семантика страдает, но в AdminShell back редок (sidebar-driven nav).
+**SDK PR:** dedup как опция в Breadcrumbs primitive (`mode: "consecutive"|"latest"|"none"`) или в useProjectionRoute auto-flatten.
+
 ### G-K-9 — crystallize теряет mainEntity в detail-артефактах — ✅ ЗАКРЫТ (idf-sdk#239)
 
 **Severity:** P0 → **closed 2026-04-23 в core@0.58.0** (PR idf-sdk#239 «fix(core): preserve mainEntity + entities в artifact из crystallizeV2»).

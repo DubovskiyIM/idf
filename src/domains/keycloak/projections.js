@@ -31,6 +31,12 @@ const CANONICAL_ENTITIES = [
  * вместо flat formBody. Автор управляет группировкой вручную — это
  * декларативная UX-декомпозиция, не автоматическая.
  */
+// G-K-16 host-fix: AdminShell (G-K-14) даёт persistent sidebar tree —
+// hierarchy-tree-nav apply внутри body становится дубликатом. Disable
+// через projection.patterns.disabled. Применяем ко ВСЕМ catalog'ам
+// keycloak'а (host знает что включил persistentSidebar в SHELL).
+const SUPPRESS_TREE_IN_BODY = { disabled: ["hierarchy-tree-nav"] };
+
 export const PROJECTIONS = {
   // Stage 5b override: после G-K-10 fix derive назначает kind:"feed" для
   // Realm/Client (R2 feed override активируется через synthetic FK +
@@ -43,6 +49,7 @@ export const PROJECTIONS = {
     mainEntity: "Realm",
     entities: ["Realm"],
     witnesses: [],
+    patterns: SUPPRESS_TREE_IN_BODY,
   },
   client_list: {
     name: "Clients",
@@ -53,6 +60,7 @@ export const PROJECTIONS = {
     // G-K-17 host-fix: scope по routeParams.realmId (через worldWithRoute).
     // Если на корневом list (без realm scope) — показываем все.
     filter: "!world.realmId || realmId === world.realmId",
+    patterns: SUPPRESS_TREE_IN_BODY,
   },
 
   // ═══ G-K-17 host workaround: scoped child-каталоги ═══════════════════
@@ -68,6 +76,7 @@ export const PROJECTIONS = {
     entities: ["User"],
     witnesses: [],
     filter: "!world.realmId || realmId === world.realmId",
+    patterns: SUPPRESS_TREE_IN_BODY,
   },
   group_list: {
     name: "Группы",
@@ -76,6 +85,7 @@ export const PROJECTIONS = {
     entities: ["Group"],
     witnesses: [],
     filter: "!world.realmId || realmId === world.realmId",
+    patterns: SUPPRESS_TREE_IN_BODY,
   },
   role_list: {
     name: "Роли",
@@ -84,6 +94,7 @@ export const PROJECTIONS = {
     entities: ["Role"],
     witnesses: [],
     filter: "!world.realmId || realmId === world.realmId",
+    patterns: SUPPRESS_TREE_IN_BODY,
   },
   identityprovider_list: {
     name: "Identity Providers",
@@ -92,6 +103,7 @@ export const PROJECTIONS = {
     entities: ["IdentityProvider"],
     witnesses: [],
     filter: "!world.realmId || realmId === world.realmId",
+    patterns: SUPPRESS_TREE_IN_BODY,
   },
   clientscope_list: {
     name: "Client Scopes",
@@ -100,6 +112,7 @@ export const PROJECTIONS = {
     entities: ["ClientScope"],
     witnesses: [],
     filter: "!world.realmId || realmId === world.realmId",
+    patterns: SUPPRESS_TREE_IN_BODY,
   },
   component_list: {
     name: "Components",
@@ -108,6 +121,7 @@ export const PROJECTIONS = {
     entities: ["Component"],
     witnesses: [],
     filter: "!world.realmId || realmId === world.realmId",
+    patterns: SUPPRESS_TREE_IN_BODY,
   },
   organization_list: {
     name: "Organizations",
@@ -116,6 +130,7 @@ export const PROJECTIONS = {
     entities: ["Organization"],
     witnesses: [],
     filter: "!world.realmId || realmId === world.realmId",
+    patterns: SUPPRESS_TREE_IN_BODY,
   },
   workflow_list: {
     name: "Workflows",
@@ -124,6 +139,7 @@ export const PROJECTIONS = {
     entities: ["Workflow"],
     witnesses: [],
     filter: "!world.realmId || realmId === world.realmId",
+    patterns: SUPPRESS_TREE_IN_BODY,
   },
   realm_create: {
     name: "Создать realm",

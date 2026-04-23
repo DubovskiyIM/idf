@@ -181,16 +181,21 @@ export default function V2Shell({
    * useProjectionRoute (на навигационной стороне).
    */
   const dedupedHistory = useMemo(() => {
-    const out = [];
-    for (const crumb of (history || [])) {
-      const last = out[out.length - 1];
-      if (last && last.projectionId === crumb.projectionId &&
-          JSON.stringify(last.params || {}) === JSON.stringify(crumb.params || {})) {
-        continue;
-      }
-      out.push(crumb);
-    }
-    return out;
+    // G-K-13 + G-K-21: deep nav (Group → Organization → Group) даёт
+    // breadcrumb «Группы / Organizations / Группы / Group» даже после
+    // consecutive-dedup. Aggressive: dedup по (projectionId+params) с
+    // СОХРАНЕНИЕМ только ПОСЛЕДНЕГО occurrence — для нелинейного nav
+    // визуальный trail чище, back-семантика страдает (но в AdminShell
+    // back редок — used sidebar). SDK PR должен закрыть для всех flows.
+    const seenIndex = new Map();
+    (history || []).forEach((crumb, i) => {
+      const key = `${crumb.projectionId}:${JSON.stringify(crumb.params || {})}`;
+      seenIndex.set(key, i);
+    });
+    return (history || []).filter((crumb, i) => {
+      const key = `${crumb.projectionId}:${JSON.stringify(crumb.params || {})}`;
+      return seenIndex.get(key) === i; // только последнее occurrence
+    });
   }, [history]);
 
   const crumbNames = useMemo(() => {
