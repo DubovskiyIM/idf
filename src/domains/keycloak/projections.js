@@ -31,6 +31,48 @@ const CANONICAL_ENTITIES = [
  * вместо flat formBody. Автор управляет группировкой вручную — это
  * декларативная UX-декомпозиция, не автоматическая.
  */
+// G-K-16 host-fix: AdminShell даёт persistent sidebar tree —
+// hierarchy-tree-nav в body дублирует. Disable через patterns.disabled.
+const SUPPRESS_TREE_IN_BODY = { disabled: ["hierarchy-tree-nav"] };
+
+// G-K-22 host-fix: catalog-default-datagrid pattern не apply'ится если
+// body.item.intents непустой (base assignToSlotsCatalog добавляет inline
+// CRUD intents — это base behavior, не pattern). bodyOverride с явным
+// type:"dataGrid" — обходим. Helper генерит columns из witnesses
+// (sortable+filterable дефолты).
+function dgColumns(witnesses, fieldDefs = {}) {
+  return witnesses.map(key => ({
+    key,
+    label: fieldDefs[key]?.label || key,
+    sortable: true,
+    filterable: true,
+  }));
+}
+function dataGridBody(mainEntity, witnesses, actionIntents = []) {
+  const cols = [...dgColumns(witnesses)];
+  if (actionIntents.length > 0) {
+    cols.push({
+      key: "_actions",
+      kind: "actions",
+      label: "",
+      display: "auto", // ≤2 inline, ≥3 menu (Gravitino #218/#222)
+      actions: actionIntents.map(intentId => ({
+        intentId,
+        label: intentId.startsWith("update") ? "Изменить"
+             : intentId.startsWith("remove") ? "Удалить"
+             : intentId.startsWith("read")   ? "Открыть"
+             : intentId,
+        danger: intentId.startsWith("remove"),
+      })),
+    });
+  }
+  return {
+    type: "dataGrid",
+    source: mainEntity,  // world[mainEntity] — entities группируются по target=PascalCase
+    columns: cols,
+  };
+}
+
 export const PROJECTIONS = {
   // Stage 5b override: после G-K-10 fix derive назначает kind:"feed" для
   // Realm/Client (R2 feed override активируется через synthetic FK +
@@ -42,14 +84,107 @@ export const PROJECTIONS = {
     kind: "catalog",
     mainEntity: "Realm",
     entities: ["Realm"],
-    witnesses: [],
+    witnesses: ["realm", "displayName", "enabled", "sslRequired"],
+    bodyOverride: dataGridBody("Realm", ["realm", "displayName", "enabled", "sslRequired"], ["updateRealm", "removeRealm"]),
+    patterns: SUPPRESS_TREE_IN_BODY,
   },
   client_list: {
     name: "Clients",
     kind: "catalog",
     mainEntity: "Client",
     entities: ["Client"],
-    witnesses: [],
+    witnesses: ["clientId", "name", "enabled", "publicClient", "protocol"],
+    filter: "!world.realmId || realmId === world.realmId",
+    bodyOverride: dataGridBody("Client", ["clientId", "name", "enabled", "publicClient", "protocol"], ["updateClient", "removeClient"]),
+    patterns: SUPPRESS_TREE_IN_BODY,
+  },
+
+  // ═══ G-K-17 host workaround: scoped child-каталоги ═══════════════════
+  // Под persistentSidebar AdminShell (G-K-14) клик «Users под master» vs
+  // «Users под customer-app» должен дать РАЗНЫЕ списки, но без filter
+  // показывает все 10 users в обоих случаях. Authored filter по
+  // routeParams.realmId через worldWithRoute (= {...world, ...current.params}).
+  // X1: после SDK derive auto-filter по FK match (G-K-17 SDK PR) удалить.
+  user_list: {
+    name: "Пользователи",
+    kind: "catalog",
+    mainEntity: "User",
+    entities: ["User"],
+    witnesses: ["username", "email", "firstName", "lastName", "enabled", "emailVerified"],
+    filter: "!world.realmId || realmId === world.realmId",
+    bodyOverride: dataGridBody("User", ["username", "email", "firstName", "lastName", "enabled", "emailVerified"], ["updateUser", "removeUser"]),
+    patterns: SUPPRESS_TREE_IN_BODY,
+  },
+  group_list: {
+    name: "Группы",
+    kind: "catalog",
+    mainEntity: "Group",
+    entities: ["Group"],
+    witnesses: ["name", "path", "subGroupCount"],
+    filter: "!world.realmId || realmId === world.realmId",
+    bodyOverride: dataGridBody("Group", ["name", "path", "subGroupCount"], ["updateGroup", "removeGroup"]),
+    patterns: SUPPRESS_TREE_IN_BODY,
+  },
+  role_list: {
+    name: "Роли",
+    kind: "catalog",
+    mainEntity: "Role",
+    entities: ["Role"],
+    witnesses: ["name", "description", "composite", "clientRole"],
+    filter: "!world.realmId || realmId === world.realmId",
+    bodyOverride: dataGridBody("Role", ["name", "description", "composite", "clientRole"], ["updateRole", "removeRole"]),
+    patterns: SUPPRESS_TREE_IN_BODY,
+  },
+  identityprovider_list: {
+    name: "Identity Providers",
+    kind: "catalog",
+    mainEntity: "IdentityProvider",
+    entities: ["IdentityProvider"],
+    witnesses: ["alias", "displayName", "providerId", "enabled", "trustEmail"],
+    filter: "!world.realmId || realmId === world.realmId",
+    // IdentityProvider: только remove (нет updateIdentityProvider в imported)
+    bodyOverride: dataGridBody("IdentityProvider", ["alias", "displayName", "providerId", "enabled", "trustEmail"], ["removeIdentityProvider"]),
+    patterns: SUPPRESS_TREE_IN_BODY,
+  },
+  clientscope_list: {
+    name: "Client Scopes",
+    kind: "catalog",
+    mainEntity: "ClientScope",
+    entities: ["ClientScope"],
+    witnesses: ["name", "protocol", "description"],
+    filter: "!world.realmId || realmId === world.realmId",
+    bodyOverride: dataGridBody("ClientScope", ["name", "protocol", "description"], ["updateClientScope", "removeClientScope"]),
+    patterns: SUPPRESS_TREE_IN_BODY,
+  },
+  component_list: {
+    name: "Components",
+    kind: "catalog",
+    mainEntity: "Component",
+    entities: ["Component"],
+    witnesses: ["name", "providerType", "providerId"],
+    filter: "!world.realmId || realmId === world.realmId",
+    bodyOverride: dataGridBody("Component", ["name", "providerType", "providerId"], ["updateComponent", "removeComponent"]),
+    patterns: SUPPRESS_TREE_IN_BODY,
+  },
+  organization_list: {
+    name: "Organizations",
+    kind: "catalog",
+    mainEntity: "Organization",
+    entities: ["Organization"],
+    witnesses: ["alias", "name", "description", "enabled"],
+    filter: "!world.realmId || realmId === world.realmId",
+    bodyOverride: dataGridBody("Organization", ["alias", "name", "description", "enabled"], ["updateOrganization", "removeOrganization"]),
+    patterns: SUPPRESS_TREE_IN_BODY,
+  },
+  workflow_list: {
+    name: "Workflows",
+    kind: "catalog",
+    mainEntity: "Workflow",
+    entities: ["Workflow"],
+    witnesses: ["name", "description", "enabled"],
+    filter: "!world.realmId || realmId === world.realmId",
+    bodyOverride: dataGridBody("Workflow", ["name", "description", "enabled"], ["updateWorkflow", "removeWorkflow"]),
+    patterns: SUPPRESS_TREE_IN_BODY,
   },
   realm_create: {
     name: "Создать realm",

@@ -21,10 +21,14 @@ import { v4 as uuid } from "uuid";
  * быть редактируемы через UI после baseline-render'а.
  */
 export function getSeedEffects() {
+  // G-K-19 fix: stable IDs (а не uuid() каждый раз) — иначе на каждом
+  // refresh standalone.jsx existence check `existingIds.has(e.id)` не
+  // находит совпадения и seed дубируется (24 Realm в DB при 3 ожидаемых).
+  // Stable: `seed_keycloak_${target}_${context.id}`.
   const now = Date.now();
   const effects = [];
   const ef = (target, context) => effects.push({
-    id: uuid(),
+    id: `seed_keycloak_${target}_${context.id || context.internalId || context.alias}`,
     intent_id: "_seed",
     alpha: "add",
     scope: "account",

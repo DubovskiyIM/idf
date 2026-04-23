@@ -27,6 +27,18 @@ export const DOMAIN_ID = "keycloak";
 export const DOMAIN_NAME = "Keycloak — identity & access";
 
 /**
+ * G-K-14 host-config: для admin-style UX используем AdminShell layout
+ * (persistent sidebar tree + body), а не top-tabs. V2Shell детектит этот
+ * флаг и рендерит @intent-driven/renderer::AdminShell вместо стандартных
+ * горизонтальных tabs. Tree строится host-side из ROOT_PROJECTIONS +
+ * world-instances + R8 hubSections.
+ */
+export const SHELL = {
+  layout: "persistentSidebar",
+  sidebarTitle: "Workspace",
+};
+
+/**
  * Generic buildEffects для useEngine. importer-openapi @0.6 не выставляет
  * intent.particles.effects (только entities), поэтому DomainRuntime'овский
  * makeGenericBuildEffects не подходит. Здесь напрямую читаем top-level
