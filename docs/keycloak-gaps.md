@@ -113,9 +113,30 @@ node -e "import('./src/domains/keycloak/projections.js').then(m => console.log(m
 **Fix:** добавлены `mainEntity: proj.mainEntity || null` и `entities: proj.entities || (proj.mainEntity ? [proj.mainEntity] : [])`. 5 новых assertions в `preserveMainEntity.test.js`, full core suite 1253/1253 green.
 **Verification:** `arts.user_detail.mainEntity === "User"` (раньше `undefined`) — manual probe подтверждает после bump core@0.58.0.
 
-### G-K-10 — detectForeignKeys не учитывает synthetic FK (Stage 5 discovery) — SDK BUG ⛔
+### G-K-10 — detectForeignKeys не учитывает synthetic FK (Stage 5 discovery) — ✅ ЗАКРЫТ (idf-sdk#243)
 
-**Severity:** P0 (теперь главный блокер R8 после G-K-9 closure)
+**Severity:** P0 → closed
+**Closed:** idf-sdk#243 merged 2026-04-23, core@0.58.1 published. detectForeignKeys теперь принимает `{ kind: "foreignKey" + references }` shape. R8 начал срабатывать для 22 absorption'ов в Keycloak.
+
+---
+
+### G-K-11 — R8 absorbHubChildren выбирает первого parent'а (multi-parent noise) (Stage 5 discovery)
+
+**Severity:** P1 (не блокер, UX noise)
+**Module:** `@intent-driven/core` crystallize_v2/absorbHubChildren
+**Observation:** `absorbHubChildren` iterate'ит detailByEntity в порядке Object.entries и для каждого parent'а берёт matching child'ов без приоритизации. Если child имеет FK на несколько parent'ов (User.roleId + User.realmId), R8 абсорбирует его в первого встреченного parent'а. Для Keycloak User.roleId (synthetic path FK от `/roles/{roleId}/users`) встречается раньше realmId → user_list.absorbedBy = "role_detail" вместо ожидаемого "realm_detail".
+
+В Keycloak всего ~22 catalog'а абсорбированы, но часть к "неправильному" parent'у (user→role, group→user, и др). Renderer показывает их в subsections, но hierarchy семантически кривая.
+
+**Target-stage:** SDK PR — best-parent heuristic. Варианты:
+1. «Hubbier wins» — parent с бо́льшим числом children-candidate'ов (Realm имеет ~10, Role ~2)
+2. «Not-absorbed-self wins» — parent, который сам не absorbedBy
+3. Author-override в ontology: `entity.preferredParent: "Realm"` для мультиparent child'ов
+
+Первый вариант — pure алгоритмический, не требует author input.
+**Workaround:** host-side `absorbed: false` на конкретные noise-absorbtions в projections.js.
+
+
 **Module:** `@intent-driven/core` deriveProjections::detectForeignKeys
 **Observation:** `detectForeignKeys` в `src/crystallize_v2/deriveProjections.js` ищет ТОЛЬКО `field.type === "entityRef"`. Но `importer-openapi @0.5+` синтезирует path-derived FK как `{ type: "string", kind: "foreignKey", references: "Realm", synthetic: "openapi-path" }`. Type не `"entityRef"` → SDK FK detection skip'ает.
 
