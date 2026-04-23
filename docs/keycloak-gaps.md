@@ -106,6 +106,38 @@ node -e "import('./src/domains/keycloak/projections.js').then(m => console.log(m
 **Stage 3 host-fix:** explicit mapping 17 canonical `xsX → createX` с подменой `alpha: "insert"` + `creates: target`. Результат: 8 → 20 derived catalog'ов.
 **SDK PR (X1):** importer-openapi `detectCollectionPostAsCreate` — heuristic для POST на nested collection paths (path заканчивается на segment без `{id}` после).
 
+### G-K-14 — admin-shell layout: persistent sidebar tree (Stage 5b smoke) — SDK архитектурный gap ⛔
+
+**Severity:** P0 для Keycloak-style UX (не блокирует другие домены)
+**Module:** `@intent-driven/renderer` V2Shell layout (нет mode'а для admin-UI)
+**Observation:** Сейчас `hierarchy-tree-nav` pattern apply'ится **внутри body** одной из catalog projections (например `realm_list`). На других top-tabs (Event / IdentityProvider / Мои Event) дерева нет. Также — клик по узлу tree не переключает правую панель целиком (не отдельный layout-region), а является частью того же catalog'а.
+
+**Что хочет user (Keycloak Admin Console reference):**
+```
+| persistent sidebar (tree)    | body (current selected projection) |
+| - Realms                     |                                    |
+|   - master                   |                                    |
+|     - Users                  |     [content of selected node]     |
+|     - Groups                 |                                    |
+|     - Clients                |                                    |
+|     - ...                    |                                    |
+|   - customer-app             |                                    |
+| - Events                     |                                    |
+| - Settings                   |                                    |
+```
+
+**Target-stage:** SDK PR — V2Shell новый prop `layoutMode: "topTabs" | "persistentSidebar"` (или domain-level `domain.shell = { layout: "persistentSidebar", treeSource: "realm_detail.hubSections" }`). Required для admin-style UX (Keycloak / Gravitino / Grafana / Argo / любой enterprise control-plane).
+
+**Workaround (host):** свести ROOT_PROJECTIONS до 1 («Realms»), всю иерархию открывать кликом на realm — но это уход от admin-style nav, юзер вернётся к click-through вместо persistent tree.
+
+### G-K-15 — hierarchy-tree-nav включает embedded entities (Stage 5b smoke)
+
+**Severity:** P1 (визуальный мусор в дереве)
+**Module:** `@intent-driven/core` patterns/cross/hierarchy-tree-nav
+**Observation:** В дереве «ИЕРАРХИЯ» видны embedded entities без intents: `AuthDetailsRepresentation`, `ClientDescriptionConverter`, `ClientSessionStat`, `ClientType`, `ClientsInitialAccess`, `Composite`, `PushRevocation`, `Available`. Они помечены `kind:"embedded"` через G-K-3 host-fix, но pattern apply все равно их вытаскивает (вероятно ищет children по FK references=Realm в `ontology.entities`, не по absorbed catalogs или non-embedded entities).
+
+**Target-stage:** SDK PR — hierarchy-tree-nav.apply должен skip'ать `entity.kind === "embedded"` или проверять `catalogByEntity[childEntity]` (т.е. показывать только entities с derived catalog).
+
 ### G-K-9 — crystallize теряет mainEntity в detail-артефактах — ✅ ЗАКРЫТ (idf-sdk#239)
 
 **Severity:** P0 → **closed 2026-04-23 в core@0.58.0** (PR idf-sdk#239 «fix(core): preserve mainEntity + entities в artifact из crystallizeV2»).
