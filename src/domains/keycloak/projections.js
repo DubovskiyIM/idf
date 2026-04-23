@@ -56,13 +56,16 @@ function dataGridBody(mainEntity, witnesses, actionIntents = []) {
       kind: "actions",
       label: "",
       display: "auto", // ≤2 inline, ≥3 menu (Gravitino #218/#222)
-      actions: actionIntents.map(intentId => ({
-        intentId,
-        label: intentId.startsWith("update") ? "Изменить"
-             : intentId.startsWith("remove") ? "Удалить"
-             : intentId.startsWith("read")   ? "Открыть"
-             : intentId,
-        danger: intentId.startsWith("remove"),
+      // SDK ActionCell schema: { intent (NOT intentId), label, params, danger }.
+      // params использует resolveActionParams: "item.X" → row[X].
+      actions: actionIntents.map(intent => ({
+        intent,
+        label: intent.startsWith("update") ? "Изменить"
+             : intent.startsWith("remove") ? "Удалить"
+             : intent.startsWith("read")   ? "Открыть"
+             : intent,
+        params: { id: "item.id" },
+        danger: intent.startsWith("remove"),
       })),
     });
   }
@@ -71,6 +74,22 @@ function dataGridBody(mainEntity, witnesses, actionIntents = []) {
     source: mainEntity,  // world[mainEntity] — entities группируются по target=PascalCase
     columns: cols,
   };
+}
+
+// Hero-create CTA spec: bodyOverride блокирует hero-create.apply
+// (pattern boundary), поэтому author hero вручную для каждого catalog'а.
+// containers.jsx::IntentButton с opens:"overlay" + overlayKey =
+// `overlay_${intentId}` — overlay уже автогенерится crystallize_v2.
+function heroCreate(intentId, label) {
+  return [{
+    type: "intentButton",
+    intentId,
+    label,
+    opens: "overlay",
+    overlayKey: `overlay_${intentId}`,
+    icon: "⚡",
+    variant: "primary",
+  }];
 }
 
 export const PROJECTIONS = {
@@ -86,6 +105,7 @@ export const PROJECTIONS = {
     entities: ["Realm"],
     witnesses: ["realm", "displayName", "enabled", "sslRequired"],
     bodyOverride: dataGridBody("Realm", ["realm", "displayName", "enabled", "sslRequired"], ["updateRealm", "removeRealm"]),
+    hero: heroCreate("createRealm", "Создать realm"),
     patterns: SUPPRESS_TREE_IN_BODY,
   },
   client_list: {
@@ -96,6 +116,7 @@ export const PROJECTIONS = {
     witnesses: ["clientId", "name", "enabled", "publicClient", "protocol"],
     filter: "!world.realmId || realmId === world.realmId",
     bodyOverride: dataGridBody("Client", ["clientId", "name", "enabled", "publicClient", "protocol"], ["updateClient", "removeClient"]),
+    hero: heroCreate("createClient", "Создать client"),
     patterns: SUPPRESS_TREE_IN_BODY,
   },
 
@@ -113,6 +134,7 @@ export const PROJECTIONS = {
     witnesses: ["username", "email", "firstName", "lastName", "enabled", "emailVerified"],
     filter: "!world.realmId || realmId === world.realmId",
     bodyOverride: dataGridBody("User", ["username", "email", "firstName", "lastName", "enabled", "emailVerified"], ["updateUser", "removeUser"]),
+    hero: heroCreate("createUser", "Создать user"),
     patterns: SUPPRESS_TREE_IN_BODY,
   },
   group_list: {
@@ -123,6 +145,7 @@ export const PROJECTIONS = {
     witnesses: ["name", "path", "subGroupCount"],
     filter: "!world.realmId || realmId === world.realmId",
     bodyOverride: dataGridBody("Group", ["name", "path", "subGroupCount"], ["updateGroup", "removeGroup"]),
+    hero: heroCreate("createGroup", "Создать group"),
     patterns: SUPPRESS_TREE_IN_BODY,
   },
   role_list: {
@@ -133,6 +156,7 @@ export const PROJECTIONS = {
     witnesses: ["name", "description", "composite", "clientRole"],
     filter: "!world.realmId || realmId === world.realmId",
     bodyOverride: dataGridBody("Role", ["name", "description", "composite", "clientRole"], ["updateRole", "removeRole"]),
+    hero: heroCreate("createRole", "Создать role"),
     patterns: SUPPRESS_TREE_IN_BODY,
   },
   identityprovider_list: {
@@ -144,6 +168,7 @@ export const PROJECTIONS = {
     filter: "!world.realmId || realmId === world.realmId",
     // IdentityProvider: только remove (нет updateIdentityProvider в imported)
     bodyOverride: dataGridBody("IdentityProvider", ["alias", "displayName", "providerId", "enabled", "trustEmail"], ["removeIdentityProvider"]),
+    hero: heroCreate("createIdentityProvider", "Создать IdP"),
     patterns: SUPPRESS_TREE_IN_BODY,
   },
   clientscope_list: {
@@ -154,6 +179,7 @@ export const PROJECTIONS = {
     witnesses: ["name", "protocol", "description"],
     filter: "!world.realmId || realmId === world.realmId",
     bodyOverride: dataGridBody("ClientScope", ["name", "protocol", "description"], ["updateClientScope", "removeClientScope"]),
+    hero: heroCreate("createClientScope", "Создать ClientScope"),
     patterns: SUPPRESS_TREE_IN_BODY,
   },
   component_list: {
@@ -164,6 +190,7 @@ export const PROJECTIONS = {
     witnesses: ["name", "providerType", "providerId"],
     filter: "!world.realmId || realmId === world.realmId",
     bodyOverride: dataGridBody("Component", ["name", "providerType", "providerId"], ["updateComponent", "removeComponent"]),
+    hero: heroCreate("createComponent", "Создать Component"),
     patterns: SUPPRESS_TREE_IN_BODY,
   },
   organization_list: {
@@ -174,6 +201,7 @@ export const PROJECTIONS = {
     witnesses: ["alias", "name", "description", "enabled"],
     filter: "!world.realmId || realmId === world.realmId",
     bodyOverride: dataGridBody("Organization", ["alias", "name", "description", "enabled"], ["updateOrganization", "removeOrganization"]),
+    hero: heroCreate("createOrganization", "Создать Organization"),
     patterns: SUPPRESS_TREE_IN_BODY,
   },
   workflow_list: {
@@ -184,6 +212,7 @@ export const PROJECTIONS = {
     witnesses: ["name", "description", "enabled"],
     filter: "!world.realmId || realmId === world.realmId",
     bodyOverride: dataGridBody("Workflow", ["name", "description", "enabled"], ["updateWorkflow", "removeWorkflow"]),
+    hero: heroCreate("createWorkflow", "Создать Workflow"),
     patterns: SUPPRESS_TREE_IN_BODY,
   },
   realm_create: {
