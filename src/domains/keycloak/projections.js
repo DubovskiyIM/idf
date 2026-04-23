@@ -48,11 +48,28 @@ function dgColumns(witnesses, fieldDefs = {}) {
     filterable: true,
   }));
 }
-function dataGridBody(mainEntity, witnesses, extraColumns = []) {
+function dataGridBody(mainEntity, witnesses, actionIntents = []) {
+  const cols = [...dgColumns(witnesses)];
+  if (actionIntents.length > 0) {
+    cols.push({
+      key: "_actions",
+      kind: "actions",
+      label: "",
+      display: "auto", // ≤2 inline, ≥3 menu (Gravitino #218/#222)
+      actions: actionIntents.map(intentId => ({
+        intentId,
+        label: intentId.startsWith("update") ? "Изменить"
+             : intentId.startsWith("remove") ? "Удалить"
+             : intentId.startsWith("read")   ? "Открыть"
+             : intentId,
+        danger: intentId.startsWith("remove"),
+      })),
+    });
+  }
   return {
     type: "dataGrid",
     source: mainEntity,  // world[mainEntity] — entities группируются по target=PascalCase
-    columns: [...dgColumns(witnesses), ...extraColumns],
+    columns: cols,
   };
 }
 
@@ -68,7 +85,7 @@ export const PROJECTIONS = {
     mainEntity: "Realm",
     entities: ["Realm"],
     witnesses: ["realm", "displayName", "enabled", "sslRequired"],
-    bodyOverride: dataGridBody("Realm", ["realm", "displayName", "enabled", "sslRequired"]),
+    bodyOverride: dataGridBody("Realm", ["realm", "displayName", "enabled", "sslRequired"], ["updateRealm", "removeRealm"]),
     patterns: SUPPRESS_TREE_IN_BODY,
   },
   client_list: {
@@ -78,7 +95,7 @@ export const PROJECTIONS = {
     entities: ["Client"],
     witnesses: ["clientId", "name", "enabled", "publicClient", "protocol"],
     filter: "!world.realmId || realmId === world.realmId",
-    bodyOverride: dataGridBody("Client", ["clientId", "name", "enabled", "publicClient", "protocol"]),
+    bodyOverride: dataGridBody("Client", ["clientId", "name", "enabled", "publicClient", "protocol"], ["updateClient", "removeClient"]),
     patterns: SUPPRESS_TREE_IN_BODY,
   },
 
@@ -95,7 +112,7 @@ export const PROJECTIONS = {
     entities: ["User"],
     witnesses: ["username", "email", "firstName", "lastName", "enabled", "emailVerified"],
     filter: "!world.realmId || realmId === world.realmId",
-    bodyOverride: dataGridBody("User", ["username", "email", "firstName", "lastName", "enabled", "emailVerified"]),
+    bodyOverride: dataGridBody("User", ["username", "email", "firstName", "lastName", "enabled", "emailVerified"], ["updateUser", "removeUser"]),
     patterns: SUPPRESS_TREE_IN_BODY,
   },
   group_list: {
@@ -105,7 +122,7 @@ export const PROJECTIONS = {
     entities: ["Group"],
     witnesses: ["name", "path", "subGroupCount"],
     filter: "!world.realmId || realmId === world.realmId",
-    bodyOverride: dataGridBody("Group", ["name", "path", "subGroupCount"]),
+    bodyOverride: dataGridBody("Group", ["name", "path", "subGroupCount"], ["updateGroup", "removeGroup"]),
     patterns: SUPPRESS_TREE_IN_BODY,
   },
   role_list: {
@@ -115,7 +132,7 @@ export const PROJECTIONS = {
     entities: ["Role"],
     witnesses: ["name", "description", "composite", "clientRole"],
     filter: "!world.realmId || realmId === world.realmId",
-    bodyOverride: dataGridBody("Role", ["name", "description", "composite", "clientRole"]),
+    bodyOverride: dataGridBody("Role", ["name", "description", "composite", "clientRole"], ["updateRole", "removeRole"]),
     patterns: SUPPRESS_TREE_IN_BODY,
   },
   identityprovider_list: {
@@ -125,7 +142,8 @@ export const PROJECTIONS = {
     entities: ["IdentityProvider"],
     witnesses: ["alias", "displayName", "providerId", "enabled", "trustEmail"],
     filter: "!world.realmId || realmId === world.realmId",
-    bodyOverride: dataGridBody("IdentityProvider", ["alias", "displayName", "providerId", "enabled", "trustEmail"]),
+    // IdentityProvider: только remove (нет updateIdentityProvider в imported)
+    bodyOverride: dataGridBody("IdentityProvider", ["alias", "displayName", "providerId", "enabled", "trustEmail"], ["removeIdentityProvider"]),
     patterns: SUPPRESS_TREE_IN_BODY,
   },
   clientscope_list: {
@@ -135,7 +153,7 @@ export const PROJECTIONS = {
     entities: ["ClientScope"],
     witnesses: ["name", "protocol", "description"],
     filter: "!world.realmId || realmId === world.realmId",
-    bodyOverride: dataGridBody("ClientScope", ["name", "protocol", "description"]),
+    bodyOverride: dataGridBody("ClientScope", ["name", "protocol", "description"], ["updateClientScope", "removeClientScope"]),
     patterns: SUPPRESS_TREE_IN_BODY,
   },
   component_list: {
@@ -145,7 +163,7 @@ export const PROJECTIONS = {
     entities: ["Component"],
     witnesses: ["name", "providerType", "providerId"],
     filter: "!world.realmId || realmId === world.realmId",
-    bodyOverride: dataGridBody("Component", ["name", "providerType", "providerId"]),
+    bodyOverride: dataGridBody("Component", ["name", "providerType", "providerId"], ["updateComponent", "removeComponent"]),
     patterns: SUPPRESS_TREE_IN_BODY,
   },
   organization_list: {
@@ -155,7 +173,7 @@ export const PROJECTIONS = {
     entities: ["Organization"],
     witnesses: ["alias", "name", "description", "enabled"],
     filter: "!world.realmId || realmId === world.realmId",
-    bodyOverride: dataGridBody("Organization", ["alias", "name", "description", "enabled"]),
+    bodyOverride: dataGridBody("Organization", ["alias", "name", "description", "enabled"], ["updateOrganization", "removeOrganization"]),
     patterns: SUPPRESS_TREE_IN_BODY,
   },
   workflow_list: {
@@ -165,7 +183,7 @@ export const PROJECTIONS = {
     entities: ["Workflow"],
     witnesses: ["name", "description", "enabled"],
     filter: "!world.realmId || realmId === world.realmId",
-    bodyOverride: dataGridBody("Workflow", ["name", "description", "enabled"]),
+    bodyOverride: dataGridBody("Workflow", ["name", "description", "enabled"], ["updateWorkflow", "removeWorkflow"]),
     patterns: SUPPRESS_TREE_IN_BODY,
   },
   realm_create: {
