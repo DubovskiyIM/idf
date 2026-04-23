@@ -24,21 +24,53 @@
  * (docs/gravitino-gaps.md G1).
  */
 
-const catalog = (mainEntity, name, witnesses, { onItemClick = true, sort } = {}) => ({
-  name,
-  kind: "catalog",
-  mainEntity,
-  entities: [mainEntity],
-  witnesses,
-  ...(sort ? { sort } : {}),
-  ...(onItemClick ? {
-    onItemClick: {
-      action: "navigate",
-      to: `${mainEntity.toLowerCase()}_detail`,
-      params: { [`${mainEntity.toLowerCase()}Id`]: "item.name" },
-    },
-  } : {}),
-});
+const pluralizeLower = (entity) => {
+  const lower = entity.toLowerCase();
+  if (lower.endsWith("y")) return `${lower.slice(0, -1)}ies`;
+  if (lower.endsWith("s") || lower.endsWith("x") || lower.endsWith("ch") || lower.endsWith("sh")) return `${lower}es`;
+  return `${lower}s`;
+};
+
+// DataGrid `source` convention совпадает с catalog-archetype default
+// (`pluralizeLower(mainEntity)`), после idf-sdk#216 DataGrid primitive
+// резолвит items из ctx.world[source] когда node.items пустой.
+//
+// onItemClick передаёт item.id (а не item.name), потому что
+// resolveDetailTarget резолвит detail по `e.id === routeParams[idParam]`.
+// Gravitino natural key — name, но он unique только в пределах parent
+// (schema "public" может быть в нескольких catalogs), поэтому url-param
+// держит uuid. Breadcrumbs должны использовать name как label.
+const catalog = (mainEntity, name, witnesses, { onItemClick = true, sort, columns } = {}) => {
+  const lower = mainEntity.toLowerCase();
+  const clickSpec = onItemClick ? {
+    action: "navigate",
+    to: `${lower}_detail`,
+    params: { [`${lower}Id`]: "item.id" },
+  } : null;
+
+  const base = {
+    name,
+    kind: "catalog",
+    mainEntity,
+    entities: [mainEntity],
+    witnesses,
+    ...(sort ? { sort } : {}),
+    ...(clickSpec ? { onItemClick: clickSpec } : {}),
+  };
+
+  if (columns) {
+    base.bodyOverride = {
+      type: "dataGrid",
+      items: [],
+      source: pluralizeLower(mainEntity),
+      columns,
+      emptyLabel: `Нет данных (${name})`,
+      ...(clickSpec ? { onItemClick: clickSpec } : {}),
+    };
+  }
+
+  return base;
+};
 
 const detail = (mainEntity, name, witnesses, subCollections = [], idParam = null) => ({
   name,
@@ -59,7 +91,12 @@ export const PROJECTIONS = {
 
   // ═══ Metalake ══════════════════════════════════════════════════════════════
   metalake_list: catalog("Metalake", "Metalakes",
-    ["name", "comment"]),
+    ["name", "comment"], {
+      columns: [
+        { key: "name",    label: "Name",    sortable: true, filterable: true },
+        { key: "comment", label: "Comment", filterable: true },
+      ],
+    }),
   metalake_detail: detail("Metalake", "Metalake",
     ["name", "comment", "properties", "audit"],
     [{ entity: "Catalog", foreignKey: "metalakeId", title: "Catalogs" }]),
@@ -68,13 +105,10 @@ export const PROJECTIONS = {
   // type: relational/fileset/messaging/model; provider: hive/iceberg/...
   //
   // bodyOverride: DataGrid primitive с sort+filter per column (G20/G21/G38).
-  // После merge idf-sdk#214 (core projection.bodyOverride) + renderer bump —
-  // catalog_list рендерится как native AntD Table вместо default card-list.
-  catalog_list: {
-    ...catalog("Catalog", "Catalogs", ["name", "type", "provider", "comment"]),
-    bodyOverride: {
-      type: "dataGrid",
-      items: [],
+  // После merge idf-sdk#216 (DataGrid source resolution) — grid пуллит items
+  // из ctx.world[source] когда node.items пустой.
+  catalog_list: catalog("Catalog", "Catalogs",
+    ["name", "type", "provider", "comment"], {
       columns: [
         { key: "name",     label: "Name",     sortable: true, filterable: true },
         { key: "type",     label: "Type",     sortable: true, filter: "enum",
@@ -82,14 +116,7 @@ export const PROJECTIONS = {
         { key: "provider", label: "Provider", sortable: true, filterable: true },
         { key: "comment",  label: "Comment",  filterable: true },
       ],
-      emptyLabel: "Нет каталогов",
-      onItemClick: {
-        action: "navigate",
-        to: "catalog_detail",
-        params: { catalogId: "item.id" },
-      },
-    },
-  },
+    }),
   catalog_detail: detail("Catalog", "Catalog",
     ["name", "type", "provider", "comment", "properties", "audit"],
     [{ entity: "Schema", foreignKey: "catalogId", title: "Schemas" }]),
@@ -97,7 +124,12 @@ export const PROJECTIONS = {
   // ═══ Schema ════════════════════════════════════════════════════════════════
   // Schema — child Catalog; сам является parent'ом для Table/Fileset/Topic/Model.
   schema_list: catalog("Schema", "Schemas",
-    ["name", "comment"]),
+    ["name", "comment"], {
+      columns: [
+        { key: "name",    label: "Name",    sortable: true, filterable: true },
+        { key: "comment", label: "Comment", filterable: true },
+      ],
+    }),
   schema_detail: detail("Schema", "Schema",
     ["name", "comment", "properties", "audit"],
     [
@@ -110,27 +142,51 @@ export const PROJECTIONS = {
   // ═══ Table ═════════════════════════════════════════════════════════════════
   // Table несёт columns (nested json), partitioning, distribution, indexes.
   table_list: catalog("Table", "Tables",
-    ["name", "comment"]),
+    ["name", "comment"], {
+      columns: [
+        { key: "name",    label: "Name",    sortable: true, filterable: true },
+        { key: "comment", label: "Comment", filterable: true },
+      ],
+    }),
   table_detail: detail("Table", "Table",
     ["name", "comment", "columns", "partitioning", "distribution",
      "sortOrders", "indexes", "properties", "audit"]),
 
   // ═══ Fileset ═══════════════════════════════════════════════════════════════
   fileset_list: catalog("Fileset", "Filesets",
-    ["name", "type", "storageLocation", "comment"]),
+    ["name", "type", "storageLocation", "comment"], {
+      columns: [
+        { key: "name",            label: "Name",             sortable: true, filterable: true },
+        { key: "type",            label: "Type",             sortable: true, filter: "enum",
+          values: ["managed", "external"] },
+        { key: "storageLocation", label: "Storage Location", filterable: true },
+        { key: "comment",         label: "Comment",          filterable: true },
+      ],
+    }),
   fileset_detail: detail("Fileset", "Fileset",
     ["name", "type", "storageLocation", "comment", "properties"]),
 
   // ═══ Topic ═════════════════════════════════════════════════════════════════
   topic_list: catalog("Topic", "Topics",
-    ["name", "comment"]),
+    ["name", "comment"], {
+      columns: [
+        { key: "name",    label: "Name",    sortable: true, filterable: true },
+        { key: "comment", label: "Comment", filterable: true },
+      ],
+    }),
   topic_detail: detail("Topic", "Topic",
     ["name", "comment", "properties"]),
 
   // ═══ Model ═════════════════════════════════════════════════════════════════
   // latestVersion — counter. Model содержит ModelVersion как children.
   model_list: catalog("Model", "Models",
-    ["name", "latestVersion", "comment"]),
+    ["name", "latestVersion", "comment"], {
+      columns: [
+        { key: "name",          label: "Name",           sortable: true, filterable: true },
+        { key: "latestVersion", label: "Latest Version", sortable: true },
+        { key: "comment",       label: "Comment",        filterable: true },
+      ],
+    }),
   model_detail: detail("Model", "Model",
     ["name", "latestVersion", "comment", "properties", "audit"],
     [{ entity: "ModelVersion", foreignKey: "modelId", title: "Versions" }]),
@@ -140,13 +196,21 @@ export const PROJECTIONS = {
   // catalog-archetype не уважает field.primitive hint (chipList), упадёт
   // на object children. Видны на detail через ChipList.
   user_list: catalog("User", "Users",
-    ["name"]),
+    ["name"], {
+      columns: [
+        { key: "name", label: "Name", sortable: true, filterable: true },
+      ],
+    }),
   user_detail: detail("User", "User",
     ["name", "roles", "audit"]),
 
   // ═══ Group ═════════════════════════════════════════════════════════════════
   group_list: catalog("Group", "Groups",
-    ["name"]),
+    ["name"], {
+      columns: [
+        { key: "name", label: "Name", sortable: true, filterable: true },
+      ],
+    }),
   group_detail: detail("Group", "Group",
     ["name", "roles", "audit"]),
 
@@ -154,13 +218,24 @@ export const PROJECTIONS = {
   // securableObjects — matrix, только на detail. properties — json,
   // popover только на detail.
   role_list: catalog("Role", "Roles",
-    ["name"]),
+    ["name"], {
+      columns: [
+        { key: "name", label: "Name", sortable: true, filterable: true },
+      ],
+    }),
   role_detail: detail("Role", "Role",
     ["name", "securableObjects", "properties"]),
 
   // ═══ Tag ═══════════════════════════════════════════════════════════════════
   tag_list: catalog("Tag", "Tags",
-    ["name", "comment", "inherited"]),
+    ["name", "comment", "inherited"], {
+      columns: [
+        { key: "name",      label: "Name",      sortable: true, filterable: true },
+        { key: "comment",   label: "Comment",   filterable: true },
+        { key: "inherited", label: "Inherited", sortable: true, filter: "enum",
+          values: [true, false] },
+      ],
+    }),
   tag_detail: detail("Tag", "Tag",
     ["name", "comment", "inherited", "properties", "audit"]),
 
@@ -168,7 +243,16 @@ export const PROJECTIONS = {
   // Importer G32 не склеил PolicyBase/PolicyMetadata — host ontology.js
   // enrichment добавляет синтетические visible fields (name/type/enabled/
   // comment/content/audit). Используем их в projections.
-  policy_list: catalog("Policy", "Policies", ["name", "type", "enabled", "comment"]),
+  policy_list: catalog("Policy", "Policies",
+    ["name", "type", "enabled", "comment"], {
+      columns: [
+        { key: "name",    label: "Name",    sortable: true, filterable: true },
+        { key: "type",    label: "Type",    sortable: true, filterable: true },
+        { key: "enabled", label: "Enabled", sortable: true, filter: "enum",
+          values: [true, false] },
+        { key: "comment", label: "Comment", filterable: true },
+      ],
+    }),
   policy_detail: detail("Policy", "Policy", ["name", "type", "enabled", "comment", "content", "audit"]),
 };
 

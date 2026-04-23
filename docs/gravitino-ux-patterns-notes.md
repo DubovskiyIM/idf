@@ -54,6 +54,30 @@
 **Related patterns:** `subcollections` в `packages/core/src/patterns/stable/detail/` — fix именно там.
 **Follow-up:** SDK backlog — либо fix apply-функции, либо переместить subcollections в matching-only (без apply) и заставить авторов явно писать subCollections.
 
+### P-4: DataGrid для всех catalog-list проекций (не только «≥3 metrics»)
+
+**Стадия:** Stage 2/3 post-seed (2026-04-23)
+**Источник:** Gravitino dogfood + Workzilla/AntD pro admin paradigm
+**Наблюдение:** При seed с ≥5 items в catalog user ожидает **таблицу с sort/filter per column**, не cards. Card-layout уместен для визуально-насыщенных feeds (e-commerce listings, social posts), не для CRUD-administration UI (metalakes, policies, roles). Для 12 list-проекций Gravitino 100% должны быть таблицами.
+**Trigger (candidate):** `archetype === "catalog"` + `mainEntity` entity без `image|multiImage` полей + witnesses не содержат `heroImage|avatar` + ≥5 seeded items (admin CRUD surface, не feed).
+**Structure:** `slots.body = { type: "dataGrid", source: pluralize(mainEntity), columns: witnesses → DataGrid.columns, onItemClick }`. Каждый witness field превращается в `column` с `sortable: true + filterable|filter:"enum"` по field.type.
+**Evidence:** Gravitino v2 WebUI ВСЕ 12 модулей — таблицы (screenshot batch 2026-04-22). AntD Pro admin-layout defaults to `<Table>` primitive. User feedback 2026-04-23: «Таблиц нет, все в карточках».
+**Counterexample:** sales.listing_feed — image-rich catalog (multiImage), grid-card-layout уместен; reflect.mood_entries_feed — compact cards OK; любой feed-архетип (не catalog).
+**Related patterns:** `grid-card-layout` (работает на image/money fields), `faceted-filter-panel` (дополняет DataGrid для ≥3 enum polya).
+**Follow-up:** после dogfood финала — кандидат в `catalog/dataGrid-default-layout` с trigger-matcher'ом. До того — host авторы пишут `projection.bodyOverride` руками (current state).
+
+### P-5: Natural-key navigation (name vs synthetic id)
+
+**Стадия:** Stage 2 (click-handler debugging, 2026-04-23)
+**Источник:** Gravitino (name = natural key), Stripe ids (`cus_*` prefix), K8s resources (name within namespace)
+**Наблюдение:** `resolveDetailTarget` в renderer hardcodes `list.find(e => e.id === routeParams[idParam])`. Когда domain имеет natural key (`name` для Gravitino, `slug` для CMS), автор интуитивно передаёт `params: { metalakeId: "item.name" }` — и detail не резолвится, клик «не работает» silently.
+**Trigger (format-level):** `entity` с уникальным human-readable полем (name/slug/code) + idParam convention в URL с natural key — ожидает lookup by that field, не by `.id`.
+**Structure:** kandidat — ontology-level `entity.identifierField: "name"` + `resolveDetailTarget` использует `e[identifierField] ?? e.id`. Или host-level: автор осознанно передаёт `item.id` (uuid-style URL, breadcrumbs label отдельно через `name`).
+**Evidence:** user feedback 2026-04-23 «не работают клики/евенты» → root cause: `item.name` → e.id mismatch (id=`m_prod`, name=`prod_lake`). Fix: сменили onItemClick на `item.id`.
+**Counterexample:** когда `id === name` уже уникален в пределах world (напр., все доменные User id = email), fix не нужен.
+**Related patterns:** `hierarchy-tree-nav`, `subCollections.foreignKey` — те же conventions по natural-key могут проявляться.
+**Follow-up:** SDK backlog — предложить `entity.identifierField` в ontology-шейпе или добавить fallback `e.id ?? e.name` в resolveDetailTarget. Исправить silent-fail: если detail не находит entity, рендерить empty-state «не найден», а не пустой экран.
+
 ### P-?: (placeholder for next observation)
 
-<!-- По мере работы в Stage 2-8 добавлять P-4, P-5, ... -->
+<!-- По мере работы в Stage 2-8 добавлять P-6, P-7, ... -->

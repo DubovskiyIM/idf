@@ -449,9 +449,10 @@ Metalake list → heroCreate ✓ (inline composer для новой metalake).
 ### Оставшиеся gap'ы (приоритизированный финал)
 
 **Host-integration deferred (низкоприоритетный для architecture, но visible):**
-- **G20/G21/G38 (Stage 4.5)** — catalog shape-layer для Tags/Policies chip columns + Type/Provider filter. SDK DataGrid готов, нужна host/core integration (pattern + projection authoring)
+- **G20/G21/G38 (Stage 4.5)** — catalog shape-layer для Tags/Policies chip columns + Type/Provider filter. SDK DataGrid готов, нужна host/core integration (pattern + projection authoring). **Частично закрыто 2026-04-23:** все 12 list-projections имеют `bodyOverride` с columns + per-column sortable/filterable/enum filter. idf-sdk#216 (DataGrid source resolution) merged; release PR #217 pending → после публикации renderer@0.34.1 + adapter-antd@1.6.2 и bump host. Tags/Policies chip-columns — всё ещё открыто
 - **G23 (Stage 6.5)** — authored `catalog_create` projection с Wizard primitive (multi-step provider selection). SDK Wizard готов
 - **G34** — per-item Grant Role action в user_list/group_list catalog-archetype (intents есть, wiring нужен)
+- **Click-nav root cause** — `resolveDetailTarget` в renderer использует `e.id === routeParams[idParam]`. Gravitino natural key = `name`, но seed id ≠ name → клики тихо не работали. **Закрыто 2026-04-23:** host projections передают `item.id` в onItemClick params. SDK-side fix (ontology `entity.identifierField` с fallback) записан в ux-patterns-notes P-5
 
 **Future/vended:**
 - **G29 Versions** — materialize from Φ.history (document materializer extension)
