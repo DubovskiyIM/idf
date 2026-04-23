@@ -168,6 +168,31 @@ export default function V2Shell({
    * (нечасто для hierarchical nav, но возможно в истории back-forward) —
    * последний override wins. Для текущих Gravitino flows conflict'ов нет.
    */
+  /**
+   * Dedup consecutive identical crumb'ы (same projectionId + same params).
+   * SDK Breadcrumbs primitive рендерит [...history, current] как есть; на
+   * deep-tree nav (Keycloak Realm hierarchy) можно несколько раз клик'нуть
+   * "наверх" → один и тот же realm_list пишется в history N раз → trail
+   * выглядит «Realms / Realms / Realms / Group / Group». Consecutive
+   * dedup сохраняет back-forward semantics (back на N-1 уровень) и
+   * убирает визуальный мусор.
+   *
+   * G-K-13: SDK PR должен сделать dedup в Breadcrumbs primitive или в
+   * useProjectionRoute (на навигационной стороне).
+   */
+  const dedupedHistory = useMemo(() => {
+    const out = [];
+    for (const crumb of (history || [])) {
+      const last = out[out.length - 1];
+      if (last && last.projectionId === crumb.projectionId &&
+          JSON.stringify(last.params || {}) === JSON.stringify(crumb.params || {})) {
+        continue;
+      }
+      out.push(crumb);
+    }
+    return out;
+  }, [history]);
+
   const crumbNames = useMemo(() => {
     if (!current) return projectionNames;
     const base = { ...projectionNames };
@@ -531,7 +556,7 @@ export default function V2Shell({
         {!isOnRoot && (
           <div style={{ flex: 1 }}>
             <Breadcrumbs
-              history={history}
+              history={dedupedHistory}
               current={current}
               canGoBack={canGoBack}
               onBack={back}
