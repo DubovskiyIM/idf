@@ -179,7 +179,34 @@ describe("keycloak Stage 1+2 baseline", () => {
     expect(PROJECTIONS.realm_create.bodyOverride?.type).toBe("wizard");
     expect(PROJECTIONS.realm_create.bodyOverride.steps).toHaveLength(3);
     expect(PROJECTIONS.client_create.bodyOverride.steps).toHaveLength(3);
-    expect(PROJECTIONS.identityprovider_create.bodyOverride.steps).toHaveLength(2);
+    // Stage 7 (P-K-B): idp wizard теперь 3 steps (type / endpoints+testConnection / advanced)
+    expect(PROJECTIONS.identityprovider_create.bodyOverride.steps).toHaveLength(3);
+    const endpointsStep = PROJECTIONS.identityprovider_create.bodyOverride.steps[1];
+    expect(endpointsStep.id).toBe("endpoints");
+    expect(endpointsStep.testConnection?.intent).toBe("testIdentityProviderConnection");
+  });
+
+  it("Stage 7: domain.TEST_CONNECTION_HANDLERS регистрирует testIdentityProviderConnection", async () => {
+    const { TEST_CONNECTION_HANDLERS } = await import("../domain.js");
+    expect(typeof TEST_CONNECTION_HANDLERS?.testIdentityProviderConnection).toBe("function");
+    // Format check: валидный URL → ok
+    const ok = await TEST_CONNECTION_HANDLERS.testIdentityProviderConnection({
+      authorizationUrl: "https://provider.com/oauth/authorize",
+      tokenUrl: "https://provider.com/oauth/token",
+      clientId: "my-client",
+    });
+    expect(ok.ok).toBe(true);
+    // Без clientId → error
+    const miss = await TEST_CONNECTION_HANDLERS.testIdentityProviderConnection({
+      authorizationUrl: "https://provider.com/oauth/authorize",
+    });
+    expect(miss.ok).toBe(false);
+    // Некорректный URL → error
+    const bad = await TEST_CONNECTION_HANDLERS.testIdentityProviderConnection({
+      authorizationUrl: "not-a-url",
+      clientId: "x",
+    });
+    expect(bad.ok).toBe(false);
   });
 
   it("Stage 5: crystallizeV2 рендерит wizard-body для authored form-projection'ов", () => {
@@ -196,6 +223,35 @@ describe("keycloak Stage 1+2 baseline", () => {
       expect(Array.isArray(body.steps)).toBe(true);
       expect(body.steps.length).toBeGreaterThan(0);
     }
+  });
+
+  it("Stage 6: client_detail tabbedForm — 5 tabs с Settings/Credentials/Flow/URLs/Advanced", () => {
+    expect(PROJECTIONS.client_detail).toBeDefined();
+    expect(PROJECTIONS.client_detail.kind).toBe("form");
+    expect(PROJECTIONS.client_detail.bodyOverride?.type).toBe("tabbedForm");
+    const tabs = PROJECTIONS.client_detail.bodyOverride.tabs;
+    expect(tabs).toHaveLength(5);
+    const ids = tabs.map(t => t.id);
+    expect(ids).toEqual(["settings", "credentials", "flow", "urls", "advanced"]);
+    // Каждый tab имеет fields + onSubmit
+    for (const tab of tabs) {
+      expect(Array.isArray(tab.fields)).toBe(true);
+      expect(tab.fields.length).toBeGreaterThan(0);
+      expect(tab.onSubmit?.intent).toBe("updateClient");
+    }
+  });
+
+  it("Stage 6: crystallize рендерит tabbedForm-body для client_detail", () => {
+    const artifacts = crystallizeV2(
+      INTENTS,
+      { ...PROJECTIONS },
+      ONTOLOGY,
+      "keycloak",
+    );
+    const body = artifacts.client_detail?.slots?.body;
+    expect(body?.type).toBe("tabbedForm");
+    expect(Array.isArray(body.tabs)).toBe(true);
+    expect(body.tabs.length).toBe(5);
   });
 
   it("Stage 5: wizard steps имеют id / title / fields", () => {

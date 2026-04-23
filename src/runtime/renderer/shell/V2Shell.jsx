@@ -230,6 +230,34 @@ export default function V2Shell({
     return viewer;
   }, [viewer]);
 
+  /**
+   * Stage 7 (P-K-B): host-side probe для Wizard step.testConnection.
+   * Domain может предоставить `domain.testConnectionHandlers[intentId]` —
+   * async function(values) → Promise<{ok, message?}>. Если handler не
+   * задан — возвращаем graceful error (Wizard покажет "✗ Test not implemented").
+   *
+   * Для Keycloak IdP endpoints probe: домен может реализовать OIDC
+   * discovery / SAML metadata GET. В dogfood — мокируем через timeout.
+   */
+  const handleTestConnection = useCallback(async (intentId, values) => {
+    const handlers = domain.TEST_CONNECTION_HANDLERS || {};
+    const handler = handlers[intentId];
+    if (typeof handler !== "function") {
+      return {
+        ok: false,
+        message: `testConnection "${intentId}" не реализован в домене`,
+      };
+    }
+    try {
+      return await handler(values);
+    } catch (err) {
+      return {
+        ok: false,
+        message: err?.message || "Probe failed",
+      };
+    }
+  }, [domain]);
+
   // Role-switcher + UI-kit («слой») switcher — dev-toolbar для работы
   // с прототипом. Role-switcher показывается, когда домен определяет
   // session_set_active_role (универсальный паттерн вне зависимости от
@@ -618,6 +646,7 @@ export default function V2Shell({
             world={worldWithRoute}
             exec={wrappedExec}
             execBatch={wrappedExecBatch}
+            testConnection={handleTestConnection}
             viewer={viewerObj}
             viewerContext={viewerContext}
             routeParams={current.params}

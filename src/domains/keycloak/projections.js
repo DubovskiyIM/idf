@@ -48,7 +48,7 @@ function dgColumns(witnesses, fieldDefs = {}) {
     filterable: true,
   }));
 }
-function dataGridBody(mainEntity, witnesses, actionIntents = []) {
+function dataGridBody(mainEntity, witnesses, actionIntents = [], filter = null) {
   const cols = [...dgColumns(witnesses)];
   if (actionIntents.length > 0) {
     cols.push({
@@ -56,13 +56,16 @@ function dataGridBody(mainEntity, witnesses, actionIntents = []) {
       kind: "actions",
       label: "",
       display: "auto", // ≤2 inline, ≥3 menu (Gravitino #218/#222)
-      actions: actionIntents.map(intentId => ({
-        intentId,
-        label: intentId.startsWith("update") ? "Изменить"
-             : intentId.startsWith("remove") ? "Удалить"
-             : intentId.startsWith("read")   ? "Открыть"
-             : intentId,
-        danger: intentId.startsWith("remove"),
+      // SDK ActionCell schema: { intent (NOT intentId), label, params, danger }.
+      // params использует resolveActionParams: "item.X" → row[X].
+      actions: actionIntents.map(intent => ({
+        intent,
+        label: intent.startsWith("update") ? "Изменить"
+             : intent.startsWith("remove") ? "Удалить"
+             : intent.startsWith("read")   ? "Открыть"
+             : intent,
+        params: { id: "item.id" },
+        danger: intent.startsWith("remove"),
       })),
     });
   }
@@ -70,7 +73,29 @@ function dataGridBody(mainEntity, witnesses, actionIntents = []) {
     type: "dataGrid",
     source: mainEntity,  // world[mainEntity] — entities группируются по target=PascalCase
     columns: cols,
+    // G-K-25 (idf-sdk#267): DataGrid::resolveItems применяет node.filter
+    ...(filter ? { filter } : {}),
   };
+}
+
+// Scoping filter: scope по worldWithRoute.realmId (для child-каталогов
+// под realm-instance в AdminShell tree).
+const SCOPED_BY_REALM = "!world.realmId || realmId === world.realmId";
+
+// Hero-create CTA spec: bodyOverride блокирует hero-create.apply
+// (pattern boundary), поэтому author hero вручную для каждого catalog'а.
+// containers.jsx::IntentButton с opens:"overlay" + overlayKey =
+// `overlay_${intentId}` — overlay уже автогенерится crystallize_v2.
+function heroCreate(intentId, label) {
+  return [{
+    type: "intentButton",
+    intentId,
+    label,
+    opens: "overlay",
+    overlayKey: `overlay_${intentId}`,
+    icon: "⚡",
+    variant: "primary",
+  }];
 }
 
 export const PROJECTIONS = {
@@ -86,6 +111,7 @@ export const PROJECTIONS = {
     entities: ["Realm"],
     witnesses: ["realm", "displayName", "enabled", "sslRequired"],
     bodyOverride: dataGridBody("Realm", ["realm", "displayName", "enabled", "sslRequired"], ["updateRealm", "removeRealm"]),
+    hero: heroCreate("createRealm", "Создать realm"),
     patterns: SUPPRESS_TREE_IN_BODY,
   },
   client_list: {
@@ -95,7 +121,8 @@ export const PROJECTIONS = {
     entities: ["Client"],
     witnesses: ["clientId", "name", "enabled", "publicClient", "protocol"],
     filter: "!world.realmId || realmId === world.realmId",
-    bodyOverride: dataGridBody("Client", ["clientId", "name", "enabled", "publicClient", "protocol"], ["updateClient", "removeClient"]),
+    bodyOverride: dataGridBody("Client", ["clientId", "name", "enabled", "publicClient", "protocol"], ["updateClient", "removeClient"], SCOPED_BY_REALM),
+    hero: heroCreate("createClient", "Создать client"),
     patterns: SUPPRESS_TREE_IN_BODY,
   },
 
@@ -112,7 +139,8 @@ export const PROJECTIONS = {
     entities: ["User"],
     witnesses: ["username", "email", "firstName", "lastName", "enabled", "emailVerified"],
     filter: "!world.realmId || realmId === world.realmId",
-    bodyOverride: dataGridBody("User", ["username", "email", "firstName", "lastName", "enabled", "emailVerified"], ["updateUser", "removeUser"]),
+    bodyOverride: dataGridBody("User", ["username", "email", "firstName", "lastName", "enabled", "emailVerified"], ["updateUser", "removeUser"], SCOPED_BY_REALM),
+    hero: heroCreate("createUser", "Создать user"),
     patterns: SUPPRESS_TREE_IN_BODY,
   },
   group_list: {
@@ -122,7 +150,8 @@ export const PROJECTIONS = {
     entities: ["Group"],
     witnesses: ["name", "path", "subGroupCount"],
     filter: "!world.realmId || realmId === world.realmId",
-    bodyOverride: dataGridBody("Group", ["name", "path", "subGroupCount"], ["updateGroup", "removeGroup"]),
+    bodyOverride: dataGridBody("Group", ["name", "path", "subGroupCount"], ["updateGroup", "removeGroup"], SCOPED_BY_REALM),
+    hero: heroCreate("createGroup", "Создать group"),
     patterns: SUPPRESS_TREE_IN_BODY,
   },
   role_list: {
@@ -132,7 +161,8 @@ export const PROJECTIONS = {
     entities: ["Role"],
     witnesses: ["name", "description", "composite", "clientRole"],
     filter: "!world.realmId || realmId === world.realmId",
-    bodyOverride: dataGridBody("Role", ["name", "description", "composite", "clientRole"], ["updateRole", "removeRole"]),
+    bodyOverride: dataGridBody("Role", ["name", "description", "composite", "clientRole"], ["updateRole", "removeRole"], SCOPED_BY_REALM),
+    hero: heroCreate("createRole", "Создать role"),
     patterns: SUPPRESS_TREE_IN_BODY,
   },
   identityprovider_list: {
@@ -143,7 +173,8 @@ export const PROJECTIONS = {
     witnesses: ["alias", "displayName", "providerId", "enabled", "trustEmail"],
     filter: "!world.realmId || realmId === world.realmId",
     // IdentityProvider: только remove (нет updateIdentityProvider в imported)
-    bodyOverride: dataGridBody("IdentityProvider", ["alias", "displayName", "providerId", "enabled", "trustEmail"], ["removeIdentityProvider"]),
+    bodyOverride: dataGridBody("IdentityProvider", ["alias", "displayName", "providerId", "enabled", "trustEmail"], ["removeIdentityProvider"], SCOPED_BY_REALM),
+    hero: heroCreate("createIdentityProvider", "Создать IdP"),
     patterns: SUPPRESS_TREE_IN_BODY,
   },
   clientscope_list: {
@@ -153,7 +184,8 @@ export const PROJECTIONS = {
     entities: ["ClientScope"],
     witnesses: ["name", "protocol", "description"],
     filter: "!world.realmId || realmId === world.realmId",
-    bodyOverride: dataGridBody("ClientScope", ["name", "protocol", "description"], ["updateClientScope", "removeClientScope"]),
+    bodyOverride: dataGridBody("ClientScope", ["name", "protocol", "description"], ["updateClientScope", "removeClientScope"], SCOPED_BY_REALM),
+    hero: heroCreate("createClientScope", "Создать ClientScope"),
     patterns: SUPPRESS_TREE_IN_BODY,
   },
   component_list: {
@@ -163,7 +195,8 @@ export const PROJECTIONS = {
     entities: ["Component"],
     witnesses: ["name", "providerType", "providerId"],
     filter: "!world.realmId || realmId === world.realmId",
-    bodyOverride: dataGridBody("Component", ["name", "providerType", "providerId"], ["updateComponent", "removeComponent"]),
+    bodyOverride: dataGridBody("Component", ["name", "providerType", "providerId"], ["updateComponent", "removeComponent"], SCOPED_BY_REALM),
+    hero: heroCreate("createComponent", "Создать Component"),
     patterns: SUPPRESS_TREE_IN_BODY,
   },
   organization_list: {
@@ -173,7 +206,8 @@ export const PROJECTIONS = {
     entities: ["Organization"],
     witnesses: ["alias", "name", "description", "enabled"],
     filter: "!world.realmId || realmId === world.realmId",
-    bodyOverride: dataGridBody("Organization", ["alias", "name", "description", "enabled"], ["updateOrganization", "removeOrganization"]),
+    bodyOverride: dataGridBody("Organization", ["alias", "name", "description", "enabled"], ["updateOrganization", "removeOrganization"], SCOPED_BY_REALM),
+    hero: heroCreate("createOrganization", "Создать Organization"),
     patterns: SUPPRESS_TREE_IN_BODY,
   },
   workflow_list: {
@@ -183,7 +217,8 @@ export const PROJECTIONS = {
     entities: ["Workflow"],
     witnesses: ["name", "description", "enabled"],
     filter: "!world.realmId || realmId === world.realmId",
-    bodyOverride: dataGridBody("Workflow", ["name", "description", "enabled"], ["updateWorkflow", "removeWorkflow"]),
+    bodyOverride: dataGridBody("Workflow", ["name", "description", "enabled"], ["updateWorkflow", "removeWorkflow"], SCOPED_BY_REALM),
+    hero: heroCreate("createWorkflow", "Создать Workflow"),
     patterns: SUPPRESS_TREE_IN_BODY,
   },
   realm_create: {
@@ -274,6 +309,99 @@ export const PROJECTIONS = {
       onSubmit: { intent: "createClient" },
     },
   },
+  /**
+   * Stage 6 (P-K-A, idf-sdk#263): tabbed-form для Client.detail. Client
+   * имеет 48 полей — flat formBody не масштабируется. Декомпозиция по
+   * semantic tabs: Settings / Credentials / Auth flow / URLs / Advanced.
+   * Каждый tab — свой Save, shared intent updateClient.
+   */
+  client_detail: {
+    name: "Client",
+    kind: "form",
+    mainEntity: "Client",
+    idParam: "clientId",
+    bodyOverride: {
+      type: "tabbedForm",
+      initialTab: "settings",
+      tabs: [
+        {
+          id: "settings",
+          title: "Настройки",
+          fields: [
+            { name: "clientId", label: "Client ID", type: "string", required: true },
+            { name: "name", label: "Name", type: "string" },
+            { name: "description", label: "Description", type: "textarea" },
+            { name: "enabled", label: "Включён", type: "boolean" },
+            { name: "alwaysDisplayInConsole", label: "Always display in console", type: "boolean" },
+            { name: "consentRequired", label: "Consent required", type: "boolean" },
+          ],
+          onSubmit: { intent: "updateClient" },
+        },
+        {
+          id: "credentials",
+          title: "Credentials",
+          fields: [
+            { name: "clientAuthenticatorType", label: "Authenticator", type: "select",
+              options: ["client-secret", "client-jwt", "client-x509"] },
+            { name: "secret", label: "Secret", type: "string" },
+            { name: "registrationAccessToken", label: "Registration access token", type: "string" },
+            { name: "bearerOnly", label: "Bearer only", type: "boolean" },
+          ],
+          onSubmit: { intent: "updateClient" },
+        },
+        {
+          id: "flow",
+          title: "Client type",
+          fields: [
+            { name: "protocol", label: "Protocol", type: "select",
+              options: ["openid-connect", "saml"] },
+            { name: "publicClient", label: "Public client", type: "boolean" },
+            { name: "standardFlowEnabled", label: "Standard flow", type: "boolean" },
+            { name: "implicitFlowEnabled", label: "Implicit flow", type: "boolean" },
+            { name: "directAccessGrantsEnabled", label: "Direct access grants", type: "boolean" },
+            { name: "serviceAccountsEnabled", label: "Service accounts", type: "boolean" },
+            { name: "authorizationServicesEnabled", label: "Authorization services", type: "boolean" },
+          ],
+          onSubmit: { intent: "updateClient" },
+        },
+        {
+          id: "urls",
+          title: "URL'ы",
+          fields: [
+            { name: "rootUrl", label: "Root URL", type: "string" },
+            { name: "baseUrl", label: "Base URL", type: "string" },
+            { name: "adminUrl", label: "Admin URL", type: "string" },
+            { name: "redirectUris", label: "Redirect URIs", type: "textarea" },
+            { name: "webOrigins", label: "Web origins", type: "textarea" },
+          ],
+          onSubmit: { intent: "updateClient" },
+        },
+        {
+          id: "advanced",
+          title: "Advanced",
+          fields: [
+            { name: "notBefore", label: "Not before (unix ts)", type: "number" },
+            { name: "surrogateAuthRequired", label: "Surrogate auth required", type: "boolean" },
+            { name: "frontchannelLogout", label: "Front-channel logout", type: "boolean" },
+            { name: "fullScopeAllowed", label: "Full scope allowed", type: "boolean" },
+          ],
+          onSubmit: { intent: "updateClient" },
+        },
+      ],
+    },
+  },
+  /**
+   * Stage 7 (P-K-B): connection-test mid-wizard. IdP create имеет OAuth
+   * endpoints (authorizationUrl / tokenUrl / userInfoUrl) которые должны
+   * быть validated до submit — отдельный wizard-step с testConnection
+   * (Wizard primitive уже поддерживает `step.testConnection` через
+   * ctx.testConnection(intent, values) async handler).
+   *
+   * Flow: Type → Endpoints → Test Connection → Advanced → Submit.
+   * Test step вызывает ctx.testConnection("testIdentityProviderConnection",
+   * values) — host-runtime handler делает probe к OIDC discovery или
+   * SAML metadata URL, возвращает { ok, message? }.
+   */
   identityprovider_create: {
     name: "Создать identity provider",
     kind: "form",
@@ -294,8 +422,28 @@ export const PROJECTIONS = {
           ],
         },
         {
-          id: "config",
-          title: "Configuration",
+          id: "endpoints",
+          title: "Endpoints",
+          fields: [
+            { name: "authorizationUrl", label: "Authorization URL", type: "string",
+              placeholder: "https://provider.example.com/oauth/authorize" },
+            { name: "tokenUrl", label: "Token URL", type: "string",
+              placeholder: "https://provider.example.com/oauth/token" },
+            { name: "userInfoUrl", label: "User info URL", type: "string",
+              placeholder: "https://provider.example.com/oauth/userinfo" },
+            { name: "clientId", label: "Client ID", type: "string", required: true },
+            { name: "clientSecret", label: "Client secret", type: "string", fieldRole: "secret" },
+          ],
+          // P-K-B: Test connection перед advanced-step'ом. Wizard primitive
+          // рендерит button с async-validation, блокирует Next до OK.
+          testConnection: {
+            intent: "testIdentityProviderConnection",
+            label: "Проверить подключение",
+          },
+        },
+        {
+          id: "advanced",
+          title: "Advanced",
           fields: [
             { name: "enabled", label: "Включён", type: "boolean" },
             { name: "trustEmail", label: "Trust email", type: "boolean" },
