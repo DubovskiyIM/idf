@@ -32,6 +32,25 @@ const CANONICAL_ENTITIES = [
  * декларативная UX-декомпозиция, не автоматическая.
  */
 export const PROJECTIONS = {
+  // Stage 5b override: после G-K-10 fix derive назначает kind:"feed" для
+  // Realm/Client (R2 feed override активируется через synthetic FK +
+  // confirmation:"enter"). Feed-архетип активирует composer-entry pattern
+  // («Сообщение...» внизу) — для admin-UI неуместно. Принудительно
+  // catalog для top-level entities.
+  realm_list: {
+    name: "Realms",
+    kind: "catalog",
+    mainEntity: "Realm",
+    entities: ["Realm"],
+    witnesses: [],
+  },
+  client_list: {
+    name: "Clients",
+    kind: "catalog",
+    mainEntity: "Client",
+    entities: ["Client"],
+    witnesses: [],
+  },
   realm_create: {
     name: "Создать realm",
     kind: "form",
