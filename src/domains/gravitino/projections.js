@@ -89,34 +89,23 @@ export const PROJECTIONS = {
   // могут включать audit, т.к. buildDetailBody уважает field.primitive
   // hint (propertyPopover) из ontology.js.
 
+  // Columns для 10 простых catalog-list'ов больше не пишем руками — после
+  // idf-sdk#224 stable pattern `catalog-default-datagrid.apply` автоматически
+  // генерирует dataGrid body с column-synthesis из witnesses +
+  // ontology.field.type/values. `projection.bodyOverride` оставляем только
+  // для user_list/group_list, где нужна actions-column (gear menu).
+
   // ═══ Metalake ══════════════════════════════════════════════════════════════
   metalake_list: catalog("Metalake", "Metalakes",
-    ["name", "comment"], {
-      columns: [
-        { key: "name",    label: "Name",    sortable: true, filterable: true },
-        { key: "comment", label: "Comment", filterable: true },
-      ],
-    }),
+    ["name", "comment"]),
   metalake_detail: detail("Metalake", "Metalake",
     ["name", "comment", "properties", "audit"],
     [{ entity: "Catalog", foreignKey: "metalakeId", title: "Catalogs" }]),
 
   // ═══ Catalog ═══════════════════════════════════════════════════════════════
   // type: relational/fileset/messaging/model; provider: hive/iceberg/...
-  //
-  // bodyOverride: DataGrid primitive с sort+filter per column (G20/G21/G38).
-  // После merge idf-sdk#216 (DataGrid source resolution) — grid пуллит items
-  // из ctx.world[source] когда node.items пустой.
   catalog_list: catalog("Catalog", "Catalogs",
-    ["name", "type", "provider", "comment"], {
-      columns: [
-        { key: "name",     label: "Name",     sortable: true, filterable: true },
-        { key: "type",     label: "Type",     sortable: true, filter: "enum",
-          values: ["relational", "messaging", "fileset", "model"] },
-        { key: "provider", label: "Provider", sortable: true, filterable: true },
-        { key: "comment",  label: "Comment",  filterable: true },
-      ],
-    }),
+    ["name", "type", "provider", "comment"]),
   catalog_detail: detail("Catalog", "Catalog",
     ["name", "type", "provider", "comment", "properties", "audit"],
     [{ entity: "Schema", foreignKey: "catalogId", title: "Schemas" }]),
@@ -124,12 +113,7 @@ export const PROJECTIONS = {
   // ═══ Schema ════════════════════════════════════════════════════════════════
   // Schema — child Catalog; сам является parent'ом для Table/Fileset/Topic/Model.
   schema_list: catalog("Schema", "Schemas",
-    ["name", "comment"], {
-      columns: [
-        { key: "name",    label: "Name",    sortable: true, filterable: true },
-        { key: "comment", label: "Comment", filterable: true },
-      ],
-    }),
+    ["name", "comment"]),
   schema_detail: detail("Schema", "Schema",
     ["name", "comment", "properties", "audit"],
     [
@@ -142,51 +126,27 @@ export const PROJECTIONS = {
   // ═══ Table ═════════════════════════════════════════════════════════════════
   // Table несёт columns (nested json), partitioning, distribution, indexes.
   table_list: catalog("Table", "Tables",
-    ["name", "comment"], {
-      columns: [
-        { key: "name",    label: "Name",    sortable: true, filterable: true },
-        { key: "comment", label: "Comment", filterable: true },
-      ],
-    }),
+    ["name", "comment"]),
   table_detail: detail("Table", "Table",
     ["name", "comment", "columns", "partitioning", "distribution",
      "sortOrders", "indexes", "properties", "audit"]),
 
   // ═══ Fileset ═══════════════════════════════════════════════════════════════
   fileset_list: catalog("Fileset", "Filesets",
-    ["name", "type", "storageLocation", "comment"], {
-      columns: [
-        { key: "name",            label: "Name",             sortable: true, filterable: true },
-        { key: "type",            label: "Type",             sortable: true, filter: "enum",
-          values: ["managed", "external"] },
-        { key: "storageLocation", label: "Storage Location", filterable: true },
-        { key: "comment",         label: "Comment",          filterable: true },
-      ],
-    }),
+    ["name", "type", "storageLocation", "comment"]),
   fileset_detail: detail("Fileset", "Fileset",
     ["name", "type", "storageLocation", "comment", "properties"]),
 
   // ═══ Topic ═════════════════════════════════════════════════════════════════
   topic_list: catalog("Topic", "Topics",
-    ["name", "comment"], {
-      columns: [
-        { key: "name",    label: "Name",    sortable: true, filterable: true },
-        { key: "comment", label: "Comment", filterable: true },
-      ],
-    }),
+    ["name", "comment"]),
   topic_detail: detail("Topic", "Topic",
     ["name", "comment", "properties"]),
 
   // ═══ Model ═════════════════════════════════════════════════════════════════
   // latestVersion — counter. Model содержит ModelVersion как children.
   model_list: catalog("Model", "Models",
-    ["name", "latestVersion", "comment"], {
-      columns: [
-        { key: "name",          label: "Name",           sortable: true, filterable: true },
-        { key: "latestVersion", label: "Latest Version", sortable: true },
-        { key: "comment",       label: "Comment",        filterable: true },
-      ],
-    }),
+    ["name", "latestVersion", "comment"]),
   model_detail: detail("Model", "Model",
     ["name", "latestVersion", "comment", "properties", "audit"],
     [{ entity: "ModelVersion", foreignKey: "modelId", title: "Versions" }]),
@@ -251,25 +211,18 @@ export const PROJECTIONS = {
   // ═══ Role ══════════════════════════════════════════════════════════════════
   // securableObjects — matrix, только на detail. properties — json,
   // popover только на detail.
+  //
+  // role_list имеет только 1 witness (name) — ниже порога pattern apply
+  // (trigger требует ≥2 witnesses), поэтому остаётся default card-layout.
+  // Acceptable: у Role ещё нет других scalar полей для column-display.
   role_list: catalog("Role", "Roles",
-    ["name"], {
-      columns: [
-        { key: "name", label: "Name", sortable: true, filterable: true },
-      ],
-    }),
+    ["name"]),
   role_detail: detail("Role", "Role",
     ["name", "securableObjects", "properties"]),
 
   // ═══ Tag ═══════════════════════════════════════════════════════════════════
   tag_list: catalog("Tag", "Tags",
-    ["name", "comment", "inherited"], {
-      columns: [
-        { key: "name",      label: "Name",      sortable: true, filterable: true },
-        { key: "comment",   label: "Comment",   filterable: true },
-        { key: "inherited", label: "Inherited", sortable: true, filter: "enum",
-          values: [true, false] },
-      ],
-    }),
+    ["name", "comment", "inherited"]),
   tag_detail: detail("Tag", "Tag",
     ["name", "comment", "inherited", "properties", "audit"]),
 
@@ -278,15 +231,7 @@ export const PROJECTIONS = {
   // enrichment добавляет синтетические visible fields (name/type/enabled/
   // comment/content/audit). Используем их в projections.
   policy_list: catalog("Policy", "Policies",
-    ["name", "type", "enabled", "comment"], {
-      columns: [
-        { key: "name",    label: "Name",    sortable: true, filterable: true },
-        { key: "type",    label: "Type",    sortable: true, filterable: true },
-        { key: "enabled", label: "Enabled", sortable: true, filter: "enum",
-          values: [true, false] },
-        { key: "comment", label: "Comment", filterable: true },
-      ],
-    }),
+    ["name", "type", "enabled", "comment"]),
   policy_detail: detail("Policy", "Policy", ["name", "type", "enabled", "comment", "content", "audit"]),
 };
 
