@@ -157,12 +157,15 @@ export const PROJECTIONS = {
 
 const _derived = deriveProjections(INTENTS, ONTOLOGY);
 
-// Whitelist: только canonical catalog'и + dashboard'ы.
-// Catalog'и с mainEntity вне CANONICAL_ENTITIES — отбрасываем как noise.
+// Whitelist: canonical catalog/feed'ы + dashboard'ы. После core@0.58.1
+// (explicit FK-marker в detectForeignKeys) R2 rule назначает `realm_list`
+// и `client_list` kind:"feed" (т.к. intents имеют confirmation:"enter" +
+// foreignKey), а не "catalog". Whitelist принимает обе формы.
+// Catalog/feed с mainEntity вне CANONICAL_ENTITIES — отбрасываем как noise.
 export const ROOT_PROJECTIONS = Object.entries(_derived)
   .filter(([, p]) => {
     if (p?.kind === "dashboard") return true;
-    if (p?.kind !== "catalog") return false;
+    if (p?.kind !== "catalog" && p?.kind !== "feed") return false;
     return CANONICAL_ENTITIES.includes(p.mainEntity);
   })
   .map(([id]) => id);

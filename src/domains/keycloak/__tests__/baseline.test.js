@@ -116,6 +116,38 @@ describe("keycloak Stage 1+2 baseline", () => {
     expect(aliceUser?.realmId).toBe("r_customer");
   });
 
+  it("R8 hub-absorption работает (G-K-9 + G-K-10 closed): Realm.detail имеет hubSections", () => {
+    const derived = deriveProjections(INTENTS, ONTOLOGY);
+    const merged = { ...derived };
+    for (const [id, authored] of Object.entries(PROJECTIONS)) {
+      merged[id] = merged[id] ? { ...merged[id], ...authored } : authored;
+    }
+    const arts = crystallizeV2(INTENTS, merged, ONTOLOGY, "keycloak");
+
+    // G-K-9 fix (idf-sdk#239 → core@0.58.0): mainEntity preserved
+    expect(arts.user_detail.mainEntity).toBe("User");
+    expect(arts.realm_detail.mainEntity).toBe("Realm");
+
+    // G-K-10 fix (idf-sdk#243 → core@0.58.1): detectForeignKeys учитывает synthetic FK
+    const realmHub = arts.realm_detail?.hubSections;
+    expect(Array.isArray(realmHub)).toBe(true);
+    expect(realmHub.length).toBeGreaterThanOrEqual(6);
+    const hubEntities = realmHub.map(s => s.entity);
+    expect(hubEntities).toContain("User");
+    expect(hubEntities).toContain("Group");
+    expect(hubEntities).toContain("Role");
+    expect(hubEntities).toContain("ClientScope");
+
+    // Absorbed catalog'и должны быть отмечены absorbedBy (G-K-11: R8 сейчас
+    // выбирает первого matching parent'а — для User это Role.detail, т.к.
+    // User.roleId FK на Role встречается раньше realmId FK на Realm. Это
+    // deferred на SDK «best-parent heuristic»). Здесь проверяем только факт
+    // absorption, не конкретный parent.
+    const ABSORBABLE_PARENTS = ["realm_detail", "role_detail", "group_detail", "client_detail", "user_detail"];
+    expect(ABSORBABLE_PARENTS).toContain(arts.user_list.absorbedBy);
+    expect(ABSORBABLE_PARENTS).toContain(arts.group_list.absorbedBy);
+  });
+
   it("crystallizeV2 не падает после Stage 2 enrichment", () => {
     const derived = deriveProjections(INTENTS, ONTOLOGY);
     const merged = { ...derived };
