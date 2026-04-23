@@ -674,17 +674,19 @@ export default function V2Shell({
           projectionId: detailId,
           params: { [idParam]: itemId },
         };
-        // Sub-children из hubSections (R8). G-K-18: добавляем parent
-        // disambiguator в label (например, «master · Пользователи»)
-        // — иначе при scroll sidebar пользователь не видит, под каким
-        // realm'ом он находится.
+        // Sub-children из hubSections (R8). G-K-18 v2: prefix parent ТОЛЬКО
+        // если parent label короткий (≤16 chars). Длинные auto-IDs (типа
+        // realm_1776947407606_ev2y от createRealm без displayName) делают
+        // sidebar нечитаемым (G-K-18 backfire). Без prefix — indent + tree
+        // structure всё равно показывают context.
         const hub = detailArt.hubSections || [];
         if (hub.length > 0) {
+          const shortParent = label.length <= 16;
           itemNode.children = hub.map(sec => {
             const childLabel = projectionNames[sec.projectionId] || sec.entity;
             return {
               id: `${sec.projectionId}:${itemId}`,
-              label: `${label} · ${childLabel}`,
+              label: shortParent ? `${label} · ${childLabel}` : childLabel,
               projectionId: sec.projectionId,
               params: { [sec.foreignKey]: itemId },
             };
