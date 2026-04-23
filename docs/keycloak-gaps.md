@@ -120,9 +120,13 @@ node -e "import('./src/domains/keycloak/projections.js').then(m => console.log(m
 
 ---
 
-### G-K-11 — R8 absorbHubChildren выбирает первого parent'а (multi-parent noise) (Stage 5 discovery)
+### G-K-11 — R8 absorbHubChildren выбирает первого parent'а (multi-parent noise) — ✅ ЗАКРЫТ (idf-sdk#245)
 
-**Severity:** P1 (не блокер, UX noise)
+**Severity:** P1 → closed
+**Closed:** idf-sdk#245 merged 2026-04-23, core@0.58.2 published. «Hubbier wins» heuristic + redistribution cleanup: parent'ы с <MIN children после конфликта skipped. Keycloak user_list теперь correctly абсорбируется в realm_detail (Realm — 10 candidates, Role — 1 после redistribution).
+
+**Historical (исходный observation):**
+
 **Module:** `@intent-driven/core` crystallize_v2/absorbHubChildren
 **Observation:** `absorbHubChildren` iterate'ит detailByEntity в порядке Object.entries и для каждого parent'а берёт matching child'ов без приоритизации. Если child имеет FK на несколько parent'ов (User.roleId + User.realmId), R8 абсорбирует его в первого встреченного parent'а. Для Keycloak User.roleId (synthetic path FK от `/roles/{roleId}/users`) встречается раньше realmId → user_list.absorbedBy = "role_detail" вместо ожидаемого "realm_detail".
 

@@ -138,14 +138,15 @@ describe("keycloak Stage 1+2 baseline", () => {
     expect(hubEntities).toContain("Role");
     expect(hubEntities).toContain("ClientScope");
 
-    // Absorbed catalog'и должны быть отмечены absorbedBy (G-K-11: R8 сейчас
-    // выбирает первого matching parent'а — для User это Role.detail, т.к.
-    // User.roleId FK на Role встречается раньше realmId FK на Realm. Это
-    // deferred на SDK «best-parent heuristic»). Здесь проверяем только факт
-    // absorption, не конкретный parent.
-    const ABSORBABLE_PARENTS = ["realm_detail", "role_detail", "group_detail", "client_detail", "user_detail"];
-    expect(ABSORBABLE_PARENTS).toContain(arts.user_list.absorbedBy);
-    expect(ABSORBABLE_PARENTS).toContain(arts.group_list.absorbedBy);
+    // G-K-11 closed (idf-sdk#245 → core@0.58.2): R8 best-parent heuristic
+    // выбирает «hubbier» parent'а — User с FK на Realm (10 children) и Role
+    // (1 child) идёт в realm_detail. Role.detail после redistribution имеет
+    // 0 children и не становится hub.
+    expect(arts.user_list.absorbedBy).toBe("realm_detail");
+    expect(arts.group_list.absorbedBy).toBe("realm_detail");
+    // После redistribution Role не hub — hubSections может быть
+    // undefined (never assigned) или null (prev value), главное — не массив.
+    expect(Array.isArray(arts.role_detail?.hubSections)).toBe(false);
   });
 
   it("crystallizeV2 не падает после Stage 2 enrichment", () => {
