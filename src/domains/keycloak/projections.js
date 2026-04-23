@@ -48,7 +48,7 @@ function dgColumns(witnesses, fieldDefs = {}) {
     filterable: true,
   }));
 }
-function dataGridBody(mainEntity, witnesses, actionIntents = []) {
+function dataGridBody(mainEntity, witnesses, actionIntents = [], filter = null) {
   const cols = [...dgColumns(witnesses)];
   if (actionIntents.length > 0) {
     cols.push({
@@ -73,8 +73,14 @@ function dataGridBody(mainEntity, witnesses, actionIntents = []) {
     type: "dataGrid",
     source: mainEntity,  // world[mainEntity] — entities группируются по target=PascalCase
     columns: cols,
+    // G-K-25 (idf-sdk#267): DataGrid::resolveItems применяет node.filter
+    ...(filter ? { filter } : {}),
   };
 }
+
+// Scoping filter: scope по worldWithRoute.realmId (для child-каталогов
+// под realm-instance в AdminShell tree).
+const SCOPED_BY_REALM = "!world.realmId || realmId === world.realmId";
 
 // Hero-create CTA spec: bodyOverride блокирует hero-create.apply
 // (pattern boundary), поэтому author hero вручную для каждого catalog'а.
@@ -115,7 +121,7 @@ export const PROJECTIONS = {
     entities: ["Client"],
     witnesses: ["clientId", "name", "enabled", "publicClient", "protocol"],
     filter: "!world.realmId || realmId === world.realmId",
-    bodyOverride: dataGridBody("Client", ["clientId", "name", "enabled", "publicClient", "protocol"], ["updateClient", "removeClient"]),
+    bodyOverride: dataGridBody("Client", ["clientId", "name", "enabled", "publicClient", "protocol"], ["updateClient", "removeClient"], SCOPED_BY_REALM),
     hero: heroCreate("createClient", "Создать client"),
     patterns: SUPPRESS_TREE_IN_BODY,
   },
@@ -133,7 +139,7 @@ export const PROJECTIONS = {
     entities: ["User"],
     witnesses: ["username", "email", "firstName", "lastName", "enabled", "emailVerified"],
     filter: "!world.realmId || realmId === world.realmId",
-    bodyOverride: dataGridBody("User", ["username", "email", "firstName", "lastName", "enabled", "emailVerified"], ["updateUser", "removeUser"]),
+    bodyOverride: dataGridBody("User", ["username", "email", "firstName", "lastName", "enabled", "emailVerified"], ["updateUser", "removeUser"], SCOPED_BY_REALM),
     hero: heroCreate("createUser", "Создать user"),
     patterns: SUPPRESS_TREE_IN_BODY,
   },
@@ -144,7 +150,7 @@ export const PROJECTIONS = {
     entities: ["Group"],
     witnesses: ["name", "path", "subGroupCount"],
     filter: "!world.realmId || realmId === world.realmId",
-    bodyOverride: dataGridBody("Group", ["name", "path", "subGroupCount"], ["updateGroup", "removeGroup"]),
+    bodyOverride: dataGridBody("Group", ["name", "path", "subGroupCount"], ["updateGroup", "removeGroup"], SCOPED_BY_REALM),
     hero: heroCreate("createGroup", "Создать group"),
     patterns: SUPPRESS_TREE_IN_BODY,
   },
@@ -155,7 +161,7 @@ export const PROJECTIONS = {
     entities: ["Role"],
     witnesses: ["name", "description", "composite", "clientRole"],
     filter: "!world.realmId || realmId === world.realmId",
-    bodyOverride: dataGridBody("Role", ["name", "description", "composite", "clientRole"], ["updateRole", "removeRole"]),
+    bodyOverride: dataGridBody("Role", ["name", "description", "composite", "clientRole"], ["updateRole", "removeRole"], SCOPED_BY_REALM),
     hero: heroCreate("createRole", "Создать role"),
     patterns: SUPPRESS_TREE_IN_BODY,
   },
@@ -167,7 +173,7 @@ export const PROJECTIONS = {
     witnesses: ["alias", "displayName", "providerId", "enabled", "trustEmail"],
     filter: "!world.realmId || realmId === world.realmId",
     // IdentityProvider: только remove (нет updateIdentityProvider в imported)
-    bodyOverride: dataGridBody("IdentityProvider", ["alias", "displayName", "providerId", "enabled", "trustEmail"], ["removeIdentityProvider"]),
+    bodyOverride: dataGridBody("IdentityProvider", ["alias", "displayName", "providerId", "enabled", "trustEmail"], ["removeIdentityProvider"], SCOPED_BY_REALM),
     hero: heroCreate("createIdentityProvider", "Создать IdP"),
     patterns: SUPPRESS_TREE_IN_BODY,
   },
@@ -178,7 +184,7 @@ export const PROJECTIONS = {
     entities: ["ClientScope"],
     witnesses: ["name", "protocol", "description"],
     filter: "!world.realmId || realmId === world.realmId",
-    bodyOverride: dataGridBody("ClientScope", ["name", "protocol", "description"], ["updateClientScope", "removeClientScope"]),
+    bodyOverride: dataGridBody("ClientScope", ["name", "protocol", "description"], ["updateClientScope", "removeClientScope"], SCOPED_BY_REALM),
     hero: heroCreate("createClientScope", "Создать ClientScope"),
     patterns: SUPPRESS_TREE_IN_BODY,
   },
@@ -189,7 +195,7 @@ export const PROJECTIONS = {
     entities: ["Component"],
     witnesses: ["name", "providerType", "providerId"],
     filter: "!world.realmId || realmId === world.realmId",
-    bodyOverride: dataGridBody("Component", ["name", "providerType", "providerId"], ["updateComponent", "removeComponent"]),
+    bodyOverride: dataGridBody("Component", ["name", "providerType", "providerId"], ["updateComponent", "removeComponent"], SCOPED_BY_REALM),
     hero: heroCreate("createComponent", "Создать Component"),
     patterns: SUPPRESS_TREE_IN_BODY,
   },
@@ -200,7 +206,7 @@ export const PROJECTIONS = {
     entities: ["Organization"],
     witnesses: ["alias", "name", "description", "enabled"],
     filter: "!world.realmId || realmId === world.realmId",
-    bodyOverride: dataGridBody("Organization", ["alias", "name", "description", "enabled"], ["updateOrganization", "removeOrganization"]),
+    bodyOverride: dataGridBody("Organization", ["alias", "name", "description", "enabled"], ["updateOrganization", "removeOrganization"], SCOPED_BY_REALM),
     hero: heroCreate("createOrganization", "Создать Organization"),
     patterns: SUPPRESS_TREE_IN_BODY,
   },
@@ -211,7 +217,7 @@ export const PROJECTIONS = {
     entities: ["Workflow"],
     witnesses: ["name", "description", "enabled"],
     filter: "!world.realmId || realmId === world.realmId",
-    bodyOverride: dataGridBody("Workflow", ["name", "description", "enabled"], ["updateWorkflow", "removeWorkflow"]),
+    bodyOverride: dataGridBody("Workflow", ["name", "description", "enabled"], ["updateWorkflow", "removeWorkflow"], SCOPED_BY_REALM),
     hero: heroCreate("createWorkflow", "Создать Workflow"),
     patterns: SUPPRESS_TREE_IN_BODY,
   },
