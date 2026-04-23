@@ -55,4 +55,60 @@ function aliasParameters(intents) {
   return result;
 }
 
-export const INTENTS = aliasParameters(imported.intents);
+/**
+ * Stage 3 host-fix для G-K-8 (новый): importer-openapi @0.6 неправильно
+ * классифицирует POST на nested-коллекцию (`POST /realms/{realm}/users`)
+ * как `usersUser` с α=`replace` вместо `createUser` с α=`insert`.
+ *
+ * Последствие: deriveProjections правило R1 (catalog требует insert-creator)
+ * не срабатывает — на canonical entities (User/Group/Role/IdP/ClientScope/
+ * Component/Organization/Workflow) появляется только detail, без catalog.
+ * Только Realm и Client получили catalog потому что у них POST top-level
+ * (POST /realms — `createRealm`, не nested).
+ *
+ * Host-fix: для известных canonical 14 mapping'ов — переименовываем
+ * `xsX` → `createX` + α=`insert`. Это разблокирует R1.
+ *
+ * X1: после SDK PR `importer-openapi.detectCollectionPostAsCreate`.
+ */
+const COLLECTION_POST_TO_CREATE = {
+  usersUser: "createUser",
+  groupsGroup: "createGroup",
+  rolesRole: "createRole",
+  identity_providersIdentityProvider: "createIdentityProvider",
+  client_scopesClientScope: "createClientScope",
+  componentsComponent: "createComponent",
+  organizationsOrganization: "createOrganization",
+  workflowsWorkflow: "createWorkflow",
+  membersMember: "createMember",
+  resourcesResource: "createResource",
+  scopesScope: "createScope",
+  protocol_mappersProtocolMapper: "createProtocolMapper",
+  credentialsCredential: "createCredential",
+  flowsFlow: "createFlow",
+  modelsModel: "createModel",
+  client_templatesClientTemplate: "createClientTemplate",
+  policiesPolicy: "createPolicy",
+};
+
+function reclassifyCollectionPosts(intents) {
+  const result = {};
+  for (const [id, intent] of Object.entries(intents)) {
+    const newId = COLLECTION_POST_TO_CREATE[id];
+    if (newId) {
+      // analyzeIntents() в core ищет creators через intent.creates,
+      // НЕ через α=insert. Без `creates` правило R1 (catalog) не срабатывает.
+      result[newId] = {
+        ...intent,
+        alpha: "insert",
+        creates: intent.target,
+        originalId: id,
+      };
+    } else {
+      result[id] = intent;
+    }
+  }
+  return result;
+}
+
+export const INTENTS = reclassifyCollectionPosts(aliasParameters(imported.intents));

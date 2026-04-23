@@ -64,6 +64,30 @@ describe("keycloak Stage 1+2 baseline", () => {
     expect(ROOT_PROJECTIONS.length).toBeGreaterThanOrEqual(5);
   });
 
+  it("Stage 3 reclassify: createUser exists с α=insert и creates=User", () => {
+    expect(INTENTS.createUser).toBeDefined();
+    expect(INTENTS.createUser.alpha).toBe("insert");
+    expect(INTENTS.createUser.creates).toBe("User");
+    expect(INTENTS.createGroup?.alpha).toBe("insert");
+    expect(INTENTS.createRole?.alpha).toBe("insert");
+    expect(INTENTS.createIdentityProvider?.alpha).toBe("insert");
+  });
+
+  it("Stage 3 whitelist: ROOT_PROJECTIONS — только canonical (не больше 12)", () => {
+    expect(ROOT_PROJECTIONS.length).toBeGreaterThanOrEqual(8);
+    expect(ROOT_PROJECTIONS.length).toBeLessThanOrEqual(12);
+    expect(ROOT_PROJECTIONS).toContain("realm_list");
+    expect(ROOT_PROJECTIONS).toContain("user_list");
+    expect(ROOT_PROJECTIONS).toContain("client_list");
+    expect(ROOT_PROJECTIONS).toContain("group_list");
+    expect(ROOT_PROJECTIONS).toContain("role_list");
+    // Operation-noise НЕ в whitelist
+    expect(ROOT_PROJECTIONS).not.toContain("activate_list");
+    expect(ROOT_PROJECTIONS).not.toContain("deactivate_list");
+    expect(ROOT_PROJECTIONS).not.toContain("moveafter_list");
+    expect(ROOT_PROJECTIONS).not.toContain("localization_list");
+  });
+
   it("crystallizeV2 не падает после Stage 2 enrichment", () => {
     const derived = deriveProjections(INTENTS, ONTOLOGY);
     const merged = { ...derived };

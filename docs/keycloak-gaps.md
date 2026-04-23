@@ -1,4 +1,4 @@
-# Keycloak gap-каталог (Stage 1+2 baseline)
+# Keycloak gap-каталог (Stage 1+2+3 baseline)
 
 **Дата:** 2026-04-23
 **Worktree:** `.worktrees/keycloak-dogfood/` (host), branch `feat/keycloak-dogfood`
@@ -7,7 +7,9 @@
 **Stage 1 baseline:** 224 entities / 254 intents / 1 role (`owner`) → derive: 48 projections (7 catalog).
 **Stage 2 после host-enrichment:** **199 entities** (-25 dedup) / **254 intents** (253 с alias) / **5 roles** (admin/realmAdmin/userMgr/viewer/self) → derive: **49 artifacts (8 catalog + 7 form + 34 detail)**, **53 fields** с `fieldRole` hint (secret/datetime/email/url), **75 entities** помечены `kind:embedded`. Pattern-bank матчит ≥3 patterns на каждом catalog (`hero-create`, `hierarchy-tree-nav`, `catalog-action-cta`).
 
-**Методология:** static-analysis через `crystallizeV2` + `deriveProjections` в node-репле; baseline smoke-тест **9/9 passed** (`src/domains/keycloak/__tests__/baseline.test.js`).
+**Stage 3 после reclassify + whitelist:** **20 catalog'ов derived** (host-fix `reclassifyCollectionPosts` синтезирует `createX` intents с α=`insert` + `creates=X` для 17 canonical collection-POST endpoint'ов), **10 чистых ROOT_PROJECTIONS** (whitelist canonical: realm/user/client/group/role/identityprovider/clientscope/component/organization/workflow). Operation-noise (activate/deactivate/moveafter/localization/federatedidentity) исключена из nav. Baseline 11/11 tests green.
+
+**Методология:** static-analysis через `crystallizeV2` + `deriveProjections` в node-репле; baseline smoke-тест **11/11 passed** (`src/domains/keycloak/__tests__/baseline.test.js`).
 
 ## Ключевое наблюдение Stage 1
 
@@ -90,6 +92,38 @@ node -e "import('./src/domains/keycloak/imported.js').then(m => {
 node -e "import('./src/domains/keycloak/projections.js').then(m => console.log(m.ROOT_PROJECTIONS))"
 ```
 
+### G-K-8 — POST-collection как α=replace без creates (Stage 3 discovery) — host-fix ⚠️
+
+**Severity:** P0 → **частично закрыт host-fix'ом** (intents.js::reclassifyCollectionPosts).
+**Module:** `@intent-driven/importer-openapi`
+**Observation:** Importer создаёт intent для `POST /realms/{realm}/users` как `usersUser` с α=`replace` и БЕЗ `creates: "User"`. Поскольку `analyzeIntents` в core ищет creators через `intent.creates` (НЕ через α), правило R1 (catalog) не срабатывает — User/Group/Role/IdP/ClientScope/Component/Organization/Workflow получают только detail, без catalog.
+
+Только `Realm` и `Client` получили catalog в Stage 1-2 потому что у них POST top-level (`POST /admin/realms` → `createRealm` с правильным α=insert + creates=Realm).
+
+**Stage 3 host-fix:** explicit mapping 17 canonical `xsX → createX` с подменой `alpha: "insert"` + `creates: target`. Результат: 8 → 20 derived catalog'ов.
+**SDK PR (X1):** importer-openapi `detectCollectionPostAsCreate` — heuristic для POST на nested collection paths (path заканчивается на segment без `{id}` после).
+
+### G-K-9 — crystallize теряет mainEntity в detail-артефактах (Stage 3 discovery) — SDK BUG ⛔
+
+**Severity:** P0 (блокирует R8 hub-absorption)
+**Module:** `@intent-driven/core` crystallizeV2
+**Observation:** `derived[user_detail].mainEntity = "User"` (правильно). После `crystallizeV2(...)` — `arts[user_detail].mainEntity = undefined`. Все 34 detail-артефакта теряют mainEntity. Это блокирует `absorbHubChildren` (R8): `detailByEntity[mainEntity]` index пуст → нет автоматической hub-absorption даже с настроенными FK.
+
+Сейчас: 6 child catalog'ов (User/Group/Role/Client/ClientScope/Component) имеют `realmId references Realm`, FK detected правильно (`detectForeignKeys` работает), но R8 не активируется — Realm.realm_detail не получает hubSections автоматически.
+
+**Verification:**
+```bash
+node -e "import('./src/domains/keycloak/domain.js').then(async m => {
+  const { deriveProjections, crystallizeV2 } = await import('@intent-driven/core');
+  const d = deriveProjections(m.INTENTS, m.ONTOLOGY);
+  const a = crystallizeV2(m.INTENTS, d, m.ONTOLOGY, 'keycloak');
+  console.log('derived:', d.user_detail?.mainEntity, '/ artifact:', a.user_detail?.mainEntity);
+})"
+```
+
+**Target-stage:** SDK BUG — должен быть приоритетный fix в `@intent-driven/core` crystallizeV2 (вероятно где-то в pipeline phase 3a-d mainEntity дропается). Без этого R8 hub-absorption неоперабельна для всего dogfood'а.
+**Workaround:** authored hubSections в host projections.js (manual override).
+
 ### G-K-7 — fieldRole не выводится importer'ом (новый, Stage 2 discovery) — host-fix ⚠️
 
 **Severity:** P1 → **частично закрыт host-fix'ом** (ontology.js::applyFieldRoleHints).
@@ -137,9 +171,20 @@ node -e "import('./src/domains/keycloak/projections.js').then(m => console.log(m
 - [x] 5 base roles задекларированы (admin/realmAdmin/userMgr/viewer/self)
 - [x] Все тесты green (9/9), counts перепроверены: 199 entities / 49 artifacts / 8 catalogs
 
+## Stage 3 acceptance-критерии (закрыт 2026-04-23)
+
+- [x] Reclassify (intents.js): 17 collection-POST → createX с α=insert + creates=target
+- [x] ROOT_PROJECTIONS whitelist (projections.js): 12 canonical → 10 active root catalog'ов в nav
+- [x] Discovery: G-K-8 (importer α=replace BUG), G-K-9 (crystallize mainEntity drop SDK BUG)
+- [x] Тесты 11/11 green; catalog'ов 8 → 20 (12 новых canonical), nav 8 → 10 чистых
+- [ ] Authored projections для 4 MVP — отложено до Stage 4 (визуальная валидация требует seed)
+- [ ] Hub-absorption (Realm.detail с children sections) — заблокирован G-K-9, нужен SDK fix
+
 ## Открытые SDK PR'ы (X1: удаление host-fix'ов после merge)
 
 - importer-openapi `mergeRepresentationDuplicates` (закроет G-K-1)
 - importer-openapi `detectActionEndpoints` (закроет G-K-2 и P-K-E)
 - importer-openapi `inferFieldRoles` (закроет G-K-7)
 - importer-openapi `markEmbeddedTypes` (закроет G-K-3)
+- importer-openapi `detectCollectionPostAsCreate` (закроет G-K-8)
+- core `crystallizeV2.preserveMainEntity` (закроет G-K-9, BUG, наивысший приоритет)
