@@ -41,8 +41,34 @@ const KEYCLOAK_ROLES = {
   },
 };
 
+/**
+ * Stage 9 (P-K-D) host-decl: RoleMapping как assignment-entity для
+ * демонстрации 4 источников ролей (direct / composite / group / client-
+ * default). OpenAPI spec Keycloak не моделирует это как sub-resource,
+ * role-mappings берутся через GET /users/{id}/role-mappings — отдельный
+ * shape который importer не видит. Host declares синтетическую entity.
+ */
+const ROLE_MAPPING_ENTITY = {
+  name: "RoleMapping",
+  label: "Role mapping",
+  kind: "assignment",
+  ownerField: "userId",
+  fields: {
+    id: { type: "text" },
+    userId: { type: "entityRef", kind: "foreignKey", references: "User" },
+    type: { type: "select", options: ["realm", "client"], label: "Type" },
+    roleName: { type: "text", label: "Role" },
+    privileges: { type: "json", label: "Privileges" },
+    inheritedFrom: { type: "text", label: "Source" },
+    clientId: { type: "entityRef", kind: "foreignKey", references: "Client" },
+  },
+};
+
 export const ONTOLOGY = {
-  entities: imported.entities,
+  entities: {
+    ...imported.entities,
+    RoleMapping: ROLE_MAPPING_ENTITY,
+  },
   roles: KEYCLOAK_ROLES,
   invariants: imported.invariants || [],
   features: imported.features || {},
