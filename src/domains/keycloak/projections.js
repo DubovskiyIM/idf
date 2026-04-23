@@ -21,7 +21,139 @@ const CANONICAL_ENTITIES = [
   "AuthenticationFlow", "Event",
 ];
 
-export const PROJECTIONS = {};
+/**
+ * Stage 5 — Wizard catalog_create (G23 closed core@0.58+): authored
+ * form-projection с `bodyOverride: { type: "wizard", steps }` разделяет
+ * один createX intent на семантические step'ы. Подходит для enterprise-
+ * config entity с десятками полей (Realm.fields = 155, Client.fields = 48).
+ *
+ * Renderer: form-archetype читает bodyOverride и отдаёт Wizard primitive
+ * вместо flat formBody. Автор управляет группировкой вручную — это
+ * декларативная UX-декомпозиция, не автоматическая.
+ */
+export const PROJECTIONS = {
+  realm_create: {
+    name: "Создать realm",
+    kind: "form",
+    mode: "create",
+    mainEntity: "Realm",
+    creatorIntent: "createRealm",
+    bodyOverride: {
+      type: "wizard",
+      steps: [
+        {
+          id: "basic",
+          title: "Основное",
+          fields: [
+            { name: "realm", label: "ID realm'а", type: "string", required: true, placeholder: "my-realm" },
+            { name: "displayName", label: "Отображаемое имя", type: "string", placeholder: "My Realm" },
+            { name: "displayNameHtml", label: "HTML-версия имени", type: "textarea" },
+            { name: "enabled", label: "Включён", type: "boolean" },
+          ],
+        },
+        {
+          id: "login",
+          title: "Вход и регистрация",
+          fields: [
+            { name: "registrationAllowed", label: "Разрешена регистрация", type: "boolean" },
+            { name: "resetPasswordAllowed", label: "Разрешён сброс пароля", type: "boolean" },
+            { name: "rememberMe", label: "«Запомнить меня»", type: "boolean" },
+            { name: "verifyEmail", label: "Верификация email", type: "boolean" },
+            { name: "loginTheme", label: "Login theme", type: "string", placeholder: "keycloak" },
+            { name: "accountTheme", label: "Account theme", type: "string", placeholder: "keycloak" },
+          ],
+        },
+        {
+          id: "security",
+          title: "Токены и безопасность",
+          fields: [
+            { name: "sslRequired", label: "SSL requirement", type: "select", options: ["all", "external", "none"] },
+            { name: "defaultSignatureAlgorithm", label: "Signature algorithm", type: "string", placeholder: "RS256" },
+            { name: "accessTokenLifespan", label: "Access token lifespan (sec)", type: "number" },
+          ],
+        },
+      ],
+      onSubmit: { intent: "createRealm" },
+    },
+  },
+  client_create: {
+    name: "Создать client",
+    kind: "form",
+    mode: "create",
+    mainEntity: "Client",
+    creatorIntent: "createClient",
+    bodyOverride: {
+      type: "wizard",
+      steps: [
+        {
+          id: "basic",
+          title: "Основное",
+          fields: [
+            { name: "clientId", label: "Client ID", type: "string", required: true, placeholder: "my-app" },
+            { name: "name", label: "Name", type: "string" },
+            { name: "description", label: "Description", type: "textarea" },
+            { name: "enabled", label: "Включён", type: "boolean" },
+          ],
+        },
+        {
+          id: "flow",
+          title: "Client type",
+          fields: [
+            { name: "protocol", label: "Protocol", type: "select", options: ["openid-connect", "saml"] },
+            { name: "publicClient", label: "Public client", type: "boolean" },
+            { name: "standardFlowEnabled", label: "Standard flow", type: "boolean" },
+            { name: "directAccessGrantsEnabled", label: "Direct access grants", type: "boolean" },
+            { name: "serviceAccountsEnabled", label: "Service accounts", type: "boolean" },
+          ],
+        },
+        {
+          id: "urls",
+          title: "URL'ы",
+          fields: [
+            { name: "rootUrl", label: "Root URL", type: "string", fieldRole: "url" },
+            { name: "baseUrl", label: "Base URL", type: "string", fieldRole: "url" },
+            { name: "redirectUris", label: "Redirect URIs (через запятую)", type: "textarea" },
+            { name: "webOrigins", label: "Web origins (через запятую)", type: "textarea" },
+          ],
+        },
+      ],
+      onSubmit: { intent: "createClient" },
+    },
+  },
+  identityprovider_create: {
+    name: "Создать identity provider",
+    kind: "form",
+    mode: "create",
+    mainEntity: "IdentityProvider",
+    creatorIntent: "createIdentityProvider",
+    bodyOverride: {
+      type: "wizard",
+      steps: [
+        {
+          id: "type",
+          title: "Type",
+          fields: [
+            { name: "providerId", label: "Provider", type: "select", required: true,
+              options: ["oidc", "saml", "google", "github", "microsoft", "facebook", "gitlab"] },
+            { name: "alias", label: "Alias", type: "string", required: true, placeholder: "google" },
+            { name: "displayName", label: "Display name", type: "string" },
+          ],
+        },
+        {
+          id: "config",
+          title: "Configuration",
+          fields: [
+            { name: "enabled", label: "Включён", type: "boolean" },
+            { name: "trustEmail", label: "Trust email", type: "boolean" },
+            { name: "storeToken", label: "Store token", type: "boolean" },
+            { name: "linkOnly", label: "Link only", type: "boolean" },
+          ],
+        },
+      ],
+      onSubmit: { intent: "createIdentityProvider" },
+    },
+  },
+};
 
 const _derived = deriveProjections(INTENTS, ONTOLOGY);
 

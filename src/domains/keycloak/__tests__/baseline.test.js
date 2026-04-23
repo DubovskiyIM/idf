@@ -126,4 +126,44 @@ describe("keycloak Stage 1+2 baseline", () => {
     const artifacts = crystallizeV2(INTENTS, merged, ONTOLOGY, "keycloak");
     expect(Object.keys(artifacts).length).toBeGreaterThan(5);
   });
+
+  it("Stage 5 authored wizard: realm_create/client_create/identityprovider_create декларированы", () => {
+    expect(PROJECTIONS.realm_create).toBeDefined();
+    expect(PROJECTIONS.realm_create.kind).toBe("form");
+    expect(PROJECTIONS.realm_create.mode).toBe("create");
+    expect(PROJECTIONS.realm_create.bodyOverride?.type).toBe("wizard");
+    expect(PROJECTIONS.realm_create.bodyOverride.steps).toHaveLength(3);
+    expect(PROJECTIONS.client_create.bodyOverride.steps).toHaveLength(3);
+    expect(PROJECTIONS.identityprovider_create.bodyOverride.steps).toHaveLength(2);
+  });
+
+  it("Stage 5: crystallizeV2 рендерит wizard-body для authored form-projection'ов", () => {
+    const derived = deriveProjections(INTENTS, ONTOLOGY);
+    const merged = { ...derived };
+    for (const [id, authored] of Object.entries(PROJECTIONS)) {
+      merged[id] = merged[id] ? { ...merged[id], ...authored } : authored;
+    }
+    const artifacts = crystallizeV2(INTENTS, merged, ONTOLOGY, "keycloak");
+    for (const id of ["realm_create", "client_create", "identityprovider_create"]) {
+      const body = artifacts[id]?.slots?.body;
+      expect(body, `${id} body should exist`).toBeDefined();
+      expect(body.type, `${id} body.type should be wizard`).toBe("wizard");
+      expect(Array.isArray(body.steps)).toBe(true);
+      expect(body.steps.length).toBeGreaterThan(0);
+    }
+  });
+
+  it("Stage 5: wizard steps имеют id / title / fields", () => {
+    const artifacts = crystallizeV2(
+      INTENTS,
+      { ...PROJECTIONS },
+      ONTOLOGY,
+      "keycloak",
+    );
+    const realmSteps = artifacts.realm_create.slots.body.steps;
+    expect(realmSteps[0].id).toBe("basic");
+    expect(realmSteps[0].title).toBe("Основное");
+    expect(realmSteps[0].fields.find(f => f.name === "realm")?.required).toBe(true);
+    expect(realmSteps[2].id).toBe("security");
+  });
 });
