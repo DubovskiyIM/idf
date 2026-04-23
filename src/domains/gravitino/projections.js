@@ -196,9 +196,9 @@ export const PROJECTIONS = {
   // catalog-archetype не уважает field.primitive hint (chipList), упадёт
   // на object children. Видны на detail через ChipList.
   //
-  // Actions: Grant/Revoke Role — inline через idf-sdk#218 col.kind:"actions".
-  // `user` param совпадает с OpenAPI path {user}; intents.js aliasParameters
-  // умеет маппить на `userId` если понадобится.
+  // Actions column (idf-sdk#218 col.kind:"actions" + #222 display modes):
+  // 3 actions → auto-mode схлопывает в ⚙ dropdown (gear icon). Grant/Revoke
+  // Role + Remove User. `user` param совпадает с OpenAPI path {user}.
   user_list: catalog("User", "Users",
     ["name"], {
       columns: [
@@ -207,10 +207,14 @@ export const PROJECTIONS = {
           key: "_actions",
           label: "Actions",
           kind: "actions",
+          icon: "gear",
+          menuLabel: "User actions",
           actions: [
             { intent: "grantRoleToUser", label: "Grant Role",
               params: { user: "item.name" } },
-            { intent: "revokeRoleFromUser", label: "Revoke",
+            { intent: "revokeRoleFromUser", label: "Revoke Role",
+              params: { user: "item.name" } },
+            { intent: "removeUser", label: "Delete",
               params: { user: "item.name" }, danger: true },
           ],
         },
@@ -228,10 +232,14 @@ export const PROJECTIONS = {
           key: "_actions",
           label: "Actions",
           kind: "actions",
+          icon: "gear",
+          menuLabel: "Group actions",
           actions: [
             { intent: "grantRoleToGroup", label: "Grant Role",
               params: { group: "item.name" } },
-            { intent: "revokeRoleFromGroup", label: "Revoke",
+            { intent: "revokeRoleFromGroup", label: "Revoke Role",
+              params: { group: "item.name" } },
+            { intent: "removeGroup", label: "Delete",
               params: { group: "item.name" }, danger: true },
           ],
         },

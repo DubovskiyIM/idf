@@ -78,6 +78,17 @@
 **Related patterns:** `hierarchy-tree-nav`, `subCollections.foreignKey` — те же conventions по natural-key могут проявляться.
 **Follow-up:** SDK backlog — предложить `entity.identifierField` в ontology-шейпе или добавить fallback `e.id ?? e.name` в resolveDetailTarget. Исправить silent-fail: если detail не находит entity, рендерить empty-state «не найден», а не пустой экран.
 
+### P-6: Row-contextual actions menu (⋯ / ⚙ dropdown)
+
+**Стадия:** Post-G34 dogfood (2026-04-23)
+**Источник:** Gravitino v2 WebUI, Apache Gravitino screenshots + user observation «шестерёнка вызывает контекстное меню с действиями, возможными к выполнению для сущности в row»
+**Наблюдение:** В CRUD-admin таблицах (user_list, role_list, policy_list) при ≥3 applicable per-row intents inline-кнопки перегружают визуально. Стандартный паттерн: kebab (⋯) или gear (⚙) trigger → dropdown со всеми secondary actions. Primary action (если есть через `catalog-action-cta`) остаётся inline; остальные в menu. AntD Pro ProTable, Stripe Dashboard, GitHub PR list, K8s Lens/Rancher, Linear — все дефолтят на этот shape.
+**Trigger:** `archetype:"catalog"` + column `{ kind: "actions", actions.length ≥ 3 }`. Для `≤ 2` actions — inline сохраняется (save один клик на hot path).
+**Structure:** `col.display: "inline" | "menu" | "auto"` (auto = 2-rule split). `col.icon: "gear"` (⚙) или default (⋯, MoreOutlined). adapter-antd использует AntD Dropdown + Button type="text". SVG-fallback — inline dropdown с click-outside listener.
+**Evidence:** реализовано в idf-sdk#222 (renderer 410 tests, adapter-antd 45 tests, 1 curated candidate).
+**Counterexample:** image-rich feeds (listings, social) — actions через hover в card, не menu column; timeline feeds (messenger) — swipe/long-press; ≤2 actions — inline.
+**Related patterns:** `catalog-action-cta` (primary inline), `row-contextual-actions-menu` (secondary menu) — композиция.
+
 ### P-?: (placeholder for next observation)
 
-<!-- По мере работы в Stage 2-8 добавлять P-6, P-7, ... -->
+<!-- По мере работы в Stage 2-8 добавлять P-7, P-8, ... -->
