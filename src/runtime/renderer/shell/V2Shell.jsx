@@ -674,15 +674,21 @@ export default function V2Shell({
           projectionId: detailId,
           params: { [idParam]: itemId },
         };
-        // Sub-children из hubSections (R8)
+        // Sub-children из hubSections (R8). G-K-18: добавляем parent
+        // disambiguator в label (например, «master · Пользователи»)
+        // — иначе при scroll sidebar пользователь не видит, под каким
+        // realm'ом он находится.
         const hub = detailArt.hubSections || [];
         if (hub.length > 0) {
-          itemNode.children = hub.map(sec => ({
-            id: `${sec.projectionId}:${itemId}`,
-            label: projectionNames[sec.projectionId] || sec.entity,
-            projectionId: sec.projectionId,
-            params: { [sec.foreignKey]: itemId },
-          }));
+          itemNode.children = hub.map(sec => {
+            const childLabel = projectionNames[sec.projectionId] || sec.entity;
+            return {
+              id: `${sec.projectionId}:${itemId}`,
+              label: `${label} · ${childLabel}`,
+              projectionId: sec.projectionId,
+              params: { [sec.foreignKey]: itemId },
+            };
+          });
         }
         return itemNode;
       });
