@@ -402,6 +402,33 @@ export const PROJECTIONS = {
    * values) — host-runtime handler делает probe к OIDC discovery или
    * SAML metadata URL, возвращает { ok, message? }.
    */
+  /**
+   * Stage 9 (P-K-D, idf-sdk#269): user_detail с role-mappings sub-section.
+   * Показывает 4 источника ролей (direct / composite / group / client-default)
+   * через RoleMapping assignment-entity с FK userId. В MVP рендерится как
+   * обычная SubCollectionSection — item.roleName + item.inheritedFrom
+   * badge через auto-generated itemView. Full PermissionMatrix UI с
+   * inheritance-badges (idf-sdk#269) — ждёт section.kind-dispatcher в
+   * ArchetypeDetail (follow-up SDK PR).
+   */
+  user_detail: {
+    name: "Пользователь",
+    kind: "detail",
+    mainEntity: "User",
+    idParam: "userId",
+    subCollections: [
+      {
+        entity: "RoleMapping",
+        foreignKey: "userId",
+        title: "Роли пользователя",
+        itemView: [
+          { bind: "type", type: "badge" },
+          { bind: "roleName", type: "text" },
+          { bind: "inheritedFrom", type: "text" },
+        ],
+      },
+    ],
+  },
   identityprovider_create: {
     name: "Создать identity provider",
     kind: "form",

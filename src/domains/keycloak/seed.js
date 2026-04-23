@@ -162,5 +162,25 @@ export function getSeedEffects() {
   ];
   SCOPES.forEach(s => ef("ClientScope", s));
 
+  // ═══ Role mappings (P-K-D, Stage 9) ═══════════════════════════════════
+  // Демонстрация 4 источников: direct / composite / group / client-default.
+  // Alice имеет realm-admin (direct), view-users (через composite realm-admin),
+  // customer-tier-1 (через group Admins), backend-caller (client role, direct).
+  // Bob имеет manage-users (direct) + customer-tier-1 (через group Engineers).
+  // Charlie — только customer-tier-1 (через group Subscribers).
+  const ROLE_MAPPINGS = [
+    // Alice — комплексный случай с 4 источниками
+    { id: "rm_alice_1", userId: "u_alice", type: "realm",  roleName: "realm-admin",   privileges: ["manage-realm"], inheritedFrom: "direct" },
+    { id: "rm_alice_2", userId: "u_alice", type: "realm",  roleName: "view-users",    privileges: ["view"],         inheritedFrom: "composite:realm-admin" },
+    { id: "rm_alice_3", userId: "u_alice", type: "realm",  roleName: "customer-tier-1", privileges: ["use"],        inheritedFrom: "group:Admins" },
+    { id: "rm_alice_4", userId: "u_alice", type: "client", roleName: "backend-caller", privileges: ["invoke"],      inheritedFrom: "direct", clientId: "cl_backend_api" },
+    // Bob — 2 источника
+    { id: "rm_bob_1",   userId: "u_bob",   type: "realm",  roleName: "manage-users",  privileges: ["manage"], inheritedFrom: "direct" },
+    { id: "rm_bob_2",   userId: "u_bob",   type: "realm",  roleName: "customer-tier-1", privileges: ["use"], inheritedFrom: "group:Engineers" },
+    // Charlie — только group-inherited
+    { id: "rm_charlie_1", userId: "u_charlie", type: "realm", roleName: "customer-tier-1", privileges: ["use"], inheritedFrom: "group:Subscribers" },
+  ];
+  ROLE_MAPPINGS.forEach(rm => ef("RoleMapping", rm));
+
   return effects;
 }

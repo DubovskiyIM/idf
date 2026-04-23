@@ -186,6 +186,31 @@ describe("keycloak Stage 1+2 baseline", () => {
     expect(endpointsStep.testConnection?.intent).toBe("testIdentityProviderConnection");
   });
 
+  it("Stage 9: RoleMapping entity в ontology + 7 seed effects (Alice 4 sources / Bob 2 / Charlie 1)", () => {
+    expect(ONTOLOGY.entities.RoleMapping).toBeDefined();
+    expect(ONTOLOGY.entities.RoleMapping.kind).toBe("assignment");
+    expect(ONTOLOGY.entities.RoleMapping.ownerField).toBe("userId");
+    const roleMappings = getSeedEffects().filter(e => e.target === "RoleMapping");
+    expect(roleMappings.length).toBe(7);
+    const alice = roleMappings.filter(e => e.context?.userId === "u_alice");
+    expect(alice).toHaveLength(4);
+    // Demo 4 источников
+    const sources = alice.map(e => e.context.inheritedFrom);
+    expect(sources).toContain("direct");
+    expect(sources).toContain("composite:realm-admin");
+    expect(sources).toContain("group:Admins");
+  });
+
+  it("Stage 9: user_detail projection с RoleMapping subCollection", () => {
+    expect(PROJECTIONS.user_detail).toBeDefined();
+    expect(PROJECTIONS.user_detail.kind).toBe("detail");
+    const subs = PROJECTIONS.user_detail.subCollections;
+    expect(Array.isArray(subs)).toBe(true);
+    const roleMapSub = subs.find(s => s.entity === "RoleMapping");
+    expect(roleMapSub).toBeDefined();
+    expect(roleMapSub.foreignKey).toBe("userId");
+  });
+
   it("Stage 7: domain.TEST_CONNECTION_HANDLERS регистрирует testIdentityProviderConnection", async () => {
     const { TEST_CONNECTION_HANDLERS } = await import("../domain.js");
     expect(typeof TEST_CONNECTION_HANDLERS?.testIdentityProviderConnection).toBe("function");
