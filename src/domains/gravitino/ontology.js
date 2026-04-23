@@ -3,22 +3,34 @@ import { ontology as imported } from "./imported.js";
 
 /**
  * Host-level field enrichment. Поверх imported ontology добавляем
- * declarative `field.primitive` hints (core@0.53+ declarative primitive
- * hint механизм, idf-sdk#198) для custom rendering.
+ * declarative `field.primitive` hints (core@0.53+, idf-sdk#198) для
+ * custom rendering. Без hint'ов json/array-поля выпадают в text-default
+ * (raw blob); hint привязывает custom primitive per field.
  *
- * Text-heuristic / role-heuristic для json-полей даёт raw JSON blob;
- * с hint'ом renderer вызывает соответствующий primitive:
- *   - Table.columns (json) → SchemaEditor (renderer@0.30.0, idf-sdk#196)
+ * Активные аннотации:
+ *   - Table.columns (json)           → SchemaEditor     (renderer@0.30.0 #196)
+ *   - Role.securableObjects (json)   → permissionMatrix (renderer@0.32.0 #202)
+ *   - <entity>.properties (json)     → propertyPopover  (Stage 7 #206)
+ *   - User.roles / Group.roles      → chipList variant=role (Stage 7 #206)
+ *   - Tag.appliedTo / Policy.*      → future tags/policies
  *
- * Future host-annotations (Stage 4-7):
- *   - Role.securableObjects → permissionMatrix primitive (Stage 5)
- *   - Catalog.tags / Catalog.policies → chip primitive (Stage 7)
+ * Каждый hint activates только после merge соответствующего SDK PR +
+ * renderer bump. До активации — fallback (text-blob).
  */
 function enrichFieldsWithPrimitives(entities) {
-  const enriched = { ...entities };
+  const enriched = {};
 
-  // Table.columns — primary Stage 3 deliverable (Gravitino docs сравнение
-  // G26). Без hint'а рендерится как text с bind на json-array — blob.
+  // Entities с json `properties` — получают propertyPopover (Stage 7).
+  const PROPERTIES_BEARERS = [
+    "Metalake", "Catalog", "Schema", "Table", "Fileset", "Topic", "Model",
+    "Tag", "Policy", "Role",
+  ];
+
+  for (const [name, entity] of Object.entries(entities)) {
+    enriched[name] = entity;
+  }
+
+  // Stage 3: Table.columns → schemaEditor
   if (enriched.Table?.fields?.columns) {
     enriched.Table = {
       ...enriched.Table,
@@ -33,8 +45,7 @@ function enrichFieldsWithPrimitives(entities) {
     };
   }
 
-  // Role.securableObjects — Stage 5 deliverable (G35 P0). PermissionMatrix
-  // primitive (renderer@0.32+, idf-sdk#202) рендерит как RBAC matrix.
+  // Stage 5: Role.securableObjects → permissionMatrix
   if (enriched.Role?.fields?.securableObjects) {
     enriched.Role = {
       ...enriched.Role,
@@ -47,6 +58,42 @@ function enrichFieldsWithPrimitives(entities) {
         },
       },
     };
+  }
+
+  // Stage 7: entity.properties → propertyPopover
+  for (const entityName of PROPERTIES_BEARERS) {
+    const ent = enriched[entityName];
+    if (ent?.fields?.properties) {
+      enriched[entityName] = {
+        ...ent,
+        fields: {
+          ...ent.fields,
+          properties: {
+            ...ent.fields.properties,
+            primitive: "propertyPopover",
+            label: "Properties",
+          },
+        },
+      };
+    }
+  }
+
+  // Stage 7: User.roles и Group.roles → chipList (variant "role")
+  for (const entityName of ["User", "Group"]) {
+    const ent = enriched[entityName];
+    if (ent?.fields?.roles) {
+      enriched[entityName] = {
+        ...ent,
+        fields: {
+          ...ent.fields,
+          roles: {
+            ...ent.fields.roles,
+            primitive: "chipList",
+            label: "Roles",
+          },
+        },
+      };
+    }
   }
 
   return enriched;
