@@ -110,6 +110,81 @@ export default function V2Shell({
     return names;
   }, [allProjections]);
 
+  /**
+   * Entity-aware breadcrumb labels — если projection это detail с idParam,
+   * и в world есть instance под этим id, показываем instance primary-title
+   * вместо projection-level имени. Для метадата-доменов (Gravitino) это
+   * даёт «Metalakes / prod_metalake / Catalogs / hive» вместо
+   * «Metalakes / Metalake / Schemas / Schema».
+   *
+   * Key: `${projectionId}:${idParamValue}` → entity title.
+   * Compute on-demand через lookup в world по projection.mainEntity
+   * и instance.id === idParamValue. Primary-title поле находим через
+   * inferFieldRole (первое поле с role "primary-title" / "title" / "name").
+   *
+   * Fallback: projection.name (base projectionNames map).
+   */
+  const instanceLabels = useMemo(() => {
+    if (!world || !allProjections) return {};
+    const labels = {};
+    for (const [id, proj] of Object.entries(allProjections)) {
+      if (proj.kind !== "detail") continue;
+      const idParam = proj.idParam;
+      const mainEntity = proj.mainEntity;
+      if (!idParam || !mainEntity) continue;
+      // Collection name — camelCase plural (metalakes / catalogs / ...).
+      const collection = mainEntity.charAt(0).toLowerCase() + mainEntity.slice(1) + "s";
+      const items = Array.isArray(world[collection]) ? world[collection] : [];
+      if (items.length === 0) continue;
+      // Primary-title field — ищем в ontology entities
+      const entity = domain.ONTOLOGY?.entities?.[mainEntity];
+      const fields = entity?.fields;
+      let titleField = "name";
+      if (fields && typeof fields === "object" && !Array.isArray(fields)) {
+        for (const [fname, fdef] of Object.entries(fields)) {
+          if (fdef?.role === "primary-title" || fdef?.fieldRole === "primary-title") {
+            titleField = fname; break;
+          }
+        }
+        if (!fields[titleField] && fields.title) titleField = "title";
+        if (!fields[titleField] && fields.label) titleField = "label";
+      }
+      for (const item of items) {
+        const key = `${id}:${item.id}`;
+        const title = item[titleField];
+        if (typeof title === "string" && title) labels[key] = title;
+      }
+    }
+    return labels;
+  }, [world, allProjections, domain.ONTOLOGY]);
+
+  /**
+   * Breadcrumb-specific override of projectionNames. Для каждого crumb'а
+   * в visible path (history + current) берём instance-specific label если
+   * доступен. Fallback на projectionNames map. Эффект: на metalake_detail
+   * с params.metalakeId=m1 — показываем "prod_metalake", а не "Metalake".
+   *
+   * Потенциальный collision: если в path два crumb'а с одним projectionId
+   * (нечасто для hierarchical nav, но возможно в истории back-forward) —
+   * последний override wins. Для текущих Gravitino flows conflict'ов нет.
+   */
+  const crumbNames = useMemo(() => {
+    if (!current) return projectionNames;
+    const base = { ...projectionNames };
+    const allCrumbs = [...(history || []), current];
+    for (const crumb of allCrumbs) {
+      if (!crumb?.params) continue;
+      const proj = allProjections[crumb.projectionId];
+      const idParam = proj?.idParam;
+      const idValue = idParam ? crumb.params[idParam] : null;
+      if (!idValue) continue;
+      const key = `${crumb.projectionId}:${idValue}`;
+      const instanceLabel = instanceLabels[key];
+      if (instanceLabel) base[crumb.projectionId] = instanceLabel;
+    }
+    return base;
+  }, [projectionNames, history, current, instanceLabels, allProjections]);
+
   // Viewer context для wrappedExec в ProjectionRendererV2 — подставляется
   // в ctx каждого exec-вызова. Виртуальный viewer: domain-runtime сами
   // решают, что такое «я» (booking — client, planning — participant и т.д.).
@@ -460,7 +535,7 @@ export default function V2Shell({
               current={current}
               canGoBack={canGoBack}
               onBack={back}
-              projectionNames={projectionNames}
+              projectionNames={crumbNames}
             />
           </div>
         )}

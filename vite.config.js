@@ -11,7 +11,7 @@ function spaFallback() {
     '/lifequest', '/reflect', '/invest', '/sales',
     '/booking', '/booking-v2', '/planning', '/planning-v2',
     '/workflow', '/messenger', '/messenger-v2',
-    '/freelance',
+    '/freelance', '/gravitino',
   ];
   return {
     name: 'spa-fallback',
