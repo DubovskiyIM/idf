@@ -61,11 +61,48 @@ export function getSeedEffects() {
   SCHEMAS.forEach(s => ef("schemas", s));
 
   // ═══ Tables (Schema → Table) ═════════════════════════════════════════════
+  // columns — array of composite column defs (varchar(N), decimal(P,S),
+  // bigint, timestamp, ...). Stage 3 SDK SchemaEditor primitive (idf-sdk#196)
+  // рендерит эту структуру как table-editor; authored table_detail.columns
+  // получит primitive='schemaEditor' после bump'а renderer.
+  const COL_FACT_SALES = [
+    { name: "order_id",    type: "bigint",    nullable: false, comment: "Primary key" },
+    { name: "customer_id", type: "bigint",    nullable: false, comment: "FK → dim_customer" },
+    { name: "product_sku", type: "varchar",   length: 64, nullable: false },
+    { name: "quantity",    type: "integer",   nullable: false },
+    { name: "gross_amount", type: "decimal",  precision: 12, scale: 2, nullable: false, comment: "Gross sale amount" },
+    { name: "discount",     type: "decimal",  precision: 10, scale: 2, nullable: true },
+    { name: "currency",    type: "char",      length: 3, nullable: false, comment: "ISO-4217" },
+    { name: "order_ts",    type: "timestamp", nullable: false },
+  ];
+  const COL_DIM_CUSTOMER = [
+    { name: "customer_id", type: "bigint",   nullable: false, comment: "Surrogate PK" },
+    { name: "email",       type: "varchar",  length: 320, nullable: false },
+    { name: "first_name",  type: "varchar",  length: 100, nullable: true },
+    { name: "last_name",   type: "varchar",  length: 100, nullable: true },
+    { name: "country",     type: "char",     length: 2, nullable: true },
+    { name: "created_at",  type: "timestamp", nullable: false },
+  ];
+  const COL_CAMPAIGNS = [
+    { name: "campaign_id", type: "bigint",   nullable: false },
+    { name: "name",        type: "varchar",  length: 200, nullable: false },
+    { name: "channel",     type: "varchar",  length: 32, nullable: true, comment: "email | push | social | ..." },
+    { name: "budget",      type: "decimal",  precision: 14, scale: 2, nullable: true },
+    { name: "start_date",  type: "date",     nullable: false },
+    { name: "end_date",    type: "date",     nullable: true },
+  ];
+  const COL_CLICKS = [
+    { name: "click_id",    type: "bigint",    nullable: false },
+    { name: "user_id",     type: "bigint",    nullable: false },
+    { name: "url",         type: "varchar",   length: 2048, nullable: false },
+    { name: "ip",          type: "varchar",   length: 45 },
+    { name: "event_ts",    type: "timestamp", nullable: false },
+  ];
   const TABLES = [
-    { id: "t_fact_sales",    name: "fact_sales",    comment: "Fact table for sales events",  properties: { "location": "s3://warehouse/sales/fact_sales" }, schemaId: "s_sales",     audit: audit("alice@acme") },
-    { id: "t_dim_customer",  name: "dim_customer",  comment: "Customer dimension",           properties: {},                                                 schemaId: "s_sales",     audit: audit("alice@acme") },
-    { id: "t_campaigns",     name: "campaigns",     comment: "Marketing campaigns",          properties: {},                                                 schemaId: "s_marketing", audit: audit("alice@acme") },
-    { id: "t_clicks_2026",   name: "clicks_2026",   comment: "Iceberg partitioned by date",  properties: {},                                                 schemaId: "s_clicks",    audit: audit("alice@acme") },
+    { id: "t_fact_sales",    name: "fact_sales",    comment: "Fact table for sales events",  properties: { "location": "s3://warehouse/sales/fact_sales" }, columns: COL_FACT_SALES,  schemaId: "s_sales",     audit: audit("alice@acme") },
+    { id: "t_dim_customer",  name: "dim_customer",  comment: "Customer dimension",           properties: {},                                                 columns: COL_DIM_CUSTOMER, schemaId: "s_sales",     audit: audit("alice@acme") },
+    { id: "t_campaigns",     name: "campaigns",     comment: "Marketing campaigns",          properties: {},                                                 columns: COL_CAMPAIGNS,   schemaId: "s_marketing", audit: audit("alice@acme") },
+    { id: "t_clicks_2026",   name: "clicks_2026",   comment: "Iceberg partitioned by date",  properties: {},                                                 columns: COL_CLICKS,      schemaId: "s_clicks",    audit: audit("alice@acme") },
   ];
   TABLES.forEach(t => ef("tables", t));
 
