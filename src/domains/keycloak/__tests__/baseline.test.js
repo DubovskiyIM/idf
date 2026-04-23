@@ -1,10 +1,11 @@
-// Stage 1 + 2 baseline smoke. Цель — ловить ломку host-facade'а
+// Stage 1-4 baseline smoke. Цель — ловить ломку host-facade'а
 // до dev-server'а. Stage 2 после dedup проверяет что *Representation
 // мерджнуты в short names (Realm/Client/User), fieldRole-hint
 // применяется к secret/datetime/email-полям, custom roles задекларированы.
+// Stage 4 — seed возвращает >30 effects, fold(seed) даёт expected counts.
 import { describe, it, expect } from "vitest";
-import { crystallizeV2, deriveProjections } from "@intent-driven/core";
-import { ONTOLOGY, INTENTS, ROOT_PROJECTIONS, PROJECTIONS } from "../domain.js";
+import { crystallizeV2, deriveProjections, fold } from "@intent-driven/core";
+import { ONTOLOGY, INTENTS, ROOT_PROJECTIONS, PROJECTIONS, getSeedEffects } from "../domain.js";
 
 describe("keycloak Stage 1+2 baseline", () => {
   it("Stage 2 dedup: canonical entities под коротким именем (Realm, не RealmRepresentation)", () => {
@@ -86,6 +87,33 @@ describe("keycloak Stage 1+2 baseline", () => {
     expect(ROOT_PROJECTIONS).not.toContain("deactivate_list");
     expect(ROOT_PROJECTIONS).not.toContain("moveafter_list");
     expect(ROOT_PROJECTIONS).not.toContain("localization_list");
+  });
+
+  it("Stage 4 seed: >30 effects, expected target distribution", () => {
+    const effects = getSeedEffects();
+    expect(effects.length).toBeGreaterThanOrEqual(30);
+    const byTarget = {};
+    for (const e of effects) byTarget[e.target] = (byTarget[e.target] || 0) + 1;
+    expect(byTarget.Realm).toBe(3);
+    expect(byTarget.Client).toBe(5);
+    expect(byTarget.User).toBe(10);
+    expect(byTarget.Group).toBe(3);
+    expect(byTarget.Role).toBe(6);
+    expect(byTarget.IdentityProvider).toBe(4);
+  });
+
+  it("Stage 4 seed: fold(effects) даёт world с canonical entities", () => {
+    const world = fold(getSeedEffects());
+    // fold возвращает Map-like world; entities группируются по target
+    const realmCount = (world.Realm || []).length;
+    const userCount = (world.User || []).length;
+    const clientCount = (world.Client || []).length;
+    expect(realmCount).toBe(3);
+    expect(userCount).toBe(10);
+    expect(clientCount).toBe(5);
+    // FK realmId на User
+    const aliceUser = (world.User || []).find(u => u.username === "alice@acme.com");
+    expect(aliceUser?.realmId).toBe("r_customer");
   });
 
   it("crystallizeV2 не падает после Stage 2 enrichment", () => {

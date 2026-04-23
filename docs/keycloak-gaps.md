@@ -171,6 +171,14 @@ node -e "import('./src/domains/keycloak/domain.js').then(async m => {
 - [x] 5 base roles задекларированы (admin/realmAdmin/userMgr/viewer/self)
 - [x] Все тесты green (9/9), counts перепроверены: 199 entities / 49 artifacts / 8 catalogs
 
+## Stage 4 acceptance-критерии (закрыт 2026-04-23)
+
+- [x] `getSeedEffects()` возвращает 34 effects (3 Realm + 5 Client + 10 User + 3 Group + 6 Role + 4 IdentityProvider + 3 ClientScope)
+- [x] FK realmId корректный — все child entities ссылаются на Realm.id
+- [x] `fold(effects)` даёт expected world counts (3/5/10) — verified в тестах
+- [x] Тесты 13/13 green
+- [ ] Visual baseline в браузере — отложено (требует пользовательского взгляда + dev-сервер)
+
 ## Stage 3 acceptance-критерии (закрыт 2026-04-23)
 
 - [x] Reclassify (intents.js): 17 collection-POST → createX с α=insert + creates=target
