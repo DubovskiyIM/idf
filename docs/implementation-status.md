@@ -26,16 +26,19 @@
 | delivery | 45 | 14 сущностей | 5 ролей, map-primitive, dispatcher m2m, irreversibility в `capture_payment` |
 | freelance | 46 | Task, Response, Deal, Wallet, Transaction, Review, Category | Биржа услуг, multi-owner (customerId + executorId) на Deal, escrow через hold/release, revision loop, комиссия платформы |
 | compliance | 38 | User, Department, Control, JournalEntry, Approval, AttestationCycle, Attestation, Finding, Evidence, Amendment | **13-й полевой тест**, SOX ICFR / «provable UI». 6 ролей, 15 invariants (5 expression-kind), 7 rules (все 4 v1.5 ext), 5 `__irr:high` intents. Первый домен со всеми 5 behavioral patterns signal-classifier'а. Reuse AntD. Закрыл backlog §1.1. |
+| keycloak | 256 | 186 entities (Realm, Client, User, Group, Role, IdentityProvider, ClientScope, Component, Organization, Workflow + 75 embedded + service types) | **15-й полевой тест** (после Gravitino 14-го), Keycloak Admin Console. **AdminShell layout** (persistent sidebar tree + body region), **scoped DataGrid** (master/customer-app/staging — разные user pool через `node.filter`), Stage 6 **tabbedForm** (Client.detail × 5 tabs × 48 полей), Stage 7 **testConnection wizard step** (IdP create). Импортирован через `@intent-driven/importer-openapi@0.11.0`. **Закрыл 12 SDK gap'ов** (G-K-1/2/3/7/8/9/10/11/14/20/24/25). 5 ролей (admin/realmAdmin/userMgr/viewer/self), 25 createX intents. AntD enterprise. |
 
-**Итого:** 672 намерения, 11 доменов, один движок кристаллизации.
+**Итого:** ~930 намерений, 12 доменов, один движок кристаллизации.
 
 Freelance (12-й полевой тест) выявил 40+ конкретных SDK gap'ов в процессе авторинга — см. [`sdk-improvements-backlog.md`](sdk-improvements-backlog.md). Backlog классифицирован P0/P1/P2 и адресован `@intent-driven/core`, `@intent-driven/renderer`, `@intent-driven/adapter-antd`.
 
 Compliance (13-й полевой тест) закрыл backlog §1.1 (`invariant.kind: "expression"` — расширен до `(row, world, viewer, context)` сигнатуры), добавил 5-ю производную материализацию (`materializeAuditLog` над Φ для observer-role) и зафиксировал три открытых design-gap: polymorphic Evidence.attachedTo (sparse-columns в MVP), computed ownerField для Attestation, `role.scope: {kind: "expression"}` support.
 
+Keycloak (15-й полевой тест, 2026-04-23) — первый dogfood-домен полностью на importer-openapi pipeline без ручного авторинга ontology. Закрыл 12 SDK gap'ов в один день (importer dedup/embedded/inferFieldRoles/detectActionEndpoints/detectCollectionPostAsCreate, core preserveMainEntity/detectFK-synthetic/R8-bestParent/formModal-entity-fields, renderer AdminShell-primitive/DataGrid-filter/ActionCell-auto-overlay). **AdminShell** — новый layout-mode для admin-style enterprise UX (Keycloak / Gravitino / Argo / Grafana / любой control-plane): 2-column shell с persistent sidebar tree (instance-aware через R8 hubSections) и body, переключаемым через `onSelect`. Открытые gap'ы: G-K-12 (Wizard через row-CTA edit), G-K-22 (`ontology.features.preferDataGrid` switch), G-K-23 (validation soft-warn). См. финальный gap-каталог `idf/docs/keycloak-gaps.md` (25 gap'ов, 9 ✅ closed via SDK PR, 6 host workarounds, 4 deferred design ask, 6 informational).
+
 ### Тестовое покрытие
 
-- **idf (прототип)**: 799 unit-тестов в 56 файлах (+31 compliance после 13-го теста)
+- **idf (прототип)**: ~820 unit-тестов в 58 файлах (+31 compliance после 13-го теста, +20 keycloak baseline после 15-го теста)
 - **@intent-driven/core**: 916 unit-тестов (+21 после PR #96 + #98: expression world/viewer/context + audit materializer)
 - **@intent-driven/renderer**: 175 тестов
 - **@intent-driven/canvas-kit**: 36 тестов
