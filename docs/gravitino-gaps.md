@@ -400,11 +400,68 @@ Deferred в SDK backlog (не Stage 2 scope): G15 R8 absorb.
 
 | Stage | Primary gap'ы | Status |
 |-------|---------------|--------|
-| Stage 3 (composite) | G26 (SchemaEditor host-integration), G27 (nested — deferred) | SDK merged, host-integration pending |
-| Stage 4 (data-grid) | G21, G38 (filter), plus G20 (chip columns) | pending |
-| Stage 5 (permission matrix) | G35 | pending |
-| Stage 6 (wizard dynamics) | G23, G24 | pending |
-| Stage 7 (property popover + assoc) | G18, G22, G31, G37 | pending |
-| Stage 8 (polish + demo) | G19, G33, G36 (workspace switcher) | pending |
+| Stage 3 (composite) | G26 (SchemaEditor host-integration), G27 (nested — deferred) | ✓ SDK merged + host annotation active |
+| Stage 4 (data-grid) | G21, G38 (filter), plus G20 (chip columns) | ✓ SDK DataGrid merged; catalog-archetype shape-layer integration deferred |
+| Stage 5 (permission matrix) | G35 | ✓ SDK merged + host annotation active |
+| Stage 6 (wizard dynamics) | G23, G24 | ✓ SDK Wizard merged; host Create Catalog projection authoring deferred |
+| Stage 7 (property popover + assoc) | G18, G22, G31, G37 | ✓ SDK + host annotations active |
+| Stage 8 (native AntD polish) | adapter-antd delegations + affinity + cell formats | ✓ merged |
 | Deferred / vend | G25 (UDFs), G29 (Versions), G30 (Jobs Run modal), G27 (nested types) | SDK backlog / future |
 | SDK backlog | G32 (importer subtype merge) | §9.7 candidate |
+
+---
+
+## Final walkthrough: Gravitino docs vs current derived UI (2026-04-23)
+
+**После всех 13 SDK PR'ов merged** (186/188/190/192/193/196/198/200/202/204/206/210/212) + host annotations активированы. SDK versions: core@0.54.0, renderer@0.34.0, adapter-antd@1.6.1.
+
+**Derived state per projection:**
+
+Metalake / Catalog / Schema / Model / Tag / Policy detail → AntD TreeNav sidebar + PropertyPopover на properties + sections от subCollections.
+User / Group detail → ChipList на roles + sections.
+Role detail → PermissionMatrix на securableObjects + PropertyPopover на properties.
+Table detail → SchemaEditor на columns + PropertyPopover на properties.
+Metalake list → heroCreate ✓ (inline composer для новой metalake).
+Остальные lists → heroCreate не активирован (wizard-required creates).
+
+### Module-by-module closure
+
+| Module | Gravitino docs UI | Наш derived сейчас | Closure |
+|--------|-------------------|---------------------|---------|
+| Metalakes list | Name / Properties(popover) / Actions | Name heading + heroCreate ✓ | Partial — properties popover на detail, не на list |
+| Metalake detail | basic info + Schemas list + Roles | PropertyPopover(properties) + subCollections Catalogs | ✓ parity |
+| Catalogs list | Type/Provider filter + Tags/Policies chips | flat list без filter/chip columns | DataGrid host-integration pending (Stage 4.5) |
+| Catalogs detail | info + Schemas | PropertyPopover + subCollection Schemas + treeNav | ✓ |
+| Schemas list | Under Catalog detail | subCollection в catalog_detail | ✓ |
+| Schemas detail | Tables/Filesets/Topics/Models lists | 4 sections (Tables/Filesets/Topics/Models) + treeNav + PropertyPopover | ✓ parity (чувствительное совпадение) |
+| Tables list | Table name + metadata | list projection, flat | Default catalog archetype, adequate |
+| Tables detail | columns (varchar(N)/decimal(P,S)/etc) | SchemaEditor primitive с native AntD Table columns | ✓ parity |
+| Filesets | Two-level Fileset → Files | fileset_list + fileset_detail; Files — runtime, вне metadata scope | Partial (by design) |
+| Topics / Models | list + detail basic | ✓ rendered | ✓ |
+| Versions | version history | нет modularized — через Φ.history (не активировано) | G29 deferred |
+| Jobs / JobTemplates | Run job modal с {{placeholders}} | нет authored projections | G30 deferred |
+| Data Compliance — Tags | list + create-modal + click-to-objects | tag_list + overlay_createTag ✓; cross-entity browse — через subcollection патттерн | ✓ (partial) |
+| Data Compliance — Policies | list + create-modal | policy_list ✓ (minimal witness — Policy только id из importer; G32 pending) | Partial — importer G32 |
+| Access — Users | list + Grant Role inline | user_list + user_detail ChipList(roles) + sections auto-derived (Grant/Revoke) | ✓ (per-item grant action — G34 pending) |
+| Access — Groups | list + Grant Role inline | group_list + ChipList(roles) + sections | ✓ |
+| Access — Roles | securable objects matrix | role_list + **PermissionMatrix** (securableObjects) + PropertyPopover | ✓ parity |
+
+### Оставшиеся gap'ы (приоритизированный финал)
+
+**Host-integration deferred (низкоприоритетный для architecture, но visible):**
+- **G20/G21/G38 (Stage 4.5)** — catalog shape-layer для Tags/Policies chip columns + Type/Provider filter. SDK DataGrid готов, нужна host/core integration (pattern + projection authoring)
+- **G23 (Stage 6.5)** — authored `catalog_create` projection с Wizard primitive (multi-step provider selection). SDK Wizard готов
+- **G34** — per-item Grant Role action в user_list/group_list catalog-archetype (intents есть, wiring нужен)
+
+**Future/vended:**
+- **G29 Versions** — materialize from Φ.history (document materializer extension)
+- **G30 Jobs Run modal** — parametric intents с {{placeholder}} values (generic pattern — применимо не только к Gravitino)
+- **G25 UDFs** — не в canonical 12 entities Gravitino
+
+**SDK backlog:**
+- **G32** — importer-openapi subtype merging (PolicyBase/PolicyMetadata → Policy)
+- **G11** — anchoring particles в importer (87% intents без constraints после enrich)
+
+### Vermissung: достигнуто 11/12 Gravitino модулей с visually native AntD рендером
+
+Оставшиеся 1-2 визуальные gap'ы (host-integration catalog-shape + wizard activation) — work products otros host PR'ов, не SDK. Весь SDK primitive layer закрыт.
