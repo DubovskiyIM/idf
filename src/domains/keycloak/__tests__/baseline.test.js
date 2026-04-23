@@ -198,6 +198,35 @@ describe("keycloak Stage 1+2 baseline", () => {
     }
   });
 
+  it("Stage 6: client_detail tabbedForm — 5 tabs с Settings/Credentials/Flow/URLs/Advanced", () => {
+    expect(PROJECTIONS.client_detail).toBeDefined();
+    expect(PROJECTIONS.client_detail.kind).toBe("form");
+    expect(PROJECTIONS.client_detail.bodyOverride?.type).toBe("tabbedForm");
+    const tabs = PROJECTIONS.client_detail.bodyOverride.tabs;
+    expect(tabs).toHaveLength(5);
+    const ids = tabs.map(t => t.id);
+    expect(ids).toEqual(["settings", "credentials", "flow", "urls", "advanced"]);
+    // Каждый tab имеет fields + onSubmit
+    for (const tab of tabs) {
+      expect(Array.isArray(tab.fields)).toBe(true);
+      expect(tab.fields.length).toBeGreaterThan(0);
+      expect(tab.onSubmit?.intent).toBe("updateClient");
+    }
+  });
+
+  it("Stage 6: crystallize рендерит tabbedForm-body для client_detail", () => {
+    const artifacts = crystallizeV2(
+      INTENTS,
+      { ...PROJECTIONS },
+      ONTOLOGY,
+      "keycloak",
+    );
+    const body = artifacts.client_detail?.slots?.body;
+    expect(body?.type).toBe("tabbedForm");
+    expect(Array.isArray(body.tabs)).toBe(true);
+    expect(body.tabs.length).toBe(5);
+  });
+
   it("Stage 5: wizard steps имеют id / title / fields", () => {
     const artifacts = crystallizeV2(
       INTENTS,

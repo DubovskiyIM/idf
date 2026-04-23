@@ -274,6 +274,87 @@ export const PROJECTIONS = {
       onSubmit: { intent: "createClient" },
     },
   },
+  /**
+   * Stage 6 (P-K-A, idf-sdk#263): tabbed-form для Client.detail. Client
+   * имеет 48 полей — flat formBody не масштабируется. Декомпозиция по
+   * semantic tabs: Settings / Credentials / Auth flow / URLs / Advanced.
+   * Каждый tab — свой Save, shared intent updateClient.
+   */
+  client_detail: {
+    name: "Client",
+    kind: "form",
+    mainEntity: "Client",
+    idParam: "clientId",
+    bodyOverride: {
+      type: "tabbedForm",
+      initialTab: "settings",
+      tabs: [
+        {
+          id: "settings",
+          title: "Настройки",
+          fields: [
+            { name: "clientId", label: "Client ID", type: "string", required: true },
+            { name: "name", label: "Name", type: "string" },
+            { name: "description", label: "Description", type: "textarea" },
+            { name: "enabled", label: "Включён", type: "boolean" },
+            { name: "alwaysDisplayInConsole", label: "Always display in console", type: "boolean" },
+            { name: "consentRequired", label: "Consent required", type: "boolean" },
+          ],
+          onSubmit: { intent: "updateClient" },
+        },
+        {
+          id: "credentials",
+          title: "Credentials",
+          fields: [
+            { name: "clientAuthenticatorType", label: "Authenticator", type: "select",
+              options: ["client-secret", "client-jwt", "client-x509"] },
+            { name: "secret", label: "Secret", type: "string" },
+            { name: "registrationAccessToken", label: "Registration access token", type: "string" },
+            { name: "bearerOnly", label: "Bearer only", type: "boolean" },
+          ],
+          onSubmit: { intent: "updateClient" },
+        },
+        {
+          id: "flow",
+          title: "Client type",
+          fields: [
+            { name: "protocol", label: "Protocol", type: "select",
+              options: ["openid-connect", "saml"] },
+            { name: "publicClient", label: "Public client", type: "boolean" },
+            { name: "standardFlowEnabled", label: "Standard flow", type: "boolean" },
+            { name: "implicitFlowEnabled", label: "Implicit flow", type: "boolean" },
+            { name: "directAccessGrantsEnabled", label: "Direct access grants", type: "boolean" },
+            { name: "serviceAccountsEnabled", label: "Service accounts", type: "boolean" },
+            { name: "authorizationServicesEnabled", label: "Authorization services", type: "boolean" },
+          ],
+          onSubmit: { intent: "updateClient" },
+        },
+        {
+          id: "urls",
+          title: "URL'ы",
+          fields: [
+            { name: "rootUrl", label: "Root URL", type: "string" },
+            { name: "baseUrl", label: "Base URL", type: "string" },
+            { name: "adminUrl", label: "Admin URL", type: "string" },
+            { name: "redirectUris", label: "Redirect URIs", type: "textarea" },
+            { name: "webOrigins", label: "Web origins", type: "textarea" },
+          ],
+          onSubmit: { intent: "updateClient" },
+        },
+        {
+          id: "advanced",
+          title: "Advanced",
+          fields: [
+            { name: "notBefore", label: "Not before (unix ts)", type: "number" },
+            { name: "surrogateAuthRequired", label: "Surrogate auth required", type: "boolean" },
+            { name: "frontchannelLogout", label: "Front-channel logout", type: "boolean" },
+            { name: "fullScopeAllowed", label: "Full scope allowed", type: "boolean" },
+          ],
+          onSubmit: { intent: "updateClient" },
+        },
+      ],
+    },
+  },
   identityprovider_create: {
     name: "Создать identity provider",
     kind: "form",
