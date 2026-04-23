@@ -66,8 +66,30 @@ export const PROJECTIONS = {
 
   // ═══ Catalog ═══════════════════════════════════════════════════════════════
   // type: relational/fileset/messaging/model; provider: hive/iceberg/...
-  catalog_list: catalog("Catalog", "Catalogs",
-    ["name", "type", "provider", "comment"]),
+  //
+  // bodyOverride: DataGrid primitive с sort+filter per column (G20/G21/G38).
+  // После merge idf-sdk#214 (core projection.bodyOverride) + renderer bump —
+  // catalog_list рендерится как native AntD Table вместо default card-list.
+  catalog_list: {
+    ...catalog("Catalog", "Catalogs", ["name", "type", "provider", "comment"]),
+    bodyOverride: {
+      type: "dataGrid",
+      items: [],
+      columns: [
+        { key: "name",     label: "Name",     sortable: true, filterable: true },
+        { key: "type",     label: "Type",     sortable: true, filter: "enum",
+          values: ["relational", "messaging", "fileset", "model"] },
+        { key: "provider", label: "Provider", sortable: true, filterable: true },
+        { key: "comment",  label: "Comment",  filterable: true },
+      ],
+      emptyLabel: "Нет каталогов",
+      onItemClick: {
+        action: "navigate",
+        to: "catalog_detail",
+        params: { catalogId: "item.id" },
+      },
+    },
+  },
   catalog_detail: detail("Catalog", "Catalog",
     ["name", "type", "provider", "comment", "properties", "audit"],
     [{ entity: "Schema", foreignKey: "catalogId", title: "Schemas" }]),
