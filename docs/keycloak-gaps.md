@@ -138,6 +138,28 @@ node -e "import('./src/domains/keycloak/projections.js').then(m => console.log(m
 
 **Target-stage:** SDK PR — hierarchy-tree-nav.apply должен skip'ать `entity.kind === "embedded"` или проверять `catalogByEntity[childEntity]` (т.е. показывать только entities с derived catalog).
 
+### G-K-16 — hierarchy-tree-nav в body дублирует AdminShell sidebar (Stage 5b smoke) — pattern-tuning ⚠️
+
+**Severity:** P1 (visual mess в admin-mode)
+**Module:** `@intent-driven/core` patterns/cross/hierarchy-tree-nav
+**Observation:** AdminShell (G-K-14) даёт persistent sidebar tree слева. Однако внутри body одного из catalog'ов (например `user_list`) `hierarchy-tree-nav` apply'ится дополнительно — entity-types schema внутри body. Получается дубликат tree-nav (один в sidebar, один в body).
+**Target-stage:** SDK PR — pattern apply должен skip'ать `hierarchy-tree-nav` если в context есть signal "host провайдит external nav" (например, через `applyContext.hasExternalShell` flag, выставленный V2Shell в AdminShell mode). Альтернатива: feature-flag в `ontology.features.suppressHierarchyTreeInBody = true`.
+
+### G-K-17 — params-driven filtering не работает между realm-instance'ами (Stage 5b smoke)
+
+**Severity:** P1 (data identical поверх different realms — UX mistruth)
+**Module:** `@intent-driven/core` deriveProjections + filter pipeline
+**Observation:** AdminShell tree содержит инстанс-узлы `Пользователи под master` и `Пользователи под customer-app`. Клик в обоих местах даёт **одинаковый список 10 users** (полный набор), хотя ожидается scoped по `realmId`. routeParams `{realmId: "r_master"}` передаются, но user_list filter их игнорирует — derived projection не auto-filter'ит по FK match.
+**Target-stage:** SDK PR — derive auto-filter: если `child.foreignKey` матчится с `routeParams[idParam]` parent'а, добавить implicit filter `where: child[fk] === routeParams[idParam]`. Альтернатива: host authored projection с явным `filter`.
+**Workaround (host):** authored `user_list` с `filter: (item, ctx) => item.realmId === ctx.routeParams?.realmId`. Не делал в Stage 5b — отложено в Stage 6.
+
+### G-K-18 — sidebar labels одинаковые между realm-instance'ами
+
+**Severity:** P2 (cosmetic — UX confusion в big workspace)
+**Module:** host V2Shell adminTree builder
+**Observation:** Под master и customer-app в sidebar — `Composite / Role / Clients / Group / Organization / Пользователи / ...` (одинаковые labels). При big workspace user может потеряться, какой realm активен.
+**Workaround (host):** prepend parent label в child label — `master / Пользователи` вместо просто `Пользователи`. Минимальный fix в `adminTree useMemo` builder в V2Shell.jsx. Альтернатива: оставить labels чистыми, но добавить sticky breadcrumb в sidebar header.
+
 ### G-K-9 — crystallize теряет mainEntity в detail-артефактах — ✅ ЗАКРЫТ (idf-sdk#239)
 
 **Severity:** P0 → **closed 2026-04-23 в core@0.58.0** (PR idf-sdk#239 «fix(core): preserve mainEntity + entities в artifact из crystallizeV2»).
