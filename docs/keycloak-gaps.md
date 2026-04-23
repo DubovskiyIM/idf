@@ -1,15 +1,18 @@
-# Keycloak gap-каталог (Stage 1+2+3 baseline)
+# Keycloak gap-каталог (Stage 1-5 closed)
 
 **Дата:** 2026-04-23
-**Worktree:** `.worktrees/keycloak-dogfood/` (host), branch `feat/keycloak-dogfood`
+**Worktree:** `.worktrees/keycloak-dogfood/` (host), branch `feat/keycloak-dogfood` (NOT merged, накапливает Stage'и)
 **Источник:** Keycloak Admin REST OpenAPI 1.0 (https://www.keycloak.org/docs-api/latest/rest-api/openapi.yaml, ~370KB / 14400 строк / 265 paths / 22 tags)
 **Importer:** `@intent-driven/importer-openapi@0.6.0` (с flattenSchema из Gravitino #227)
+**SDK after bump:** core@0.58.0 / renderer@0.38.1 / adapter-antd@1.8.0 / importer-openapi@0.6.0
+
 **Stage 1 baseline:** 224 entities / 254 intents / 1 role (`owner`) → derive: 48 projections (7 catalog).
-**Stage 2 после host-enrichment:** **199 entities** (-25 dedup) / **254 intents** (253 с alias) / **5 roles** (admin/realmAdmin/userMgr/viewer/self) → derive: **49 artifacts (8 catalog + 7 form + 34 detail)**, **53 fields** с `fieldRole` hint (secret/datetime/email/url), **75 entities** помечены `kind:embedded`. Pattern-bank матчит ≥3 patterns на каждом catalog (`hero-create`, `hierarchy-tree-nav`, `catalog-action-cta`).
+**Stage 2 host-enrichment:** **199 entities** (-25 dedup) / 254 intents (253 с alias) / 5 roles (admin/realmAdmin/userMgr/viewer/self) → 49 artifacts (8 catalog + 7 form + 34 detail), 53 fields с `fieldRole`, 75 embedded.
+**Stage 3 reclassify + whitelist:** 20 catalog'ов derived (`reclassifyCollectionPosts` 17 POST → createX), **10 чистых ROOT_PROJECTIONS** (canonical-12 minus AuthFlow/Event с low coverage). Operation-noise отфильтрована.
+**Stage 4 seed:** 34 effects (3 Realm + 5 Client + 10 User + 3 Group + 6 Role + 4 IdP + 3 ClientScope), FK realmId корректный.
+**Stage 5 wizards (G23 unblocked by idf-sdk#240):** 3 authored form-projections с `bodyOverride: { type: "wizard", steps }` — `realm_create` (3 steps × 13 fields), `client_create` (3 × 13), `identityprovider_create` (2 × 7). Декларативная UX-декомпозиция Wizard primitive.
 
-**Stage 3 после reclassify + whitelist:** **20 catalog'ов derived** (host-fix `reclassifyCollectionPosts` синтезирует `createX` intents с α=`insert` + `creates=X` для 17 canonical collection-POST endpoint'ов), **10 чистых ROOT_PROJECTIONS** (whitelist canonical: realm/user/client/group/role/identityprovider/clientscope/component/organization/workflow). Operation-noise (activate/deactivate/moveafter/localization/federatedidentity) исключена из nav. Baseline 11/11 tests green.
-
-**Методология:** static-analysis через `crystallizeV2` + `deriveProjections` в node-репле; baseline smoke-тест **11/11 passed** (`src/domains/keycloak/__tests__/baseline.test.js`).
+**Методология:** static-analysis через `crystallizeV2` + `deriveProjections` в node-репле; baseline smoke-тест **16/16 passed** (`src/domains/keycloak/__tests__/baseline.test.js`).
 
 ## Ключевое наблюдение Stage 1
 
@@ -103,13 +106,20 @@ node -e "import('./src/domains/keycloak/projections.js').then(m => console.log(m
 **Stage 3 host-fix:** explicit mapping 17 canonical `xsX → createX` с подменой `alpha: "insert"` + `creates: target`. Результат: 8 → 20 derived catalog'ов.
 **SDK PR (X1):** importer-openapi `detectCollectionPostAsCreate` — heuristic для POST на nested collection paths (path заканчивается на segment без `{id}` после).
 
-### G-K-9 — crystallize теряет mainEntity в detail-артефактах (Stage 3 discovery) — SDK BUG ⛔
+### G-K-9 — crystallize теряет mainEntity в detail-артефактах — ✅ ЗАКРЫТ (idf-sdk#239)
 
-**Severity:** P0 (блокирует R8 hub-absorption)
-**Module:** `@intent-driven/core` crystallizeV2
-**Observation:** `derived[user_detail].mainEntity = "User"` (правильно). После `crystallizeV2(...)` — `arts[user_detail].mainEntity = undefined`. Все 34 detail-артефакта теряют mainEntity. Это блокирует `absorbHubChildren` (R8): `detailByEntity[mainEntity]` index пуст → нет автоматической hub-absorption даже с настроенными FK.
+**Severity:** P0 → **closed 2026-04-23 в core@0.58.0** (PR idf-sdk#239 «fix(core): preserve mainEntity + entities в artifact из crystallizeV2»).
+**Root cause:** `artifact = { ... }` builder в `src/crystallize_v2/index.js` line 279 пропускал `mainEntity` и `entities` из projection. Один-line oversight — все остальные поля (`projection/name/domain/layer/archetype/pattern/.../witnesses`) собирались, кроме этих двух.
+**Fix:** добавлены `mainEntity: proj.mainEntity || null` и `entities: proj.entities || (proj.mainEntity ? [proj.mainEntity] : [])`. 5 новых assertions в `preserveMainEntity.test.js`, full core suite 1253/1253 green.
+**Verification:** `arts.user_detail.mainEntity === "User"` (раньше `undefined`) — manual probe подтверждает после bump core@0.58.0.
 
-Сейчас: 6 child catalog'ов (User/Group/Role/Client/ClientScope/Component) имеют `realmId references Realm`, FK detected правильно (`detectForeignKeys` работает), но R8 не активируется — Realm.realm_detail не получает hubSections автоматически.
+### G-K-10 — detectForeignKeys не учитывает synthetic FK (Stage 5 discovery) — SDK BUG ⛔
+
+**Severity:** P0 (теперь главный блокер R8 после G-K-9 closure)
+**Module:** `@intent-driven/core` deriveProjections::detectForeignKeys
+**Observation:** `detectForeignKeys` в `src/crystallize_v2/deriveProjections.js` ищет ТОЛЬКО `field.type === "entityRef"`. Но `importer-openapi @0.5+` синтезирует path-derived FK как `{ type: "string", kind: "foreignKey", references: "Realm", synthetic: "openapi-path" }`. Type не `"entityRef"` → SDK FK detection skip'ает.
+
+**Последствие:** absorbHubChildren находит 0 children для Realm, хотя host-side manual walk показывает 10 valid candidates (User/Group/Role/Client/ClientScope/Component/Organization/Workflow/ClientTemplate/Member все с `realmId.references=Realm + kind:foreignKey`).
 
 **Verification:**
 ```bash
@@ -117,12 +127,12 @@ node -e "import('./src/domains/keycloak/domain.js').then(async m => {
   const { deriveProjections, crystallizeV2 } = await import('@intent-driven/core');
   const d = deriveProjections(m.INTENTS, m.ONTOLOGY);
   const a = crystallizeV2(m.INTENTS, d, m.ONTOLOGY, 'keycloak');
-  console.log('derived:', d.user_detail?.mainEntity, '/ artifact:', a.user_detail?.mainEntity);
+  console.log('absorbed:', Object.values(a).filter(x => x.absorbedBy).length);  // 0 (должно быть >=6)
 })"
 ```
 
-**Target-stage:** SDK BUG — должен быть приоритетный fix в `@intent-driven/core` crystallizeV2 (вероятно где-то в pipeline phase 3a-d mainEntity дропается). Без этого R8 hub-absorption неоперабельна для всего dogfood'а.
-**Workaround:** authored hubSections в host projections.js (manual override).
+**Target-stage:** SDK PR — расширить `detectForeignKeys` heuristic'ом «`fieldDef.kind === "foreignKey"` ИЛИ `fieldDef.references` напрямую» в дополнение к type-check'у. ~10 строк fix.
+**Workaround:** host-side преобразование — массово пометить synthetic FK как `type:"entityRef"` в keycloak ontology.js (но это лишает path-derived metadata семантики «string на самом деле»).
 
 ### G-K-7 — fieldRole не выводится importer'ом (новый, Stage 2 discovery) — host-fix ⚠️
 
@@ -142,16 +152,33 @@ node -e "import('./src/domains/keycloak/domain.js').then(async m => {
 
 Это значит даже baseline без authored projections даст работающий navigation experience. Stage 2 work — почистить noise → patterns заработают на ВСЕХ canonical caталогах.
 
-## Заплары на дальше (Stage 2+)
+## План Stage 6+ (актуально на 2026-04-23 после Stage 5 closure)
 
-- **Stage 2** — host-facade enrichment: aliasing param-имён (`{realm}` → `realmId`), target-remap для grant/revoke, fieldRole для password / secret / token / timestamp.
-- **Stage 3** — authored projections для 12 canonical entities (Realm / Client / User / Group / Role / IdentityProvider / ClientScope / UserFederation / AuthenticationFlow / Event / Session / Policy).
-- **Stage 4** — seed: 2-3 realms + 5 clients + 10 users + 4 IdP + role hierarchy.
-- **Stage 5** — Wizard catalog_create (G23 deferred из Gravitino) — Add Realm / Add Client / Add IdentityProvider.
-- **Stage 6** — Tab-composed form (Client с 10+ tabs × 30+ полей: Settings/Credentials/Roles/ClientScopes/Authorization/Sessions/OfflineAccess/Installation). Новый класс pattern'ов — **tabbed-form-sections**.
-- **Stage 7** — Connection-test pattern (IdP + UserFederation create flow с "Test connection" mid-wizard).
-- **Stage 8** — Credentials primitive (password / OTP / WebAuthn / X509 — multi-kind credential).
-- **Stage 9** — Role-mappings matrix с group inheritance.
+### Критический путь (блокеры R8 / визуального демо)
+
+- **G-K-10 SDK fix** (importer-derived synthetic FK) — `detectForeignKeys` extension. Без него R8 hub-absorption не работает на всём openapi-imported set'е. ~10 LOC, аналогично #239 — failing test → fix → changeset → PR.
+- **dev-server smoke** — после G-K-10 fix запустить `npm run server` + `npm run dev`, открыть keycloak в browser, зафиксировать визуальные gap'ы (form layout, hover-trail, tabbed-section overflow).
+
+### Authored content (после критического пути)
+
+- **Stage 6 — Tab-composed form (P-K-A)** — Client.detail имеет ~10 tabs (Settings / Credentials / Roles / ClientScopes / Authorization / Sessions / OfflineAccess / Installation), каждая с 30+ полями. Расширить `bodyOverride` под nested tabs ИЛИ новый primitive `TabbedFormSections`. Stage 5 wizard'ы покрыли create-flow, Stage 6 — edit/detail-flow.
+- **Stage 7 — Connection-test mid-wizard (P-K-B)** — IdP `identityprovider_create` уже имеет 2 step'а; добавить промежуточный `kind: "verification"` step (test SAML metadata fetch / LDAP bind / OIDC discovery) с server route `/api/probe/idp-connection`. Wizard primitive нужно расширить под verification-step'ы.
+- **Stage 8 — Credentials primitive (P-K-C)** — User.credentials = разные types (password / OTP / WebAuthn / X.509). Каждый требует своего input UI. Возможно новый renderer-primitive `CredentialEditor` с per-type discriminator-driven render.
+- **Stage 9 — Role-mappings matrix (P-K-D)** — User → effective roles (direct realm + direct client + composite + group-inherited). PermissionMatrix primitive (есть) + расширение под inheritance-graph. tree-like renderer.
+
+### SDK PR'ы по-прежнему открытые (X1: удаление host-fix'ов после merge)
+
+- importer-openapi `mergeRepresentationDuplicates` (G-K-1) — сейчас host ontology.js.
+- importer-openapi `detectActionEndpoints` (G-K-2 + P-K-E) — operation-as-entity → row-action.
+- importer-openapi `inferFieldRoles` (G-K-7) — централизованный fieldRole heuristic.
+- importer-openapi `markEmbeddedTypes` (G-K-3) — orphan type без path → `kind:embedded`.
+- importer-openapi `detectCollectionPostAsCreate` (G-K-8) — POST collection → α=insert + creates.
+- **core `detectForeignKeys.synthetic` (G-K-10) — НОВЫЙ, P0 блокер R8.**
+
+### Закрытые SDK PR'ы
+
+- ✅ `core.preserveMainEntity` (G-K-9) — idf-sdk#239 merged 2026-04-23 → core@0.58.0.
+- ✅ `core.formArchetype.bodyOverride` (G23 backport из Gravitino) — idf-sdk#240 merged 2026-04-23 → core@0.58.0. Unblocked Stage 5.
 
 ## Stage 1 acceptance-критерии
 
@@ -188,11 +215,15 @@ node -e "import('./src/domains/keycloak/domain.js').then(async m => {
 - [ ] Authored projections для 4 MVP — отложено до Stage 4 (визуальная валидация требует seed)
 - [ ] Hub-absorption (Realm.detail с children sections) — заблокирован G-K-9, нужен SDK fix
 
-## Открытые SDK PR'ы (X1: удаление host-fix'ов после merge)
+## Stage 5 acceptance-критерии (закрыт 2026-04-23 commit `4c0a9cc`)
 
-- importer-openapi `mergeRepresentationDuplicates` (закроет G-K-1)
-- importer-openapi `detectActionEndpoints` (закроет G-K-2 и P-K-E)
-- importer-openapi `inferFieldRoles` (закроет G-K-7)
-- importer-openapi `markEmbeddedTypes` (закроет G-K-3)
-- importer-openapi `detectCollectionPostAsCreate` (закроет G-K-8)
-- core `crystallizeV2.preserveMainEntity` (закроет G-K-9, BUG, наивысший приоритет)
+- [x] G23 разблокирован (idf-sdk#240 — form-archetype `projection.bodyOverride`)
+- [x] 3 authored wizard'а: `realm_create` (3 steps × 13 fields), `client_create` (3 × 13), `identityprovider_create` (2 × 7)
+- [x] Bump SDK deps к latest (core@0.58.0 + renderer@0.38.1 + adapter-antd@1.8.0) — commit `7227ddb`
+- [x] Тесты 16/16 green
+- [ ] Визуальная проверка wizard render — отложена до Stage 6 setup
+
+## Stage 5 discoveries
+
+- **G-K-9 closed** через мой PR idf-sdk#239 (1-line oversight в crystallize artifact builder)
+- **G-K-10 opened** — глубже G-K-9. detectForeignKeys не покрывает synthetic FK от importer-openapi. Главный блокер R8 hub-absorption теперь.
