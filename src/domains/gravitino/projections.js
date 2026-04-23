@@ -195,10 +195,25 @@ export const PROJECTIONS = {
   // roles — json array (имена Role entities). В list не показываем —
   // catalog-archetype не уважает field.primitive hint (chipList), упадёт
   // на object children. Видны на detail через ChipList.
+  //
+  // Actions: Grant/Revoke Role — inline через idf-sdk#218 col.kind:"actions".
+  // `user` param совпадает с OpenAPI path {user}; intents.js aliasParameters
+  // умеет маппить на `userId` если понадобится.
   user_list: catalog("User", "Users",
     ["name"], {
       columns: [
         { key: "name", label: "Name", sortable: true, filterable: true },
+        {
+          key: "_actions",
+          label: "Actions",
+          kind: "actions",
+          actions: [
+            { intent: "grantRoleToUser", label: "Grant Role",
+              params: { user: "item.name" } },
+            { intent: "revokeRoleFromUser", label: "Revoke",
+              params: { user: "item.name" }, danger: true },
+          ],
+        },
       ],
     }),
   user_detail: detail("User", "User",
@@ -209,6 +224,17 @@ export const PROJECTIONS = {
     ["name"], {
       columns: [
         { key: "name", label: "Name", sortable: true, filterable: true },
+        {
+          key: "_actions",
+          label: "Actions",
+          kind: "actions",
+          actions: [
+            { intent: "grantRoleToGroup", label: "Grant Role",
+              params: { group: "item.name" } },
+            { intent: "revokeRoleFromGroup", label: "Revoke",
+              params: { group: "item.name" }, danger: true },
+          ],
+        },
       ],
     }),
   group_detail: detail("Group", "Group",
