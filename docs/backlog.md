@@ -263,8 +263,8 @@ Bump `@intent-driven/enricher-claude` → `0.2.1`. После release — пер
 | Stage | Capability | PR | Статус |
 |-------|-----------|----|----|
 | 1 | Bootstrap + baseline render + gap-каталог | [idf#105](https://github.com/DubovskiyIM/idf/pull/105) | draft, 14+ commits |
-| 2 | Deep tree nav + breadcrumbs | [idf#105](https://github.com/DubovskiyIM/idf/pull/105) (продолжение) | in-progress |
-| 3 | Composite / nested types | — | pending |
+| 2 | Deep tree nav + breadcrumbs | [idf#105](https://github.com/DubovskiyIM/idf/pull/105) + seed demo | done ✓ (SDK #190/#192/#193 merged + V2Shell entity-aware labels + demo seed) |
+| 3 | Composite / nested types | [idf#105](https://github.com/DubovskiyIM/idf/pull/105) + SDK #196 | in-progress (seed с columns ✓, SDK SchemaEditor primitive open PR, host-integration после merge) |
 | 4 | Advanced data-grid | — | pending |
 | 5 | Permission matrix | — | pending |
 | 6 | Wizard dynamics + test-connection | — | pending |
@@ -278,8 +278,9 @@ Bump `@intent-driven/enricher-claude` → `0.2.1`. После release — пер
 | [idf-sdk#186](https://github.com/DubovskiyIM/idf-sdk/pull/186) | enricher-claude@0.2.1: structured_output wire-format | merged ✓ |
 | [idf-sdk#188](https://github.com/DubovskiyIM/idf-sdk/pull/188) | importer-openapi@0.5.0: path-derived FK synthesis | merged ✓ |
 | [idf-sdk#190](https://github.com/DubovskiyIM/idf-sdk/pull/190) | renderer@0.29.0: Breadcrumbs primitive | merged ✓ |
-| [idf-sdk#192](https://github.com/DubovskiyIM/idf-sdk/pull/192) | core: subcollections.apply render-ready shape (G14) | open |
-| [idf-sdk#193](https://github.com/DubovskiyIM/idf-sdk/pull/193) | adapter-antd: Breadcrumb capability | open |
+| [idf-sdk#192](https://github.com/DubovskiyIM/idf-sdk/pull/192) | core@0.52.1: subcollections.apply render-ready shape (G14) | merged ✓ |
+| [idf-sdk#193](https://github.com/DubovskiyIM/idf-sdk/pull/193) | adapter-antd@1.5.0: Breadcrumb capability | merged ✓ |
+| [idf-sdk#196](https://github.com/DubovskiyIM/idf-sdk/pull/196) | renderer: SchemaEditor primitive (Stage 3) | open |
 
 **Gap-каталог:** `docs/gravitino-gaps.md`. **Закрыто:** G1 (tree-nav pattern apply); **G14** (subcollections render-ready) — ждёт merge SDK#192 + host bump. **Open:** G13 (TreeNav runtime-mode) — deferred в отдельный sprint. G15/G16/G17/G11/G2/G3/G12 — в SDK backlog / Stage 8 polish.
 
