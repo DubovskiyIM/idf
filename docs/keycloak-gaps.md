@@ -187,6 +187,22 @@ Edit-projection генерируется из `intent.parameters`, не из `en
 **Stage 5b host-fix:** aggressive dedup через `seenIndex.set(key, i)` — оставляем только ПОСЛЕДНЕЕ occurrence каждого `(projectionId+params)`. Back-семантика страдает, но в AdminShell back редок (sidebar-driven nav).
 **SDK PR:** dedup как опция в Breadcrumbs primitive (`mode: "consecutive"|"latest"|"none"`) или в useProjectionRoute auto-flatten.
 
+### G-K-25 — DataGrid не применяет projection.filter (Stage 5b smoke) — SDK gap ⛔
+
+**Severity:** P0 (filter G-K-17 из projections.js не работает на dataGrid bodyOverride)
+**Module:** `@intent-driven/renderer` DataGrid::resolveItems
+**Observation:** Renderer applyFilter вызывается только для body.type:"list". DataGrid (через resolveItems) берёт `ctx.world[node.source]` напрямую — projection.filter игнорируется. После моего bodyOverride dataGrid scope-фильтр (`!world.realmId || realmId === world.realmId`) перестал работать — master/customer-app/staging показывают весь pool users включая delivery-domain entries (courier_*/m_user_*/disp_*).
+**Target-stage:** SDK PR — DataGrid resolveItems учитывает `node.filter` и/или `projection.filter` через evalFilter/evalCondition. Семантически эквивалентно List behavior.
+**Workaround:** N/A на host'е (DataGrid принимает array `items` или string `source`, в спеке нет filter hook).
+
+### G-K-24 — ActionCell не auto-open overlay для form-confirmation intents (Stage 5b smoke)
+
+**Severity:** P0 (✎ Изменить / × Удалить кнопки не работают на form-confirmation intents)
+**Module:** `@intent-driven/renderer` DataGrid::ActionCell
+**Observation:** ActionCell делает `ctx.exec(action.intent, params)` напрямую. Для intents с `confirmation: "form"` это НЕ открывает overlay (overlay открывается через ctx.openOverlay(overlayKey) в IntentButton::opens="overlay"). Per-row Изменить/Удалить кнопки рендерятся, но click — пустой effect (intent invoke без overlay).
+**Target-stage:** SDK PR — ActionCell auto-detect form-intent (через ctx.intents[intentId].confirmation === "form") → openOverlay вместо exec. ИЛИ action schema расширен `opens: "overlay", overlayKey: "..."` (manually).
+**Workaround:** в моём dataGridBody actions передавать `opens: "overlay"` + `overlayKey` явно. Не сделал в Stage 5b — отложено в Stage 6.
+
 ### G-K-9 — crystallize теряет mainEntity в detail-артефактах — ✅ ЗАКРЫТ (idf-sdk#239)
 
 **Severity:** P0 → **closed 2026-04-23 в core@0.58.0** (PR idf-sdk#239 «fix(core): preserve mainEntity + entities в artifact из crystallizeV2»).
