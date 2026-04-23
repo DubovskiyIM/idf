@@ -1,6 +1,6 @@
 import { useMemo, useState, useCallback, useEffect } from "react";
 import { usePersonalPrefs, prefsToStyle } from "../personal/usePersonalPrefs.js";
-import { ProjectionRendererV2, useProjectionRoute, Breadcrumbs, getAdaptedComponent, ViewSwitcher } from "@intent-driven/renderer";
+import { ProjectionRendererV2, useProjectionRoute, Breadcrumbs, getAdaptedComponent, ViewSwitcher, AdminShell } from "@intent-driven/renderer";
 import { crystallizeV2, generateEditProjections, deriveProjections, isProjectionAvailableForRole } from "@intent-driven/core";
 import BottomTabs from "./BottomTabs.jsx";
 import PatternInspector from "./PatternInspector.jsx";
@@ -635,6 +635,115 @@ export default function V2Shell({
 
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const isMobile = typeof window !== "undefined" && window.innerWidth < 768;
+
+  // G-K-14: AdminShell mode (persistent sidebar tree + body) — для admin-style
+  // доменов (Keycloak / Gravitino / Argo / Grafana). Активируется через
+  // domain.SHELL.layout === "persistentSidebar". Tree строится из
+  // ROOT_PROJECTIONS + world-instances + R8 hubSections рекурсивно.
+  const useAdminShell = domain.SHELL?.layout === "persistentSidebar";
+
+  const adminTree = useMemo(() => {
+    if (!useAdminShell) return null;
+    return rootProjections.map(rootId => {
+      const rootArt = artifacts[rootId];
+      const rootProj = allProjections[rootId];
+      const mainEntity = rootArt?.mainEntity || rootProj?.mainEntity;
+      const node = {
+        id: rootId,
+        label: projectionNames[rootId] || rootId,
+        projectionId: rootId,
+      };
+      if (!mainEntity) return node;
+      // Instance-level узлы из world
+      const items = (world && world[mainEntity]) || [];
+      const detailId = `${mainEntity.toLowerCase()}_detail`;
+      const detailArt = artifacts[detailId];
+      const idParam = detailArt?.idParam || allProjections[detailId]?.idParam || `${mainEntity.toLowerCase()}Id`;
+      if (!detailArt || items.length === 0) return node;
+      node.children = items.map(item => {
+        const itemId = item.id || item[idParam] || item.name;
+        const label = item.realm || item.displayName || item.name || item.username || item.alias || itemId;
+        const itemNode = {
+          id: `${detailId}:${itemId}`,
+          label,
+          projectionId: detailId,
+          params: { [idParam]: itemId },
+        };
+        // Sub-children из hubSections (R8)
+        const hub = detailArt.hubSections || [];
+        if (hub.length > 0) {
+          itemNode.children = hub.map(sec => ({
+            id: `${sec.projectionId}:${itemId}`,
+            label: projectionNames[sec.projectionId] || sec.entity,
+            projectionId: sec.projectionId,
+            params: { [sec.foreignKey]: itemId },
+          }));
+        }
+        return itemNode;
+      });
+      return node;
+    });
+  }, [useAdminShell, rootProjections, artifacts, allProjections, projectionNames, world]);
+
+  const adminCurrentNodeId = useMemo(() => {
+    if (!useAdminShell || !current) return null;
+    // Match: projectionId + первый param-value
+    const projId = current.projectionId;
+    const params = current.params || {};
+    const idValue = Object.values(params)[0];
+    return idValue ? `${projId}:${idValue}` : projId;
+  }, [useAdminShell, current]);
+
+  const handleAdminSelect = useCallback(({ projectionId, params }) => {
+    reset(projectionId, params || {});
+  }, [reset]);
+
+  if (useAdminShell) {
+    return (
+      <div style={{
+        display: "flex", flexDirection: "column", height: "100%", minHeight: 0,
+        fontFamily: "var(--idf-font, -apple-system, system-ui, sans-serif)",
+        fontSize: "var(--idf-font-size, 14px)",
+        ...personalStyle,
+      }}>
+        {toolbarBar}
+        <div style={{ flex: 1, minHeight: 0 }}>
+          <AdminShell
+            tree={adminTree || []}
+            body={mainContent}
+            onSelect={handleAdminSelect}
+            currentNodeId={adminCurrentNodeId}
+            sidebarTitle={domain.SHELL?.sidebarTitle || null}
+            sidebarWidth={domain.SHELL?.sidebarWidth || 260}
+          />
+        </div>
+        {prefs.patternInspector && (
+          <PatternInspector
+            domain={domainId}
+            projectionId={current?.projectionId}
+            onClose={() => setPref("patternInspector", false)}
+            onPreviewChange={handlePreviewChange}
+            onXrayChange={handleXrayChange}
+            initialSelectedPatternId={pinnedPatternId || initialInspectPattern}
+          />
+        )}
+        {prefs.crystallizeInspector && (
+          <CrystallizeInspector
+            domain={domainId}
+            projectionId={current?.projectionId}
+            onClose={() => setPref("crystallizeInspector", false)}
+          />
+        )}
+        {prefs.materializationsViewer && (
+          <MaterializationsViewer
+            domain={domainId}
+            projectionId={current?.projectionId}
+            onClose={() => setPref("materializationsViewer", false)}
+          />
+        )}
+      </div>
+    );
+  }
 
   if (sections) {
     // Mobile + BottomTabs: контент сверху, bottom tabs снизу
