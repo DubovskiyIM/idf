@@ -448,21 +448,25 @@ Metalake list → heroCreate ✓ (inline composer для новой metalake).
 
 ### Оставшиеся gap'ы (приоритизированный финал)
 
-**Host-integration deferred (низкоприоритетный для architecture, но visible):**
-- **G20/G21/G38 (Stage 4.5)** — catalog shape-layer для Tags/Policies chip columns + Type/Provider filter. **Закрыто 2026-04-23:** idf-sdk#224 промоция `catalog-default-datagrid` pattern в stable с `structure.apply` — автоматически генерирует dataGrid body с column-synthesis из witnesses + ontology.field.type/values. Host убрал ручной `bodyOverride.columns` для 10 простых catalog'ов; остались только user_list/group_list с actions column (gear menu). Tags/Policies chip-columns — всё ещё открыто (требует relation chip-column kind в DataGrid)
-- **G23 (Stage 6.5)** — authored `catalog_create` projection с Wizard primitive (multi-step provider selection). SDK Wizard готов
-- **G34** — per-item Grant Role action в user_list/group_list catalog-archetype (intents есть, wiring нужен)
-- **Click-nav root cause** — `resolveDetailTarget` в renderer использует `e.id === routeParams[idParam]`. Gravitino natural key = `name`, но seed id ≠ name → клики тихо не работали. **Закрыто 2026-04-23:** host projections передают `item.id` в onItemClick params. SDK-side fix (ontology `entity.identifierField` с fallback) записан в ux-patterns-notes P-5
+**Закрыто 2026-04-23 (спринт G32/G34/DataGrid polish):**
+- **G20/G21/G38** — idf-sdk#216 (DataGrid source resolution) + #224 (`catalog-default-datagrid` stable с `structure.apply`) → 10 catalog-list'ов автоматически рендерятся tabular; host убрал ручной `bodyOverride.columns` (~29 LOC)
+- **G32** — idf-sdk#227 (flattenSchema для allOf/oneOf/anyOf) + re-import → Policy entity flat с 7 полями; снят host-side synthetic enrichment (~20 LOC)
+- **G34** — idf-sdk#218 (DataGrid col.kind:"actions") + #222 (display modes inline/menu/auto + gear icon) → user_list/group_list с ⚙ dropdown (Grant/Revoke/Delete)
+- **Click-nav** — root cause: resolveDetailTarget ищет по `e.id`, Gravitino natural key = `name`. Host fix: `onItemClick.params: { id: "item.id" }`. SDK-side fallback (ontology `entity.identifierField`) записан в ux-patterns-notes P-5
+
+**Pattern bank обогащён:**
+- P-4 `catalog-default-datagrid` — promoted в stable с apply (idf-sdk#224)
+- P-6 `row-contextual-actions-menu` — curated candidate (idf-sdk#222)
+- 15+ candidates сгенерированы через researcher pipeline из Gravitino WebUI (idf-sdk#226), сохранены в `refs/candidates/`
+
+**Host-integration deferred:**
+- **G23 (Stage 6.5)** — authored `catalog_create` с Wizard primitive (multi-step provider selection). SDK Wizard готов, но нужна поддержка `bodyOverride` в form-archetype (сейчас только в catalog)
+- **Tags/Policies chip-columns** — auto-render array values работает через adapter-antd renderCellValue, но **relation chip-column** (resolve `roles: ["admin"]` → Role entity links) — open
 
 **Future/vended:**
 - **G29 Versions** — materialize from Φ.history (document materializer extension)
-- **G30 Jobs Run modal** — parametric intents с {{placeholder}} values (generic pattern — применимо не только к Gravitino)
+- **G30 Jobs Run modal** — parametric intents с {{placeholder}} values
 - **G25 UDFs** — не в canonical 12 entities Gravitino
-
-**SDK backlog:**
-- **G32** — importer-openapi subtype merging (PolicyBase/PolicyMetadata → Policy)
 - **G11** — anchoring particles в importer (87% intents без constraints после enrich)
 
-### Vermissung: достигнуто 11/12 Gravitino модулей с visually native AntD рендером
-
-Оставшиеся 1-2 визуальные gap'ы (host-integration catalog-shape + wizard activation) — work products otros host PR'ов, не SDK. Весь SDK primitive layer закрыт.
+### Итог: 12/12 Gravitino модулей рендерятся native AntD — metalakes/catalogs/schemas/tables/filesets/topics/models/tags/policies/users/groups как DataGrid, roles как card-list (1 witness, ниже порога pattern). Vermissung закрыт.
