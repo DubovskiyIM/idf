@@ -33,6 +33,22 @@ function enrichFieldsWithPrimitives(entities) {
     };
   }
 
+  // Role.securableObjects — Stage 5 deliverable (G35 P0). PermissionMatrix
+  // primitive (renderer@0.32+, idf-sdk#202) рендерит как RBAC matrix.
+  if (enriched.Role?.fields?.securableObjects) {
+    enriched.Role = {
+      ...enriched.Role,
+      fields: {
+        ...enriched.Role.fields,
+        securableObjects: {
+          ...enriched.Role.fields.securableObjects,
+          primitive: "permissionMatrix",
+          label: "Privileges",
+        },
+      },
+    };
+  }
+
   return enriched;
 }
 
