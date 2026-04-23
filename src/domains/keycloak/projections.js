@@ -50,6 +50,80 @@ export const PROJECTIONS = {
     mainEntity: "Client",
     entities: ["Client"],
     witnesses: [],
+    // G-K-17 host-fix: scope по routeParams.realmId (через worldWithRoute).
+    // Если на корневом list (без realm scope) — показываем все.
+    filter: "!world.realmId || realmId === world.realmId",
+  },
+
+  // ═══ G-K-17 host workaround: scoped child-каталоги ═══════════════════
+  // Под persistentSidebar AdminShell (G-K-14) клик «Users под master» vs
+  // «Users под customer-app» должен дать РАЗНЫЕ списки, но без filter
+  // показывает все 10 users в обоих случаях. Authored filter по
+  // routeParams.realmId через worldWithRoute (= {...world, ...current.params}).
+  // X1: после SDK derive auto-filter по FK match (G-K-17 SDK PR) удалить.
+  user_list: {
+    name: "Пользователи",
+    kind: "catalog",
+    mainEntity: "User",
+    entities: ["User"],
+    witnesses: [],
+    filter: "!world.realmId || realmId === world.realmId",
+  },
+  group_list: {
+    name: "Группы",
+    kind: "catalog",
+    mainEntity: "Group",
+    entities: ["Group"],
+    witnesses: [],
+    filter: "!world.realmId || realmId === world.realmId",
+  },
+  role_list: {
+    name: "Роли",
+    kind: "catalog",
+    mainEntity: "Role",
+    entities: ["Role"],
+    witnesses: [],
+    filter: "!world.realmId || realmId === world.realmId",
+  },
+  identityprovider_list: {
+    name: "Identity Providers",
+    kind: "catalog",
+    mainEntity: "IdentityProvider",
+    entities: ["IdentityProvider"],
+    witnesses: [],
+    filter: "!world.realmId || realmId === world.realmId",
+  },
+  clientscope_list: {
+    name: "Client Scopes",
+    kind: "catalog",
+    mainEntity: "ClientScope",
+    entities: ["ClientScope"],
+    witnesses: [],
+    filter: "!world.realmId || realmId === world.realmId",
+  },
+  component_list: {
+    name: "Components",
+    kind: "catalog",
+    mainEntity: "Component",
+    entities: ["Component"],
+    witnesses: [],
+    filter: "!world.realmId || realmId === world.realmId",
+  },
+  organization_list: {
+    name: "Organizations",
+    kind: "catalog",
+    mainEntity: "Organization",
+    entities: ["Organization"],
+    witnesses: [],
+    filter: "!world.realmId || realmId === world.realmId",
+  },
+  workflow_list: {
+    name: "Workflows",
+    kind: "catalog",
+    mainEntity: "Workflow",
+    entities: ["Workflow"],
+    witnesses: [],
+    filter: "!world.realmId || realmId === world.realmId",
   },
   realm_create: {
     name: "Создать realm",
