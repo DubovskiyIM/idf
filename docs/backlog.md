@@ -266,9 +266,9 @@ Bump `@intent-driven/enricher-claude` → `0.2.1`. После release — пер
 | 2 | Deep tree nav + breadcrumbs | [idf#105](https://github.com/DubovskiyIM/idf/pull/105) + seed demo | done ✓ (SDK #190/#192/#193 merged + V2Shell entity-aware labels + demo seed) |
 | 3 | Composite / nested types | [idf#105](https://github.com/DubovskiyIM/idf/pull/105) + SDK #196 + #198 | done ✓ (SchemaEditor primitive + field.primitive hint merged + host annotation Table.columns) |
 | 4 | Advanced data-grid | SDK #200 | done SDK ✓ (DataGrid primitive merged/renderer@0.31.0); host-integration для catalog-projections отложен |
-| 5 | Permission matrix | SDK #202 | in-progress (PermissionMatrix primitive open PR + host annotation Role.securableObjects ready) |
-| 6 | Wizard dynamics + test-connection | — | pending |
-| 7 | Property popover + associations | — | pending |
+| 5 | Permission matrix | SDK #202 | done ✓ (merged renderer@0.32.0 + host annotation Role.securableObjects active) |
+| 6 | Wizard dynamics + test-connection | SDK #204 | in-progress (Wizard primitive open PR) |
+| 7 | Property popover + associations | SDK #206 | in-progress (PropertyPopover + ChipList open PR; host annotations ready) |
 | 8 | Polish + demo | — | pending |
 
 **SDK PRs от Gravitino dogfood:**
@@ -283,7 +283,9 @@ Bump `@intent-driven/enricher-claude` → `0.2.1`. После release — пер
 | [idf-sdk#196](https://github.com/DubovskiyIM/idf-sdk/pull/196) | renderer@0.30.0: SchemaEditor primitive (Stage 3) | merged ✓ |
 | [idf-sdk#198](https://github.com/DubovskiyIM/idf-sdk/pull/198) | core@0.53.0: field.primitive declarative hint | merged ✓ |
 | [idf-sdk#200](https://github.com/DubovskiyIM/idf-sdk/pull/200) | renderer@0.31.0: DataGrid primitive (Stage 4) | merged ✓ |
-| [idf-sdk#202](https://github.com/DubovskiyIM/idf-sdk/pull/202) | renderer: PermissionMatrix primitive (Stage 5) | open |
+| [idf-sdk#202](https://github.com/DubovskiyIM/idf-sdk/pull/202) | renderer@0.32.0: PermissionMatrix primitive (Stage 5) | merged ✓ |
+| [idf-sdk#204](https://github.com/DubovskiyIM/idf-sdk/pull/204) | renderer: Wizard primitive + test-connection (Stage 6) | open |
+| [idf-sdk#206](https://github.com/DubovskiyIM/idf-sdk/pull/206) | renderer: PropertyPopover + ChipList primitives (Stage 7) | open |
 
 **Gap-каталог:** `docs/gravitino-gaps.md`. **Закрыто:** G1 (tree-nav pattern apply); **G14** (subcollections render-ready) — ждёт merge SDK#192 + host bump. **Open:** G13 (TreeNav runtime-mode) — deferred в отдельный sprint. G15/G16/G17/G11/G2/G3/G12 — в SDK backlog / Stage 8 polish.
 
