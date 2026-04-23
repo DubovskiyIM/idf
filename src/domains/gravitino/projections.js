@@ -227,12 +227,13 @@ export const PROJECTIONS = {
     ["name", "comment", "inherited", "properties", "audit"]),
 
   // ═══ Policy ════════════════════════════════════════════════════════════════
-  // Importer G32 не склеил PolicyBase/PolicyMetadata — host ontology.js
-  // enrichment добавляет синтетические visible fields (name/type/enabled/
-  // comment/content/audit). Используем их в projections.
+  // После idf-sdk#227 flattenSchema — importer сливает PolicyBase +
+  // CustomPolicy (allOf) + Policy (oneOf) в единый entity с полями
+  // name / comment / policyType / enabled / audit / inherited / content.
+  // Host enrichment в ontology.js снят.
   policy_list: catalog("Policy", "Policies",
-    ["name", "type", "enabled", "comment"]),
-  policy_detail: detail("Policy", "Policy", ["name", "type", "enabled", "comment", "content", "audit"]),
+    ["name", "policyType", "enabled", "comment"]),
+  policy_detail: detail("Policy", "Policy", ["name", "policyType", "enabled", "comment", "content", "audit", "inherited"]),
 };
 
 export const ROOT_PROJECTIONS = [

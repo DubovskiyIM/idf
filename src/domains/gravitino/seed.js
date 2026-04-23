@@ -278,12 +278,14 @@ export function getSeedEffects() {
   TAGS.forEach(t => ef("tags", t));
 
   // ═══ Policies ═══════════════════════════════════════════════════════════
+  // После idf-sdk#227 importer сливает PolicyBase → Policy: поле
+  // называется `policyType` (из PolicyBase.policyType), не `type`.
   const POLICIES = [
-    { id: "pol_pii_mask",    name: "pii-mask",             type: "data_masking",   enabled: true,  comment: "Mask PII columns at read",              content: { columns: ["email", "ssn", "phone", "dob", "birth_date", "first_name", "last_name"], algorithm: "format-preserving" }, audit: audit("alice@acme", 110) },
-    { id: "pol_retention",   name: "retention-365d",       type: "data_lifecycle", enabled: true,  comment: "Delete after 365 days",                 content: { days: 365, action: "hard_delete" },                                                                                audit: audit("alice@acme", 105) },
-    { id: "pol_finance_acl", name: "finance-restricted",   type: "access_control", enabled: true,  comment: "Finance schemas — только finance group", content: { allow: ["finance", "admin"], deny: ["*"] },                                                                        audit: audit("diane@acme", 85) },
-    { id: "pol_quality",     name: "quality-checks",       type: "quality",        enabled: true,  comment: "Automated data quality checks — freshness + completeness", content: { freshness_hours: 24, completeness_threshold: 0.95 },                                  audit: audit("bob@acme",   40) },
-    { id: "pol_disabled",    name: "legacy-masking",       type: "data_masking",   enabled: false, comment: "Disabled — superseded by pii-mask v2",  content: {},                                                                                                                  audit: audit("bob@acme",   200) },
+    { id: "pol_pii_mask",    name: "pii-mask",             policyType: "data_masking",   enabled: true,  inherited: false, comment: "Mask PII columns at read",              content: { columns: ["email", "ssn", "phone", "dob", "birth_date", "first_name", "last_name"], algorithm: "format-preserving" }, audit: audit("alice@acme", 110) },
+    { id: "pol_retention",   name: "retention-365d",       policyType: "data_lifecycle", enabled: true,  inherited: false, comment: "Delete after 365 days",                 content: { days: 365, action: "hard_delete" },                                                                                audit: audit("alice@acme", 105) },
+    { id: "pol_finance_acl", name: "finance-restricted",   policyType: "access_control", enabled: true,  inherited: false, comment: "Finance schemas — только finance group", content: { allow: ["finance", "admin"], deny: ["*"] },                                                                        audit: audit("diane@acme", 85) },
+    { id: "pol_quality",     name: "quality-checks",       policyType: "quality",        enabled: true,  inherited: true,  comment: "Automated data quality checks — freshness + completeness", content: { freshness_hours: 24, completeness_threshold: 0.95 },                                  audit: audit("bob@acme",   40) },
+    { id: "pol_disabled",    name: "legacy-masking",       policyType: "data_masking",   enabled: false, inherited: false, comment: "Disabled — superseded by pii-mask v2",  content: {},                                                                                                                  audit: audit("bob@acme",   200) },
   ];
   POLICIES.forEach(p => ef("policies", p));
 

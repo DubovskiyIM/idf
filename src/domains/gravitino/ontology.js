@@ -117,24 +117,18 @@ function enrichFieldsWithPrimitives(entities) {
     }
   }
 
-  // Host-polish: Policy enrichment — importer G32 оставил только 'id' /
-  // 'objectId' / 'metalakeId' (не склеил PolicyBase/PolicyMetadata
-  // subtypes). Синтезируем visible fields из common Gravitino policy-shape.
-  // Поля readOnly — редактирование через custom intent workflow, не form.
-  if (enriched.Policy) {
+  // Host-polish: Policy.content → propertyPopover (синтетический PolicyContent
+  // object может быть сложным — показываем как dict через popover).
+  if (enriched.Policy?.fields?.content) {
     enriched.Policy = {
       ...enriched.Policy,
       fields: {
         ...enriched.Policy.fields,
-        name:     { type: "string", role: "primary-title", readOnly: true },
-        type:     { type: "string", role: "category", readOnly: true,
-                    values: ["data_masking","data_lifecycle","access_control","quality","custom"] },
-        enabled:  { type: "boolean", readOnly: true },
-        comment:  { type: "string", role: "long-text", readOnly: true },
-        content:  { type: "json", primitive: "propertyPopover", label: "Content",
-                    synthetic: "host-policy-enrichment" },
-        audit:    { type: "json", primitive: "propertyPopover", label: "Audit",
-                    synthetic: "host-policy-enrichment" },
+        content: {
+          ...enriched.Policy.fields.content,
+          primitive: "propertyPopover",
+          label: "Content",
+        },
       },
     };
   }
