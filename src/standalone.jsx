@@ -20,6 +20,7 @@ import * as lifequestDomain from "./domains/lifequest/domain.js";
 import * as reflectDomain from "./domains/reflect/domain.js";
 import * as investDomain from "./domains/invest/domain.js";
 import * as gravitinoDomain from "./domains/gravitino/domain.js";
+import * as keycloakDomain from "./domains/keycloak/domain.js";
 
 import BookingUI from "./domains/booking/ManualUI.jsx";
 import PlanningUI from "./domains/planning/ManualUI.jsx";
@@ -72,6 +73,7 @@ const DOMAIN_ADAPTERS = {
   reflect: appleAdapter,
   invest: antdAdapter,
   gravitino: antdAdapter,
+  keycloak: antdAdapter,
 };
 
 function makeV2UI(domainId) {
@@ -103,6 +105,7 @@ const DOMAINS_RAW = {
   reflect: reflectDomain,
   invest: investDomain,
   gravitino: gravitinoDomain,
+  keycloak: keycloakDomain,
 };
 
 const DOMAIN_TITLES = {
@@ -118,6 +121,7 @@ const DOMAIN_TITLES = {
   reflect: "🌀 Reflect",
   invest: "💼 Invest",
   gravitino: "🗂 Gravitino",
+  keycloak: "🔐 Keycloak",
 };
 
 const DOMAINS = {
@@ -133,6 +137,7 @@ const DOMAINS = {
   reflect: { ...reflectDomain, UI: makeV2UI("reflect") },
   invest: { ...investDomain, UI: makeV2UI("invest") },
   gravitino: { ...gravitinoDomain, UI: makeV2UI("gravitino") },
+  keycloak: { ...keycloakDomain, UI: makeV2UI("keycloak") },
 };
 
 export default function StandaloneApp({ domainId }) {
