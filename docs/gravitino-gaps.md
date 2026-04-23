@@ -266,3 +266,145 @@ Deferred в SDK backlog (не Stage 2 scope): G15 R8 absorb.
 Добавить **Task 0 (pre-work)** перед Stage 2 capability-работой: авторировать minimal ROOT_PROJECTIONS (12 штук — по одному list+detail на canonical entity). Это разблокирует crystallize и даст реальный test-surface для TreeNav расширения. Без этого Stage 2 негде проверять.
 
 Альтернатива: приостановить Gravitino-работу и починить enricher-claude в SDK (§1.12) — тогда большинство G1 закроется автоматически.
+
+---
+
+## Docs-сравнение (2026-04-23, после Stage 2+3 SDK work)
+
+**Reference:** https://gravitino.apache.org/docs/1.2.0/webui-v2/ (см. `~/.claude/projects/.../memory/reference_gravitino_webui_docs.md`). SDK на момент сравнения: core@0.52.1, renderer@0.30.0 (SchemaEditor), adapter-antd@1.5.0 (Breadcrumb capability).
+
+Проход по 12 Gravitino модулям — что Gravitino docs описывает vs что наш derived UI даёт.
+
+### M-Metalakes
+
+| Аспект | Gravitino docs | Наш derived | Gap ID |
+|--------|---------------|-------------|--------|
+| List cols | Name, Properties(popover), Actions dropdown | body binds: name/comment/audit | G18 P1: нет properties popover-column |
+| Top action | **CREATE METALAKE** button prominent | `slots.hero` имеет heroCreate ✓ | OK |
+| Detail content | basic info + highlighted numbers(hover) + Schemas list + Roles(auth) | detail + subCollection Catalogs ✓ | OK |
+| Delete flow | "not in-use" first + name-confirmation | no "in-use" toggle; drop через overlay_dropMetalake (просто confirm) | G19 P1: нет in-use lifecycle (soft-disable state) |
+
+### M-Catalogs
+
+| Аспект | Gravitino docs | Наш derived | Gap ID |
+|--------|---------------|-------------|--------|
+| List cols | Name, Type(filter), Provider(filter), Tags, Policies, Actions | body binds: name/type/provider/comment | G20 P0: нет Tags/Policies columns + нет filter headers |
+| Type selector | top-left dynamic type-filter (relational/messaging/fileset/model) | — | G21 P1: нет top-level filter selector (faceted nav) |
+| Inline actions | "Associate Tag", "Associate Policy", remove-X on chip | — | G22 P1: нет chip-associations primitive (Stage 7) |
+| Top action | **CREATE CATALOG** multi-step wizard | `slots.hero: []` пусто (wizard-intents не превращаются в heroCreate) | G23 P0: нет create button + нет multi-step wizard path |
+| Create wizard | Step1: Provider selection for chosen type; Step2: required props + "Test Connection" | нет | G24 P0: Stage 6 deliverable (discriminator-wizard + test-connection control) |
+| Disabled state | icon + non-clickable | — | G19 parent — нет disable lifecycle |
+
+### M-Schemas
+
+| Аспект | Gravitino docs | Наш derived | Gap ID |
+|--------|---------------|-------------|--------|
+| Hierarchical display | Schema shows под Catalog Detail, Tables tab + Functions tab conditional | subCollections работает — schema_detail имеет 4 sections (Table/Fileset/Topic/Model) ✓ | OK (good) |
+| Tree left-side | Tree nav Metalake → Catalog → Schema → Table | treeNav есть на metalake_detail/catalog_detail/schema_detail (relative root) | G17 existing — нужен absolute-root |
+| Functions tab | conditional UDF list + params | — (нет UDFs в ontology) | G25 P2: UDF registry отдельный модуль |
+
+### M-Tables
+
+| Аспект | Gravitino docs | Наш derived | Gap ID |
+|--------|---------------|-------------|--------|
+| Create wizard multi-step | Step1: columns (varchar/decimal/list/map/struct/union); Step2: Partitions+SortOrders+Distribution; Step3: Properties | нет wizard path | G26 P0: Stage 3 partial — SchemaEditor primitive merged (#196/renderer@0.30.0), но authored `table_detail.witnessOverrides.columns = { primitive: "schemaEditor" }` ещё не добавлен |
+| Columns view | parametric types rendered (varchar(N), decimal(P,S)) | default JSON blob (Table.columns:json) | G26 same — host-integration pending |
+| Complex types | list/map/struct/union per-provider | SchemaEditor v1 supports только flat parametric; nested — future | G27 P1 deferred |
+
+### M-Filesets
+
+| Аспект | Gravitino docs | Наш derived | Gap ID |
+|--------|---------------|-------------|--------|
+| Two-level view | Filesets list → Files list per-fileset | fileset_list + fileset_detail существуют, но нет inner Files list | G28 P2: Files — runtime data, не metadata; возможно вне scope |
+
+### M-Topics / M-Models
+
+| Аспект | Gravitino docs | Наш derived | Gap ID |
+|--------|---------------|-------------|--------|
+| List + detail basic | topic_list/topic_detail, model_list/model_detail ✓ | OK |
+| latestVersion counter (Model) | bigint counter | present в projections.js + enriched role: "counter" ✓ | OK |
+
+### M-Versions
+
+| Аспект | Gravitino docs | Наш derived | Gap ID |
+|--------|---------------|-------------|--------|
+| Version history display | версии entity'ей | нет отдельного модуля Versions (в нашем mapping'е) | G29 P1: derive timeline из Φ.history через materializer |
+
+### M-Jobs / M-Job Templates
+
+| Аспект | Gravitino docs | Наш derived | Gap ID |
+|--------|---------------|-------------|--------|
+| Job Run modal | dropdown + left/right panels (template params / job config `{{}}` placeholders) | нет (JobTemplate/Job entities есть в ontology но проекций не authored) | G30 P1: параметризованные-intent wizards (связано со Stage 6) |
+
+### M-Data Compliance — Tags
+
+| Аспект | Gravitino docs | Наш derived | Gap ID |
+|--------|---------------|-------------|--------|
+| List + create modal | ✓ tag_list + overlay_createTag | ✓ OK |
+| Click-through → associated objects | association browser | нет (одна проекция — tag_detail) | G31 P2: associated-metadata-objects view (Stage 7 property-popover connected) |
+
+### M-Data Compliance — Policies
+
+| Аспект | Gravitino docs | Наш derived | Gap ID |
+|--------|---------------|-------------|--------|
+| Minimal data | Policy минимальный — только id в importer output | policy_list: `["id"]` witness | G32 P1: importer не склеил PolicyBase/PolicyMetadata subtypes в Policy (§9.7 SDK backlog: OpenAPI subtype merging) |
+
+### M-Access — Users / Groups / Roles
+
+| Аспект | Gravitino docs | Наш derived | Gap ID |
+|--------|---------------|-------------|--------|
+| Conditional visibility (auth) | `gravitino.authorization.enable=true` flag | наш UI показывает всегда | G33 P1: feature-flag gating в nav |
+| Grant Role inline action | Actions column → Grant Role modal | нет (Role intents есть, но нет per-item action wired) | G34 P1: per-item intent action в catalog archetype |
+| Add User / Group modals | Simple form | overlay_addUser/overlay_addGroup существуют ✓ | OK |
+| Role с multiple securable objects + privileges | complex multi-object grid | плоский witness securableObjects (json blob) | G35 P0: Stage 5 PermissionMatrix primitive deliverable |
+
+### Shared UI patterns
+
+| Паттерн | Gravitino docs | Наш derived | Gap ID |
+|---------|---------------|-------------|--------|
+| Left tree sidebar persistent | absolute-rooted tree (Metalake→Catalog→Schema→Table) | treeNav есть, но relative-rooted per projection | G17 existing (Stage 2 Task 4 deferred) |
+| Navbar: system mode + user menu | metalake switcher + username + logout | — (V2Shell не имеет metalake switcher) | G36 P1: host-level workspace switcher |
+| Hover popover on highlighted metrics | property counts раскрываются | — | G37 P1: Stage 7 PropertyPopover primitive (deliverable) |
+| Disabled state visual | icon + non-clickable | — | G19 parent |
+| Authorization visibility gating | whole screens hidden by flag | — | G33 parent |
+| Filter columns | table header per-column filter | — | G38 P1: Stage 4 DataGrid primitive (column filter capability) |
+| Breadcrumb entity-aware | — (docs не говорят явно, но implied через navbar) | ✓ V2Shell Stage 2 Task 3 done | OK |
+
+### Приоритизированный summary gap'ов
+
+**P0 (блокируют demo quality):**
+- G20 — Catalogs list нет Tags/Policies columns (S7)
+- G23 — нет multi-step Create Catalog wizard (S6)
+- G24 — нет test-connection control (S6)
+- G26 — Table columns host-integration pending (SchemaEditor wiring)
+- G35 — Role privilege matrix отсутствует (S5)
+
+**P1 (визуально плохо но не блокирует):**
+- G18 — properties popover-column (S7)
+- G19/G33 — lifecycle states (in-use / disabled) + auth gating
+- G21 — top-level faceted filter selector (S4)
+- G22 — chip-associations (S7)
+- G25/G29/G30 — UDF / Versions / Jobs проекции (deferred)
+- G32 — Policy importer subtype merge (SDK §9.7)
+- G34 — per-item Grant Role action (catalog-archetype)
+- G36 — workspace/metalake switcher (host)
+- G37 — PropertyPopover primitive (S7)
+- G38 — column filter capability (S4)
+
+**P2:**
+- G27 — nested composite types (deferred)
+- G28 — runtime Files list (вне scope)
+- G31 — tag-associated-objects browser (S7 subset)
+
+### Stage deliverables — updated mapping
+
+| Stage | Primary gap'ы | Status |
+|-------|---------------|--------|
+| Stage 3 (composite) | G26 (SchemaEditor host-integration), G27 (nested — deferred) | SDK merged, host-integration pending |
+| Stage 4 (data-grid) | G21, G38 (filter), plus G20 (chip columns) | pending |
+| Stage 5 (permission matrix) | G35 | pending |
+| Stage 6 (wizard dynamics) | G23, G24 | pending |
+| Stage 7 (property popover + assoc) | G18, G22, G31, G37 | pending |
+| Stage 8 (polish + demo) | G19, G33, G36 (workspace switcher) | pending |
+| Deferred / vend | G25 (UDFs), G29 (Versions), G30 (Jobs Run modal), G27 (nested types) | SDK backlog / future |
+| SDK backlog | G32 (importer subtype merge) | §9.7 candidate |
