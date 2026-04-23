@@ -53,7 +53,7 @@
     "@intent-driven/canvas-kit": "^0.2.0",
     "@intent-driven/core": "^0.59.1",
     "@intent-driven/engine": "^0.2.0",
-    "@intent-driven/importer-openapi": "^0.6.0",
+    "@intent-driven/importer-openapi": "^0.11.0",
     "@intent-driven/renderer": "^0.39.0",
     "@mantine/core": "^9.0.1",
     "@mantine/dates": "^9.0.1",
