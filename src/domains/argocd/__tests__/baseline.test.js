@@ -147,6 +147,49 @@ describe("argocd Stage 1+2 baseline", () => {
     expect(actions.find(a => a.intent === "removeApplication")?.danger).toBe(true);
   });
 
+  it("Stage 5 — Resource entity с applicationId FK", () => {
+    expect(ONTOLOGY.entities.Resource).toBeDefined();
+    expect(ONTOLOGY.entities.Resource.kind).toBe("internal");
+    expect(ONTOLOGY.entities.Resource.ownerField).toBe("applicationId");
+    const fields = ONTOLOGY.entities.Resource.fields;
+    expect(fields.applicationId?.type).toBe("entityRef");
+    expect(fields.applicationId?.references).toBe("Application");
+    expect(fields.kind?.fieldRole).toBe("name");
+    expect(fields.syncStatus?.fieldRole).toBe("status");
+    expect(fields.healthStatus?.options).toContain("Degraded");
+    expect(fields.parentResource?.references).toBe("Resource");
+  });
+
+  it("Stage 5 — seed генерит 5 resources × 4 apps = 20 Resource effects", () => {
+    const effects = getSeedEffects();
+    const resources = effects.filter(e => e.target === "Resource");
+    expect(resources.length).toBe(20);
+    const apps = new Set(resources.map(r => r.context.applicationId));
+    expect(apps.size).toBe(4);
+    const kinds = resources.map(r => r.context.kind).sort();
+    expect(kinds.filter(k => k === "Deployment").length).toBe(4);
+    expect(kinds.filter(k => k === "ReplicaSet").length).toBe(4);
+    expect(kinds.filter(k => k === "Pod").length).toBe(8);
+    expect(kinds.filter(k => k === "Service").length).toBe(4);
+    const paymentsPods = resources.filter(
+      r => r.context.applicationId === "a_payments-api" && r.context.kind === "Pod"
+    );
+    expect(paymentsPods.map(p => p.context.healthStatus).sort())
+      .toEqual(["Degraded", "Missing"]);
+  });
+
+  it("Stage 5 — application_detail subCollection с renderAs:resourceTree", () => {
+    const detail = PROJECTIONS.application_detail;
+    expect(detail.subCollections).toBeDefined();
+    const resSub = detail.subCollections.find(s => s.entity === "Resource");
+    expect(resSub).toBeDefined();
+    expect(resSub.foreignKey).toBe("applicationId");
+    expect(resSub.renderAs?.type).toBe("resourceTree");
+    const healthCol = resSub.columns.find(c => c.key === "healthStatus");
+    expect(healthCol?.kind).toBe("badge");
+    expect(healthCol?.colorMap?.Degraded).toBe("danger");
+  });
+
   it("Stage 4 badge columns: syncStatus/healthStatus с kind:badge + colorMap", () => {
     const cols = PROJECTIONS.application_list.bodyOverride.columns;
     const syncCol = cols.find(c => c.key === "syncStatus");
@@ -171,9 +214,9 @@ describe("argocd Stage 1+2 baseline", () => {
     expect(connCol?.colorMap?.Failed).toBe("danger");
   });
 
-  it("Stage 3 rich seed: 30+ effects, 10 Applications разных syncStatus", () => {
+  it("Stage 3 rich seed: 50+ effects (35 base + 20 Stage 5 resources)", () => {
     const effects = getSeedEffects();
-    expect(effects.length).toBeGreaterThanOrEqual(30);
+    expect(effects.length).toBeGreaterThanOrEqual(50);
     const byTarget = {};
     for (const e of effects) byTarget[e.target] = (byTarget[e.target] || 0) + 1;
     expect(byTarget.Project).toBe(3);

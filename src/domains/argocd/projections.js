@@ -107,6 +107,30 @@ export const PROJECTIONS = {
     intents: ["readApplication", "updateApplication", "syncApplication",
               "rollbackApplication", "removeApplication"],
     idParam: "name",
+    // Stage 5 — Resource tree subCollection. renderAs:"resourceTree" —
+    // host-specific dispatcher (V2Shell::renderSubCollection) рендерит
+    // иерархическое дерево с K8s kind-icons и status-badges, вместо плоской
+    // table. Fallback на обычный list если renderer не знает dispatcher.
+    subCollections: [
+      {
+        entity: "Resource",
+        foreignKey: "applicationId",
+        title: "Resources",
+        renderAs: { type: "resourceTree" },
+        columns: [
+          { key: "kind",         label: "Kind", sortable: true, filterable: true },
+          { key: "name",         label: "Name", sortable: true, filterable: true },
+          { key: "namespace",    label: "Namespace", sortable: true, filterable: true },
+          { key: "syncStatus",   label: "Sync",   kind: "badge",
+            colorMap: { Synced: "success", OutOfSync: "warning" } },
+          { key: "healthStatus", label: "Health", kind: "badge",
+            colorMap: {
+              Healthy: "success", Progressing: "info", Degraded: "danger",
+              Missing: "neutral", Suspended: "warning", Unknown: "neutral",
+            } },
+        ],
+      },
+    ],
   },
 
   // === ApplicationSets ===
