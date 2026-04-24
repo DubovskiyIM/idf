@@ -411,6 +411,13 @@ export const PROJECTIONS = {
    * inheritance-badges (idf-sdk#269) — ждёт section.kind-dispatcher в
    * ArchetypeDetail (follow-up SDK PR).
    */
+  /**
+   * P-K-D / P-K-C полноценный UI через idf-sdk#283 renderAs dispatchers
+   * (renderer@0.45.0). RoleMapping рендерится PermissionMatrix'ом
+   * (inheritance color-badges composite/group/client/direct). Credential —
+   * CredentialEditor с 4 type-specific sub-views (password notice / OTP
+   * TOTP detect / WebAuthn device / X509 subject).
+   */
   user_detail: {
     name: "Пользователь",
     kind: "detail",
@@ -421,25 +428,21 @@ export const PROJECTIONS = {
         entity: "RoleMapping",
         foreignKey: "userId",
         title: "Роли пользователя",
-        itemView: [
-          { bind: "type", type: "badge" },
-          { bind: "roleName", type: "text" },
-          { bind: "inheritedFrom", type: "text" },
-        ],
+        renderAs: { type: "permissionMatrix", readOnly: true },
       },
-      // Stage 8 (P-K-C, idf-sdk#272): Credentials sub-section. CredentialEditor
-      // primitive готов в renderer — discriminator-driven viewer с 4 типами
-      // (password/otp/webauthn/x509). Host MVP через default SubCollectionSection
-      // (section.kind dispatcher для primitive-embed — отдельный SDK PR).
       {
         entity: "Credential",
         foreignKey: "userId",
         title: "Credentials",
-        itemView: [
-          { bind: "type", type: "badge" },
-          { bind: "userLabel", type: "text" },
-          { bind: "createdDate", type: "text" },
-        ],
+        renderAs: {
+          type: "credentialEditor",
+          readOnly: false,
+          actionIntents: {
+            rotate: "resetUserPassword",
+            delete: "removeCredential",
+            revealSecret: "showCredentialSecret",
+          },
+        },
       },
     ],
   },

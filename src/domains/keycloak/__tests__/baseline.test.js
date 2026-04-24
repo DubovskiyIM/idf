@@ -201,14 +201,15 @@ describe("keycloak Stage 1+2 baseline", () => {
     expect(sources).toContain("group:Admins");
   });
 
-  it("Stage 9: user_detail projection с RoleMapping subCollection", () => {
+  it("Stage 9: user_detail RoleMapping subCollection + renderAs:permissionMatrix", () => {
     expect(PROJECTIONS.user_detail).toBeDefined();
     expect(PROJECTIONS.user_detail.kind).toBe("detail");
     const subs = PROJECTIONS.user_detail.subCollections;
-    expect(Array.isArray(subs)).toBe(true);
     const roleMapSub = subs.find(s => s.entity === "RoleMapping");
     expect(roleMapSub).toBeDefined();
     expect(roleMapSub.foreignKey).toBe("userId");
+    // idf-sdk#283: renderAs dispatcher → PermissionMatrix с inheritance-badges
+    expect(roleMapSub.renderAs?.type).toBe("permissionMatrix");
   });
 
   it("Stage 7: domain.TEST_CONNECTION_HANDLERS регистрирует testIdentityProviderConnection", async () => {
@@ -293,12 +294,15 @@ describe("keycloak Stage 1+2 baseline", () => {
     expect(charlie[0].context.temporary).toBe(true);
   });
 
-  it("Stage 8: user_detail projection имеет Credential subCollection", () => {
+  it("Stage 8: user_detail Credential subCollection + renderAs:credentialEditor", () => {
     const subs = PROJECTIONS.user_detail.subCollections;
     const credSub = subs.find(s => s.entity === "Credential");
     expect(credSub).toBeDefined();
     expect(credSub.foreignKey).toBe("userId");
     expect(credSub.title).toBe("Credentials");
+    // idf-sdk#283: renderAs dispatcher → CredentialEditor с type-specific sub-views
+    expect(credSub.renderAs?.type).toBe("credentialEditor");
+    expect(credSub.renderAs?.actionIntents?.rotate).toBe("resetUserPassword");
   });
 
   it("Stage 5: wizard steps имеют id / title / fields", () => {
