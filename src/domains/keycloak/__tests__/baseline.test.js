@@ -279,6 +279,28 @@ describe("keycloak Stage 1+2 baseline", () => {
     expect(body.tabs.length).toBe(5);
   });
 
+  it("Stage 8 (P-K-C): Credentials seed — Alice/Bob/Charlie с 4 типами", () => {
+    const credentials = getSeedEffects().filter(e => e.target === "Credential");
+    expect(credentials.length).toBe(7);
+    const alice = credentials.filter(e => e.context?.userId === "u_alice");
+    expect(alice).toHaveLength(4);
+    const types = alice.map(e => e.context.type).sort();
+    expect(types).toEqual(["otp", "password", "webauthn", "x509"]);
+    const bob = credentials.filter(e => e.context?.userId === "u_bob");
+    expect(bob.map(e => e.context.type).sort()).toEqual(["otp", "password"]);
+    const charlie = credentials.filter(e => e.context?.userId === "u_charlie");
+    expect(charlie).toHaveLength(1);
+    expect(charlie[0].context.temporary).toBe(true);
+  });
+
+  it("Stage 8: user_detail projection имеет Credential subCollection", () => {
+    const subs = PROJECTIONS.user_detail.subCollections;
+    const credSub = subs.find(s => s.entity === "Credential");
+    expect(credSub).toBeDefined();
+    expect(credSub.foreignKey).toBe("userId");
+    expect(credSub.title).toBe("Credentials");
+  });
+
   it("Stage 5: wizard steps имеют id / title / fields", () => {
     const artifacts = crystallizeV2(
       INTENTS,
