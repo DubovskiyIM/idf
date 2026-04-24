@@ -19,14 +19,46 @@ const CANONICAL_ENTITIES = [
 /**
  * DataGrid helper — генерит columns из списка fields + actions-столбец.
  * (Скопировано из Keycloak, G-K-22 workaround.)
+ *
+ * Stage 4: status-колонки (syncStatus/healthStatus/connectionStatus) —
+ * `kind: "badge"` с canonical colorMap. Renderer делегирует в Badge
+ * primitive с tone mapping (renderer@0.47+ idf-sdk#293 G-A-3).
  */
+const STATUS_COLOR_MAPS = {
+  syncStatus: {
+    Synced: "success",
+    OutOfSync: "warning",
+    Unknown: "neutral",
+  },
+  healthStatus: {
+    Healthy: "success",
+    Progressing: "info",
+    Degraded: "danger",
+    Missing: "neutral",
+    Suspended: "warning",
+    Unknown: "neutral",
+  },
+  connectionStatus: {
+    Successful: "success",
+    Failed: "danger",
+    Unknown: "neutral",
+  },
+};
+
 function dgColumns(fieldKeys, fieldDefs = {}) {
-  return fieldKeys.map(key => ({
-    key,
-    label: fieldDefs[key]?.label || key,
-    sortable: true,
-    filterable: true,
-  }));
+  return fieldKeys.map(key => {
+    const base = {
+      key,
+      label: fieldDefs[key]?.label || key,
+      sortable: true,
+      filterable: true,
+    };
+    const colorMap = STATUS_COLOR_MAPS[key];
+    if (colorMap) {
+      return { ...base, kind: "badge", colorMap };
+    }
+    return base;
+  });
 }
 
 function dataGridBody(mainEntity, fieldKeys, actionIntents = []) {
