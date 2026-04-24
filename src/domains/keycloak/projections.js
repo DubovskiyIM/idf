@@ -423,6 +423,50 @@ export const PROJECTIONS = {
     kind: "detail",
     mainEntity: "User",
     idParam: "userId",
+    /**
+     * G-K-12 (idf-sdk#288, core@0.64.0): `editBodyOverride` прокидывается
+     * `generateEditProjections` в синтезированный `user_detail_edit` как
+     * `bodyOverride`. Без этого row-CTA «Изменить» даёт flat formBody
+     * — теперь тот же TabbedForm, что и в create-wizard'е, но в tab-режиме.
+     */
+    editBodyOverride: {
+      type: "tabbedForm",
+      initialTab: "profile",
+      tabs: [
+        {
+          id: "profile",
+          title: "Профиль",
+          fields: [
+            { name: "username", label: "Username", type: "string", required: true },
+            { name: "firstName", label: "Имя", type: "string" },
+            { name: "lastName", label: "Фамилия", type: "string" },
+            { name: "email", label: "Email", type: "string", fieldRole: "email" },
+            { name: "emailVerified", label: "Email верифицирован", type: "boolean" },
+            { name: "enabled", label: "Включён", type: "boolean" },
+          ],
+          onSubmit: { intent: "updateUser" },
+        },
+        {
+          id: "attributes",
+          title: "Атрибуты",
+          fields: [
+            { name: "attributes", label: "Custom attributes (JSON)", type: "textarea" },
+            { name: "requiredActions", label: "Required actions (JSON)", type: "textarea" },
+          ],
+          onSubmit: { intent: "updateUser" },
+        },
+        {
+          id: "federation",
+          title: "Federation",
+          fields: [
+            { name: "federationLink", label: "Federation link", type: "string" },
+            { name: "origin", label: "Origin", type: "string" },
+            { name: "serviceAccountClientId", label: "Service account client", type: "string" },
+          ],
+          onSubmit: { intent: "updateUser" },
+        },
+      ],
+    },
     subCollections: [
       {
         entity: "RoleMapping",
