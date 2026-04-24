@@ -130,6 +130,32 @@ export const PROJECTIONS = {
             } },
         ],
       },
+      // Stage 6 — ApplicationCondition timeline (audit-log inline).
+      // renderAs:"conditionsTimeline" — новый dispatcher с chronological
+      // sort descending + color-coding по type+status severity
+      // (SyncError/ComparisonError→danger, Warning→warning, resolved→neutral).
+      {
+        entity: "ApplicationCondition",
+        foreignKey: "applicationId",
+        title: "Conditions",
+        renderAs: { type: "conditionsTimeline" },
+        sort: { key: "lastTransitionTime", order: "desc" },
+        columns: [
+          { key: "type",    label: "Type",   kind: "badge",
+            colorMap: {
+              SyncError: "danger", ComparisonError: "danger",
+              ValidationFailed: "danger", InvalidSpecError: "danger",
+              ResourceHealth: "warning", Deleted: "neutral",
+              ExcludedResourceWarning: "info",
+              SharedResourceWarning: "info",
+              OrphanedResourceWarning: "info",
+            } },
+          { key: "status",  label: "Active", kind: "badge",
+            colorMap: { True: "warning", False: "success", Unknown: "neutral" } },
+          { key: "message", label: "Message" },
+          { key: "lastTransitionTime", label: "At" },
+        ],
+      },
     ],
   },
 

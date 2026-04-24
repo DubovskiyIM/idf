@@ -178,6 +178,47 @@ describe("argocd Stage 1+2 baseline", () => {
       .toEqual(["Degraded", "Missing"]);
   });
 
+  it("Stage 6 — ApplicationCondition entity декларирована с timeline fields", () => {
+    const e = ONTOLOGY.entities.ApplicationCondition;
+    expect(e).toBeDefined();
+    expect(e.ownerField).toBe("applicationId");
+    expect(e.fields.type?.options).toContain("SyncError");
+    expect(e.fields.type?.options).toContain("ResourceHealth");
+    expect(e.fields.status?.options).toEqual(["True", "False", "Unknown"]);
+    expect(e.fields.lastTransitionTime?.type).toBe("datetime");
+    expect(e.fields.lastTransitionTime?.fieldRole).toBe("datetime");
+  });
+
+  it("Stage 6 — seed: 12 ApplicationCondition effects с разной severity", () => {
+    const effects = getSeedEffects();
+    const conds = effects.filter(e => e.target === "ApplicationCondition");
+    expect(conds.length).toBe(12);
+    // payments-api (Degraded) — 4 conditions, 2 active
+    const paymentsApi = conds.filter(c => c.context.applicationId === "a_payments-api");
+    expect(paymentsApi).toHaveLength(4);
+    const activePayApi = paymentsApi.filter(c => c.context.status === "True");
+    expect(activePayApi).toHaveLength(2);
+    // Healthy apps (frontend) — минимум 1 resolved condition
+    const frontend = conds.filter(c => c.context.applicationId === "a_frontend");
+    expect(frontend).toHaveLength(1);
+    expect(frontend[0].context.status).toBe("False");
+  });
+
+  it("Stage 6 — application_detail subCollection с renderAs:conditionsTimeline", () => {
+    const detail = PROJECTIONS.application_detail;
+    const condSub = detail.subCollections.find(s => s.entity === "ApplicationCondition");
+    expect(condSub).toBeDefined();
+    expect(condSub.foreignKey).toBe("applicationId");
+    expect(condSub.renderAs?.type).toBe("conditionsTimeline");
+    expect(condSub.sort?.key).toBe("lastTransitionTime");
+    expect(condSub.sort?.order).toBe("desc");
+    // Badge colors по severity: SyncError=danger, ResourceHealth=warning
+    const typeCol = condSub.columns.find(c => c.key === "type");
+    expect(typeCol?.colorMap?.SyncError).toBe("danger");
+    expect(typeCol?.colorMap?.ResourceHealth).toBe("warning");
+    expect(typeCol?.colorMap?.SharedResourceWarning).toBe("info");
+  });
+
   it("Stage 5 — application_detail subCollection с renderAs:resourceTree", () => {
     const detail = PROJECTIONS.application_detail;
     expect(detail.subCollections).toBeDefined();
@@ -214,9 +255,9 @@ describe("argocd Stage 1+2 baseline", () => {
     expect(connCol?.colorMap?.Failed).toBe("danger");
   });
 
-  it("Stage 3 rich seed: 50+ effects (35 base + 20 Stage 5 resources)", () => {
+  it("Stage 3 rich seed: 60+ effects (31 base + 20 resources + 12 conditions = 63)", () => {
     const effects = getSeedEffects();
-    expect(effects.length).toBeGreaterThanOrEqual(50);
+    expect(effects.length).toBeGreaterThanOrEqual(60);
     const byTarget = {};
     for (const e of effects) byTarget[e.target] = (byTarget[e.target] || 0) + 1;
     expect(byTarget.Project).toBe(3);
