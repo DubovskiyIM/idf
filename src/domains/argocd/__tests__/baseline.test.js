@@ -147,6 +147,30 @@ describe("argocd Stage 1+2 baseline", () => {
     expect(actions.find(a => a.intent === "removeApplication")?.danger).toBe(true);
   });
 
+  it("Stage 4 badge columns: syncStatus/healthStatus с kind:badge + colorMap", () => {
+    const cols = PROJECTIONS.application_list.bodyOverride.columns;
+    const syncCol = cols.find(c => c.key === "syncStatus");
+    expect(syncCol?.kind).toBe("badge");
+    expect(syncCol?.colorMap).toEqual({
+      Synced: "success",
+      OutOfSync: "warning",
+      Unknown: "neutral",
+    });
+
+    const healthCol = cols.find(c => c.key === "healthStatus");
+    expect(healthCol?.kind).toBe("badge");
+    expect(healthCol?.colorMap?.Healthy).toBe("success");
+    expect(healthCol?.colorMap?.Degraded).toBe("danger");
+    expect(healthCol?.colorMap?.Progressing).toBe("info");
+
+    // Cluster.connectionStatus тоже с badge
+    const clusterCols = PROJECTIONS.cluster_list.bodyOverride.columns;
+    const connCol = clusterCols.find(c => c.key === "connectionStatus");
+    expect(connCol?.kind).toBe("badge");
+    expect(connCol?.colorMap?.Successful).toBe("success");
+    expect(connCol?.colorMap?.Failed).toBe("danger");
+  });
+
   it("Stage 3 rich seed: 30+ effects, 10 Applications разных syncStatus", () => {
     const effects = getSeedEffects();
     expect(effects.length).toBeGreaterThanOrEqual(30);
