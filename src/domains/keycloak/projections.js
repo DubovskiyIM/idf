@@ -427,6 +427,20 @@ export const PROJECTIONS = {
           { bind: "inheritedFrom", type: "text" },
         ],
       },
+      // Stage 8 (P-K-C, idf-sdk#272): Credentials sub-section. CredentialEditor
+      // primitive готов в renderer — discriminator-driven viewer с 4 типами
+      // (password/otp/webauthn/x509). Host MVP через default SubCollectionSection
+      // (section.kind dispatcher для primitive-embed — отдельный SDK PR).
+      {
+        entity: "Credential",
+        foreignKey: "userId",
+        title: "Credentials",
+        itemView: [
+          { bind: "type", type: "badge" },
+          { bind: "userLabel", type: "text" },
+          { bind: "createdDate", type: "text" },
+        ],
+      },
     ],
   },
   identityprovider_create: {

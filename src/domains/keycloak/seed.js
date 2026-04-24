@@ -182,5 +182,24 @@ export function getSeedEffects() {
   ];
   ROLE_MAPPINGS.forEach(rm => ef("RoleMapping", rm));
 
+  // ═══ Credentials (P-K-C, Stage 8) ═════════════════════════════════════
+  // Demo 4 типов credentials для CredentialEditor primitive (idf-sdk#272):
+  // Alice — full set (password + TOTP + WebAuthn + X509), Bob — только
+  // password + TOTP, Charlie — только password. Password stored as hashed
+  // meta (algorithm/iterations) — plain-password никогда не hit'ает world.
+  const CREDENTIALS = [
+    // Alice — 4 credentials
+    { id: "cr_alice_pw",  userId: "u_alice",   type: "password",  userLabel: "Основной пароль",     createdDate: ago(120), algorithm: "argon2id", hashIterations: 3,   temporary: false },
+    { id: "cr_alice_otp", userId: "u_alice",   type: "otp",       userLabel: "Google Authenticator", createdDate: ago(80),  algorithm: "SHA-256",  digits: 6, period: 30, device: "iPhone 15" },
+    { id: "cr_alice_wa",  userId: "u_alice",   type: "webauthn",  userLabel: "MacBook Touch ID",    createdDate: ago(45),  device: "MacBook Pro M3", credentialData: "a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6" },
+    { id: "cr_alice_x5",  userId: "u_alice",   type: "x509",      userLabel: "YubiKey 5C NFC",      createdDate: ago(30),  device: "CN=Alice Ivanova,O=Acme,C=RU", credentialData: "3082032830820210a003020102020900..." },
+    // Bob — 2 credentials
+    { id: "cr_bob_pw",    userId: "u_bob",     type: "password",  userLabel: "Пароль",              createdDate: ago(85),  algorithm: "argon2id", hashIterations: 3,   temporary: false },
+    { id: "cr_bob_otp",   userId: "u_bob",     type: "otp",       userLabel: "Authy",               createdDate: ago(60),  algorithm: "SHA-1",    digits: 6, period: 30, device: "Android" },
+    // Charlie — только temporary password
+    { id: "cr_charlie_pw", userId: "u_charlie", type: "password", userLabel: "Временный (сброс)",    createdDate: ago(45),  algorithm: "argon2id", hashIterations: 3,   temporary: true },
+  ];
+  CREDENTIALS.forEach(c => ef("Credential", c));
+
   return effects;
 }
