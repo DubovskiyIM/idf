@@ -78,9 +78,10 @@ describe("argocd Stage 1+2 baseline", () => {
     expect(INTENTS.ApplicationService_Create).toBeUndefined();
     expect(INTENTS.ApplicationService_Sync).toBeUndefined();
 
-    // _aliasOf сохранён для debug
-    expect(INTENTS.createApplication._aliasOf).toBe("ApplicationService_Create");
-    expect(INTENTS.syncApplication._aliasOf).toBe("ApplicationService_Sync");
+    // G-A-7 ✅ CLOSED (importer-openapi@0.13.0): canonicalization теперь
+    // автоматическая в SDK, не через host renameIntents. _aliasOf ставится
+    // только на host-renamed intents (plural aliases).
+    expect(INTENTS.listApplications._aliasOf).toBe("listApplication");
   });
 
   it("intent.creates указывает на короткое имя (которое теперь имеет поля)", () => {

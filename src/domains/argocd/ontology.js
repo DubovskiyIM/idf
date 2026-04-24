@@ -2,34 +2,30 @@
 import { ontology as imported } from "./imported.js";
 
 /**
- * Stage 2 host-workaround для G-A-1 (K8s CRD naming merge).
+ * G-A-1 ✅ partially CLOSED (importer-openapi@0.13.0): `mergeK8sCrdDuplicates`
+ * в reimport script auto-мёрджит regex-matching пары (Application ←
+ * v1alpha1Application, Cluster ← v1alpha1Cluster, Repository ←
+ * v1alpha1Repository, Applicationset ← v1alpha1ApplicationSet).
  *
- * importer-openapi@0.11 создаёт две отдельные entities на K8s CRD:
- *   - path-derived `Application` (fields:{id}, kind:internal) — из URL pattern
- *     `/api/v1/applications/{name}` через entityNameFromPath.
- *   - schema-derived `v1alpha1Application` (4 поля, kind:embedded) — из
- *     `#/definitions/v1alpha1.Application` через schemaToEntity.
+ * Остаются host-override'ы для semantic-alias pairs (path-name ≠
+ * schema-name), которые regex не ловит:
+ *   Project     ← v1alpha1AppProject      (path 'Project' ≠ schema 'AppProject')
+ *   Gpgkey      ← v1alpha1GnuPGPublicKey  (path 'Gpgkey' ≠ schema 'GnuPGPublicKey')
+ *   Certificate ← v1alpha1RepositoryCertificate
+ *   Repocred    ← v1alpha1RepoCreds
+ *   Account     ← accountAccount           (не K8s CRD)
+ *   Session     ← sessionSessionResponse   (не K8s CRD)
  *
- * Host-level merge map: короткое имя ← полная v-сущность. Поля копируются,
- * kind переводится в "internal", v-сущность остаётся как embedded для
- * wrapper-refs (`v1alpha1ApplicationList.items[]`).
- *
- * G-A-6 также: после swagger2openapi конверсии все $ref-поля K8s CRD
- * теряют типизацию, становятся `{type: "string"}`. Для Stage 3 DataGrid
- * и Stage 4 statusBadge нужны плоские semantic fields — добавляем их
- * через SEMANTIC_AUGMENT ниже (syncStatus / healthStatus / project / ...).
+ * G-A-6 (Swagger 2.0 type-loss) остаётся open — SEMANTIC_AUGMENT
+ * декларирует плоские semantic fields поверх nested spec.
  */
 const K8S_CRD_MERGE = {
-  Application:    "v1alpha1Application",
-  Cluster:        "v1alpha1Cluster",
-  Project:        "v1alpha1AppProject",
-  Repository:     "v1alpha1Repository",
-  Applicationset: "v1alpha1ApplicationSet",
-  Gpgkey:         "v1alpha1GnuPGPublicKey",
-  Certificate:    "v1alpha1RepositoryCertificate",
-  Repocred:       "v1alpha1RepoCreds",
-  Account:        "accountAccount",
-  Session:        "sessionSessionResponse",
+  Project:     "v1alpha1AppProject",
+  Gpgkey:      "v1alpha1GnuPGPublicKey",
+  Certificate: "v1alpha1RepositoryCertificate",
+  Repocred:    "v1alpha1RepoCreds",
+  Account:     "accountAccount",
+  Session:     "sessionSessionResponse",
 };
 
 /**
@@ -108,21 +104,31 @@ const SEMANTIC_AUGMENT = {
 
 function mergeK8sCrds(entities) {
   const merged = { ...entities };
+  // Phase 1: host semantic-alias merge (path-name ≠ schema-name pairs).
   for (const [shortName, fullName] of Object.entries(K8S_CRD_MERGE)) {
     const full = entities[fullName];
     if (!full) continue;
     const stub = entities[shortName] || { name: shortName, fields: {} };
-    const augment = SEMANTIC_AUGMENT[shortName] || {};
     merged[shortName] = {
       ...stub,
       name: shortName,
       fields: {
         ...full.fields,
         ...stub.fields,   // id-stub побеждает поле с тем же именем
-        ...augment,       // semantic augmentation имеет абсолютный приоритет
       },
       kind: "internal",
       label: stub.label || shortName,
+    };
+  }
+  // Phase 2: SEMANTIC_AUGMENT applied к любой entity (включая auto-merged
+  // через SDK mergeK8sCrdDuplicates). G-A-6 workaround — плоские поля
+  // поверх type:"string" полей после Swagger 2→3.
+  for (const [shortName, augment] of Object.entries(SEMANTIC_AUGMENT)) {
+    const base = merged[shortName];
+    if (!base) continue;
+    merged[shortName] = {
+      ...base,
+      fields: { ...base.fields, ...augment },
     };
   }
   return merged;

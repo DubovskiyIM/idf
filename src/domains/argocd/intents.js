@@ -2,92 +2,40 @@
 import { ontology as imported } from "./imported.js";
 
 /**
- * Stage 2 host-workaround для G-A-4 (grpc-gateway operationId naming).
+ * G-A-7 ✅ CLOSED (importer-openapi@0.13.0): grpc-gateway operationId
+ * теперь auto-canonicalized в `pathToIntent` (ApplicationService_Create →
+ * createApplication, ClusterService_RotateAuth → rotateClusterAuth и т.д.).
  *
- * ArgoCD Swagger 2.0 использует operationId вида `<Service>_<Verb>` —
- * `ApplicationService_Create`, `ApplicationService_List`. Host-код и
- * row-action resolver'ы ожидают canonical `createApplication` /
- * `listApplications` (Keycloak / Gravitino convention). Без переименования
- * renderer не находит intent по canonical имени.
+ * Host больше не делает 53 переименования. Остаются 3 категории edge cases:
  *
- * Rename map — explicit для 30+ наиболее востребованных. Автоматический
- * SDK rename (SDK PR `importer-openapi.canonicalizeGrpcOperationIds`) —
- * более правильное решение, но требует rule-engine для irregular verbs
- * (Sync/Rollback/GetManifests/ListResourceEvents/...).
- *
- * Оригинальное имя сохраняется как alias (`intent._aliasOf`) для
- * отладки / обратной совместимости с server-логом.
+ *  1. Plural naming: SDK даёт `list<Entity>` (singular), host projections
+ *     используют `list<Entities>` (plural per Keycloak convention). Aliases
+ *     выравнивают форму.
+ *  2. Case mismatch: SDK сохраняет PascalCase из operationId (`GPGKey`);
+ *     host projections ожидают `Gpgkey` (path-segment lowercase).
+ *  3. Semantic overrides: SDK алгоритм не различает verb/noun, для
+ *     `PodLogs2` / `CanI` / `GetUserInfo` host даёт более читаемые имена.
  */
 const INTENT_RENAME = {
-  // Applications
-  ApplicationService_Create:               "createApplication",
-  ApplicationService_List:                 "listApplications",
-  ApplicationService_Get:                  "readApplication",
-  ApplicationService_Update:               "updateApplication",
-  ApplicationService_Delete:               "removeApplication",
-  ApplicationService_Patch:                "patchApplication",
-  ApplicationService_Sync:                 "syncApplication",
-  ApplicationService_Rollback:             "rollbackApplication",
-  ApplicationService_TerminateOperation:   "terminateApplicationOperation",
-  ApplicationService_RevisionMetadata:     "readApplicationRevisionMetadata",
-  ApplicationService_ManagedResources:     "readApplicationManagedResources",
-  ApplicationService_ResourceTree:         "readApplicationResourceTree",
-  ApplicationService_GetManifests:         "readApplicationManifests",
-  ApplicationService_ServerSideDiff:       "readApplicationServerSideDiff",
-  ApplicationService_ListResourceEvents:   "listApplicationResourceEvents",
-  ApplicationService_ListLinks:            "listApplicationLinks",
-  ApplicationService_PodLogs2:             "readApplicationPodLogs",
+  // (1) Plural list — SDK singular → host plural
+  listApplication:     "listApplications",
+  listApplicationSet:  "listApplicationSets",
+  listCluster:         "listClusters",
+  listProject:         "listProjects",
+  listRepository:      "listRepositories",
+  listCertificate:     "listCertificates",
+  listAccount:         "listAccounts",
 
-  // Projects (AppProject CRD → короткое Project в UI)
-  ProjectService_Create:                   "createProject",
-  ProjectService_List:                     "listProjects",
-  ProjectService_Get:                      "readProject",
-  ProjectService_Update:                   "updateProject",
-  ProjectService_Delete:                   "removeProject",
+  // (2) Case mismatch на GPGKey — SDK preserves operationId case
+  createGPGKey:        "createGpgkey",
+  readGPGKey:          "readGpgkey",
+  removeGPGKey:        "removeGpgkey",
+  listGPGKey:          "listGpgkeys",
 
-  // Clusters
-  ClusterService_Create:                   "createCluster",
-  ClusterService_List:                     "listClusters",
-  ClusterService_Get:                      "readCluster",
-  ClusterService_Update:                   "updateCluster",
-  ClusterService_Delete:                   "removeCluster",
-  ClusterService_RotateAuth:               "rotateClusterAuth",
-  ClusterService_InvalidateCache:          "invalidateClusterCache",
-
-  // Repositories
-  RepositoryService_CreateRepository:      "createRepository",
-  RepositoryService_ListRepositories:      "listRepositories",
-  RepositoryService_Get:                   "readRepository",
-  RepositoryService_Update:                "updateRepository",
-  RepositoryService_DeleteRepository:      "removeRepository",
-  RepositoryService_GetAppDetails:         "readRepositoryAppDetails",
-
-  // ApplicationSets
-  ApplicationSetService_Create:            "createApplicationSet",
-  ApplicationSetService_List:              "listApplicationSets",
-  ApplicationSetService_Get:               "readApplicationSet",
-  ApplicationSetService_Delete:            "removeApplicationSet",
-  ApplicationSetService_Generate:          "generateApplicationSet",
-
-  // GPG / Certificates
-  GPGKeyService_Create:                    "createGpgkey",
-  GPGKeyService_List:                      "listGpgkeys",
-  GPGKeyService_Get:                       "readGpgkey",
-  GPGKeyService_Delete:                    "removeGpgkey",
-  CertificateService_CreateCertificate:    "createCertificate",
-  CertificateService_ListCertificates:     "listCertificates",
-  CertificateService_DeleteCertificate:    "removeCertificate",
-
-  // Accounts / Sessions
-  AccountService_ListAccounts:             "listAccounts",
-  AccountService_GetAccount:               "readAccount",
-  AccountService_UpdatePassword:           "updateAccountPassword",
-  AccountService_CreateToken:              "createAccountToken",
-  AccountService_DeleteToken:              "removeAccountToken",
-  AccountService_CanI:                     "readAccountCanI",
-  SessionService_Create:                   "createSession",
-  SessionService_Delete:                   "removeSession",
-  SessionService_GetUserInfo:              "readUserInfo",
+  // (3) Semantic overrides (SDK heuristic не distinguishable verb/noun)
+  canAccountI:             "readAccountCanI",
+  readSessionUserInfo:     "readUserInfo",
+  podApplicationLogs2:     "readApplicationPodLogs",
 };
 
 function renameIntents(imported) {
