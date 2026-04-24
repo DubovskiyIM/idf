@@ -36,6 +36,7 @@
     "test:core": "cd packages/core && npx vitest run",
     "agent-smoke": "node scripts/agent-smoke.mjs",
     "smoke-compliance": "node scripts/smoke-compliance.mjs",
+    "smoke-fold-invest": "node scripts/fold-invest-agent-smoke.mjs",
     "audit-domains": "node scripts/domain-audit.mjs --all",
     "audit-report": "node scripts/audit-report.mjs",
     "crystallize-llm": "node scripts/crystallize-llm.mjs",
