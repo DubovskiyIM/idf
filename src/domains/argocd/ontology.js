@@ -128,6 +128,58 @@ function mergeK8sCrds(entities) {
   return merged;
 }
 
+/**
+ * Stage 5 — Resource entity как child-коллекция Application.
+ *
+ * G-A-4 (inline-children gap): в реальном ArgoCD API `Application.status.
+ * resources[]` — inline массив K8s объектов (Deployment/Service/Pod/
+ * ReplicaSet) под Application. Это structurally "children", но в
+ * OpenAPI-контракте — inline field, не отдельная collection через FK.
+ *
+ * Importer'у такая форма не видна (schemaToEntity не извлекает inline
+ * arrays как entity). Host декларирует синтетическую Resource entity
+ * с `applicationId` FK для рендера через subCollections + `renderAs:
+ * "resourceTree"` dispatcher. Когда SDK добавит inline-children primitive
+ * (backlog G-A-4), host может убрать FK и вернуться к естественной
+ * модели.
+ *
+ * fields:
+ *   kind:          K8s kind (Deployment/Service/Pod/ReplicaSet/ConfigMap/Secret/...)
+ *   name:          resource name
+ *   namespace:     K8s namespace
+ *   group:         API group (apps/v1, v1, networking.k8s.io/v1, ...)
+ *   syncStatus:    Synced/OutOfSync (из Application.status.resources[i].status)
+ *   healthStatus:  Healthy/Degraded/Progressing/... (из health.status)
+ *   parentResource: опциональная FK на родителя (Deployment → ReplicaSet → Pod)
+ */
+const RESOURCE_ENTITY = {
+  name: "Resource",
+  label: "K8s Resource",
+  kind: "internal",
+  ownerField: "applicationId",
+  fields: {
+    id:            { type: "text" },
+    applicationId: { type: "entityRef", kind: "foreignKey", references: "Application", label: "Application" },
+    kind:          { type: "text", label: "Kind", fieldRole: "name" },
+    name:          { type: "text", label: "Name", fieldRole: "name" },
+    namespace:     { type: "text", label: "Namespace" },
+    group:         { type: "text", label: "API group" },
+    syncStatus: {
+      type: "select",
+      label: "Sync",
+      options: ["Synced", "OutOfSync"],
+      fieldRole: "status",
+    },
+    healthStatus: {
+      type: "select",
+      label: "Health",
+      options: ["Healthy", "Progressing", "Degraded", "Missing", "Suspended", "Unknown"],
+      fieldRole: "status",
+    },
+    parentResource: { type: "entityRef", kind: "foreignKey", references: "Resource", label: "Parent" },
+  },
+};
+
 const ARGOCD_ROLES = {
   admin: {
     name: "Администратор",
@@ -157,7 +209,10 @@ const ARGOCD_ROLES = {
 };
 
 export const ONTOLOGY = {
-  entities: mergeK8sCrds(imported.entities),
+  entities: {
+    ...mergeK8sCrds(imported.entities),
+    Resource: RESOURCE_ENTITY,
+  },
   roles: ARGOCD_ROLES,
   invariants: imported.invariants || [],
   features: {

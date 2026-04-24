@@ -156,5 +156,38 @@ export function getSeedEffects() {
   effects.push(ef("Account", { id: "acc_ci",    name: "ci-bot", capabilities: "apiKey", enabled: true }));
   effects.push(ef("Account", { id: "acc_readonly", name: "readonly", capabilities: "login", enabled: true }));
 
+  // --- Resources (Stage 5) — K8s children для 4 apps ---
+  // Типичная K8s иерархия: Deployment → ReplicaSet → Pod (2-3) + Service (sibling).
+  // Распределение health reflects parent app health — если app Degraded, Pod'ы Degraded/Missing.
+  const resourceBatch = (appId, namespace, baseHealth, baseSync) => {
+    const prefix = appId.replace("a_", "");
+    return [
+      { id: `r_${prefix}_deploy`,    kind: "Deployment", name: prefix, namespace, group: "apps/v1",
+        syncStatus: baseSync, healthStatus: baseHealth },
+      { id: `r_${prefix}_rs`,        kind: "ReplicaSet", name: `${prefix}-7d9c4b`, namespace, group: "apps/v1",
+        syncStatus: baseSync, healthStatus: baseHealth, parentResource: `r_${prefix}_deploy` },
+      { id: `r_${prefix}_pod1`,      kind: "Pod", name: `${prefix}-7d9c4b-abc12`, namespace, group: "v1",
+        syncStatus: baseSync, healthStatus: baseHealth === "Degraded" ? "Degraded" : "Healthy",
+        parentResource: `r_${prefix}_rs` },
+      { id: `r_${prefix}_pod2`,      kind: "Pod", name: `${prefix}-7d9c4b-xyz34`, namespace, group: "v1",
+        syncStatus: baseSync, healthStatus: baseHealth === "Degraded" ? "Missing" : "Healthy",
+        parentResource: `r_${prefix}_rs` },
+      { id: `r_${prefix}_svc`,       kind: "Service", name: prefix, namespace, group: "v1",
+        syncStatus: baseSync, healthStatus: "Healthy" },
+    ];
+  };
+
+  const resourceApps = [
+    { appId: "a_frontend",       namespace: "platform", health: "Healthy",     sync: "Synced" },
+    { appId: "a_payments-api",   namespace: "payments", health: "Degraded",    sync: "Synced" },
+    { appId: "a_grafana",        namespace: "monitoring", health: "Progressing", sync: "Synced" },
+    { appId: "a_prometheus",     namespace: "monitoring", health: "Healthy",   sync: "OutOfSync" },
+  ];
+  for (const { appId, namespace, health, sync } of resourceApps) {
+    for (const res of resourceBatch(appId, namespace, health, sync)) {
+      effects.push(ef("Resource", { ...res, applicationId: appId }));
+    }
+  }
+
   return effects;
 }
