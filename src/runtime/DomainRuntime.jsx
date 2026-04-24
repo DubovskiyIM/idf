@@ -40,6 +40,7 @@ import * as deliveryDomain from "../domains/delivery/domain.js";
 import * as freelanceDomain from "../domains/freelance/domain.js";
 import * as complianceDomain from "../domains/compliance/domain.js";
 import * as keycloakDomain from "../domains/keycloak/domain.js";
+import * as argocdDomain from "../domains/argocd/domain.js";
 
 import V2Shell from "./renderer/shell/V2Shell.jsx";
 import { useAuth } from "./renderer/auth/useAuth.js";
@@ -61,6 +62,7 @@ const HARDCODED_DOMAINS = {
   freelance: freelanceDomain,
   compliance: complianceDomain,
   keycloak: keycloakDomain,
+  argocd: argocdDomain,
 };
 const DYNAMIC_LOADERS = import.meta.glob("../domains/*/domain.js");
 
