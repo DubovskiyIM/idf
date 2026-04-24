@@ -180,6 +180,52 @@ const RESOURCE_ENTITY = {
   },
 };
 
+/**
+ * Stage 6 — ApplicationCondition как child-коллекция Application
+ * (audit-log-like timeline).
+ *
+ * G-A-4 (inline-children gap — второй шаг): в реальном ArgoCD
+ * `Application.status.conditions[]` — inline массив с `{type, status,
+ * message, lastTransitionTime}`. Те же limitations: importer не видит
+ * inline arrays → host synthetic FK.
+ *
+ * Типичные types: SyncError / ComparisonError / ResourceHealth / Deleted /
+ * ValidationFailed / ExcludedResourceWarning / SharedResourceWarning.
+ * Status: True (active) / False (resolved) / Unknown.
+ *
+ * Renderer через renderAs:{type:"conditionsTimeline"} — color-coded
+ * events по severity (type) с chronological sort descending.
+ */
+const APPLICATION_CONDITION_ENTITY = {
+  name: "ApplicationCondition",
+  label: "Application Condition",
+  kind: "internal",
+  ownerField: "applicationId",
+  fields: {
+    id:            { type: "text" },
+    applicationId: { type: "entityRef", kind: "foreignKey", references: "Application", label: "Application" },
+    type: {
+      type: "select",
+      label: "Type",
+      options: [
+        "SyncError", "ComparisonError", "ResourceHealth",
+        "Deleted", "ValidationFailed",
+        "ExcludedResourceWarning", "SharedResourceWarning",
+        "OrphanedResourceWarning", "InvalidSpecError",
+      ],
+      fieldRole: "status",
+    },
+    status: {
+      type: "select",
+      label: "Status",
+      options: ["True", "False", "Unknown"],
+      fieldRole: "status",
+    },
+    message:            { type: "textarea", label: "Message" },
+    lastTransitionTime: { type: "datetime", label: "Last transition", fieldRole: "datetime" },
+  },
+};
+
 const ARGOCD_ROLES = {
   admin: {
     name: "Администратор",
@@ -212,6 +258,7 @@ export const ONTOLOGY = {
   entities: {
     ...mergeK8sCrds(imported.entities),
     Resource: RESOURCE_ENTITY,
+    ApplicationCondition: APPLICATION_CONDITION_ENTITY,
   },
   roles: ARGOCD_ROLES,
   invariants: imported.invariants || [],

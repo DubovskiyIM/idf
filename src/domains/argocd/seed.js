@@ -189,5 +189,53 @@ export function getSeedEffects() {
     }
   }
 
+  // --- ApplicationConditions (Stage 6) — timeline events ---
+  // Healthy apps: 1-2 истор. conditions (status:False/resolved).
+  // Degraded apps: 3-4 conditions, часть active (status:True).
+  const condEf = (appId, type, status, message, hoursAgo) => effects.push(
+    ef("ApplicationCondition", {
+      id: `cond_${appId.replace("a_","")}_${type.toLowerCase()}_${hoursAgo}h`,
+      applicationId: appId,
+      type, status, message,
+      lastTransitionTime: NOW - hoursAgo * H,
+    })
+  );
+
+  // payments-api (Degraded) — 4 conditions, 2 active
+  condEf("a_payments-api", "ResourceHealth", "True",
+    "Pod payments-api-7d9c4b-xyz34 is in CrashLoopBackOff (exit code 137)", 1);
+  condEf("a_payments-api", "SyncError", "False",
+    "Previous sync succeeded", 24);
+  condEf("a_payments-api", "ComparisonError", "True",
+    "ConfigMap payments-config has diverged from git spec", 6);
+  condEf("a_payments-api", "ValidationFailed", "False",
+    "Resolved: chart helm values now valid", 48);
+
+  // payments-worker (Degraded + OutOfSync) — 3 conditions
+  condEf("a_payments-worker", "ResourceHealth", "True",
+    "Deployment payments-worker has 1/2 pods ready", 2);
+  condEf("a_payments-worker", "SyncError", "True",
+    "apps/v1 Deployment payments-worker: failed to apply (validation error)", 3);
+  condEf("a_payments-worker", "ExcludedResourceWarning", "True",
+    "Resource Pod/payments-worker-backup is excluded by argocd.argoproj.io/compare-options", 12);
+
+  // legacy-billing (Missing) — 2 conditions
+  condEf("a_legacy-billing", "ComparisonError", "True",
+    "Failed to list namespaces in cluster: cluster offline since 2026-04-23", 36);
+  condEf("a_legacy-billing", "ResourceHealth", "True",
+    "Application has no managed resources (empty manifest)", 36);
+
+  // grafana (Progressing) — 1 condition
+  condEf("a_grafana", "ResourceHealth", "True",
+    "Deployment grafana is rolling out (2/3 pods updated)", 0);
+
+  // frontend (Healthy) — 1 историческое
+  condEf("a_frontend", "SyncError", "False",
+    "Previous deployment attempt rejected by admission webhook — resolved", 72);
+
+  // prometheus (OutOfSync+Healthy) — 1 warning
+  condEf("a_prometheus", "SharedResourceWarning", "True",
+    "ConfigMap monitoring/prometheus-config is managed by both prometheus and cluster-addons", 5);
+
   return effects;
 }
