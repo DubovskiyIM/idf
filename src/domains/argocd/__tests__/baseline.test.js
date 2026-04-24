@@ -178,6 +178,30 @@ describe("argocd Stage 1+2 baseline", () => {
       .toEqual(["Degraded", "Missing"]);
   });
 
+  it("Stage 7 — application_detail editBodyOverride: 5-tab form (G-A-5 host)", () => {
+    const detail = PROJECTIONS.application_detail;
+    expect(detail.editBodyOverride?.type).toBe("tabbedForm");
+    expect(detail.editBodyOverride.initialTab).toBe("settings");
+    const tabs = detail.editBodyOverride.tabs;
+    expect(tabs).toHaveLength(5);
+    const ids = tabs.map(t => t.id);
+    expect(ids).toEqual(["settings", "source", "destination", "sync", "advanced"]);
+    for (const tab of tabs) {
+      expect(Array.isArray(tab.fields)).toBe(true);
+      expect(tab.fields.length).toBeGreaterThan(0);
+      expect(tab.onSubmit?.intent).toBe("updateApplication");
+    }
+    // settings tab: name / project / namespace + status selects
+    const settingsFields = tabs[0].fields.map(f => f.name);
+    expect(settingsFields).toContain("name");
+    expect(settingsFields).toContain("project");
+    expect(settingsFields).toContain("syncStatus");
+    expect(settingsFields).toContain("healthStatus");
+    // advanced tab: raw JSON read-only для status
+    const statusField = tabs[4].fields.find(f => f.name === "status");
+    expect(statusField?.readOnly).toBe(true);
+  });
+
   it("Stage 6 — ApplicationCondition entity декларирована с timeline fields", () => {
     const e = ONTOLOGY.entities.ApplicationCondition;
     expect(e).toBeDefined();

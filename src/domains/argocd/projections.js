@@ -107,6 +107,72 @@ export const PROJECTIONS = {
     intents: ["readApplication", "updateApplication", "syncApplication",
               "rollbackApplication", "removeApplication"],
     idParam: "name",
+    // Stage 7 — tabbedForm для deeply-nested Application.spec (G-A-5
+    // host-workaround). Вместо flat formBody с 15+ полями — 5 семантических
+    // tabs: Settings / Source / Destination / Sync / Advanced. Покрывает
+    // основные ArgoCD Application UI секции (Web-UI "App Details" panel).
+    //
+    // Поля берутся из SEMANTIC_AUGMENT (ontology.js) + базовые K8s metadata.
+    // Полный spec.syncPolicy / spec.source.helm.parameters[] требует SDK PR
+    // `yamlEditor` control-archetype (backlog §10.5).
+    editBodyOverride: {
+      type: "tabbedForm",
+      initialTab: "settings",
+      tabs: [
+        {
+          id: "settings",
+          title: "Settings",
+          fields: [
+            { name: "name",         label: "Имя", type: "string", required: true },
+            { name: "project",      label: "Проект", type: "entityRef", references: "Project" },
+            { name: "namespace",    label: "Namespace", type: "string" },
+            { name: "syncStatus",   label: "Sync status",   type: "select",
+              options: ["Synced", "OutOfSync", "Unknown"] },
+            { name: "healthStatus", label: "Health status", type: "select",
+              options: ["Healthy", "Progressing", "Degraded", "Missing", "Suspended", "Unknown"] },
+          ],
+          onSubmit: { intent: "updateApplication" },
+        },
+        {
+          id: "source",
+          title: "Source",
+          fields: [
+            { name: "source",    label: "Repo URL",   type: "string", placeholder: "https://github.com/acme/platform-gitops" },
+            { name: "revision",  label: "Revision",   type: "string", placeholder: "main / HEAD / v1.2.3" },
+          ],
+          onSubmit: { intent: "updateApplication" },
+        },
+        {
+          id: "destination",
+          title: "Destination",
+          fields: [
+            { name: "server",    label: "Target cluster", type: "string",
+              placeholder: "https://kubernetes.default.svc" },
+            { name: "namespace", label: "Target namespace", type: "string" },
+          ],
+          onSubmit: { intent: "updateApplication" },
+        },
+        {
+          id: "sync",
+          title: "Sync policy",
+          fields: [
+            { name: "lastSyncedAt", label: "Last synced", type: "datetime" },
+            { name: "revision",     label: "Target revision", type: "string" },
+          ],
+          onSubmit: { intent: "updateApplication" },
+        },
+        {
+          id: "advanced",
+          title: "Advanced (raw)",
+          fields: [
+            { name: "spec",      label: "spec (raw JSON)",      type: "textarea" },
+            { name: "metadata",  label: "metadata (raw JSON)",  type: "textarea" },
+            { name: "status",    label: "status (raw, readonly)", type: "textarea", readOnly: true },
+          ],
+          onSubmit: { intent: "updateApplication" },
+        },
+      ],
+    },
     // Stage 5 — Resource tree subCollection. renderAs:"resourceTree" —
     // host-specific dispatcher (V2Shell::renderSubCollection) рендерит
     // иерархическое дерево с K8s kind-icons и status-badges, вместо плоской
