@@ -429,3 +429,76 @@ Import-generated ontology не имеет: compositions (R9), invariants (transi
 
 **P2 (нет блокеров):**
 - 9.5 (bare `projection.name` guard), 9.7 (legacy `role:` warning), 9.8 (ontology-authoring-checklist → sdk/docs/)
+
+---
+
+## 10. ArgoCD dogfood findings (2026-04-24, 16-й полевой тест)
+
+**Контекст.** Первый **status-driven admin** домен после IAM CRUD (Keycloak 15-й) и metadata catalog (Gravitino 14-й). Источник — ArgoCD Swagger 2.0 (82 paths, 262 definitions). Все host-workaround'ы остаются в `src/domains/argocd/` — список ниже для SDK backlog.
+
+### 10.1 ⛔ K8s CRD naming — path-derived vs schema-derived не мёрджится
+**Файл:** `packages/importer-openapi/src/{pathToIntent,schemaToEntity}.js`
+**Проблема.** На K8s CRD pattern `v<ver><Name>` importer создаёт **две раздельные entities**:
+- path-derived `Application` (fields:`{id}`, kind:`internal`) — из URL pattern `/api/v1/applications/{name}` через `entityNameFromPath`
+- schema-derived `v1alpha1Application` (4 поля, kind:`embedded`) — из `#/definitions/v1alpha1.Application` через `schemaToEntity`
+
+Они НЕ мёрджатся. `intent.creates="Application"` → dangling reference на stub. То же для AppProject / Cluster / Repository / ApplicationSet / GnuPGPublicKey — 10 entity pairs.
+
+**Workaround в idf (ArgoCD Stage 2, PR #117).** `ontology.js::K8S_CRD_MERGE` table — короткое имя ← полная v1alpha1-сущность, поля копируются, kind="internal". v-сущность сохраняется для wrapper-refs (`v1alpha1ApplicationList.items[]`).
+
+**Что сделать.** SDK PR `importer-openapi.mergeK8sCrdDuplicates` — автоматический pattern `v<digits>(alpha|beta)?<digits>?<Name>` + detection через path-response-schema match. Аналогично `mergeRepresentationDuplicates` (Keycloak trailing-suffix pattern).
+
+### 10.2 🟡 `markEmbeddedTypes` слишком aggressive для K8s root CRDs
+**Файл:** `packages/importer-openapi/src/markEmbeddedTypes.js`
+**Проблема.** K8s root CRDs (`v1alpha1Application/AppProject/Cluster`) помечены `kind:"embedded"`, хотя они top-level ресурсы через path-collection (`/api/v1/applications`). markEmbedded считает "ссылается ли на тебя другая entity"; K8s root'ы всегда nested в wrapper-types (`*List`) → помечаются embedded.
+
+**Workaround в idf.** `K8S_CRD_MERGE` создаёт новую short-name entity с `kind: "internal"` — оригинал остаётся embedded, но intents уже смотрят на новую.
+
+**Что сделать.** Whitelist или detection через path-coverage: если entity X используется как `response.type` на top-level path-collection (list-path), unmark embedded, даже если она nested в других types.
+
+### 10.3 ✅ Закрыт 2026-04-24 — SDK PR idf-sdk#293
+**`column.kind="badge"` cell-renderer** в DataGrid с colorMap/toneMap. Host integration в ArgoCD PR #118 + renderer bump 0.47.0 через host PR #119.
+
+### 10.4 ⛔ Inline-children gap — K8s `status.resources[]` / `status.conditions[]`
+**Файл:** `packages/importer-openapi/src/schemaToEntity.js`, `packages/renderer/src/primitives/SubCollectionSection.jsx`
+**Проблема.** `Application.status.resources[]` (K8s Deployment/Service/Pod list) и `Application.status.conditions[]` (audit-log timeline) — **inline массивы в OpenAPI**, не отдельные entities через FK. Importer не извлекает их как child-коллекции. Renderer не умеет отображать inline-array как grouped table/tree/timeline.
+
+**Workaround в idf (Stage 5+6, PR #120+#121).** Host декларирует синтетические `Resource` / `ApplicationCondition` entities с `applicationId` FK + seed расширяется с child effects + `application_detail.subCollections[]` с `renderAs` dispatcher.
+
+**Что сделать (3 шага):**
+1. **10.4a SDK**: `importer-openapi.extractInlineArrays` — извлекать inline array-of-object в nested-collection metadata (не создавая separate entity, но делая их видимыми renderer'у как child).
+2. **10.4b SDK renderer**: inline-children primitive — рендерит nested array как subCollection БЕЗ FK-lookup (items резолвятся прямо из parent's field).
+3. **10.4c SDK dispatchers**: new renderAs dispatchers:
+   - `resourceTree` — tree view с parent-indent (Deployment → ReplicaSet → Pod), K8s kind-icons, badge columns (syncStatus/healthStatus)
+   - `conditionsTimeline` — vertical-line timeline с icon bullets, time-ago formatting, color-coding по severity (type/status)
+
+### 10.5 ⛔ Deeply-nested `Application.spec` — tabbed form / YAML-editor
+**Файл:** `packages/renderer/src/archetypes/ArchetypeForm.jsx`
+**Проблема.** ArgoCD `Application.spec` — deeply-nested (source.helm.parameters[], destination.namespace, syncPolicy.automated.{prune,selfHeal,retry.{limit,backoff}}, ignoreDifferences[]). Flat form не справится: 30+ полей группируются логически на tabs (Settings/Sync/Source/Destination/Advanced).
+
+**Workaround в idf (Stage 7 — pending).** Либо tabbed-form (как Keycloak client_detail 5 tabs), либо Monaco/CodeMirror YAML-editor fallback.
+
+**Что сделать.** Новый control-archetype `yamlEditor` (или `codeEditor`) — renderer с Monaco-like primitive для spec-as-YAML. Author declares `bodyOverride: { type: "yamlEditor", sourceField: "spec", schema: "json-schema.org/..." }`.
+
+### 10.6 ⛔ Swagger 2.0 → OpenAPI 3.0: тип-потеря на nested $ref полях
+**Файл:** `packages/importer-openapi/src/{parseSpec,flattenSchema,schemaToEntity}.js`
+**Проблема.** ArgoCD использует Swagger 2.0 (`swagger: "2.0"`, `definitions[]`). Текущий importer читает только `components.schemas` (OpenAPI 3.0). Host конвертирует через `swagger2openapi` перед import'ом (`scripts/argocd-reimport.mjs`). После конверсии **все $ref-поля K8s CRD теряют типизацию** — все становятся `{type: "string"}` (metadata/operation/spec/status у Application — 4 поля типа string вместо nested object).
+
+**Workaround в idf.** `ontology.js::SEMANTIC_AUGMENT` — автор декларирует плоские semantic fields поверх nested spec (`syncStatus/healthStatus/project/namespace/source/revision/...`).
+
+**Что сделать.** SDK-level fix: либо встроить swagger2openapi в `parseSpec` (auto-detect версии и convert), либо починить `flattenSchema` чтобы сохранить field-type info после конверсии. Желательно preserve {$ref → inline object shape} связь.
+
+### 10.7 🟡 grpc-gateway operationId не canonicalized
+**Файл:** `packages/importer-openapi/src/pathToIntent.js`
+**Проблема.** ArgoCD use grpc-gateway с `operationId` вида `<Service>_<Method>` — `ApplicationService_Create`, `ApplicationService_Sync`, `ClusterService_RotateAuth`. Host-код и row-action resolver'ы ожидают canonical `createApplication`/`syncApplication`/`rotateClusterAuth` (Keycloak/Gravitino convention). Без переименования renderer не находит intent по canonical имени.
+
+**Workaround в idf (Stage 2, PR #117).** `intents.js::INTENT_RENAME` table — 53 renames. Оригинал сохраняется как `intent._aliasOf`.
+
+**Что сделать.** SDK PR `importer-openapi.canonicalizeGrpcOperationIds` — detection паттерна `<Service>_<VerbNoun>` → `<verb><Noun>`. Irregular verbs (Sync/Rollback/GetManifests) требуют rule-engine или whitelist.
+
+---
+
+**Приоритет (обновлённый 2026-04-24):**
+- **P0 (блокирует e2e для status-driven admin):** 10.4abc (inline-children + resourceTree + conditionsTimeline dispatchers) — сейчас graceful fallback на SubCollectionSection с badge columns, визуально flat
+- **P1 (качество importer):** 10.1 (K8s CRD merge), 10.6 (Swagger 2.0 type-loss), 10.2 (markEmbedded K8s roots)
+- **P2 (полнота):** 10.5 (YAML editor для deeply-nested spec), 10.7 (grpc-gateway canonicalization)
