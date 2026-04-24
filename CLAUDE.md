@@ -16,7 +16,7 @@
 
 - **Манифест v2** (`docs/manifesto-v2.md`) — timeless-документ о формате IDF: 26 глав в 8 частях (I. Тезис · II. Объекты формата · III. Алгебра · IV. Четыре читателя формата · V. Авторство · VI. Conformance набросок · VII. Границы · VIII. Перспектива). Читай перед работой над ядром формата.
 - **Имплементационный статус** (`docs/implementation-status.md`) — живой документ: 11 доменов (672 намерения), SDK пакеты, ~1960 тестов (799 host + 916 core + 175 renderer + 36 canvas-kit + 34 adapters), open items. Обновляется вместе с кодом и часто опережает этот CLAUDE.md.
-- **SDK backlog** (`docs/sdk-improvements-backlog.md`) — 40+ gap'ов из freelance field-test'а. P0-блок закрыт 2026-04-20 (antd 2.1–2.4, invariants 1.1, multi-owner 3.2). Остаются §3.1 (PrimaryCTAList multi-param), §4.1–4.3 (inferParameters / heroCreate / footer-inline-setter). **§9 добавлен 2026-04-21** (Workzilla post-bump): 9.1 `type:"string"` не мапится, 9.2 detail без автоматического `idParam`, 9.3 onItemClick picks wrong detail из nav-graph.
+- **SDK backlog** (`docs/sdk-improvements-backlog.md`) — 40+ gap'ов из freelance field-test'а. P0-блок закрыт 2026-04-20 (antd 2.1–2.4, invariants 1.1, multi-owner 3.2). Остаются §3.1 (PrimaryCTAList multi-param), §4.1–4.3 (inferParameters / heroCreate / footer-inline-setter). **§9 добавлен 2026-04-21** (Workzilla post-bump): 9.1 `type:"string"` не мапится, 9.2 detail без автоматического `idParam`, 9.3 onItemClick picks wrong detail из nav-graph. **§10 добавлен 2026-04-24** (ArgoCD): 7 gap'ов G-A-1..G-A-7 — K8s CRD naming merge, inline-children (resources + conditions), Swagger 2→3 type-loss, grpc-gateway canonicalization, yamlEditor archetype.
 - **Ontology authoring checklist** (`~/WebstormProjects/idf-sdk/docs/ontology-authoring-checklist.md`) — 12 пунктов для host-автора: canonical types, fieldRole, entityRef+relations, labels, valueLabels, idParam на detail, onItemClick на list, compositions для dotted-witnesses, forRoles, semantic grouping (singleton-detail + subCollections), host-integration props. **Claude должен проактивно применять при работе с любой ontology** — см. feedback-memory `feedback_ontology_completeness.md`.
 - **Session backlog** (`docs/backlog.md`) — cross-cutting очередь между сессиями (inbox для deferred items, insights, находок; не дублирует sdk-improvements-backlog).
 - **Design-спеки** (`docs/design/`) — `intent-salience-spec.md`, `2026-04-20-sdk-p0-integration-design.md`.
@@ -43,8 +43,10 @@
 | delivery | 45 | User, Merchant, MenuItem, Zone, DispatcherAssignment, Order, OrderItem, Delivery, Address, CourierLocation, Payment, Notification, Review, AgentPreapproval | **11-й полевой тест**, food/groceries last-mile. 5 ролей (customer/courier/merchant/dispatcher/agent), dispatcher m2m через DispatcherAssignment. 8 правил (5 temporal schedule v2, 1 threshold, 1 condition, 1 aggregation), 3 canvas с map-primitive, `capture_payment` с `__irr`. Применяет все 3 paradigm additions v1.7 совместно. |
 | freelance | 46 | User, Task, Response, Deal, Wallet, Transaction, Review, Category | **12-й полевой тест**, биржа услуг. Multi-owner (customerId + executorId) на Deal, escrow (hold/release), revision-loop (`on_review ↔ revision_requested`), комиссия платформы. `__irr.high` на `confirm_deal`. Выявил 40+ SDK gap'ов — см. `docs/sdk-improvements-backlog.md`. |
 | compliance | 38 | User, Department, Control, JournalEntry, Approval, AttestationCycle, Attestation, Finding, Evidence, Amendment | **13-й полевой тест**, SOX ICFR / «provable UI». 6 ролей (preparer/reviewer/approver/controlOwner/auditor/cfo), 15 invariants (5 expression-kind — SoD triplet + dynamic threshold + cycle-close), 7 правил (все 4 v1.5 ext), 5 `__irr:high` intents (approve_je / submit_attestation / amend_attestation / sign_off_cycle_404 / file_amendment). **Первый домен со всеми 5 behavioral patterns** signal-classifier'а. AntD reuse. Закрыл backlog §1.1 (expression-kind). |
+| keycloak | 256 | 186 (Realm, Client, User, Group, Role, IdentityProvider, ClientScope, Component, Organization, Workflow + 75 embedded) | **15-й полевой тест** (Keycloak Admin Console), AdminShell layout, scoped DataGrid, tabbedForm × 5 tabs, testConnection wizard, renderAs dispatchers (permissionMatrix / credentialEditor). Закрыл 12 SDK gap'ов. AntD. |
+| argocd | 106 | 300 (Application, ApplicationSet, Cluster, Project, Repository, Certificate, GPGKey, Account + 157 v1alpha1* K8s CRDs + 2 синтетические: Resource, ApplicationCondition) | **16-й полевой тест** (status-driven admin), Swagger 2.0 через swagger2openapi, 5 ролей (admin/developer/deployer/viewer/auditor). Stage 4: **statusBadge cell-renderer** (SDK PR idf-sdk#293 closed). Stage 5-6: inline-children (K8s resources + conditions) через синтетический FK + renderAs dispatchers. Stage 7: tabbedForm × 5 tabs для Application.spec. Host-workaround'ы в **backlog §10** (7 gap'ов G-A-1..G-A-7). Rich seed: 10 apps × 3 sync × 6 health states. AntD. |
 
-Переключатель доменов в `prototype.jsx`. Один движок, **одиннадцать** наборов определений. Суммарно 672 намерения.
+Переключатель доменов в `prototype.jsx`. Один движок, **тринадцать** наборов определений. Суммарно ~1036 намерений.
 
 `.worktrees/petstore-demo/` — отдельный git-worktree с demo-доменом (не в `src/domains/`), HTTP-proxy effect builder + dailySum predicate; used as лёгкий demo surface для внешней аудитории.
 
@@ -64,7 +66,7 @@
 ```
 # Прототип (host-слой — минимальный после SDK Phase 2 extraction)
 src/
-  domains/{booking,planning,workflow,messenger,sales,lifequest,reflect,invest,delivery,freelance,compliance}/
+  domains/{booking,planning,workflow,messenger,sales,lifequest,reflect,invest,delivery,freelance,compliance,keycloak,argocd}/
   studio/           # §27 authoring environment — Graph3D + pattern-узлы + Claude proxy (dev-time, :4000)
   runtime/
     DomainRuntime.jsx          # антд-shim чистый после adapter-antd@1.2.0
@@ -97,7 +99,7 @@ server/
     documentMaterializer.cjs  # document-материализация (§1)
     voiceMaterializer.cjs     # voice-материализация (§1, 3 форматов)
     invariantChecker.cjs      # thin re-export из SDK
-    baseRoles.cjs, buildXxxEffects.cjs (11 доменов), intentAlgebra.cjs, checkOwnership.cjs
+    baseRoles.cjs, buildXxxEffects.cjs (13 доменов), intentAlgebra.cjs, checkOwnership.cjs
   routes/
     agent.js            # /api/agent/:domain/* + preapproval hook
     document.js         # /api/document/:domain/:projection
