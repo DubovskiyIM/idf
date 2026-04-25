@@ -118,6 +118,11 @@ function mergeK8sCrds(entities) {
       },
       kind: "internal",
       label: stub.label || shortName,
+      // form-yaml-dual-surface pattern: resourceClass:"k8s" активирует Form/YAML
+      // toggle для K8s CRD entities (Application, Cluster, Project, Applicationset).
+      ...(["Application", "Applicationset", "Project", "Cluster"].includes(shortName)
+        ? { resourceClass: "k8s" }
+        : {}),
     };
   }
   // Phase 2: SEMANTIC_AUGMENT applied к любой entity (включая auto-merged
