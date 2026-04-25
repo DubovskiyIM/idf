@@ -433,6 +433,85 @@ Bump `@intent-driven/enricher-claude` → `0.2.1`. После release — пер
 
 **Owner:** SDK packaging + сайт fold.software.
 
+### 2.12 Sheaf-формулировка целостности — формализация ядра (вторичное)
+
+**Дата:** 2026-04-26 (внешний review, второе письмо)
+**Категория:** Формализация ядра.
+**Severity:** **Вторичное.** Не на критическом пути M1.x; не блокирует первого production pilot'а. Operationally полезные подзадачи (§2.12a, §2.12b) — отдельные P1, делать в обычном потоке. Полная sheaf-теоретическая формализация требует математика и не должна предшествовать имплементации §2.8 (Φ schema-versioning) и §2.9 (provenance дизайна) — те **на критическом пути**.
+
+**Тезис.** Целостность IDF-домена можно переформулировать **не как набор инвариантов, которые мы проверяем**, а как **математическое свойство домена**, для которого инварианты — приближение. Структурно: роли образуют решётку (poset); `viewerWorld(role) = filterWorldForRole(world, role)` — это restriction map; presheaf на ролях даёт sheaf при выполнении аксиомы склейки. H⁰ = глобальные сечения, H¹ = препятствия к склейке. Это **переворот рамки** статуса формата: «формат с эвристическим валидатором» → «формат с математически определимым понятием корректности».
+
+**Что в IDF уже есть как **presheaf без названия**:**
+
+| Элемент sheaf | В IDF |
+|---|---|
+| База (poset) | 5 base roles (`owner / viewer / agent / observer / admin`) — открытое множество прецедентов |
+| Данные на роли | `viewerWorld(role) = filterWorldForRole(world, role, ontology)` |
+| Restriction maps | `filterWorldForRole` — фильтрация world'а под роль |
+| Покрытие (cover) | Set of roles — пока не формализовано |
+| Sheaf-аксиома | Не проверяется |
+
+**Что верно (сильные стороны формулировки):**
+
+1. Класс багов «agent зависит от поля, которое viewer должен одобрить, но не видит» — **реален**. Compliance-домен с SoD-инвариантами (`reviewer ≠ approver ≠ controlOwner`) ловит подобное на confirm; но если `intent.precondition` ссылается на поле, недоступное роли, которая может intent execute'ить, **никакая локальная проверка не ловит**. Это глобальное препятствие (нарушение H¹).
+2. Композиция доменов через restriction maps на пересечении онтологий — **натуральный язык** для проблемы, которую сейчас решаем ad-hoc через `__domain` provenance (§1.3). Formal: домены склеиваются, если restriction maps на пересечении согласованы и H¹ объединённого sheaf'а равен нулю.
+3. Иерархия warning'ов получает **природу**: H⁰-нарушения (поле невидимо для всех ролей, хотя должно быть), H¹-нарушения (попарная согласованность без глобальной), локальные. Это **операционно полезно** даже без формальной когомологии — даёт классификацию `domain-audit.json` findings по природе препятствия.
+
+**Где натяжки (слабые места):**
+
+1. **Решётка ролей не такая регулярная**, как предполагает sheaf-формулировка. У нас:
+   - `owner` владеет своими row'ами через `ownerField`
+   - `agent` может **execute** intents, которые `owner` не может (preapproved orders с budget guard)
+   - `observer` — read-only audit с `materializeAuditLog`
+   - `admin` — row-override, видит всё
+   
+   `agent ⊆ owner` по visible-set'ам, но `agent ⊄ owner` по execute-set'ам. Это **две решётки** (read-poset × execute-poset), и они не совпадают. Sheaf нужен над парой со специальной структурой — усложняет когомологию вдвое.
+
+2. **H¹ для конечного poset из 5 элементов вычисляется тривиально** (rank kernel - rank image на cochain complex). Гротендиковские topologies / sites / sheaves of categories Spivak'а — **аппарат для бесконечного / непрерывного**, у нас 5 ролей. Формализм полезен **как язык классификации**, не как computational tool.
+
+3. **Cosheaf-Φ — спекулятивно.** Φ — единый append-only лог, не разделённый по ролям. Эффект от admin'а — не «расширение» эффекта от viewer'а; они независимые. Inclusion-структуры нет. **Что работает двойственно:** для каждой роли r определить `Φ_r` = эффекты, видимые этой ролью, и доказать `restrict_r ∘ fold = fold ∘ filter_r` (filter и fold коммутируют). Это **sheaf-морфизм между Φ-уровнем и world-уровнем**, не cosheaf.
+
+4. **«Почему именно 5 ролей»** — sheaf не даёт обоснования (его критерий «достаточно богатой / простой» выполняется при любом разумном выборе). Реальное обоснование 5 ролей — эмпирическое (из 13 полевых тестов хватало). Sheaf даёт ответ на другой вопрос: «как формально проверить, что выбор не имеет patological holes».
+
+**Самое ценное в формулировке** — **переформулировка статуса формата**: «целостность — математическое свойство, инварианты — аппроксимация». Это в духе IDF («формат, не фреймворк»). Сейчас audit-report выдаёт 187 findings плоским списком — каждое своей природы. Классификация warnings по природе препятствия (locally-visible / pairwise-inconsistent / globally-unrealizable) — **операционно полезно**, даже без формальной когомологии. Drift-protection-spec уже движется в эту сторону (3 detector'а как layers).
+
+**Cross-связи:**
+
+- §2.8 (Φ schema-versioning) — sheaf над **движущейся** базой (онтология эволюционирует → решётка ролей тоже). Возможно ближе к stack'ам, чем sheaves. Парное направление.
+- §2.10 (federation Φ) — cross-domain composition как sheaf на пересечении.
+- `idf-manifest-v2.1/docs/design/drift-protection-spec.md` — H-классификация как новый layer detector'а.
+
+**Action:** Не делать sheaf-теорию IDF целиком. Зафиксировать как architectural research direction; разделить на:
+- **§2.12a (P1)** — `role.extends: [otherRole]` как formal poset + monotonic linter в `audit-report.mjs` (отдельная P1-task ниже).
+- **§2.12b (P1)** — static cross-role precondition analyzer (8-я ось в `audit-report.mjs`, отдельная P1-task ниже).
+- **§2.12c (deferred)** — полная sheaf-формализация с математиком; design-spec stub в `docs/design/2026-04-26-sheaf-formulation-spec.md`.
+
+**Owner:** `@intent-driven/core/baseRoles` + `audit-report.mjs` + manifest v2.1 (Часть III, Алгебра — раздел «Целостность как когомология»).
+
+**Источник:** External design review 2026-04-26 (второе письмо после §2.8).
+
+### 2.12a Formal `role.extends` poset + monotonic restriction linter (P1)
+
+**Дата:** 2026-04-26
+**Severity:** P1, операционная подзадача §2.12.
+
+**Что сделать.** В onto schema разрешить `role.extends: ["otherRole"]` (массив). Linter в `scripts/audit-report.mjs` (новая ось «role-monotonicity») проверяет: если `roleA.extends` содержит `roleB`, то `visibleFields(roleA) ⊇ visibleFields(roleB)` для каждого entity. Нарушение — warning «role inheritance broken».
+
+**Почему сейчас:** Закрывает 70% value sheaf-формулировки без когомологии. Полиномиальный pass, ловит реальный класс багов (admin случайно теряет visibility поля, которое viewer видит).
+
+**Owner:** `@intent-driven/core/baseRoles.js` + `scripts/audit-report.mjs`.
+
+### 2.12b Static cross-role precondition analyzer (P1)
+
+**Дата:** 2026-04-26
+**Severity:** P1, операционная подзадача §2.12.
+
+**Что сделать.** Новая ось в `audit-report.mjs` («cross-role-precondition»). Для каждого `intent.precondition` (включая dotted-path вида `Order.status === "paid"`) проверить, что все referenced поля доступны **всем ролям из `intent.permittedFor` (или ролям с этим intent в `canExecute`)**. Если роль может execute, но не может read поле в precondition — emit warning «precondition refers to invisible field».
+
+**Почему сейчас:** Ловит ровно тот класс багов, который sheaf-формулировка называет H¹-нарушением, простым cross-reference анализом. Не требует когомологии.
+
+**Owner:** `scripts/audit-report.mjs` + `@intent-driven/core/conditionParser.js` (для парсинга precondition expressions).
+
 ---
 
 ## 3. Cross-cutting observations
