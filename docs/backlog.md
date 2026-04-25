@@ -348,6 +348,91 @@ Bump `@intent-driven/enricher-claude` → `0.2.1`. После release — пер
 **Action:** Deferred — требует design о semantic-tag format.
 **Owner:** `idf-manifest-v2.1/docs/design/` (будущий `manifest-drift-linking-spec.md`)
 
+### 2.8 Φ schema-versioning + ontology evolution log + reader gap policy ⚠️ P0-architecture
+
+**Дата:** 2026-04-26 (внешний review)
+**Severity:** **P0 для архитектуры формата.** Закрывать **до первого production pilot'а с Φ ≥ 10k эффектов и ≥ 6 месяцев истории**, пока цена не выросла квадратично с числом доменов и линейно с возрастом каждого Φ.
+
+**Контекст.** Φ — append-only лог `confirmed` эффектов, записанных в терминах **текущей** онтологии (ссылки на entity/field/role/invariants). Когда онтология эволюционирует (новое поле, ужесточённый enum, split entity, ужесточённая роль) — старые эффекты остаются, но `fold(Φ)` интерпретирует их через новую схему. Схему, в которой эффект был эмиттен, **сейчас никто не помнит**: ни эффект (нет `schemaVersion` в context), ни ontology (нет evolution log).
+
+**Полу-ответы, которые есть:**
+- `spec.renames` (studio PR #28) — declarative переименования entity/field. Idempotent JSONB update. Покрывает только renames на одну транзакцию.
+- Breaking-commit gate (studio #26) — превентивная блокировка deploy'я, ломающего legacy data. Не миграция, а отказ.
+- Φ snapshot/restore (studio #27) — даёт «откатимся к pre-deploy», не «прочтём legacy в новой схеме».
+- `effect.context.actor` + `materializeAuditLog` — provenance события, не схемы.
+
+**Чего нет:**
+- `effect.context.schemaVersion` — эффект не помнит свою схему.
+- `ontology.upcasts: [{ fromHash, toHash, fn }]` — функции миграции legacy effect → new schema. Должно быть first-class artifact в формате.
+- Φ-аналог для самой онтологии (append-only лог evolution с upcasters). Сейчас domain.json коммитится в `projects.domainJson` как plain JSONB.
+- **Reader gap policy** — каждый из 4 reader'ов (pixels / voice / agent / document) сейчас graceful'ничает legacy gap (missing field, unknown enum value) **по-своему**. Это **формально нарушает reader-equivalence (§23 axiom 5)**.
+
+**Четыре сценария боли (внешний review):**
+
+| Сценарий | Сейчас |
+|---|---|
+| Новое поле `task.priority` | `fold` возвращает `undefined`. Pixels рендерят пусто, voice промолчит, agent JSON отдаёт без ключа, document — «—». Reader-equivalence ломается. |
+| Enum сжался `open\|done` → `draft\|active\|done\|archived` | Старый row с `status:"open"`. Транзишн-инвариант проверялся на confirm, не пере-валидируется. `assignToSlotsCatalog` встречает unknown в `valueLabels` → crash в renderer (был в практике). |
+| `task` → `task` + `subtask` (split entity) | Никак. Старые `task.created` остаются в старом entity; новые subtask'и в новом. Совмещения нет. |
+| Роль `viewer` ужесточилась | Эффекты в Φ не пере-валидируются (audit trail). Но `filterWorldForRole` фильтрует на чтении по **текущей** ontology — viewer перестаёт видеть свою историю. |
+
+**Action (минимальный план):**
+1. `effect.context.schemaVersion = <hash domain.json>` — append-only лог онтологий по hash'у; эффект помнит свою. Backward compatible (zero migration через JSON).
+2. `ontology.upcasts: [{ fromHash, toHash, fn }]` first-class. `fold` становится `fold(upcast(Φ, currentSchema))` — формула меняется, но честно. Upcasters — code, design-time, тестируемые. **Жёсткий запрет runtime-LLM в upcast** (соблазн «LLM прочитает legacy» = смерть детерминизма).
+3. **Reader gap policy** в core: каждый reader декларирует strategy для missing/legacy (`hidden | omit | placeholder | error`) — частью контракта reader-equivalence. Пятый detector в `drift-protection-spec.md`.
+
+**Кросс-связи:**
+- `idf-manifest-v2.1/docs/design/drift-protection-spec.md` — Layer 3 (reader-equivalence) дополняется Layer 4 (legacy-data-equivalence).
+- §1.3 (`__domain` provenance) — параллельный schema-tagging вопрос.
+- Manifest v2.1 — добавить главу «Эволюция онтологии» в Часть III (Алгебра).
+
+**Owner:** `@intent-driven/core` (fold/upcast) + `@intent-driven/engine` (lifecycle) + manifest v2.1.
+**Источник:** External design review 2026-04-26 (`docs/design/2026-04-26-phi-schema-versioning-spec.md`).
+
+### 2.9 Provenance дизайна (LLM design-time → ontology lineage)
+
+**Дата:** 2026-04-26 (внешний review)
+**Severity:** **Полу-gap.** Pattern bank witnesses + anchoring дают derivation lineage; design-provenance в `domain.json` отсутствует. Закрывается append-only полями, не ломает `fold`. Retrofit на legacy intents — ad-hoc, но не катастрофа. Для compliance/healthcare аудитов — must.
+
+**Что есть:** Pattern bank `witness.basis/reliability`, anchoring witness-of-proof, `effect.context.actor`, `materializeAuditLog`, studio `sessions.turns[]` (Postgres append-only лог chat-сессии).
+
+**Чего нет:**
+- В самом `domain.json` — `intent.provenance: { authoredBy, llmModel, llmHash, acceptedAt, sessionId }`. Сейчас provenance **снаружи** формата (в studio.sessions Postgres), а для compliance должно быть **внутри** — иначе экспорт `domain.json.tar.gz` теряет lineage.
+- `pattern.promotedFrom: [{ domain, witness, sessionId }]` — pattern bank lineage. Дал бы эмпирический ответ на вопрос «сходится ли pattern bank на разумном размере».
+
+**Action:** Дизайн-спека о shape `intent.provenance` + `invariant.provenance` + `pattern.promotedFrom`. Append-only поля в format'е, populate'ятся studio orchestrator'ом при accept/promote.
+
+**Owner:** `@intent-driven/core` + studio sessions writer + manifest v2.1.
+
+### 2.10 Format extensibility — формальный x-namespace + federation Φ
+
+**Дата:** 2026-04-26 (внешний review)
+**Severity:** **Стратегический.** Базовая extensibility есть (open base-roles `owner/viewer/agent/observer/admin` как «открытое множество прецедентов», `ontology.features.*` flag-namespace). Формального `x-` namespace в духе OpenAPI extensions — нет. Federation Φ (cross-tenant agent flows) — даже не на roadmap'е.
+
+**Контекст.** IDF описывает приложение целиком (не интерфейс к существующему как OpenAPI / JSON-LD). Это значит, что в момент когда первый enterprise pilot упрётся в ограничение (org hierarchy не ложится на 5 base roles, делегация / имперсонация, временные пермиссии) — он должен иметь формальный путь расширения core, не ломая readers.
+
+**Action:**
+- Зафиксировать `x-<namespace>` соглашение для extension fields (на уровне `domain.x-acme.*` и `intent.x-acme.*`), readers игнорируют unknown `x-` keys.
+- Federation Φ — отдельный design в manifest v2.1 (cross-tenant intent-push, cryptographic effect signing, multi-Φ fold).
+
+**Owner:** manifest v2.1 + future SDK extension surface.
+
+### 2.11 Consumer-side tooling — социальный layer формата
+
+**Дата:** 2026-04-26 (внешний review)
+**Severity:** **Слабая зона.** Все текущие tools (Studio Graph3D, PatternInspector, derivation-diff CLI) — для **авторов**. У OpenAPI вирусность дала Swagger UI как бесплатный onboarding для consumer'ов. У IDF аналога нет.
+
+**Чего нет:**
+- Public domain explorer — упасть на чужой `domain.json`, увидеть schema/projections/intents без deploy.
+- Domain diff tool для consumer'а (есть для self в studio).
+- Embed-snippet (`<idf-embed src="example.json" projection="task_list">`) для блогов/статей.
+- Codegen для consumer'а — TS-типы из чужого `domain.json` для интеграции.
+- Domain marketplace (есть «Domain marketplace pitch» как M2 — это pitch, не реализация).
+
+**Action:** Не блокирующее, но влияет на adoption-curve. Когда первые 3-5 production tenant'ов работают — возможный dev-relations workstream.
+
+**Owner:** SDK packaging + сайт fold.software.
+
 ---
 
 ## 3. Cross-cutting observations
