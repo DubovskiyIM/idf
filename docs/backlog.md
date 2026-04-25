@@ -512,6 +512,79 @@ Bump `@intent-driven/enricher-claude` → `0.2.1`. После release — пер
 
 **Owner:** `scripts/audit-report.mjs` + `@intent-driven/core/conditionParser.js` (для парсинга precondition expressions).
 
+### 2.13 Эргономические законы как формальные предсказания над артефактом — операционное
+
+**Дата:** 2026-04-26 (внешний review, седьмое письмо)
+**Категория:** Операционное (не «формализация ядра» как §2.12).
+**Severity:** **Вторичное.** Не на критическом пути M1.x; не блокирует первого production pilot'а. Но **сильнее** трёх предыдущих формализационных кандидатов (термодинамика / Information Bottleneck / variational principle) тем, что **computable from static artifact без production telemetry** — что было общим blocker'ом тех направлений.
+
+**Тезис.** В отличие от §2.12 (sheaf — алгебраический язык для уже-делаемого), §2.13 не reframes существующее, а добавляет **внешнюю науку** с собственными количественными законами:
+
+| Закон / модель | Формула | Применение к IDF |
+|---|---|---|
+| **Fitts** (1954) | `MT = a + b · log₂(D/W + 1)` | Min target size, distance-aware placement |
+| **Hick-Hyman** (1953) | `RT = a + b · log₂(N+1)` | Choice overload в slot'ах с большим N |
+| **Cowan** (2001, обновлённый Miller 7±2) | working memory ≈ 4 chunks | Лимит на одновременные visual groups |
+| **Cognitive Load Theory** (Sweller 1988+) | intrinsic / extraneous / germane | Минимизация extraneous load = минимизация UI noise |
+| **GOMS** (Card-Moran-Newell 1983) | predicted task time из operator-sequence | Task completion time из artifact'а до рендера |
+
+**Что верно (сильные стороны):**
+1. Computable from static artifact — **закрывает gap** §2.13/§2.14/§2.15 (отклонённых формализационных кандидатов), которым требовалась production telemetry / ground truth / measurable cognitive load.
+2. Reference solid — Card/Moran/Newell 1983, CogTool (Bonnie John 2004+), 50+ лет экспериментальной валидации Fitts.
+3. Industry gap real — Vercel v0, Claude artifacts, GitHub Copilot не выдают «expected task completion time» как predict для output. У нас **детерминированный артефакт** — GOMS-анализ реализуем.
+4. Operational extracts (P2-P3) реализуемы **сейчас**, без производственных данных и математика.
+
+**Где натяжки:**
+1. Fitts/Hick — для **motor/choice tasks**, не для всего UI. Reading comprehension (Just&Carpenter), visual search (Treisman) — другие модели. Эргономика — не один аппарат, а несколько.
+2. GOMS prediction accuracy ≈ 20-40% — для **comparing alternatives** и **screening gross violations**, не fine-grained ranking.
+3. Computing GOMS требует task script (последовательность user actions) — у нас есть intent declaration, но реальная sequence зависит от **adapter rendering**. То есть GOMS-прогон — `(intent × adapter × ontology) → time`, не `intent → time`. Реализуемо, но non-trivial.
+4. Working memory 4±1 — applies to **task chunking** и **transitions между screens**, не «items на экране» (catalog с 30 cards user не «удерживает» — он скан'ит).
+
+**Cross-связи:**
+- §2.12 (sheaf) — даёт class of cross-role bugs. §2.13 даёт **другой class**: gross UI violations (too many choices, working memory overload, target size). Дополняют друг друга.
+- §2.14 IB / §2.15 variational (отклонены) — общий blocker «нет ground truth». §2.13 закрывает: эргономика даёт apriori predictive model.
+- `idf-manifest-v2.1` — возможный новый абзац в Часть IV (Четыре читателя): ergonomic prediction как часть pixel-reader contract.
+
+**Action:** Не делать «эргономическую теорию IDF» полностью. Разделить на:
+- **§2.13a (P2)** — Fitts target-size axis в `audit-report.mjs` + `adapter.capabilities` declaration (отдельная подзадача ниже).
+- **§2.13b (P2)** — Hick-Hyman / Miller working-memory axis в `audit-report.mjs` (отдельная подзадача ниже).
+- **§2.13c (deferred research-grade)** — GOMS-prediction для adapter benchmarking — реальный operational вклад в industry, реализуемо после первого production tenant'а с usage logs для validation.
+
+**Owner:** `scripts/audit-report.mjs` + `adapter.capabilities` декларация + manifest v2.1 (Часть IV).
+**Источник:** External design review 2026-04-26 (седьмое письмо после §2.12/§2.13/§2.14/§2.15 — седьмой рассмотрен, четыре приняты в backlog, три отклонены).
+
+### 2.13a Fitts target-size axis в audit-report (P2)
+
+**Дата:** 2026-04-26
+**Severity:** P2, операционная подзадача §2.13.
+
+**Что сделать.** В `adapter.capabilities` (renderer/src/adapters/registry.js) добавить declared constants:
+- `minTargetSize: { width: 44, height: 44 }` (WCAG 2.5.5 baseline для AA)
+- `density: "compact" | "comfortable"` (info для density-aware placement)
+
+В `scripts/audit-report.mjs` — новая ось «target-size»:
+- Для каждого `pattern.structure.apply`, генерирующего clickable element — проверить, что rendered target satisfies `adapter.capabilities.minTargetSize`.
+- Warning «target below WCAG AA» для violations.
+
+**Почему сейчас:** Реализуется без change в crystallize logic. Просто declarative + lint. Закрывает реальный класс a11y-багов.
+
+**Owner:** `@intent-driven/renderer/adapters/registry.js` + `scripts/audit-report.mjs`.
+
+### 2.13b Working-memory axis (Hick-Hyman / Miller / Cowan) в audit-report (P2)
+
+**Дата:** 2026-04-26
+**Severity:** P2, операционная подзадача §2.13.
+
+**Что сделать.** Новая ось «working-memory» в `audit-report.mjs`. Три проверки:
+
+1. **Choice overload (Hick-Hyman):** если slot имеет N items с N > 7 — warning «choice overload, рассмотри faceted-filter-panel или paginate».
+2. **Top-level navigation (Cowan):** если `ROOT_PROJECTIONS` для роли > 4 distinct visual groups — warning «working-memory overload at top level, рассмотри group или hub-absorption».
+3. **Form complexity:** если `archetype: "form"` или `wizard step` имеет > 7 visible fields одновременно — warning «form complexity, рассмотри tabbedForm или wizard split».
+
+**Почему сейчас:** Полиномиальный pass (counting). Не требует GOMS-симуляции, дополняет существующий R8 hub-absorption (который уже снимает «много flat tabs»).
+
+**Owner:** `scripts/audit-report.mjs`.
+
 ---
 
 ## 3. Cross-cutting observations
