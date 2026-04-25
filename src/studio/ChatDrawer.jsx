@@ -4,6 +4,26 @@ import ReactMarkdown from "react-markdown";
 import { sendChat } from "./api/chat.js";
 import ToolUseBadge from "./components/ToolUseBadge.jsx";
 
+function ThinkingDots() {
+  return (
+    <div style={{ display: "inline-flex", gap: 5, alignItems: "center", padding: "6px 2px" }}>
+      <style>{`
+        @keyframes idf-dot {
+          0%, 60%, 100% { transform: translateY(0); opacity: 0.3; }
+          30% { transform: translateY(-5px); opacity: 1; }
+        }
+      `}</style>
+      {[0, 1, 2].map(i => (
+        <div key={i} style={{
+          width: 6, height: 6, borderRadius: "50%", background: "#818cf8",
+          animation: "idf-dot 1.2s ease-in-out infinite",
+          animationDelay: `${i * 0.18}s`,
+        }} />
+      ))}
+    </div>
+  );
+}
+
 const MESSAGES_KEY = (d) => `studio.messages.${d}`;
 const SESSION_KEY = (d) => `studio.session.${d}`;
 
@@ -168,7 +188,12 @@ export default function ChatDrawer({ open, onClose, domain, prefill, onPrefillCo
                   background: m.role === "user" ? "#1e293b" : "transparent",
                   borderRadius: 10, fontSize: 13, lineHeight: 1.55, color: "#e2e8f0",
                 }}>
-                  <ReactMarkdown>{m.text || (busy && i === messages.length - 1 ? "…" : "")}</ReactMarkdown>
+                  {m.text
+                    ? <ReactMarkdown>{m.text}</ReactMarkdown>
+                    : (busy && i === messages.length - 1)
+                      ? <ThinkingDots />
+                      : null
+                  }
                   {m.tools?.map((t) => (
                     <ToolUseBadge key={t.id} use={t} result={m.results?.[t.id]} />
                   ))}
@@ -191,7 +216,7 @@ export default function ChatDrawer({ open, onClose, domain, prefill, onPrefillCo
               }}
             />
             <button
-              onClick={send}
+              onMouseDown={(e) => { e.preventDefault(); send(); }}
               disabled={busy || !input.trim()}
               style={{
                 padding: "0 20px", background: busy || !input.trim() ? "#334155" : "#4338ca",
