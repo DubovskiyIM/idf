@@ -107,14 +107,11 @@ export const PROJECTIONS = {
     intents: ["readApplication", "updateApplication", "syncApplication",
               "rollbackApplication", "removeApplication"],
     idParam: "name",
-    // Stage 7 — tabbedForm для deeply-nested Application.spec (G-A-5
-    // host-workaround). Вместо flat formBody с 15+ полями — 5 семантических
-    // tabs: Settings / Source / Destination / Sync / Advanced. Покрывает
-    // основные ArgoCD Application UI секции (Web-UI "App Details" panel).
-    //
-    // Поля берутся из SEMANTIC_AUGMENT (ontology.js) + базовые K8s metadata.
-    // Полный spec.syncPolicy / spec.source.helm.parameters[] требует SDK PR
-    // `yamlEditor` control-archetype (backlog §10.5).
+    // Stage 7 — tabbedForm для Application.spec (G-A-5 workaround упрощён
+    // после SDK pattern-bank Sprint 1). "Advanced (raw)" tab удалён:
+    // form-yaml-dual-surface pattern автоматически добавляет Form/YAML toggle
+    // для K8s entities (entity.resourceClass:"k8s" в ontology.js). Оставшиеся
+    // 4 tabs — guided UX для domain fields, без raw textarea fallback.
     editBodyOverride: {
       type: "tabbedForm",
       initialTab: "settings",
@@ -161,40 +158,20 @@ export const PROJECTIONS = {
           ],
           onSubmit: { intent: "updateApplication" },
         },
-        {
-          id: "advanced",
-          title: "Advanced (raw)",
-          fields: [
-            { name: "spec",      label: "spec (raw JSON)",      type: "textarea" },
-            { name: "metadata",  label: "metadata (raw JSON)",  type: "textarea" },
-            { name: "status",    label: "status (raw, readonly)", type: "textarea", readOnly: true },
-          ],
-          onSubmit: { intent: "updateApplication" },
-        },
       ],
     },
-    // Stage 5 — Resource tree subCollection. renderAs:"resourceTree" —
-    // host-specific dispatcher (V2Shell::renderSubCollection) рендерит
-    // иерархическое дерево с K8s kind-icons и status-badges, вместо плоской
-    // table. Fallback на обычный list если renderer не знает dispatcher.
+    // Stage 5 — Resource tree subCollection. renderAs больше не задаётся
+    // вручную: resource-hierarchy-canvas pattern автоматически добавляет
+    // renderAs:{type:"resourceTree"} для Resource entity (self-FK parentResource
+    // + healthStatus/syncStatus enum fields). SDK PR #321 + bugfix #331.
+    // ApplicationCondition — authored renderAs:"conditionsTimeline" (нет
+    // соответствующего pattern для event-timeline type).
     subCollections: [
       {
         entity: "Resource",
         foreignKey: "applicationId",
         title: "Resources",
-        renderAs: { type: "resourceTree" },
-        columns: [
-          { key: "kind",         label: "Kind", sortable: true, filterable: true },
-          { key: "name",         label: "Name", sortable: true, filterable: true },
-          { key: "namespace",    label: "Namespace", sortable: true, filterable: true },
-          { key: "syncStatus",   label: "Sync",   kind: "badge",
-            colorMap: { Synced: "success", OutOfSync: "warning" } },
-          { key: "healthStatus", label: "Health", kind: "badge",
-            colorMap: {
-              Healthy: "success", Progressing: "info", Degraded: "danger",
-              Missing: "neutral", Suspended: "warning", Unknown: "neutral",
-            } },
-        ],
+        // renderAs auto-derived by resource-hierarchy-canvas pattern (SDK #321+#331)
       },
       // Stage 6 — ApplicationCondition timeline (audit-log inline).
       // renderAs:"conditionsTimeline" — новый dispatcher с chronological

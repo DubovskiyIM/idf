@@ -178,14 +178,16 @@ describe("argocd Stage 1+2 baseline", () => {
       .toEqual(["Degraded", "Missing"]);
   });
 
-  it("Stage 7 — application_detail editBodyOverride: 5-tab form (G-A-5 host)", () => {
+  it("Stage 7 — application_detail editBodyOverride: 4-tab form (Advanced raw tab удалён — G-A-7 partial close)", () => {
     const detail = PROJECTIONS.application_detail;
     expect(detail.editBodyOverride?.type).toBe("tabbedForm");
     expect(detail.editBodyOverride.initialTab).toBe("settings");
     const tabs = detail.editBodyOverride.tabs;
-    expect(tabs).toHaveLength(5);
+    // "Advanced (raw)" tab удалён: form-yaml-dual-surface pattern добавляет
+    // Form/YAML toggle для K8s entities (entity.resourceClass:"k8s").
+    expect(tabs).toHaveLength(4);
     const ids = tabs.map(t => t.id);
-    expect(ids).toEqual(["settings", "source", "destination", "sync", "advanced"]);
+    expect(ids).toEqual(["settings", "source", "destination", "sync"]);
     for (const tab of tabs) {
       expect(Array.isArray(tab.fields)).toBe(true);
       expect(tab.fields.length).toBeGreaterThan(0);
@@ -197,9 +199,6 @@ describe("argocd Stage 1+2 baseline", () => {
     expect(settingsFields).toContain("project");
     expect(settingsFields).toContain("syncStatus");
     expect(settingsFields).toContain("healthStatus");
-    // advanced tab: raw JSON read-only для status
-    const statusField = tabs[4].fields.find(f => f.name === "status");
-    expect(statusField?.readOnly).toBe(true);
   });
 
   it("Stage 6 — ApplicationCondition entity декларирована с timeline fields", () => {
@@ -243,16 +242,16 @@ describe("argocd Stage 1+2 baseline", () => {
     expect(typeCol?.colorMap?.SharedResourceWarning).toBe("info");
   });
 
-  it("Stage 5 — application_detail subCollection с renderAs:resourceTree", () => {
+  it("Stage 5 — application_detail subCollection Resource (renderAs auto-derived by pattern)", () => {
     const detail = PROJECTIONS.application_detail;
     expect(detail.subCollections).toBeDefined();
     const resSub = detail.subCollections.find(s => s.entity === "Resource");
     expect(resSub).toBeDefined();
     expect(resSub.foreignKey).toBe("applicationId");
-    expect(resSub.renderAs?.type).toBe("resourceTree");
-    const healthCol = resSub.columns.find(c => c.key === "healthStatus");
-    expect(healthCol?.kind).toBe("badge");
-    expect(healthCol?.colorMap?.Degraded).toBe("danger");
+    // renderAs убран из authored projection — auto-derived resource-hierarchy-canvas
+    // pattern (SDK #321 + bugfix #331): Resource.parentResource self-FK +
+    // healthStatus/syncStatus status-enum fields → renderAs:{type:"resourceTree"}.
+    expect(resSub.renderAs).toBeUndefined();
   });
 
   it("Stage 4 badge columns: syncStatus/healthStatus с kind:badge + colorMap", () => {
