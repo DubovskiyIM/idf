@@ -587,6 +587,65 @@ Bump `@intent-driven/enricher-claude` → `0.2.1`. После release — пер
 
 ---
 
+### 2.14 IR-stages — типизированные границы внутри `crystallize_v2` (research)
+
+**Дата:** 2026-04-26
+**Severity:** P2 research, depends on §2.8 closeout. Параллельное §2.12 (sheaf) и §2.13 (ergonomic) направление: формализация уже существующего, не выдуманное расширение.
+
+**Контекст.** Внешний reviewer 2026-04-26 (8-е письмо) предложил пересобрать `crystallize` из «магической функции» в MLIR-style лестницу IR. Зацепка резонирует частично: лестница **де-факто существует** в коде (`assignToSlots*` → `deriveShape`/`absorbHubChildren` → `slots.*` → `applyStructuralPatterns` → adapter codegen), но без типизированных границ между ступенями и без property-based тестов per-level. Witness trail (`artifact.witnesses[]`) уже даёт «аннотацию через уровни», но не верифицируется отдельно от соседей.
+
+**Что предлагается** (light-touch, без MLIR-инфраструктуры):
+
+1. **Назвать существующие стадии явно.** В `crystallize_v2/index.js` extract'нуть фазы 1-3a-3b-3c-3d с возвратом промежуточных артефактов: `semanticArtifact` (intent → slot/anchored), `structuralArtifact` (+ shape + hubAbsorption), `layoutArtifact` (slots уложены, без adapter), `patternedArtifact` (после apply). Сейчас pipeline inline, snapshot per-stage не фиксируется.
+2. **Расширить witness contract.** К существующему `basis: "structural-rule" | "pattern-bank" | "declaration-order" | ...` добавить `stage: "semantic" | "structural" | "layout" | "pattern"`. Аддитивно, breaking ничего.
+3. **Property-tests per stage** (новый `packages/core/src/__tests__/per-stage-properties/`):
+   - **semantic-conservation** — `every intent ∈ output.slots ∪ artifact.anchorRejections` (никакой intent не пропал тихо)
+   - **structural-reachability** — `forall intent: navGraph.distance(root, intent) ≤ K` (любое действие достижимо через ≤N кликов)
+   - **pattern-idempotency** — `apply(apply(slots)) == apply(slots)` (повторное применение не меняет результат)
+   - **reader-equivalence per stage** — semantic-уровень даёт изоморфный information content для 4 reader'ов; layout — точка где материализации расходятся.
+4. **`explainCrystallize()` отдаёт per-stage tree**, не плоский список. Это уже планировалось в §28 v2.1 («Debugging derived UI»); здесь финализируется shape результата.
+5. **MLIR — как референс, не как dependency.** Никакого `tablegen` / `dialect` / `lowering` в коде формата. Внутренний ADR через 6 mo: «нужна ли реальная typed-IR-инфраструктура».
+
+**Что НЕ делается** (натяжки от MLIR-аналогии):
+- Layout IR с Fitts's-Law предикатами — у нас семантические слоты, не геометрия. Геометрия делегирована в адаптеры через `adapter.capabilities`. Ergonomic-предикаты (Fitts/Hick-Hyman/Cowan) живут на адаптерном уровне через §2.13a/b axis'ы, не внутри IR-stages.
+- «4 адаптера = 4 codegen-backend'а одного UI» — неверно. Voice / agent-API / document — другие read-проекции Φ через материализаторы, не lowering targets pixels-IR.
+- Полный typed-dialect framework — over-engineering под текущий объём (≤ 10 авторов формата).
+
+**Польза.**
+- **Diff-able артефакты per-stage** — самый сильный аргумент. Сейчас `derivation-diff.mjs` показывает только final-vs-final. С stages — автор видит, какая ступень провалилась, не «перегенерировал, всё стало другое».
+- **Property-tests заменяют convention-by-invariant.** Сейчас «ни один intent не пропал» — invariant-by-convention, теста нет.
+- **Pattern Bank как rewrite-rules с pre/post-condition'ами на patterned-IR** — композиционность (порядок применения) и falsification-fixtures на промежуточном представлении.
+- **§28 «Debugging derived UI» (v2.1)** — естественно расщепляется на per-stage, witness-`stage` поле даёт structured drill-down вместо flat-списка witnesses.
+- **Drift-protection (manifest v2.1, 3 detector layers)** — Layer 1 conformance-drift на `patternedArtifact`, Layer 3 reader-equivalence на `semanticArtifact`. Detector'ы становятся реализуемы поэтапно, не «всё сразу».
+
+**Зависимости / порядок.**
+- **§2.8 первым.** Φ schema-versioning ставит лестницу на двигающуюся базу — без неё IR-stages работают только на «срезе во времени» одной онтологии. Сделать stages раньше = переделывать после.
+- **manifest v2.1 finalize вторым.** §28 (Debugging derived UI) как глава Части V уже формулирует witness-`basis`; IR-stages добавляет `stage`-поле и пишется как новая глава §29 в Часть III или §28.bis.
+- **Параллель к §2.12 (sheaf) и §2.13 (ergonomic).** Sheaf — горизонтальная композиция (cross-role). Ergonomic — apriori behavioral predictions поверх final artifact'а. IR-stages — вертикальная композиция (внутри одной crystallize-проходки). Не пересекаются, дополняют.
+
+**Зафиксировано:**
+- `docs/design/2026-04-26-ir-stages-spec.md` (~280 LOC, design-spec)
+- PR (этот) — backlog item + spec, stacked поверх #131 (§2.8) → #132 (§2.12) → #133 (§2.13)
+
+**Owner:** `@intent-driven/core/crystallize_v2/*` (extract stages, witness `stage`-поле) + manifest v2.1 (новая глава §29 в Часть III или §28.bis в Часть V) + `idf-spec` (опционально L2/L3 conformance — «artifact MUST/MAY expose per-stage snapshots»).
+
+**Когда закрывать.** После §2.8 closeout, до публикации manifest v2.1. Реализационная стоимость — 3-4 SDK PR'а (extract + witness + property-tests + explainCrystallize tree-shape), без breaking changes.
+
+**Метрика успеха.**
+- `derivation-diff` показывает per-stage delta для любых двух ontology-версий
+- ≥ 4 property-tests прогоняются per-stage в SDK CI (semantic-conservation + structural-reachability + pattern-idempotency + reader-equivalence-semantic)
+- `explainCrystallize()` возвращает tree-shape, не flat-список witnesses
+- Drift-protection Layer 3 reader-equivalence runtime-check реализован поверх `semanticArtifact` (а не пытается это делать на final output)
+
+**Cross-связи:**
+- §2.8 (Φ schema-versioning) — IR-stages работает на срезе, schema-versioning даёт upcasters между срезами; stages × срезы = matrix свойств для проверки
+- §2.12 (sheaf) — IR-stages вертикальная, sheaf горизонтальная; independent
+- §2.13 (ergonomic laws) — IR-stages про инвариантность переходов, ergonomic про behavioral predictions; разные оси
+- `idf-manifest-v2.1/docs/design/debugging-derived-ui-spec.md` — §28 уже содержит witness `basis`, IR-stages добавляет `stage` как ортогональную ось
+- `idf-manifest-v2.1/docs/design/drift-protection-spec.md` — три detector layer'а становятся per-stage detector'ами, реализуются поэтапно
+
+---
+
 ## 3. Cross-cutting observations
 
 Наблюдения, не привязанные к одному workstream'у.
