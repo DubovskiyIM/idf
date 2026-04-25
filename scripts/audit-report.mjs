@@ -46,6 +46,7 @@ const ROOT = path.resolve(path.dirname(__filename), "..");
 const DOMAIN_NAMES = [
   "booking", "planning", "workflow", "messenger", "sales",
   "lifequest", "reflect", "invest", "delivery", "freelance",
+  "compliance", "keycloak", "argocd", "gravitino", "automation",
 ];
 const SEVERITY_ORDER = { error: 3, warning: 2, info: 1 };
 

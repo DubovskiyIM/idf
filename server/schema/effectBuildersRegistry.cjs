@@ -17,6 +17,7 @@ const { buildDeliveryEffects } = require("./buildDeliveryEffects.cjs");
 const { buildFreelanceEffects } = require("./buildFreelanceEffects.cjs");
 const { buildComplianceEffects } = require("./buildComplianceEffects.cjs");
 const { buildGravitinoEffects } = require("./buildGravitinoEffects.cjs");
+const { buildAutomationEffects } = require("./buildAutomationEffects.cjs");
 
 const REGISTRY = {
   booking: buildBookingEffects,
@@ -31,6 +32,7 @@ const REGISTRY = {
   freelance: buildFreelanceEffects,
   compliance: buildComplianceEffects,
   gravitino: buildGravitinoEffects,
+  automation: buildAutomationEffects,
 };
 
 function getEffectBuilder(domain) {
