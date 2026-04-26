@@ -433,6 +433,217 @@ Bump `@intent-driven/enricher-claude` → `0.2.1`. После release — пер
 
 **Owner:** SDK packaging + сайт fold.software.
 
+### 2.12 Sheaf-формулировка целостности — формализация ядра (вторичное)
+
+**Дата:** 2026-04-26 (внешний review, второе письмо)
+**Категория:** Формализация ядра.
+**Severity:** **Вторичное.** Не на критическом пути M1.x; не блокирует первого production pilot'а. Operationally полезные подзадачи (§2.12a, §2.12b) — отдельные P1, делать в обычном потоке. Полная sheaf-теоретическая формализация требует математика и не должна предшествовать имплементации §2.8 (Φ schema-versioning) и §2.9 (provenance дизайна) — те **на критическом пути**.
+
+**Тезис.** Целостность IDF-домена можно переформулировать **не как набор инвариантов, которые мы проверяем**, а как **математическое свойство домена**, для которого инварианты — приближение. Структурно: роли образуют решётку (poset); `viewerWorld(role) = filterWorldForRole(world, role)` — это restriction map; presheaf на ролях даёт sheaf при выполнении аксиомы склейки. H⁰ = глобальные сечения, H¹ = препятствия к склейке. Это **переворот рамки** статуса формата: «формат с эвристическим валидатором» → «формат с математически определимым понятием корректности».
+
+**Что в IDF уже есть как **presheaf без названия**:**
+
+| Элемент sheaf | В IDF |
+|---|---|
+| База (poset) | 5 base roles (`owner / viewer / agent / observer / admin`) — открытое множество прецедентов |
+| Данные на роли | `viewerWorld(role) = filterWorldForRole(world, role, ontology)` |
+| Restriction maps | `filterWorldForRole` — фильтрация world'а под роль |
+| Покрытие (cover) | Set of roles — пока не формализовано |
+| Sheaf-аксиома | Не проверяется |
+
+**Что верно (сильные стороны формулировки):**
+
+1. Класс багов «agent зависит от поля, которое viewer должен одобрить, но не видит» — **реален**. Compliance-домен с SoD-инвариантами (`reviewer ≠ approver ≠ controlOwner`) ловит подобное на confirm; но если `intent.precondition` ссылается на поле, недоступное роли, которая может intent execute'ить, **никакая локальная проверка не ловит**. Это глобальное препятствие (нарушение H¹).
+2. Композиция доменов через restriction maps на пересечении онтологий — **натуральный язык** для проблемы, которую сейчас решаем ad-hoc через `__domain` provenance (§1.3). Formal: домены склеиваются, если restriction maps на пересечении согласованы и H¹ объединённого sheaf'а равен нулю.
+3. Иерархия warning'ов получает **природу**: H⁰-нарушения (поле невидимо для всех ролей, хотя должно быть), H¹-нарушения (попарная согласованность без глобальной), локальные. Это **операционно полезно** даже без формальной когомологии — даёт классификацию `domain-audit.json` findings по природе препятствия.
+
+**Где натяжки (слабые места):**
+
+1. **Решётка ролей не такая регулярная**, как предполагает sheaf-формулировка. У нас:
+   - `owner` владеет своими row'ами через `ownerField`
+   - `agent` может **execute** intents, которые `owner` не может (preapproved orders с budget guard)
+   - `observer` — read-only audit с `materializeAuditLog`
+   - `admin` — row-override, видит всё
+   
+   `agent ⊆ owner` по visible-set'ам, но `agent ⊄ owner` по execute-set'ам. Это **две решётки** (read-poset × execute-poset), и они не совпадают. Sheaf нужен над парой со специальной структурой — усложняет когомологию вдвое.
+
+2. **H¹ для конечного poset из 5 элементов вычисляется тривиально** (rank kernel - rank image на cochain complex). Гротендиковские topologies / sites / sheaves of categories Spivak'а — **аппарат для бесконечного / непрерывного**, у нас 5 ролей. Формализм полезен **как язык классификации**, не как computational tool.
+
+3. **Cosheaf-Φ — спекулятивно.** Φ — единый append-only лог, не разделённый по ролям. Эффект от admin'а — не «расширение» эффекта от viewer'а; они независимые. Inclusion-структуры нет. **Что работает двойственно:** для каждой роли r определить `Φ_r` = эффекты, видимые этой ролью, и доказать `restrict_r ∘ fold = fold ∘ filter_r` (filter и fold коммутируют). Это **sheaf-морфизм между Φ-уровнем и world-уровнем**, не cosheaf.
+
+4. **«Почему именно 5 ролей»** — sheaf не даёт обоснования (его критерий «достаточно богатой / простой» выполняется при любом разумном выборе). Реальное обоснование 5 ролей — эмпирическое (из 13 полевых тестов хватало). Sheaf даёт ответ на другой вопрос: «как формально проверить, что выбор не имеет patological holes».
+
+**Самое ценное в формулировке** — **переформулировка статуса формата**: «целостность — математическое свойство, инварианты — аппроксимация». Это в духе IDF («формат, не фреймворк»). Сейчас audit-report выдаёт 187 findings плоским списком — каждое своей природы. Классификация warnings по природе препятствия (locally-visible / pairwise-inconsistent / globally-unrealizable) — **операционно полезно**, даже без формальной когомологии. Drift-protection-spec уже движется в эту сторону (3 detector'а как layers).
+
+**Cross-связи:**
+
+- §2.8 (Φ schema-versioning) — sheaf над **движущейся** базой (онтология эволюционирует → решётка ролей тоже). Возможно ближе к stack'ам, чем sheaves. Парное направление.
+- §2.10 (federation Φ) — cross-domain composition как sheaf на пересечении.
+- `idf-manifest-v2.1/docs/design/drift-protection-spec.md` — H-классификация как новый layer detector'а.
+
+**Action:** Не делать sheaf-теорию IDF целиком. Зафиксировать как architectural research direction; разделить на:
+- **§2.12a (P1)** — `role.extends: [otherRole]` как formal poset + monotonic linter в `audit-report.mjs` (отдельная P1-task ниже).
+- **§2.12b (P1)** — static cross-role precondition analyzer (8-я ось в `audit-report.mjs`, отдельная P1-task ниже).
+- **§2.12c (deferred)** — полная sheaf-формализация с математиком; design-spec stub в `docs/design/2026-04-26-sheaf-formulation-spec.md`.
+
+**Owner:** `@intent-driven/core/baseRoles` + `audit-report.mjs` + manifest v2.1 (Часть III, Алгебра — раздел «Целостность как когомология»).
+
+**Источник:** External design review 2026-04-26 (второе письмо после §2.8).
+
+### 2.12a Formal `role.extends` poset + monotonic restriction linter (P1)
+
+**Дата:** 2026-04-26
+**Severity:** P1, операционная подзадача §2.12.
+
+**Что сделать.** В onto schema разрешить `role.extends: ["otherRole"]` (массив). Linter в `scripts/audit-report.mjs` (новая ось «role-monotonicity») проверяет: если `roleA.extends` содержит `roleB`, то `visibleFields(roleA) ⊇ visibleFields(roleB)` для каждого entity. Нарушение — warning «role inheritance broken».
+
+**Почему сейчас:** Закрывает 70% value sheaf-формулировки без когомологии. Полиномиальный pass, ловит реальный класс багов (admin случайно теряет visibility поля, которое viewer видит).
+
+**Owner:** `@intent-driven/core/baseRoles.js` + `scripts/audit-report.mjs`.
+
+### 2.12b Static cross-role precondition analyzer (P1)
+
+**Дата:** 2026-04-26
+**Severity:** P1, операционная подзадача §2.12.
+
+**Что сделать.** Новая ось в `audit-report.mjs` («cross-role-precondition»). Для каждого `intent.precondition` (включая dotted-path вида `Order.status === "paid"`) проверить, что все referenced поля доступны **всем ролям из `intent.permittedFor` (или ролям с этим intent в `canExecute`)**. Если роль может execute, но не может read поле в precondition — emit warning «precondition refers to invisible field».
+
+**Почему сейчас:** Ловит ровно тот класс багов, который sheaf-формулировка называет H¹-нарушением, простым cross-reference анализом. Не требует когомологии.
+
+**Owner:** `scripts/audit-report.mjs` + `@intent-driven/core/conditionParser.js` (для парсинга precondition expressions).
+
+### 2.13 Эргономические законы как формальные предсказания над артефактом — операционное
+
+**Дата:** 2026-04-26 (внешний review, седьмое письмо)
+**Категория:** Операционное (не «формализация ядра» как §2.12).
+**Severity:** **Вторичное.** Не на критическом пути M1.x; не блокирует первого production pilot'а. Но **сильнее** трёх предыдущих формализационных кандидатов (термодинамика / Information Bottleneck / variational principle) тем, что **computable from static artifact без production telemetry** — что было общим blocker'ом тех направлений.
+
+**Тезис.** В отличие от §2.12 (sheaf — алгебраический язык для уже-делаемого), §2.13 не reframes существующее, а добавляет **внешнюю науку** с собственными количественными законами:
+
+| Закон / модель | Формула | Применение к IDF |
+|---|---|---|
+| **Fitts** (1954) | `MT = a + b · log₂(D/W + 1)` | Min target size, distance-aware placement |
+| **Hick-Hyman** (1953) | `RT = a + b · log₂(N+1)` | Choice overload в slot'ах с большим N |
+| **Cowan** (2001, обновлённый Miller 7±2) | working memory ≈ 4 chunks | Лимит на одновременные visual groups |
+| **Cognitive Load Theory** (Sweller 1988+) | intrinsic / extraneous / germane | Минимизация extraneous load = минимизация UI noise |
+| **GOMS** (Card-Moran-Newell 1983) | predicted task time из operator-sequence | Task completion time из artifact'а до рендера |
+
+**Что верно (сильные стороны):**
+1. Computable from static artifact — **закрывает gap** §2.13/§2.14/§2.15 (отклонённых формализационных кандидатов), которым требовалась production telemetry / ground truth / measurable cognitive load.
+2. Reference solid — Card/Moran/Newell 1983, CogTool (Bonnie John 2004+), 50+ лет экспериментальной валидации Fitts.
+3. Industry gap real — Vercel v0, Claude artifacts, GitHub Copilot не выдают «expected task completion time» как predict для output. У нас **детерминированный артефакт** — GOMS-анализ реализуем.
+4. Operational extracts (P2-P3) реализуемы **сейчас**, без производственных данных и математика.
+
+**Где натяжки:**
+1. Fitts/Hick — для **motor/choice tasks**, не для всего UI. Reading comprehension (Just&Carpenter), visual search (Treisman) — другие модели. Эргономика — не один аппарат, а несколько.
+2. GOMS prediction accuracy ≈ 20-40% — для **comparing alternatives** и **screening gross violations**, не fine-grained ranking.
+3. Computing GOMS требует task script (последовательность user actions) — у нас есть intent declaration, но реальная sequence зависит от **adapter rendering**. То есть GOMS-прогон — `(intent × adapter × ontology) → time`, не `intent → time`. Реализуемо, но non-trivial.
+4. Working memory 4±1 — applies to **task chunking** и **transitions между screens**, не «items на экране» (catalog с 30 cards user не «удерживает» — он скан'ит).
+
+**Cross-связи:**
+- §2.12 (sheaf) — даёт class of cross-role bugs. §2.13 даёт **другой class**: gross UI violations (too many choices, working memory overload, target size). Дополняют друг друга.
+- §2.14 IB / §2.15 variational (отклонены) — общий blocker «нет ground truth». §2.13 закрывает: эргономика даёт apriori predictive model.
+- `idf-manifest-v2.1` — возможный новый абзац в Часть IV (Четыре читателя): ergonomic prediction как часть pixel-reader contract.
+
+**Action:** Не делать «эргономическую теорию IDF» полностью. Разделить на:
+- **§2.13a (P2)** — Fitts target-size axis в `audit-report.mjs` + `adapter.capabilities` declaration (отдельная подзадача ниже).
+- **§2.13b (P2)** — Hick-Hyman / Miller working-memory axis в `audit-report.mjs` (отдельная подзадача ниже).
+- **§2.13c (deferred research-grade)** — GOMS-prediction для adapter benchmarking — реальный operational вклад в industry, реализуемо после первого production tenant'а с usage logs для validation.
+
+**Owner:** `scripts/audit-report.mjs` + `adapter.capabilities` декларация + manifest v2.1 (Часть IV).
+**Источник:** External design review 2026-04-26 (седьмое письмо после §2.12/§2.13/§2.14/§2.15 — седьмой рассмотрен, четыре приняты в backlog, три отклонены).
+
+### 2.13a Fitts target-size axis в audit-report (P2)
+
+**Дата:** 2026-04-26
+**Severity:** P2, операционная подзадача §2.13.
+
+**Что сделать.** В `adapter.capabilities` (renderer/src/adapters/registry.js) добавить declared constants:
+- `minTargetSize: { width: 44, height: 44 }` (WCAG 2.5.5 baseline для AA)
+- `density: "compact" | "comfortable"` (info для density-aware placement)
+
+В `scripts/audit-report.mjs` — новая ось «target-size»:
+- Для каждого `pattern.structure.apply`, генерирующего clickable element — проверить, что rendered target satisfies `adapter.capabilities.minTargetSize`.
+- Warning «target below WCAG AA» для violations.
+
+**Почему сейчас:** Реализуется без change в crystallize logic. Просто declarative + lint. Закрывает реальный класс a11y-багов.
+
+**Owner:** `@intent-driven/renderer/adapters/registry.js` + `scripts/audit-report.mjs`.
+
+### 2.13b Working-memory axis (Hick-Hyman / Miller / Cowan) в audit-report (P2)
+
+**Дата:** 2026-04-26
+**Severity:** P2, операционная подзадача §2.13.
+
+**Что сделать.** Новая ось «working-memory» в `audit-report.mjs`. Три проверки:
+
+1. **Choice overload (Hick-Hyman):** если slot имеет N items с N > 7 — warning «choice overload, рассмотри faceted-filter-panel или paginate».
+2. **Top-level navigation (Cowan):** если `ROOT_PROJECTIONS` для роли > 4 distinct visual groups — warning «working-memory overload at top level, рассмотри group или hub-absorption».
+3. **Form complexity:** если `archetype: "form"` или `wizard step` имеет > 7 visible fields одновременно — warning «form complexity, рассмотри tabbedForm или wizard split».
+
+**Почему сейчас:** Полиномиальный pass (counting). Не требует GOMS-симуляции, дополняет существующий R8 hub-absorption (который уже снимает «много flat tabs»).
+
+**Owner:** `scripts/audit-report.mjs`.
+
+---
+
+### 2.14 IR-stages — типизированные границы внутри `crystallize_v2` (research)
+
+**Дата:** 2026-04-26
+**Severity:** P2 research, depends on §2.8 closeout. Параллельное §2.12 (sheaf) и §2.13 (ergonomic) направление: формализация уже существующего, не выдуманное расширение.
+
+**Контекст.** Внешний reviewer 2026-04-26 (8-е письмо) предложил пересобрать `crystallize` из «магической функции» в MLIR-style лестницу IR. Зацепка резонирует частично: лестница **де-факто существует** в коде (`assignToSlots*` → `deriveShape`/`absorbHubChildren` → `slots.*` → `applyStructuralPatterns` → adapter codegen), но без типизированных границ между ступенями и без property-based тестов per-level. Witness trail (`artifact.witnesses[]`) уже даёт «аннотацию через уровни», но не верифицируется отдельно от соседей.
+
+**Что предлагается** (light-touch, без MLIR-инфраструктуры):
+
+1. **Назвать существующие стадии явно.** В `crystallize_v2/index.js` extract'нуть фазы 1-3a-3b-3c-3d с возвратом промежуточных артефактов: `semanticArtifact` (intent → slot/anchored), `structuralArtifact` (+ shape + hubAbsorption), `layoutArtifact` (slots уложены, без adapter), `patternedArtifact` (после apply). Сейчас pipeline inline, snapshot per-stage не фиксируется.
+2. **Расширить witness contract.** К существующему `basis: "structural-rule" | "pattern-bank" | "declaration-order" | ...` добавить `stage: "semantic" | "structural" | "layout" | "pattern"`. Аддитивно, breaking ничего.
+3. **Property-tests per stage** (новый `packages/core/src/__tests__/per-stage-properties/`):
+   - **semantic-conservation** — `every intent ∈ output.slots ∪ artifact.anchorRejections` (никакой intent не пропал тихо)
+   - **structural-reachability** — `forall intent: navGraph.distance(root, intent) ≤ K` (любое действие достижимо через ≤N кликов)
+   - **pattern-idempotency** — `apply(apply(slots)) == apply(slots)` (повторное применение не меняет результат)
+   - **reader-equivalence per stage** — semantic-уровень даёт изоморфный information content для 4 reader'ов; layout — точка где материализации расходятся.
+4. **`explainCrystallize()` отдаёт per-stage tree**, не плоский список. Это уже планировалось в §28 v2.1 («Debugging derived UI»); здесь финализируется shape результата.
+5. **MLIR — как референс, не как dependency.** Никакого `tablegen` / `dialect` / `lowering` в коде формата. Внутренний ADR через 6 mo: «нужна ли реальная typed-IR-инфраструктура».
+
+**Что НЕ делается** (натяжки от MLIR-аналогии):
+- Layout IR с Fitts's-Law предикатами — у нас семантические слоты, не геометрия. Геометрия делегирована в адаптеры через `adapter.capabilities`. Ergonomic-предикаты (Fitts/Hick-Hyman/Cowan) живут на адаптерном уровне через §2.13a/b axis'ы, не внутри IR-stages.
+- «4 адаптера = 4 codegen-backend'а одного UI» — неверно. Voice / agent-API / document — другие read-проекции Φ через материализаторы, не lowering targets pixels-IR.
+- Полный typed-dialect framework — over-engineering под текущий объём (≤ 10 авторов формата).
+
+**Польза.**
+- **Diff-able артефакты per-stage** — самый сильный аргумент. Сейчас `derivation-diff.mjs` показывает только final-vs-final. С stages — автор видит, какая ступень провалилась, не «перегенерировал, всё стало другое».
+- **Property-tests заменяют convention-by-invariant.** Сейчас «ни один intent не пропал» — invariant-by-convention, теста нет.
+- **Pattern Bank как rewrite-rules с pre/post-condition'ами на patterned-IR** — композиционность (порядок применения) и falsification-fixtures на промежуточном представлении.
+- **§28 «Debugging derived UI» (v2.1)** — естественно расщепляется на per-stage, witness-`stage` поле даёт structured drill-down вместо flat-списка witnesses.
+- **Drift-protection (manifest v2.1, 3 detector layers)** — Layer 1 conformance-drift на `patternedArtifact`, Layer 3 reader-equivalence на `semanticArtifact`. Detector'ы становятся реализуемы поэтапно, не «всё сразу».
+
+**Зависимости / порядок.**
+- **§2.8 первым.** Φ schema-versioning ставит лестницу на двигающуюся базу — без неё IR-stages работают только на «срезе во времени» одной онтологии. Сделать stages раньше = переделывать после.
+- **manifest v2.1 finalize вторым.** §28 (Debugging derived UI) как глава Части V уже формулирует witness-`basis`; IR-stages добавляет `stage`-поле и пишется как новая глава §29 в Часть III или §28.bis.
+- **Параллель к §2.12 (sheaf) и §2.13 (ergonomic).** Sheaf — горизонтальная композиция (cross-role). Ergonomic — apriori behavioral predictions поверх final artifact'а. IR-stages — вертикальная композиция (внутри одной crystallize-проходки). Не пересекаются, дополняют.
+
+**Зафиксировано:**
+- `docs/design/2026-04-26-ir-stages-spec.md` (~280 LOC, design-spec)
+- PR (этот) — backlog item + spec, stacked поверх #131 (§2.8) → #132 (§2.12) → #133 (§2.13)
+
+**Owner:** `@intent-driven/core/crystallize_v2/*` (extract stages, witness `stage`-поле) + manifest v2.1 (новая глава §29 в Часть III или §28.bis в Часть V) + `idf-spec` (опционально L2/L3 conformance — «artifact MUST/MAY expose per-stage snapshots»).
+
+**Когда закрывать.** После §2.8 closeout, до публикации manifest v2.1. Реализационная стоимость — 3-4 SDK PR'а (extract + witness + property-tests + explainCrystallize tree-shape), без breaking changes.
+
+**Метрика успеха.**
+- `derivation-diff` показывает per-stage delta для любых двух ontology-версий
+- ≥ 4 property-tests прогоняются per-stage в SDK CI (semantic-conservation + structural-reachability + pattern-idempotency + reader-equivalence-semantic)
+- `explainCrystallize()` возвращает tree-shape, не flat-список witnesses
+- Drift-protection Layer 3 reader-equivalence runtime-check реализован поверх `semanticArtifact` (а не пытается это делать на final output)
+
+**Cross-связи:**
+- §2.8 (Φ schema-versioning) — IR-stages работает на срезе, schema-versioning даёт upcasters между срезами; stages × срезы = matrix свойств для проверки
+- §2.12 (sheaf) — IR-stages вертикальная, sheaf горизонтальная; independent
+- §2.13 (ergonomic laws) — IR-stages про инвариантность переходов, ergonomic про behavioral predictions; разные оси
+- `idf-manifest-v2.1/docs/design/debugging-derived-ui-spec.md` — §28 уже содержит witness `basis`, IR-stages добавляет `stage` как ортогональную ось
+- `idf-manifest-v2.1/docs/design/drift-protection-spec.md` — три detector layer'а становятся per-stage detector'ами, реализуются поэтапно
+
 ---
 
 ## 3. Cross-cutting observations
