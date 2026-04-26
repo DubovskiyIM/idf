@@ -31,7 +31,6 @@ export const INTENTS = {
     }, antagonist: "cancel_booking", creates: "Booking(confirmed)"
   },
   cancel_booking: {
-    salience: "primary",
     name: "Отменить запись", particles: {
       entities: ["booking: Booking", "slot: TimeSlot"],
       conditions: ["booking.status = 'confirmed'", "booking.clientId = me.id"],
@@ -105,7 +104,7 @@ export const INTENTS = {
       ],
       witnesses: ["booking.serviceName", "booking.date", "new_slot.date", "new_slot.startTime"],
       confirmation: "click"
-    }, antagonist: null, creates: null, phase: "investigation", salience: "primary"
+    }, antagonist: null, creates: null, phase: "investigation"
   },
   mark_no_show: {
     name: "Отметить неявку", particles: {
@@ -194,7 +193,6 @@ export const INTENTS = {
     }, antagonist: null, creates: null
   },
   update_service: {
-    salience: "primary",
     name: "Изменить услугу", particles: {
       entities: ["service: Service"],
       conditions: ["service.specialistId = me.id"],
