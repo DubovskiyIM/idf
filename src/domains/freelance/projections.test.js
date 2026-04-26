@@ -227,8 +227,12 @@ describe("freelance intents — permittedFor (multi-owner Deal, backlog 3.2)", (
   it("cancel_deal_mutual — без permittedFor → both owners (OR-disjunction)", () => {
     const merged = mergedProjections();
     const arts = crystallizeV2(INTENTS, merged, ONTOLOGY, "freelance");
-    const toolbar = arts.deal_detail.slots.toolbar;
-    const cancel = toolbar.find(x => x.intentId === "cancel_deal_mutual");
+    // cancel_deal_mutual уходит в overflow (Phase 2 salience: destructive ниже primary CTA)
+    const toolbarAll = [
+      ...arts.deal_detail.slots.toolbar,
+      ...(arts.deal_detail.slots.toolbar.find(x => x.type === "overflow")?.children || []),
+    ];
+    const cancel = toolbarAll.find(x => x.intentId === "cancel_deal_mutual");
     expect(cancel?.condition).toContain("customerId === viewer.id");
     expect(cancel?.condition).toContain("executorId === viewer.id");
   });
