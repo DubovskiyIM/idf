@@ -245,11 +245,11 @@ export const PROJECTIONS = {
   },
 };
 
-// Top-level navigation per role
-export const ROOT_PROJECTIONS = {
-  workspaceOwner: ["sidebar_workspace", "recent_activity", "members_admin", "agent_console"],
-  editor: ["sidebar_workspace", "recent_activity", "agent_console"],
-  commenter: ["sidebar_workspace", "recent_activity"],
-  viewer: ["sidebar_workspace", "recent_activity"],
-  agent: ["agent_console"],
-};
+// Top-level navigation. Per-role visibility — через projection.forRoles
+// (V2Shell фильтрует rootProjections по activeRole).
+export const ROOT_PROJECTIONS = [
+  "sidebar_workspace",
+  "recent_activity",
+  "members_admin",
+  "agent_console",
+];
