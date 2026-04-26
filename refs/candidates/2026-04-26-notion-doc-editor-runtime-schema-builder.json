@@ -1,0 +1,73 @@
+{
+  "id": "runtime-schema-builder",
+  "version": 1,
+  "status": "candidate",
+  "archetype": "detail",
+  "trigger": {
+    "requires": [
+      {
+        "kind": "intent-creates",
+        "creates": "Property"
+      },
+      {
+        "kind": "intent-effect",
+        "intent": "change_property_kind",
+        "α": "replace",
+        "target": ".kind"
+      },
+      {
+        "kind": "entity-field",
+        "field": "kind",
+        "discriminator": true,
+        "min-values": 8
+      }
+    ]
+  },
+  "structure": {
+    "slot": "header",
+    "description": "Inline column-header inplace UI для add/rename/change-kind/remove property; kind определяет cell-renderer (chip/avatar/computed/file). Schema редактируется вместе с данными, не через отдельный admin-панель."
+  },
+  "rationale": {
+    "hypothesis": "Если сама схема — пользовательский artifact (а не developer-decision), её редактирование должно жить рядом с данными. Отдельный schema-screen ломает loop 'вижу-чего-не-хватает → добавляю поле → заполняю'.",
+    "evidence": [
+      {
+        "source": "notion",
+        "description": "Add property через '+' в header колонок, kind → cell renderer",
+        "reliability": "high"
+      },
+      {
+        "source": "airtable",
+        "description": "Field-customize прямо из header",
+        "reliability": "high"
+      },
+      {
+        "source": "coda",
+        "description": "Add column inline + per-column type",
+        "reliability": "high"
+      }
+    ],
+    "counterexample": [
+      {
+        "source": "salesforce",
+        "description": "Object Manager — schema отдельно от records, потому что multi-tenant governance важнее ergonomics",
+        "reliability": "high"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [
+      {
+        "domain": "notion",
+        "projection": "database_detail",
+        "reason": "DatabaseProperty с runtime add_property + 19 kind-вариантов"
+      }
+    ],
+    "shouldNotMatch": [
+      {
+        "domain": "invest",
+        "projection": "portfolios_catalog",
+        "reason": "Position fields зашиты в ontology, не runtime"
+      }
+    ]
+  }
+}

@@ -1,0 +1,78 @@
+{
+  "id": "self-ref-tree-with-drag-reparent",
+  "version": 1,
+  "status": "candidate",
+  "archetype": "catalog",
+  "trigger": {
+    "requires": [
+      {
+        "kind": "entity-field",
+        "field": "parentPageId",
+        "self-ref": true
+      },
+      {
+        "kind": "intent-effect",
+        "intent": "reparent_page",
+        "α": "replace",
+        "target": ".parentPageId"
+      }
+    ]
+  },
+  "structure": {
+    "slot": "sidebar",
+    "description": "Catalog рендерится как collapsible tree через self-ref FK; drag-and-drop меняет parent, hover показывает ⋮ + ⊕ для add-child; expand-state persistent per-user."
+  },
+  "rationale": {
+    "hypothesis": "Self-ref hierarchy — индикатор organizational drilldown, а не реляционной связи. Flat list скрывает структуру и заставляет пользователя помнить путь; tree даёт spatial memory + zero-cost reorganization через drag.",
+    "evidence": [
+      {
+        "source": "notion",
+        "description": "Sidebar — primary navigation; reparent через drag — основной способ организации workspace",
+        "reliability": "high"
+      },
+      {
+        "source": "obsidian",
+        "description": "File-tree pane с drag-to-folder, expand-state в graph",
+        "reliability": "high"
+      },
+      {
+        "source": "confluence",
+        "description": "Page-tree с ⋮ context menu и inline create-child",
+        "reliability": "high"
+      }
+    ],
+    "counterexample": [
+      {
+        "source": "linear",
+        "description": "Issues — flat queue с фильтрами; tree-структура была бы оверкиллом для transient workflow",
+        "reliability": "high"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [
+      {
+        "domain": "notion",
+        "projection": "pages_catalog",
+        "reason": "Page.parentPageId self-ref + reparent_page replace"
+      },
+      {
+        "domain": "workflow",
+        "projection": "nodes_tree",
+        "reason": "Node может иметь parent в group-структуре"
+      }
+    ],
+    "shouldNotMatch": [
+      {
+        "domain": "messenger",
+        "projection": "conversations_list",
+        "reason": "Conversation — flat, нет parent"
+      },
+      {
+        "domain": "delivery",
+        "projection": "orders_catalog",
+        "reason": "Order не образует hierarchy"
+      }
+    ]
+  }
+}

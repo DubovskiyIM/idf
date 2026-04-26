@@ -1,0 +1,74 @@
+{
+  "id": "external-invite-lifecycle",
+  "version": 1,
+  "status": "candidate",
+  "archetype": "detail",
+  "trigger": {
+    "requires": [
+      {
+        "kind": "entity-field",
+        "field": "email"
+      },
+      {
+        "kind": "intent-creates",
+        "creates": "Invite"
+      },
+      {
+        "kind": "entity-field",
+        "field": "acceptedAt"
+      },
+      {
+        "kind": "intent-effect",
+        "intent": "revoke_*",
+        "α": "remove"
+      }
+    ]
+  },
+  "structure": {
+    "slot": "sections",
+    "description": "Invite-section — отдельный list с lifecycle states (pending/accepted/revoked) + per-row resend/revoke actions; invite-form запрашивает email + level/role + scope. Отделена от member-list, потому что guests вне billing/workspace boundary."
+  },
+  "rationale": {
+    "hypothesis": "External users — отдельный класс с другой семантикой (нет workspace-membership, ограниченный scope, audit-trail важен для compliance). Mixing с regular members размывает policy и создаёт billing-сюрпризы.",
+    "evidence": [
+      {
+        "source": "notion",
+        "description": "Guest invites отдельный список в Settings → Members",
+        "reliability": "high"
+      },
+      {
+        "source": "github",
+        "description": "Outside collaborators отдельно от org members",
+        "reliability": "high"
+      },
+      {
+        "source": "figma",
+        "description": "Editors vs viewers vs link-share — разные lifecycle UI",
+        "reliability": "high"
+      }
+    ],
+    "counterexample": [
+      {
+        "source": "slack-free",
+        "description": "Guests upgrade-flow смешан с member invitation, потому что billing-тиры разные",
+        "reliability": "low"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [
+      {
+        "domain": "notion",
+        "projection": "guests_catalog",
+        "reason": "GuestInvite.email + lifecycle pending/accepted/revoked"
+      }
+    ],
+    "shouldNotMatch": [
+      {
+        "domain": "booking",
+        "projection": "specialists_catalog",
+        "reason": "Specialist — internal staff, нет invite-by-email"
+      }
+    ]
+  }
+}

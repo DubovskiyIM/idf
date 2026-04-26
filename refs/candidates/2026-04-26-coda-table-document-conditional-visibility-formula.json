@@ -1,0 +1,69 @@
+{
+  "id": "conditional-visibility-formula",
+  "version": 1,
+  "status": "candidate",
+  "archetype": null,
+  "trigger": {
+    "requires": [
+      {
+        "kind": "entity-field",
+        "entity": "Button",
+        "field": "visibleIfFormula",
+        "fieldKind": "expression"
+      },
+      {
+        "kind": "intent-effect",
+        "α": "replace",
+        "target": "button.visibleIfFormula",
+        "confirmation": "enter"
+      }
+    ]
+  },
+  "structure": {
+    "slot": "overlay",
+    "description": "Поле visibility-formula рендерится в meta-section сущности (рядом с её другими настройками). При authoring projection форма для предиката; при rendering projection примитив evaluate'ит формулу против row-context и возвращает boolean."
+  },
+  "rationale": {
+    "hypothesis": "Кнопки/блоки, видимые всегда, шумят. Спрятанные за бизнес-правилом — но это правило часто row-specific. Pattern формализует второй author-mode (предикат на видимость), отдельный от формы конфигурации основного действия.",
+    "evidence": [
+      {
+        "source": "coda",
+        "description": "Button.visibleIfFormula видимость по row-context",
+        "reliability": "high"
+      },
+      {
+        "source": "retool",
+        "description": "hidden property для component с expression evaluation",
+        "reliability": "high"
+      },
+      {
+        "source": "appsmith",
+        "description": "isVisible binding с JS-выражением",
+        "reliability": "medium"
+      }
+    ],
+    "counterexample": [
+      {
+        "source": "figma",
+        "description": "Visibility — toggle, не predicate (нет runtime context)",
+        "reliability": "high"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [
+      {
+        "domain": "automation",
+        "projection": "automation_detail",
+        "reason": "conditionFormula аналогична visibleIfFormula"
+      }
+    ],
+    "shouldNotMatch": [
+      {
+        "domain": "delivery",
+        "projection": "order_detail",
+        "reason": "Order.confirmAction всегда виден, нет conditional gating"
+      }
+    ]
+  }
+}

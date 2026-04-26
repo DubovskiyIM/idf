@@ -1,0 +1,69 @@
+{
+  "id": "ephemeral-presence-overlay",
+  "version": 1,
+  "status": "candidate",
+  "archetype": "detail",
+  "trigger": {
+    "requires": [
+      {
+        "kind": "entity-field",
+        "field": "lastSeenAt"
+      },
+      {
+        "kind": "entity-field",
+        "field": "userId"
+      },
+      {
+        "kind": "entity-kind",
+        "kind-value": "ephemeral"
+      }
+    ]
+  },
+  "structure": {
+    "slot": "header",
+    "description": "Top-right overlay показывает stack of avatars currently-viewing entity; inline-cursor с user color + name следует за caret. Источник — non-Φ-confirmed ephemeral entity (presence-cursor), TTL короткий, не materialized в audit log."
+  },
+  "rationale": {
+    "hypothesis": "Co-presence радикально снижает stepping-on-toes в shared editing. Persisting presence в Φ создаёт ненужный noise в audit-trail; ephemeral overlay даёт situational awareness без log-spam.",
+    "evidence": [
+      {
+        "source": "notion",
+        "description": "Avatar-stack + inline cursors с color",
+        "reliability": "high"
+      },
+      {
+        "source": "figma",
+        "description": "Live cursors + viewport-frustums",
+        "reliability": "high"
+      },
+      {
+        "source": "google-docs",
+        "description": "Coloured carets + collaborator avatars в header",
+        "reliability": "high"
+      }
+    ],
+    "counterexample": [
+      {
+        "source": "single-user-tool",
+        "description": "Solo journaling — presence бесполезен, добавляет noise",
+        "reliability": "high"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [
+      {
+        "domain": "notion",
+        "projection": "page_detail",
+        "reason": "PresenceCursor — ephemeral entity, не Φ-confirmed"
+      }
+    ],
+    "shouldNotMatch": [
+      {
+        "domain": "lifequest",
+        "projection": "habits_catalog",
+        "reason": "Solo-domain, нет co-editing"
+      }
+    ]
+  }
+}

@@ -1,0 +1,75 @@
+{
+  "id": "external-source-sync-status-header",
+  "version": 1,
+  "status": "candidate",
+  "archetype": "detail",
+  "trigger": {
+    "requires": [
+      {
+        "kind": "entity-field",
+        "entity": "*",
+        "field": "lastSyncedAt",
+        "fieldKind": "date"
+      },
+      {
+        "kind": "entity-field",
+        "entity": "*",
+        "field": "syncStatus",
+        "fieldKind": "select"
+      },
+      {
+        "kind": "intent-effect",
+        "α": "replace",
+        "target": "*.lastSyncedAt",
+        "confirmation": "click"
+      }
+    ]
+  },
+  "structure": {
+    "slot": "header",
+    "description": "Сущность, синхронизируемая с внешним источником, в header detail/block получает: status-badge (healthy/stale/error), 'last synced X ago' с tooltip полной даты, primary action 'Refresh' справа. Error раскладывает inline-сообщение об ошибке."
+  },
+  "rationale": {
+    "hypothesis": "Когда пользователь работает с данными, импортированными извне, ему критично видеть свежесть в момент потребления, а не лезть в settings. Status + age + refresh в одном header убирают неопределённость 'актуально ли это?' за один взгляд.",
+    "evidence": [
+      {
+        "source": "coda",
+        "description": "Cross-doc block — last-synced badge + refresh в header",
+        "reliability": "high"
+      },
+      {
+        "source": "linear",
+        "description": "Github sync — status в header issue",
+        "reliability": "high"
+      },
+      {
+        "source": "argocd",
+        "description": "Application sync status badge + last-synced timestamp",
+        "reliability": "high"
+      }
+    ],
+    "counterexample": [
+      {
+        "source": "internal-data-list",
+        "description": "Sync-status неуместен для пользовательских записей",
+        "reliability": "high"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [
+      {
+        "domain": "invest",
+        "projection": "asset_detail",
+        "reason": "Asset-цены приходят с market-data feed — нужен sync-status"
+      }
+    ],
+    "shouldNotMatch": [
+      {
+        "domain": "lifequest",
+        "projection": "habit_detail",
+        "reason": "Habit — internal entity, нет внешнего источника"
+      }
+    ]
+  }
+}

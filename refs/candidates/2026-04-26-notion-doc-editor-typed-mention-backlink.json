@@ -1,0 +1,71 @@
+{
+  "id": "typed-mention-backlink",
+  "version": 1,
+  "status": "candidate",
+  "archetype": "detail",
+  "trigger": {
+    "requires": [
+      {
+        "kind": "intent-creates",
+        "creates": "Mention"
+      },
+      {
+        "kind": "entity-field",
+        "field": "targetType",
+        "discriminator": true
+      },
+      {
+        "kind": "entity-field",
+        "field": "kind",
+        "discriminator": true
+      }
+    ]
+  },
+  "structure": {
+    "slot": "composer",
+    "description": "@-trigger в block-content открывает typed picker (person/page/date/database); selection создаёт Mention entity с двусторонним backlink + опциональный side-effect (notification для person, calendar-event для date). Backlink-section на target detail показывает 'mentioned in N pages'."
+  },
+  "rationale": {
+    "hypothesis": "Mentions без typing превращаются в plain links — теряется семантика (notification triggers, date-aware ranges, backlink-graph). Типизированный mention делает knowledge-graph computable: можно спросить 'все pages mentioning Q4-roadmap' без full-text search.",
+    "evidence": [
+      {
+        "source": "notion",
+        "description": "@person, @page, @date, @database — first-class entities с backlink",
+        "reliability": "high"
+      },
+      {
+        "source": "roam-research",
+        "description": "Bi-directional links с backlink-section внизу страницы",
+        "reliability": "high"
+      },
+      {
+        "source": "obsidian",
+        "description": "Wiki-links + dataview backlinks",
+        "reliability": "high"
+      }
+    ],
+    "counterexample": [
+      {
+        "source": "messenger",
+        "description": "@user в чате — только notification, без backlink-graph; mention не нужен first-class",
+        "reliability": "medium"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [
+      {
+        "domain": "notion",
+        "projection": "page_detail",
+        "reason": "Mention.targetType + Mention.kind, intent mention_user"
+      }
+    ],
+    "shouldNotMatch": [
+      {
+        "domain": "delivery",
+        "projection": "orders_catalog",
+        "reason": "Нет cross-entity reference-graph поверх transactional модели"
+      }
+    ]
+  }
+}

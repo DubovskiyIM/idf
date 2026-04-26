@@ -1,0 +1,69 @@
+{
+  "id": "live-formula-bar-with-preview",
+  "version": 1,
+  "status": "candidate",
+  "archetype": "detail",
+  "trigger": {
+    "requires": [
+      {
+        "kind": "entity-field",
+        "entity": "Column",
+        "field": "formula",
+        "fieldKind": "expression"
+      },
+      {
+        "kind": "intent-effect",
+        "α": "replace",
+        "target": "*.formula",
+        "confirmation": "enter"
+      }
+    ]
+  },
+  "structure": {
+    "slot": "footer",
+    "description": "Поле формулы рендерится не как plain text-input, а как formula-bar: monospace + autocomplete по схеме + live preview результата под полем + parser-ошибки inline (красный underline + hover-tooltip)."
+  },
+  "rationale": {
+    "hypothesis": "Формула — это код, а не строка. Без autocomplete пользователь не может найти доступные имена колонок; без preview не понимает, правильна ли формула; без inline-ошибки не знает, где сломалось. Plain text-input для formula — UX-аборт.",
+    "evidence": [
+      {
+        "source": "coda",
+        "description": "Formula-bar с =Table.Column autocomplete и live-preview результата",
+        "reliability": "high"
+      },
+      {
+        "source": "airtable",
+        "description": "Formula-editor с inline error highlighting",
+        "reliability": "high"
+      },
+      {
+        "source": "notion",
+        "description": "Formula-popover с syntax-highlight",
+        "reliability": "high"
+      }
+    ],
+    "counterexample": [
+      {
+        "source": "google-sheets",
+        "description": "Formula-bar без preview — но result сразу виден в cell",
+        "reliability": "medium"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [
+      {
+        "domain": "automation",
+        "projection": "automation_detail",
+        "reason": "Condition formula с autocomplete по schema"
+      }
+    ],
+    "shouldNotMatch": [
+      {
+        "domain": "messenger",
+        "projection": "message_detail",
+        "reason": "Message.content — plain text, не expression"
+      }
+    ]
+  }
+}

@@ -1,0 +1,74 @@
+{
+  "id": "multi-view-of-same-collection",
+  "version": 1,
+  "status": "candidate",
+  "archetype": "catalog",
+  "trigger": {
+    "requires": [
+      {
+        "kind": "sub-entity-exists",
+        "of": "View",
+        "with-discriminator": "kind"
+      },
+      {
+        "kind": "entity-field",
+        "field": "filters"
+      },
+      {
+        "kind": "entity-field",
+        "field": "sorts"
+      },
+      {
+        "kind": "entity-field",
+        "field": "groupBy"
+      }
+    ]
+  },
+  "structure": {
+    "slot": "header",
+    "description": "Tab-bar в header переключает renderer (table/board/gallery/list/calendar/timeline) над одним коллекционным датасетом; каждая View хранит свои filters/sorts/groupBy/visibleProperties и persistent. Запрос данных общий, конфигурация представления — per-view."
+  },
+  "rationale": {
+    "hypothesis": "Один датасет нужен разным cognitive tasks (planning → calendar, status-tracking → board, scanning → table). Hardcoded single-renderer заставляет либо forking данных, либо подмены через filters; first-class View снимает оба.",
+    "evidence": [
+      {
+        "source": "notion",
+        "description": "table/board/gallery/list/calendar/timeline на одной database",
+        "reliability": "high"
+      },
+      {
+        "source": "linear",
+        "description": "Issue list / board / roadmap — три view над одной коллекцией issues",
+        "reliability": "high"
+      },
+      {
+        "source": "airtable",
+        "description": "Grid/Kanban/Calendar/Gallery/Form — per-view конфиги",
+        "reliability": "high"
+      }
+    ],
+    "counterexample": [
+      {
+        "source": "messenger",
+        "description": "Conversation-list имеет один смысловой renderer — multi-view был бы overkill",
+        "reliability": "high"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [
+      {
+        "domain": "notion",
+        "projection": "database_detail",
+        "reason": "DatabaseView.kind ∈ 6 вариантов, persistent per database"
+      }
+    ],
+    "shouldNotMatch": [
+      {
+        "domain": "booking",
+        "projection": "specialists_catalog",
+        "reason": "Один canonical view — list of cards"
+      }
+    ]
+  }
+}

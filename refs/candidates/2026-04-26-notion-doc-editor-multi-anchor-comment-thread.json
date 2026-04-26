@@ -1,0 +1,75 @@
+{
+  "id": "multi-anchor-comment-thread",
+  "version": 1,
+  "status": "candidate",
+  "archetype": "detail",
+  "trigger": {
+    "requires": [
+      {
+        "kind": "entity-field",
+        "field": "blockId",
+        "nullable": true
+      },
+      {
+        "kind": "entity-field",
+        "field": "anchorRange",
+        "nullable": true
+      },
+      {
+        "kind": "entity-field",
+        "field": "pageId"
+      },
+      {
+        "kind": "entity-field",
+        "field": "resolved"
+      }
+    ]
+  },
+  "structure": {
+    "slot": "overlay",
+    "description": "Single Comment entity с 3 anchor levels (page-footer / block-sidecar / inline text-range); rendering выбирается по nullability (anchorRange != null → inline highlight, blockId != null без range → block-margin pin, оба null → page footer)."
+  },
+  "rationale": {
+    "hypothesis": "Три раздельные comment-сущности дублируют resolution/mention/threading логику; единая Comment с nullable anchor сохраняет lifecycle uniform и позволяет 'unresolve all', 'mentions of me', 'export thread' работать без if-else по типу.",
+    "evidence": [
+      {
+        "source": "notion",
+        "description": "Inline / block / page comments — все resolve, threadable, mention",
+        "reliability": "high"
+      },
+      {
+        "source": "google-docs",
+        "description": "Inline + suggestion modes — единый comment-pipe",
+        "reliability": "high"
+      },
+      {
+        "source": "figma",
+        "description": "Pin-комменты на canvas + page-level — общий resolve workflow",
+        "reliability": "medium"
+      }
+    ],
+    "counterexample": [
+      {
+        "source": "github-pr",
+        "description": "Inline review vs general PR comment — разные сущности (review vs issue-comment); потому что review имеет approval-семантику",
+        "reliability": "high"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [
+      {
+        "domain": "notion",
+        "projection": "page_detail",
+        "reason": "Comment.pageId+blockId+anchorRange (sparse FK)"
+      }
+    ],
+    "shouldNotMatch": [
+      {
+        "domain": "messenger",
+        "projection": "conversation_messages",
+        "reason": "Message — основной канал, не аннотация над контентом"
+      }
+    ]
+  }
+}

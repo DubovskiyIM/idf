@@ -6,17 +6,16 @@
       "fields": [
         "path",
         "name",
-        "config",
-        "syncProvider",
-        "createdAt"
-      ],
-      "statusValues": []
+        "configPath",
+        "syncEnabled",
+        "publishEnabled"
+      ]
     },
     {
       "name": "Folder",
       "fields": [
-        "name",
         "path",
+        "name",
         "parentId",
         "vaultId"
       ],
@@ -25,22 +24,16 @@
     {
       "name": "Note",
       "fields": [
-        "title",
         "path",
+        "title",
         "content",
         "frontmatter",
         "aliases",
-        "tags",
-        "folderId",
         "createdAt",
-        "modifiedAt",
-        "isDailyNote",
-        "publishStatus"
-      ],
-      "statusValues": [
-        "draft",
-        "published",
-        "unpublished"
+        "updatedAt",
+        "folderId",
+        "isDaily",
+        "isPublished"
       ],
       "foreignKey": "folderId→Folder"
     },
@@ -48,27 +41,12 @@
       "name": "WikiLink",
       "fields": [
         "sourceNoteId",
-        "targetNoteTitle",
         "targetNoteId",
-        "context",
-        "lineNumber",
+        "targetTitle",
+        "contextSnippet",
         "isResolved"
       ],
       "foreignKey": "sourceNoteId→Note"
-    },
-    {
-      "name": "Backlink",
-      "fields": [
-        "sourceNoteId",
-        "targetNoteId",
-        "contextSnippet",
-        "linkType"
-      ],
-      "statusValues": [
-        "linked",
-        "unlinked_mention"
-      ],
-      "foreignKey": "targetNoteId→Note"
     },
     {
       "name": "Tag",
@@ -76,60 +54,55 @@
         "name",
         "parentTag",
         "noteCount"
-      ],
-      "foreignKey": "parentTag→Tag"
-    },
-    {
-      "name": "Attachment",
-      "fields": [
-        "filename",
-        "path",
-        "mimeType",
-        "size",
-        "embeddedInNoteId"
-      ],
-      "foreignKey": "embeddedInNoteId→Note"
-    },
-    {
-      "name": "Workspace",
-      "fields": [
-        "name",
-        "openTabs",
-        "layout",
-        "activeTabId"
       ]
+    },
+    {
+      "name": "NoteTag",
+      "fields": [
+        "noteId",
+        "tagName"
+      ],
+      "foreignKey": "noteId→Note"
+    },
+    {
+      "name": "Alias",
+      "fields": [
+        "noteId",
+        "value"
+      ],
+      "foreignKey": "noteId→Note"
+    },
+    {
+      "name": "UnlinkedMention",
+      "fields": [
+        "sourceNoteId",
+        "targetNoteId",
+        "contextSnippet"
+      ],
+      "foreignKey": "sourceNoteId→Note"
     },
     {
       "name": "Tab",
       "fields": [
         "noteId",
-        "viewMode",
-        "workspaceId",
-        "position"
+        "mode",
+        "position",
+        "workspaceId"
       ],
       "statusValues": [
-        "live_preview",
         "source",
+        "live-preview",
         "reading"
       ],
       "foreignKey": "noteId→Note"
     },
     {
-      "name": "DailyNote",
-      "fields": [
-        "date",
-        "noteId",
-        "templateId"
-      ],
-      "foreignKey": "noteId→Note"
-    },
-    {
-      "name": "Template",
+      "name": "Workspace",
       "fields": [
         "name",
-        "content",
-        "targetFolder",
-        "dateFormat"
+        "layout",
+        "openTabs",
+        "activeTabId"
       ]
     },
     {
@@ -137,12 +110,11 @@
       "fields": [
         "id",
         "name",
-        "version",
         "author",
-        "description",
+        "version",
         "isCommunity",
         "isEnabled",
-        "settings"
+        "description"
       ],
       "statusValues": [
         "installed",
@@ -154,78 +126,68 @@
     {
       "name": "Theme",
       "fields": [
+        "id",
         "name",
         "author",
-        "cssVariables",
-        "isActive"
-      ],
-      "statusValues": [
-        "installed",
-        "active",
-        "available"
+        "isActive",
+        "cssVariables"
       ]
     },
     {
-      "name": "GraphNode",
+      "name": "DailyNote",
       "fields": [
+        "date",
         "noteId",
-        "x",
-        "y",
-        "colorGroup",
-        "tagFilter",
-        "folderFilter",
-        "isOrphan"
+        "templatePath"
       ],
       "foreignKey": "noteId→Note"
     },
     {
-      "name": "GraphEdge",
-      "fields": [
-        "sourceNodeId",
-        "targetNodeId",
-        "weight"
-      ],
-      "foreignKey": "sourceNodeId→GraphNode"
-    },
-    {
       "name": "SearchQuery",
       "fields": [
-        "queryString",
+        "query",
         "scope",
         "regex",
         "caseSensitive",
-        "matchedNoteIds"
+        "filters"
       ]
     },
     {
-      "name": "SyncSession",
+      "name": "GraphView",
       "fields": [
-        "provider",
+        "scope",
+        "centerNoteId",
+        "hops",
+        "filters",
+        "colorGroups"
+      ],
+      "statusValues": [
+        "global",
+        "local"
+      ]
+    },
+    {
+      "name": "PublishedNote",
+      "fields": [
+        "noteId",
+        "publishUrl",
+        "publishedAt"
+      ],
+      "foreignKey": "noteId→Note"
+    },
+    {
+      "name": "SyncStatus",
+      "fields": [
         "lastSyncAt",
-        "deviceId",
-        "status",
-        "encryptionKey"
+        "provider",
+        "isE2EE",
+        "deviceCount"
       ],
       "statusValues": [
-        "idle",
-        "syncing",
         "synced",
+        "syncing",
         "conflict",
-        "error"
-      ]
-    },
-    {
-      "name": "PublishSite",
-      "fields": [
-        "subdomain",
-        "selectedNoteIds",
-        "theme",
-        "lastPublishedAt"
-      ],
-      "statusValues": [
-        "draft",
-        "live",
-        "unpublished"
+        "offline"
       ]
     }
   ],
@@ -256,15 +218,33 @@
       "confirmation": "click"
     },
     {
+      "id": "create_folder",
+      "α": "add",
+      "creates": "Folder",
+      "confirmation": "enter"
+    },
+    {
       "id": "edit_note_content",
       "α": "replace",
       "target": "note.content",
       "confirmation": "enter"
     },
     {
-      "id": "switch_view_mode",
+      "id": "switch_to_source_mode",
       "α": "replace",
-      "target": "tab.viewMode",
+      "target": "tab.mode",
+      "confirmation": "click"
+    },
+    {
+      "id": "switch_to_live_preview",
+      "α": "replace",
+      "target": "tab.mode",
+      "confirmation": "click"
+    },
+    {
+      "id": "switch_to_reading_mode",
+      "α": "replace",
+      "target": "tab.mode",
       "confirmation": "click"
     },
     {
@@ -276,44 +256,20 @@
     {
       "id": "insert_tag",
       "α": "add",
-      "creates": "Tag",
+      "creates": "NoteTag",
       "confirmation": "enter"
     },
     {
       "id": "add_alias",
       "α": "add",
-      "target": "note.aliases",
+      "creates": "Alias",
       "confirmation": "enter"
     },
     {
-      "id": "create_folder",
-      "α": "add",
-      "creates": "Folder",
-      "confirmation": "enter"
-    },
-    {
-      "id": "open_tab",
-      "α": "add",
-      "creates": "Tab",
-      "confirmation": "click"
-    },
-    {
-      "id": "close_tab",
-      "α": "remove",
-      "target": "tabs",
-      "confirmation": "click"
-    },
-    {
-      "id": "switch_workspace",
+      "id": "linkify_mention",
       "α": "replace",
-      "target": "workspace.activeTabId",
+      "target": "unlinkedMention.isResolved",
       "confirmation": "click"
-    },
-    {
-      "id": "save_workspace",
-      "α": "add",
-      "creates": "Workspace",
-      "confirmation": "form"
     },
     {
       "id": "open_quick_switcher",
@@ -328,39 +284,57 @@
       "confirmation": "enter"
     },
     {
-      "id": "view_local_graph",
-      "α": "replace",
-      "target": "tab.viewMode",
-      "confirmation": "click"
-    },
-    {
-      "id": "view_global_graph",
+      "id": "open_note_in_tab",
       "α": "add",
       "creates": "Tab",
       "confirmation": "click"
     },
     {
+      "id": "close_tab",
+      "α": "remove",
+      "target": "tabs",
+      "confirmation": "click"
+    },
+    {
+      "id": "switch_workspace",
+      "α": "replace",
+      "target": "workspace.layout",
+      "confirmation": "click"
+    },
+    {
+      "id": "save_workspace",
+      "α": "add",
+      "creates": "Workspace",
+      "confirmation": "form"
+    },
+    {
+      "id": "view_local_graph",
+      "α": "replace",
+      "target": "graphView.scope",
+      "confirmation": "click"
+    },
+    {
+      "id": "view_global_graph",
+      "α": "replace",
+      "target": "graphView.scope",
+      "confirmation": "click"
+    },
+    {
       "id": "filter_graph",
       "α": "replace",
-      "target": "graphNode.tagFilter",
+      "target": "graphView.filters",
       "confirmation": "click"
     },
     {
-      "id": "linkify_unlinked_mention",
+      "id": "set_graph_color_groups",
       "α": "replace",
-      "target": "backlink.linkType",
-      "confirmation": "click"
+      "target": "graphView.colorGroups",
+      "confirmation": "form"
     },
     {
-      "id": "create_daily_note",
-      "α": "add",
-      "creates": "DailyNote",
-      "confirmation": "click"
-    },
-    {
-      "id": "apply_template",
+      "id": "browse_community_plugins",
       "α": "replace",
-      "target": "note.content",
+      "target": "plugin",
       "confirmation": "click"
     },
     {
@@ -376,17 +350,17 @@
       "confirmation": "click"
     },
     {
+      "id": "disable_plugin",
+      "α": "replace",
+      "target": "plugin.isEnabled",
+      "confirmation": "click"
+    },
+    {
       "id": "uninstall_plugin",
       "α": "remove",
       "target": "plugins",
       "irreversibility": "high",
       "confirmation": "click"
-    },
-    {
-      "id": "configure_plugin",
-      "α": "replace",
-      "target": "plugin.settings",
-      "confirmation": "form"
     },
     {
       "id": "apply_theme",
@@ -401,46 +375,40 @@
       "confirmation": "enter"
     },
     {
-      "id": "embed_attachment",
+      "id": "create_daily_note",
       "α": "add",
-      "creates": "Attachment",
+      "creates": "DailyNote",
       "confirmation": "click"
+    },
+    {
+      "id": "configure_daily_template",
+      "α": "replace",
+      "target": "dailyNote.templatePath",
+      "confirmation": "form"
     },
     {
       "id": "sync_to_cloud",
       "α": "replace",
-      "target": "syncSession.status",
+      "target": "syncStatus.lastSyncAt",
       "confirmation": "click"
     },
     {
-      "id": "resolve_sync_conflict",
+      "id": "configure_sync_provider",
       "α": "replace",
-      "target": "syncSession.status",
+      "target": "vault.syncEnabled",
       "confirmation": "form"
     },
     {
-      "id": "select_note_for_publish",
-      "α": "replace",
-      "target": "note.publishStatus",
-      "confirmation": "click"
-    },
-    {
       "id": "publish_note",
-      "α": "replace",
-      "target": "publishSite.lastPublishedAt",
+      "α": "add",
+      "creates": "PublishedNote",
       "confirmation": "click"
     },
     {
       "id": "unpublish_note",
-      "α": "replace",
-      "target": "note.publishStatus",
+      "α": "remove",
+      "target": "publishedNotes",
       "irreversibility": "high",
-      "confirmation": "click"
-    },
-    {
-      "id": "drag_note_to_folder",
-      "α": "replace",
-      "target": "note.folderId",
       "confirmation": "click"
     }
   ],
@@ -448,30 +416,27 @@
     "owner"
   ],
   "observations": [
-    "Single-role model — owner-data only, нет permission/share слоя; всё что видишь — твоё",
-    "File explorer слева как primary navigation: tree of folders + files с drag-to-reparent",
-    "Tabs сверху (Chrome-style) — multiple notes одновременно, switchable view mode per tab",
-    "Editor имеет 3 ортогональных view mode на one entity (live-preview / source / reading) — не три entity, а три проекции одного Note",
-    "Wiki-link [[Note Name]] — inline action: click создаёт link если note есть, или создаёт новую note если нет (lazy creation)",
-    "Auto-completion с fuzzy matching при наборе [[ — quick switcher inline в editor",
-    "Tags nested через slash (#area/work) — иерархия в одном поле, не отдельный entity-tree",
-    "Aliases в front-matter — дополнительные resolveable identifiers для одной note",
-    "Backlinks panel справа — derived view: список всех notes ссылающихся на текущую + context-snippet",
-    "Unlinked mentions — отдельная секция в backlinks panel с CTA 'linkify' (one-click conversion)",
-    "Graph view как полноценный archetype — global (весь vault) и local (per-note, 1-2 hops) проекции",
-    "Filter chips на graph: tags / paths / orphans / attachments — multi-select",
-    "Color groups в graph: по tag / folder / regex — настраиваемые правила окраски nodes",
-    "Daily notes — встроенный plugin с template-driven creation (yyyy-mm-dd.md), Calendar plugin визуализирует в grid",
-    "Quick switcher (Cmd+O) — fuzzy search по file name, primary navigation primitive",
-    "Full-text search (Cmd+Shift+F) — operator syntax 'tag:#ml file:research', scope filters",
-    "Community plugins — installable JS-пакеты, browse/install/enable как 3 разных action на one Plugin entity",
-    "Themes как параллельный plugin-like ecosystem (CSS-variables based), один active при time",
-    "Sync — opt-in feature с альтернативами (iCloud / Dropbox / Git) — sync provider как поле, не fixed",
-    "Publish — explicit selective: галочки на notes для публикации, не whole-vault export",
-    "Local-first: vault = папка на диске, .md файлы — single source of truth (не database)",
-    "Plugin-extensibility — Dataview позволяет SQL-like queries прямо в notes (extension authoring stack для users)",
-    "Workspace = saved layout of tabs + panels, switchable preset",
-    "Drag-to-reparent на folders в file tree — direct manipulation вместо modal",
-    "Delete note — destructive с confirmation; но по умолчанию moves to system trash (recoverable)"
+    "Single-role model: ownerEverything — no multi-user permission surface, all data is local-first owner-data",
+    "Three orthogonal navigation surfaces over the same Notes: file-tree (folders), wiki-links (backlinks), tags (nested)",
+    "File-tree as primary structure (left sidebar) — folders are first-class, unlike Notion's page-as-database model",
+    "Tabs at top mirror Chrome-style multi-document UX; each tab carries its own view mode (source/live-preview/reading)",
+    "View mode is per-tab state (source/live-preview/reading) — a tri-state toggle, not a global setting",
+    "Wiki-link [[Note Name]] auto-completes via fuzzy search and creates the note on click if missing — link-as-creation affordance",
+    "Backlinks panel (right sidebar) shows incoming references with paragraph-context snippets",
+    "Unlinked mentions surfaced as suggestions to linkify — separate from resolved backlinks",
+    "Tags support nesting via #area/work syntax — hierarchical tag tree as a secondary navigation",
+    "Aliases declared in YAML front-matter participate in wiki-link resolution (one note, many addressable names)",
+    "Graph view has two scopes: global (force-directed over entire vault) and local (1-2 hop neighborhood per note)",
+    "Graph filter chips (tags, paths, orphans, attachments) and color groups (tag/folder/regex) — exploration-mode UI",
+    "Daily notes are template-driven, date-keyed (yyyy-mm-dd.md), surfaced via Calendar plugin in calendar grid",
+    "Plugin ecosystem (1500+ community plugins) is the primary extensibility surface — Browse → install → enable workflow",
+    "Themes are CSS-variable-based (200+) — purely cosmetic layer separate from functional plugins",
+    "Cmd+O quick switcher (file-by-name fuzzy) and Cmd+Shift+F full-text (regex, scope, filters) are two distinct search modes",
+    "Search-in-search compositional queries: 'tag:#ml file:research' — query DSL surface",
+    "Sync is opt-in and provider-pluggable (Obsidian Sync E2EE / iCloud / Dropbox / Syncthing / Git) — vault is just a folder",
+    "Publish is selective per-note (checkbox-driven) → static site at yourname.obsidian.page",
+    "Markdown files are the single source of truth — UI is a derived view over plain-text files (local-first)",
+    "Drag-to-reparent in file explorer is the primary move-to-folder affordance",
+    "Workspaces capture full layout state (open tabs, panel positions) — saveable presets for context-switching"
   ]
 }

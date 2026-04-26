@@ -1,0 +1,71 @@
+{
+  "id": "linked-mirror-collection",
+  "version": 1,
+  "status": "candidate",
+  "archetype": "detail",
+  "trigger": {
+    "requires": [
+      {
+        "kind": "entity-field",
+        "entity": "Database",
+        "field": "isInline"
+      },
+      {
+        "kind": "entity-field",
+        "entity": "Block",
+        "field": "kind"
+      },
+      {
+        "kind": "intent-creates",
+        "creates": "Block"
+      }
+    ]
+  },
+  "structure": {
+    "slot": "body",
+    "description": "Inline-block kind 'database_linked' рендерит view другой Database в текущей Page без копирования rows; mutations через linked view идут в source database (single source of truth)."
+  },
+  "rationale": {
+    "hypothesis": "Контекстная aggregation — собрать tasks-проекта на странице проекта — требует view rows другой коллекции в нескольких местах одновременно; mirror без copy предотвращает desync.",
+    "evidence": [
+      {
+        "source": "notion",
+        "description": "Linked databases — same source rendered в N мест",
+        "reliability": "high"
+      },
+      {
+        "source": "coda",
+        "description": "Cross-doc tables через explicit link",
+        "reliability": "high"
+      },
+      {
+        "source": "obsidian",
+        "description": "Dataview-блоки запрашивают notes по query inline",
+        "reliability": "medium"
+      }
+    ],
+    "counterexample": [
+      {
+        "source": "google-docs",
+        "description": "Embed только-чтение, без write-through",
+        "reliability": "medium"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [
+      {
+        "domain": "notion",
+        "projection": "page_detail",
+        "reason": "Block.kind включает database_linked + Database с isInline"
+      }
+    ],
+    "shouldNotMatch": [
+      {
+        "domain": "invest",
+        "projection": "portfolio_detail",
+        "reason": "Нет cross-document linked-collection mechanism"
+      }
+    ]
+  }
+}
