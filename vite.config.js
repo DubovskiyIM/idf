@@ -12,6 +12,7 @@ function spaFallback() {
     '/booking', '/booking-v2', '/planning', '/planning-v2',
     '/workflow', '/messenger', '/messenger-v2',
     '/freelance', '/gravitino', '/keycloak', '/argocd',
+    '/delivery', '/compliance', '/notion',
   ];
   return {
     name: 'spa-fallback',
