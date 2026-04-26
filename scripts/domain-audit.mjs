@@ -84,12 +84,21 @@ export function checkAntagonistSymmetry(intents) {
 export function checkIrreversibility(intents) {
   const gaps = [];
   for (const [name, intent] of Object.entries(intents || {})) {
-    // Поддерживаем обе формы декларации:
+    // §12.7: поддерживаем три формы декларации.
     //   1. legacy: intent.irreversibility (boolean / object) — pre-v1.7
-    //   2. canonical: intent.context.__irr.point (low/medium/high) — v1.7+
+    //   2. intent-level: intent.context.__irr.point (low/medium/high) — v1.7+
+    //   3. per-effect: intent.particles.effects[*].context.__irr.point —
+    //      когда intent эмитит несколько эффектов и __irr нужен только для
+    //      некоторых (compliance approve_je, delivery capture_payment через
+    //      server irreversibility.mergeIntoContext).
     if (intent.irreversibility) continue;
-    const irrPoint = intent.context?.__irr?.point;
-    if (irrPoint && ["low", "medium", "high"].includes(irrPoint)) continue;
+    const intentLevelPoint = intent.context?.__irr?.point;
+    if (intentLevelPoint && ["low", "medium", "high"].includes(intentLevelPoint)) continue;
+    const effectsList = intent.particles?.effects || [];
+    const hasEffectIrr = effectsList.some(
+      (e) => ["low", "medium", "high"].includes(e?.context?.__irr?.point),
+    );
+    if (hasEffectIrr) continue;
 
     const effects = intent.particles?.effects || [];
     const hasRemove = effects.some((e) => e.α === "remove");
