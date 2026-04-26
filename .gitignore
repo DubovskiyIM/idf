@@ -29,6 +29,7 @@ CLAUDE.md
 docs/specs/
 docs/superpowers/
 .superpowers.worktrees/
+.worktrees/
 .superpowers/
 .npm-cache/
 
