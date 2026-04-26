@@ -107,13 +107,8 @@
 **Priority:** P0 — wallet-flow полностью сломан без creator-affordance в empty-state.
 **Workaround сейчас:** нет (SDK-level, не обходится декларативно).
 
-### 3.3 🟡 `IrreversibleBadge` не auto-placed
-**Файлы:** `packages/core/src/crystallize_v2/assignToSlotsDetail.js::buildDetailBody` + `packages/renderer/src/controls/ConfirmDialog.jsx`.
-**Проблема.** Entity с `__irr:{point:"high", at}` получает поле данных, но SDK `buildDetailBody` не инжектит `{type:"irreversibleBadge"}` node в children. ConfirmDialog тоже не рендерит badge (`controls/ConfirmDialog.jsx`).
-**Что сделать.**
-- `buildDetailBody` должен добавлять `irreversibleBadge` в header-row (рядом с title) для mainEntity, если у target есть `__irr`.
-- ConfirmDialog должен рендерить badge, если `spec.irreversibility === "high"`, с текстом причины из `__irr.reason`.
-- ConfirmDialog fixed label «Удалить» — сделать configurable (`spec.confirmLabel` / `spec.danger: false`). Для `confirm_deal` надпись «Удалить» абсурдна.
+### 3.3 ✅ `IrreversibleBadge` auto-placed
+**Статус:** ЗАКРЫТО. `assignToSlotsDetail.js:827` инжектит `{type: "irreversibleBadge", bind: "__irr"}` в header-row для detail-проекций mainEntity с irreversible-action. Тесты в `assignToSlotsDetail.test.js:208-267` («IrreversibleBadge auto-placed (backlog 3.3)»). `ConfirmDialog.jsx:7-16` поддерживает `spec.__irr` (decl) и `item.__irr` (post-confirm) с reason. `confirmLabel` configurable. Renderer primitive в `packages/renderer/src/primitives/IrreversibleBadge.jsx`.
 
 ### 3.4 🟢 `registerUIAdapter` вызывается в render
 **Файл:** `packages/renderer/src/adapters/registry.js` + usage pattern.
@@ -459,18 +454,13 @@ Import-generated ontology не имеет: compositions (R9), invariants (transi
 ### 10.3 ✅ Закрыт 2026-04-24 — SDK PR idf-sdk#293
 **`column.kind="badge"` cell-renderer** в DataGrid с colorMap/toneMap. Host integration в ArgoCD PR #118 + renderer bump 0.47.0 через host PR #119.
 
-### 10.4 ⛔ Inline-children gap — K8s `status.resources[]` / `status.conditions[]`
-**Файл:** `packages/importer-openapi/src/schemaToEntity.js`, `packages/renderer/src/primitives/SubCollectionSection.jsx`
-**Проблема.** `Application.status.resources[]` (K8s Deployment/Service/Pod list) и `Application.status.conditions[]` (audit-log timeline) — **inline массивы в OpenAPI**, не отдельные entities через FK. Importer не извлекает их как child-коллекции. Renderer не умеет отображать inline-array как grouped table/tree/timeline.
+### 10.4 ✅ Inline-children family — ЗАКРЫТО
+**Статус:** ЗАКРЫТО. Pipeline для inline-children теперь полный:
+1. **10.4a** `importer-openapi.extractInlineArrays` — idf-sdk #306 (inline array-of-object → `entity.inlineCollections[]` metadata).
+2. **10.4b** `SubCollectionSection` inline-mode — idf-sdk #315 (items резолвятся прямо из parent's field по `inlineSource` path, без FK-lookup).
+3. **10.4c** `renderAs` dispatchers `resourceTree` + `conditionsTimeline` — idf-sdk renderer (`PRIMITIVES.resourceTree` + named exports `ResourceTree` / `EventTimeline`).
 
-**Workaround в idf (Stage 5+6, PR #120+#121).** Host декларирует синтетические `Resource` / `ApplicationCondition` entities с `applicationId` FK + seed расширяется с child effects + `application_detail.subCollections[]` с `renderAs` dispatcher.
-
-**Что сделать (3 шага):**
-1. **10.4a SDK**: `importer-openapi.extractInlineArrays` — извлекать inline array-of-object в nested-collection metadata (не создавая separate entity, но делая их видимыми renderer'у как child).
-2. **10.4b SDK renderer**: inline-children primitive — рендерит nested array как subCollection БЕЗ FK-lookup (items резолвятся прямо из parent's field).
-3. **10.4c SDK dispatchers**: new renderAs dispatchers:
-   - `resourceTree` — tree view с parent-indent (Deployment → ReplicaSet → Pod), K8s kind-icons, badge columns (syncStatus/healthStatus)
-   - `conditionsTimeline` — vertical-line timeline с icon bullets, time-ago formatting, color-coding по severity (type/status)
+ArgoCD host-workaround'ы (`Resource` / `ApplicationCondition` синтетические entities + seed child effects) могут быть удалены в follow-up cleanup PR.
 
 ### 10.5 ⛔ Deeply-nested `Application.spec` — tabbed form / YAML-editor
 **Файл:** `packages/renderer/src/archetypes/ArchetypeForm.jsx`
@@ -498,9 +488,9 @@ Import-generated ontology не имеет: compositions (R9), invariants (transi
 
 ---
 
-**Приоритет (обновлённый 2026-04-24):**
-- **P0 (блокирует e2e для status-driven admin):** 10.4abc (inline-children + resourceTree + conditionsTimeline dispatchers) — сейчас graceful fallback на SubCollectionSection с badge columns, визуально flat
-- **P1 (качество importer):** 10.1 (K8s CRD merge), 10.6 (Swagger 2.0 type-loss), 10.2 (markEmbedded K8s roots)
+**Приоритет (обновлённый 2026-04-26):**
+- ✅ **10.4abc** (inline-children family) — ЗАКРЫТО (idf-sdk #306 / #315 / dispatchers).
+- **P1 (качество importer):** 10.1 (K8s CRD merge), 10.6 (Swagger 2.0 type-loss), 10.2 (markEmbedded K8s roots) — host-workaround'ы остаются в `argocd/ontology.js` (K8S_CRD_MERGE / SEMANTIC_AUGMENT / INTENT_RENAME).
 - **P2 (полнота):** 10.5 (YAML editor для deeply-nested spec), 10.7 (grpc-gateway canonicalization)
 
 ---
