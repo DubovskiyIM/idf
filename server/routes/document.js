@@ -39,7 +39,9 @@ function makeDocumentRouter() {
     const projectionId = req.params.projection;
     const format = (req.query.format || "").toLowerCase()
       || (req.accepts(["html", "json"]) === "json" ? "json" : "html");
-    const role = (req.query.as || "observer").toLowerCase();
+    // Role identifier — case-sensitive (ontology может использовать camelCase
+    // идентификаторы: `formatAuthor`, `workspaceOwner`). Default — "observer".
+    const role = req.query.as || "observer";
 
     const ontology = getOntology(domain);
     if (!ontology) {

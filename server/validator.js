@@ -9,7 +9,7 @@ function updateTypeMap(ontology) {
   const map = { draft: "drafts" };
   if (ontology?.entities) {
     for (const entityName of Object.keys(ontology.entities)) {
-      // Ключ lookup — lowercase (регистронезависимый), значение — camelCase plural.
+      // Ключ lookup — lowercase singular, значение — camelCase plural.
       // "ScheduledTimer" → ключ "scheduledtimer", значение "scheduledTimers"
       const singular = entityName.toLowerCase();
       // camelCase base: первая буква строчная, остальное как в оригинале
@@ -61,12 +61,15 @@ function foldWorld() {
     }
 
     const base = ef.target.split(".")[0];
-    // Lookup регистронезависимый: ключи SINGULAR_TO_PLURAL — в нижнем регистре
+    // §13.15: target case-insensitive. CamelCase entity (`BacklogItem.status`)
+    // → lookup через SINGULAR_TO_PLURAL[lowercase] → canonical plural.
+    // Если уже plural lowercase (`backlogitems`) — fall through к нему.
     const collType = SINGULAR_TO_PLURAL[base.toLowerCase()] || base;
     if (!collections[collType]) collections[collType] = {};
 
     switch (ef.alpha) {
-      case "add": {
+      case "add":
+      case "create": { // §13.14: SDK `α:create` приравнивается к `α:add` в fold
         const entityId = ctx.id || ef.id;
         collections[collType][entityId] = { ...ctx };
         break;
@@ -76,9 +79,12 @@ function foldWorld() {
         if (entityId && collections[collType][entityId]) {
           const segments = ef.target.split(".");
           if (segments.length > 1) {
-            // Target вида "Entity.field" — обновляем конкретное поле через val
+            // Target вида "Entity.field" — берём значение из `val` (ef.value),
+            // §13.16 fallback: если val null/undefined, читаем `ctx[field]`
+            // (intent particles кладут fields через context).
             const field = segments.pop();
-            collections[collType][entityId] = { ...collections[collType][entityId], [field]: val };
+            const next = val != null ? val : ctx[field];
+            collections[collType][entityId] = { ...collections[collType][entityId], [field]: next };
           } else {
             // Target вида "Entity" — мержим весь ctx (без id) поверх записи
             const { id: _id, ...patch } = ctx;
@@ -103,7 +109,17 @@ function foldWorld() {
 
   const world = {};
   for (const [type, entities] of Object.entries(collections)) {
-    world[type] = Object.values(entities);
+    const arr = Object.values(entities);
+    world[type] = arr;
+    // §13.15 fix: alias lowercase-plural форма для совместимости с SDK
+    // material-er'ами (findCollection делает `pluralize(entity.toLowerCase())`,
+    // а server-side updateTypeMap хранит camelCase). Без alias'а у CamelCase
+    // entities (`BacklogItem` → `backlogItems`) document/voice материализатор
+    // выдаёт пустую коллекцию.
+    const lower = type.toLowerCase();
+    if (lower !== type && !world[lower]) {
+      world[lower] = arr;
+    }
   }
   return world;
 }

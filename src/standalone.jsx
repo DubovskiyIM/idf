@@ -24,6 +24,7 @@ import * as keycloakDomain from "./domains/keycloak/domain.js";
 import * as argocdDomain from "./domains/argocd/domain.js";
 import * as automationDomain from "./domains/automation/domain.js";
 import * as notionDomain from "./domains/notion/domain.js";
+import * as metaDomain from "./domains/meta/domain.js";
 
 import BookingUI from "./domains/booking/ManualUI.jsx";
 import PlanningUI from "./domains/planning/ManualUI.jsx";
@@ -74,6 +75,10 @@ registerCanvas("regulator_report", RegulatorReportCanvas);
 import NotionBlockCanvas from "./domains/notion/canvas/BlockCanvas.jsx";
 registerCanvas("block_canvas", NotionBlockCanvas);
 
+// Meta-домен canvas (Studio shell)
+import { registerMetaCanvases } from "./domains/meta/canvas/registerCanvases.jsx";
+registerMetaCanvases();
+
 // Домены с переключением адаптера
 const DOMAIN_ADAPTERS = {
   lifequest: appleAdapter,
@@ -83,6 +88,7 @@ const DOMAIN_ADAPTERS = {
   keycloak: antdAdapter,
   argocd: antdAdapter,
   notion: antdAdapter,
+  meta: antdAdapter,
 };
 
 function makeV2UI(domainId) {
@@ -104,7 +110,9 @@ function makeV2UI(domainId) {
   };
 }
 
-const DOMAINS_RAW = {
+// Экспортируется как single-source-of-truth для main.jsx и vite.config.js
+// (динамическая регистрация роутов вместо ручного списка). §13.10.
+export const DOMAINS_RAW = {
   booking: bookingDomain,
   planning: planningDomain,
   workflow: workflowDomain,
@@ -118,6 +126,7 @@ const DOMAINS_RAW = {
   argocd: argocdDomain,
   automation: automationDomain,
   notion: notionDomain,
+  meta: metaDomain,
 };
 
 const DOMAIN_TITLES = {
@@ -137,6 +146,7 @@ const DOMAIN_TITLES = {
   argocd: "🚀 ArgoCD",
   automation: "⚙️ Automation",
   notion: "📝 Notion",
+  meta: "🪞 Meta (IDF-on-IDF)",
 };
 
 const DOMAINS = {
@@ -156,6 +166,7 @@ const DOMAINS = {
   argocd: { ...argocdDomain, UI: makeV2UI("argocd") },
   automation: { ...automationDomain, UI: makeV2UI("automation") },
   notion: { ...notionDomain, UI: makeV2UI("notion") },
+  meta: { ...metaDomain, UI: makeV2UI("meta") },
 };
 
 export default function StandaloneApp({ domainId }) {

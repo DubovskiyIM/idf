@@ -645,3 +645,175 @@ WorkflowNode: {
 5. **P0** — §12.10 BlockEditor primitive (or explicit out-of-scope).
 6. **P2** — §12.3 / §12.4 / §12.5 / §12.6 — minor fixes / docs / audit polish.
 
+## §13 — Meta-domain Level 1 (IDF-on-IDF, 2026-04-26, observability-only)
+
+**Source.** Эксперимент «положить IDF на IDF»: построить мета-домен, чьи сущности — Domain / Intent / Projection / Pattern / Witness / RRule / Adapter / Capability. Φ — build-time snapshot из `pattern-bank/`, `src/domains/*`, `~/WebstormProjects/idf-sdk/packages/*`.
+
+**Scope test'а.** Level 1 = read-only observability (write-side intent'ы — Level 2; full Studio replacement через codegen — Level 3). Бутстрап-вопрос «codegen vs reader» отложен до выбора (а)/(б)/(в) — см. §13.0.
+
+**Snapshot summary** (после первого билда): 16 доменов, 339 intents, 196 projections, 44 stable + 11 candidate patterns, 4 adapters, 23 capabilities, 122 witnesses, 41 rules → 778 seed-effects.
+
+### 13.0 Architectural decision — codegen ≠ reader (РЕШЕНО 2026-04-26: вариант б)
+
+**Проблема.** §1 манифеста v2 фиксирует **четыре** equivalent reader'а (pixels / voice / agent-API / document). Любой write-side intent в meta-домене (`create_domain`, `promote_pattern_from_candidate_to_stable`, `register_adapter`) пишет в файловую систему — это codegen, не reader.
+
+**Решение (2026-04-26): soft-authoring (б).** Меняем Φ — отдельный compiler-шаг применяет к файловой системе.
+
+- Φ-effects от write-side intent'ов сохраняются как обычные `confirmed` записи.
+- Compiler (`scripts/meta-compile.mjs`) — отдельный CLI, не reader. Читает мета-Φ (через `/api/effects` или прямо `foldWorld()`), эмиттит patch'и в `.md`/`.json`/`.cjs`. Идемпотентен через стабильные маркеры (`<!-- meta-compile: <id> -->`).
+- **Compiler — НЕ пятая материализация.** Это writer-of-source, а не reader-of-format. Манифест остаётся timeless с четырьмя reader'ами.
+- Двухступенчатость (Φ → compile) даёт reversibility: пока compile не запустился, изменение в Φ можно откатить через `α:replace`. После compile patch в файлы — обычный git artifact.
+
+**Open для Level 2:**
+- Какие write-intent'ы первой волны: `add_backlog_item`, `add_witness_review`, `promote_pattern_from_candidate_to_stable`, `mark_intent_irreversible`.
+- Compile trigger: ручной (CI / `npm run meta-compile`) или автоматический (post-confirmed-effect SSE → debounced compile).
+- Конфликт-разрешение: что если файл изменён руками после compile? — git merge / детекция через hash.
+
+### 13.1 P0 — `pattern.id` не уникален между bank'ами
+
+**Источник.** При seed'е `pattern-bank/candidate/avito-rating-aggregate-hero.json` и `idf-sdk/packages/core/src/patterns/stable/detail/rating-aggregate-hero.js` дают одинаковый `id: "rating-aggregate-hero"`. Workaround в meta-seed — composite `${status}__${patternId}__${sourceProduct}`.
+
+**Проблема.** Identity паттерна де-факто составной ключ (status + id + sourceProduct), но формализован как plain string. Это работает локально внутри `stable/<archetype>/`, но не работает в кросс-bank-аналитике, и не работает в `pattern.witnesses[]` ссылках, если паттерн «начинался как candidate с product-prefix, мигрировал в stable».
+
+**Что нужно.** Либо `pattern.id` уникальный глобально (rename candidate'ов), либо официально composite-ключ + helper `patternKey(p) → "stable__hero-create"` в SDK.
+
+### 13.2 P0 — `role.base: "admin"` не даёт автоматического nav-access
+
+**Источник.** Meta-домен `formatAuthor` объявлен `base: "admin"` с `visibleFields: { Domain: ["*"], … }`. `filterProjectionsByRole(ROOT_PROJECTIONS.formatAuthor, projections, "formatAuthor")` правильно отдаёт проекции с `forRoles: [..., "formatAuthor"]`, но не делает row-override.
+
+**Проблема.** Две независимые системы видимости — `role.base` (row-override через `filterWorldForRole`) и `forRoles` (nav-projection-level). Они ортогональны, что задокументировано, но disconnect создаёт author trap: «admin есть, но проекции не видит». Ожидание автора — admin = bypass и для row, и для nav.
+
+**Что нужно.** Либо документировать «admin требует явного `forRoles` в каждой projection», либо `filterProjectionsByRole` уважает `ontology.roles[role].base === "admin"` как короткое замыкание.
+
+### 13.3 P1 — `pattern-bank/candidate/*.json` shape без `sourceProduct`
+
+**Источник.** Meta-snapshot scanner вынужден извлекать `sourceProduct` из имени файла (`avito-...`, `profi-...`), потому что JSON-shape не имеет declared поля.
+
+**Проблема.** Naming convention `<product>-<patternId>.json` — implicit. `pattern-researcher.mjs` пишет JSON без `sourceProduct`, `observedIn[]`, `productCategory`. Поиск «какой паттерн где наблюдался» требует grep по filename'у.
+
+**Что нужно.** Спецификация candidate-shape (idf-spec / pattern-bank/README): обязательные поля `sourceProduct: string`, `observedIn: string[]`, опциональный `productCategory`.
+
+### 13.4 P2 — JSON-snapshot import работает только в Vite
+
+**Источник.** `import snapshot from "./meta-snapshot.json"` падает в plain Node (`ERR_IMPORT_ATTRIBUTE_MISSING`); требует `with: { type: "json" }`. Vitest и Vite handle сами через transform.
+
+**Проблема.** Build-time snapshot pattern (запекаемые данные в .json + import) ломается, как только meta-домен становится backend-runtime'ом (нужен в `server/routes/meta.js` для `/api/meta/world`). Альтернативно — `JSON.parse(fs.readFileSync(...))`.
+
+**Что нужно.** Решение в SDK / docs: если snapshot-pattern легитимен, прокинуть `with` атрибут или предоставить `@intent-driven/snapshot` helper, читающий через fs.
+
+### 13.5 P0 — Static scanner не AST-aware (helper-style projection authoring)
+
+**Источник.** `src/domains/gravitino/projections.js` использует helper-функции (`metalake_list: catalog("Metalake", "Metalakes", [...])`). Regex-парсер meta-snapshot экстрактит только id+count, body=null. Без depth-aware skipExpression парсер находил фантомные `params:` ключи в helper-аргументах (6 ложных коллизий до фикса).
+
+**Проблема.** Любой meta-domain, читающий формат как сторонний tool (без рантайма domain-loader'а), должен делать **runtime evaluate** (vm / dynamic import) или вызывать TypeScript compiler API. Static scanning не масштабируется на helper-style authoring.
+
+**Что нужно.** Либо `@intent-driven/format-reflect` пакет (runtime evaluate ontology/projections без mounting domain'а), либо обязательное правило «projection authoring = только object-literal» (что ломает gravitino's actual style и снижает leverage helper'ов).
+
+### 13.6 P1 — Witnesses не персистируются (recomputed-per-crystallize)
+
+**Источник.** При scaffold'е meta-онтологии я предположил `Witness` как Φ-stored сущность (history, audit). На деле `artifact.witnesses[]` пересчитывается каждый раз из `crystallizeV2` по текущим intents/ontology/projection — это не events, а derived view. Meta-домен синтезирует «синтетические» witness-rows только для подсчёта.
+
+**Проблема.** Невозможно ответить на вопросы вроде «какой witness был на slot X в projection Y две недели назад» / «когда basis сменился с heuristic на pattern-bank». Witness-как-Φ-event дал бы full audit, но требует рантайм-инжекта в crystallize_v2.
+
+**Что нужно.** Решение: считаем ли witness'ы persistent или derived. Если persistent — нужен `emit_witness` effect-shape; если derived — закрыть как «not applicable».
+
+### 13.7 P1 — Reverse-association от Domain к Intent/Projection/RRule не очевидна
+
+**Источник.** Meta-онтология имеет `Intent.domainId → Domain`, `Projection.domainId → Domain`, `RRule.domainId → Domain`. Это даёт catalog/feed-witness в Intent, но reverse-side (на Domain.detail показать «its intents/projections/rules») требует либо `subCollections: [...]` в projection, либо `reverse-association-browser` pattern.
+
+**Проблема.** Сейчас домен `meta` не использует subCollections (Level 1, минимум авторства), поэтому Domain.detail без вспомогательных проекций бессмысленный.
+
+**Что нужно.** Либо добавить subCollections в `domain_detail` (Level 1.1), либо подтвердить что `reverse-association-browser` pattern автоматически apply'ится.
+
+### 13.8 P0 — `/api/document` и `/api/voice` lowercase'ят role-параметр
+
+**Источник.** Live-probe мета-домена: `GET /api/document/meta/pattern_bank_browser?as=formatAuthor` отдавал `Role "formatauthor" не найдена в ontology`. `server/routes/document.js:42` и `server/routes/voice.js:33` принудительно делали `.toLowerCase()` на `req.query.as`, но онтология использует camelCase идентификаторы (`formatAuthor`, `workspaceOwner`).
+
+**Что сделано.** Удалил `.toLowerCase()` в обоих route'ах (case-sensitive role lookup). Зафиксировано как host-fix в этом эксперименте.
+
+**Что нужно.** Audit остальных мест где роли передаются через query/header (agent-API, possible internal callers).
+
+### 13.9 P0 — Установленный `@intent-driven/core@0.74.0` отстаёт от §12.1 fix
+
+**Источник.** Live-probe: `materializeAsDocument({archetype: "catalog"})` без `kind` → `"Неизвестный архетип undefined"`. `normalizeProjection` присутствует в SDK source (core@0.78+) но не в bundled dist@0.74.0. CLAUDE.md упоминает 0.76, на nm есть 0.79.
+
+**Workaround.** В meta-проекциях задаём оба поля (`archetype: "catalog", kind: "catalog"`). Подтверждение, что §12.1 — реальный live-gap, а не теоретический.
+
+**Что нужно.** Bump core до 0.79+ в host package.json (сразу `npm install --package-lock-only` per memory). Параллельно мета-домен — natural triage point для obsolete bundled deps.
+
+### 13.11 P1 — sales overlay entries без поля `key` (ЗАКРЫТО 2026-04-27, idf-sdk#381 merged + published @0.84.x)
+
+**Источник.** Live runtime-evaluate: `crystallizeV2(salesIntents, ...)` логировал 8+ warnings `overlay entry missing "key"`.
+
+**Сделано.** `undo-toast-window.apply` и `optimistic-replace-with-undo.apply` теперь эмиттят `key: "undoToast__<intentId>"`. После bump core 0.81→0.84.2 в host: snapshot builder выдаёт **0 overlay warnings** (было 8+).
+
+### 13.12 P1 — `subCollection.entity` vs `sub.collection` (ЗАКРЫТО 2026-04-27, idf-sdk#380 merged + published @0.84.x)
+
+**Источник.** Live: `documentMaterializer::materializeDetail` искал `world[sub.collection]`, CamelCase `{entity: "Intent"}` ломалось.
+
+**Сделано.** SDK fix: `materializeDetail` использует `findCollection(world, sub.entity)`. После bump'а в host убран дублирующий workaround в `meta-домен/projections.js` — clean `{entity: "Intent", foreignKey: "domainId"}` work'ает live (booking.detail отдаёт 22 intents / 15 projections / 1 rule / 84 witnesses).
+
+### 13.10 P1 — `src/main.jsx` route registration вручную для каждого домена (ЗАКРЫТО 2026-04-27)
+
+**Источник.** Добавление `/meta` route потребовало двух edit'ов: `src/main.jsx` (React Router) и `vite.config.js` (SPA fallback list). Те же edit'ы пропущены для automation домена.
+
+**Сделано.** `standalone.jsx` экспортирует `DOMAINS_RAW`; `main.jsx` рендерит роуты через `Object.keys(DOMAINS_RAW).map(...)` + `V2_ALIASES = ["booking","planning","messenger"]`; `vite.config.js` читает `src/domains/*` через `readdirSync`. Single source of truth.
+
+### 13.13 P0 — invariant cascade на witness'ах (ЗАКРЫТО 2026-04-27)
+
+**Источник.** Live-probe Level 2: `POST /api/effects` отдавал 500 с `[invariants] откачен: witness_on_projection × 2454`. Cascade-rejection по всем 2454 witness rows.
+
+**Root cause.** Не invariant evaluator (он корректен), а **snapshot builder**: я seed'ил только authored projections (196), но witness'ы из `crystallizeV2` ссылались на **derived** projections (`argocd__account_detail`, `domain_x__my_y`, и т.п.) — referential FK `Witness.projectionId → Projection.id` ломался.
+
+**Сделано.** `scripts/build-meta-snapshot.mjs` теперь seed'ит **merged** projections (authored + derived из `deriveProjections`). Snapshot вырос со 196 → 600 projections. Все witness FK validate.
+
+### 13.14 P0 — server's foldWorld не обрабатывает `α:create` (ЗАКРЫТО 2026-04-27)
+
+**Источник.** Live demo: effect с `alpha: "create"` (canonical из `intent.particles.effects`) → material-er 0 rows.
+
+**Сделано.** `server/validator.js::applyEf` теперь имеет `case "add": case "create":` (fall-through). SDK intent particles c `α:create` корректно сворачиваются как добавление сущности. **0 регрессий** в 502/505 server тестах.
+
+### 13.15 P1 — target case-sensitive vs lowercase plural (ЗАКРЫТО 2026-04-27)
+
+**Источник.** Live: `α:replace target="BacklogItem.status"` не находил entity, потому что server клал rows в `world.backlogItems` (camelCase plural из updateTypeMap), а material-er искал `world.backlogitems` (lowercase pluralize в SDK findCollection).
+
+**Сделано.** `server/validator.js::foldWorld` теперь алиасит lowercase-plural форму поверх camelCase для совместимости с SDK material-er'ами. Сохраняет camelCase plurals для existing scheduledTimer/etc compat.
+
+### 13.16 P1 — `α:replace` ctx-fallback (ЗАКРЫТО 2026-04-27)
+
+**Источник.** Live: положил `status: "closed"` в context, value=null, validator применил `[field]: undefined`.
+
+**Сделано.** `α:replace` fold теперь fallback'ит на `ctx[field]` если `val == null`. SDK intent particles `{α:"replace", target:"X.field", fields:{field: "value"}}` корректно работают через context — без явного `value`-поля.
+
+### Action items (priority)
+
+1. **P0** — §13.0 architectural decision (codegen ≠ reader) до старта Level 2.
+2. **P0** — §13.1 pattern.id global uniqueness (или formal composite-key API).
+3. **P0** — §13.2 admin nav-access disconnect (документация или filterProjectionsByRole change).
+4. **P0** — §13.5 format-reflect package (или строгое ограничение «object-literal only» с migration gravitino).
+5. **P1** — §13.3 candidate JSON shape spec.
+6. **P1** — §13.6 witness persistence decision.
+7. **P1** — §13.7 reverse-association в meta-домене (Level 1.1).
+8. **P2** — §13.4 snapshot import portability.
+
+## §14 — Backlog Inbox (meta-домен Level 2 soft-authoring)
+
+Items добавляются через intent `add_backlog_item` в meta-домене, журналируются в Φ. Compiler `scripts/meta-compile.mjs` синхронизирует Φ ↔ файл между маркерами ниже. **Не редактируйте секцию руками** — изменения перезатрутся при следующем compile.
+
+<!-- meta-compile: backlog-inbox -->
+
+### P0 (блокеры)
+
+- 🟢 open **Final demo BLI #1** · 2026-04-26
+  Live e2e test
+
+### P1 (важно)
+
+- 🟢 open **Final demo BLI #2** · 2026-04-26
+  Live e2e test
+- 🟢 open **Final demo BLI #3** · 2026-04-26
+  Live e2e test
+
+<!-- /meta-compile -->
+
+
