@@ -22,8 +22,15 @@ const OWNER_CANDIDATES = ["userId", "ownerId", "authorId", "createdBy"];
 
 export function checkEntityKind(ontology) {
   const gaps = [];
+  // Поддерживаем `entity.kind` (canonical, v1.6+) и legacy `entity.type`.
+  // Default = "internal" (не gap). Помечаем только entity с явным
+  // невалидным значением (опечатка в kind/type).
+  const VALID_KINDS = new Set(["internal", "reference", "mirror", "assignment", "embedded", "polymorphic"]);
   for (const [name, entity] of Object.entries(ontology.entities || {})) {
-    if (!entity.type) gaps.push({ kind: "entity-no-type", entity: name });
+    const kind = entity.kind || entity.type;
+    if (kind && !VALID_KINDS.has(kind)) {
+      gaps.push({ kind: "entity-no-type", entity: name, value: kind });
+    }
   }
   return gaps;
 }
@@ -77,13 +84,21 @@ export function checkAntagonistSymmetry(intents) {
 export function checkIrreversibility(intents) {
   const gaps = [];
   for (const [name, intent] of Object.entries(intents || {})) {
+    // Поддерживаем обе формы декларации:
+    //   1. legacy: intent.irreversibility (boolean / object) — pre-v1.7
+    //   2. canonical: intent.context.__irr.point (low/medium/high) — v1.7+
     if (intent.irreversibility) continue;
+    const irrPoint = intent.context?.__irr?.point;
+    if (irrPoint && ["low", "medium", "high"].includes(irrPoint)) continue;
+
     const effects = intent.particles?.effects || [];
     const hasRemove = effects.some((e) => e.α === "remove");
     const hasStatusKill = effects.some(
       (e) => e.α === "replace" && /\.status$/.test(e.target || "") && DESTRUCTIVE_STATUSES.has(e.value),
     );
-    if (hasRemove || hasStatusKill) {
+    // Также любой intent с α: "remove" на верхнем уровне (без particles.effects)
+    const topLevelRemove = intent.α === "remove";
+    if (hasRemove || hasStatusKill || topLevelRemove) {
       gaps.push({ kind: "irreversibility-missing", intent: name });
     }
   }
