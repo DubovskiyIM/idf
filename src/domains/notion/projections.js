@@ -13,7 +13,7 @@ export const PROJECTIONS = {
   sidebar_workspace: {
     id: "sidebar_workspace",
     title: "Workspace",
-    archetype: "feed",
+    kind: "feed",
     mainEntity: "Page",
     forRoles: ["workspaceOwner", "editor", "commenter", "viewer"],
     witnesses: ["title", "icon"],
@@ -31,7 +31,7 @@ export const PROJECTIONS = {
   page_detail: {
     id: "page_detail",
     title: "Страница",
-    archetype: "detail",
+    kind: "detail",
     mainEntity: "Page",
     idParam: "pageId",
     forRoles: ["workspaceOwner", "editor", "commenter", "viewer"],
@@ -68,7 +68,7 @@ export const PROJECTIONS = {
   database_detail: {
     id: "database_detail",
     title: "База данных",
-    archetype: "detail",
+    kind: "detail",
     mainEntity: "Database",
     idParam: "databaseId",
     forRoles: ["workspaceOwner", "editor", "commenter", "viewer"],
@@ -90,7 +90,7 @@ export const PROJECTIONS = {
   database_views_list: {
     id: "database_views_list",
     title: "Виды",
-    archetype: "catalog",
+    kind: "catalog",
     mainEntity: "DatabaseView",
     forRoles: ["workspaceOwner", "editor", "commenter", "viewer"],
     witnesses: ["name", "kind"],
@@ -102,7 +102,7 @@ export const PROJECTIONS = {
   database_properties_list: {
     id: "database_properties_list",
     title: "Свойства",
-    archetype: "catalog",
+    kind: "catalog",
     mainEntity: "Property",
     forRoles: ["workspaceOwner", "editor"],
     witnesses: ["name", "kind"],
@@ -115,7 +115,7 @@ export const PROJECTIONS = {
   database_table_view: {
     id: "database_table_view",
     title: "Таблица",
-    archetype: "catalog",
+    kind: "catalog",
     mainEntity: "DatabaseRow",
     forRoles: ["workspaceOwner", "editor", "commenter", "viewer"],
     witnesses: ["pageId", "createdAt"],
@@ -129,7 +129,7 @@ export const PROJECTIONS = {
   database_board_view: {
     id: "database_board_view",
     title: "Канбан",
-    archetype: "catalog",
+    kind: "catalog",
     mainEntity: "DatabaseRow",
     forRoles: ["workspaceOwner", "editor", "commenter", "viewer"],
     witnesses: ["pageId"],
@@ -143,7 +143,7 @@ export const PROJECTIONS = {
   database_gallery_view: {
     id: "database_gallery_view",
     title: "Галерея",
-    archetype: "catalog",
+    kind: "catalog",
     mainEntity: "DatabaseRow",
     forRoles: ["workspaceOwner", "editor", "commenter", "viewer"],
     witnesses: ["pageId"],
@@ -157,7 +157,7 @@ export const PROJECTIONS = {
   database_calendar_view: {
     id: "database_calendar_view",
     title: "Календарь",
-    archetype: "canvas",
+    kind: "canvas",
     mainEntity: "DatabaseRow",
     forRoles: ["workspaceOwner", "editor", "commenter", "viewer"],
     slots: {
@@ -169,7 +169,7 @@ export const PROJECTIONS = {
   comments_thread: {
     id: "comments_thread",
     title: "Комментарии",
-    archetype: "feed",
+    kind: "feed",
     mainEntity: "Comment",
     forRoles: ["workspaceOwner", "editor", "commenter", "viewer"],
     witnesses: ["body", "authorId", "createdAt", "resolvedAt"],
@@ -183,7 +183,7 @@ export const PROJECTIONS = {
   page_permissions_panel: {
     id: "page_permissions_panel",
     title: "Доступ",
-    archetype: "catalog",
+    kind: "catalog",
     mainEntity: "PagePermission",
     forRoles: ["workspaceOwner", "editor"],
     witnesses: ["userId", "level", "grantedAt"],
@@ -196,7 +196,7 @@ export const PROJECTIONS = {
   members_admin: {
     id: "members_admin",
     title: "Участники workspace",
-    archetype: "catalog",
+    kind: "catalog",
     mainEntity: "WorkspaceMember",
     forRoles: ["workspaceOwner"],
     witnesses: ["userId", "role", "invitedAt"],
@@ -209,7 +209,7 @@ export const PROJECTIONS = {
   recent_activity: {
     id: "recent_activity",
     title: "Недавнее",
-    archetype: "feed",
+    kind: "feed",
     mainEntity: "Page",
     forRoles: ["workspaceOwner", "editor", "commenter", "viewer"],
     witnesses: ["title", "icon", "lastEditedById", "updatedAt"],
@@ -223,7 +223,7 @@ export const PROJECTIONS = {
   search_results: {
     id: "search_results",
     title: "Результаты поиска",
-    archetype: "feed",
+    kind: "feed",
     mainEntity: "Page",
     forRoles: ["workspaceOwner", "editor", "commenter", "viewer"],
     witnesses: ["title", "icon"],
@@ -234,7 +234,7 @@ export const PROJECTIONS = {
   agent_console: {
     id: "agent_console",
     title: "Агент",
-    archetype: "form",
+    kind: "form",
     mainEntity: "Page",
     forRoles: ["workspaceOwner", "editor"],
     slots: {
