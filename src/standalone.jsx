@@ -22,6 +22,7 @@ import * as investDomain from "./domains/invest/domain.js";
 import * as gravitinoDomain from "./domains/gravitino/domain.js";
 import * as keycloakDomain from "./domains/keycloak/domain.js";
 import * as argocdDomain from "./domains/argocd/domain.js";
+import * as automationDomain from "./domains/automation/domain.js";
 
 import BookingUI from "./domains/booking/ManualUI.jsx";
 import PlanningUI from "./domains/planning/ManualUI.jsx";
@@ -109,6 +110,7 @@ const DOMAINS_RAW = {
   gravitino: gravitinoDomain,
   keycloak: keycloakDomain,
   argocd: argocdDomain,
+  automation: automationDomain,
 };
 
 const DOMAIN_TITLES = {
@@ -126,6 +128,7 @@ const DOMAIN_TITLES = {
   gravitino: "🗂 Gravitino",
   keycloak: "🔐 Keycloak",
   argocd: "🚀 ArgoCD",
+  automation: "⚙️ Automation",
 };
 
 const DOMAINS = {
@@ -143,6 +146,7 @@ const DOMAINS = {
   gravitino: { ...gravitinoDomain, UI: makeV2UI("gravitino") },
   keycloak: { ...keycloakDomain, UI: makeV2UI("keycloak") },
   argocd: { ...argocdDomain, UI: makeV2UI("argocd") },
+  automation: { ...automationDomain, UI: makeV2UI("automation") },
 };
 
 export default function StandaloneApp({ domainId }) {
