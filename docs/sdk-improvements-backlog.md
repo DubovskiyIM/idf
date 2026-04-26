@@ -502,3 +502,76 @@ Import-generated ontology не имеет: compositions (R9), invariants (transi
 - **P0 (блокирует e2e для status-driven admin):** 10.4abc (inline-children + resourceTree + conditionsTimeline dispatchers) — сейчас graceful fallback на SubCollectionSection с badge columns, визуально flat
 - **P1 (качество importer):** 10.1 (K8s CRD merge), 10.6 (Swagger 2.0 type-loss), 10.2 (markEmbedded K8s roots)
 - **P2 (полнота):** 10.5 (YAML editor для deeply-nested spec), 10.7 (grpc-gateway canonicalization)
+
+---
+
+## 11. Tri-source field-research P0 sprint (2026-04-25/26)
+
+**Контекст.** Анализ трёх production-стэков (workflow-editor LLM/AI-agent, workflow-editor data-pipeline, Angular-imperative legacy с polymorphic 200+ кубами и 18-fork brand-overlay) выявил convergent evolution на четырёх уровнях. Спринт закрыл четыре фундамента в SDK + один CI-фикс.
+
+### 11.1 ✅ `@intent-driven/host-contracts@0.2.0` extraction
+**SDK PR:** [#335](https://github.com/DubovskiyIM/idf-sdk/pull/335)
+**Назначение.** Формализация контракта `shell ↔ module` для IDF-хостов и адаптеров micro-frontend. Несколько независимых production-стэков (Vite-MF runtime, статические импорты + DCE feature-flags, IDF host) пришли к одной абстракции «модуль = id + basePath + nav + routes + commands/headerSlots/docs» + «shell даёт контекст: auth/i18n/theme/navigate/events/toast». Type-only по сути (peer-`react` только для типов компонентов), MIT.
+**API:** `AppModuleManifest`, `ShellContext`, `NavSection`, `NavItem`, `RouteConfig`, `CommandConfig`, `LoadingTipConfig`, `DocLink`, `HeaderSlotName`, `EventBus`, `ToastAPI`, `AuthAPI`, `I18nInstance`, `ThemeAPI` + runtime helpers `validateModuleManifest(manifest)`, `mergeNavSections(...lists)` (merge nav-секций нескольких модулей с детектом item-id коллизий + sort by order), enum `HEADER_SLOTS`.
+
+### 11.2 ✅ `entity.kind: "polymorphic"` + `discriminator` + `variants[]` API (P0.2)
+**SDK PR:** [#347](https://github.com/DubovskiyIM/idf-sdk/pull/347)
+**Закрывает Open item:** «Composite / polymorphic entities — union-типы не выражаются через `entity.kind`».
+**Назначение.** Расширение taxonomy `entity.kind` (раньше: `internal` / `reference` / `mirror` / `assignment`) — добавлен `polymorphic`. Полевые тесты с 70+ и 200+ подтипами кубов в production workflow-editor стэках показали, что без формализации polymorphic entity host-авторам приходится держать 3 параллельных декларации (frontend type / backend DTO / form-renderer) — итого ~21k LOC ручного бойлерплейта на 70 типов.
+**Схема:**
+```js
+WorkflowNode: {
+  kind: "polymorphic",
+  discriminator: "type",
+  fields: { id, type, label, workflowId },  // base shared
+  variants: {
+    ManualTrigger: { label: "...", fields: {} },
+    TelegramTrigger: { label: "...", fields: { botToken, webhookUrl }, invariants: [...] },
+    // ...
+  },
+}
+```
+**API:** `isPolymorphicEntity`, `getDiscriminatorField`, `getEntityVariants`, `getEntityVariant`, `listVariantValues`, `getEffectiveFields(entityDef, value?)` (base + active variant с override priority), `getUnionFields(entityDef)` (base + ВСЕ variants для form-archetype synthesis с conditional visibility, first-wins при конфликтах), `getVariantSpecificFields`, `validatePolymorphicEntity` (`{ valid, errors[] }`).
+**Status:** matching-only / declarative API. Production-derivation (form-archetype synthesis на discriminator + per-variant fields, filterWorld awareness, materializer-output) — отдельные sub-projects. Backward-compatible: legacy entity без `kind:"polymorphic"` обрабатывается прозрачно.
+
+### 11.3 ✅ Canonical type-map + auto field-mapping FE↔BE (P0.4)
+**SDK PR:** [#349](https://github.com/DubovskiyIM/idf-sdk/pull/349)
+**Закрывает:** §9.1 (canonical type-map) **полностью** (раньше частично через `mapOntologyTypeToControl` mini-map в `crystallize_v2/ontologyHelpers.js`, теперь — отдельный полноценный модуль с published API), плюс три полевые боли: 70+ ручных трансформ camelCase ↔ snake_case при FE↔BE bridge; 200+ нормалайзеров на разные нестандартные shape'ы; importers (postgres / openapi / prisma) silent-drop при `type:"string"`.
+**Содержимое `CANONICAL_TYPES`:** ~40 types — text/textarea/markdown/richText/code/yaml/json, number/integer/decimal/money/percentage, boolean, date/time/datetime/duration, id/uuid/slug, email/url/phone/tel/secret/password, select/multiSelect/enum, entityRef/entityRefArray/foreignKey, image/multiImage/file/color, coordinate/address/zone, ticker/manifest.
+**Содержимое `TYPE_ALIASES`:** string/varchar/char/clob/String/TEXT/longtext/mediumtext → text/textarea; int/Int/int4/int8/bigint/smallint/tinyint/serial/bigserial/Integer → integer; float/double/numeric/real/Float/Decimal → decimal; bool/Boolean/bit → boolean; timestamp/timestamptz/DateTime → datetime; jsonb/Json → json; UUID → uuid; currency → money; reference/ref/ManyToOne/OneToMany/ManyToMany → entityRef family.
+**API:** `CANONICAL_TYPES` (frozen list), `TYPE_ALIASES` (alias dict), `normalizeFieldType(rawType)`, `normalizeFieldDef(rawFieldDef)` (целое поле + derive `entityRef` shape из `references` / `entityRef` shorthand), `camelToSnake` / `snakeToCamel` (acronym-runs supported: `URLPath → url_path`, `isHTTPSEnabled → is_https_enabled`), `inferWireFieldName(name, { case: "snake"|"camel"|"original" })`, `applyFieldMapping(obj, mapping, "toWire" | "fromWire")` (без мутации), `buildAutoFieldMapping(fields, options)`.
+**Status:** utility-layer. Не trigger'ится автоматически в fold/filterWorld; importers и effect-runners (включая third-party) могут начать использовать сразу.
+
+### 11.4 ✅ 4 candidate-паттерна из tri-source field research (P0.3)
+**SDK PR:** [#338](https://github.com/DubovskiyIM/idf-sdk/pull/338)
+**Назначение.** Matching-only candidate'ы в `packages/core/src/patterns/candidate/`. Все четыре независимо проявились в трёх независимых production-стэках — convergent evolution подтверждает их как стабильные UX-формы.
+
+| Pattern | Архетип | Trigger |
+|---|---|---|
+| `cross/human-in-the-loop-gate` | cross | `intent-confirmation: "human-input"` — асинхронная пауза execution до confirmation от человека-supervisor'а; отличается от `irreversible-confirm` (другой actor, structured input, timeout). |
+| `cross/composition-as-callable` | detail | `entity-kind: "callable"` — entity-as-tool с input/output schema, «Used by» reverse-association, «Run standalone» CTA. |
+| `cross/agent-plan-preview-approve` | cross | `has-role: "agent"` + `intent-confirmation: "preapproval"` — multi-effect plan-preview между intent.proposed и intent.confirmed; partial-approve toggle. |
+| `detail/lifecycle-gates-on-run` | detail | `entity-field: status (select)` + `intent-confirmation: "lifecycle-gate"` — declarative issue-checklist + disabled run/publish CTA + deep-link к причине. |
+
+`CURATED_CANDIDATES.length` 6 → 10. Все имеют полные `rationale.evidence` (4-7) + `counterexample` (4-5) + `falsification.shouldMatch`/`shouldNotMatch` (4-5/4-5).
+
+### 11.5 ✅ CI scaffold-smoke OOM fix
+**SDK PR:** [#339](https://github.com/DubovskiyIM/idf-sdk/pull/339)
+**Проблема.** `pnpm -r build` в `.github/workflows/scaffold-smoke.yml` падал на DTS-worker для `packages/core` (1.27 MB бандл) с `ERR_WORKER_OUT_OF_MEMORY` на ubuntu-latest runner'е (>4 GB heap). Не связан с содержимым PR — падал на любой ветке.
+**Фикс.** Добавил `env: SKIP_DTS: "true"` в шаг "Build all packages" — тот же подход, что в `ci.yml` (см. коммиты `3fffbc6` / `9024e8c`).
+
+### Roadmap (отдельные sub-projects, не блокируют)
+
+1. **discriminator-wizard.apply** (closes one matching-only) — автогенерация на `listVariantValues`.
+2. **Form-archetype synthesis для polymorphic** — conditional visibility per discriminator-value (использует `getUnionFields` + `getVariantSpecificFields`).
+3. **`validatePolymorphicEntity`** интеграция в conformance-runner / global ontology validate.
+4. **`filterWorld` awareness** — учитывать variant fields в `visibleFields` per role.
+5. **Importer-postgres / -openapi**: генерация polymorphic shape из discriminated union в schema (oneOf / type-tag pattern); cleanup local type-aliases в пользу shared `normalizeFieldType`.
+6. **Crystallize_v2 input cleanup** — `normalizeFieldDef` поверх raw fields первым шагом (закроет silent drop'ы для всех downstream).
+7. **`effect-runner-http`** — экспорт hook `withMapping(handlerOptions)` для авто-bridge на каждый HTTP-endpoint.
+8. **Validation для `field.mapping: { wire: "..." }`** — explicit override (authored mapping wins over auto-derive).
+
+### Закрытие после спринта 2026-04-26
+
+- ✅ §9.1 canonical type-map — теперь выделенный модуль с published API.
+- ✅ Open item «Composite / polymorphic entities» — declarative API готов; production-derivation — отдельные sub-projects.

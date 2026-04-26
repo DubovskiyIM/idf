@@ -37,7 +37,7 @@
 3. `step-inspector-with-input-output-bundle-diff` — applicable к compliance audit step, workflow editor, debug viewers
 
 **Средний приоритет** (canvas-specific, narrow scope):
-4. `node-palette-categorized-drag-to-canvas` — Selfai workflow editor + future automation domains
+4. `node-palette-categorized-drag-to-canvas` — workflow-editor field-test + future automation domains
 5. `side-attached-node-config-drawer` — same scope
 6. `error-branch-attached-to-node` — distinguished от generic conditional pattern
 7. `live-execution-coloring-on-canvas` — требует SSE infra
