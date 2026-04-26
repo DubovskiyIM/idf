@@ -3,7 +3,15 @@ import StudioHeader from "./StudioHeader.jsx";
 import StudioTabBar from "./StudioTabBar.jsx";
 import SpecPanel from "./SpecPanel.jsx";
 import ChatHistory from "./ChatHistory.jsx";
+import ChangesTab from "./ChangesTab.jsx";
+import LiveTab from "./LiveTab.jsx";
+import ChannelsTab from "./ChannelsTab.jsx";
+import AuditTab from "./AuditTab.jsx";
+import AccessTab from "./AccessTab.jsx";
+import DeploysTab from "./DeploysTab.jsx";
+import SnapshotsTab from "./SnapshotsTab.jsx";
 import { ONTOLOGY, INTENTS } from "../domain.js";
+import snapshotMod from "../meta-snapshot.js";
 
 /**
  * Meta Studio Canvas — primary-entry projection /meta route.
@@ -67,10 +75,15 @@ export default function MetaStudioCanvas({ artifact, world, exec, viewer, projec
         </div>
         <div style={{ flex: 1, display: "flex", flexDirection: "column", minHeight: 0 }}>
           <StudioTabBar active={topTab} onChange={setTopTab} />
-          <div style={{ flex: 1, overflow: "hidden" }}>
-            {topTab === "spec" && (
-              <SpecPanel domain={domain} ontology={ONTOLOGY} intents={INTENTS} />
-            )}
+          <div style={{ flex: 1, overflow: "auto" }}>
+            {topTab === "spec" && <SpecPanel domain={domain} ontology={ONTOLOGY} intents={INTENTS} />}
+            {topTab === "changes" && <ChangesTab items={items} />}
+            {topTab === "live" && <LiveTab />}
+            {topTab === "channels" && <ChannelsTab />}
+            {topTab === "audit" && <AuditTab ontology={ONTOLOGY} />}
+            {topTab === "access" && <AccessTab ontology={ONTOLOGY} intents={INTENTS} />}
+            {topTab === "deploys" && <DeploysTab adapters={snapshotMod?.adapters || []} />}
+            {topTab === "snapshots" && <SnapshotsTab />}
           </div>
         </div>
       </div>

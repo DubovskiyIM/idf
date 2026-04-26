@@ -2,13 +2,13 @@ import React from "react";
 
 const TOP_TABS = [
   { id: "spec", label: "Спек", enabled: true },
-  { id: "changes", label: "Изменения", enabled: false },
-  { id: "live", label: "Live", enabled: false },
-  { id: "channels", label: "4 канала", enabled: false },
-  { id: "audit", label: "Аудит", enabled: false },
-  { id: "access", label: "Доступ", enabled: false },
-  { id: "deploys", label: "Деплои", enabled: false },
-  { id: "snapshots", label: "Снапшоты", enabled: false },
+  { id: "changes", label: "Изменения", enabled: true },
+  { id: "live", label: "Live", enabled: true },
+  { id: "channels", label: "4 канала", enabled: true },
+  { id: "audit", label: "Аудит", enabled: true },
+  { id: "access", label: "Доступ", enabled: true },
+  { id: "deploys", label: "Деплои", enabled: true },
+  { id: "snapshots", label: "Снапшоты", enabled: true },
 ];
 
 export default function StudioTabBar({ active, onChange }) {
