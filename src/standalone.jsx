@@ -36,7 +36,14 @@ import { mantineAdapter } from "@intent-driven/adapter-mantine";
 import { shadcnAdapter } from "@intent-driven/adapter-shadcn";
 import { appleAdapter } from "@intent-driven/adapter-apple";
 import { antdAdapter } from "@intent-driven/adapter-antd";
+import { applyTiptapBlockEditor } from "@intent-driven/adapter-antd-blockeditor-tiptap";
 import { ConfigProvider as AntConfigProvider, theme as antTheme } from "antd";
+
+// §12.10 v0.2 — заменяем reference textarea-impl BlockEditor на Tiptap-backed
+// (rich-text inline-formatting через ProseMirror StarterKit). Идемпотентно;
+// host wrapper'ы (notion BlockCanvas) ничего не меняют — primitive contract
+// тот же. Capability flag inlineFormatting переключается false → true.
+applyTiptapBlockEditor(antdAdapter);
 import ruRU from "antd/locale/ru_RU";
 import { usePersonalPrefs } from "./runtime/renderer/personal/usePersonalPrefs.js";
 
