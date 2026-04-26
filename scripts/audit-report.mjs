@@ -40,6 +40,7 @@ import {
   checkRoleBase,
   checkOwnerField,
 } from "./domain-audit.mjs";
+import { auditCrossRolePrecondition } from "./lib/cross-role-precondition.mjs";
 
 const __filename = fileURLToPath(import.meta.url);
 const ROOT = path.resolve(path.dirname(__filename), "..");
@@ -534,6 +535,7 @@ async function main() {
       ["testCoverage", () => auditTestCoverage(domain.id)],
       ["patternApplication", () => auditPatternApplication(domain, registry)],
       ["structuralHealth", () => auditStructuralHealth(domain)],
+      ["crossRolePrecondition", () => auditCrossRolePrecondition(domain)],
     ];
 
     for (const [axisName, fn] of axes) {
