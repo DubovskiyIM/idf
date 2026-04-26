@@ -69,6 +69,7 @@ function Root() {
           <Route path="/gravitino" element={<StandaloneApp domainId="gravitino" />} />
           <Route path="/keycloak" element={<StandaloneApp domainId="keycloak" />} />
           <Route path="/argocd" element={<StandaloneApp domainId="argocd" />} />
+          <Route path="/notion" element={<StandaloneApp domainId="notion" />} />
           <Route path="/*" element={<StudioRedirect />} />
         </Routes>
       </BrowserRouter>
