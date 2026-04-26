@@ -23,7 +23,6 @@ export const INTENTS = {
     name: "Создать workflow",
     target: "Workflow",
     confirmation: "form",
-    salience: "primary",
     parameters: [
       { name: "name", type: "text", label: "Название", required: true },
       { name: "description", type: "textarea", label: "Описание" },
@@ -276,7 +275,6 @@ export const INTENTS = {
     name: "Создать credential",
     target: "Credential",
     confirmation: "form",
-    salience: "primary",
     parameters: [
       { name: "name", type: "text", required: true, label: "Название" },
       {
@@ -393,7 +391,6 @@ export const INTENTS = {
     name: "Запустить",
     target: "Execution",
     confirmation: "click",
-    salience: "primary",
     precondition: { "Workflow.status": ["active"] },
     parameters: [{ name: "workflowId", type: "entityRef", entity: "Workflow", required: true }],
     // Custom — создаёт Execution + ExecutionStep'ы для всех Node, см. buildAutomationEffects.cjs
