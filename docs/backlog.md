@@ -527,7 +527,32 @@ Bump `@intent-driven/enricher-claude` → `0.2.1`. После release — пер
 
 *(здесь накапливаются пункты, которые были закрыты; для истории и чтобы видно прогресс. По достижении большого объёма — архивировать в `docs/archive/backlog-YYYY-MM.md`.)*
 
-### ✅ 1.1 `invariant.kind: "expression"` — custom row-level predicate
+### ✅ Cross-role precondition analyzer — operational extract sheaf-формулировки
+
+**Дата:** 2026-04-26. **Контекст:** Sheaf-формулировка целостности (PR #132 stacked, застряла в feature-branch — содержимое не на main, поэтому open §2.12 не существует здесь). Operational extract — статический cross-reference analyzer, ловит класс H¹-нарушений простым полиномиальным pass'ом без когомологии.
+
+**Что сделано:**
+- `scripts/lib/cross-role-precondition.mjs` — модуль с `extractPreconditionFieldRefs` / `rolesThatCanExecute` / `isFieldVisibleToRole` / `auditCrossRolePrecondition`. Поддерживает обе формы precondition: object `{Entity.field: [vals]}` и string-expression.
+- `scripts/audit-report.mjs` — новая axis «crossRolePrecondition» в orchestration; import функции из lib/.
+- `scripts/lib/cross-role-precondition.test.mjs` — 19 unit-тестов (4 helper + 9 integration с synthetic ontologies, включая negative fixtures).
+
+**Алгоритм:**
+```
+∀ intent ∈ ontology.intents:
+  preconditionFields = parse(intent.precondition)
+  ∀ role: intent ∈ role.canExecute:
+    ∀ {entity, field} ∈ preconditionFields:
+      if !isFieldVisibleToRole(role, entity, field):
+        emit warning «role X executes intent, но не видит entity.field в precondition»
+```
+
+**Bypass:** `role.base === "admin"` (row-override), `visibleFields[Entity] = ["*"]`.
+
+**Skip cases:** entity не в ontology, field не существует — другие axes ловят.
+
+**Baseline (2026-04-26):** на текущих 14 доменах — **0 findings** (только automation имеет preconditions, и все референсы visible для exec-ролей). Ось работает на регрессионную защиту: будущие preconditions (compliance / sales / freelance / новый workflow editor) автоматически проверяются.
+
+**Backlog item:** §2.12b sheaf-formulation-spec.md operational P1 task.
 
 **Дата начала:** 2026-04-20. **Дата закрытия:** 2026-04-20.
 **Контекст:** Freelance `Deal.customerId !== Deal.executorId` нельзя было выразить простым kind'ом.
