@@ -1,0 +1,81 @@
+{
+  "id": "zoom-into-subtree",
+  "version": 1,
+  "status": "candidate",
+  "archetype": "detail",
+  "trigger": {
+    "requires": [
+      {
+        "kind": "entity-field",
+        "entity": "*",
+        "field": "parentBlockId",
+        "fieldRole": "self-reference"
+      },
+      {
+        "kind": "intent-effect",
+        "target": "session.zoomedBlockId"
+      },
+      {
+        "kind": "intent-confirmation",
+        "value": "click"
+      }
+    ]
+  },
+  "structure": {
+    "slot": "body",
+    "description": "Self-referential entity (parent → self) + intent, переключающий session.zoomedBlockId, разворачивает body-slot в subtree-view: текущий узел становится root, потомки рендерятся как nested outliner, breadcrumb-цепочка пишется в header."
+  },
+  "rationale": {
+    "hypothesis": "Hierarchical tree-nav упирается в depth — на 5+ уровнях пользователь теряет контекст. Zoom-replace меняет workspace на subtree и оставляет breadcrumb, давая O(1) когнитивную сложность независимо от глубины. Это не drilldown в каталог (там items), а replace-frame в той же иерархии.",
+    "evidence": [
+      {
+        "source": "roam-research",
+        "description": "Click bullet → URL меняется на /block/<uuid>, workspace-frame показывает subtree",
+        "reliability": "high"
+      },
+      {
+        "source": "workflowy",
+        "description": "Zoom-into-bullet — главная навигационная метафора с 2010",
+        "reliability": "high"
+      },
+      {
+        "source": "logseq",
+        "description": "Block zoom через ((uuid)) clicks, breadcrumb обязательный",
+        "reliability": "high"
+      }
+    ],
+    "counterexample": [
+      {
+        "source": "notion",
+        "description": "Pages иерархичны, но zoom — это open-page; subtree внутри страницы не zoomable, потому что block ≠ first-class addressable",
+        "reliability": "high"
+      },
+      {
+        "source": "jira-epics",
+        "description": "Drilldown в epic открывает list, не replace-frame — задача отображается отдельно",
+        "reliability": "medium"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [
+      {
+        "domain": "workflow",
+        "projection": "node_detail",
+        "reason": "Node имеет parent (граф иерархичен), zoom в sub-graph — естественная навигация"
+      }
+    ],
+    "shouldNotMatch": [
+      {
+        "domain": "messenger",
+        "projection": "conversation_detail",
+        "reason": "Сообщения — flat-список, нет parentMessageId с глубиной"
+      },
+      {
+        "domain": "sales",
+        "projection": "listing_detail",
+        "reason": "Listing не self-referential, иерархия категорий — внешний справочник"
+      }
+    ]
+  }
+}

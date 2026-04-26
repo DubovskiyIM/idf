@@ -1,0 +1,76 @@
+{
+  "id": "drag-to-reparent-tree",
+  "version": 1,
+  "status": "candidate",
+  "archetype": null,
+  "trigger": {
+    "requires": [
+      {
+        "kind": "entity-field",
+        "entity": "*",
+        "field": "parentId"
+      },
+      {
+        "kind": "intent-effect",
+        "α": "replace",
+        "target": "*.parentId"
+      },
+      {
+        "kind": "intent-confirmation",
+        "value": "click"
+      }
+    ]
+  },
+  "structure": {
+    "slot": "body",
+    "description": "Direct manipulation на hierarchy-tree-nav: drag node на другой parent → replace parentId. Альтернатива модалкам/select-полям, валидация — drop zone подсветка. Эффект — один replace-intent на drop."
+  },
+  "rationale": {
+    "hypothesis": "Когда пользователь видит target-parent в том же tree, что и source-node, явная форма «select new parent» избыточна — целевая позиция уже визуально известна. Drag-and-drop сокращает path до одного gesture; affordance дешевле, чем cognitive switch к dialog'у.",
+    "evidence": [
+      {
+        "source": "obsidian",
+        "description": "drag note или folder в file tree — replace folderId/parentId",
+        "reliability": "high"
+      },
+      {
+        "source": "macos-finder",
+        "description": "Drag file в folder — переместить",
+        "reliability": "high"
+      },
+      {
+        "source": "notion",
+        "description": "Drag page в sidebar для смены parent",
+        "reliability": "high"
+      }
+    ],
+    "counterexample": [
+      {
+        "source": "compliance",
+        "description": "Reparenting Control'а — sensitive operation, должна идти через approval-flow, не drag",
+        "reliability": "high"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [
+      {
+        "domain": "obsidian",
+        "projection": "vault_explorer",
+        "reason": "Folder.parentId + Note.folderId + intent drag_note_to_folder/move_to_folder"
+      }
+    ],
+    "shouldNotMatch": [
+      {
+        "domain": "compliance",
+        "projection": "control_catalog",
+        "reason": "Tree reparent должен иметь invariant-проверку, не direct manipulation"
+      },
+      {
+        "domain": "invest",
+        "projection": "position_catalog",
+        "reason": "Position не имеет parentId — flat сущность"
+      }
+    ]
+  }
+}

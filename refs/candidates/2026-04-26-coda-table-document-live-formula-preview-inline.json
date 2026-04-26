@@ -1,0 +1,87 @@
+{
+  "id": "live-formula-preview-inline",
+  "version": 1,
+  "status": "candidate",
+  "archetype": "detail",
+  "trigger": {
+    "requires": [
+      {
+        "kind": "entity-field",
+        "field": "formula|expression|prompt",
+        "fieldRole": "expression"
+      },
+      {
+        "kind": "intent-confirmation",
+        "intent": "*",
+        "confirmation": "enter"
+      },
+      {
+        "kind": "intent-effect",
+        "α": "replace",
+        "target": "*.formula|*.expression"
+      }
+    ]
+  },
+  "structure": {
+    "slot": "footer",
+    "description": "Под expression-editor (formula/AI prompt) показывается live-evaluation preview — каждое нажатие клавиши re-evaluates expression в текущем context (sample row, current viewer) и показывает результат или type-error inline; нет explicit submit, enter промоутит preview в confirmed Φ."
+  },
+  "rationale": {
+    "hypothesis": "Expression languages имеют exponential cost ошибки — невидимая опечатка ломает downstream computation; live-preview закрывает feedback loop в момент написания (~100ms vs save→reload), превращая написание формулы из 'compile-then-debug' в 'incremental refine'.",
+    "evidence": [
+      {
+        "source": "coda",
+        "description": "Formula bar показывает результат текущей формулы под полем ввода в реальном времени",
+        "reliability": "high"
+      },
+      {
+        "source": "airtable",
+        "description": "Formula field с preview под input",
+        "reliability": "high"
+      },
+      {
+        "source": "notion",
+        "description": "Database formula property — inline preview результата",
+        "reliability": "high"
+      },
+      {
+        "source": "observable",
+        "description": "Reactive notebook cells — live re-eval при изменении dependencies",
+        "reliability": "medium"
+      }
+    ],
+    "counterexample": [
+      {
+        "source": "github-actions",
+        "description": "YAML expressions в CI — нет inline preview, только run-time evaluation",
+        "reliability": "high"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [
+      {
+        "domain": "coda-table-document",
+        "projection": "column_detail",
+        "reason": "Column.formula с set_column_formula confirmation=enter"
+      },
+      {
+        "domain": "coda-table-document",
+        "projection": "ai_block_detail",
+        "reason": "AIBlock.prompt с ai_generate_block confirmation=enter — same pattern для AI"
+      }
+    ],
+    "shouldNotMatch": [
+      {
+        "domain": "messenger",
+        "projection": "message_composer",
+        "reason": "Message.text — plain natural language, нет evaluation"
+      },
+      {
+        "domain": "sales",
+        "projection": "listing_detail",
+        "reason": "Listing.description — text-блоб, не expression"
+      }
+    ]
+  }
+}

@@ -1,0 +1,416 @@
+{
+  "source": "roam-research-graph",
+  "entities": [
+    {
+      "name": "Graph",
+      "fields": [
+        "name",
+        "owner",
+        "visibility",
+        "customUrl",
+        "createdAt"
+      ],
+      "statusValues": [
+        "private",
+        "public-readonly"
+      ]
+    },
+    {
+      "name": "Page",
+      "fields": [
+        "title",
+        "createdAt",
+        "updatedAt",
+        "isDailyNote",
+        "date",
+        "graphId"
+      ],
+      "foreignKey": "graphId→Graph"
+    },
+    {
+      "name": "Block",
+      "fields": [
+        "uuid",
+        "content",
+        "order",
+        "indentLevel",
+        "parentBlockId",
+        "pageId",
+        "createdAt",
+        "updatedAt",
+        "createdBy"
+      ],
+      "foreignKey": "pageId→Page"
+    },
+    {
+      "name": "BlockReference",
+      "fields": [
+        "sourceBlockId",
+        "targetBlockId",
+        "kind"
+      ],
+      "foreignKey": "sourceBlockId→Block",
+      "statusValues": [
+        "embed",
+        "reference"
+      ]
+    },
+    {
+      "name": "PageLink",
+      "fields": [
+        "sourceBlockId",
+        "targetPageId",
+        "linkKind",
+        "alias"
+      ],
+      "foreignKey": "sourceBlockId→Block",
+      "statusValues": [
+        "explicit",
+        "tag",
+        "unlinked"
+      ]
+    },
+    {
+      "name": "Attribute",
+      "fields": [
+        "blockId",
+        "key",
+        "value",
+        "pageId"
+      ],
+      "foreignKey": "blockId→Block"
+    },
+    {
+      "name": "Query",
+      "fields": [
+        "blockId",
+        "dsl",
+        "lastEvaluatedAt"
+      ],
+      "foreignKey": "blockId→Block"
+    },
+    {
+      "name": "Todo",
+      "fields": [
+        "blockId",
+        "checked",
+        "completedAt"
+      ],
+      "foreignKey": "blockId→Block",
+      "statusValues": [
+        "open",
+        "done"
+      ]
+    },
+    {
+      "name": "SidebarPane",
+      "fields": [
+        "userId",
+        "targetKind",
+        "targetId",
+        "order"
+      ],
+      "statusValues": [
+        "page",
+        "block",
+        "graph"
+      ]
+    },
+    {
+      "name": "Comment",
+      "fields": [
+        "blockId",
+        "author",
+        "content",
+        "createdAt"
+      ],
+      "foreignKey": "blockId→Block"
+    },
+    {
+      "name": "GraphMember",
+      "fields": [
+        "graphId",
+        "userId",
+        "role",
+        "invitedAt"
+      ],
+      "foreignKey": "graphId→Graph",
+      "statusValues": [
+        "graphOwner",
+        "editor",
+        "reader",
+        "public-viewer"
+      ]
+    },
+    {
+      "name": "Plugin",
+      "fields": [
+        "graphId",
+        "kind",
+        "sourcePageId",
+        "enabled"
+      ],
+      "foreignKey": "graphId→Graph",
+      "statusValues": [
+        "roam-css",
+        "roam-js",
+        "smartblock"
+      ]
+    },
+    {
+      "name": "User",
+      "fields": [
+        "email",
+        "displayName",
+        "presence"
+      ]
+    }
+  ],
+  "intents": [
+    {
+      "id": "create_page",
+      "α": "add",
+      "creates": "Page",
+      "confirmation": "enter"
+    },
+    {
+      "id": "navigate_today",
+      "α": "replace",
+      "target": "session.currentPage",
+      "confirmation": "click"
+    },
+    {
+      "id": "navigate_to_date",
+      "α": "replace",
+      "target": "session.currentPage",
+      "confirmation": "click"
+    },
+    {
+      "id": "create_block",
+      "α": "add",
+      "creates": "Block",
+      "confirmation": "enter"
+    },
+    {
+      "id": "edit_block",
+      "α": "replace",
+      "target": "block.content",
+      "confirmation": "enter"
+    },
+    {
+      "id": "indent_block",
+      "α": "replace",
+      "target": "block.indentLevel",
+      "confirmation": "click"
+    },
+    {
+      "id": "outdent_block",
+      "α": "replace",
+      "target": "block.indentLevel",
+      "confirmation": "click"
+    },
+    {
+      "id": "move_block",
+      "α": "replace",
+      "target": "block.order",
+      "confirmation": "click"
+    },
+    {
+      "id": "delete_block",
+      "α": "remove",
+      "target": "blocks",
+      "irreversibility": "high",
+      "confirmation": "click"
+    },
+    {
+      "id": "zoom_into_block",
+      "α": "replace",
+      "target": "session.zoomedBlockId",
+      "confirmation": "click"
+    },
+    {
+      "id": "embed_block",
+      "α": "add",
+      "creates": "BlockReference",
+      "confirmation": "enter"
+    },
+    {
+      "id": "reference_block",
+      "α": "add",
+      "creates": "BlockReference",
+      "confirmation": "enter"
+    },
+    {
+      "id": "link_to_page",
+      "α": "add",
+      "creates": "PageLink",
+      "confirmation": "enter"
+    },
+    {
+      "id": "tag_block",
+      "α": "add",
+      "creates": "PageLink",
+      "confirmation": "enter"
+    },
+    {
+      "id": "create_attribute",
+      "α": "add",
+      "creates": "Attribute",
+      "confirmation": "enter"
+    },
+    {
+      "id": "edit_attribute",
+      "α": "replace",
+      "target": "attribute.value",
+      "confirmation": "enter"
+    },
+    {
+      "id": "mark_todo",
+      "α": "add",
+      "creates": "Todo",
+      "confirmation": "click"
+    },
+    {
+      "id": "toggle_todo",
+      "α": "replace",
+      "target": "todo.checked",
+      "confirmation": "click"
+    },
+    {
+      "id": "run_query",
+      "α": "add",
+      "creates": "Query",
+      "confirmation": "enter"
+    },
+    {
+      "id": "aggregate_todos",
+      "α": "add",
+      "creates": "Query",
+      "confirmation": "enter"
+    },
+    {
+      "id": "view_linked_refs",
+      "α": "replace",
+      "target": "session.refsView",
+      "confirmation": "click"
+    },
+    {
+      "id": "view_unlinked_refs",
+      "α": "replace",
+      "target": "session.refsView",
+      "confirmation": "click"
+    },
+    {
+      "id": "open_in_sidebar",
+      "α": "add",
+      "creates": "SidebarPane",
+      "confirmation": "click"
+    },
+    {
+      "id": "close_sidebar_pane",
+      "α": "remove",
+      "target": "sidebarPanes",
+      "confirmation": "click"
+    },
+    {
+      "id": "search_full_text",
+      "α": "replace",
+      "target": "session.searchQuery",
+      "confirmation": "enter"
+    },
+    {
+      "id": "search_by_attribute",
+      "α": "replace",
+      "target": "session.searchQuery",
+      "confirmation": "enter"
+    },
+    {
+      "id": "quick_open_page",
+      "α": "replace",
+      "target": "session.currentPage",
+      "confirmation": "enter"
+    },
+    {
+      "id": "add_comment",
+      "α": "add",
+      "creates": "Comment",
+      "confirmation": "enter"
+    },
+    {
+      "id": "invite_member",
+      "α": "add",
+      "creates": "GraphMember",
+      "confirmation": "form"
+    },
+    {
+      "id": "change_member_role",
+      "α": "replace",
+      "target": "graphMember.role",
+      "confirmation": "click"
+    },
+    {
+      "id": "revoke_member",
+      "α": "remove",
+      "target": "graphMembers",
+      "irreversibility": "high",
+      "confirmation": "click"
+    },
+    {
+      "id": "publish_graph_public",
+      "α": "replace",
+      "target": "graph.visibility",
+      "irreversibility": "high",
+      "confirmation": "form"
+    },
+    {
+      "id": "install_plugin",
+      "α": "add",
+      "creates": "Plugin",
+      "confirmation": "form"
+    },
+    {
+      "id": "toggle_plugin",
+      "α": "replace",
+      "target": "plugin.enabled",
+      "confirmation": "click"
+    },
+    {
+      "id": "delete_page",
+      "α": "remove",
+      "target": "pages",
+      "irreversibility": "high",
+      "confirmation": "form"
+    },
+    {
+      "id": "undo",
+      "α": "replace",
+      "target": "session.historyCursor",
+      "confirmation": "click"
+    }
+  ],
+  "roles": [
+    "owner",
+    "viewer",
+    "observer"
+  ],
+  "observations": [
+    "Daily note for today is the default landing page — Φ entry-point is temporal, not hierarchical",
+    "Every block carries a UUID and is addressable as first-class entity (((uuid))), not just pages",
+    "Outliner with zoom-in: clicking a bullet replaces workspace with that block + descendants and adds a breadcrumb",
+    "Bidirectional links auto-materialize: creating [[Page]] inside a block creates the page node and a backlink edge",
+    "Linked References footer aggregates all blocks across all pages that mention current page title or its aliases",
+    "Unlinked References footer surfaces plain-text mentions as candidates for explicit linking",
+    "Block embed (( )) renders as live-mirror — edits propagate to all embed sites, distinct from one-shot copy",
+    "Right sidebar acts as stacked workspace: shift-click opens additional page/block panes alongside main",
+    "Inline DSL queries ({{query: ...}}) are stored as blocks and re-evaluated live — query is data, not view-config",
+    "Attributes (Key:: Value inside block) double as searchable KV-rows and as table-pivot under Attributes/Key namespace",
+    "TODO is just an attribute/tag pattern aggregated through the same query DSL — no dedicated task entity",
+    "Multi-select across bullets enables group-actions (move, copy ref, color) — bulk-action-toolbar pattern",
+    "Keyboard shortcuts dominate (Cmd-U quick-open, Cmd-Shift-9 search, Tab/Shift-Tab indent) — global-command-palette and keyboard-property-popover patterns are core, not optional",
+    "Permissions are graph-scoped (graphOwner / editor / reader / public-viewer), not page-scoped",
+    "Public graph is a visibility flag on Graph entity with custom URL — read-only mirror, not a separate copy",
+    "Real-time multiplayer presence and per-block comments imply CRDT-style block model with author+timestamp on every block",
+    "Plugins (roam/css, roam/js, SmartBlocks) live as code inside special pages — codebase is part of the graph itself",
+    "Deep undo history (Cmd-Z) implies effect-log retention beyond session scope"
+  ]
+}

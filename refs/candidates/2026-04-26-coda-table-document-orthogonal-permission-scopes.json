@@ -1,0 +1,73 @@
+{
+  "id": "orthogonal-permission-scopes",
+  "version": 1,
+  "status": "candidate",
+  "archetype": "detail",
+  "trigger": {
+    "requires": [
+      {
+        "kind": "intent-creates",
+        "creates": "Permission|Access|*Lock",
+        "scopeCount": ">=2"
+      },
+      {
+        "kind": "entity-field",
+        "entity": "Permission*",
+        "field": "level",
+        "fieldRole": "permission-tier"
+      }
+    ]
+  },
+  "structure": {
+    "slot": "sections",
+    "description": "Detail mainEntity (Doc) показывает permissions как stacked sections по scope: doc-level tier table (editor/commenter/viewer × principal), page-level hide overrides (per-page), row-level locked sections (predicate-based) — каждый scope управляется независимым intent-set, visualization — separate subcollection с scope-specific affordances."
+  },
+  "rationale": {
+    "hypothesis": "Permission systems с многоуровневым scoping (doc / page / row) формируют lattice доступа; flatten в один matrix создаёт comb-explosion и скрывает scope-semantics; orthogonal sections дают автору explicit ментальную модель 'где именно я ограничиваю' и кому-то конкретно.",
+    "evidence": [
+      {
+        "source": "coda",
+        "description": "Sharing pane с tabs: Members / Page-access / Locked sections",
+        "reliability": "high"
+      },
+      {
+        "source": "notion",
+        "description": "Share modal + page-restrict + database-edit-lock — три independent layer",
+        "reliability": "high"
+      },
+      {
+        "source": "google-drive",
+        "description": "Doc-level share + comment-only mode + protected ranges (sheets)",
+        "reliability": "high"
+      }
+    ],
+    "counterexample": [
+      {
+        "source": "github-repo",
+        "description": "Single-tier collaborator-list, нет sub-resource scope (file-level perms отсутствуют)",
+        "reliability": "high"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [
+      {
+        "domain": "coda-table-document",
+        "projection": "doc_detail_sharing",
+        "reason": "Permission + PageAccess + LockedSection — три ортогональных scope в одном детале"
+      }
+    ],
+    "shouldNotMatch": [
+      {
+        "domain": "messenger",
+        "projection": "conversation_detail",
+        "reason": "Single-scope membership, нет sub-resource permissions"
+      },
+      {
+        "domain": "booking",
+        "projection": "specialist_detail",
+        "reason": "Нет multi-scope permission модели"
+      }
+    ]
+  }
+}
