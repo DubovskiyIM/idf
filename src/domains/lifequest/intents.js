@@ -32,13 +32,13 @@ export const INTENTS = {
     ["goal.userId = me.id"],
     [ef("replace", "goal.title"), ef("replace", "goal.description"), ef("replace", "goal.deadline")],
     ["goal.title", "goal.description", "goal.deadline"],
-    "form", { salience: "primary" }),
+    "form"),
 
   update_goal_progress: intent("Обновить прогресс", ["goal: Goal"],
     ["goal.status = 'active'", "goal.userId = me.id"],
     [ef("replace", "goal.progress")],
     ["goal.progress"],
-    "click", { salience: "primary" }),
+    "click"),
 
   complete_goal: intent("Завершить цель", ["goal: Goal"],
     ["goal.status = 'active'", "goal.userId = me.id"],
@@ -93,7 +93,7 @@ export const INTENTS = {
     ["habit.userId = me.id"],
     [ef("replace", "habit.title"), ef("replace", "habit.targetValue"), ef("replace", "habit.unit"), ef("replace", "habit.frequency")],
     ["habit.title", "habit.targetValue", "habit.unit", "habit.frequency"],
-    "form", { salience: "primary" }),
+    "form"),
 
   delete_habit: intent("Удалить привычку", ["habit: Habit"],
     ["habit.userId = me.id"],
@@ -105,7 +105,7 @@ export const INTENTS = {
     ["habit.status = 'active'"],
     [ef("add", "habitLogs")],
     ["habit.id"],
-    "click", { salience: "primary" }),
+    "click"),
 
   uncheck_habit: intent("Снять отметку", ["habitLog: HabitLog"],
     ["habitLog.userId = me.id"],
@@ -335,7 +335,7 @@ export const INTENTS = {
     ["user.id = me.id"],
     [ef("replace", "user.name")],
     ["name"],
-    "form", { salience: "primary" }),
+    "form"),
 
   set_avatar: intent("Установить аватар", ["user: User"],
     ["user.id = me.id"],

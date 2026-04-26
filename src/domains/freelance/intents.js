@@ -864,7 +864,6 @@ export const INTENTS = {
   },
 
   accept_result: {
-    salience: "primary",
     name: "Принять работу",
     description: "Customer принимает результат — Deal.status → completed, escrow release executor'у (payout), commission платформе.",
     α: "replace",

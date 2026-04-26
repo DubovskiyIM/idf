@@ -26,13 +26,13 @@ export const INTENTS = {
   create_listing: intent("Создать лот", ["listing: Listing"],
     [], [ef("add", "listings")],
     ["title", "description", "startPrice"],
-    "enter", { creates: "Listing(draft)", salience: "primary" }),
+    "enter", { creates: "Listing(draft)" }),
 
   edit_listing: intent("Редактировать лот", ["listing: Listing"],
     ["listing.status = 'draft'", "listing.sellerId = me.id"],
     [ef("replace", "listing.title"), ef("replace", "listing.description"), ef("replace", "listing.startPrice")],
     ["title", "description", "startPrice", "condition"],
-    "click", { phase: "investigation", salience: "primary" }),
+    "click", { phase: "investigation" }),
 
   publish_listing: intent("Опубликовать", ["listing: Listing"],
     ["listing.status = 'draft'", "listing.sellerId = me.id"],
@@ -108,7 +108,7 @@ export const INTENTS = {
   feature_listing: intent("В рекомендуемые", ["listing: Listing"],
     ["listing.status = 'active'", "listing.moderatorOnly = true"],
     [ef("replace", "listing.featured", "account", { value: true })],
-    [], "click", { antagonist: "unfeature_listing", salience: "primary" }),
+    [], "click", { antagonist: "unfeature_listing" }),
 
   unfeature_listing: intent("Убрать из рекомендуемых", ["listing: Listing"],
     ["listing.featured = true", "listing.moderatorOnly = true"],
@@ -228,7 +228,7 @@ export const INTENTS = {
     ["order.sellerId = me.id"],
     [ef("replace", "order.trackingNumber")],
     ["trackingNumber"],
-    "click", { salience: "primary" }),
+    "click"),
 
   confirm_delivery: intent("Подтвердить получение", ["order: Order"],
     ["order.status = 'shipped'", "order.buyerId = me.id"],
@@ -394,7 +394,7 @@ export const INTENTS = {
     ["listing.status = 'active'"],
     [ef("add", "watchlists")],
     ["listing.title"], "click",
-    { antagonist: "remove_from_watchlist", parameters: [], salience: "primary" }),
+    { antagonist: "remove_from_watchlist", parameters: [] }),
 
   remove_from_watchlist: intent("Убрать из избранного", ["watchlist: Watchlist"],
     ["watchlist.userId = me.id"],
@@ -473,7 +473,7 @@ export const INTENTS = {
     ["user.id = me.id"],
     [ef("replace", "user.name"), ef("replace", "user.bio"), ef("replace", "user.location")],
     ["user.name", "user.bio", "user.location"],
-    "click", { phase: "investigation", salience: "primary" }),
+    "click", { phase: "investigation" }),
 
   set_avatar: intent("Установить аватар", ["user: User"],
     ["user.id = me.id"],
@@ -520,7 +520,7 @@ export const INTENTS = {
     [],
     [ef("add", "follows")],
     ["user.name"],
-    "click", { antagonist: "unfollow_seller", parameters: [], salience: "primary" }),
+    "click", { antagonist: "unfollow_seller", parameters: [] }),
 
   unfollow_seller: intent("Отписаться от продавца", ["user: User"],
     [],
@@ -637,7 +637,7 @@ export const INTENTS = {
   bulk_relist: intent("Массовое перевыставление", ["listing: Listing"],
     [],
     [ef("add", "listings")],
-    [], "click", { extended: true, creates: "Listing(draft)", salience: "primary" }),
+    [], "click", { extended: true, creates: "Listing(draft)" }),
 
   export_listings: intent("Экспорт лотов", [],
     [],

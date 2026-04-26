@@ -74,7 +74,7 @@ export const INTENTS = {
   revoke_invite_link: intent("Отозвать ссылку", ["inviteLink: InviteLink"], ["inviteLink.createdBy = me.id"], [ef("remove", "invitelinks")], ["invite_url"], "click", { irreversibility: "medium" }),
 
   // ===== ПРОФИЛЬ (10) =====
-  update_profile: intent("Обновить профиль", ["user: User"], ["user.id = me.id"], [ef("replace", "user.name"), ef("replace", "user.avatar")], ["user.name", "user.avatar"], "form", { phase: "investigation", salience: "primary" }),
+  update_profile: intent("Обновить профиль", ["user: User"], ["user.id = me.id"], [ef("replace", "user.name"), ef("replace", "user.avatar")], ["user.name", "user.avatar"], "form", { phase: "investigation" }),
   set_status_message: intent("Статус-сообщение", ["user: User"], ["user.id = me.id"], [ef("replace", "user.statusMessage")], ["user.statusMessage"], "form", { parameters: [{ name: "statusMessage", type: "text", required: false, placeholder: "Что у вас нового?" }] }),
   set_avatar: intent("Установить аватар", ["user: User"], ["user.id = me.id"], [ef("replace", "user.avatar")], ["user.name"], "file"),
   delete_avatar: intent("Удалить аватар", ["user: User"], ["user.id = me.id"], [ef("replace", "user.avatar", "account", { value: "" })], [], "click"),
