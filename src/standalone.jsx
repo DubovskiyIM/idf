@@ -23,6 +23,7 @@ import * as gravitinoDomain from "./domains/gravitino/domain.js";
 import * as keycloakDomain from "./domains/keycloak/domain.js";
 import * as argocdDomain from "./domains/argocd/domain.js";
 import * as automationDomain from "./domains/automation/domain.js";
+import * as notionDomain from "./domains/notion/domain.js";
 
 import BookingUI from "./domains/booking/ManualUI.jsx";
 import PlanningUI from "./domains/planning/ManualUI.jsx";
@@ -81,6 +82,7 @@ const DOMAIN_ADAPTERS = {
   gravitino: antdAdapter,
   keycloak: antdAdapter,
   argocd: antdAdapter,
+  notion: antdAdapter,
 };
 
 function makeV2UI(domainId) {
@@ -115,6 +117,7 @@ const DOMAINS_RAW = {
   keycloak: keycloakDomain,
   argocd: argocdDomain,
   automation: automationDomain,
+  notion: notionDomain,
 };
 
 const DOMAIN_TITLES = {
@@ -133,6 +136,7 @@ const DOMAIN_TITLES = {
   keycloak: "🔐 Keycloak",
   argocd: "🚀 ArgoCD",
   automation: "⚙️ Automation",
+  notion: "📝 Notion",
 };
 
 const DOMAINS = {
@@ -151,6 +155,7 @@ const DOMAINS = {
   keycloak: { ...keycloakDomain, UI: makeV2UI("keycloak") },
   argocd: { ...argocdDomain, UI: makeV2UI("argocd") },
   automation: { ...automationDomain, UI: makeV2UI("automation") },
+  notion: { ...notionDomain, UI: makeV2UI("notion") },
 };
 
 export default function StandaloneApp({ domainId }) {
