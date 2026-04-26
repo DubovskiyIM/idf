@@ -69,6 +69,10 @@ registerCanvas("market_trends", MarketLineCanvas);
 registerCanvas("advisor_client_dashboard", AdvisorReviewCanvas);
 registerCanvas("regulator_report", RegulatorReportCanvas);
 
+// Notion canvas (block-editor через adapter capability §12.10)
+import NotionBlockCanvas from "./domains/notion/canvas/BlockCanvas.jsx";
+registerCanvas("block_canvas", NotionBlockCanvas);
+
 // Домены с переключением адаптера
 const DOMAIN_ADAPTERS = {
   lifequest: appleAdapter,
