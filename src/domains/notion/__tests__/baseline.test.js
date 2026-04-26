@@ -67,12 +67,13 @@ describe("notion baseline", () => {
     expect(Object.keys(world.pages).length).toBeGreaterThanOrEqual(8);
   });
 
-  it("ROOT_PROJECTIONS — 5 ролей", () => {
-    expect(ROOT_PROJECTIONS.workspaceOwner).toBeDefined();
-    expect(ROOT_PROJECTIONS.editor).toBeDefined();
-    expect(ROOT_PROJECTIONS.commenter).toBeDefined();
-    expect(ROOT_PROJECTIONS.viewer).toBeDefined();
-    expect(ROOT_PROJECTIONS.agent).toBeDefined();
+  it("ROOT_PROJECTIONS — array из 4 root entries (V2Shell контракт)", () => {
+    // Per-role visibility — через projection.forRoles, не через keyed-map.
+    expect(Array.isArray(ROOT_PROJECTIONS)).toBe(true);
+    expect(ROOT_PROJECTIONS).toContain("sidebar_workspace");
+    expect(ROOT_PROJECTIONS).toContain("recent_activity");
+    expect(ROOT_PROJECTIONS).toContain("members_admin");
+    expect(ROOT_PROJECTIONS).toContain("agent_console");
   });
 
   it("invariants: 19 referential + 4 cardinality + 7 expression", () => {

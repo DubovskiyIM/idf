@@ -53,13 +53,23 @@ describe("checkEnumValues", () => {
 });
 
 describe("checkEntityKind", () => {
-  it("entity без type даёт gap", () => {
+  // §12.5 (2026-04-26): default = "internal" (не gap).
+  // Помечаем только entity с явным невалидным kind/type.
+  it("entity без kind/type — не gap (default internal)", () => {
     const onto = { entities: { Foo: { fields: { id: { type: "id" } } } } };
-    expect(checkEntityKind(onto)).toEqual([{ kind: "entity-no-type", entity: "Foo" }]);
+    expect(checkEntityKind(onto)).toEqual([]);
   });
   it("entity с type=internal проходит", () => {
     const onto = { entities: { Foo: { fields: {}, type: "internal" } } };
     expect(checkEntityKind(onto)).toEqual([]);
+  });
+  it("entity с canonical kind='reference' проходит", () => {
+    const onto = { entities: { Foo: { fields: {}, kind: "reference" } } };
+    expect(checkEntityKind(onto)).toEqual([]);
+  });
+  it("entity с invalid kind даёт gap", () => {
+    const onto = { entities: { Foo: { fields: {}, kind: "garbage" } } };
+    expect(checkEntityKind(onto)).toEqual([{ kind: "entity-no-type", entity: "Foo", value: "garbage" }]);
   });
 });
 
