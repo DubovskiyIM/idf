@@ -724,6 +724,39 @@ Bump `@intent-driven/enricher-claude` → `0.2.1`. После release — пер
 **Дата:** 2026-04-20
 **Контекст:** Debugging-derived-ui workstream завершён. Итог: 13 правил деривации (R1, R1b, R2, R3, R3b, R4, R6, R7 v2, R7b, R8, R9, R10, R11 v2) + composeProjections + explainCrystallize + resolveCompositions + near-miss witnesses + CrystallizeInspector (§27 host).
 
+### 2.8-fmt Archetype list — closed enum 7; UX modality живёт в extension layer
+
+**Дата:** 2026-04-25
+**Severity:** Format-rule (architectural). Закреплено через revert-PR'ы.
+
+**Контекст.** PR'ы idf-sdk #304 (introduce AgentConsole) + #351 (wire в ARCHETYPES dict) ввели AgentConsole как **8-й archetype** в `@intent-driven/renderer`. После 9-layer cascade hot-fix'ов на host (filterProjectionsByRole / ROOT_PROJECTIONS / pass-through / V2Shell visibility) — стало понятно, что попадание в archetype enum было концептуально неверным.
+
+**Правило.** `ProjectionRendererV2` ARCHETYPES dict — closed enum 7: `catalog / detail / feed / form / canvas / dashboard / wizard`. Не расширять без manifest-level decision'а.
+
+**Why.** Archetype в IDF format — это структурный shape проекции, declarative structure над данными. Composable across 4 reader'ов (pixels/voice/agent/document) с осмысленным mapping каждый: catalog → плитки в pixels / список «top-N» в voice / `[{id,...}]` в agent / нумерованный список в document.
+
+**Тест:** «Как этот shape проявляется в voice/document/agent?» Если хотя бы один ответ «никак» — это interaction modality / extension, не archetype.
+
+**Контр-пример (AgentConsole).** Чат-стиль UI поверх agent reader — interaction modality, не shape. Spectacle поверх pixels-modality, который слушает agent-API endpoint. В voice/document это уже сама modality, не «структура» внутри проекции — конфлация двух ортогональных осей:
+- shape (archetype) — что показывать
+- modality (reader) — как взаимодействовать
+
+**Где живут новые UX-паттерны.**
+1. **Host-extensions** — opt-in module + `projection.extension: "<id>"` marker. Host (e.g. idf-runtime TenantApp) dispatch'ит на extension перед archetype-dispatch. Demo-modules не inflating archetype list. Реализация: `idf-runtime/web/src/extensions/agent-console-demo/` (PR #57, 2026-04-25).
+2. **Pattern Bank** — поведенческие паттерны над существующими archetype'ами. Stable + candidate каталог, structure.apply contract.
+
+**Реализация revert'а:**
+- `idf-sdk #354` — удаление `packages/renderer/src/archetypes/AgentConsole/` + ARCHETYPES dict entry + changeset minor
+- `idf-runtime #57` — host-extension layer + dispatch перед `ProjectionRendererV2`
+- `idf-studio #80` — invest template: `agent_console.archetype: "canvas"` + `extension: "agent-console-demo"`
+
+**Manifesto v2.1 home.** Короткая глава «Extension surface vs format core» в Часть VII (Границы): закрытое перечисление 7 archetype'ов; canonical extension marker shape (`projection.extension: string`); host-side dispatch contract; demo vs core separation.
+
+**Связано:**
+- `docs/manifesto-v2.md` Часть II (Объекты формата) — archetype enum
+- memory `project_archetype_extension_separation.md`
+- session learning: «архетипы трогаем отдельными сессиями; ≥5 layer'ов hot-fix вокруг рендера = архитектурный smell, не bug-cascade»
+
 **Metrics финальные:**
 - Baseline: U = 24 (21%) при 88.5% authored.
 - После всех правил + ontology audit + R11 v2 activation: **U = 11 (9.5%)** (predicted).
