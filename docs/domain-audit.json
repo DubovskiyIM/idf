@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-04-25T23:45:30.737Z",
+  "generatedAt": "2026-04-26T06:15:55.943Z",
   "domains": [
     "booking",
     "planning",
@@ -66,17 +66,17 @@
           "findings": [],
           "metrics": {
             "authored": 6,
-            "derived": 8,
-            "total": 14,
-            "overrideCoefficient": 0.429,
+            "derived": 9,
+            "total": 15,
+            "overrideCoefficient": 0.4,
             "histogramMatched": [
               0,
               0,
               0,
-              14
+              15
             ],
             "patternsWithApply": 89,
-            "patternsMatchingOnly": 15,
+            "patternsMatchingOnly": 16,
             "alphabeticalFallbacks": 0,
             "disabledDeclarations": 0
           }
@@ -137,8 +137,8 @@
               "projectionId": "service_catalog",
               "archetype": "catalog",
               "behavioral": "configuration",
-              "matchedCount": 8,
-              "applyCount": 7
+              "matchedCount": 7,
+              "applyCount": 6
             },
             {
               "projectionId": "specialist_schedule",
@@ -165,8 +165,8 @@
               "projectionId": "service_detail",
               "archetype": "detail",
               "behavioral": "configuration",
-              "matchedCount": 7,
-              "applyCount": 6
+              "matchedCount": 6,
+              "applyCount": 5
             },
             {
               "projectionId": "booking_wizard",
@@ -225,17 +225,17 @@
           "findings": [],
           "metrics": {
             "authored": 3,
-            "derived": 10,
-            "total": 13,
-            "overrideCoefficient": 0.231,
+            "derived": 11,
+            "total": 14,
+            "overrideCoefficient": 0.214,
             "histogramMatched": [
               0,
               0,
               0,
-              13
+              14
             ],
-            "patternsWithApply": 83,
-            "patternsMatchingOnly": 15,
+            "patternsWithApply": 81,
+            "patternsMatchingOnly": 16,
             "alphabeticalFallbacks": 0,
             "disabledDeclarations": 0
           }
@@ -298,15 +298,15 @@
               "projectionId": "my_polls",
               "archetype": "catalog",
               "behavioral": null,
-              "matchedCount": 10,
-              "applyCount": 9
+              "matchedCount": 9,
+              "applyCount": 8
             },
             {
               "projectionId": "poll_overview",
               "archetype": "detail",
               "behavioral": null,
-              "matchedCount": 8,
-              "applyCount": 6
+              "matchedCount": 7,
+              "applyCount": 5
             },
             {
               "projectionId": "voting_matrix",
@@ -366,17 +366,17 @@
           "findings": [],
           "metrics": {
             "authored": 4,
-            "derived": 9,
-            "total": 13,
-            "overrideCoefficient": 0.308,
+            "derived": 10,
+            "total": 14,
+            "overrideCoefficient": 0.286,
             "histogramMatched": [
               0,
               0,
               0,
-              13
+              14
             ],
-            "patternsWithApply": 55,
-            "patternsMatchingOnly": 13,
+            "patternsWithApply": 53,
+            "patternsMatchingOnly": 14,
             "alphabeticalFallbacks": 0,
             "disabledDeclarations": 0
           }
@@ -431,15 +431,15 @@
               "projectionId": "workflow_list",
               "archetype": "catalog",
               "behavioral": null,
-              "matchedCount": 9,
-              "applyCount": 8
+              "matchedCount": 8,
+              "applyCount": 7
             },
             {
               "projectionId": "workflow_canvas",
               "archetype": "canvas",
               "behavioral": null,
-              "matchedCount": 4,
-              "applyCount": 3
+              "matchedCount": 3,
+              "applyCount": 2
             },
             {
               "projectionId": "node_inspector",
@@ -513,7 +513,7 @@
               0,
               19
             ],
-            "patternsWithApply": 132,
+            "patternsWithApply": 129,
             "patternsMatchingOnly": 25,
             "alphabeticalFallbacks": 0,
             "disabledDeclarations": 0
@@ -591,8 +591,8 @@
               "projectionId": "conversation_list",
               "archetype": "catalog",
               "behavioral": "triage",
-              "matchedCount": 10,
-              "applyCount": 9
+              "matchedCount": 9,
+              "applyCount": 8
             },
             {
               "projectionId": "chat_view",
@@ -684,17 +684,17 @@
           "findings": [],
           "metrics": {
             "authored": 15,
-            "derived": 24,
-            "total": 39,
-            "overrideCoefficient": 0.385,
+            "derived": 25,
+            "total": 40,
+            "overrideCoefficient": 0.375,
             "histogramMatched": [
               0,
               0,
               0,
-              39
+              40
             ],
-            "patternsWithApply": 341,
-            "patternsMatchingOnly": 45,
+            "patternsWithApply": 338,
+            "patternsMatchingOnly": 46,
             "alphabeticalFallbacks": 0,
             "disabledDeclarations": 0
           }
@@ -772,29 +772,29 @@
               "projectionId": "listing_feed",
               "archetype": "catalog",
               "behavioral": "triage",
-              "matchedCount": 14,
-              "applyCount": 13
+              "matchedCount": 13,
+              "applyCount": 12
             },
             {
               "projectionId": "listing_detail",
               "archetype": "detail",
               "behavioral": "triage",
-              "matchedCount": 12,
-              "applyCount": 10
+              "matchedCount": 11,
+              "applyCount": 9
             },
             {
               "projectionId": "listing_detail_edit",
               "archetype": "form",
               "behavioral": "triage",
-              "matchedCount": 7,
-              "applyCount": 6
+              "matchedCount": 6,
+              "applyCount": 5
             },
             {
               "projectionId": "my_listings",
               "archetype": "catalog",
               "behavioral": "triage",
-              "matchedCount": 14,
-              "applyCount": 13
+              "matchedCount": 13,
+              "applyCount": 12
             },
             {
               "projectionId": "my_bids",
@@ -842,8 +842,8 @@
               "projectionId": "category_browse",
               "archetype": "catalog",
               "behavioral": "triage",
-              "matchedCount": 11,
-              "applyCount": 10
+              "matchedCount": 10,
+              "applyCount": 9
             },
             {
               "projectionId": "dispute_detail",
@@ -923,17 +923,17 @@
           "findings": [],
           "metrics": {
             "authored": 12,
-            "derived": 19,
-            "total": 31,
-            "overrideCoefficient": 0.387,
+            "derived": 20,
+            "total": 32,
+            "overrideCoefficient": 0.375,
             "histogramMatched": [
               0,
               0,
               0,
-              31
+              32
             ],
-            "patternsWithApply": 165,
-            "patternsMatchingOnly": 37,
+            "patternsWithApply": 169,
+            "patternsMatchingOnly": 38,
             "alphabeticalFallbacks": 0,
             "disabledDeclarations": 0
           }
@@ -1007,15 +1007,15 @@
               "projectionId": "habit_list",
               "archetype": "catalog",
               "behavioral": "configuration",
-              "matchedCount": 9,
-              "applyCount": 8
+              "matchedCount": 10,
+              "applyCount": 9
             },
             {
               "projectionId": "habit_detail",
               "archetype": "detail",
               "behavioral": "configuration",
-              "matchedCount": 8,
-              "applyCount": 6
+              "matchedCount": 9,
+              "applyCount": 7
             },
             {
               "projectionId": "goal_list",
@@ -1056,8 +1056,8 @@
               "projectionId": "all_time_stats",
               "archetype": "detail",
               "behavioral": "configuration",
-              "matchedCount": 10,
-              "applyCount": 8
+              "matchedCount": 9,
+              "applyCount": 7
             },
             {
               "projectionId": "badge_list",
@@ -1129,7 +1129,7 @@
               0,
               35
             ],
-            "patternsWithApply": 143,
+            "patternsWithApply": 140,
             "patternsMatchingOnly": 36,
             "alphabeticalFallbacks": 0,
             "disabledDeclarations": 0
@@ -1242,8 +1242,8 @@
               "projectionId": "weekly_summary",
               "archetype": "detail",
               "behavioral": null,
-              "matchedCount": 7,
-              "applyCount": 6
+              "matchedCount": 6,
+              "applyCount": 5
             },
             {
               "projectionId": "hypothesis_detail",
@@ -1471,17 +1471,17 @@
           "findings": [],
           "metrics": {
             "authored": 17,
-            "derived": 40,
-            "total": 57,
-            "overrideCoefficient": 0.298,
+            "derived": 41,
+            "total": 58,
+            "overrideCoefficient": 0.293,
             "histogramMatched": [
               0,
               0,
-              9,
-              48
+              0,
+              58
             ],
-            "patternsWithApply": 223,
-            "patternsMatchingOnly": 57,
+            "patternsWithApply": 284,
+            "patternsMatchingOnly": 58,
             "alphabeticalFallbacks": 0,
             "disabledDeclarations": 0
           }
@@ -1676,120 +1676,120 @@
               "projectionId": "portfolios_root",
               "archetype": "catalog",
               "behavioral": "triage",
-              "matchedCount": 7,
-              "applyCount": 6
+              "matchedCount": 8,
+              "applyCount": 7
             },
             {
               "projectionId": "goals_root",
               "archetype": "catalog",
               "behavioral": "triage",
-              "matchedCount": 8,
-              "applyCount": 7
+              "matchedCount": 10,
+              "applyCount": 9
             },
             {
               "projectionId": "watchlists_root",
-              "archetype": "catalog",
-              "behavioral": "triage",
-              "matchedCount": 5,
-              "applyCount": 4
-            },
-            {
-              "projectionId": "recommendations_inbox",
-              "archetype": "catalog",
-              "behavioral": "triage",
-              "matchedCount": 8,
-              "applyCount": 7
-            },
-            {
-              "projectionId": "alerts_feed",
               "archetype": "catalog",
               "behavioral": "triage",
               "matchedCount": 6,
               "applyCount": 5
             },
             {
-              "projectionId": "transactions_history",
+              "projectionId": "recommendations_inbox",
               "archetype": "catalog",
               "behavioral": "triage",
-              "matchedCount": 5,
-              "applyCount": 4
+              "matchedCount": 9,
+              "applyCount": 8
             },
             {
-              "projectionId": "asset_detail",
-              "archetype": "detail",
-              "behavioral": "triage",
-              "matchedCount": 5,
-              "applyCount": 4
-            },
-            {
-              "projectionId": "performance_dashboard",
-              "archetype": "dashboard",
-              "behavioral": "triage",
-              "matchedCount": 2,
-              "applyCount": 1
-            },
-            {
-              "projectionId": "allocation_breakdown",
-              "archetype": "canvas",
-              "behavioral": "triage",
-              "matchedCount": 2,
-              "applyCount": 1
-            },
-            {
-              "projectionId": "market_trends",
-              "archetype": "canvas",
-              "behavioral": "triage",
-              "matchedCount": 2,
-              "applyCount": 1
-            },
-            {
-              "projectionId": "advisor_clients",
+              "projectionId": "alerts_feed",
               "archetype": "catalog",
               "behavioral": "triage",
               "matchedCount": 7,
               "applyCount": 6
             },
             {
-              "projectionId": "advisor_client_dashboard",
-              "archetype": "canvas",
-              "behavioral": "triage",
-              "matchedCount": 2,
-              "applyCount": 1
-            },
-            {
-              "projectionId": "regulator_report",
-              "archetype": "canvas",
-              "behavioral": "triage",
-              "matchedCount": 2,
-              "applyCount": 1
-            },
-            {
-              "projectionId": "assets_catalog",
+              "projectionId": "transactions_history",
               "archetype": "catalog",
+              "behavioral": "triage",
+              "matchedCount": 6,
+              "applyCount": 5
+            },
+            {
+              "projectionId": "asset_detail",
+              "archetype": "detail",
+              "behavioral": "triage",
+              "matchedCount": 6,
+              "applyCount": 5
+            },
+            {
+              "projectionId": "performance_dashboard",
+              "archetype": "dashboard",
               "behavioral": "triage",
               "matchedCount": 3,
               "applyCount": 2
             },
             {
-              "projectionId": "rules_list",
+              "projectionId": "allocation_breakdown",
+              "archetype": "canvas",
+              "behavioral": "triage",
+              "matchedCount": 3,
+              "applyCount": 2
+            },
+            {
+              "projectionId": "market_trends",
+              "archetype": "canvas",
+              "behavioral": "triage",
+              "matchedCount": 3,
+              "applyCount": 2
+            },
+            {
+              "projectionId": "advisor_clients",
+              "archetype": "catalog",
+              "behavioral": "triage",
+              "matchedCount": 8,
+              "applyCount": 7
+            },
+            {
+              "projectionId": "advisor_client_dashboard",
+              "archetype": "canvas",
+              "behavioral": "triage",
+              "matchedCount": 3,
+              "applyCount": 2
+            },
+            {
+              "projectionId": "regulator_report",
+              "archetype": "canvas",
+              "behavioral": "triage",
+              "matchedCount": 3,
+              "applyCount": 2
+            },
+            {
+              "projectionId": "assets_catalog",
               "archetype": "catalog",
               "behavioral": "triage",
               "matchedCount": 4,
               "applyCount": 3
             },
             {
+              "projectionId": "rules_list",
+              "archetype": "catalog",
+              "behavioral": "triage",
+              "matchedCount": 5,
+              "applyCount": 4
+            },
+            {
               "projectionId": "risk_questionnaire",
               "archetype": "wizard",
               "behavioral": "triage",
-              "matchedCount": 2,
-              "applyCount": 1
+              "matchedCount": 3,
+              "applyCount": 2
             },
             {
               "projectionId": "portfolio_onboarding",
               "archetype": "wizard",
               "behavioral": "triage",
-              "matchedCount": 2,
-              "applyCount": 1
+              "matchedCount": 3,
+              "applyCount": 2
             }
           ]
         },
@@ -1989,17 +1989,17 @@
           "findings": [],
           "metrics": {
             "authored": 25,
-            "derived": 32,
-            "total": 57,
-            "overrideCoefficient": 0.439,
+            "derived": 38,
+            "total": 63,
+            "overrideCoefficient": 0.397,
             "histogramMatched": [
               0,
               0,
               12,
-              45
+              51
             ],
-            "patternsWithApply": 212,
-            "patternsMatchingOnly": 57,
+            "patternsWithApply": 224,
+            "patternsMatchingOnly": 63,
             "alphabeticalFallbacks": 0,
             "disabledDeclarations": 0
           }
@@ -2114,8 +2114,8 @@
               "projectionId": "customer_home",
               "archetype": "catalog",
               "behavioral": "execution",
-              "matchedCount": 8,
-              "applyCount": 7
+              "matchedCount": 7,
+              "applyCount": 6
             },
             {
               "projectionId": "merchant_catalog",
@@ -2247,8 +2247,8 @@
               "projectionId": "zones_catalog",
               "archetype": "catalog",
               "behavioral": "execution",
-              "matchedCount": 5,
-              "applyCount": 4
+              "matchedCount": 4,
+              "applyCount": 3
             },
             {
               "projectionId": "assignments_form",
@@ -2442,17 +2442,17 @@
           "findings": [],
           "metrics": {
             "authored": 7,
-            "derived": 24,
-            "total": 31,
-            "overrideCoefficient": 0.226,
+            "derived": 26,
+            "total": 33,
+            "overrideCoefficient": 0.212,
             "histogramMatched": [
               0,
               0,
               0,
-              31
+              33
             ],
-            "patternsWithApply": 154,
-            "patternsMatchingOnly": 32,
+            "patternsWithApply": 156,
+            "patternsMatchingOnly": 34,
             "alphabeticalFallbacks": 0,
             "disabledDeclarations": 2
           }
@@ -2506,8 +2506,8 @@
               "projectionId": "task_catalog_public",
               "archetype": "catalog",
               "behavioral": "exploration",
-              "matchedCount": 11,
-              "applyCount": 10
+              "matchedCount": 10,
+              "applyCount": 9
             },
             {
               "projectionId": "my_task_list",
@@ -2690,17 +2690,17 @@
           "findings": [],
           "metrics": {
             "authored": 22,
-            "derived": 21,
-            "total": 43,
-            "overrideCoefficient": 0.512,
+            "derived": 22,
+            "total": 44,
+            "overrideCoefficient": 0.5,
             "histogramMatched": [
               0,
               0,
               13,
-              30
+              31
             ],
-            "patternsWithApply": 160,
-            "patternsMatchingOnly": 43,
+            "patternsWithApply": 163,
+            "patternsMatchingOnly": 44,
             "alphabeticalFallbacks": 0,
             "disabledDeclarations": 0
           }
@@ -4835,17 +4835,17 @@
           "findings": [],
           "metrics": {
             "authored": 15,
-            "derived": 65,
-            "total": 80,
-            "overrideCoefficient": 0.188,
+            "derived": 77,
+            "total": 92,
+            "overrideCoefficient": 0.163,
             "histogramMatched": [
               0,
-              10,
-              35,
-              35
+              0,
+              6,
+              86
             ],
-            "patternsWithApply": 130,
-            "patternsMatchingOnly": 80,
+            "patternsWithApply": 252,
+            "patternsMatchingOnly": 92,
             "alphabeticalFallbacks": 0,
             "disabledDeclarations": 10
           }
@@ -4884,106 +4884,106 @@
               "projectionId": "realm_list",
               "archetype": "catalog",
               "behavioral": null,
-              "matchedCount": 5,
-              "applyCount": 4
+              "matchedCount": 6,
+              "applyCount": 5
             },
             {
               "projectionId": "client_list",
               "archetype": "catalog",
               "behavioral": null,
-              "matchedCount": 5,
-              "applyCount": 4
+              "matchedCount": 6,
+              "applyCount": 5
             },
             {
               "projectionId": "user_list",
               "archetype": "catalog",
               "behavioral": null,
-              "matchedCount": 5,
-              "applyCount": 4
+              "matchedCount": 6,
+              "applyCount": 5
             },
             {
               "projectionId": "group_list",
               "archetype": "catalog",
               "behavioral": null,
-              "matchedCount": 4,
-              "applyCount": 3
+              "matchedCount": 5,
+              "applyCount": 4
             },
             {
               "projectionId": "role_list",
+              "archetype": "catalog",
+              "behavioral": null,
+              "matchedCount": 6,
+              "applyCount": 5
+            },
+            {
+              "projectionId": "identityprovider_list",
+              "archetype": "catalog",
+              "behavioral": null,
+              "matchedCount": 6,
+              "applyCount": 5
+            },
+            {
+              "projectionId": "clientscope_list",
               "archetype": "catalog",
               "behavioral": null,
               "matchedCount": 5,
               "applyCount": 4
             },
             {
-              "projectionId": "identityprovider_list",
+              "projectionId": "component_list",
               "archetype": "catalog",
               "behavioral": null,
               "matchedCount": 4,
               "applyCount": 3
-            },
-            {
-              "projectionId": "clientscope_list",
-              "archetype": "catalog",
-              "behavioral": null,
-              "matchedCount": 3,
-              "applyCount": 2
-            },
-            {
-              "projectionId": "component_list",
-              "archetype": "catalog",
-              "behavioral": null,
-              "matchedCount": 3,
-              "applyCount": 2
             },
             {
               "projectionId": "organization_list",
               "archetype": "catalog",
               "behavioral": null,
-              "matchedCount": 4,
-              "applyCount": 3
+              "matchedCount": 5,
+              "applyCount": 4
             },
             {
               "projectionId": "workflow_list",
               "archetype": "catalog",
               "behavioral": null,
-              "matchedCount": 3,
-              "applyCount": 2
+              "matchedCount": 5,
+              "applyCount": 4
             },
             {
               "projectionId": "realm_create",
               "archetype": "form",
               "behavioral": null,
-              "matchedCount": 2,
-              "applyCount": 1
+              "matchedCount": 3,
+              "applyCount": 2
             },
             {
               "projectionId": "client_create",
               "archetype": "form",
               "behavioral": null,
-              "matchedCount": 2,
-              "applyCount": 1
+              "matchedCount": 3,
+              "applyCount": 2
             },
             {
               "projectionId": "client_detail",
               "archetype": "form",
               "behavioral": null,
-              "matchedCount": 2,
-              "applyCount": 1
+              "matchedCount": 3,
+              "applyCount": 2
             },
             {
               "projectionId": "user_detail",
               "archetype": "detail",
               "behavioral": null,
-              "matchedCount": 4,
-              "applyCount": 3
+              "matchedCount": 5,
+              "applyCount": 4
             },
             {
               "projectionId": "identityprovider_create",
               "archetype": "form",
               "behavioral": null,
-              "matchedCount": 1,
-              "applyCount": 0
+              "matchedCount": 3,
+              "applyCount": 2
             }
           ]
         },
@@ -7928,17 +7928,17 @@
           "findings": [],
           "metrics": {
             "authored": 9,
-            "derived": 26,
-            "total": 35,
-            "overrideCoefficient": 0.257,
+            "derived": 33,
+            "total": 42,
+            "overrideCoefficient": 0.214,
             "histogramMatched": [
               0,
-              9,
-              22,
-              4
+              13,
+              16,
+              13
             ],
-            "patternsWithApply": 32,
-            "patternsMatchingOnly": 35,
+            "patternsWithApply": 46,
+            "patternsMatchingOnly": 42,
             "alphabeticalFallbacks": 0,
             "disabledDeclarations": 0
           }
@@ -7977,15 +7977,15 @@
               "projectionId": "application_list",
               "archetype": "catalog",
               "behavioral": null,
-              "matchedCount": 4,
-              "applyCount": 3
+              "matchedCount": 3,
+              "applyCount": 2
             },
             {
               "projectionId": "application_detail",
               "archetype": "detail",
               "behavioral": null,
-              "matchedCount": 3,
-              "applyCount": 2
+              "matchedCount": 4,
+              "applyCount": 3
             },
             {
               "projectionId": "applicationset_list",
@@ -7998,15 +7998,15 @@
               "projectionId": "project_list",
               "archetype": "catalog",
               "behavioral": null,
-              "matchedCount": 2,
-              "applyCount": 1
+              "matchedCount": 3,
+              "applyCount": 2
             },
             {
               "projectionId": "cluster_list",
               "archetype": "catalog",
               "behavioral": null,
-              "matchedCount": 2,
-              "applyCount": 1
+              "matchedCount": 3,
+              "applyCount": 2
             },
             {
               "projectionId": "repository_list",
@@ -8033,8 +8033,8 @@
               "projectionId": "account_list",
               "archetype": "catalog",
               "behavioral": null,
-              "matchedCount": 1,
-              "applyCount": 0
+              "matchedCount": 2,
+              "applyCount": 1
             }
           ]
         },
@@ -10673,17 +10673,17 @@
           "findings": [],
           "metrics": {
             "authored": 24,
-            "derived": 17,
-            "total": 41,
-            "overrideCoefficient": 0.585,
+            "derived": 21,
+            "total": 45,
+            "overrideCoefficient": 0.533,
             "histogramMatched": [
               0,
+              10,
               15,
-              14,
-              12
+              20
             ],
-            "patternsWithApply": 39,
-            "patternsMatchingOnly": 41,
+            "patternsWithApply": 56,
+            "patternsMatchingOnly": 45,
             "alphabeticalFallbacks": 0,
             "disabledDeclarations": 0
           }
@@ -10764,43 +10764,43 @@
               "projectionId": "table_list",
               "archetype": "catalog",
               "behavioral": null,
-              "matchedCount": 2,
-              "applyCount": 1
+              "matchedCount": 3,
+              "applyCount": 2
             },
             {
               "projectionId": "table_detail",
               "archetype": "detail",
               "behavioral": null,
-              "matchedCount": 2,
-              "applyCount": 1
+              "matchedCount": 3,
+              "applyCount": 2
             },
             {
               "projectionId": "fileset_list",
               "archetype": "catalog",
               "behavioral": null,
-              "matchedCount": 2,
-              "applyCount": 1
+              "matchedCount": 3,
+              "applyCount": 2
             },
             {
               "projectionId": "fileset_detail",
               "archetype": "detail",
               "behavioral": null,
-              "matchedCount": 2,
-              "applyCount": 1
+              "matchedCount": 3,
+              "applyCount": 2
             },
             {
               "projectionId": "topic_list",
               "archetype": "catalog",
               "behavioral": null,
-              "matchedCount": 2,
-              "applyCount": 1
+              "matchedCount": 3,
+              "applyCount": 2
             },
             {
               "projectionId": "topic_detail",
               "archetype": "detail",
               "behavioral": null,
-              "matchedCount": 1,
-              "applyCount": 0
+              "matchedCount": 2,
+              "applyCount": 1
             },
             {
               "projectionId": "model_list",
@@ -10820,43 +10820,43 @@
               "projectionId": "user_list",
               "archetype": "catalog",
               "behavioral": null,
-              "matchedCount": 1,
-              "applyCount": 0
+              "matchedCount": 2,
+              "applyCount": 1
             },
             {
               "projectionId": "user_detail",
               "archetype": "detail",
               "behavioral": null,
-              "matchedCount": 2,
-              "applyCount": 1
+              "matchedCount": 3,
+              "applyCount": 2
             },
             {
               "projectionId": "group_list",
               "archetype": "catalog",
               "behavioral": null,
-              "matchedCount": 1,
-              "applyCount": 0
+              "matchedCount": 2,
+              "applyCount": 1
             },
             {
               "projectionId": "group_detail",
               "archetype": "detail",
               "behavioral": null,
-              "matchedCount": 2,
-              "applyCount": 1
+              "matchedCount": 3,
+              "applyCount": 2
             },
             {
               "projectionId": "role_list",
               "archetype": "catalog",
               "behavioral": null,
-              "matchedCount": 1,
-              "applyCount": 0
+              "matchedCount": 2,
+              "applyCount": 1
             },
             {
               "projectionId": "role_detail",
               "archetype": "detail",
               "behavioral": null,
-              "matchedCount": 2,
-              "applyCount": 1
+              "matchedCount": 3,
+              "applyCount": 2
             },
             {
               "projectionId": "tag_list",
@@ -10876,15 +10876,15 @@
               "projectionId": "policy_list",
               "archetype": "catalog",
               "behavioral": null,
-              "matchedCount": 3,
-              "applyCount": 2
+              "matchedCount": 2,
+              "applyCount": 1
             },
             {
               "projectionId": "policy_detail",
               "archetype": "detail",
               "behavioral": null,
-              "matchedCount": 3,
-              "applyCount": 2
+              "matchedCount": 2,
+              "applyCount": 1
             }
           ]
         },
@@ -11255,17 +11255,17 @@
           "findings": [],
           "metrics": {
             "authored": 4,
-            "derived": 14,
-            "total": 18,
-            "overrideCoefficient": 0.222,
+            "derived": 15,
+            "total": 19,
+            "overrideCoefficient": 0.211,
             "histogramMatched": [
               0,
-              5,
-              4,
+              3,
+              7,
               9
             ],
-            "patternsWithApply": 29,
-            "patternsMatchingOnly": 18,
+            "patternsWithApply": 27,
+            "patternsMatchingOnly": 19,
             "alphabeticalFallbacks": 0,
             "disabledDeclarations": 0
           }
@@ -11301,8 +11301,8 @@
               "projectionId": "workflow_canvas",
               "archetype": "canvas",
               "behavioral": "execution",
-              "matchedCount": 3,
-              "applyCount": 2
+              "matchedCount": 2,
+              "applyCount": 1
             },
             {
               "projectionId": "execution_replay",
@@ -11315,8 +11315,8 @@
               "projectionId": "credential_vault",
               "archetype": "catalog",
               "behavioral": "execution",
-              "matchedCount": 3,
-              "applyCount": 2
+              "matchedCount": 2,
+              "applyCount": 1
             },
             {
               "projectionId": "node_palette",
