@@ -45,8 +45,9 @@
 | compliance | 38 | User, Department, Control, JournalEntry, Approval, AttestationCycle, Attestation, Finding, Evidence, Amendment | **13-й полевой тест**, SOX ICFR / «provable UI». 6 ролей (preparer/reviewer/approver/controlOwner/auditor/cfo), 15 invariants (5 expression-kind — SoD triplet + dynamic threshold + cycle-close), 7 правил (все 4 v1.5 ext), 5 `__irr:high` intents (approve_je / submit_attestation / amend_attestation / sign_off_cycle_404 / file_amendment). **Первый домен со всеми 5 behavioral patterns** signal-classifier'а. AntD reuse. Закрыл backlog §1.1 (expression-kind). |
 | keycloak | 256 | 186 (Realm, Client, User, Group, Role, IdentityProvider, ClientScope, Component, Organization, Workflow + 75 embedded) | **15-й полевой тест** (Keycloak Admin Console), AdminShell layout, scoped DataGrid, tabbedForm × 5 tabs, testConnection wizard, renderAs dispatchers (permissionMatrix / credentialEditor). Закрыл 12 SDK gap'ов. AntD. |
 | argocd | 106 | 300 (Application, ApplicationSet, Cluster, Project, Repository, Certificate, GPGKey, Account + 157 v1alpha1* K8s CRDs + 2 синтетические: Resource, ApplicationCondition) | **16-й полевой тест** (status-driven admin), Swagger 2.0 через swagger2openapi, 5 ролей (admin/developer/deployer/viewer/auditor). Stage 4: **statusBadge cell-renderer** (SDK PR idf-sdk#293 closed). Stage 5-6: inline-children (K8s resources + conditions) через синтетический FK + renderAs dispatchers. Stage 7: tabbedForm × 5 tabs для Application.spec. Host-workaround'ы в **backlog §10** (7 gap'ов G-A-1..G-A-7). Rich seed: 10 apps × 3 sync × 6 health states. AntD. |
+| notion | 60 | 12 (User, Workspace, WorkspaceMember, Page (self-ref), **Block (polymorphic, 15 variants)**, Database, DatabaseView, Property, DatabaseRow, PropertyValue, Comment, PagePermission) | **18-й полевой тест** (block-based KB), 5 ролей (workspaceOwner/editor/commenter/viewer/agent). Стресс-тесты формата: self-ref hierarchy через `Page.parentPageId`, **первый домен с `entity.kind: "polymorphic"`** (Block), multi-view database (table/board/gallery/calendar/timeline), permission-inheritance (Page → parent → Workspace), sparse-FK Comment (pageId XOR blockId). Pattern research (4 эталона: coda/obsidian/roam/confluence) — 37 candidates. **12 SDK gap'ов в §12** (P0: permission-inheritance + BlockEditor primitive; P1: archetype/kind, voice primary-field, __irr audit). AntD. |
 
-Переключатель доменов в `prototype.jsx`. Один движок, **тринадцать** наборов определений. Суммарно ~1036 намерений.
+Переключатель доменов в `prototype.jsx`. Один движок, **четырнадцать** наборов определений (включая automation/gravitino/notion вне таблицы). Суммарно ~1100 намерений.
 
 `.worktrees/petstore-demo/` — отдельный git-worktree с demo-доменом (не в `src/domains/`), HTTP-proxy effect builder + dailySum predicate; used as лёгкий demo surface для внешней аудитории.
 
@@ -299,7 +300,12 @@ Postmortem'ы: `docs/superpowers/specs/2026-04-14-sdk-core-postmortem.md` (Phase
 - ✅ **4 candidate-паттерна** (idf-sdk PR #338, P0.3) — `human-in-the-loop-gate`, `composition-as-callable`, `agent-plan-preview-approve`, `lifecycle-gates-on-run`; `CURATED_CANDIDATES.length` 6 → 10
 - ✅ **CI scaffold-smoke OOM fix** (idf-sdk PR #339) — `SKIP_DTS=true` env для `pnpm -r build`
 
-### Open items (актуально на 2026-04-22)
+**Sprint 2026-04-26 (Notion dogfood, 18-й полевой тест):**
+- ✅ **`notion` домен** (idf PR pending) — block-based KB; 12 сущностей / 5 ролей / ~60 intent'ов / 30 invariants / 15 projections; первое полевое использование `entity.kind: "polymorphic"` (Block с 15 variants); self-ref `Page.parentPageId`; sparse-FK Comment (pageId XOR blockId); multi-view database (5 view-kind'ов).
+- ✅ **Pattern research на 4 эталонных продуктах** — Coda (11), Obsidian (8), Roam Research (8), Confluence (10) → 37 кандидатов в `refs/candidates/`. Notion-doc-editor failed на JSON parse (single retry possible).
+- ✅ **Backlog §12** — 12 SDK gap'ов из field test'а: P0 (permission-inheritance, BlockEditor primitive), P1 (archetype/kind unification, voice primary-field discovery, __irr audit shape, polymorphic derive, sparse-FK API, multi-view, default permission), P2 (detail routeParams, domain fallback, audit kind default).
+
+### Open items (актуально на 2026-04-26)
 
 - **Domain scoping full** (backlog 1.4) — auto-discriminator `__domain` provenance в Φ deferred; сейчас автор использует `invariant.where` или discriminator-поле вручную
 - **Composite groupBy в cardinality** (session-backlog 1.2) — «один активный Response на пару (executorId, taskId)» сейчас в host
