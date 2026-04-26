@@ -565,3 +565,83 @@ WorkflowNode: {
 
 - ✅ §9.1 canonical type-map — теперь выделенный модуль с published API.
 - ✅ Open item «Composite / polymorphic entities» — declarative API готов; production-derivation — отдельные sub-projects.
+
+
+---
+
+## §12 — Notion field test (2026-04-26, 18-й полевой тест)
+
+Новый домен `notion` (12 сущностей, 5 ролей, ~60 intent'ов, 15 projections, 30 invariants, polymorphic Block с 15 variants). Стресс-тест на: self-referential page hierarchy, polymorphic Block, multi-view database, permission-inheritance, sparse-FK Comment, four-reader equivalence.
+
+### 12.1 P1 — `projection.archetype` vs `projection.kind` неконсистентны
+**Source.** Notion field test (initial smoke).
+**Проблема.** Documentation/manifesto использует термин **archetype** (feed/catalog/detail/canvas/dashboard/wizard/form). Runtime materializers и SDK derivation читают `projection.kind`. Author может написать `archetype: "feed"` — кристаллизатор работает (через `inferArchetype` fallback), но materializer'ы не находят catalog/feed в switch'е → пустой output.
+**Что нужно.** Либо нормализация в одном месте (на ingest crystallizeV2 проставлять `proj.kind ||= proj.archetype`), либо unified terminology (depredecate один). Сейчас 7 из 13 доменов используют `archetype:`, 6 — `kind:` — drift.
+**Workaround в host.** Использовать `kind:` явно. Notion обновлён.
+
+### 12.2 P1 — Voice materializer hard-codes `r.name || r.title` field-fallback
+**Source.** Notion field test, axiom 5 manual check.
+**Проблема.** `voiceCatalog` / `voiceFeed` / `voiceDetail` хардкодят последовательность `r.name || r.title || r.ticker || r.id`. Notion Page имеет `title` (как у настоящего Notion). После fallback'а title находится, но `projection.name` (display-имя проекции) у нас тоже не задано → "В ленте «undefined»".
+**Что нужно.** Заменить hard-code на `getPrimaryFieldValue(row, ontology, mainEntity)` — выбирать поле через `fieldRole: "primary"` или first field. Тот же fix для `projection.name || projection.title || projection.id` для display-имени.
+**Workaround.** Author задаёт `projection.name` явно. Notion может добавить.
+
+### 12.3 P2 — `materializeAsDocument` для detail не находит entity при `routeParams`
+**Source.** Notion field test.
+**Проблема.** `materializeAsDocument(detailProj, world, viewer, { routeParams: { pageId: "..." } })` возвращает `not_found`. Тестировать через `/api/document/notion/page_detail?pageId=p-onboarding` — также проваливается. Возможно `materializeDetail` принимает `routeParams` через 4-й аргумент напрямую, а не из `opts`.
+**Что нужно.** Унифицировать сигнатуру или документировать, что routeParams — отдельный 4-й arg (не в opts).
+
+### 12.4 P1 — `domain` пустая в materializer outputs если не передан в opts
+**Source.** Notion field test.
+**Проблема.** Output: «Ты — голосовой ассистент для домена «»». Materializer не падает на `ontology.domain`, читает только `opts.domain`. Server-side route правильно передаёт; standalone smoke — нет.
+**Что нужно.** Fallback `opts.domain || ontology?.domain || "unknown"`. Тривиально.
+
+### 12.5 P2 — `domain-audit.mjs` помечает все entities как `entity-no-type` если нет `kind`
+**Source.** Notion field test (60 reported gaps, из них 12 — false positive).
+**Проблема.** Default `entity.kind === "internal"` не считается audit'ом — все 12 сущностей помечены `entity-no-type`. Это шум.
+**Что нужно.** Audit script default'ит `entity.kind ??= "internal"`.
+
+### 12.6 P1 — Polymorphic Block: derive не валидирует variant.fields
+**Source.** Notion field test (Block с 15 variants).
+**Проблема.** Sanity-test показал, что `entity.kind === "polymorphic"` принимается без validation. Но в materializer'ах / formArchetype variant fields разрешаются только частично. Production-derivation per-variant form (синтезированный create-form) — пока roadmap (см. §11 → roadmap.2).
+**Что нужно.** Закрыть roadmap point 2 (form-archetype synthesis для polymorphic discriminator) либо явно warning'ом помечать «polymorphic entity не получает per-variant create-projections».
+
+### 12.7 P1 — `intent.context.__irr` не распознаётся audit'ом
+**Source.** Notion field test (revoke_member / delete_property / archive_database с `__irr.medium`).
+**Проблема.** Все 5 intent'ов с `__irr` помечены `irreversibility-missing`. Audit ищет либо отдельное поле `irreversibility`, либо что-то иное вместо `intent.context.__irr.point`.
+**Что нужно.** Стандартизировать форму записи irreversibility и обновить audit.
+
+### 12.8 P0 — Permission inheritance (Page → parent → Workspace) не выражается в формате
+**Source.** Notion field test (PagePermission).
+**Проблема.** Notion-style permission cascade: PagePermission override → если нет, наследовать от parent Page → если корень, читать `Workspace.defaultPermissionLevel`. `filterWorldForRole` не знает о parent-chain. Нет first-class invariant'а / declarative API.
+**Что нужно.** Либо `entity.permissionInheritance: { parentField: "parentPageId", fallback: "Workspace.defaultPermissionLevel" }`, либо invariant.kind "inheritance". Без этого — host-level вычисление.
+**Применимо к.** Любой self-referential domain с per-row ACL: Notion / Confluence / Filesystem / Org-tree.
+
+### 12.9 P1 — Sparse-FK Comment.pageId XOR blockId
+**Source.** Notion field test.
+**Проблема.** Comment может быть прикреплён либо к Page, либо к Block (не оба). Закрывается двумя expression invariants — workaround. Polymorphic API закрывает variant'ы внутри одной сущности, не cross-entity attach.
+**Что нужно.** `field.kind: "polymorphicFk"` с alternatives `[{entity: "Page", field: "pageId"}, {entity: "Block", field: "blockId"}]` + автоматический cardinality(exactly-one).
+
+### 12.10 P0 — Block-canvas primitive отсутствует
+**Source.** Notion field test (page_detail.body = canvas).
+**Проблема.** Notion-style block-list (drag handles, slash commands, indent/outdent, kind-conversion) — нет `<BlockEditor>` в renderer/primitives. canvas slot для page_detail рендерится как пустой placeholder.
+**Что нужно.** Renderer primitive `BlockEditor` (15+ kind'ов с variant-fields), реагирующий на indent/outdent и slash-command intent'ы. Или признать, что rich-text editing — out of scope формата (`renderer.primitives.canvas` остаётся хост-слотом).
+
+### 12.11 P1 — `proj.views[]` не используется для multi-view database
+**Source.** Notion field test (database с 5 view-kind'ами).
+**Проблема.** Multi-view database (table/board/gallery/calendar/timeline) на одной сущности (`DatabaseRow`) — formal `projection.views[]` API существует в SDK, но domain рисует 5 отдельных projections. Это нарушает DRY.
+**Что нужно.** Doc + example, как использовать `projection.views[]` для notion-style сценария. Возможно, ScientificallyDoesn't закрывает все cases (per-view filter+groupBy+sort).
+
+### 12.12 P1 — Author-defined `defaultPermissionLevel` не работает через filterWorld
+**Source.** Notion field test (Workspace.defaultPermissionLevel).
+**Проблема.** Field на entity не имеет first-class роли — это просто поле. `filterWorldForRole` его не читает. Public-share через токен (Notion: "Share to web") вообще не выражается.
+**Что нужно.** Объявить authoritative semantics, либо отнести к §12.8 (permission-inheritance).
+
+### Action items (priority order)
+
+1. **P0** — §12.8 permission-inheritance (касается ≥3 vertical-ов: Notion/Confluence/Filesystem/Org-tree).
+2. **P1** — §12.1 archetype/kind unification.
+3. **P1** — §12.2 voice materializer primary-field discovery.
+4. **P1** — §12.7 audit recognizes `__irr.point` shape.
+5. **P0** — §12.10 BlockEditor primitive (or explicit out-of-scope).
+6. **P2** — §12.3 / §12.4 / §12.5 / §12.6 — minor fixes / docs / audit polish.
+

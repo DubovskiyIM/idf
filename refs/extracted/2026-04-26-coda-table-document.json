@@ -1,0 +1,580 @@
+{
+  "source": "coda-doc-builder",
+  "entities": [
+    {
+      "name": "Doc",
+      "fields": [
+        "title",
+        "icon",
+        "cover",
+        "ownerId",
+        "folderId",
+        "createdAt",
+        "updatedAt",
+        "publishedUrl",
+        "isPublished"
+      ],
+      "foreignKey": "folderId→Folder"
+    },
+    {
+      "name": "Folder",
+      "fields": [
+        "name",
+        "parentFolderId",
+        "ownerId"
+      ],
+      "foreignKey": "parentFolderId→Folder"
+    },
+    {
+      "name": "Page",
+      "fields": [
+        "title",
+        "icon",
+        "docId",
+        "parentPageId",
+        "position",
+        "isHidden",
+        "hideFromRoles",
+        "isLocked"
+      ],
+      "foreignKey": "docId→Doc"
+    },
+    {
+      "name": "Block",
+      "fields": [
+        "pageId",
+        "kind",
+        "position",
+        "content"
+      ],
+      "statusValues": [
+        "text",
+        "table",
+        "button",
+        "ai",
+        "canvas",
+        "crossDoc",
+        "image",
+        "embed"
+      ],
+      "foreignKey": "pageId→Page"
+    },
+    {
+      "name": "Table",
+      "fields": [
+        "pageId",
+        "blockId",
+        "name",
+        "rowCount",
+        "isLocked"
+      ],
+      "foreignKey": "blockId→Block"
+    },
+    {
+      "name": "Column",
+      "fields": [
+        "tableId",
+        "name",
+        "type",
+        "position",
+        "formula",
+        "lookupTableId",
+        "selectOptions",
+        "isFormulaColumn",
+        "isAIColumn",
+        "aiPrompt"
+      ],
+      "statusValues": [
+        "text",
+        "number",
+        "date",
+        "checkbox",
+        "select",
+        "lookup",
+        "button",
+        "image",
+        "file",
+        "formula",
+        "canvas",
+        "ai"
+      ],
+      "foreignKey": "tableId→Table"
+    },
+    {
+      "name": "Row",
+      "fields": [
+        "tableId",
+        "values",
+        "isLocked",
+        "createdAt",
+        "updatedAt"
+      ],
+      "foreignKey": "tableId→Table"
+    },
+    {
+      "name": "View",
+      "fields": [
+        "sourceTableId",
+        "name",
+        "kind",
+        "filterFormula",
+        "sort",
+        "groupByColumnId",
+        "isControlled",
+        "preset"
+      ],
+      "statusValues": [
+        "table",
+        "card",
+        "kanban",
+        "calendar",
+        "timeline",
+        "detail"
+      ],
+      "foreignKey": "sourceTableId→Table"
+    },
+    {
+      "name": "Button",
+      "fields": [
+        "pageId",
+        "tableId",
+        "label",
+        "actionKind",
+        "actionConfig",
+        "visibleIfFormula",
+        "disabledIfFormula"
+      ],
+      "statusValues": [
+        "addRow",
+        "modifyRow",
+        "notify",
+        "openUrl",
+        "runPackAction"
+      ]
+    },
+    {
+      "name": "Automation",
+      "fields": [
+        "docId",
+        "name",
+        "triggerKind",
+        "triggerConfig",
+        "conditionFormula",
+        "actionKind",
+        "actionConfig",
+        "isEnabled"
+      ],
+      "statusValues": [
+        "rowAdded",
+        "rowChanged",
+        "rowDeleted",
+        "scheduled",
+        "buttonClicked"
+      ],
+      "foreignKey": "docId→Doc"
+    },
+    {
+      "name": "CrossDocSync",
+      "fields": [
+        "sourceDocId",
+        "sourceTableId",
+        "targetDocId",
+        "refreshSchedule",
+        "lastSyncedAt",
+        "syncStatus"
+      ],
+      "statusValues": [
+        "pending",
+        "syncing",
+        "synced",
+        "failed"
+      ],
+      "foreignKey": "targetDocId→Doc"
+    },
+    {
+      "name": "Pack",
+      "fields": [
+        "name",
+        "vendor",
+        "version",
+        "providedTables",
+        "providedActions",
+        "iconUrl"
+      ]
+    },
+    {
+      "name": "PackInstallation",
+      "fields": [
+        "packId",
+        "docId",
+        "installedById",
+        "credentials",
+        "installedAt"
+      ],
+      "foreignKey": "docId→Doc"
+    },
+    {
+      "name": "Permission",
+      "fields": [
+        "docId",
+        "subjectKind",
+        "subjectId",
+        "level",
+        "scope",
+        "scopeId"
+      ],
+      "statusValues": [
+        "editor",
+        "commenter",
+        "viewer"
+      ],
+      "foreignKey": "docId→Doc"
+    },
+    {
+      "name": "Template",
+      "fields": [
+        "name",
+        "category",
+        "previewImage",
+        "sourceDocId",
+        "installCount"
+      ]
+    },
+    {
+      "name": "AIBlock",
+      "fields": [
+        "pageId",
+        "prompt",
+        "sourceRef",
+        "lastResult",
+        "autoUpdate",
+        "lastRunAt"
+      ],
+      "foreignKey": "pageId→Page"
+    }
+  ],
+  "intents": [
+    {
+      "id": "create_doc",
+      "α": "add",
+      "creates": "Doc",
+      "confirmation": "click"
+    },
+    {
+      "id": "create_doc_from_template",
+      "α": "add",
+      "creates": "Doc",
+      "confirmation": "click"
+    },
+    {
+      "id": "rename_doc",
+      "α": "replace",
+      "target": "doc.title",
+      "confirmation": "enter"
+    },
+    {
+      "id": "move_doc_to_folder",
+      "α": "replace",
+      "target": "doc.folderId",
+      "confirmation": "click"
+    },
+    {
+      "id": "delete_doc",
+      "α": "remove",
+      "target": "docs",
+      "irreversibility": "high",
+      "confirmation": "form"
+    },
+    {
+      "id": "create_page",
+      "α": "add",
+      "creates": "Page",
+      "confirmation": "click"
+    },
+    {
+      "id": "rename_page",
+      "α": "replace",
+      "target": "page.title",
+      "confirmation": "enter"
+    },
+    {
+      "id": "nest_page",
+      "α": "replace",
+      "target": "page.parentPageId",
+      "confirmation": "click"
+    },
+    {
+      "id": "hide_page_from_viewers",
+      "α": "replace",
+      "target": "page.isHidden",
+      "confirmation": "click"
+    },
+    {
+      "id": "delete_page",
+      "α": "remove",
+      "target": "pages",
+      "irreversibility": "high",
+      "confirmation": "click"
+    },
+    {
+      "id": "add_table",
+      "α": "add",
+      "creates": "Table",
+      "confirmation": "click"
+    },
+    {
+      "id": "add_column",
+      "α": "add",
+      "creates": "Column",
+      "confirmation": "form"
+    },
+    {
+      "id": "change_column_type",
+      "α": "replace",
+      "target": "column.type",
+      "confirmation": "form",
+      "irreversibility": "high"
+    },
+    {
+      "id": "rename_column",
+      "α": "replace",
+      "target": "column.name",
+      "confirmation": "enter"
+    },
+    {
+      "id": "set_column_formula",
+      "α": "replace",
+      "target": "column.formula",
+      "confirmation": "enter"
+    },
+    {
+      "id": "configure_lookup",
+      "α": "replace",
+      "target": "column.lookupTableId",
+      "confirmation": "form"
+    },
+    {
+      "id": "delete_column",
+      "α": "remove",
+      "target": "columns",
+      "irreversibility": "high",
+      "confirmation": "click"
+    },
+    {
+      "id": "add_row",
+      "α": "add",
+      "creates": "Row",
+      "confirmation": "click"
+    },
+    {
+      "id": "set_cell_value",
+      "α": "replace",
+      "target": "row.values",
+      "confirmation": "enter"
+    },
+    {
+      "id": "delete_row",
+      "α": "remove",
+      "target": "rows",
+      "irreversibility": "high",
+      "confirmation": "click"
+    },
+    {
+      "id": "lock_row",
+      "α": "replace",
+      "target": "row.isLocked",
+      "confirmation": "click"
+    },
+    {
+      "id": "lock_section",
+      "α": "replace",
+      "target": "table.isLocked",
+      "confirmation": "form"
+    },
+    {
+      "id": "write_formula",
+      "α": "replace",
+      "target": "column.formula",
+      "confirmation": "enter"
+    },
+    {
+      "id": "add_button",
+      "α": "add",
+      "creates": "Button",
+      "confirmation": "click"
+    },
+    {
+      "id": "configure_button_action",
+      "α": "replace",
+      "target": "button.actionConfig",
+      "confirmation": "form"
+    },
+    {
+      "id": "set_button_visibility",
+      "α": "replace",
+      "target": "button.visibleIfFormula",
+      "confirmation": "enter"
+    },
+    {
+      "id": "click_button",
+      "α": "add",
+      "confirmation": "click"
+    },
+    {
+      "id": "create_view",
+      "α": "add",
+      "creates": "View",
+      "confirmation": "form"
+    },
+    {
+      "id": "switch_view_kind",
+      "α": "replace",
+      "target": "view.kind",
+      "confirmation": "click"
+    },
+    {
+      "id": "set_view_filter",
+      "α": "replace",
+      "target": "view.filterFormula",
+      "confirmation": "enter"
+    },
+    {
+      "id": "make_view_controlled",
+      "α": "replace",
+      "target": "view.isControlled",
+      "confirmation": "click"
+    },
+    {
+      "id": "create_automation",
+      "α": "add",
+      "creates": "Automation",
+      "confirmation": "form"
+    },
+    {
+      "id": "toggle_automation",
+      "α": "replace",
+      "target": "automation.isEnabled",
+      "confirmation": "click"
+    },
+    {
+      "id": "delete_automation",
+      "α": "remove",
+      "target": "automations",
+      "irreversibility": "high",
+      "confirmation": "click"
+    },
+    {
+      "id": "sync_cross_doc",
+      "α": "add",
+      "creates": "CrossDocSync",
+      "confirmation": "form"
+    },
+    {
+      "id": "refresh_cross_doc",
+      "α": "replace",
+      "target": "crossDocSync.lastSyncedAt",
+      "confirmation": "click"
+    },
+    {
+      "id": "install_pack",
+      "α": "add",
+      "creates": "PackInstallation",
+      "confirmation": "form"
+    },
+    {
+      "id": "uninstall_pack",
+      "α": "remove",
+      "target": "packInstallations",
+      "irreversibility": "high",
+      "confirmation": "form"
+    },
+    {
+      "id": "run_pack_action",
+      "α": "add",
+      "confirmation": "form"
+    },
+    {
+      "id": "share_doc",
+      "α": "add",
+      "creates": "Permission",
+      "confirmation": "form"
+    },
+    {
+      "id": "change_permission_level",
+      "α": "replace",
+      "target": "permission.level",
+      "confirmation": "click"
+    },
+    {
+      "id": "revoke_permission",
+      "α": "remove",
+      "target": "permissions",
+      "irreversibility": "high",
+      "confirmation": "click"
+    },
+    {
+      "id": "publish_doc",
+      "α": "replace",
+      "target": "doc.isPublished",
+      "confirmation": "form"
+    },
+    {
+      "id": "unpublish_doc",
+      "α": "replace",
+      "target": "doc.isPublished",
+      "irreversibility": "high",
+      "confirmation": "click"
+    },
+    {
+      "id": "ai_generate_block",
+      "α": "add",
+      "creates": "AIBlock",
+      "confirmation": "enter"
+    },
+    {
+      "id": "ai_generate_column",
+      "α": "add",
+      "creates": "Column",
+      "confirmation": "form"
+    },
+    {
+      "id": "ai_refresh_block",
+      "α": "replace",
+      "target": "aiBlock.lastResult",
+      "confirmation": "click"
+    },
+    {
+      "id": "automate_on_change",
+      "α": "add",
+      "creates": "Automation",
+      "confirmation": "form"
+    }
+  ],
+  "roles": [
+    "docOwner",
+    "editor",
+    "commenter",
+    "viewer",
+    "packAdmin"
+  ],
+  "observations": [
+    "Doc как первичная единица в sidebar с folder-tree (вложенные Folder→Doc), не как plain list",
+    "Page-tree внутри Doc'а без database/page дихотомии Notion — Table это блок внутри Page, а не sibling-сущность",
+    "Несколько Table может жить на одной Page (composition, не один-к-одному)",
+    "Column type — first-class enum с 12 вариантами, change_column_type помечен high-irreversibility (lossy conversion)",
+    "Formula bar с live preview — 'enter' confirmation, не 'form'; subset Excel-синтаксиса с richer semantics ([Status]=, User(), Filter())",
+    "Button — двойственная природа: и column-type, и standalone block; configure_button_action отделён от add_button (форма vs click)",
+    "View — derived projection поверх Table (sourceTableId), не дублирует rows; kind как select-enum определяет архетип (table/card/kanban/calendar/timeline/detail)",
+    "Controlled view — preset filters, immutable для viewer'а (новая роль semantics поверх стандартных permission-уровней)",
+    "Automation — Trigger + Condition + Action в одной форме, классический ECA-паттерн",
+    "Cross-doc sync — one-way с refreshSchedule, отдельная сущность CrossDocSync со status (pending/syncing/synced/failed)",
+    "Pack как extensibility surface: providedTables + providedActions; PackInstallation хранит credentials per-doc",
+    "Section/row locking — granular permission ниже уровня page (lock_section + lock_row отдельные intents)",
+    "Page-level visibility (hideFromRoles) — третий слой permission'ов после Doc.level и Section.isLocked",
+    "Publish_doc с фильтрацией — какие pages публиковать; unpublish помечен irreversibility:high (broken links)",
+    "AI как три surface: AIBlock (ad-hoc prompt), AI column (per-row evaluation), inline prompt — не одна сущность",
+    "AI column реализован как column.type='ai' + aiPrompt, унификация с formula-column — авто-вычисление per row",
+    "Templates как separate entity с installCount — discovery surface, не просто preset Doc",
+    "Permission.scope позволяет page-level и table-level overrides поверх doc-level (subjectKind+scope+scopeId паттерн)"
+  ]
+}

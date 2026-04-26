@@ -1,0 +1,84 @@
+{
+  "id": "sync-status-machine-badge",
+  "version": 1,
+  "status": "candidate",
+  "archetype": "detail",
+  "trigger": {
+    "requires": [
+      {
+        "kind": "entity-field",
+        "field": "*Status|syncStatus|jobStatus",
+        "discriminator": true,
+        "variantCount": ">=3"
+      },
+      {
+        "kind": "field-role-present",
+        "role": "timestamp",
+        "field": "lastSyncAt|lastRunAt|completedAt"
+      },
+      {
+        "kind": "intent-effect",
+        "α": "replace",
+        "target": "*.lastSyncAt|*.lastRunAt",
+        "manualTrigger": true
+      }
+    ]
+  },
+  "structure": {
+    "slot": "header",
+    "description": "В header detail-проекции status-machine (idle/syncing/ok/failed) рендерится как coloured badge + relative timestamp ('synced 5m ago'); manual-refresh CTA inline рядом с badge, при transition в 'syncing' badge становится spinner, при 'failed' — кликабельный с error tooltip."
+  },
+  "rationale": {
+    "hypothesis": "Async-sync entities имеют две независимые оси состояния (последнее-известное-время + текущая-фаза); раздельные UI-элементы для них фрагментируют восприятие — пользователь хочет узнать 'свежо ли и работает ли' одним взглядом; combined badge сводит две оси в один visual unit.",
+    "evidence": [
+      {
+        "source": "coda",
+        "description": "Cross-doc sync block с status badge + 'synced X ago' + manual refresh button",
+        "reliability": "high"
+      },
+      {
+        "source": "airtable",
+        "description": "Sync source status indicator с timestamp + retry",
+        "reliability": "high"
+      },
+      {
+        "source": "github",
+        "description": "Workflow run status (queued/running/success/failure) с inline timestamp",
+        "reliability": "high"
+      },
+      {
+        "source": "vercel",
+        "description": "Deployment status badge с time-ago + redeploy CTA",
+        "reliability": "high"
+      }
+    ],
+    "counterexample": [
+      {
+        "source": "any-realtime-app",
+        "description": "WebSocket-driven entities (chat) — состояние всегда 'fresh', sync-machine концепция не применима",
+        "reliability": "high"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [
+      {
+        "domain": "coda-table-document",
+        "projection": "cross_doc_sync_detail",
+        "reason": "CrossDocSync.syncStatus 4-state + lastSyncAt + refresh_cross_doc — точное совпадение"
+      }
+    ],
+    "shouldNotMatch": [
+      {
+        "domain": "messenger",
+        "projection": "conversation_detail",
+        "reason": "Conversation realtime, нет async-sync state machine"
+      },
+      {
+        "domain": "planning",
+        "projection": "poll_detail",
+        "reason": "Poll.status — фаза lifecycle, не sync-machine"
+      }
+    ]
+  }
+}

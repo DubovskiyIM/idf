@@ -1,0 +1,666 @@
+{
+  "source": "notion-block-based-workspace",
+  "entities": [
+    {
+      "name": "Workspace",
+      "fields": [
+        "name",
+        "icon",
+        "plan",
+        "ownerId"
+      ],
+      "foreignKey": "ownerId→User"
+    },
+    {
+      "name": "Teamspace",
+      "fields": [
+        "name",
+        "icon",
+        "description",
+        "workspaceId",
+        "visibility"
+      ],
+      "statusValues": [
+        "open",
+        "closed",
+        "private"
+      ],
+      "foreignKey": "workspaceId→Workspace"
+    },
+    {
+      "name": "Page",
+      "fields": [
+        "title",
+        "icon",
+        "coverImage",
+        "description",
+        "parentId",
+        "teamspaceId",
+        "kind",
+        "archived",
+        "createdBy",
+        "lastEditedAt"
+      ],
+      "statusValues": [
+        "active",
+        "archived"
+      ],
+      "foreignKey": "parentId→Page"
+    },
+    {
+      "name": "Block",
+      "fields": [
+        "pageId",
+        "parentBlockId",
+        "kind",
+        "payload",
+        "order",
+        "indent",
+        "color",
+        "createdBy"
+      ],
+      "statusValues": [
+        "paragraph",
+        "heading_1",
+        "heading_2",
+        "heading_3",
+        "bulleted_list",
+        "numbered_list",
+        "todo",
+        "toggle",
+        "quote",
+        "callout",
+        "code",
+        "divider",
+        "image",
+        "video",
+        "file",
+        "bookmark",
+        "embed",
+        "table",
+        "column_layout",
+        "database_inline",
+        "database_linked",
+        "synced_block",
+        "breadcrumb",
+        "ai_block"
+      ],
+      "foreignKey": "pageId→Page"
+    },
+    {
+      "name": "Database",
+      "fields": [
+        "pageId",
+        "name",
+        "icon",
+        "description"
+      ],
+      "foreignKey": "pageId→Page"
+    },
+    {
+      "name": "Property",
+      "fields": [
+        "databaseId",
+        "name",
+        "kind",
+        "config",
+        "order"
+      ],
+      "statusValues": [
+        "text",
+        "number",
+        "select",
+        "multi_select",
+        "status",
+        "date",
+        "person",
+        "files",
+        "checkbox",
+        "url",
+        "email",
+        "phone",
+        "formula",
+        "relation",
+        "rollup",
+        "created_time",
+        "last_edited_time"
+      ],
+      "foreignKey": "databaseId→Database"
+    },
+    {
+      "name": "PropertyValue",
+      "fields": [
+        "rowPageId",
+        "propertyId",
+        "value"
+      ],
+      "foreignKey": "rowPageId→Page"
+    },
+    {
+      "name": "View",
+      "fields": [
+        "databaseId",
+        "name",
+        "kind",
+        "filters",
+        "sorts",
+        "groupBy",
+        "visibleProperties",
+        "coverProperty"
+      ],
+      "statusValues": [
+        "table",
+        "board",
+        "gallery",
+        "list",
+        "calendar",
+        "timeline"
+      ],
+      "foreignKey": "databaseId→Database"
+    },
+    {
+      "name": "Permission",
+      "fields": [
+        "pageId",
+        "principalType",
+        "principalId",
+        "level"
+      ],
+      "statusValues": [
+        "full_access",
+        "can_edit",
+        "can_comment",
+        "can_view",
+        "no_access"
+      ],
+      "foreignKey": "pageId→Page"
+    },
+    {
+      "name": "PublicShare",
+      "fields": [
+        "pageId",
+        "publicUrl",
+        "allowEditing",
+        "allowCommenting",
+        "indexable",
+        "enabled"
+      ],
+      "foreignKey": "pageId→Page"
+    },
+    {
+      "name": "Comment",
+      "fields": [
+        "pageId",
+        "blockId",
+        "anchorRange",
+        "content",
+        "author",
+        "createdAt",
+        "resolved",
+        "threadId"
+      ],
+      "statusValues": [
+        "open",
+        "resolved"
+      ],
+      "foreignKey": "pageId→Page"
+    },
+    {
+      "name": "Mention",
+      "fields": [
+        "sourceBlockId",
+        "targetType",
+        "targetId",
+        "createdBy"
+      ],
+      "statusValues": [
+        "person",
+        "page",
+        "database",
+        "date"
+      ],
+      "foreignKey": "sourceBlockId→Block"
+    },
+    {
+      "name": "User",
+      "fields": [
+        "name",
+        "email",
+        "avatar",
+        "workspaceRole"
+      ],
+      "statusValues": [
+        "workspaceOwner",
+        "member",
+        "guest",
+        "commenter",
+        "viewer"
+      ]
+    },
+    {
+      "name": "Membership",
+      "fields": [
+        "workspaceId",
+        "userId",
+        "role",
+        "invitedAt"
+      ],
+      "foreignKey": "workspaceId→Workspace"
+    },
+    {
+      "name": "Template",
+      "fields": [
+        "name",
+        "scope",
+        "structure",
+        "createdBy",
+        "category"
+      ],
+      "statusValues": [
+        "workspace",
+        "user"
+      ]
+    },
+    {
+      "name": "TrashEntry",
+      "fields": [
+        "pageId",
+        "archivedAt",
+        "archivedBy",
+        "purgeAt"
+      ],
+      "foreignKey": "pageId→Page"
+    },
+    {
+      "name": "PresenceSession",
+      "fields": [
+        "pageId",
+        "userId",
+        "cursorBlockId",
+        "color",
+        "lastSeenAt"
+      ],
+      "foreignKey": "pageId→Page"
+    },
+    {
+      "name": "AiInvocation",
+      "fields": [
+        "pageId",
+        "blockId",
+        "prompt",
+        "capability",
+        "result",
+        "invokedBy",
+        "invokedAt"
+      ],
+      "statusValues": [
+        "summarize",
+        "draft",
+        "translate",
+        "brainstorm",
+        "fix_grammar",
+        "change_tone",
+        "continue_writing"
+      ],
+      "foreignKey": "pageId→Page"
+    }
+  ],
+  "intents": [
+    {
+      "id": "create_page",
+      "α": "add",
+      "creates": "Page",
+      "confirmation": "click"
+    },
+    {
+      "id": "create_subpage",
+      "α": "add",
+      "creates": "Page",
+      "confirmation": "click"
+    },
+    {
+      "id": "rename_page",
+      "α": "replace",
+      "target": "page.title",
+      "confirmation": "enter"
+    },
+    {
+      "id": "change_page_icon",
+      "α": "replace",
+      "target": "page.icon",
+      "confirmation": "click"
+    },
+    {
+      "id": "set_cover_image",
+      "α": "replace",
+      "target": "page.coverImage",
+      "confirmation": "click"
+    },
+    {
+      "id": "reparent_page",
+      "α": "replace",
+      "target": "page.parentId",
+      "confirmation": "click"
+    },
+    {
+      "id": "archive_page",
+      "α": "remove",
+      "target": "pages",
+      "confirmation": "click",
+      "irreversibility": "high"
+    },
+    {
+      "id": "restore_page",
+      "α": "replace",
+      "target": "page.archived",
+      "confirmation": "click"
+    },
+    {
+      "id": "purge_page",
+      "α": "remove",
+      "target": "pages",
+      "confirmation": "form",
+      "irreversibility": "high"
+    },
+    {
+      "id": "duplicate_page",
+      "α": "add",
+      "creates": "Page",
+      "confirmation": "click"
+    },
+    {
+      "id": "add_block",
+      "α": "add",
+      "creates": "Block",
+      "confirmation": "enter"
+    },
+    {
+      "id": "change_block_kind",
+      "α": "replace",
+      "target": "block.kind",
+      "confirmation": "click"
+    },
+    {
+      "id": "edit_block_payload",
+      "α": "replace",
+      "target": "block.payload",
+      "confirmation": "enter"
+    },
+    {
+      "id": "drag_block",
+      "α": "replace",
+      "target": "block.order",
+      "confirmation": "click"
+    },
+    {
+      "id": "indent_block",
+      "α": "replace",
+      "target": "block.indent",
+      "confirmation": "click"
+    },
+    {
+      "id": "duplicate_block",
+      "α": "add",
+      "creates": "Block",
+      "confirmation": "click"
+    },
+    {
+      "id": "delete_block",
+      "α": "remove",
+      "target": "blocks",
+      "confirmation": "click",
+      "irreversibility": "high"
+    },
+    {
+      "id": "color_block",
+      "α": "replace",
+      "target": "block.color",
+      "confirmation": "click"
+    },
+    {
+      "id": "create_synced_block",
+      "α": "add",
+      "creates": "Block",
+      "confirmation": "click"
+    },
+    {
+      "id": "create_database",
+      "α": "add",
+      "creates": "Database",
+      "confirmation": "click"
+    },
+    {
+      "id": "add_property",
+      "α": "add",
+      "creates": "Property",
+      "confirmation": "click"
+    },
+    {
+      "id": "change_property_kind",
+      "α": "replace",
+      "target": "property.kind",
+      "confirmation": "form",
+      "irreversibility": "high"
+    },
+    {
+      "id": "rename_property",
+      "α": "replace",
+      "target": "property.name",
+      "confirmation": "enter"
+    },
+    {
+      "id": "delete_property",
+      "α": "remove",
+      "target": "properties",
+      "confirmation": "click",
+      "irreversibility": "high"
+    },
+    {
+      "id": "add_database_row",
+      "α": "add",
+      "creates": "Page",
+      "confirmation": "click"
+    },
+    {
+      "id": "set_property_value",
+      "α": "replace",
+      "target": "propertyValue.value",
+      "confirmation": "enter"
+    },
+    {
+      "id": "create_view",
+      "α": "add",
+      "creates": "View",
+      "confirmation": "click"
+    },
+    {
+      "id": "set_filter",
+      "α": "replace",
+      "target": "view.filters",
+      "confirmation": "click"
+    },
+    {
+      "id": "set_sort",
+      "α": "replace",
+      "target": "view.sorts",
+      "confirmation": "click"
+    },
+    {
+      "id": "set_group_by",
+      "α": "replace",
+      "target": "view.groupBy",
+      "confirmation": "click"
+    },
+    {
+      "id": "delete_view",
+      "α": "remove",
+      "target": "views",
+      "confirmation": "click",
+      "irreversibility": "high"
+    },
+    {
+      "id": "share_page",
+      "α": "add",
+      "creates": "PublicShare",
+      "confirmation": "click"
+    },
+    {
+      "id": "toggle_public_share",
+      "α": "replace",
+      "target": "publicShare.enabled",
+      "confirmation": "click"
+    },
+    {
+      "id": "change_permission_level",
+      "α": "replace",
+      "target": "permission.level",
+      "confirmation": "click"
+    },
+    {
+      "id": "invite_guest",
+      "α": "add",
+      "creates": "Permission",
+      "confirmation": "form"
+    },
+    {
+      "id": "revoke_permission",
+      "α": "remove",
+      "target": "permissions",
+      "confirmation": "click",
+      "irreversibility": "high"
+    },
+    {
+      "id": "add_inline_comment",
+      "α": "add",
+      "creates": "Comment",
+      "confirmation": "enter"
+    },
+    {
+      "id": "add_block_comment",
+      "α": "add",
+      "creates": "Comment",
+      "confirmation": "enter"
+    },
+    {
+      "id": "resolve_comment",
+      "α": "replace",
+      "target": "comment.resolved",
+      "confirmation": "click"
+    },
+    {
+      "id": "delete_comment",
+      "α": "remove",
+      "target": "comments",
+      "confirmation": "click",
+      "irreversibility": "high"
+    },
+    {
+      "id": "mention_user",
+      "α": "add",
+      "creates": "Mention",
+      "confirmation": "click"
+    },
+    {
+      "id": "mention_page",
+      "α": "add",
+      "creates": "Mention",
+      "confirmation": "click"
+    },
+    {
+      "id": "mention_date",
+      "α": "add",
+      "creates": "Mention",
+      "confirmation": "click"
+    },
+    {
+      "id": "ai_summarize",
+      "α": "add",
+      "creates": "AiInvocation",
+      "confirmation": "click"
+    },
+    {
+      "id": "ai_continue_writing",
+      "α": "add",
+      "creates": "AiInvocation",
+      "confirmation": "click"
+    },
+    {
+      "id": "ai_translate",
+      "α": "add",
+      "creates": "AiInvocation",
+      "confirmation": "form"
+    },
+    {
+      "id": "ai_change_tone",
+      "α": "add",
+      "creates": "AiInvocation",
+      "confirmation": "form"
+    },
+    {
+      "id": "regenerate_ai_block",
+      "α": "replace",
+      "target": "block.payload",
+      "confirmation": "click"
+    },
+    {
+      "id": "search_workspace",
+      "α": "replace",
+      "target": "search.query",
+      "confirmation": "enter"
+    },
+    {
+      "id": "apply_template",
+      "α": "add",
+      "creates": "Page",
+      "confirmation": "click"
+    },
+    {
+      "id": "save_as_template",
+      "α": "add",
+      "creates": "Template",
+      "confirmation": "form"
+    },
+    {
+      "id": "create_teamspace",
+      "α": "add",
+      "creates": "Teamspace",
+      "confirmation": "form"
+    },
+    {
+      "id": "join_presence",
+      "α": "add",
+      "creates": "PresenceSession",
+      "confirmation": "click"
+    }
+  ],
+  "roles": [
+    "owner",
+    "viewer",
+    "agent",
+    "observer"
+  ],
+  "observations": [
+    "Sidebar — иерархическое дерево страниц с unlimited nesting; drag-to-reparent внутри дерева, pinned/private секции как разделители",
+    "Page = и контейнер блоков, и row базы данных — двойственность, которая делает Page first-class сущностью с self-referencing parentId",
+    "Block — first-class объект с UUID, типом и payload; ~20+ block kinds через discriminator (kind+payload), кандидат на entity.kind:'polymorphic' с discriminator='kind'",
+    "Slash-command (/) как universal block creator — единственный канал композиции, заменяет тулбар; меню типов с fuzzy-search",
+    "Markdown-shortcuts ('# ', '- ', '[]') как inline-альтернатива slash-команде — два равноправных канала ввода",
+    "Drag-handle (⋮⋮) hover-overlay слева от блока: row-contextual menu (Delete/Duplicate/Turn into/Color/Comment/Copy link)",
+    "Indent/outdent (Tab/Shift+Tab) формирует tree через block.indent + parentBlockId — bullet/todo/toggle становятся nested",
+    "Database = специализированная Page с прикреплёнными Property/View; Row базы — снова Page, что даёт unbounded recursion (Page содержит Database, Database содержит Pages, каждая Page содержит Blocks)",
+    "Property.kind как discriminator с config-payload — text/number/select/relation/rollup/formula требуют разной формы редактирования (полиморфизм property values)",
+    "View — multi-projection одной коллекции (Table/Board/Gallery/List/Calendar/Timeline) с per-view filter/sort/groupBy; classic faceted-database pattern",
+    "Permission inheritance: Page наследует от parent, override на любом уровне; 5 levels (full/edit/comment/view/none) как ordered enum",
+    "Public sharing — отдельная сущность PublicShare с трёх-bit flags (allowEditing/allowCommenting/indexable), не просто boolean",
+    "Real-time presence как ephemeral entity (PresenceSession) — avatars сверху + inline cursor с цветом; CRDT для conflict-free merge на block-level",
+    "Comment имеет три scope'а: inline (anchor к text range внутри блока), block-level (sidebar к блоку), page-level (footer треда) — anchorRange + blockId + pageId формируют scope",
+    "@-mention — polymorphic Mention с targetType discriminator (person/page/database/date), backlinks и notifications как side-effects",
+    "AI как отдельный capability-set с persistent AI-blocks (regenerate-able) — invocation с prompt+result сохраняется как entity",
+    "Templates — meta-сущность: snapshot структуры страницы/database, применяется как 'add Page from template'",
+    "Soft-delete с TTL: archived 30 дней, потом hard-delete; TrashEntry содержит purgeAt timer — кандидат на schedule_timer + irreversibility=high на purge",
+    "Quick Find (Cmd+P) — global command palette с filter-chips ('type:page', 'in:database', 'by:user') как facets, типичный pattern global-command-palette",
+    "Breadcrumb сверху страницы как computed-derivation от parent-chain — авто-renders без author intent",
+    "Cover image как collapsible hero (1500x300) + emoji icon + title — стандартный hero-layout для page-archetype",
+    "Change_property_kind помечен irreversibility=high т.к. может lossy-конвертить existing values (number→text безопасно, select→date — нет)"
+  ]
+}

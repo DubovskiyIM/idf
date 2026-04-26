@@ -1,0 +1,76 @@
+{
+  "id": "saved-layout-preset",
+  "version": 1,
+  "status": "candidate",
+  "archetype": null,
+  "trigger": {
+    "requires": [
+      {
+        "kind": "intent-creates",
+        "creates": "Workspace"
+      },
+      {
+        "kind": "entity-field",
+        "entity": "Workspace",
+        "field": "openTabs"
+      },
+      {
+        "kind": "entity-field",
+        "entity": "Workspace",
+        "field": "layout"
+      }
+    ]
+  },
+  "structure": {
+    "slot": "shell",
+    "description": "Mini-dropdown в shell для save/load именованных preset'ов layout'а (открытые табы + sidebar config + viewMode каждого таба). Switching пресета — atomic replace всего composition state, не пошагово."
+  },
+  "rationale": {
+    "hypothesis": "Когда пользователь часто переключается между task-modes («research», «daily journaling», «code review») и каждый требует своего layout'а, ручная пересборка убивает flow. Saved presets фиксируют состояние как именованную сущность — один клик восстанавливает full UI context.",
+    "evidence": [
+      {
+        "source": "obsidian",
+        "description": "Workspaces plugin: save/load именованных layouts",
+        "reliability": "high"
+      },
+      {
+        "source": "vscode",
+        "description": ".code-workspace files с панелями + открытыми файлами",
+        "reliability": "high"
+      },
+      {
+        "source": "intellij",
+        "description": "«Tool Window Layouts» с именованными presets",
+        "reliability": "high"
+      }
+    ],
+    "counterexample": [
+      {
+        "source": "instagram",
+        "description": "Single screen, нет понятия «layout» для сохранения",
+        "reliability": "high"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [
+      {
+        "domain": "obsidian",
+        "projection": "vault_workspace",
+        "reason": "Workspace entity с openTabs+layout+activeTabId + intents save_workspace/switch_workspace"
+      }
+    ],
+    "shouldNotMatch": [
+      {
+        "domain": "delivery",
+        "projection": "order_catalog",
+        "reason": "Single-screen mobile flow — нет multi-pane layout'а для сохранения"
+      },
+      {
+        "domain": "booking",
+        "projection": "specialist_catalog",
+        "reason": "Booking-flow линеен, presets не нужны"
+      }
+    ]
+  }
+}

@@ -1,0 +1,77 @@
+{
+  "id": "selective-bulk-publish",
+  "version": 1,
+  "status": "candidate",
+  "archetype": "catalog",
+  "trigger": {
+    "requires": [
+      {
+        "kind": "intent-effect",
+        "α": "replace",
+        "target": "*.publishStatus"
+      },
+      {
+        "kind": "entity-field",
+        "entity": "*",
+        "field": "publishStatus"
+      },
+      {
+        "kind": "intent-count",
+        "α": "replace",
+        "min": 2
+      }
+    ]
+  },
+  "structure": {
+    "slot": "toolbar",
+    "description": "Catalog с per-row checkbox + sticky footer-bar показывающий «N selected for publish» + global CTA «Publish all». Не bulk-action-toolbar (multiple operations), а selective-curation: подмножество ремаркируется как published, остальные остаются draft."
+  },
+  "rationale": {
+    "hypothesis": "Whole-vault export — слишком грубо (private notes leak); per-note publish — слишком много кликов. Galочки + global Publish curate подмножество за один проход: explicit selection видна как state, потом одна команда.",
+    "evidence": [
+      {
+        "source": "obsidian-publish",
+        "description": "Чек-боксы на notes для публикации, потом single Publish action",
+        "reliability": "high"
+      },
+      {
+        "source": "notion-public-pages",
+        "description": "Per-page «share to web» toggle с aggregate site preview",
+        "reliability": "medium"
+      },
+      {
+        "source": "github-pages",
+        "description": "_config.yml с include/exclude — explicit subset publishing",
+        "reliability": "medium"
+      }
+    ],
+    "counterexample": [
+      {
+        "source": "messenger",
+        "description": "Сообщения не имеют publish-state — public/private не applicable",
+        "reliability": "high"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [
+      {
+        "domain": "obsidian",
+        "projection": "publish_catalog",
+        "reason": "Note.publishStatus + select_note_for_publish + publish_note"
+      }
+    ],
+    "shouldNotMatch": [
+      {
+        "domain": "delivery",
+        "projection": "order_catalog",
+        "reason": "Orders не имеют publish-podmnozhestvo как concept"
+      },
+      {
+        "domain": "compliance",
+        "projection": "control_catalog",
+        "reason": "Bulk publishing controls violates SoD invariants"
+      }
+    ]
+  }
+}

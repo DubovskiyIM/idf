@@ -1,0 +1,87 @@
+{
+  "id": "self-referential-tree-drag-reparent",
+  "version": 1,
+  "status": "candidate",
+  "archetype": "catalog",
+  "trigger": {
+    "requires": [
+      {
+        "kind": "entity-kind",
+        "value": "self-referential",
+        "field": "parentId"
+      },
+      {
+        "kind": "intent-effect",
+        "α": "replace",
+        "targetField": "parentId"
+      },
+      {
+        "kind": "intent-count",
+        "min": 1,
+        "filter": "α=replace AND target ends with .parentId"
+      }
+    ]
+  },
+  "structure": {
+    "slot": "hero",
+    "description": "Catalog с self-referential FK (parentId→same entity) рендерится не плоской таблицей, а expand/collapse деревом с drag-handle на каждой ноде; intent move/replace .parentId биндится к drop-event, восстанавливая ordering и subtree-валидацию (no cycle, no self-parent)."
+  },
+  "rationale": {
+    "hypothesis": "Self-referential parent-child иерархии (страницы, файлы, темы forum, эпики) пользователь воспринимает пространственно. Flat datagrid с колонкой parentId требует ментальной реконструкции дерева; drag-to-reparent делает структурное изменение конкретным жестом и снимает необходимость в отдельном modal'е move-page.",
+    "evidence": [
+      {
+        "source": "confluence",
+        "description": "Page-tree sidebar внутри space с drag-to-reparent — дефолтная навигация, flat list страниц не предлагается даже как опция",
+        "reliability": "high"
+      },
+      {
+        "source": "notion",
+        "description": "Sidebar полностью построен вокруг drag-handle для перемещения страниц между родителями/workspace'ами",
+        "reliability": "high"
+      },
+      {
+        "source": "linear",
+        "description": "Sub-issues в дереве parent-issue с drag-reparent внутри issue-detail",
+        "reliability": "medium"
+      }
+    ],
+    "counterexample": [
+      {
+        "source": "github-issues",
+        "description": "Issues плоские по дизайну — иерархия только через ссылки в body; tree-pattern был бы насильственным",
+        "reliability": "high"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [
+      {
+        "domain": "confluence-space-wiki",
+        "projection": "page_tree",
+        "reason": "Page.parentId→Page + intent move_page (α=replace, target page.parentId)"
+      },
+      {
+        "domain": "workflow",
+        "projection": "node_canvas",
+        "reason": "Node может иметь parent через nesting (если есть)"
+      }
+    ],
+    "shouldNotMatch": [
+      {
+        "domain": "messenger",
+        "projection": "conversations_list",
+        "reason": "Conversation не иерархичен, нет parentId"
+      },
+      {
+        "domain": "invest",
+        "projection": "positions_list",
+        "reason": "Position не имеет self-FK"
+      },
+      {
+        "domain": "delivery",
+        "projection": "orders_list",
+        "reason": "Order — flat по статусу, не по дереву"
+      }
+    ]
+  }
+}
