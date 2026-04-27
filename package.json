@@ -50,7 +50,7 @@
     "@ant-design/plots": "^2.6.8",
     "@anthropic-ai/sdk": "^0.88.0",
     "@intent-driven/adapter-antd": "^1.9.0",
-    "@intent-driven/adapter-antd-blockeditor-tiptap": "^0.3.0",
+    "@intent-driven/adapter-antd-blockeditor-tiptap": "^0.3.1",
     "@intent-driven/adapter-apple": "^1.4.2",
     "@intent-driven/adapter-mantine": "^1.4.2",
     "@intent-driven/adapter-shadcn": "^1.4.2",
