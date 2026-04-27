@@ -785,15 +785,44 @@ WorkflowNode: {
 
 **Сделано.** `α:replace` fold теперь fallback'ит на `ctx[field]` если `val == null`. SDK intent particles `{α:"replace", target:"X.field", fields:{field: "value"}}` корректно работают через context — без явного `value`-поля.
 
+### 13.17 P0 — pattern researcher → apply-derivation gap
+
+**Источник.** Live triage 134 candidate'ов через `scripts/triage-candidates.mjs` (2026-04-27, dogfood meta-домена в Level 2.1 promote flow). Heuristic scorer с threshold ≥14 → **0 candidates** прошли в `promote-now` bucket; 79 в `review`, 55 в `park`. Главный отсекающий фактор — отсутствие `structure.apply` функции.
+
+**Проблема.** `pattern-researcher.mjs` (и domain batch'и) экстрактят из эталонных продуктов:
+- `id`, `archetype`, `version` ✓
+- `trigger.requires[]` (formal entity-field/intent-creates) ✓
+- `rationale.hypothesis` + `evidence[]` ✓
+- `shouldMatch` / `shouldNotMatch` falsification fixtures ✓ (когда researcher эмиттит)
+- `structure.slot` (где пришивается) ✓ partial
+- **`structure.apply(slots, context)` ✗ ОТСУТСТВУЕТ**
+
+`structure.apply` — это императивная JS-функция, превращающая matching-only паттерн в executable derivation. Без неё паттерн остаётся **descriptive**, не **prescriptive**. Promote candidate → stable требует apply (см. CLAUDE.md: «35 stable + 2 matching-only из 37»). Researcher AI правильно **диагностирует** паттерн, но не пишет код.
+
+Это превращается в **bottleneck**: researcher выдаёт 134 candidate'а за день, но каждый требует ручной AI-сессии для apply-derivation (≈30-60 мин/паттерн). При текущей скорости 79 review-bucket паттернов = 40-80 часов ручной работы на следующий шаг.
+
+**Что нужно** (опции в порядке убывающей амбиции):
+
+- **(а) Apply-derivation pass в SDK.** Новый pipeline-шаг: `researcher → apply-synthesizer → stable-candidate`. Synthesizer берёт `structure.slot + trigger + structure.description` и генерит skeleton `apply(slots, context) → slots` функции через AI с fallback'ом на «marker-only» apply (добавить `source: "derived:<id>"` без mutation). Все 79 review кандидатов получат apply-stub автоматически.
+- **(б) Researcher v2 с apply-emit.** Расширить prompt researcher'а: «после rationale эмить JS-snippet apply-функции». Меньше работы, но непредсказуемое качество — apply требует понимания SDK runtime (slots shape, idempotency contract, `source:` markers).
+- **(в) Marker-only stable.** Acceptable degradation: paттерн promotes без apply → matching-only. SDK уже supports это (2 stable matching-only). Trade-off: pattern bank растёт, но без runtime impact.
+
+**Метрика для следующей сессии.** До закрытия §13.17:
+- 134 candidate'ов · 0 promote-now · ручной triage 30-60 мин/штука = 67-134 ч
+- После: target ≥30% promote-now с auto-apply, полная сессия — 5-10 ч на 30 паттернов.
+
+**Связанные.** §13.1 (pattern.id collision) — это структурный prerequisite перед массовой промоцией: каждый promoted candidate должен получить unique global id, либо формальный composite-key API. Без §13.1 промоция через Level 2.1 ломается на FK-конфликтах между `stable/<arch>/X.js` и `candidate/<source>-X.json`.
+
 ### Action items (priority)
 
-1. **P0** — §13.0 architectural decision (codegen ≠ reader) до старта Level 2.
-2. **P0** — §13.1 pattern.id global uniqueness (или formal composite-key API).
-3. **P0** — §13.2 admin nav-access disconnect (документация или filterProjectionsByRole change).
-4. **P0** — §13.5 format-reflect package (или строгое ограничение «object-literal only» с migration gravitino).
-5. **P1** — §13.3 candidate JSON shape spec.
-6. **P1** — §13.6 witness persistence decision.
-7. **P1** — §13.7 reverse-association в meta-домене (Level 1.1).
+1. **P0** — §13.0 architectural decision (codegen ≠ reader) до старта Level 2. ✅
+2. **P0** — §13.17 pattern researcher → apply-derivation (bottleneck для Level 2.1 на масштабе).
+3. **P0** — §13.1 pattern.id global uniqueness (или formal composite-key API). [§13.17 prerequisite]
+4. **P0** — §13.2 admin nav-access disconnect (документация или filterProjectionsByRole change).
+5. **P0** — §13.5 format-reflect package (или строгое ограничение «object-literal only» с migration gravitino).
+6. **P1** — §13.3 candidate JSON shape spec.
+7. **P1** — §13.6 witness persistence decision.
+8. **P1** — §13.7 reverse-association в meta-домене (Level 1.1).
 8. **P2** — §13.4 snapshot import portability.
 
 ## §14 — Backlog Inbox (meta-домен Level 2 soft-authoring)
@@ -804,6 +833,8 @@ Items добавляются через intent `add_backlog_item` в meta-дом
 
 ### P0 (блокеры)
 
+- 🟢 open **pattern researcher → apply-derivation gap** · домен `meta` · 2024-04-25
+  Live triage 134 candidate'ов через `scripts/triage-candidates.mjs` (2026-04-27, dogfood meta-домена в Level 2.1 promote flow). Heuristic scorer с threshold ≥14 → **0 candidates** прошли в `promote-now` bucket; 79 в `review`, 55 в `park`. Главный отсекающий фактор — отсутствие `st
 - ✅ closed **server's foldWorld не обрабатывает `α:create`** · домен `meta` · 2024-04-25
   Live demo: effect с `alpha: "create"` (canonical из `intent.particles.effects`) → material-er 0 rows.
 - ✅ closed **invariant cascade на witness'ах** · домен `meta` · 2024-04-25
