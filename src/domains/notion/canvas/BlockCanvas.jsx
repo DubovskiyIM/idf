@@ -80,6 +80,14 @@ export default function BlockCanvas({ world, exec, viewer, ctx }) {
     if (exec) exec("change_block_kind", { id: blockId, kind: domainKind });
   }, [exec]);
 
+  // Add-block inline: вызываем notion intent add_block с auto-incremented
+  // position. Tiptap-обёртка в дальнейшем сможет дернуть это через slash-меню.
+  const handleAddBlock = useCallback((kind = "paragraph") => {
+    if (!exec || !pageId) return;
+    const nextPos = editorBlocks.length;
+    exec("add_block", { pageId, kind, text: "", position: nextPos });
+  }, [exec, pageId, editorBlocks.length]);
+
   if (!pageId) {
     return (
       <div style={{ padding: 24, color: "var(--idf-text-muted, #6b7280)" }}>
@@ -88,15 +96,53 @@ export default function BlockCanvas({ world, exec, viewer, ctx }) {
     );
   }
 
+  const canEdit = !!viewer?.canEdit || true; // notion: viewer без canEdit для editor роли — fallback open
+  const isEmpty = editorBlocks.length === 0;
+
   return (
     <div style={{ padding: "16px 24px", maxWidth: 920, margin: "0 auto" }}>
       <BlockEditor
         blocks={editorBlocks}
         onChange={handleChange}
         onKindChange={handleKindChange}
-        readOnly={!viewer?.canEdit}
+        readOnly={!canEdit}
         placeholder="Страница пуста — добавьте блок"
       />
+      {canEdit && (
+        <div style={{
+          display: "flex",
+          gap: 6,
+          marginTop: isEmpty ? 0 : 12,
+          paddingTop: isEmpty ? 0 : 8,
+          borderTop: isEmpty ? "none" : "1px dashed var(--idf-border, #e5e7eb)",
+        }}>
+          <AddBlockBtn label="+ Параграф" onClick={() => handleAddBlock("paragraph")} />
+          <AddBlockBtn label="+ H2" onClick={() => handleAddBlock("heading_2")} />
+          <AddBlockBtn label="+ Список" onClick={() => handleAddBlock("bulleted_list")} />
+          <AddBlockBtn label="+ Todo" onClick={() => handleAddBlock("todo")} />
+          <AddBlockBtn label="+ Code" onClick={() => handleAddBlock("code")} />
+          <AddBlockBtn label="+ Цитата" onClick={() => handleAddBlock("quote")} />
+        </div>
+      )}
     </div>
+  );
+}
+
+function AddBlockBtn({ label, onClick }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      style={{
+        background: "var(--idf-surface, transparent)",
+        border: "1px solid var(--idf-border, #d9d9d9)",
+        borderRadius: 6,
+        padding: "4px 10px",
+        fontSize: 12,
+        color: "var(--idf-text-muted, #6b7280)",
+        cursor: "pointer",
+        fontFamily: "var(--idf-font, system-ui)",
+      }}
+    >{label}</button>
   );
 }

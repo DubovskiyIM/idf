@@ -56,7 +56,7 @@ export const PROJECTIONS = {
         // Custom canvas рендерит Block-список с поддержкой 15 kind'ов
       },
       toolbar: {
-        intents: ["rename_page", "set_page_icon", "set_cover_image", "share_page", "archive_page", "duplicate_page"],
+        intents: ["add_block", "rename_page", "set_page_icon", "set_cover_image", "share_page", "archive_page", "duplicate_page"],
       },
     },
   },
