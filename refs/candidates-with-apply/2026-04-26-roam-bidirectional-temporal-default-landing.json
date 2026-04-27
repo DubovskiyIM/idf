@@ -1,0 +1,95 @@
+{
+  "id": "temporal-default-landing",
+  "version": 1,
+  "status": "candidate",
+  "archetype": "catalog",
+  "trigger": {
+    "requires": [
+      {
+        "kind": "entity-field",
+        "entity": "*",
+        "field": "isDailyNote",
+        "fieldRole": "boolean"
+      },
+      {
+        "kind": "entity-field",
+        "entity": "*",
+        "field": "date",
+        "fieldRole": "date"
+      },
+      {
+        "kind": "intent-effect",
+        "target": "session.currentPage"
+      },
+      {
+        "kind": "intent-confirmation",
+        "value": "click"
+      }
+    ]
+  },
+  "structure": {
+    "slot": "header",
+    "description": "Если ontology содержит entity с флагом isDailyNote+date и intent navigate_today/navigate_to_date, дефолтная landing-проекция — daily-note за today, а не root-каталог. Hero-slot заменяется на сегодняшнюю запись, header показывает ленту дат.",
+    "applySource": "function apply(slots, context) {\n  // Auto-synthesized marker-only apply (§13.17 opt-c).\n  // Marks first un-marked item in slots.header with source: \"derived:temporal-default-landing\".\n  // Idempotent: skip if already marked.\n  const slot = slots?.header;\n  if (!Array.isArray(slot) || slot.length === 0) return slots;\n  const idx = slot.findIndex((x) => x && !x.source);\n  if (idx === -1) return slots;\n  const marker = \"derived:temporal-default-landing\";\n  if (slot[idx].source === marker) return slots;\n  return {\n    ...slots,\n    header: slot.map((item, i) =>\n      i === idx ? { ...item, source: marker } : item),\n  };\n}",
+    "applyKind": "marker-only-synthesized",
+    "applySynthesizedAt": 1777280149903
+  },
+  "rationale": {
+    "hypothesis": "Когда Φ-entry-point у пользователя темпоральный (журнал), а не иерархический (дерево), показ root-каталога заставляет лишний клик и ломает habit-loop. Авто-перенос на today-note делает ежедневный workflow zero-click.",
+    "evidence": [
+      {
+        "source": "roam-research",
+        "description": "Daily Notes — дефолтный экран, иерархия пустая до первой ручной страницы",
+        "reliability": "high"
+      },
+      {
+        "source": "logseq",
+        "description": "Journal page открывается при старте, ничего другого по умолчанию не видно",
+        "reliability": "high"
+      },
+      {
+        "source": "obsidian-daily-notes-plugin",
+        "description": "Опционально, но top-installed plugin — показывает спрос",
+        "reliability": "medium"
+      }
+    ],
+    "counterexample": [
+      {
+        "source": "notion",
+        "description": "Hierarchical workspace без temporal default — рабочая модель для проектных доков",
+        "reliability": "high"
+      },
+      {
+        "source": "linear",
+        "description": "Default landing — Inbox/Active queue, не date-based",
+        "reliability": "high"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [
+      {
+        "domain": "reflect",
+        "projection": "mood_entries_daily",
+        "reason": "MoodEntry per-day с полем date — entry-point естественно темпоральный"
+      },
+      {
+        "domain": "lifequest",
+        "projection": "habit_log_today",
+        "reason": "HabitLog темпоральный, today — дефолтный фокус"
+      }
+    ],
+    "shouldNotMatch": [
+      {
+        "domain": "sales",
+        "projection": "listings_catalog",
+        "reason": "Каталог — не темпоральная сущность, нет isDailyNote-флага"
+      },
+      {
+        "domain": "invest",
+        "projection": "portfolio_detail",
+        "reason": "Portfolio — иерархическая, не date-keyed"
+      }
+    ]
+  }
+}

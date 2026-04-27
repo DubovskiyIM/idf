@@ -1,0 +1,75 @@
+{
+  "id": "per-entity-view-mode-toggle",
+  "version": 1,
+  "status": "candidate",
+  "archetype": "detail",
+  "trigger": {
+    "requires": [
+      {
+        "kind": "intent-effect",
+        "α": "replace",
+        "target": "*.viewMode"
+      },
+      {
+        "kind": "entity-field",
+        "field": "viewMode",
+        "valuesAtLeast": 2
+      }
+    ]
+  },
+  "structure": {
+    "slot": "header",
+    "description": "Сегментный переключатель режимов просмотра (live-preview / source / reading) одной и той же сущности — не разные entity, а ортогональные проекции одного Note. Размещается в header detail, состояние per-tab.",
+    "applySource": "function apply(slots, context) {\n  // Auto-synthesized marker-only apply (§13.17 opt-c).\n  // Marks first un-marked item in slots.header with source: \"derived:per-entity-view-mode-toggle\".\n  // Idempotent: skip if already marked.\n  const slot = slots?.header;\n  if (!Array.isArray(slot) || slot.length === 0) return slots;\n  const idx = slot.findIndex((x) => x && !x.source);\n  if (idx === -1) return slots;\n  const marker = \"derived:per-entity-view-mode-toggle\";\n  if (slot[idx].source === marker) return slots;\n  return {\n    ...slots,\n    header: slot.map((item, i) =>\n      i === idx ? { ...item, source: marker } : item),\n  };\n}",
+    "applyKind": "marker-only-synthesized",
+    "applySynthesizedAt": 1777280149911
+  },
+  "rationale": {
+    "hypothesis": "Когда одна сущность имеет несколько ортогональных режимов рендера на одном и том же контенте, naïve-решение выносит каждый в отдельный route или табу, теряя «один объект — три взгляда». Сегментный toggle в header сохраняет идентичность entity и делает переключение мгновенным.",
+    "evidence": [
+      {
+        "source": "obsidian",
+        "description": "Live-preview / source / reading как 3 кнопки в header tab — переключают рендер одного Note без потери позиции курсора",
+        "reliability": "high"
+      },
+      {
+        "source": "notion",
+        "description": "Page properties: list / board / calendar / gallery view над одной коллекцией",
+        "reliability": "high"
+      },
+      {
+        "source": "github",
+        "description": "Code / Blame / Raw для одного файла — header-toggle",
+        "reliability": "medium"
+      }
+    ],
+    "counterexample": [
+      {
+        "source": "linear",
+        "description": "Issue detail имеет один canonical вид — view-mode toggle тут был бы шумом",
+        "reliability": "high"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [
+      {
+        "domain": "obsidian",
+        "projection": "note_detail",
+        "reason": "Tab.viewMode принимает live_preview/source/reading + intent switch_view_mode"
+      }
+    ],
+    "shouldNotMatch": [
+      {
+        "domain": "invest",
+        "projection": "position_detail",
+        "reason": "Position не имеет ортогональных view modes одного контента"
+      },
+      {
+        "domain": "messenger",
+        "projection": "message_detail",
+        "reason": "Сообщение — единая проекция, нет режима «raw markdown»"
+      }
+    ]
+  }
+}

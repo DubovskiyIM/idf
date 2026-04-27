@@ -1,0 +1,84 @@
+{
+  "id": "content-as-extension-surface",
+  "version": 1,
+  "status": "candidate",
+  "archetype": "catalog",
+  "trigger": {
+    "requires": [
+      {
+        "kind": "entity-kind",
+        "entity": "PluginScript",
+        "field": "kind",
+        "values": [
+          "roam/css",
+          "roam/js",
+          "smartblocks"
+        ]
+      },
+      {
+        "kind": "intent-creates",
+        "creates": "PluginScript"
+      },
+      {
+        "kind": "intent-confirmation",
+        "intent": "install_plugin_script",
+        "confirmation": "form"
+      }
+    ]
+  },
+  "structure": {
+    "slot": "sections",
+    "description": "Plugin-script хранится как content специальной Page (не отдельная сущность с marketplace-UI). Catalog-проекция плагинов — это catalog Page'й с фильтром по kind ∈ {script-types}. Установка = create Page с правильным title; деинсталляция = delete Page. Никаких отдельных install-flow'ов.",
+    "applySource": "function apply(slots, context) {\n  // Auto-synthesized marker-only apply (§13.17 opt-c).\n  // Marks first un-marked item in slots.sections with source: \"derived:content-as-extension-surface\".\n  // Idempotent: skip if already marked.\n  const slot = slots?.sections;\n  if (!Array.isArray(slot) || slot.length === 0) return slots;\n  const idx = slot.findIndex((x) => x && !x.source);\n  if (idx === -1) return slots;\n  const marker = \"derived:content-as-extension-surface\";\n  if (slot[idx].source === marker) return slots;\n  return {\n    ...slots,\n    sections: slot.map((item, i) =>\n      i === idx ? { ...item, source: marker } : item),\n  };\n}",
+    "applyKind": "marker-only-synthesized",
+    "applySynthesizedAt": 1777280149909
+  },
+  "rationale": {
+    "hypothesis": "Когда extension-механизм гомоморфен content-механизму, пользователь не учит вторую модель. Это снижает барьер расширения (любой пользователь, умеющий писать страницы, может писать плагины) и убирает разрыв между 'настройками' и 'данными'.",
+    "evidence": [
+      {
+        "source": "roam-research",
+        "description": "roam/css, roam/js, SmartBlocks — content special-pages с тем же edit-UX",
+        "reliability": "high"
+      },
+      {
+        "source": "logseq",
+        "description": "config.edn + custom.css как обычные страницы графа",
+        "reliability": "high"
+      },
+      {
+        "source": "emacs-init",
+        "description": "Same idea: configuration is code в обычных файлах",
+        "reliability": "medium"
+      }
+    ],
+    "counterexample": [
+      {
+        "source": "vscode-marketplace",
+        "description": "Extensions — отдельный install-mechanism, separate UI",
+        "reliability": "high"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [
+      {
+        "domain": "notion",
+        "projection": "workspace_settings",
+        "reason": "Custom blocks как Page-content возможны"
+      }
+    ],
+    "shouldNotMatch": [
+      {
+        "domain": "invest",
+        "projection": "settings",
+        "reason": "Скрипты в content портфеля — security/UX nightmare"
+      },
+      {
+        "domain": "compliance",
+        "projection": "control_detail",
+        "reason": "Code-в-content не совместим с audit-моделью"
+      }
+    ]
+  }
+}

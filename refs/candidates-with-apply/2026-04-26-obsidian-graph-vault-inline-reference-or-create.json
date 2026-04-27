@@ -1,0 +1,78 @@
+{
+  "id": "inline-reference-or-create",
+  "version": 1,
+  "status": "candidate",
+  "archetype": null,
+  "trigger": {
+    "requires": [
+      {
+        "kind": "intent-creates",
+        "creates": "WikiLink"
+      },
+      {
+        "kind": "entity-field",
+        "entity": "WikiLink",
+        "field": "isResolved"
+      },
+      {
+        "kind": "intent-confirmation",
+        "value": "enter"
+      }
+    ]
+  },
+  "structure": {
+    "slot": "composer",
+    "description": "Inline-синтаксис ([[ … ]]) внутри редактора: существующий target → ссылка, отсутствующий → lazy-create новой сущности с тем же именем. Один gesture, два разных α: link vs create — выбор по факту разрешения reference.",
+    "applySource": "function apply(slots, context) {\n  // Auto-synthesized marker-only apply (§13.17 opt-c).\n  // Marks first un-marked item in slots.composer with source: \"derived:inline-reference-or-create\".\n  // Idempotent: skip if already marked.\n  const slot = slots?.composer;\n  if (!Array.isArray(slot) || slot.length === 0) return slots;\n  const idx = slot.findIndex((x) => x && !x.source);\n  if (idx === -1) return slots;\n  const marker = \"derived:inline-reference-or-create\";\n  if (slot[idx].source === marker) return slots;\n  return {\n    ...slots,\n    composer: slot.map((item, i) =>\n      i === idx ? { ...item, source: marker } : item),\n  };\n}",
+    "applyKind": "marker-only-synthesized",
+    "applySynthesizedAt": 1777280149908
+  },
+  "rationale": {
+    "hypothesis": "Разделение «найти существующее» и «создать новое» на два разных диалога ломает поток письма. Lazy-creation сливает их в один gesture: пишешь имя — если есть, ссылаешься; если нет, создаёшь. Стоимость промаха близка к нулю (можно ввести любое имя).",
+    "evidence": [
+      {
+        "source": "obsidian",
+        "description": "[[Note Name]] — клик создаёт link или новую заметку",
+        "reliability": "high"
+      },
+      {
+        "source": "notion",
+        "description": "@-mention page: «+ Create New Page» в dropdown суггестов",
+        "reliability": "high"
+      },
+      {
+        "source": "roam-research",
+        "description": "Block-level [[backref]] с lazy creation — концептуальный прародитель",
+        "reliability": "high"
+      }
+    ],
+    "counterexample": [
+      {
+        "source": "github-issue-mentions",
+        "description": "#123 — только existing references, lazy-create issue из mention был бы опасен",
+        "reliability": "high"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [
+      {
+        "domain": "obsidian",
+        "projection": "note_detail",
+        "reason": "WikiLink.isResolved + intent insert_wikilink с creates=WikiLink и lazy fallback"
+      }
+    ],
+    "shouldNotMatch": [
+      {
+        "domain": "invest",
+        "projection": "position_detail",
+        "reason": "Asset references детерминированы — нельзя «создать» новый ticker через mention"
+      },
+      {
+        "domain": "compliance",
+        "projection": "control_detail",
+        "reason": "Lazy creation Control'а из journal entry violates SoD"
+      }
+    ]
+  }
+}

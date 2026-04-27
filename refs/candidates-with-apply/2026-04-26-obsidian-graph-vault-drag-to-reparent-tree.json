@@ -1,0 +1,86 @@
+{
+  "id": "drag-to-reparent-tree",
+  "version": 1,
+  "status": "candidate",
+  "archetype": "catalog",
+  "trigger": {
+    "requires": [
+      {
+        "kind": "entity-field",
+        "entity": "<entity>",
+        "field": "parentId",
+        "fieldKind": "ref-self"
+      },
+      {
+        "kind": "intent-effect",
+        "α": "replace",
+        "target": "*.parentId"
+      },
+      {
+        "kind": "intent-effect",
+        "α": "replace",
+        "target": "*.folderId"
+      }
+    ]
+  },
+  "structure": {
+    "slot": "body",
+    "description": "Hierarchical-tree body supports drag-to-reparent as primary affordance for `replace .parentId` / `replace .folderId` intents. No 'Move to…' modal needed for the hierarchical case — drag target onto folder = commit. Modal stays available for keyboard-driven path. Effect is generated declaratively from intent + tree structure, not coded per-domain.",
+    "applySource": "function apply(slots, context) {\n  // Auto-synthesized marker-only apply (§13.17 opt-c).\n  // Marks first un-marked item in slots.body with source: \"derived:drag-to-reparent-tree\".\n  // Idempotent: skip if already marked.\n  const slot = slots?.body;\n  if (!Array.isArray(slot) || slot.length === 0) return slots;\n  const idx = slot.findIndex((x) => x && !x.source);\n  if (idx === -1) return slots;\n  const marker = \"derived:drag-to-reparent-tree\";\n  if (slot[idx].source === marker) return slots;\n  return {\n    ...slots,\n    body: slot.map((item, i) =>\n      i === idx ? { ...item, source: marker } : item),\n  };\n}",
+    "applyKind": "marker-only-synthesized",
+    "applySynthesizedAt": 1777280149908
+  },
+  "rationale": {
+    "hypothesis": "Replace-FK intents on tree-shaped entities are the prototypical drag-target operation. Forcing a modal ('Choose new parent…') breaks spatial reasoning — the user already knows where they want it because they can see the tree. Drag commits the spatial decision directly. The modal remains as keyboard fallback, not the primary path.",
+    "evidence": [
+      {
+        "source": "obsidian",
+        "description": "File explorer: drag note onto folder = move; modal exists but is secondary",
+        "reliability": "high"
+      },
+      {
+        "source": "finder-macos",
+        "description": "Decades of tree-drag-to-reparent precedent",
+        "reliability": "high"
+      },
+      {
+        "source": "notion",
+        "description": "Page tree supports drag-to-reparent; 'Move to…' is secondary",
+        "reliability": "high"
+      }
+    ],
+    "counterexample": [
+      {
+        "source": "linear",
+        "description": "Issues are flat per-project; no hierarchy to drag into",
+        "reliability": "high"
+      },
+      {
+        "source": "compliance",
+        "description": "Org-tree changes are formally approved; drag would bypass invariants",
+        "reliability": "high"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [
+      {
+        "domain": "notion",
+        "projection": "page_workspace",
+        "reason": "Page.parentPageId is self-ref FK with replace intent — drag-reparent fits"
+      }
+    ],
+    "shouldNotMatch": [
+      {
+        "domain": "invest",
+        "projection": "position_catalog",
+        "reason": "Position has no parent; flat list"
+      },
+      {
+        "domain": "compliance",
+        "projection": "control_catalog",
+        "reason": "Reparenting is approval-gated; UX must surface the approval, not hide it behind a drag"
+      }
+    ]
+  }
+}
