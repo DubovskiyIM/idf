@@ -2,7 +2,7 @@ import { useEffect } from 'react';
 import { createRoot } from 'react-dom/client';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { MantineAdapterProvider } from '@intent-driven/adapter-mantine';
-import StandaloneApp from './standalone.jsx';
+import StandaloneApp, { DOMAINS_RAW } from './standalone.jsx';
 
 // Tailwind 4 entry — должен быть в src/, не в node_modules,
 // чтобы @tailwindcss/vite plugin его подхватил.
@@ -47,29 +47,27 @@ function StudioRedirect() {
   );
 }
 
+// Все domain-роуты + их v2-варианты (booking-v2, planning-v2, messenger-v2)
+// рендерятся через одного StandaloneApp с domainId=route. Список — DOMAINS_RAW
+// + руками добавленные v2-aliases (один и тот же домен под двумя путями).
+const V2_ALIASES = ["booking", "planning", "messenger"];
+
 function Root() {
+  const domainIds = Object.keys(DOMAINS_RAW);
   return (
     <MantineAdapterProvider>
       <BrowserRouter>
         <Routes>
-          <Route path="/messenger" element={<StandaloneApp domainId="messenger" />} />
-          <Route path="/messenger-v2" element={<StandaloneApp domainId="messenger-v2" />} />
-          <Route path="/booking" element={<StandaloneApp domainId="booking" />} />
-          <Route path="/booking-v2" element={<StandaloneApp domainId="booking-v2" />} />
-          <Route path="/planning" element={<StandaloneApp domainId="planning" />} />
-          <Route path="/planning-v2" element={<StandaloneApp domainId="planning-v2" />} />
-          <Route path="/workflow" element={<StandaloneApp domainId="workflow" />} />
-          <Route path="/sales" element={<StandaloneApp domainId="sales" />} />
-          <Route path="/lifequest" element={<StandaloneApp domainId="lifequest" />} />
-          <Route path="/reflect" element={<StandaloneApp domainId="reflect" />} />
-          <Route path="/invest" element={<StandaloneApp domainId="invest" />} />
-          <Route path="/delivery" element={<StandaloneApp domainId="delivery" />} />
-          <Route path="/freelance" element={<StandaloneApp domainId="freelance" />} />
-          <Route path="/compliance" element={<StandaloneApp domainId="compliance" />} />
-          <Route path="/gravitino" element={<StandaloneApp domainId="gravitino" />} />
-          <Route path="/keycloak" element={<StandaloneApp domainId="keycloak" />} />
-          <Route path="/argocd" element={<StandaloneApp domainId="argocd" />} />
-          <Route path="/notion" element={<StandaloneApp domainId="notion" />} />
+          {domainIds.map((id) => (
+            <Route key={id} path={`/${id}`} element={<StandaloneApp domainId={id} />} />
+          ))}
+          {V2_ALIASES.map((id) => (
+            <Route
+              key={`${id}-v2`}
+              path={`/${id}-v2`}
+              element={<StandaloneApp domainId={`${id}-v2`} />}
+            />
+          ))}
           <Route path="/*" element={<StudioRedirect />} />
         </Routes>
       </BrowserRouter>
