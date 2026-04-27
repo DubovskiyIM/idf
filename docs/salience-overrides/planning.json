@@ -1,0 +1,11 @@
+{
+  "domain": "planning",
+  "generatedAt": "2026-04-27T10:47:26.468Z",
+  "note": "Numeric salience hints from author audit. NOT auto-applied to host (см. findings doc).",
+  "overrides": {
+    "set_deadline": {
+      "salience": 10,
+      "tier": "utility"
+    }
+  }
+}

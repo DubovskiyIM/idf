@@ -1,0 +1,19 @@
+{
+  "domain": "booking",
+  "generatedAt": "2026-04-27T10:47:26.468Z",
+  "note": "Numeric salience hints from author audit. NOT auto-applied to host (см. findings doc).",
+  "overrides": {
+    "add_service": {
+      "salience": 80,
+      "tier": "primary"
+    },
+    "remove_service": {
+      "salience": 10,
+      "tier": "utility"
+    },
+    "update_service": {
+      "salience": 10,
+      "tier": "utility"
+    }
+  }
+}

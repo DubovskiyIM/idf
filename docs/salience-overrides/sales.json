@@ -1,0 +1,127 @@
+{
+  "domain": "sales",
+  "generatedAt": "2026-04-27T10:47:26.469Z",
+  "note": "Numeric salience hints from author audit. NOT auto-applied to host (см. findings doc).",
+  "overrides": {
+    "add_listing_image": {
+      "salience": 10,
+      "tier": "utility"
+    },
+    "add_order_note": {
+      "salience": 10,
+      "tier": "utility"
+    },
+    "add_to_bundle": {
+      "salience": 10,
+      "tier": "utility"
+    },
+    "apply_coupon": {
+      "salience": 10,
+      "tier": "utility"
+    },
+    "apply_template": {
+      "salience": 10,
+      "tier": "utility"
+    },
+    "approve_verification": {
+      "salience": 10,
+      "tier": "utility"
+    },
+    "archive_listing": {
+      "salience": 10,
+      "tier": "utility"
+    },
+    "cancel_promotion": {
+      "salience": 10,
+      "tier": "utility"
+    },
+    "choose_payment_method": {
+      "salience": 10,
+      "tier": "utility"
+    },
+    "combine_shipping": {
+      "salience": 10,
+      "tier": "utility"
+    },
+    "disable_international_shipping": {
+      "salience": 10,
+      "tier": "utility"
+    },
+    "edit_listing": {
+      "salience": 10,
+      "tier": "utility"
+    },
+    "edit_template": {
+      "salience": 10,
+      "tier": "utility"
+    },
+    "feature_listing": {
+      "salience": 10,
+      "tier": "utility"
+    },
+    "issue_partial_refund": {
+      "salience": 10,
+      "tier": "utility"
+    },
+    "like_listing": {
+      "salience": 10,
+      "tier": "utility"
+    },
+    "mark_as_gift": {
+      "salience": 10,
+      "tier": "utility"
+    },
+    "rename_template": {
+      "salience": 10,
+      "tier": "utility"
+    },
+    "schedule_listing": {
+      "salience": 10,
+      "tier": "utility"
+    },
+    "set_avatar": {
+      "salience": 10,
+      "tier": "utility"
+    },
+    "set_listing_condition": {
+      "salience": 10,
+      "tier": "utility"
+    },
+    "set_minimum_bid_increment": {
+      "salience": 10,
+      "tier": "utility"
+    },
+    "set_shipping_cost": {
+      "salience": 10,
+      "tier": "utility"
+    },
+    "set_shipping_from": {
+      "salience": 10,
+      "tier": "utility"
+    },
+    "set_subcategory": {
+      "salience": 10,
+      "tier": "utility"
+    },
+    "set_template_defaults": {
+      "salience": 10,
+      "tier": "utility"
+    },
+    "unfeature_listing": {
+      "salience": 10,
+      "tier": "utility"
+    },
+    "unlike_listing": {
+      "salience": 10,
+      "tier": "utility"
+    },
+    "update_profile": {
+      "salience": 10,
+      "tier": "utility"
+    },
+    "verify_identity": {
+      "salience": 10,
+      "tier": "utility"
+    }
+  }
+}
