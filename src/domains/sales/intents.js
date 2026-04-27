@@ -531,7 +531,8 @@ export const INTENTS = {
 
   // ===== ПОИСК / НАВИГАЦИЯ (8) =====
 
-  search_listings: intent("Поиск лотов", [],
+  search_listings: intent("Поиск лотов",
+    ["listing: Listing", "bid: Bid", "order: Order", "watchlist: Watchlist", "category: Category", "notification: Notification", "savedSearch: SavedSearch"],
     [],
     [],
     ["query", "results"],

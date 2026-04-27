@@ -24,7 +24,7 @@ export const INTENTS = {
   send_voice_message: intent("Голосовое сообщение", ["message: Message"], [], [ef("add", "messages")], ["recording_duration"], "customCapture", { creates: "Message" }),
   schedule_message: intent("Запланировать сообщение", ["message: Message"], [], [ef("add", "messages", "account", { ttl: null })], ["content", "scheduled_time"], "form", { creates: "Message" }),
   bulk_delete_messages: intent("Массовое удаление", ["message: Message[]"], ["message.senderId = me.id"], [ef("replace", "message.deletedFor")], ["selected_count"], "click", { extended: true, irreversibility: "medium" }),
-  search_messages: intent("Поиск по сообщениям", [], [], [], ["query", "results"], "form", { control: "inlineSearch", parameters: [{ name: "query", type: "text", required: false, placeholder: "Поиск в сообщениях…" }] }),
+  search_messages: intent("Поиск по сообщениям", ["message: Message", "conversation: Conversation", "contact: Contact", "user: User"], [], [], ["query", "results"], "form", { control: "inlineSearch", parameters: [{ name: "query", type: "text", required: false, placeholder: "Поиск в сообщениях…" }] }),
   message_info: intent("Информация о сообщении", ["message: Message"], [], [], ["read_by", "delivered_to", "created_at"], "click"),
   copy_message: intent("Копировать текст", ["message: Message"], [], [], ["message.content"], "click"),
   select_messages: intent("Выделить сообщения", ["message: Message[]"], [], [], ["selected_count"], "click"),
