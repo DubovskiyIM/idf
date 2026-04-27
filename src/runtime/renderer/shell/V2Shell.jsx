@@ -350,7 +350,11 @@ export default function V2Shell({
   const currentKit = prefs.uiKit ?? null;
   const onChangeKit = useCallback((v) => setPref("uiKit", v), [setPref]);
 
-  const toolbarBar = (
+  // Hide toolbar (роль + UI-kit picker) если домен задекларировал
+  // SHELL.hideToolbar (например, мета-домен — у него своя Studio header).
+  const hideToolbar = domain?.SHELL?.hideToolbar === true;
+
+  const toolbarBar = hideToolbar ? null : (
     <div style={{
       display: "flex", alignItems: "center", gap: 16,
       padding: "6px 14px",

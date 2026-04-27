@@ -25,7 +25,10 @@ export const DOMAIN_NAME = "IDF Self-Description";
 
 export const SHELL = {
   layoutMode: "default",
-  defaultRoute: "domain_list",
+  defaultRoute: "meta_studio",
+  // V2Shell скрывает свой toolbar (роли + UI-kit picker) — мета имеет
+  // собственную Studio header в `meta_studio` canvas.
+  hideToolbar: true,
 };
 
 export function describeEffect(intentId, alpha, _ctx, target) {

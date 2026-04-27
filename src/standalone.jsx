@@ -181,7 +181,7 @@ export default function StandaloneApp({ domainId }) {
   if (!domain) return <div style={{ padding: 40, textAlign: "center", fontFamily: "system-ui" }}>Домен "{domainId}" не найден</div>;
 
   // Переключение UI-адаптера: prefs.uiKit (override) → DOMAIN_ADAPTERS → mantine
-  const { prefs: prefsForKit } = usePersonalPrefs();
+  const { prefs: prefsForKit, setPref: setPrefForKit } = usePersonalPrefs();
   const adapter = UI_KITS[prefsForKit?.uiKit]
     || DOMAIN_ADAPTERS[domainId]
     || mantineAdapter;
@@ -260,7 +260,9 @@ export default function StandaloneApp({ domainId }) {
   }, [domain]);
 
   const isV2 = domainId.endsWith("-v2");
-  const isFullWidth = domainId === "messenger" || isV2;
+  // Meta-домен (Studio shell) тоже full-width — занимает весь main area
+  // вместо max-width 800px центрированной колонки.
+  const isFullWidth = domainId === "messenger" || isV2 || domainId === "meta";
 
   // Messenger v2 manages own auth — render directly
   if (isMessengerV2) {
@@ -316,6 +318,30 @@ export default function StandaloneApp({ domainId }) {
           <span style={{ fontWeight: 600 }}>{currentUser.name}</span>
           <span style={{ color: "var(--mantine-color-dimmed)", fontSize: 12 }}>{currentUser.email}</span>
           <div style={{ flex: 1 }} />
+          {/* Inline UI-kit picker — для meta-домена и других, где SHELL.hideToolbar=true,
+              чтобы не терять переключатель адаптера. */}
+          {domain.SHELL?.hideToolbar && (
+            <div style={{ display: "flex", alignItems: "center", gap: 6, marginRight: 12 }}>
+              <span style={{ color: "var(--mantine-color-dimmed)", fontSize: 11 }}>Слой:</span>
+              {Object.entries({ null: "авто", mantine: "Mantine", shadcn: "Doodle", apple: "Apple", antd: "AntD" }).map(([v, label]) => {
+                const value = v === "null" ? null : v;
+                const active = (prefsForKit?.uiKit ?? null) === value;
+                return (
+                  <button
+                    key={v}
+                    onClick={() => setPrefForKit("uiKit", value)}
+                    style={{
+                      padding: "4px 10px", fontSize: 11, borderRadius: 4,
+                      background: active ? "var(--idf-primary, #228be6)" : "transparent",
+                      color: active ? "white" : "var(--mantine-color-dimmed)",
+                      border: "1px solid var(--mantine-color-default-border)",
+                      cursor: "pointer", fontFamily: "inherit",
+                    }}
+                  >{label}</button>
+                );
+              })}
+            </div>
+          )}
           <button
             onClick={logout}
             style={{
