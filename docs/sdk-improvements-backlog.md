@@ -804,15 +804,44 @@ Items добавляются через intent `add_backlog_item` в meta-дом
 
 ### P0 (блокеры)
 
-- 🟢 open **Final demo BLI #1** · 2026-04-26
-  Live e2e test
+- ✅ closed **server's foldWorld не обрабатывает `α:create`** · домен `meta` · 2024-04-25
+  Live demo: effect с `alpha: "create"` (canonical из `intent.particles.effects`) → material-er 0 rows.
+- ✅ closed **invariant cascade на witness'ах** · домен `meta` · 2024-04-25
+  Live-probe Level 2: `POST /api/effects` отдавал 500 с `[invariants] откачен: witness_on_projection × 2454`. Cascade-rejection по всем 2454 witness rows.
+- 🟢 open **Установленный `@intent-driven/core@0.74.0` отстаёт от §12.1 fix** · домен `meta` · 2024-04-25
+  Live-probe: `materializeAsDocument({archetype: "catalog"})` без `kind` → `"Неизвестный архетип undefined"`. `normalizeProjection` присутствует в SDK source (core@0.78+) но не в bundled dist@0.74.0. CLAUDE.md упоминает 0.76, на nm есть 0.79.
+- 🟢 open **`/api/document` и `/api/voice` lowercase'ят role-параметр** · домен `meta` · 2024-04-25
+  Live-probe мета-домена: `GET /api/document/meta/pattern_bank_browser?as=formatAuthor` отдавал `Role "formatauthor" не найдена в ontology`. `server/routes/document.js:42` и `server/routes/voice.js:33` принудительно делали `.toLowerCase()` на `req.query.as`, но онтология использует
+- 🟢 open **Static scanner не AST-aware (helper-style projection authoring)** · домен `meta` · 2024-04-25
+  `src/domains/gravitino/projections.js` использует helper-функции (`metalake_list: catalog("Metalake", "Metalakes", [...])`). Regex-парсер meta-snapshot экстрактит только id+count, body=null. Без depth-aware skipExpression парсер находил фантомные `params:` ключи в helper-аргумент
+- 🟢 open **`role.base: "admin"` не даёт автоматического nav-access** · домен `meta` · 2024-04-25
+  Meta-домен `formatAuthor` объявлен `base: "admin"` с `visibleFields: { Domain: ["*"], … }`. `filterProjectionsByRole(ROOT_PROJECTIONS.formatAuthor, projections, "formatAuthor")` правильно отдаёт проекции с `forRoles: [..., "formatAuthor"]`, но не делает row-override.
+- 🟢 open **`pattern.id` не уникален между bank'ами** · домен `meta` · 2024-04-25
+  При seed'е `pattern-bank/candidate/avito-rating-aggregate-hero.json` и `idf-sdk/packages/core/src/patterns/stable/detail/rating-aggregate-hero.js` дают одинаковый `id: "rating-aggregate-hero"`. Workaround в meta-seed — composite `${status}__${patternId}__${sourceProduct}`.
 
 ### P1 (важно)
 
-- 🟢 open **Final demo BLI #2** · 2026-04-26
-  Live e2e test
-- 🟢 open **Final demo BLI #3** · 2026-04-26
-  Live e2e test
+- ✅ closed **`α:replace` ctx-fallback** · домен `meta` · 2024-04-25
+  Live: положил `status: "closed"` в context, value=null, validator применил `[field]: undefined`.
+- ✅ closed **target case-sensitive vs lowercase plural** · домен `meta` · 2024-04-25
+  Live: `α:replace target="BacklogItem.status"` не находил entity, потому что server клал rows в `world.backlogItems` (camelCase plural из updateTypeMap), а material-er искал `world.backlogitems` (lowercase pluralize в SDK findCollection).
+- ✅ closed **`subCollection.entity` vs `sub.collection`** · домен `meta` · 2024-04-25
+  Live: `documentMaterializer::materializeDetail` искал `world[sub.collection]`, CamelCase `{entity: "Intent"}` ломалось.
+- ✅ closed **sales overlay entries без поля `key`** · домен `meta` · 2024-04-25
+  Live runtime-evaluate: `crystallizeV2(salesIntents, ...)` логировал 8+ warnings `overlay entry missing "key"`.
+- ✅ closed **`src/main.jsx` route registration вручную для каждого домена** · домен `meta` · 2024-04-25
+  Добавление `/meta` route потребовало двух edit'ов: `src/main.jsx` (React Router) и `vite.config.js` (SPA fallback list). Те же edit'ы пропущены для automation домена.
+- 🟢 open **Reverse-association от Domain к Intent/Projection/RRule не очевидна** · домен `meta` · 2024-04-25
+  Meta-онтология имеет `Intent.domainId → Domain`, `Projection.domainId → Domain`, `RRule.domainId → Domain`. Это даёт catalog/feed-witness в Intent, но reverse-side (на Domain.detail показать «its intents/projections/rules») требует либо `subCollections: [...]` в projection, либо 
+- 🟢 open **Witnesses не персистируются (recomputed-per-crystallize)** · домен `meta` · 2024-04-25
+  При scaffold'е meta-онтологии я предположил `Witness` как Φ-stored сущность (history, audit). На деле `artifact.witnesses[]` пересчитывается каждый раз из `crystallizeV2` по текущим intents/ontology/projection — это не events, а derived view. Meta-домен синтезирует «синтетические
+- 🟢 open **`pattern-bank/candidate/*.json` shape без `sourceProduct`** · домен `meta` · 2024-04-25
+  Meta-snapshot scanner вынужден извлекать `sourceProduct` из имени файла (`avito-...`, `profi-...`), потому что JSON-shape не имеет declared поля.
+
+### P2 (nice-to-have)
+
+- 🟢 open **JSON-snapshot import работает только в Vite** · домен `meta` · 2024-04-25
+  `import snapshot from "./meta-snapshot.json"` падает в plain Node (`ERR_IMPORT_ATTRIBUTE_MISSING`); требует `with: { type: "json" }`. Vitest и Vite handle сами через transform.
 
 <!-- /meta-compile -->
 

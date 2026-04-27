@@ -763,8 +763,58 @@ function synthesizeWitnesses(projections) {
 // main
 // ─────────────────────────────────────────────────────────────────
 
+async function parseBacklogItems() {
+  // Парсит docs/sdk-improvements-backlog.md §13.X записи в BacklogItem'ы.
+  // Heuristic: section header `### 13.N P{0,1,2} — <title> [(ЗАКРЫТО ...)]`,
+  // далее тело до следующего `### `.
+  const path = join(REPO_ROOT, "docs", "sdk-improvements-backlog.md");
+  const src = await readSafe(path);
+  if (!src) return [];
+  const lines = src.split("\n");
+  const items = [];
+  let i = 0;
+  while (i < lines.length) {
+    const m = /^### 13\.(\d+)\s+(P[012])\s*[—-]\s*(.+?)\s*$/.exec(lines[i]);
+    if (!m) { i += 1; continue; }
+    const num = m[1];
+    const sectionTag = m[2];
+    let titleLine = m[3];
+    // Closed-marker — `(ЗАКРЫТО YYYY-MM-DD ...)` либо уже в title
+    const closedMatch = /\(ЗАКРЫТО\s+(\d{4}-\d{2}-\d{2})/.exec(titleLine);
+    const closedAt = closedMatch ? new Date(closedMatch[1]).getTime() : null;
+    const cleanTitle = titleLine.replace(/\s*\(ЗАКРЫТО.*?\)\s*$/, "").trim();
+    // Body: следующие непустые строки до пустой / next ###
+    const bodyLines = [];
+    let j = i + 1;
+    while (j < lines.length && !/^### /.test(lines[j])) {
+      bodyLines.push(lines[j]);
+      j += 1;
+    }
+    const body = bodyLines.join("\n").trim();
+    // Берём первый параграф «Источник»/«Проблема» как description (200 символов)
+    const sourceMatch = /\*\*Источник\.\*\*\s+([^\n]+)/.exec(body);
+    const description = sourceMatch ? sourceMatch[1].slice(0, 280) : null;
+
+    items.push({
+      id: `bli_seed_§13_${num}`,
+      section: sectionTag,
+      title: cleanTitle.slice(0, 160),
+      description,
+      sourceLink: null,
+      affectedDomain: "meta",
+      status: closedAt ? "closed" : "open",
+      createdByUserId: "format-author",
+      createdAt: 1714003200000 + Number(num) * 60000, // deterministic ordering
+      compiledAt: closedAt,
+    });
+    i = j;
+  }
+  return items;
+}
+
 async function main() {
   const { domains, intents, projections, rules, witnesses: realWitnesses } = await scanDomains();
+  const backlogItems = await parseBacklogItems();
   const stable = await scanStablePatterns();
   const candidate = await scanCandidatePatterns();
   const adapterVer = await readAdapterVersions();
@@ -805,6 +855,7 @@ async function main() {
     adapters,
     capabilities,
     witnesses,
+    backlogItems,
     summary: {
       domains: domains.length,
       intents: intents.length,
@@ -815,6 +866,7 @@ async function main() {
       capabilities: capabilities.length,
       witnesses: witnesses.length,
       rules: rules.length,
+      backlogItems: backlogItems.length,
     },
   };
 

@@ -65,7 +65,8 @@ async function readPhiOffline() {
 function foldBacklogItems(effects) {
   const items = {};
   for (const ef of effects) {
-    if (!ef.target?.startsWith("backlogItems") && !ef.target?.startsWith("BacklogItem")) {
+    const t = (ef.target || "").toLowerCase();
+    if (!t.startsWith("backlogitems") && !t.startsWith("backlogitem")) {
       continue;
     }
     const ctx = typeof ef.context === "string" ? JSON.parse(ef.context) : ef.context;

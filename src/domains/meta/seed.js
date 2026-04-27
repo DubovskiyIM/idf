@@ -176,6 +176,24 @@ export function getSeedEffects() {
     );
   }
 
+  // ── BacklogItems (parsed из docs/sdk-improvements-backlog.md §13) ─
+  for (const bli of snapshot.backlogItems || []) {
+    out.push(
+      ef("backlogitems", {
+        id: bli.id,
+        section: bli.section,
+        title: bli.title,
+        description: bli.description,
+        sourceLink: bli.sourceLink,
+        affectedDomain: bli.affectedDomain,
+        status: bli.status,
+        createdByUserId: bli.createdByUserId,
+        createdAt: bli.createdAt,
+        compiledAt: bli.compiledAt,
+      }),
+    );
+  }
+
   return out;
 }
 
