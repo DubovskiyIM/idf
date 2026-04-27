@@ -1,0 +1,76 @@
+{
+  "id": "ai-generation-with-lineage-accept",
+  "version": 1,
+  "status": "candidate",
+  "archetype": "detail",
+  "trigger": {
+    "requires": [
+      {
+        "kind": "intent-creates",
+        "entity": "<ai-entity>"
+      },
+      {
+        "kind": "entity-field",
+        "entity": "<ai-entity>",
+        "field": "regeneratedFrom"
+      },
+      {
+        "kind": "intent-effect",
+        "α": "replace",
+        "targetField": "content"
+      }
+    ]
+  },
+  "structure": {
+    "slot": "footer",
+    "description": "AI output не пишется напрямую в block.content, а живёт как parallel AiGeneration record; UI рендерит preview + 'Regenerate' (создаёт next AiGeneration) + 'Accept' (replace block.content и сжигает draft); regenerate keeps lineage."
+  },
+  "rationale": {
+    "hypothesis": "Прямая запись AI-output в durable-state ломает undo и lineage-debugging; promotion-pattern (preview → accept) даёт revertability + audit-trail регенераций для каждого blока.",
+    "evidence": [
+      {
+        "source": "Notion AI",
+        "description": "AI-block с inline preview + Try again / Accept actions",
+        "reliability": "high"
+      },
+      {
+        "source": "GitHub Copilot",
+        "description": "Suggestion-overlay, Tab=accept, не сразу пишет",
+        "reliability": "high"
+      },
+      {
+        "source": "Coda AI",
+        "description": "Same accept/regenerate с history",
+        "reliability": "medium"
+      }
+    ],
+    "counterexample": [
+      {
+        "source": "Auto-translate flow",
+        "description": "Когда trust-level high, preview overhead не нужен",
+        "reliability": "medium"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [
+      {
+        "domain": "notion",
+        "projection": "page_detail",
+        "reason": "AiGeneration + accept_ai_block + regenerate_ai_block"
+      }
+    ],
+    "shouldNotMatch": [
+      {
+        "domain": "sales",
+        "projection": "listing_create",
+        "reason": "Listing создаётся напрямую без AI-draft layer"
+      },
+      {
+        "domain": "compliance",
+        "projection": "journal_entry",
+        "reason": "Audit-domain не использует AI-suggest промежуточный буфер"
+      }
+    ]
+  }
+}

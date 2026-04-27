@@ -1,0 +1,75 @@
+{
+  "id": "scoped-template-installer",
+  "version": 1,
+  "status": "candidate",
+  "archetype": "catalog",
+  "trigger": {
+    "requires": [
+      {
+        "kind": "entity-field",
+        "entity": "<template-entity>",
+        "field": "scope"
+      },
+      {
+        "kind": "intent-creates",
+        "entity": "<template-entity>"
+      },
+      {
+        "kind": "intent-creates",
+        "entity": "<instance>"
+      }
+    ]
+  },
+  "structure": {
+    "slot": "body",
+    "description": "Template-каталог группирует по scope-tier (personal/workspace/marketplace) с category-facets; row предлагает 'Use template' (instantiate) и preview; save_template снимает curent state в template."
+  },
+  "rationale": {
+    "hypothesis": "Шаблоны сегментируются по доверию (personal < workspace < marketplace); смешать их — раздать кучу разнокачественного контента; tier-сегрегация делает reputation prior'ы видимыми и фасеты помогают навигации.",
+    "evidence": [
+      {
+        "source": "Notion",
+        "description": "Templates gallery с My / Workspace / Featured tabs, category-фасеты",
+        "reliability": "high"
+      },
+      {
+        "source": "Obsidian community plugins",
+        "description": "Scope-tier (core/community) + категории",
+        "reliability": "high"
+      },
+      {
+        "source": "VSCode marketplace",
+        "description": "Trusted publishers + category-нав",
+        "reliability": "medium"
+      }
+    ],
+    "counterexample": [
+      {
+        "source": "Single-tier template-list",
+        "description": "Без scope-tier flat list проще",
+        "reliability": "high"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [
+      {
+        "domain": "notion",
+        "projection": "templates_catalog",
+        "reason": "Template.scope enum=3 + instantiate_template"
+      }
+    ],
+    "shouldNotMatch": [
+      {
+        "domain": "booking",
+        "projection": "services",
+        "reason": "Service не имеет scope-tier"
+      },
+      {
+        "domain": "lifequest",
+        "projection": "habits",
+        "reason": "Habit не template-installer pattern"
+      }
+    ]
+  }
+}

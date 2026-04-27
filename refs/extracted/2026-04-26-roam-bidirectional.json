@@ -7,8 +7,7 @@
         "name",
         "owner",
         "visibility",
-        "customUrl",
-        "createdAt"
+        "customUrl"
       ],
       "statusValues": [
         "private",
@@ -22,8 +21,7 @@
         "createdAt",
         "updatedAt",
         "isDailyNote",
-        "date",
-        "graphId"
+        "date"
       ],
       "foreignKey": "graphId→Graph"
     },
@@ -34,11 +32,10 @@
         "content",
         "order",
         "indentLevel",
-        "parentBlockId",
-        "pageId",
         "createdAt",
         "updatedAt",
-        "createdBy"
+        "parentBlockId",
+        "pageId"
       ],
       "foreignKey": "pageId→Page"
     },
@@ -49,34 +46,32 @@
         "targetBlockId",
         "kind"
       ],
-      "foreignKey": "sourceBlockId→Block",
       "statusValues": [
         "embed",
         "reference"
-      ]
+      ],
+      "foreignKey": "sourceBlockId→Block"
     },
     {
       "name": "PageLink",
       "fields": [
         "sourceBlockId",
         "targetPageId",
-        "linkKind",
-        "alias"
+        "kind"
       ],
-      "foreignKey": "sourceBlockId→Block",
       "statusValues": [
         "explicit",
         "tag",
-        "unlinked"
-      ]
+        "unlinked-mention"
+      ],
+      "foreignKey": "sourceBlockId→Block"
     },
     {
       "name": "Attribute",
       "fields": [
         "blockId",
         "key",
-        "value",
-        "pageId"
+        "value"
       ],
       "foreignKey": "blockId→Block"
     },
@@ -93,28 +88,38 @@
       "name": "Todo",
       "fields": [
         "blockId",
-        "checked",
+        "done",
         "completedAt"
       ],
-      "foreignKey": "blockId→Block",
-      "statusValues": [
-        "open",
-        "done"
-      ]
+      "foreignKey": "blockId→Block"
     },
     {
       "name": "SidebarPane",
       "fields": [
         "userId",
-        "targetKind",
-        "targetId",
-        "order"
+        "graphId",
+        "targetPageId",
+        "targetBlockId",
+        "order",
+        "openedAt"
+      ],
+      "foreignKey": "graphId→Graph"
+    },
+    {
+      "name": "GraphMember",
+      "fields": [
+        "graphId",
+        "userId",
+        "role",
+        "invitedAt"
       ],
       "statusValues": [
-        "page",
-        "block",
-        "graph"
-      ]
+        "graphOwner",
+        "editor",
+        "reader",
+        "public-viewer"
+      ],
+      "foreignKey": "graphId→Graph"
     },
     {
       "name": "Comment",
@@ -127,43 +132,18 @@
       "foreignKey": "blockId→Block"
     },
     {
-      "name": "GraphMember",
+      "name": "PluginScript",
       "fields": [
-        "graphId",
-        "userId",
-        "role",
-        "invitedAt"
-      ],
-      "foreignKey": "graphId→Graph",
-      "statusValues": [
-        "graphOwner",
-        "editor",
-        "reader",
-        "public-viewer"
-      ]
-    },
-    {
-      "name": "Plugin",
-      "fields": [
-        "graphId",
+        "pageId",
         "kind",
-        "sourcePageId",
-        "enabled"
+        "code"
       ],
-      "foreignKey": "graphId→Graph",
       "statusValues": [
-        "roam-css",
-        "roam-js",
-        "smartblock"
-      ]
-    },
-    {
-      "name": "User",
-      "fields": [
-        "email",
-        "displayName",
-        "presence"
-      ]
+        "roam/css",
+        "roam/js",
+        "smartblocks"
+      ],
+      "foreignKey": "pageId→Page"
     }
   ],
   "intents": [
@@ -223,12 +203,6 @@
       "confirmation": "click"
     },
     {
-      "id": "zoom_into_block",
-      "α": "replace",
-      "target": "session.zoomedBlockId",
-      "confirmation": "click"
-    },
-    {
       "id": "embed_block",
       "α": "add",
       "creates": "BlockReference",
@@ -247,7 +221,7 @@
       "confirmation": "enter"
     },
     {
-      "id": "tag_block",
+      "id": "add_tag",
       "α": "add",
       "creates": "PageLink",
       "confirmation": "enter"
@@ -265,22 +239,16 @@
       "confirmation": "enter"
     },
     {
-      "id": "mark_todo",
-      "α": "add",
-      "creates": "Todo",
-      "confirmation": "click"
-    },
-    {
-      "id": "toggle_todo",
-      "α": "replace",
-      "target": "todo.checked",
-      "confirmation": "click"
-    },
-    {
       "id": "run_query",
       "α": "add",
       "creates": "Query",
       "confirmation": "enter"
+    },
+    {
+      "id": "mark_todo",
+      "α": "replace",
+      "target": "todo.done",
+      "confirmation": "click"
     },
     {
       "id": "aggregate_todos",
@@ -291,13 +259,19 @@
     {
       "id": "view_linked_refs",
       "α": "replace",
-      "target": "session.refsView",
+      "target": "session.viewMode",
       "confirmation": "click"
     },
     {
       "id": "view_unlinked_refs",
       "α": "replace",
-      "target": "session.refsView",
+      "target": "session.viewMode",
+      "confirmation": "click"
+    },
+    {
+      "id": "promote_unlinked_to_linked",
+      "α": "add",
+      "creates": "PageLink",
       "confirmation": "click"
     },
     {
@@ -310,6 +284,24 @@
       "id": "close_sidebar_pane",
       "α": "remove",
       "target": "sidebarPanes",
+      "confirmation": "click"
+    },
+    {
+      "id": "zoom_into_block",
+      "α": "replace",
+      "target": "session.zoomedBlock",
+      "confirmation": "click"
+    },
+    {
+      "id": "multi_select_blocks",
+      "α": "replace",
+      "target": "session.selection",
+      "confirmation": "click"
+    },
+    {
+      "id": "group_action_blocks",
+      "α": "replace",
+      "target": "blocks.attributes",
       "confirmation": "click"
     },
     {
@@ -349,30 +341,17 @@
       "confirmation": "click"
     },
     {
-      "id": "revoke_member",
-      "α": "remove",
-      "target": "graphMembers",
-      "irreversibility": "high",
-      "confirmation": "click"
-    },
-    {
-      "id": "publish_graph_public",
+      "id": "make_graph_public",
       "α": "replace",
       "target": "graph.visibility",
       "irreversibility": "high",
       "confirmation": "form"
     },
     {
-      "id": "install_plugin",
+      "id": "install_plugin_script",
       "α": "add",
-      "creates": "Plugin",
+      "creates": "PluginScript",
       "confirmation": "form"
-    },
-    {
-      "id": "toggle_plugin",
-      "α": "replace",
-      "target": "plugin.enabled",
-      "confirmation": "click"
     },
     {
       "id": "delete_page",
@@ -382,35 +361,35 @@
       "confirmation": "form"
     },
     {
-      "id": "undo",
+      "id": "undo_action",
       "α": "replace",
-      "target": "session.historyCursor",
+      "target": "session.history",
       "confirmation": "click"
     }
   ],
   "roles": [
     "owner",
     "viewer",
+    "agent",
     "observer"
   ],
   "observations": [
-    "Daily note for today is the default landing page — Φ entry-point is temporal, not hierarchical",
-    "Every block carries a UUID and is addressable as first-class entity (((uuid))), not just pages",
-    "Outliner with zoom-in: clicking a bullet replaces workspace with that block + descendants and adds a breadcrumb",
-    "Bidirectional links auto-materialize: creating [[Page]] inside a block creates the page node and a backlink edge",
-    "Linked References footer aggregates all blocks across all pages that mention current page title or its aliases",
-    "Unlinked References footer surfaces plain-text mentions as candidates for explicit linking",
-    "Block embed (( )) renders as live-mirror — edits propagate to all embed sites, distinct from one-shot copy",
-    "Right sidebar acts as stacked workspace: shift-click opens additional page/block panes alongside main",
-    "Inline DSL queries ({{query: ...}}) are stored as blocks and re-evaluated live — query is data, not view-config",
-    "Attributes (Key:: Value inside block) double as searchable KV-rows and as table-pivot under Attributes/Key namespace",
-    "TODO is just an attribute/tag pattern aggregated through the same query DSL — no dedicated task entity",
-    "Multi-select across bullets enables group-actions (move, copy ref, color) — bulk-action-toolbar pattern",
-    "Keyboard shortcuts dominate (Cmd-U quick-open, Cmd-Shift-9 search, Tab/Shift-Tab indent) — global-command-palette and keyboard-property-popover patterns are core, not optional",
-    "Permissions are graph-scoped (graphOwner / editor / reader / public-viewer), not page-scoped",
-    "Public graph is a visibility flag on Graph entity with custom URL — read-only mirror, not a separate copy",
-    "Real-time multiplayer presence and per-block comments imply CRDT-style block model with author+timestamp on every block",
-    "Plugins (roam/css, roam/js, SmartBlocks) live as code inside special pages — codebase is part of the graph itself",
-    "Deep undo history (Cmd-Z) implies effect-log retention beyond session scope"
+    "Daily Note as primary entry point — opening Roam lands on today's yyyy-mm-dd page, no separate dashboard",
+    "Every block has a stable UUID — granularity of reference is block, not page (((uuid)) syntax)",
+    "Pages are pure outlines — no rich page-level metadata; structure expressed entirely as nested bullets",
+    "Block embeds are live mirrors — editing source updates all embed sites, distinguishing embed from copy",
+    "Footer of every page splits into two sections: Linked References (explicit [[]]) and Unlinked Mentions (string-match)",
+    "Unlinked mentions offer one-click promotion to Linked references, materializing latent backlinks",
+    "Zoom-into-block replaces workspace with the subtree, breadcrumb shows ancestor path back to page",
+    "Right sidebar acts as stacked workspace — multiple pages/blocks open in parallel via shift-click",
+    "Queries live inside blocks ({{[[query]]: ...}}) — DSL with AND/OR/NOT/BETWEEN, evaluated on render",
+    "TODO is a query-aggregable marker, not a status field — checkbox sentinel inside block content",
+    "Attributes (Key:: Value) are KV-rows embedded in prose, queryable across the graph as a virtual table",
+    "Tags (#x) are syntactic alias for [[x]] — same backlink semantics, different surface",
+    "Cmd-U quick-open and Cmd-Shift-9 full-text-with-filters are the two primary navigation modalities",
+    "Permissions are graph-level binary (Editor/Reader); public graphs expose read-only via custom URL",
+    "Plugin code (roam/css, roam/js) lives as content of special pages — self-modifying graph as extension surface",
+    "Multi-select across blocks enables group operations (move, copy reference, recolor) as bulk action",
+    "Deep undo history covers structural edits — indent/outdent/move are reversible without explicit checkpoints"
   ]
 }

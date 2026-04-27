@@ -1,0 +1,77 @@
+{
+  "id": "backlink-footer-dual-section",
+  "version": 1,
+  "status": "candidate",
+  "archetype": "detail",
+  "trigger": {
+    "requires": [
+      {
+        "kind": "sub-entity-exists",
+        "entity": "PageLink",
+        "foreignKey": "targetPageId"
+      },
+      {
+        "kind": "entity-kind",
+        "entity": "PageLink",
+        "field": "kind",
+        "values": [
+          "explicit",
+          "tag",
+          "unlinked-mention"
+        ]
+      }
+    ]
+  },
+  "structure": {
+    "slot": "footer",
+    "description": "Detail mainEntity получает в footer-слоте две auto-секции backlink'ов: Linked References (explicit/tag) и Unlinked Mentions (string-match). Обе сгруппированы по source-page с раскрываемым контекстом блока вокруг ссылки."
+  },
+  "rationale": {
+    "hypothesis": "Backlink — это inverse relation, которую пользователь хочет видеть на entity-странице без отдельной навигации. Разделение на explicit vs latent даёт два разных affordance'а: explicit подтверждает осознанную связь, latent предлагает кандидатов на промоцию. Один общий список потерял бы это различие.",
+    "evidence": [
+      {
+        "source": "roam-research",
+        "description": "Footer каждой page: 'Linked References' + 'Unlinked Mentions', collapsible, показывает контекст-block",
+        "reliability": "high"
+      },
+      {
+        "source": "obsidian",
+        "description": "Backlinks pane с разделением на Linked / Unlinked",
+        "reliability": "high"
+      },
+      {
+        "source": "logseq",
+        "description": "Linked References + Unlinked References footer",
+        "reliability": "high"
+      }
+    ],
+    "counterexample": [
+      {
+        "source": "wiki-mediawiki",
+        "description": "Special:WhatLinksHere — отдельная страница, не footer; linked-only",
+        "reliability": "medium"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [
+      {
+        "domain": "notion",
+        "projection": "page_detail",
+        "reason": "Page-to-page links + mention semantic совпадают"
+      }
+    ],
+    "shouldNotMatch": [
+      {
+        "domain": "invest",
+        "projection": "position_detail",
+        "reason": "Нет linkable-text-mention semantic"
+      },
+      {
+        "domain": "booking",
+        "projection": "specialist_detail",
+        "reason": "Booking — relational, не mention-based"
+      }
+    ]
+  }
+}

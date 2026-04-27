@@ -1,0 +1,90 @@
+{
+  "id": "template-driven-calendar-entry",
+  "version": 1,
+  "status": "candidate",
+  "archetype": "catalog",
+  "trigger": {
+    "requires": [
+      {
+        "kind": "entity-field",
+        "entity": "DailyNote",
+        "field": "date",
+        "fieldKind": "date",
+        "primary": true
+      },
+      {
+        "kind": "entity-field",
+        "entity": "DailyNote",
+        "field": "templatePath",
+        "fieldKind": "string"
+      },
+      {
+        "kind": "intent-creates",
+        "creates": "DailyNote",
+        "fromTemplate": true
+      }
+    ]
+  },
+  "structure": {
+    "slot": "body",
+    "description": "Catalog body renders as month-grid (or week-grid) keyed by date. Existing dates show as filled cells with link to the note; empty dates show 'create' affordance that instantiates from configured template. Switches the body archetype from list to calendar when the entity has a date primary key + template field."
+  },
+  "rationale": {
+    "hypothesis": "Time-keyed entities with templates (journals, standups, retros) have a discoverability problem in flat lists: 'did I write Tuesday?' is a worse question than 'show me the calendar.' Calendar grid makes existence and gaps visible at a glance; template makes creation a one-click action with consistent structure.",
+    "evidence": [
+      {
+        "source": "obsidian",
+        "description": "Calendar plugin: month grid, dotted/filled cells, click to open or create from Daily Note template",
+        "reliability": "high"
+      },
+      {
+        "source": "logseq",
+        "description": "Built-in journals view as date-keyed feed/grid",
+        "reliability": "high"
+      },
+      {
+        "source": "notion",
+        "description": "Database-with-Calendar-view + page templates achieve the same effect",
+        "reliability": "medium"
+      }
+    ],
+    "counterexample": [
+      {
+        "source": "linear",
+        "description": "Issues are date-touched but not date-keyed; calendar grid would force a non-natural axis",
+        "reliability": "high"
+      },
+      {
+        "source": "messenger",
+        "description": "Messages are time-stamped but creation is event-driven, not template-driven",
+        "reliability": "high"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [
+      {
+        "domain": "reflect",
+        "projection": "mood_entry_catalog",
+        "reason": "MoodEntry has date primary key + recurring structure — calendar grid fits"
+      },
+      {
+        "domain": "lifequest",
+        "projection": "habit_log_catalog",
+        "reason": "HabitLog is date-keyed; calendar with checkmarks per habit fits"
+      }
+    ],
+    "shouldNotMatch": [
+      {
+        "domain": "sales",
+        "projection": "listing_catalog",
+        "reason": "Listings are not date-keyed — calendar imposes wrong axis"
+      },
+      {
+        "domain": "invest",
+        "projection": "transaction_catalog",
+        "reason": "Transactions are timestamped but not template-driven; flat list with date grouping is better"
+      }
+    ]
+  }
+}

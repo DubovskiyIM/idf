@@ -1,0 +1,88 @@
+{
+  "id": "fuzzy-quick-switcher",
+  "version": 1,
+  "status": "candidate",
+  "archetype": "cross",
+  "trigger": {
+    "requires": [
+      {
+        "kind": "intent-confirmation",
+        "value": "enter"
+      },
+      {
+        "kind": "intent-effect",
+        "α": "replace",
+        "target": "tab.noteId"
+      },
+      {
+        "kind": "entity-field",
+        "entity": "<entity>",
+        "field": "title",
+        "fieldKind": "string",
+        "indexable": true
+      }
+    ]
+  },
+  "structure": {
+    "slot": "overlay",
+    "description": "Keyboard-triggered overlay (default Cmd+O) with fuzzy-match input over entity titles. Up/down to navigate candidates, Enter to switch active tab to the selected entity. Distinct from inline-search: the goal is navigation (replace current focus), not result-listing. Distinct from global-command-palette: scope is a single entity-type, not commands."
+  },
+  "rationale": {
+    "hypothesis": "Switching between named entities in a flat namespace (1000+ notes, files, contacts) is the highest-frequency navigation in editor-class tools. Mouse-driven navigation through tree/sidebar doesn't scale past ~50 items. Fuzzy quick-switcher reduces navigation latency to keyboard-only, exploits typed-name-as-best-handle, and is composable with workspace tabs (replace tab.entity rather than open new window).",
+    "evidence": [
+      {
+        "source": "obsidian",
+        "description": "Cmd+O quick switcher: fuzzy file-by-name → switch tab",
+        "reliability": "high"
+      },
+      {
+        "source": "vscode",
+        "description": "Cmd+P quick-open: same UX over file titles",
+        "reliability": "high"
+      },
+      {
+        "source": "linear",
+        "description": "Cmd+K with project-scoped fuzzy issue switcher",
+        "reliability": "high"
+      },
+      {
+        "source": "github",
+        "description": "T (file finder) in repo views — keyboard fuzzy-jump",
+        "reliability": "medium"
+      }
+    ],
+    "counterexample": [
+      {
+        "source": "google-docs",
+        "description": "No quick switcher; scale of one document at a time — pattern doesn't apply",
+        "reliability": "high"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [
+      {
+        "domain": "notion",
+        "projection": "page_workspace",
+        "reason": "Cmd+P over Page.title is canonical Notion UX"
+      },
+      {
+        "domain": "sales",
+        "projection": "listing_catalog",
+        "reason": "Listing.title fuzzy-jump for power users"
+      }
+    ],
+    "shouldNotMatch": [
+      {
+        "domain": "delivery",
+        "projection": "order_courier_view",
+        "reason": "Courier sees 1-3 active orders; fuzzy switcher is over-engineered"
+      },
+      {
+        "domain": "booking",
+        "projection": "booking_detail",
+        "reason": "Bookings are time-driven; fuzzy-by-title doesn't fit the workflow"
+      }
+    ]
+  }
+}

@@ -1,0 +1,78 @@
+{
+  "id": "selective-per-item-publish",
+  "version": 1,
+  "status": "candidate",
+  "archetype": "detail",
+  "trigger": {
+    "requires": [
+      {
+        "kind": "entity-field",
+        "entity": "<entity>",
+        "field": "isPublished",
+        "fieldKind": "boolean"
+      },
+      {
+        "kind": "intent-creates",
+        "creates": "PublishedNote"
+      },
+      {
+        "kind": "intent-effect",
+        "α": "remove",
+        "target": "publishedNotes",
+        "irreversibility": "high"
+      }
+    ]
+  },
+  "structure": {
+    "slot": "footer",
+    "description": "Detail footer surfaces a publish toggle + URL preview + 'last published' timestamp when entity is published. Publish creates a PublishedX shadow record (not a copy of the entity) carrying URL + timestamp. Unpublish is irreversible (URL may be cached/shared) — surfaces irreversible-confirm pattern. Distinct from generic visibility because it produces an external artifact (URL)."
+  },
+  "rationale": {
+    "hypothesis": "Per-item publish is a deliberate consent moment — not all content in a vault should be public. A footer toggle (vs. catalog-level filter or workspace-level setting) keeps the consent local to the item being published. The fact that PublishedNote is its own entity (not a flag on Note) means publish-state survives note edits and exposes URL/timestamp as first-class.",
+    "evidence": [
+      {
+        "source": "obsidian-publish",
+        "description": "Per-note checkbox in publish-plugin pane, URL preview, last-published time",
+        "reliability": "high"
+      },
+      {
+        "source": "notion",
+        "description": "Per-page 'Share to web' toggle with URL",
+        "reliability": "high"
+      },
+      {
+        "source": "ghost",
+        "description": "Per-post publish toggle as the canonical CMS pattern",
+        "reliability": "medium"
+      }
+    ],
+    "counterexample": [
+      {
+        "source": "google-docs",
+        "description": "Sharing is permission-based, not publish-as-static-artifact — different mental model",
+        "reliability": "high"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [
+      {
+        "domain": "notion",
+        "projection": "page_detail",
+        "reason": "Page has share-to-web semantics; PublishedPage shadow entity fits"
+      }
+    ],
+    "shouldNotMatch": [
+      {
+        "domain": "compliance",
+        "projection": "control_detail",
+        "reason": "Publishing controls would violate confidentiality invariants"
+      },
+      {
+        "domain": "invest",
+        "projection": "portfolio_detail",
+        "reason": "Portfolios are private by definition"
+      }
+    ]
+  }
+}
