@@ -138,4 +138,131 @@ export const INTENTS = {
       ],
     },
   },
+
+  // ── Pattern promotion (Level 2.1) ────────────────────────────
+  // Compile target: pattern-bank/PROMOTIONS.md (новый файл) +
+  // секция в backlog. Финальный SDK PR делает оператор по списку.
+
+  request_pattern_promotion: {
+    α: "create",
+    name: "Запросить промоцию паттерна",
+    target: "PatternPromotion",
+    confirmation: "form",
+    parameters: [
+      {
+        name: "candidateId",
+        type: "entityRef",
+        entity: "Pattern",
+        required: true,
+        label: "Candidate (status=candidate)",
+      },
+      {
+        name: "targetArchetype",
+        type: "select",
+        options: ["catalog", "cross", "detail", "feed"],
+        required: true,
+        label: "Куда промоутить",
+      },
+      {
+        name: "rationale",
+        type: "textarea",
+        required: true,
+        label: "Обоснование (≥3 продукта / apply / falsification)",
+      },
+      {
+        name: "falsificationFixtures",
+        type: "textarea",
+        label: "shouldMatch / shouldNotMatch",
+      },
+    ],
+    particles: {
+      effects: [
+        {
+          α: "create",
+          target: "PatternPromotion",
+          fields: {
+            id: "{{auto}}",
+            candidateId: "{{params.candidateId}}",
+            targetArchetype: "{{params.targetArchetype}}",
+            rationale: "{{params.rationale}}",
+            falsificationFixtures: "{{params.falsificationFixtures}}",
+            status: "pending",
+            requestedByUserId: "{{viewer.id}}",
+            requestedAt: "{{now}}",
+          },
+        },
+      ],
+    },
+  },
+
+  approve_pattern_promotion: {
+    α: "replace",
+    name: "Одобрить",
+    target: "PatternPromotion.status",
+    confirmation: "click",
+    precondition: { "PatternPromotion.status": ["pending", "rejected"] },
+    parameters: [
+      { name: "id", type: "entityRef", entity: "PatternPromotion", required: true },
+    ],
+    particles: {
+      effects: [
+        {
+          α: "replace",
+          target: "PatternPromotion.status",
+          fields: { status: "approved" },
+        },
+      ],
+    },
+  },
+
+  reject_pattern_promotion: {
+    α: "replace",
+    name: "Отклонить",
+    target: "PatternPromotion.status",
+    confirmation: "click",
+    parameters: [
+      { name: "id", type: "entityRef", entity: "PatternPromotion", required: true },
+    ],
+    particles: {
+      effects: [
+        {
+          α: "replace",
+          target: "PatternPromotion.status",
+          fields: { status: "rejected" },
+        },
+      ],
+    },
+  },
+
+  ship_pattern_promotion: {
+    α: "replace",
+    name: "Отгружено в SDK (с PR)",
+    target: "PatternPromotion.status",
+    confirmation: "form",
+    precondition: { "PatternPromotion.status": ["approved"] },
+    context: {
+      __irr: {
+        point: "high",
+        reason: "После shipped паттерн считается частью SDK release; откат требует SDK-revert.",
+      },
+    },
+    parameters: [
+      { name: "id", type: "entityRef", entity: "PatternPromotion", required: true },
+      { name: "sdkPrUrl", type: "url", required: true, label: "URL SDK PR'а" },
+    ],
+    particles: {
+      effects: [
+        {
+          α: "replace",
+          target: "PatternPromotion.status",
+          fields: { status: "shipped" },
+        },
+        {
+          α: "replace",
+          target: "PatternPromotion.sdkPrUrl",
+          fields: { sdkPrUrl: "{{params.sdkPrUrl}}" },
+        },
+      ],
+    },
+  },
 };

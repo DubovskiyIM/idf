@@ -675,13 +675,20 @@ WorkflowNode: {
 - Compile trigger: ручной (CI / `npm run meta-compile`) или автоматический (post-confirmed-effect SSE → debounced compile).
 - Конфликт-разрешение: что если файл изменён руками после compile? — git merge / детекция через hash.
 
-### 13.1 P0 — `pattern.id` не уникален между bank'ами
+### 13.1 P0 — `pattern.id` не уникален между bank'ами (PR idf-sdk#418 open)
 
-**Источник.** При seed'е `pattern-bank/candidate/avito-rating-aggregate-hero.json` и `idf-sdk/packages/core/src/patterns/stable/detail/rating-aggregate-hero.js` дают одинаковый `id: "rating-aggregate-hero"`. Workaround в meta-seed — composite `${status}__${patternId}__${sourceProduct}`.
+**Источник.** При seed'е `pattern-bank/candidate/avito-rating-aggregate-hero.json` и `idf-sdk/packages/core/src/patterns/stable/detail/rating-aggregate-hero.js` дают одинаковый `id: "rating-aggregate-hero"`.
 
-**Проблема.** Identity паттерна де-факто составной ключ (status + id + sourceProduct), но формализован как plain string. Это работает локально внутри `stable/<archetype>/`, но не работает в кросс-bank-аналитике, и не работает в `pattern.witnesses[]` ссылках, если паттерн «начинался как candidate с product-prefix, мигрировал в stable».
+**Сделано.** SDK PR `idf-sdk#418`: новый composite-key API в `@intent-driven/core`:
+- `patternKey(p)` → `stable__<id>` / `candidate__<id>__<source?>` / `anti__<id>`
+- `isSameLogicalPattern(a, b)` — true для same logical-id независимо от bank
+- `findPatternByKey(patterns, key)` — collection lookup
+- `parsePatternKey(key)` → `{status, id, sourceProduct}` (round-trip)
+- `logicalId(p)` — bare id без prefix
 
-**Что нужно.** Либо `pattern.id` уникальный глобально (rename candidate'ов), либо официально composite-ключ + helper `patternKey(p) → "stable__hero-create"` в SDK.
+Backward-compat: `pattern.id` unchanged, helpers — optional layer. 16 unit-tests, 1881/1881 passed.
+
+После merge + bump в host: meta-seed мигрирует с ad-hoc compositeId на `patternKey(p)`. Закрывает prerequisite для §13.17 на масштабе.
 
 ### 13.2 P0 — `role.base: "admin"` не даёт автоматического nav-access
 
@@ -791,15 +798,44 @@ WorkflowNode: {
 
 **Сделано.** `α:replace` fold теперь fallback'ит на `ctx[field]` если `val == null`. SDK intent particles `{α:"replace", target:"X.field", fields:{field: "value"}}` корректно работают через context — без явного `value`-поля.
 
+### 13.17 P0 — pattern researcher → apply-derivation gap
+
+**Источник.** Live triage 134 candidate'ов через `scripts/triage-candidates.mjs` (2026-04-27, dogfood meta-домена в Level 2.1 promote flow). Heuristic scorer с threshold ≥14 → **0 candidates** прошли в `promote-now` bucket; 79 в `review`, 55 в `park`. Главный отсекающий фактор — отсутствие `structure.apply` функции.
+
+**Проблема.** `pattern-researcher.mjs` (и domain batch'и) экстрактят из эталонных продуктов:
+- `id`, `archetype`, `version` ✓
+- `trigger.requires[]` (formal entity-field/intent-creates) ✓
+- `rationale.hypothesis` + `evidence[]` ✓
+- `shouldMatch` / `shouldNotMatch` falsification fixtures ✓ (когда researcher эмиттит)
+- `structure.slot` (где пришивается) ✓ partial
+- **`structure.apply(slots, context)` ✗ ОТСУТСТВУЕТ**
+
+`structure.apply` — это императивная JS-функция, превращающая matching-only паттерн в executable derivation. Без неё паттерн остаётся **descriptive**, не **prescriptive**. Promote candidate → stable требует apply (см. CLAUDE.md: «35 stable + 2 matching-only из 37»). Researcher AI правильно **диагностирует** паттерн, но не пишет код.
+
+Это превращается в **bottleneck**: researcher выдаёт 134 candidate'а за день, но каждый требует ручной AI-сессии для apply-derivation (≈30-60 мин/паттерн). При текущей скорости 79 review-bucket паттернов = 40-80 часов ручной работы на следующий шаг.
+
+**Что нужно** (опции в порядке убывающей амбиции):
+
+- **(а) Apply-derivation pass в SDK.** Новый pipeline-шаг: `researcher → apply-synthesizer → stable-candidate`. Synthesizer берёт `structure.slot + trigger + structure.description` и генерит skeleton `apply(slots, context) → slots` функции через AI с fallback'ом на «marker-only» apply (добавить `source: "derived:<id>"` без mutation). Все 79 review кандидатов получат apply-stub автоматически.
+- **(б) Researcher v2 с apply-emit.** Расширить prompt researcher'а: «после rationale эмить JS-snippet apply-функции». Меньше работы, но непредсказуемое качество — apply требует понимания SDK runtime (slots shape, idempotency contract, `source:` markers).
+- **(в) Marker-only stable.** Acceptable degradation: paттерн promotes без apply → matching-only. SDK уже supports это (2 stable matching-only). Trade-off: pattern bank растёт, но без runtime impact.
+
+**Метрика для следующей сессии.** До закрытия §13.17:
+- 134 candidate'ов · 0 promote-now · ручной triage 30-60 мин/штука = 67-134 ч
+- После: target ≥30% promote-now с auto-apply, полная сессия — 5-10 ч на 30 паттернов.
+
+**Связанные.** §13.1 (pattern.id collision) — это структурный prerequisite перед массовой промоцией: каждый promoted candidate должен получить unique global id, либо формальный composite-key API. Без §13.1 промоция через Level 2.1 ломается на FK-конфликтах между `stable/<arch>/X.js` и `candidate/<source>-X.json`.
+
 ### Action items (priority)
 
-1. **P0** — §13.0 architectural decision (codegen ≠ reader) до старта Level 2.
-2. **P0** — §13.1 pattern.id global uniqueness (или formal composite-key API).
-3. **P0** — §13.2 admin nav-access disconnect (документация или filterProjectionsByRole change).
-4. **P0** — §13.5 format-reflect package (или строгое ограничение «object-literal only» с migration gravitino).
-5. **P1** — §13.3 candidate JSON shape spec.
-6. **P1** — §13.6 witness persistence decision.
-7. **P1** — §13.7 reverse-association в meta-домене (Level 1.1).
+1. **P0** — §13.0 architectural decision (codegen ≠ reader) до старта Level 2. ✅
+2. **P0** — §13.17 pattern researcher → apply-derivation (bottleneck для Level 2.1 на масштабе).
+3. **P0** — §13.1 pattern.id global uniqueness (или formal composite-key API). [§13.17 prerequisite]
+4. **P0** — §13.2 admin nav-access disconnect (документация или filterProjectionsByRole change).
+5. **P0** — §13.5 format-reflect package (или строгое ограничение «object-literal only» с migration gravitino).
+6. **P1** — §13.3 candidate JSON shape spec.
+7. **P1** — §13.6 witness persistence decision.
+8. **P1** — §13.7 reverse-association в meta-домене (Level 1.1).
 8. **P2** — §13.4 snapshot import portability.
 
 ## §14 — Backlog Inbox (meta-домен Level 2 soft-authoring)
@@ -810,15 +846,46 @@ Items добавляются через intent `add_backlog_item` в meta-дом
 
 ### P0 (блокеры)
 
-- 🟢 open **Final demo BLI #1** · 2026-04-26
-  Live e2e test
+- 🟢 open **pattern researcher → apply-derivation gap** · домен `meta` · 2024-04-25
+  Live triage 134 candidate'ов через `scripts/triage-candidates.mjs` (2026-04-27, dogfood meta-домена в Level 2.1 promote flow). Heuristic scorer с threshold ≥14 → **0 candidates** прошли в `promote-now` bucket; 79 в `review`, 55 в `park`. Главный отсекающий фактор — отсутствие `st
+- ✅ closed **server's foldWorld не обрабатывает `α:create`** · домен `meta` · 2024-04-25
+  Live demo: effect с `alpha: "create"` (canonical из `intent.particles.effects`) → material-er 0 rows.
+- ✅ closed **invariant cascade на witness'ах** · домен `meta` · 2024-04-25
+  Live-probe Level 2: `POST /api/effects` отдавал 500 с `[invariants] откачен: witness_on_projection × 2454`. Cascade-rejection по всем 2454 witness rows.
+- 🟢 open **Установленный `@intent-driven/core@0.74.0` отстаёт от §12.1 fix** · домен `meta` · 2024-04-25
+  Live-probe: `materializeAsDocument({archetype: "catalog"})` без `kind` → `"Неизвестный архетип undefined"`. `normalizeProjection` присутствует в SDK source (core@0.78+) но не в bundled dist@0.74.0. CLAUDE.md упоминает 0.76, на nm есть 0.79.
+- 🟢 open **`/api/document` и `/api/voice` lowercase'ят role-параметр** · домен `meta` · 2024-04-25
+  Live-probe мета-домена: `GET /api/document/meta/pattern_bank_browser?as=formatAuthor` отдавал `Role "formatauthor" не найдена в ontology`. `server/routes/document.js:42` и `server/routes/voice.js:33` принудительно делали `.toLowerCase()` на `req.query.as`, но онтология использует
+- 🟢 open **Static scanner не AST-aware (helper-style projection authoring)** · домен `meta` · 2024-04-25
+  `src/domains/gravitino/projections.js` использует helper-функции (`metalake_list: catalog("Metalake", "Metalakes", [...])`). Regex-парсер meta-snapshot экстрактит только id+count, body=null. Без depth-aware skipExpression парсер находил фантомные `params:` ключи в helper-аргумент
+- 🟢 open **`role.base: "admin"` не даёт автоматического nav-access** · домен `meta` · 2024-04-25
+  Meta-домен `formatAuthor` объявлен `base: "admin"` с `visibleFields: { Domain: ["*"], … }`. `filterProjectionsByRole(ROOT_PROJECTIONS.formatAuthor, projections, "formatAuthor")` правильно отдаёт проекции с `forRoles: [..., "formatAuthor"]`, но не делает row-override.
+- 🟢 open **`pattern.id` не уникален между bank'ами** · домен `meta` · 2024-04-25
+  При seed'е `pattern-bank/candidate/avito-rating-aggregate-hero.json` и `idf-sdk/packages/core/src/patterns/stable/detail/rating-aggregate-hero.js` дают одинаковый `id: "rating-aggregate-hero"`. Workaround в meta-seed — composite `${status}__${patternId}__${sourceProduct}`.
 
 ### P1 (важно)
 
-- 🟢 open **Final demo BLI #2** · 2026-04-26
-  Live e2e test
-- 🟢 open **Final demo BLI #3** · 2026-04-26
-  Live e2e test
+- ✅ closed **`α:replace` ctx-fallback** · домен `meta` · 2024-04-25
+  Live: положил `status: "closed"` в context, value=null, validator применил `[field]: undefined`.
+- ✅ closed **target case-sensitive vs lowercase plural** · домен `meta` · 2024-04-25
+  Live: `α:replace target="BacklogItem.status"` не находил entity, потому что server клал rows в `world.backlogItems` (camelCase plural из updateTypeMap), а material-er искал `world.backlogitems` (lowercase pluralize в SDK findCollection).
+- ✅ closed **`subCollection.entity` vs `sub.collection`** · домен `meta` · 2024-04-25
+  Live: `documentMaterializer::materializeDetail` искал `world[sub.collection]`, CamelCase `{entity: "Intent"}` ломалось.
+- ✅ closed **sales overlay entries без поля `key`** · домен `meta` · 2024-04-25
+  Live runtime-evaluate: `crystallizeV2(salesIntents, ...)` логировал 8+ warnings `overlay entry missing "key"`.
+- ✅ closed **`src/main.jsx` route registration вручную для каждого домена** · домен `meta` · 2024-04-25
+  Добавление `/meta` route потребовало двух edit'ов: `src/main.jsx` (React Router) и `vite.config.js` (SPA fallback list). Те же edit'ы пропущены для automation домена.
+- 🟢 open **Reverse-association от Domain к Intent/Projection/RRule не очевидна** · домен `meta` · 2024-04-25
+  Meta-онтология имеет `Intent.domainId → Domain`, `Projection.domainId → Domain`, `RRule.domainId → Domain`. Это даёт catalog/feed-witness в Intent, но reverse-side (на Domain.detail показать «its intents/projections/rules») требует либо `subCollections: [...]` в projection, либо 
+- 🟢 open **Witnesses не персистируются (recomputed-per-crystallize)** · домен `meta` · 2024-04-25
+  При scaffold'е meta-онтологии я предположил `Witness` как Φ-stored сущность (history, audit). На деле `artifact.witnesses[]` пересчитывается каждый раз из `crystallizeV2` по текущим intents/ontology/projection — это не events, а derived view. Meta-домен синтезирует «синтетические
+- 🟢 open **`pattern-bank/candidate/*.json` shape без `sourceProduct`** · домен `meta` · 2024-04-25
+  Meta-snapshot scanner вынужден извлекать `sourceProduct` из имени файла (`avito-...`, `profi-...`), потому что JSON-shape не имеет declared поля.
+
+### P2 (nice-to-have)
+
+- 🟢 open **JSON-snapshot import работает только в Vite** · домен `meta` · 2024-04-25
+  `import snapshot from "./meta-snapshot.json"` падает в plain Node (`ERR_IMPORT_ATTRIBUTE_MISSING`); требует `with: { type: "json" }`. Vitest и Vite handle сами через transform.
 
 <!-- /meta-compile -->
 

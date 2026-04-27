@@ -108,6 +108,52 @@ export const PROJECTIONS = {
     },
   },
 
+  promotion_queue: {
+    id: "promotion_queue",
+    title: "Очередь промоций паттернов",
+    archetype: "catalog",
+    mainEntity: "PatternPromotion",
+    forRoles: ["formatAuthor", "patternCurator"],
+    witnesses: ["candidateId", "targetArchetype", "status", "requestedAt"],
+    onItemClick: "promotion_detail",
+    slots: {
+      header: {
+        kind: "facetFilter",
+        field: "status",
+        options: ["pending", "approved", "rejected", "shipped"],
+      },
+      hero: { kind: "intent", intentId: "request_pattern_promotion" },
+    },
+  },
+
+  promotion_detail: {
+    id: "promotion_detail",
+    title: "Промоция",
+    archetype: "detail",
+    mainEntity: "PatternPromotion",
+    idParam: "promotionId",
+    forRoles: ["formatAuthor", "patternCurator"],
+    witnesses: [
+      "candidateId",
+      "targetArchetype",
+      "rationale",
+      "falsificationFixtures",
+      "status",
+      "sdkPrUrl",
+      "requestedAt",
+      "decidedAt",
+    ],
+    slots: {
+      toolbar: {
+        intents: [
+          "approve_pattern_promotion",
+          "reject_pattern_promotion",
+          "ship_pattern_promotion",
+        ],
+      },
+    },
+  },
+
   backlog_inbox: {
     id: "backlog_inbox",
     title: "Backlog inbox",
@@ -193,7 +239,7 @@ export const ROOT_PROJECTIONS = [
   },
   {
     section: "Pattern Bank",
-    items: ["pattern_bank_browser", "witness_review_queue"],
+    items: ["pattern_bank_browser", "witness_review_queue", "promotion_queue"],
   },
   {
     section: "Адаптеры",
