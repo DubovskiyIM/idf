@@ -1,0 +1,90 @@
+{
+  "id": "block-list-body",
+  "version": 1,
+  "status": "candidate",
+  "archetype": "detail",
+  "trigger": {
+    "requires": [
+      {
+        "kind": "sub-entity-exists",
+        "child": "Block",
+        "foreignKey": "pageId",
+        "ordered": true
+      },
+      {
+        "kind": "polymorphic",
+        "entity": "Block"
+      },
+      {
+        "kind": "entity-field",
+        "entity": "Block",
+        "field": "position"
+      },
+      {
+        "kind": "intent-creates",
+        "creates": "Block",
+        "confirmation": "enter"
+      }
+    ]
+  },
+  "structure": {
+    "slot": "body",
+    "description": "Вместо плоской формы детализации mainEntity рендерит ordered list дочерних polymorphic Block'ов с inline-editable payload и keyboard-driven вставкой новых на Enter в пустой строке.",
+    "applySource": "function apply(slots, context) {\n  // Auto-synthesized marker-only apply (§13.17 opt-c).\n  // Marks first un-marked item in slots.body with source: \"derived:block-list-body\".\n  // Idempotent: skip if already marked.\n  const slot = slots?.body;\n  if (!Array.isArray(slot) || slot.length === 0) return slots;\n  const idx = slot.findIndex((x) => x && !x.source);\n  if (idx === -1) return slots;\n  const marker = \"derived:block-list-body\";\n  if (slot[idx].source === marker) return slots;\n  return {\n    ...slots,\n    body: slot.map((item, i) =>\n      i === idx ? { ...item, source: marker } : item),\n  };\n}",
+    "applyKind": "marker-only-synthesized",
+    "applySynthesizedAt": 1777280149899
+  },
+  "rationale": {
+    "hypothesis": "Когда документ моделируется как страница из first-class блоков (а не одно textarea), inline-editing с Enter-to-create устраняет переключение между read/edit-режимами и даёт O(1) per-block операции без формы.",
+    "evidence": [
+      {
+        "source": "notion",
+        "description": "Body страницы — список Block с UUID, Enter создаёт следующий блок",
+        "reliability": "high"
+      },
+      {
+        "source": "coda",
+        "description": "Canvas-документ из строк-блоков, Enter splits/creates",
+        "reliability": "high"
+      },
+      {
+        "source": "obsidian",
+        "description": "Markdown-документ блочного типа, каждая строка — потенциальный block",
+        "reliability": "medium"
+      },
+      {
+        "source": "roam-research",
+        "description": "Outline из bullet-block'ов, parent-child через indent",
+        "reliability": "high"
+      }
+    ],
+    "counterexample": [
+      {
+        "source": "google-docs",
+        "description": "Документ — flat character-stream, не block-list; этот паттерн не подходит для prose-only writers",
+        "reliability": "high"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [
+      {
+        "domain": "notion",
+        "projection": "page_detail",
+        "reason": "Page → Block с position, Block.kind polymorphic, add_block.confirmation=enter"
+      }
+    ],
+    "shouldNotMatch": [
+      {
+        "domain": "messenger",
+        "projection": "conversation_detail",
+        "reason": "Message — это feed/composer, не ordered editable body; reorder отсутствует"
+      },
+      {
+        "domain": "invest",
+        "projection": "portfolio_detail",
+        "reason": "Position не polymorphic и не редактируется inline через Enter"
+      }
+    ]
+  }
+}

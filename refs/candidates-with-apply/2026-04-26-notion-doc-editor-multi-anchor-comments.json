@@ -1,0 +1,82 @@
+{
+  "id": "multi-anchor-comments",
+  "version": 1,
+  "status": "candidate",
+  "archetype": "detail",
+  "trigger": {
+    "requires": [
+      {
+        "kind": "sub-entity-exists",
+        "child": "Comment",
+        "parent": "Page"
+      },
+      {
+        "kind": "entity-field",
+        "entity": "Comment",
+        "field": "blockId",
+        "optional": true
+      },
+      {
+        "kind": "entity-field",
+        "entity": "Comment",
+        "field": "anchorRange",
+        "optional": true
+      },
+      {
+        "kind": "entity-field",
+        "entity": "Comment",
+        "field": "resolvedAt"
+      }
+    ]
+  },
+  "structure": {
+    "slot": "overlay",
+    "description": "Comment рендерится в три места одновременно: inline-marker на text-range (anchorRange), gutter-thread рядом с блоком (blockId), и page-footer для page-level комментов. resolvedAt prunes из активного слоя.",
+    "applySource": "function apply(slots, context) {\n  // Auto-synthesized marker-only apply (§13.17 opt-c).\n  // Marks first un-marked item in slots.overlay with source: \"derived:multi-anchor-comments\".\n  // Idempotent: skip if already marked.\n  const slot = slots?.overlay;\n  if (!Array.isArray(slot) || slot.length === 0) return slots;\n  const idx = slot.findIndex((x) => x && !x.source);\n  if (idx === -1) return slots;\n  const marker = \"derived:multi-anchor-comments\";\n  if (slot[idx].source === marker) return slots;\n  return {\n    ...slots,\n    overlay: slot.map((item, i) =>\n      i === idx ? { ...item, source: marker } : item),\n  };\n}",
+    "applyKind": "marker-only-synthesized",
+    "applySynthesizedAt": 1777280149901
+  },
+  "rationale": {
+    "hypothesis": "Discussion в long-form документе нужна на трёх уровнях детализации (фраза / абзац / документ); единый anchor-mechanism вынуждает выбирать, что роняет signal/noise. Sparse FK (pageId XOR blockId) + optional anchorRange — formal источник трёх UX-режимов.",
+    "evidence": [
+      {
+        "source": "notion",
+        "description": "Inline highlights + block-side threads + page bottom comments",
+        "reliability": "high"
+      },
+      {
+        "source": "google-docs",
+        "description": "Inline range comments + suggesting mode",
+        "reliability": "high"
+      },
+      {
+        "source": "figma",
+        "description": "Pin-anchored vs frame-level vs file-level comments",
+        "reliability": "medium"
+      }
+    ],
+    "counterexample": [
+      {
+        "source": "linear",
+        "description": "Comment только на issue-level, без inline-anchor",
+        "reliability": "medium"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [
+      {
+        "domain": "notion",
+        "projection": "page_detail",
+        "reason": "Comment с pageId + nullable blockId + nullable anchorRange + resolvedAt"
+      }
+    ],
+    "shouldNotMatch": [
+      {
+        "domain": "messenger",
+        "projection": "conversation_detail",
+        "reason": "Message — single-anchor entity, нет inline-range и block-level overlap"
+      }
+    ]
+  }
+}

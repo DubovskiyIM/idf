@@ -1,0 +1,79 @@
+{
+  "id": "typed-mention-with-backlink",
+  "version": 1,
+  "status": "candidate",
+  "archetype": "detail",
+  "trigger": {
+    "requires": [
+      {
+        "kind": "intent-creates",
+        "entity": "<mention-entity>"
+      },
+      {
+        "kind": "entity-field",
+        "entity": "<mention-entity>",
+        "field": "targetKind"
+      },
+      {
+        "kind": "entity-field",
+        "entity": "<mention-entity>",
+        "field": "targetId"
+      }
+    ]
+  },
+  "structure": {
+    "slot": "composer",
+    "description": "В composer'е prefix-trigger ('@', '[[', '+') открывает typed-search по target-kind; на target-projection backlinks автоматически рендерятся в боковом разделе как reverse-association.",
+    "applySource": "function apply(slots, context) {\n  // Auto-synthesized marker-only apply (§13.17 opt-c).\n  // Marks first un-marked item in slots.composer with source: \"derived:typed-mention-with-backlink\".\n  // Idempotent: skip if already marked.\n  const slot = slots?.composer;\n  if (!Array.isArray(slot) || slot.length === 0) return slots;\n  const idx = slot.findIndex((x) => x && !x.source);\n  if (idx === -1) return slots;\n  const marker = \"derived:typed-mention-with-backlink\";\n  if (slot[idx].source === marker) return slots;\n  return {\n    ...slots,\n    composer: slot.map((item, i) =>\n      i === idx ? { ...item, source: marker } : item),\n  };\n}",
+    "applyKind": "marker-only-synthesized",
+    "applySynthesizedAt": 1777280149908
+  },
+  "rationale": {
+    "hypothesis": "Когда сущности ссылаются друг на друга, free-text mention (@ivan) теряется при rename'е; typed-mention хранит targetId, что даёт rename-resistance + automatic backref-rail на target'е.",
+    "evidence": [
+      {
+        "source": "Notion",
+        "description": "@person, [[Page]], +database с typed icons и автоматические backlinks",
+        "reliability": "high"
+      },
+      {
+        "source": "Roam",
+        "description": "[[bidirectional links]] с automatic backref на target",
+        "reliability": "high"
+      },
+      {
+        "source": "Obsidian",
+        "description": "[[ + alias]], graph-view backlinks",
+        "reliability": "high"
+      }
+    ],
+    "counterexample": [
+      {
+        "source": "Slack mentions",
+        "description": "@user без backref-rail на user-profile — flat",
+        "reliability": "medium"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [
+      {
+        "domain": "notion",
+        "projection": "page_detail",
+        "reason": "Mention + backlink rendering"
+      }
+    ],
+    "shouldNotMatch": [
+      {
+        "domain": "delivery",
+        "projection": "orders",
+        "reason": "Order не содержит free-text с mentions"
+      },
+      {
+        "domain": "invest",
+        "projection": "positions",
+        "reason": "Numeric-data домен без cross-ref-letters"
+      }
+    ]
+  }
+}

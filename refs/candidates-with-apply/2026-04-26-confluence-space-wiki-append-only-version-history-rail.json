@@ -1,0 +1,84 @@
+{
+  "id": "append-only-version-history-rail",
+  "version": 1,
+  "status": "candidate",
+  "archetype": "detail",
+  "trigger": {
+    "requires": [
+      {
+        "kind": "entity-field",
+        "entity": "mainEntity",
+        "field": "currentVersionId"
+      },
+      {
+        "kind": "sub-entity-exists",
+        "fkTo": "mainEntity",
+        "fields": [
+          "versionNumber",
+          "createdAt",
+          "authorId"
+        ]
+      },
+      {
+        "kind": "intent-effect",
+        "α": "replace",
+        "target": "mainEntity.currentVersionId"
+      }
+    ]
+  },
+  "structure": {
+    "slot": "sections",
+    "description": "Прикрепляет к detail right-rail хронологический список версий (newest first) с author/date/changeSummary и per-row действиями view/compare/restore. История append-only — добавление новой версии не мутирует прошлые snapshot'ы.",
+    "applySource": "function apply(slots, context) {\n  // Auto-synthesized marker-only apply (§13.17 opt-c).\n  // Marks first un-marked item in slots.sections with source: \"derived:append-only-version-history-rail\".\n  // Idempotent: skip if already marked.\n  const slot = slots?.sections;\n  if (!Array.isArray(slot) || slot.length === 0) return slots;\n  const idx = slot.findIndex((x) => x && !x.source);\n  if (idx === -1) return slots;\n  const marker = \"derived:append-only-version-history-rail\";\n  if (slot[idx].source === marker) return slots;\n  return {\n    ...slots,\n    sections: slot.map((item, i) =>\n      i === idx ? { ...item, source: marker } : item),\n  };\n}",
+    "applyKind": "marker-only-synthesized",
+    "applySynthesizedAt": 1777280149905
+  },
+  "rationale": {
+    "hypothesis": "Когда сущность имеет explicit version-snapshot child и поле currentVersionId, пользователю нужен непрерывный темпоральный контекст — отдельная projection /versions ломает workflow редактора. Inline append-only rail сохраняет внимание на mainEntity и одновременно даёт one-click rollback.",
+    "evidence": [
+      {
+        "source": "confluence",
+        "description": "Page History sidebar: версии в обратном хроно с changeSummary, кнопка Restore рядом с каждой строкой",
+        "reliability": "high"
+      },
+      {
+        "source": "google-docs",
+        "description": "Version history pane справа, с inline-restore",
+        "reliability": "high"
+      },
+      {
+        "source": "notion",
+        "description": "Page history modal со списком snapshot'ов и Restore",
+        "reliability": "medium"
+      }
+    ],
+    "counterexample": [
+      {
+        "source": "messenger",
+        "description": "Сообщения не имеют currentVersionId — линейная история не append-only-version-rail, а просто timeline",
+        "reliability": "high"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [
+      {
+        "domain": "confluence",
+        "projection": "page_detail",
+        "reason": "Page.currentVersionId + PageVersion sub-entity + restore_version intent"
+      }
+    ],
+    "shouldNotMatch": [
+      {
+        "domain": "messenger",
+        "projection": "conversation_detail",
+        "reason": "Message не имеет versionNumber, нет restore intent"
+      },
+      {
+        "domain": "booking",
+        "projection": "booking_detail",
+        "reason": "Booking не имеет version-snapshot child"
+      }
+    ]
+  }
+}

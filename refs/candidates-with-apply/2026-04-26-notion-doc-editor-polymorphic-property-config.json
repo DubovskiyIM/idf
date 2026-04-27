@@ -1,0 +1,80 @@
+{
+  "id": "polymorphic-property-config",
+  "version": 1,
+  "status": "candidate",
+  "archetype": "catalog",
+  "trigger": {
+    "requires": [
+      {
+        "kind": "polymorphic",
+        "entity": "Property"
+      },
+      {
+        "kind": "entity-field",
+        "entity": "Property",
+        "field": "config"
+      },
+      {
+        "kind": "intent-effect",
+        "intent": "change_property_kind",
+        "α": "replace",
+        "target": "kind"
+      },
+      {
+        "kind": "intent-creates",
+        "creates": "Property",
+        "confirmation": "form"
+      }
+    ]
+  },
+  "structure": {
+    "slot": "overlay",
+    "description": "Property-add/edit dialog: первый шаг — kind select (text/number/select/.../formula); per-kind форма config меняется dynamic'ally (select → options-list, formula → expression-editor, relation → target-database picker).",
+    "applySource": "function apply(slots, context) {\n  // Auto-synthesized marker-only apply (§13.17 opt-c).\n  // Marks first un-marked item in slots.overlay with source: \"derived:polymorphic-property-config\".\n  // Idempotent: skip if already marked.\n  const slot = slots?.overlay;\n  if (!Array.isArray(slot) || slot.length === 0) return slots;\n  const idx = slot.findIndex((x) => x && !x.source);\n  if (idx === -1) return slots;\n  const marker = \"derived:polymorphic-property-config\";\n  if (slot[idx].source === marker) return slots;\n  return {\n    ...slots,\n    overlay: slot.map((item, i) =>\n      i === idx ? { ...item, source: marker } : item),\n  };\n}",
+    "applyKind": "marker-only-synthesized",
+    "applySynthesizedAt": 1777280149902
+  },
+  "rationale": {
+    "hypothesis": "Polymorphic property entity с N=19 variants нельзя свести к одному form-shape; conditional config-form по выбранному kind'у — единственный способ без N независимых create-intent'ов.",
+    "evidence": [
+      {
+        "source": "notion",
+        "description": "Add property dialog с kind-step и per-kind config-step",
+        "reliability": "high"
+      },
+      {
+        "source": "airtable",
+        "description": "Field-type picker → field-config (формула / select-options / lookup-link)",
+        "reliability": "high"
+      },
+      {
+        "source": "coda",
+        "description": "Column-type с per-type configurator",
+        "reliability": "high"
+      }
+    ],
+    "counterexample": [
+      {
+        "source": "google-sheets",
+        "description": "Cells без typed columns — нет polymorphic property model",
+        "reliability": "high"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [
+      {
+        "domain": "notion",
+        "projection": "database_detail",
+        "reason": "Property.kind с 19 variants + config field + add/change kind"
+      }
+    ],
+    "shouldNotMatch": [
+      {
+        "domain": "invest",
+        "projection": "position_detail",
+        "reason": "Position fields не polymorphic и не пользователь-конфигурируемы"
+      }
+    ]
+  }
+}

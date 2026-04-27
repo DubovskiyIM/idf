@@ -1,0 +1,78 @@
+{
+  "id": "polymorphic-block-with-type-picker",
+  "version": 1,
+  "status": "candidate",
+  "archetype": "detail",
+  "trigger": {
+    "requires": [
+      {
+        "kind": "entity-kind",
+        "value": "polymorphic"
+      },
+      {
+        "kind": "intent-creates",
+        "entity": "<polymorphic-entity>"
+      },
+      {
+        "kind": "intent-effect",
+        "α": "replace",
+        "targetField": "type"
+      }
+    ]
+  },
+  "structure": {
+    "slot": "composer",
+    "description": "Один insert intent + один convert_type intent на discriminator: композер рендерит type-picker (icons/list) вместо separate intent-per-variant; уже созданный entity конвертируется через context-menu той же шкалой.",
+    "applySource": "function apply(slots, context) {\n  // Auto-synthesized marker-only apply (§13.17 opt-c).\n  // Marks first un-marked item in slots.composer with source: \"derived:polymorphic-block-with-type-picker\".\n  // Idempotent: skip if already marked.\n  const slot = slots?.composer;\n  if (!Array.isArray(slot) || slot.length === 0) return slots;\n  const idx = slot.findIndex((x) => x && !x.source);\n  if (idx === -1) return slots;\n  const marker = \"derived:polymorphic-block-with-type-picker\";\n  if (slot[idx].source === marker) return slots;\n  return {\n    ...slots,\n    composer: slot.map((item, i) =>\n      i === idx ? { ...item, source: marker } : item),\n  };\n}",
+    "applyKind": "marker-only-synthesized",
+    "applySynthesizedAt": 1777280149906
+  },
+  "rationale": {
+    "hypothesis": "Когда entity polymorphic с >5 variant'ов, generating intent-per-variant ломает signal-classifier (catalog получает 15 hero-create); единый intent + visual type-grid даёт O(1) композер вместо O(N).",
+    "evidence": [
+      {
+        "source": "Notion",
+        "description": "/-menu с 15+ block-types, post-insert convert через ⋮ menu",
+        "reliability": "high"
+      },
+      {
+        "source": "Coda",
+        "description": "Insert-block list grouped by category",
+        "reliability": "high"
+      },
+      {
+        "source": "Linear",
+        "description": "Issue-type единый picker не отдельные кнопки",
+        "reliability": "medium"
+      }
+    ],
+    "counterexample": [
+      {
+        "source": "Forms with 2 variants",
+        "description": "Если variant-ов 2 — два явных CTA понятнее picker'а",
+        "reliability": "high"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [
+      {
+        "domain": "notion",
+        "projection": "page_detail",
+        "reason": "Block — polymorphic с 15 variants"
+      }
+    ],
+    "shouldNotMatch": [
+      {
+        "domain": "planning",
+        "projection": "poll_detail",
+        "reason": "TimeOption — однородная сущность"
+      },
+      {
+        "domain": "invest",
+        "projection": "portfolio_detail",
+        "reason": "Position не polymorphic"
+      }
+    ]
+  }
+}

@@ -1,0 +1,81 @@
+{
+  "id": "stacked-sidebar-workspace",
+  "version": 1,
+  "status": "candidate",
+  "archetype": "detail",
+  "trigger": {
+    "requires": [
+      {
+        "kind": "entity-kind",
+        "entity": "SidebarPane"
+      },
+      {
+        "kind": "intent-effect",
+        "intent": "open_in_sidebar",
+        "alpha": "add",
+        "creates": "SidebarPane"
+      },
+      {
+        "kind": "intent-effect",
+        "intent": "close_sidebar_pane",
+        "alpha": "remove",
+        "target": "sidebarPanes"
+      }
+    ]
+  },
+  "structure": {
+    "slot": "overlay",
+    "description": "Параллельно с main detail-проекцией активен правый sidebar, где shift-click по любой ссылке добавляет target-entity как pane-stack элемент (вместо замены main). Каждый pane имеет собственный close + reorder; main остаётся неизменным. Workspace становится мульти-фокусным.",
+    "applySource": "function apply(slots, context) {\n  // Auto-synthesized marker-only apply (§13.17 opt-c).\n  // Marks first un-marked item in slots.overlay with source: \"derived:stacked-sidebar-workspace\".\n  // Idempotent: skip if already marked.\n  const slot = slots?.overlay;\n  if (!Array.isArray(slot) || slot.length === 0) return slots;\n  const idx = slot.findIndex((x) => x && !x.source);\n  if (idx === -1) return slots;\n  const marker = \"derived:stacked-sidebar-workspace\";\n  if (slot[idx].source === marker) return slots;\n  return {\n    ...slots,\n    overlay: slot.map((item, i) =>\n      i === idx ? { ...item, source: marker } : item),\n  };\n}",
+    "applyKind": "marker-only-synthesized",
+    "applySynthesizedAt": 1777280149910
+  },
+  "rationale": {
+    "hypothesis": "При исследовании графа пользователь часто хочет 'отложить' второй контекст не теряя основного — back/forward history принуждает к sequential навигации. Sidebar-stack делает контексты spatial и параллельными, снижая когнитивную нагрузку контекст-свича.",
+    "evidence": [
+      {
+        "source": "roam-research",
+        "description": "Right sidebar: shift-click adds pane, drag to reorder, ✕ to close, main untouched",
+        "reliability": "high"
+      },
+      {
+        "source": "logseq",
+        "description": "Right sidebar с тем же stack UX",
+        "reliability": "high"
+      },
+      {
+        "source": "obsidian",
+        "description": "Tab/split-pane workspace с похожей семантикой",
+        "reliability": "medium"
+      }
+    ],
+    "counterexample": [
+      {
+        "source": "wikipedia",
+        "description": "Hover-preview popup — single ephemeral context, без stack",
+        "reliability": "medium"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [
+      {
+        "domain": "notion",
+        "projection": "page_detail",
+        "reason": "Open-in-side-peek semantic"
+      }
+    ],
+    "shouldNotMatch": [
+      {
+        "domain": "delivery",
+        "projection": "order_detail",
+        "reason": "Order — sequential workflow, не explorative"
+      },
+      {
+        "domain": "booking",
+        "projection": "booking_detail",
+        "reason": "Single-task focus, sidebar-stack overkill"
+      }
+    ]
+  }
+}

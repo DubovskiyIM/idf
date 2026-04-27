@@ -1,0 +1,64 @@
+{
+  "id": "linked-mirror-projection",
+  "version": 1,
+  "status": "candidate",
+  "archetype": "detail",
+  "trigger": {
+    "requires": [
+      {
+        "kind": "entity-field",
+        "field": "kind",
+        "value-includes": "database_linked"
+      },
+      {
+        "kind": "entity-kind",
+        "kind-value": "mirror"
+      }
+    ]
+  },
+  "structure": {
+    "slot": "body",
+    "description": "Linked-view block ссылается на чужую коллекцию без копирования rows — дополнительная per-view конфигурация (filter/sort/groupBy) поверх shared underlying данных. Указывает на mirror-семантику: writes доходят до origin, не до projection.",
+    "applySource": "function apply(slots, context) {\n  // Auto-synthesized marker-only apply (§13.17 opt-c).\n  // Marks first un-marked item in slots.body with source: \"derived:linked-mirror-projection\".\n  // Idempotent: skip if already marked.\n  const slot = slots?.body;\n  if (!Array.isArray(slot) || slot.length === 0) return slots;\n  const idx = slot.findIndex((x) => x && !x.source);\n  if (idx === -1) return slots;\n  const marker = \"derived:linked-mirror-projection\";\n  if (slot[idx].source === marker) return slots;\n  return {\n    ...slots,\n    body: slot.map((item, i) =>\n      i === idx ? { ...item, source: marker } : item),\n  };\n}",
+    "applyKind": "marker-only-synthesized",
+    "applySynthesizedAt": 1777280149912
+  },
+  "rationale": {
+    "hypothesis": "Дублирование данных (copy view) приводит к divergence; reference-only mirror сохраняет single source of truth и позволяет surface-местам жить в разных contexts (project page показывает task-database из engineering page).",
+    "evidence": [
+      {
+        "source": "notion",
+        "description": "Linked database — отдельный block, общие rows с origin",
+        "reliability": "high"
+      },
+      {
+        "source": "coda",
+        "description": "Linked tables / views с filters",
+        "reliability": "high"
+      }
+    ],
+    "counterexample": [
+      {
+        "source": "spreadsheet-import",
+        "description": "CSV-impotr копирует rows; mirror был бы излишним для ad-hoc",
+        "reliability": "medium"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [
+      {
+        "domain": "notion",
+        "projection": "page_detail",
+        "reason": "Block.kind=database_linked + DatabaseView ссылка"
+      }
+    ],
+    "shouldNotMatch": [
+      {
+        "domain": "lifequest",
+        "projection": "habits_catalog",
+        "reason": "Habits — owned-by-user, нет cross-context surface"
+      }
+    ]
+  }
+}

@@ -1,0 +1,83 @@
+{
+  "id": "keyboard-indent-self-ref-tree",
+  "version": 1,
+  "status": "candidate",
+  "archetype": "detail",
+  "trigger": {
+    "requires": [
+      {
+        "kind": "entity-field",
+        "entity": "Block",
+        "field": "parentBlockId",
+        "selfRef": true
+      },
+      {
+        "kind": "entity-field",
+        "entity": "Block",
+        "field": "indentLevel"
+      },
+      {
+        "kind": "intent-effect",
+        "intent": "indent_block",
+        "α": "replace",
+        "target": "indentLevel"
+      },
+      {
+        "kind": "intent-effect",
+        "intent": "outdent_block",
+        "α": "replace",
+        "target": "indentLevel"
+      }
+    ]
+  },
+  "structure": {
+    "slot": "body",
+    "description": "Tab/Shift+Tab на focused-row переводят блок на уровень глубже/мельче, синхронно обновляя parentBlockId; visual indent через padding-left, без drag-target UI.",
+    "applySource": "function apply(slots, context) {\n  // Auto-synthesized marker-only apply (§13.17 opt-c).\n  // Marks first un-marked item in slots.body with source: \"derived:keyboard-indent-self-ref-tree\".\n  // Idempotent: skip if already marked.\n  const slot = slots?.body;\n  if (!Array.isArray(slot) || slot.length === 0) return slots;\n  const idx = slot.findIndex((x) => x && !x.source);\n  if (idx === -1) return slots;\n  const marker = \"derived:keyboard-indent-self-ref-tree\";\n  if (slot[idx].source === marker) return slots;\n  return {\n    ...slots,\n    body: slot.map((item, i) =>\n      i === idx ? { ...item, source: marker } : item),\n  };\n}",
+    "applyKind": "marker-only-synthesized",
+    "applySynthesizedAt": 1777280149901
+  },
+  "rationale": {
+    "hypothesis": "Когда self-ref hierarchy создаётся часто (lists, outlines), keyboard-indent в 100× быстрее drag-into-parent и не требует точного попадания мыши.",
+    "evidence": [
+      {
+        "source": "notion",
+        "description": "Tab/Shift+Tab — основной способ построить bulleted/todo tree",
+        "reliability": "high"
+      },
+      {
+        "source": "roam-research",
+        "description": "Outline целиком построен на Tab-indent",
+        "reliability": "high"
+      },
+      {
+        "source": "workflowy",
+        "description": "Tab/Shift+Tab — единственный способ сделать nested item",
+        "reliability": "high"
+      }
+    ],
+    "counterexample": [
+      {
+        "source": "trello",
+        "description": "Card hierarchy — drag-only, без keyboard depth",
+        "reliability": "medium"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [
+      {
+        "domain": "notion",
+        "projection": "page_detail",
+        "reason": "Block.parentBlockId self-ref + indentLevel field + 2 indent intents"
+      }
+    ],
+    "shouldNotMatch": [
+      {
+        "domain": "messenger",
+        "projection": "conversation_detail",
+        "reason": "Message не имеет indentLevel и self-ref hierarchy"
+      }
+    ]
+  }
+}

@@ -1,0 +1,76 @@
+{
+  "id": "runtime-schema-builder",
+  "version": 1,
+  "status": "candidate",
+  "archetype": "detail",
+  "trigger": {
+    "requires": [
+      {
+        "kind": "intent-creates",
+        "creates": "Property"
+      },
+      {
+        "kind": "intent-effect",
+        "intent": "change_property_kind",
+        "α": "replace",
+        "target": ".kind"
+      },
+      {
+        "kind": "entity-field",
+        "field": "kind",
+        "discriminator": true,
+        "min-values": 8
+      }
+    ]
+  },
+  "structure": {
+    "slot": "header",
+    "description": "Inline column-header inplace UI для add/rename/change-kind/remove property; kind определяет cell-renderer (chip/avatar/computed/file). Schema редактируется вместе с данными, не через отдельный admin-панель.",
+    "applySource": "function apply(slots, context) {\n  // Auto-synthesized marker-only apply (§13.17 opt-c).\n  // Marks first un-marked item in slots.header with source: \"derived:runtime-schema-builder\".\n  // Idempotent: skip if already marked.\n  const slot = slots?.header;\n  if (!Array.isArray(slot) || slot.length === 0) return slots;\n  const idx = slot.findIndex((x) => x && !x.source);\n  if (idx === -1) return slots;\n  const marker = \"derived:runtime-schema-builder\";\n  if (slot[idx].source === marker) return slots;\n  return {\n    ...slots,\n    header: slot.map((item, i) =>\n      i === idx ? { ...item, source: marker } : item),\n  };\n}",
+    "applyKind": "marker-only-synthesized",
+    "applySynthesizedAt": 1777280149907
+  },
+  "rationale": {
+    "hypothesis": "Если сама схема — пользовательский artifact (а не developer-decision), её редактирование должно жить рядом с данными. Отдельный schema-screen ломает loop 'вижу-чего-не-хватает → добавляю поле → заполняю'.",
+    "evidence": [
+      {
+        "source": "notion",
+        "description": "Add property через '+' в header колонок, kind → cell renderer",
+        "reliability": "high"
+      },
+      {
+        "source": "airtable",
+        "description": "Field-customize прямо из header",
+        "reliability": "high"
+      },
+      {
+        "source": "coda",
+        "description": "Add column inline + per-column type",
+        "reliability": "high"
+      }
+    ],
+    "counterexample": [
+      {
+        "source": "salesforce",
+        "description": "Object Manager — schema отдельно от records, потому что multi-tenant governance важнее ergonomics",
+        "reliability": "high"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [
+      {
+        "domain": "notion",
+        "projection": "database_detail",
+        "reason": "DatabaseProperty с runtime add_property + 19 kind-вариантов"
+      }
+    ],
+    "shouldNotMatch": [
+      {
+        "domain": "invest",
+        "projection": "portfolios_catalog",
+        "reason": "Position fields зашиты в ontology, не runtime"
+      }
+    ]
+  }
+}

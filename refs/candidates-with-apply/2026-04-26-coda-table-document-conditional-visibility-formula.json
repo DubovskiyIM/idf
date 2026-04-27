@@ -1,0 +1,72 @@
+{
+  "id": "conditional-visibility-formula",
+  "version": 1,
+  "status": "candidate",
+  "archetype": null,
+  "trigger": {
+    "requires": [
+      {
+        "kind": "entity-field",
+        "entity": "Button",
+        "field": "visibleIfFormula",
+        "fieldKind": "expression"
+      },
+      {
+        "kind": "intent-effect",
+        "α": "replace",
+        "target": "button.visibleIfFormula",
+        "confirmation": "enter"
+      }
+    ]
+  },
+  "structure": {
+    "slot": "overlay",
+    "description": "Поле visibility-formula рендерится в meta-section сущности (рядом с её другими настройками). При authoring projection форма для предиката; при rendering projection примитив evaluate'ит формулу против row-context и возвращает boolean.",
+    "applySource": "function apply(slots, context) {\n  // Auto-synthesized marker-only apply (§13.17 opt-c).\n  // Marks first un-marked item in slots.overlay with source: \"derived:conditional-visibility-formula\".\n  // Idempotent: skip if already marked.\n  const slot = slots?.overlay;\n  if (!Array.isArray(slot) || slot.length === 0) return slots;\n  const idx = slot.findIndex((x) => x && !x.source);\n  if (idx === -1) return slots;\n  const marker = \"derived:conditional-visibility-formula\";\n  if (slot[idx].source === marker) return slots;\n  return {\n    ...slots,\n    overlay: slot.map((item, i) =>\n      i === idx ? { ...item, source: marker } : item),\n  };\n}",
+    "applyKind": "marker-only-synthesized",
+    "applySynthesizedAt": 1777280149910
+  },
+  "rationale": {
+    "hypothesis": "Кнопки/блоки, видимые всегда, шумят. Спрятанные за бизнес-правилом — но это правило часто row-specific. Pattern формализует второй author-mode (предикат на видимость), отдельный от формы конфигурации основного действия.",
+    "evidence": [
+      {
+        "source": "coda",
+        "description": "Button.visibleIfFormula видимость по row-context",
+        "reliability": "high"
+      },
+      {
+        "source": "retool",
+        "description": "hidden property для component с expression evaluation",
+        "reliability": "high"
+      },
+      {
+        "source": "appsmith",
+        "description": "isVisible binding с JS-выражением",
+        "reliability": "medium"
+      }
+    ],
+    "counterexample": [
+      {
+        "source": "figma",
+        "description": "Visibility — toggle, не predicate (нет runtime context)",
+        "reliability": "high"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [
+      {
+        "domain": "automation",
+        "projection": "automation_detail",
+        "reason": "conditionFormula аналогична visibleIfFormula"
+      }
+    ],
+    "shouldNotMatch": [
+      {
+        "domain": "delivery",
+        "projection": "order_detail",
+        "reason": "Order.confirmAction всегда виден, нет conditional gating"
+      }
+    ]
+  }
+}

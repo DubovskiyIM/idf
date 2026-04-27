@@ -1,0 +1,88 @@
+{
+  "id": "stacked-pane-workspace",
+  "version": 1,
+  "status": "candidate",
+  "archetype": "detail",
+  "trigger": {
+    "requires": [
+      {
+        "kind": "session",
+        "entity": "*Pane|Sidebar*"
+      },
+      {
+        "kind": "entity-field",
+        "entity": "*Pane",
+        "field": "targetKind",
+        "statusValues": [
+          "page",
+          "block",
+          "*"
+        ]
+      },
+      {
+        "kind": "entity-field",
+        "entity": "*Pane",
+        "field": "order",
+        "fieldRole": "order"
+      },
+      {
+        "kind": "intent-creates",
+        "entity": "*Pane"
+      }
+    ]
+  },
+  "structure": {
+    "slot": "sections",
+    "description": "Боковая колонка ведёт себя как стек открытых проекций: каждый элемент Pane — это projection-instance с targetKind discriminator (page|block|graph), order определяет порядок сверху вниз. Open-in-sidebar добавляет элемент, close — снимает. Главный workspace при этом не меняет фокус.",
+    "applySource": "function apply(slots, context) {\n  // Auto-synthesized marker-only apply (§13.17 opt-c).\n  // Marks first un-marked item in slots.sections with source: \"derived:stacked-pane-workspace\".\n  // Idempotent: skip if already marked.\n  const slot = slots?.sections;\n  if (!Array.isArray(slot) || slot.length === 0) return slots;\n  const idx = slot.findIndex((x) => x && !x.source);\n  if (idx === -1) return slots;\n  const marker = \"derived:stacked-pane-workspace\";\n  if (slot[idx].source === marker) return slots;\n  return {\n    ...slots,\n    sections: slot.map((item, i) =>\n      i === idx ? { ...item, source: marker } : item),\n  };\n}",
+    "applyKind": "marker-only-synthesized",
+    "applySynthesizedAt": 1777280149903
+  },
+  "rationale": {
+    "hypothesis": "Линейная навигация (open replaces) теряет рабочий контекст при cross-referencing. Stacked-pane workspace позволяет держать N референсных проекций рядом с активной без потери основного фокуса. Это дешевле tabs (которые требуют переключения) и богаче tooltip'а.",
+    "evidence": [
+      {
+        "source": "roam-research",
+        "description": "Right sidebar — стек панелей, shift-click добавляет, drag-reorders",
+        "reliability": "high"
+      },
+      {
+        "source": "logseq",
+        "description": "Right sidebar identical с drag-reorder",
+        "reliability": "high"
+      },
+      {
+        "source": "obsidian",
+        "description": "Pane-stack через split-view, отличается structure но идея та же",
+        "reliability": "medium"
+      }
+    ],
+    "counterexample": [
+      {
+        "source": "linear",
+        "description": "Detail-view modal-style — один открытый item, без cross-referencing UI",
+        "reliability": "high"
+      },
+      {
+        "source": "gmail",
+        "description": "Конверсация занимает full-pane; preview-pane не stack'ится",
+        "reliability": "high"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [],
+    "shouldNotMatch": [
+      {
+        "domain": "booking",
+        "projection": "calendar_view",
+        "reason": "Booking flow линеен, нет нужды держать N references открытыми параллельно"
+      },
+      {
+        "domain": "delivery",
+        "projection": "order_tracker",
+        "reason": "Order — single-focus task-flow, stacked-pane избыточен"
+      }
+    ]
+  }
+}

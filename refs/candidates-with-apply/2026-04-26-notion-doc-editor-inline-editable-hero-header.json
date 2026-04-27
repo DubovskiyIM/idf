@@ -1,0 +1,83 @@
+{
+  "id": "inline-editable-hero-header",
+  "version": 1,
+  "status": "candidate",
+  "archetype": "detail",
+  "trigger": {
+    "requires": [
+      {
+        "kind": "entity-field",
+        "field": "title"
+      },
+      {
+        "kind": "entity-field",
+        "field": "icon"
+      },
+      {
+        "kind": "entity-field",
+        "field": "coverImage"
+      },
+      {
+        "kind": "intent-effect",
+        "intent": "rename_*",
+        "α": "replace",
+        "confirmation": "enter"
+      },
+      {
+        "kind": "intent-confirmation",
+        "value": "click",
+        "for-icon": true
+      }
+    ]
+  },
+  "structure": {
+    "slot": "hero",
+    "description": "Hero-header (cover + icon + title + description) — inline-editable surface без отдельного edit-form: click-to-replace на icon/cover, contenteditable title, focus-out auto-save. Form-archetype для metadata подавлен.",
+    "applySource": "function apply(slots, context) {\n  // Auto-synthesized marker-only apply (§13.17 opt-c).\n  // Marks first un-marked item in slots.hero with source: \"derived:inline-editable-hero-header\".\n  // Idempotent: skip if already marked.\n  const slot = slots?.hero;\n  if (!Array.isArray(slot) || slot.length === 0) return slots;\n  const idx = slot.findIndex((x) => x && !x.source);\n  if (idx === -1) return slots;\n  const marker = \"derived:inline-editable-hero-header\";\n  if (slot[idx].source === marker) return slots;\n  return {\n    ...slots,\n    hero: slot.map((item, i) =>\n      i === idx ? { ...item, source: marker } : item),\n  };\n}",
+    "applyKind": "marker-only-synthesized",
+    "applySynthesizedAt": 1777280149899
+  },
+  "rationale": {
+    "hypothesis": "Form-modal для page-metadata прерывает flow и обесценивает hero как 'first impression'. Inline-edit делает identity артефакта живой и быстро evolve-уемой; form-archetype оправдан только для multi-field validation, не для 1-field replace.",
+    "evidence": [
+      {
+        "source": "notion",
+        "description": "Hover icon → reroll/upload, click cover → reposition, click title → edit",
+        "reliability": "high"
+      },
+      {
+        "source": "linear",
+        "description": "Title issue inline-edit, no form",
+        "reliability": "high"
+      },
+      {
+        "source": "figma",
+        "description": "File-name inline в top-bar",
+        "reliability": "medium"
+      }
+    ],
+    "counterexample": [
+      {
+        "source": "shopify-admin",
+        "description": "Product hero редактируется через form-section — multiple validated fields требуют atomic submit",
+        "reliability": "medium"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [
+      {
+        "domain": "notion",
+        "projection": "page_detail",
+        "reason": "Page.title/icon/cover + 1-field replace intents"
+      }
+    ],
+    "shouldNotMatch": [
+      {
+        "domain": "sales",
+        "projection": "listing_create",
+        "reason": "Listing требует validated multi-field form (price/category/photos)"
+      }
+    ]
+  }
+}
