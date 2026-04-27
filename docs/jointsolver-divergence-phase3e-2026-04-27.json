@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-04-27T10:46:17.581Z",
+  "generatedAt": "2026-04-27T13:24:23.734Z",
   "phase": "3e",
   "notes": "respectRoleCanExecute: true, per-role symmetric comparison",
   "domains": [
@@ -178,13 +178,13 @@
             {
               "intentId": "complete_booking",
               "derived": null,
-              "alternate": "overlay",
+              "alternate": "hero",
               "kind": "alternate-only"
             },
             {
               "intentId": "mark_no_show",
               "derived": null,
-              "alternate": "overlay",
+              "alternate": "hero",
               "kind": "alternate-only"
             },
             {
@@ -202,10 +202,10 @@
           "mainEntity": "Booking",
           "summary": {
             "total": 4,
-            "divergent": 2,
+            "divergent": 0,
             "derivedOnly": 1,
             "alternateOnly": 1,
-            "agreed": 0
+            "agreed": 2
           },
           "diff": [
             {
@@ -215,21 +215,9 @@
               "kind": "derived-only"
             },
             {
-              "intentId": "complete_booking",
-              "derived": "primaryCTA",
-              "alternate": "overlay",
-              "kind": "divergent"
-            },
-            {
-              "intentId": "mark_no_show",
-              "derived": "primaryCTA",
-              "alternate": "overlay",
-              "kind": "divergent"
-            },
-            {
               "intentId": "bulk_cancel_day",
               "derived": null,
-              "alternate": "overlay",
+              "alternate": "primaryCTA",
               "kind": "alternate-only"
             }
           ]
@@ -387,13 +375,13 @@
             {
               "intentId": "open_poll",
               "derived": null,
-              "alternate": "overlay",
+              "alternate": "hero",
               "kind": "alternate-only"
             },
             {
               "intentId": "close_poll",
               "derived": null,
-              "alternate": "overlay",
+              "alternate": "hero",
               "kind": "alternate-only"
             },
             {
@@ -411,18 +399,12 @@
           "mainEntity": "Poll",
           "summary": {
             "total": 9,
-            "divergent": 4,
+            "divergent": 3,
             "derivedOnly": 0,
             "alternateOnly": 5,
-            "agreed": 0
+            "agreed": 1
           },
           "diff": [
-            {
-              "intentId": "open_poll",
-              "derived": "primaryCTA",
-              "alternate": "overlay",
-              "kind": "divergent"
-            },
             {
               "intentId": "set_deadline",
               "derived": "footer",
@@ -432,13 +414,13 @@
             {
               "intentId": "cancel_poll",
               "derived": "footer",
-              "alternate": "overlay",
+              "alternate": "primaryCTA",
               "kind": "divergent"
             },
             {
               "intentId": "close_poll",
               "derived": "footer",
-              "alternate": "overlay",
+              "alternate": "primaryCTA",
               "kind": "divergent"
             },
             {
@@ -462,7 +444,7 @@
             {
               "intentId": "resolve_poll",
               "derived": null,
-              "alternate": "overlay",
+              "alternate": "primaryCTA",
               "kind": "alternate-only"
             },
             {
@@ -494,7 +476,7 @@
             {
               "intentId": "import_workflow",
               "derived": "toolbar",
-              "alternate": "hero",
+              "alternate": "overlay",
               "kind": "divergent"
             },
             {
@@ -506,13 +488,13 @@
             {
               "intentId": "save_workflow",
               "derived": null,
-              "alternate": "overlay",
+              "alternate": "hero",
               "kind": "alternate-only"
             },
             {
               "intentId": "execute_workflow",
               "derived": null,
-              "alternate": "overlay",
+              "alternate": "hero",
               "kind": "alternate-only"
             },
             {
@@ -569,19 +551,12 @@
           "mainEntity": "Execution",
           "summary": {
             "total": 1,
-            "divergent": 1,
+            "divergent": 0,
             "derivedOnly": 0,
             "alternateOnly": 0,
-            "agreed": 0
+            "agreed": 1
           },
-          "diff": [
-            {
-              "intentId": "stop_execution",
-              "derived": "primaryCTA",
-              "alternate": "overlay",
-              "kind": "divergent"
-            }
-          ]
+          "diff": []
         },
         {
           "projection": "workflow_list",
@@ -605,13 +580,13 @@
             {
               "intentId": "save_workflow",
               "derived": null,
-              "alternate": "overlay",
+              "alternate": "hero",
               "kind": "alternate-only"
             },
             {
               "intentId": "execute_workflow",
               "derived": null,
-              "alternate": "overlay",
+              "alternate": "hero",
               "kind": "alternate-only"
             }
           ]
@@ -670,16 +645,28 @@
           "mainEntity": "Contact",
           "summary": {
             "total": 4,
-            "divergent": 1,
+            "divergent": 3,
             "derivedOnly": 0,
             "alternateOnly": 0,
-            "agreed": 3
+            "agreed": 1
           },
           "diff": [
             {
               "intentId": "add_contact",
               "derived": "toolbar",
               "alternate": "overlay",
+              "kind": "divergent"
+            },
+            {
+              "intentId": "accept_contact",
+              "derived": "overlay",
+              "alternate": "hero",
+              "kind": "divergent"
+            },
+            {
+              "intentId": "reject_contact",
+              "derived": "overlay",
+              "alternate": "hero",
               "kind": "divergent"
             }
           ]
@@ -832,16 +819,28 @@
           "mainEntity": "Contact",
           "summary": {
             "total": 8,
-            "divergent": 1,
+            "divergent": 3,
             "derivedOnly": 0,
             "alternateOnly": 2,
-            "agreed": 5
+            "agreed": 3
           },
           "diff": [
             {
               "intentId": "add_contact",
               "derived": "toolbar",
               "alternate": "overlay",
+              "kind": "divergent"
+            },
+            {
+              "intentId": "accept_contact",
+              "derived": "overlay",
+              "alternate": "hero",
+              "kind": "divergent"
+            },
+            {
+              "intentId": "reject_contact",
+              "derived": "overlay",
+              "alternate": "hero",
               "kind": "divergent"
             },
             {
@@ -1089,12 +1088,19 @@
           "mainEntity": "Listing",
           "summary": {
             "total": 1,
-            "divergent": 0,
+            "divergent": 1,
             "derivedOnly": 0,
             "alternateOnly": 0,
-            "agreed": 1
+            "agreed": 0
           },
-          "diff": []
+          "diff": [
+            {
+              "intentId": "buy_now",
+              "derived": "overlay",
+              "alternate": "hero",
+              "kind": "divergent"
+            }
+          ]
         },
         {
           "projection": "listing_detail",
@@ -1130,7 +1136,7 @@
             {
               "intentId": "buy_now",
               "derived": null,
-              "alternate": "overlay",
+              "alternate": "primaryCTA",
               "kind": "alternate-only"
             }
           ]
@@ -1142,12 +1148,19 @@
           "mainEntity": "Listing",
           "summary": {
             "total": 1,
-            "divergent": 0,
+            "divergent": 1,
             "derivedOnly": 0,
             "alternateOnly": 0,
-            "agreed": 1
+            "agreed": 0
           },
-          "diff": []
+          "diff": [
+            {
+              "intentId": "buy_now",
+              "derived": "overlay",
+              "alternate": "hero",
+              "kind": "divergent"
+            }
+          ]
         },
         {
           "projection": "my_bids",
@@ -1171,7 +1184,7 @@
             {
               "intentId": "retract_bid",
               "derived": null,
-              "alternate": "overlay",
+              "alternate": "hero",
               "kind": "alternate-only"
             }
           ]
@@ -1192,13 +1205,13 @@
             {
               "intentId": "pay_order",
               "derived": null,
-              "alternate": "overlay",
+              "alternate": "hero",
               "kind": "alternate-only"
             },
             {
               "intentId": "confirm_delivery",
               "derived": null,
-              "alternate": "overlay",
+              "alternate": "hero",
               "kind": "alternate-only"
             }
           ]
@@ -1210,28 +1223,16 @@
           "mainEntity": "Order",
           "summary": {
             "total": 3,
-            "divergent": 2,
+            "divergent": 0,
             "derivedOnly": 0,
             "alternateOnly": 1,
-            "agreed": 0
+            "agreed": 2
           },
           "diff": [
             {
-              "intentId": "confirm_delivery",
-              "derived": "primaryCTA",
-              "alternate": "overlay",
-              "kind": "divergent"
-            },
-            {
-              "intentId": "pay_order",
-              "derived": "primaryCTA",
-              "alternate": "overlay",
-              "kind": "divergent"
-            },
-            {
               "intentId": "open_dispute",
               "derived": null,
-              "alternate": "overlay",
+              "alternate": "primaryCTA",
               "kind": "alternate-only"
             }
           ]
@@ -1297,18 +1298,12 @@
           "mainEntity": "Dispute",
           "summary": {
             "total": 2,
-            "divergent": 1,
+            "divergent": 0,
             "derivedOnly": 0,
             "alternateOnly": 1,
-            "agreed": 0
+            "agreed": 1
           },
           "diff": [
-            {
-              "intentId": "close_dispute",
-              "derived": "primaryCTA",
-              "alternate": "overlay",
-              "kind": "divergent"
-            },
             {
               "intentId": "open_dispute",
               "derived": null,
@@ -1338,10 +1333,10 @@
           "mainEntity": "Listing",
           "summary": {
             "total": 10,
-            "divergent": 3,
+            "divergent": 4,
             "derivedOnly": 0,
             "alternateOnly": 0,
-            "agreed": 7
+            "agreed": 6
           },
           "diff": [
             {
@@ -1357,9 +1352,15 @@
               "kind": "divergent"
             },
             {
-              "intentId": "feature_listing",
+              "intentId": "cancel_listing",
               "derived": "overlay",
-              "alternate": "toolbar",
+              "alternate": "hero",
+              "kind": "divergent"
+            },
+            {
+              "intentId": "publish_listing",
+              "derived": "overlay",
+              "alternate": "hero",
               "kind": "divergent"
             }
           ]
@@ -1371,10 +1372,10 @@
           "mainEntity": "Listing",
           "summary": {
             "total": 11,
-            "divergent": 2,
+            "divergent": 3,
             "derivedOnly": 1,
             "alternateOnly": 2,
-            "agreed": 6
+            "agreed": 5
           },
           "diff": [
             {
@@ -1390,9 +1391,15 @@
               "kind": "derived-only"
             },
             {
-              "intentId": "feature_listing",
+              "intentId": "cancel_listing",
               "derived": "overlay",
-              "alternate": "toolbar",
+              "alternate": "primaryCTA",
+              "kind": "divergent"
+            },
+            {
+              "intentId": "publish_listing",
+              "derived": "overlay",
+              "alternate": "primaryCTA",
               "kind": "divergent"
             },
             {
@@ -1416,10 +1423,10 @@
           "mainEntity": "Listing",
           "summary": {
             "total": 10,
-            "divergent": 3,
+            "divergent": 4,
             "derivedOnly": 0,
             "alternateOnly": 0,
-            "agreed": 7
+            "agreed": 6
           },
           "diff": [
             {
@@ -1435,9 +1442,15 @@
               "kind": "divergent"
             },
             {
-              "intentId": "feature_listing",
+              "intentId": "cancel_listing",
               "derived": "overlay",
-              "alternate": "toolbar",
+              "alternate": "hero",
+              "kind": "divergent"
+            },
+            {
+              "intentId": "publish_listing",
+              "derived": "overlay",
+              "alternate": "hero",
               "kind": "divergent"
             }
           ]
@@ -1458,13 +1471,13 @@
             {
               "intentId": "ship_order",
               "derived": null,
-              "alternate": "overlay",
+              "alternate": "hero",
               "kind": "alternate-only"
             },
             {
               "intentId": "cancel_order",
               "derived": null,
-              "alternate": "overlay",
+              "alternate": "hero",
               "kind": "alternate-only"
             }
           ]
@@ -1476,25 +1489,12 @@
           "mainEntity": "Order",
           "summary": {
             "total": 3,
-            "divergent": 2,
+            "divergent": 0,
             "derivedOnly": 0,
             "alternateOnly": 0,
-            "agreed": 1
+            "agreed": 3
           },
-          "diff": [
-            {
-              "intentId": "cancel_order",
-              "derived": "primaryCTA",
-              "alternate": "overlay",
-              "kind": "divergent"
-            },
-            {
-              "intentId": "ship_order",
-              "derived": "primaryCTA",
-              "alternate": "overlay",
-              "kind": "divergent"
-            }
-          ]
+          "diff": []
         },
         {
           "projection": "seller_profile",
@@ -1536,19 +1536,12 @@
           "mainEntity": "Dispute",
           "summary": {
             "total": 1,
-            "divergent": 1,
+            "divergent": 0,
             "derivedOnly": 0,
             "alternateOnly": 0,
-            "agreed": 0
+            "agreed": 1
           },
-          "diff": [
-            {
-              "intentId": "close_dispute",
-              "derived": "primaryCTA",
-              "alternate": "overlay",
-              "kind": "divergent"
-            }
-          ]
+          "diff": []
         },
         {
           "projection": "saved_searches",
@@ -1571,10 +1564,10 @@
           "mainEntity": "Listing",
           "summary": {
             "total": 39,
-            "divergent": 5,
-            "derivedOnly": 25,
+            "divergent": 6,
+            "derivedOnly": 23,
             "alternateOnly": 3,
-            "agreed": 6
+            "agreed": 7
           },
           "diff": [
             {
@@ -1593,6 +1586,12 @@
               "intentId": "duplicate_listing",
               "derived": "toolbar",
               "alternate": "overlay",
+              "kind": "divergent"
+            },
+            {
+              "intentId": "accept_offer",
+              "derived": "overlay",
+              "alternate": "hero",
               "kind": "divergent"
             },
             {
@@ -1698,12 +1697,6 @@
               "kind": "derived-only"
             },
             {
-              "intentId": "archive_listing",
-              "derived": "overlay",
-              "alternate": null,
-              "kind": "derived-only"
-            },
-            {
               "intentId": "cancel_listing",
               "derived": "overlay",
               "alternate": "toolbar",
@@ -1740,12 +1733,6 @@
               "kind": "divergent"
             },
             {
-              "intentId": "unarchive_listing",
-              "derived": "overlay",
-              "alternate": null,
-              "kind": "derived-only"
-            },
-            {
               "intentId": "unfeature_listing",
               "derived": "overlay",
               "alternate": null,
@@ -1772,7 +1759,7 @@
             {
               "intentId": "approve_listing",
               "derived": null,
-              "alternate": "overlay",
+              "alternate": "hero",
               "kind": "alternate-only"
             }
           ]
@@ -1783,11 +1770,11 @@
           "archetype": "detail",
           "mainEntity": "Listing",
           "summary": {
-            "total": 50,
-            "divergent": 23,
-            "derivedOnly": 3,
-            "alternateOnly": 9,
-            "agreed": 15
+            "total": 51,
+            "divergent": 22,
+            "derivedOnly": 2,
+            "alternateOnly": 10,
+            "agreed": 17
           },
           "diff": [
             {
@@ -1800,12 +1787,6 @@
               "intentId": "apply_template",
               "derived": "toolbar",
               "alternate": "footer",
-              "kind": "divergent"
-            },
-            {
-              "intentId": "add_listing_image",
-              "derived": "overlay",
-              "alternate": "toolbar",
               "kind": "divergent"
             },
             {
@@ -1845,12 +1826,6 @@
               "kind": "derived-only"
             },
             {
-              "intentId": "set_listing_condition",
-              "derived": "overlay",
-              "alternate": "toolbar",
-              "kind": "divergent"
-            },
-            {
               "intentId": "set_minimum_bid_increment",
               "derived": "overlay",
               "alternate": "footer",
@@ -1865,7 +1840,7 @@
             {
               "intentId": "set_shipping_from",
               "derived": "overlay",
-              "alternate": "footer",
+              "alternate": "toolbar",
               "kind": "divergent"
             },
             {
@@ -1883,7 +1858,19 @@
             {
               "intentId": "accept_offer",
               "derived": "overlay",
+              "alternate": "primaryCTA",
+              "kind": "divergent"
+            },
+            {
+              "intentId": "archive_listing",
+              "derived": "overlay",
               "alternate": "footer",
+              "kind": "divergent"
+            },
+            {
+              "intentId": "cancel_listing",
+              "derived": "overlay",
+              "alternate": "primaryCTA",
               "kind": "divergent"
             },
             {
@@ -1901,7 +1888,7 @@
             {
               "intentId": "feature_listing",
               "derived": "overlay",
-              "alternate": "footer",
+              "alternate": "toolbar",
               "kind": "divergent"
             },
             {
@@ -1911,10 +1898,16 @@
               "kind": "divergent"
             },
             {
+              "intentId": "publish_listing",
+              "derived": "overlay",
+              "alternate": "primaryCTA",
+              "kind": "divergent"
+            },
+            {
               "intentId": "unarchive_listing",
               "derived": "overlay",
-              "alternate": null,
-              "kind": "derived-only"
+              "alternate": "footer",
+              "kind": "divergent"
             },
             {
               "intentId": "unfeature_listing",
@@ -1929,33 +1922,21 @@
               "kind": "divergent"
             },
             {
-              "intentId": "approve_listing",
-              "derived": "primaryCTA",
-              "alternate": "footer",
-              "kind": "divergent"
-            },
-            {
-              "intentId": "restore_listing",
-              "derived": "primaryCTA",
-              "alternate": "footer",
-              "kind": "divergent"
-            },
-            {
-              "intentId": "suspend_listing",
-              "derived": "primaryCTA",
-              "alternate": "footer",
-              "kind": "divergent"
-            },
-            {
               "intentId": "create_listing",
               "derived": null,
-              "alternate": "footer",
+              "alternate": "overlay",
               "kind": "alternate-only"
             },
             {
               "intentId": "relist_item",
               "derived": null,
               "alternate": "overlay",
+              "kind": "alternate-only"
+            },
+            {
+              "intentId": "remove_listing",
+              "derived": null,
+              "alternate": "footer",
               "kind": "alternate-only"
             },
             {
@@ -1979,13 +1960,13 @@
             {
               "intentId": "buy_now",
               "derived": null,
-              "alternate": "footer",
+              "alternate": "primaryCTA",
               "kind": "alternate-only"
             },
             {
               "intentId": "accept_bid",
               "derived": null,
-              "alternate": "footer",
+              "alternate": "primaryCTA",
               "kind": "alternate-only"
             },
             {
@@ -2009,10 +1990,10 @@
           "mainEntity": "Listing",
           "summary": {
             "total": 38,
-            "divergent": 5,
-            "derivedOnly": 24,
+            "divergent": 6,
+            "derivedOnly": 22,
             "alternateOnly": 4,
-            "agreed": 5
+            "agreed": 6
           },
           "diff": [
             {
@@ -2031,6 +2012,12 @@
               "intentId": "duplicate_listing",
               "derived": "toolbar",
               "alternate": "overlay",
+              "kind": "divergent"
+            },
+            {
+              "intentId": "accept_offer",
+              "derived": "overlay",
+              "alternate": "hero",
               "kind": "divergent"
             },
             {
@@ -2130,12 +2117,6 @@
               "kind": "derived-only"
             },
             {
-              "intentId": "archive_listing",
-              "derived": "overlay",
-              "alternate": null,
-              "kind": "derived-only"
-            },
-            {
               "intentId": "cancel_listing",
               "derived": "overlay",
               "alternate": "toolbar",
@@ -2172,12 +2153,6 @@
               "kind": "divergent"
             },
             {
-              "intentId": "unarchive_listing",
-              "derived": "overlay",
-              "alternate": null,
-              "kind": "derived-only"
-            },
-            {
               "intentId": "unfeature_listing",
               "derived": "overlay",
               "alternate": null,
@@ -2204,7 +2179,7 @@
             {
               "intentId": "approve_listing",
               "derived": null,
-              "alternate": "overlay",
+              "alternate": "hero",
               "kind": "alternate-only"
             },
             {
@@ -2222,16 +2197,22 @@
           "mainEntity": "Bid",
           "summary": {
             "total": 3,
-            "divergent": 1,
+            "divergent": 2,
             "derivedOnly": 0,
             "alternateOnly": 0,
-            "agreed": 2
+            "agreed": 1
           },
           "diff": [
             {
               "intentId": "set_auto_bid",
               "derived": "hero",
               "alternate": "overlay",
+              "kind": "divergent"
+            },
+            {
+              "intentId": "accept_bid",
+              "derived": "overlay",
+              "alternate": "hero",
               "kind": "divergent"
             }
           ]
@@ -2242,18 +2223,18 @@
           "archetype": "catalog",
           "mainEntity": "Order",
           "summary": {
-            "total": 19,
-            "divergent": 2,
-            "derivedOnly": 5,
-            "alternateOnly": 10,
-            "agreed": 2
+            "total": 20,
+            "divergent": 4,
+            "derivedOnly": 4,
+            "alternateOnly": 11,
+            "agreed": 1
           },
           "diff": [
             {
               "intentId": "add_order_note",
               "derived": "overlay",
-              "alternate": null,
-              "kind": "derived-only"
+              "alternate": "toolbar",
+              "kind": "divergent"
             },
             {
               "intentId": "add_tracking",
@@ -2292,9 +2273,15 @@
               "kind": "derived-only"
             },
             {
+              "intentId": "reject_return",
+              "derived": "overlay",
+              "alternate": "hero",
+              "kind": "divergent"
+            },
+            {
               "intentId": "pay_order",
               "derived": null,
-              "alternate": "toolbar",
+              "alternate": "overlay",
               "kind": "alternate-only"
             },
             {
@@ -2329,6 +2316,12 @@
             },
             {
               "intentId": "process_refund",
+              "derived": null,
+              "alternate": "overlay",
+              "kind": "alternate-only"
+            },
+            {
+              "intentId": "mark_as_gift",
               "derived": null,
               "alternate": "overlay",
               "kind": "alternate-only"
@@ -2348,7 +2341,7 @@
             {
               "intentId": "bulk_mark_shipped",
               "derived": null,
-              "alternate": "overlay",
+              "alternate": "hero",
               "kind": "alternate-only"
             }
           ]
@@ -2360,106 +2353,52 @@
           "mainEntity": "Order",
           "summary": {
             "total": 21,
-            "divergent": 16,
+            "divergent": 7,
             "derivedOnly": 0,
             "alternateOnly": 0,
-            "agreed": 5
+            "agreed": 14
           },
           "diff": [
             {
               "intentId": "apply_coupon",
               "derived": "toolbar",
-              "alternate": "footer",
-              "kind": "divergent"
-            },
-            {
-              "intentId": "add_order_note",
-              "derived": "overlay",
-              "alternate": "toolbar",
-              "kind": "divergent"
-            },
-            {
-              "intentId": "choose_payment_method",
-              "derived": "overlay",
-              "alternate": "toolbar",
-              "kind": "divergent"
-            },
-            {
-              "intentId": "combine_shipping",
-              "derived": "overlay",
-              "alternate": "footer",
-              "kind": "divergent"
-            },
-            {
-              "intentId": "issue_partial_refund",
-              "derived": "overlay",
-              "alternate": "footer",
+              "alternate": "overlay",
               "kind": "divergent"
             },
             {
               "intentId": "approve_return",
               "derived": "overlay",
-              "alternate": "footer",
+              "alternate": "primaryCTA",
               "kind": "divergent"
             },
             {
               "intentId": "reject_return",
               "derived": "overlay",
-              "alternate": "footer",
+              "alternate": "toolbar",
               "kind": "divergent"
             },
             {
-              "intentId": "cancel_order",
-              "derived": "primaryCTA",
-              "alternate": "overlay",
+              "intentId": "apply_store_credit",
+              "derived": "footer",
+              "alternate": "toolbar",
               "kind": "divergent"
             },
             {
-              "intentId": "complete_order",
-              "derived": "primaryCTA",
-              "alternate": "overlay",
-              "kind": "divergent"
-            },
-            {
-              "intentId": "confirm_delivery",
-              "derived": "primaryCTA",
-              "alternate": "overlay",
-              "kind": "divergent"
-            },
-            {
-              "intentId": "confirm_shipment",
-              "derived": "primaryCTA",
-              "alternate": "footer",
-              "kind": "divergent"
-            },
-            {
-              "intentId": "pay_order",
-              "derived": "primaryCTA",
-              "alternate": "overlay",
-              "kind": "divergent"
-            },
-            {
-              "intentId": "process_refund",
-              "derived": "primaryCTA",
-              "alternate": "overlay",
-              "kind": "divergent"
-            },
-            {
-              "intentId": "request_refund",
-              "derived": "primaryCTA",
-              "alternate": "overlay",
-              "kind": "divergent"
-            },
-            {
-              "intentId": "ship_order",
-              "derived": "primaryCTA",
-              "alternate": "overlay",
+              "intentId": "bulk_mark_shipped",
+              "derived": "footer",
+              "alternate": "primaryCTA",
               "kind": "divergent"
             },
             {
               "intentId": "mark_as_gift",
               "derived": "footer",
-              "alternate": "toolbar",
+              "alternate": "overlay",
+              "kind": "divergent"
+            },
+            {
+              "intentId": "request_pickup",
+              "derived": "footer",
+              "alternate": "overlay",
               "kind": "divergent"
             }
           ]
@@ -2471,16 +2410,28 @@
           "mainEntity": "User",
           "summary": {
             "total": 9,
-            "divergent": 5,
+            "divergent": 7,
             "derivedOnly": 0,
             "alternateOnly": 1,
-            "agreed": 3
+            "agreed": 1
           },
           "diff": [
             {
               "intentId": "update_profile",
               "derived": "toolbar",
               "alternate": "overlay",
+              "kind": "divergent"
+            },
+            {
+              "intentId": "unban_user",
+              "derived": "overlay",
+              "alternate": "primaryCTA",
+              "kind": "divergent"
+            },
+            {
+              "intentId": "suspend_user",
+              "derived": "overlay",
+              "alternate": "primaryCTA",
               "kind": "divergent"
             },
             {
@@ -2492,7 +2443,7 @@
             {
               "intentId": "ban_user",
               "derived": "footer",
-              "alternate": "overlay",
+              "alternate": "primaryCTA",
               "kind": "divergent"
             },
             {
@@ -2536,45 +2487,21 @@
           "mainEntity": "Dispute",
           "summary": {
             "total": 6,
-            "divergent": 6,
+            "divergent": 2,
             "derivedOnly": 0,
             "alternateOnly": 0,
-            "agreed": 0
+            "agreed": 4
           },
           "diff": [
             {
               "intentId": "resolve_dispute",
               "derived": "toolbar",
-              "alternate": "overlay",
+              "alternate": "primaryCTA",
               "kind": "divergent"
             },
             {
               "intentId": "add_dispute_evidence",
               "derived": "toolbar",
-              "alternate": "overlay",
-              "kind": "divergent"
-            },
-            {
-              "intentId": "accept_resolution",
-              "derived": "primaryCTA",
-              "alternate": "overlay",
-              "kind": "divergent"
-            },
-            {
-              "intentId": "close_dispute",
-              "derived": "primaryCTA",
-              "alternate": "overlay",
-              "kind": "divergent"
-            },
-            {
-              "intentId": "escalate_dispute",
-              "derived": "primaryCTA",
-              "alternate": "overlay",
-              "kind": "divergent"
-            },
-            {
-              "intentId": "respond_to_dispute",
-              "derived": "primaryCTA",
               "alternate": "overlay",
               "kind": "divergent"
             }
@@ -2601,10 +2528,10 @@
           "mainEntity": "Listing",
           "summary": {
             "total": 39,
-            "divergent": 8,
-            "derivedOnly": 25,
+            "divergent": 9,
+            "derivedOnly": 23,
             "alternateOnly": 3,
-            "agreed": 3
+            "agreed": 4
           },
           "diff": [
             {
@@ -2629,6 +2556,12 @@
               "intentId": "relist_item",
               "derived": "toolbar",
               "alternate": "overlay",
+              "kind": "divergent"
+            },
+            {
+              "intentId": "accept_offer",
+              "derived": "overlay",
+              "alternate": "hero",
               "kind": "divergent"
             },
             {
@@ -2700,8 +2633,8 @@
             {
               "intentId": "set_listing_category",
               "derived": "overlay",
-              "alternate": null,
-              "kind": "derived-only"
+              "alternate": "toolbar",
+              "kind": "divergent"
             },
             {
               "intentId": "set_listing_condition",
@@ -2730,8 +2663,8 @@
             {
               "intentId": "set_shipping_from",
               "derived": "overlay",
-              "alternate": null,
-              "kind": "derived-only"
+              "alternate": "toolbar",
+              "kind": "divergent"
             },
             {
               "intentId": "set_subcategory",
@@ -2750,12 +2683,6 @@
               "derived": "overlay",
               "alternate": null,
               "kind": "derived-only"
-            },
-            {
-              "intentId": "cancel_listing",
-              "derived": "overlay",
-              "alternate": "toolbar",
-              "kind": "divergent"
             },
             {
               "intentId": "cancel_promotion",
@@ -2780,12 +2707,6 @@
               "derived": "overlay",
               "alternate": null,
               "kind": "derived-only"
-            },
-            {
-              "intentId": "publish_listing",
-              "derived": "overlay",
-              "alternate": "toolbar",
-              "kind": "divergent"
             },
             {
               "intentId": "unarchive_listing",
@@ -2820,7 +2741,7 @@
             {
               "intentId": "approve_listing",
               "derived": null,
-              "alternate": "overlay",
+              "alternate": "hero",
               "kind": "alternate-only"
             }
           ]
@@ -2832,10 +2753,10 @@
           "mainEntity": "Listing",
           "summary": {
             "total": 50,
-            "divergent": 24,
-            "derivedOnly": 3,
+            "divergent": 22,
+            "derivedOnly": 2,
             "alternateOnly": 9,
-            "agreed": 14
+            "agreed": 17
           },
           "diff": [
             {
@@ -2848,12 +2769,6 @@
               "intentId": "apply_template",
               "derived": "toolbar",
               "alternate": "footer",
-              "kind": "divergent"
-            },
-            {
-              "intentId": "add_listing_image",
-              "derived": "overlay",
-              "alternate": "toolbar",
               "kind": "divergent"
             },
             {
@@ -2893,12 +2808,6 @@
               "kind": "derived-only"
             },
             {
-              "intentId": "set_listing_condition",
-              "derived": "overlay",
-              "alternate": "toolbar",
-              "kind": "divergent"
-            },
-            {
               "intentId": "set_minimum_bid_increment",
               "derived": "overlay",
               "alternate": "footer",
@@ -2913,7 +2822,7 @@
             {
               "intentId": "set_shipping_from",
               "derived": "overlay",
-              "alternate": "footer",
+              "alternate": "toolbar",
               "kind": "divergent"
             },
             {
@@ -2931,13 +2840,19 @@
             {
               "intentId": "accept_offer",
               "derived": "overlay",
-              "alternate": "footer",
+              "alternate": "primaryCTA",
               "kind": "divergent"
             },
             {
               "intentId": "archive_listing",
               "derived": "overlay",
               "alternate": "footer",
+              "kind": "divergent"
+            },
+            {
+              "intentId": "cancel_listing",
+              "derived": "overlay",
+              "alternate": "primaryCTA",
               "kind": "divergent"
             },
             {
@@ -2955,7 +2870,7 @@
             {
               "intentId": "feature_listing",
               "derived": "overlay",
-              "alternate": "footer",
+              "alternate": "toolbar",
               "kind": "divergent"
             },
             {
@@ -2965,10 +2880,16 @@
               "kind": "divergent"
             },
             {
+              "intentId": "publish_listing",
+              "derived": "overlay",
+              "alternate": "primaryCTA",
+              "kind": "divergent"
+            },
+            {
               "intentId": "unarchive_listing",
               "derived": "overlay",
-              "alternate": null,
-              "kind": "derived-only"
+              "alternate": "footer",
+              "kind": "divergent"
             },
             {
               "intentId": "unfeature_listing",
@@ -2979,24 +2900,6 @@
             {
               "intentId": "unlike_listing",
               "derived": "overlay",
-              "alternate": "footer",
-              "kind": "divergent"
-            },
-            {
-              "intentId": "approve_listing",
-              "derived": "primaryCTA",
-              "alternate": "footer",
-              "kind": "divergent"
-            },
-            {
-              "intentId": "restore_listing",
-              "derived": "primaryCTA",
-              "alternate": "footer",
-              "kind": "divergent"
-            },
-            {
-              "intentId": "suspend_listing",
-              "derived": "primaryCTA",
               "alternate": "footer",
               "kind": "divergent"
             },
@@ -3033,13 +2936,13 @@
             {
               "intentId": "buy_now",
               "derived": null,
-              "alternate": "footer",
+              "alternate": "primaryCTA",
               "kind": "alternate-only"
             },
             {
               "intentId": "accept_bid",
               "derived": null,
-              "alternate": "footer",
+              "alternate": "primaryCTA",
               "kind": "alternate-only"
             },
             {
@@ -3063,10 +2966,10 @@
           "mainEntity": "Listing",
           "summary": {
             "total": 37,
-            "divergent": 7,
-            "derivedOnly": 23,
+            "divergent": 10,
+            "derivedOnly": 21,
             "alternateOnly": 3,
-            "agreed": 4
+            "agreed": 3
           },
           "diff": [
             {
@@ -3082,6 +2985,12 @@
               "kind": "divergent"
             },
             {
+              "intentId": "create_listing",
+              "derived": "toolbar",
+              "alternate": "overlay",
+              "kind": "divergent"
+            },
+            {
               "intentId": "duplicate_listing",
               "derived": "toolbar",
               "alternate": "overlay",
@@ -3091,6 +3000,12 @@
               "intentId": "relist_item",
               "derived": "toolbar",
               "alternate": "overlay",
+              "kind": "divergent"
+            },
+            {
+              "intentId": "accept_offer",
+              "derived": "overlay",
+              "alternate": "hero",
               "kind": "divergent"
             },
             {
@@ -3174,14 +3089,14 @@
             {
               "intentId": "set_shipping_cost",
               "derived": "overlay",
-              "alternate": null,
-              "kind": "derived-only"
+              "alternate": "toolbar",
+              "kind": "divergent"
             },
             {
               "intentId": "set_shipping_from",
               "derived": "overlay",
-              "alternate": null,
-              "kind": "derived-only"
+              "alternate": "toolbar",
+              "kind": "divergent"
             },
             {
               "intentId": "set_subcategory",
@@ -3226,12 +3141,6 @@
               "kind": "derived-only"
             },
             {
-              "intentId": "publish_listing",
-              "derived": "overlay",
-              "alternate": "toolbar",
-              "kind": "divergent"
-            },
-            {
               "intentId": "unarchive_listing",
               "derived": "overlay",
               "alternate": null,
@@ -3264,7 +3173,7 @@
             {
               "intentId": "approve_listing",
               "derived": null,
-              "alternate": "overlay",
+              "alternate": "hero",
               "kind": "alternate-only"
             }
           ]
@@ -3276,16 +3185,22 @@
           "mainEntity": "Bid",
           "summary": {
             "total": 3,
-            "divergent": 1,
+            "divergent": 2,
             "derivedOnly": 0,
             "alternateOnly": 0,
-            "agreed": 2
+            "agreed": 1
           },
           "diff": [
             {
               "intentId": "set_auto_bid",
               "derived": "hero",
               "alternate": "overlay",
+              "kind": "divergent"
+            },
+            {
+              "intentId": "accept_bid",
+              "derived": "overlay",
+              "alternate": "hero",
               "kind": "divergent"
             }
           ]
@@ -3296,18 +3211,18 @@
           "archetype": "catalog",
           "mainEntity": "Order",
           "summary": {
-            "total": 19,
-            "divergent": 2,
-            "derivedOnly": 5,
-            "alternateOnly": 10,
-            "agreed": 2
+            "total": 20,
+            "divergent": 4,
+            "derivedOnly": 4,
+            "alternateOnly": 11,
+            "agreed": 1
           },
           "diff": [
             {
               "intentId": "add_order_note",
               "derived": "overlay",
-              "alternate": null,
-              "kind": "derived-only"
+              "alternate": "toolbar",
+              "kind": "divergent"
             },
             {
               "intentId": "add_tracking",
@@ -3346,9 +3261,15 @@
               "kind": "derived-only"
             },
             {
+              "intentId": "reject_return",
+              "derived": "overlay",
+              "alternate": "hero",
+              "kind": "divergent"
+            },
+            {
               "intentId": "pay_order",
               "derived": null,
-              "alternate": "toolbar",
+              "alternate": "overlay",
               "kind": "alternate-only"
             },
             {
@@ -3383,6 +3304,12 @@
             },
             {
               "intentId": "process_refund",
+              "derived": null,
+              "alternate": "overlay",
+              "kind": "alternate-only"
+            },
+            {
+              "intentId": "mark_as_gift",
               "derived": null,
               "alternate": "overlay",
               "kind": "alternate-only"
@@ -3402,7 +3329,7 @@
             {
               "intentId": "bulk_mark_shipped",
               "derived": null,
-              "alternate": "overlay",
+              "alternate": "hero",
               "kind": "alternate-only"
             }
           ]
@@ -3414,106 +3341,52 @@
           "mainEntity": "Order",
           "summary": {
             "total": 21,
-            "divergent": 16,
+            "divergent": 7,
             "derivedOnly": 0,
             "alternateOnly": 0,
-            "agreed": 5
+            "agreed": 14
           },
           "diff": [
             {
               "intentId": "apply_coupon",
               "derived": "toolbar",
-              "alternate": "footer",
-              "kind": "divergent"
-            },
-            {
-              "intentId": "add_order_note",
-              "derived": "overlay",
-              "alternate": "toolbar",
-              "kind": "divergent"
-            },
-            {
-              "intentId": "choose_payment_method",
-              "derived": "overlay",
-              "alternate": "toolbar",
-              "kind": "divergent"
-            },
-            {
-              "intentId": "combine_shipping",
-              "derived": "overlay",
-              "alternate": "footer",
-              "kind": "divergent"
-            },
-            {
-              "intentId": "issue_partial_refund",
-              "derived": "overlay",
-              "alternate": "footer",
+              "alternate": "overlay",
               "kind": "divergent"
             },
             {
               "intentId": "approve_return",
               "derived": "overlay",
-              "alternate": "footer",
+              "alternate": "primaryCTA",
               "kind": "divergent"
             },
             {
               "intentId": "reject_return",
               "derived": "overlay",
-              "alternate": "footer",
+              "alternate": "toolbar",
               "kind": "divergent"
             },
             {
-              "intentId": "cancel_order",
-              "derived": "primaryCTA",
-              "alternate": "overlay",
+              "intentId": "apply_store_credit",
+              "derived": "footer",
+              "alternate": "toolbar",
               "kind": "divergent"
             },
             {
-              "intentId": "complete_order",
-              "derived": "primaryCTA",
-              "alternate": "overlay",
-              "kind": "divergent"
-            },
-            {
-              "intentId": "confirm_delivery",
-              "derived": "primaryCTA",
-              "alternate": "overlay",
-              "kind": "divergent"
-            },
-            {
-              "intentId": "confirm_shipment",
-              "derived": "primaryCTA",
-              "alternate": "footer",
-              "kind": "divergent"
-            },
-            {
-              "intentId": "pay_order",
-              "derived": "primaryCTA",
-              "alternate": "overlay",
-              "kind": "divergent"
-            },
-            {
-              "intentId": "process_refund",
-              "derived": "primaryCTA",
-              "alternate": "overlay",
-              "kind": "divergent"
-            },
-            {
-              "intentId": "request_refund",
-              "derived": "primaryCTA",
-              "alternate": "overlay",
-              "kind": "divergent"
-            },
-            {
-              "intentId": "ship_order",
-              "derived": "primaryCTA",
-              "alternate": "overlay",
+              "intentId": "bulk_mark_shipped",
+              "derived": "footer",
+              "alternate": "primaryCTA",
               "kind": "divergent"
             },
             {
               "intentId": "mark_as_gift",
               "derived": "footer",
-              "alternate": "toolbar",
+              "alternate": "overlay",
+              "kind": "divergent"
+            },
+            {
+              "intentId": "request_pickup",
+              "derived": "footer",
+              "alternate": "overlay",
               "kind": "divergent"
             }
           ]
@@ -3525,16 +3398,28 @@
           "mainEntity": "User",
           "summary": {
             "total": 8,
-            "divergent": 5,
+            "divergent": 7,
             "derivedOnly": 0,
             "alternateOnly": 0,
-            "agreed": 3
+            "agreed": 1
           },
           "diff": [
             {
               "intentId": "update_profile",
               "derived": "toolbar",
               "alternate": "overlay",
+              "kind": "divergent"
+            },
+            {
+              "intentId": "unban_user",
+              "derived": "overlay",
+              "alternate": "primaryCTA",
+              "kind": "divergent"
+            },
+            {
+              "intentId": "suspend_user",
+              "derived": "overlay",
+              "alternate": "primaryCTA",
               "kind": "divergent"
             },
             {
@@ -3546,7 +3431,7 @@
             {
               "intentId": "ban_user",
               "derived": "footer",
-              "alternate": "overlay",
+              "alternate": "primaryCTA",
               "kind": "divergent"
             },
             {
@@ -3584,45 +3469,21 @@
           "mainEntity": "Dispute",
           "summary": {
             "total": 6,
-            "divergent": 6,
+            "divergent": 2,
             "derivedOnly": 0,
             "alternateOnly": 0,
-            "agreed": 0
+            "agreed": 4
           },
           "diff": [
             {
               "intentId": "resolve_dispute",
               "derived": "toolbar",
-              "alternate": "overlay",
+              "alternate": "primaryCTA",
               "kind": "divergent"
             },
             {
               "intentId": "add_dispute_evidence",
               "derived": "toolbar",
-              "alternate": "overlay",
-              "kind": "divergent"
-            },
-            {
-              "intentId": "accept_resolution",
-              "derived": "primaryCTA",
-              "alternate": "overlay",
-              "kind": "divergent"
-            },
-            {
-              "intentId": "close_dispute",
-              "derived": "primaryCTA",
-              "alternate": "overlay",
-              "kind": "divergent"
-            },
-            {
-              "intentId": "escalate_dispute",
-              "derived": "primaryCTA",
-              "alternate": "overlay",
-              "kind": "divergent"
-            },
-            {
-              "intentId": "respond_to_dispute",
-              "derived": "primaryCTA",
               "alternate": "overlay",
               "kind": "divergent"
             }
@@ -3735,7 +3596,7 @@
             {
               "intentId": "complete_goal",
               "derived": null,
-              "alternate": "overlay",
+              "alternate": "hero",
               "kind": "alternate-only"
             }
           ]
@@ -3747,18 +3608,12 @@
           "mainEntity": "Goal",
           "summary": {
             "total": 3,
-            "divergent": 2,
+            "divergent": 1,
             "derivedOnly": 0,
             "alternateOnly": 1,
-            "agreed": 0
+            "agreed": 1
           },
           "diff": [
-            {
-              "intentId": "complete_goal",
-              "derived": "primaryCTA",
-              "alternate": "overlay",
-              "kind": "divergent"
-            },
             {
               "intentId": "update_goal_progress",
               "derived": "footer",
@@ -3854,19 +3709,12 @@
           "mainEntity": "Activity",
           "summary": {
             "total": 1,
-            "divergent": 1,
+            "divergent": 0,
             "derivedOnly": 0,
             "alternateOnly": 0,
-            "agreed": 0
+            "agreed": 1
           },
-          "diff": [
-            {
-              "intentId": "create_activity",
-              "derived": "toolbar",
-              "alternate": "hero",
-              "kind": "divergent"
-            }
-          ]
+          "diff": []
         },
         {
           "projection": "tag_list",
@@ -3875,19 +3723,12 @@
           "mainEntity": "Tag",
           "summary": {
             "total": 1,
-            "divergent": 1,
+            "divergent": 0,
             "derivedOnly": 0,
             "alternateOnly": 0,
-            "agreed": 0
+            "agreed": 1
           },
-          "diff": [
-            {
-              "intentId": "create_tag",
-              "derived": "toolbar",
-              "alternate": "hero",
-              "kind": "divergent"
-            }
-          ]
+          "diff": []
         }
       ]
     },
@@ -4115,13 +3956,13 @@
             {
               "intentId": "publish_task",
               "derived": null,
-              "alternate": "overlay",
+              "alternate": "hero",
               "kind": "alternate-only"
             },
             {
               "intentId": "cancel_task_before_deal",
               "derived": null,
-              "alternate": "overlay",
+              "alternate": "hero",
               "kind": "alternate-only"
             }
           ]
@@ -7356,15 +7197,21 @@
           "mainEntity": "PatternPromotion",
           "summary": {
             "total": 4,
-            "divergent": 1,
+            "divergent": 2,
             "derivedOnly": 0,
             "alternateOnly": 0,
-            "agreed": 3
+            "agreed": 2
           },
           "diff": [
             {
               "intentId": "request_pattern_promotion",
               "derived": "toolbar",
+              "alternate": "hero",
+              "kind": "divergent"
+            },
+            {
+              "intentId": "approve_pattern_promotion",
+              "derived": "overlay",
               "alternate": "hero",
               "kind": "divergent"
             }
@@ -7386,19 +7233,19 @@
             {
               "intentId": "approve_pattern_promotion",
               "derived": "toolbar",
-              "alternate": "overlay",
+              "alternate": "primaryCTA",
               "kind": "divergent"
             },
             {
               "intentId": "reject_pattern_promotion",
               "derived": "toolbar",
-              "alternate": "overlay",
+              "alternate": "primaryCTA",
               "kind": "divergent"
             },
             {
               "intentId": "ship_pattern_promotion",
               "derived": "toolbar",
-              "alternate": "overlay",
+              "alternate": "primaryCTA",
               "kind": "divergent"
             },
             {
@@ -7416,15 +7263,21 @@
           "mainEntity": "BacklogItem",
           "summary": {
             "total": 4,
-            "divergent": 1,
+            "divergent": 2,
             "derivedOnly": 0,
             "alternateOnly": 0,
-            "agreed": 3
+            "agreed": 2
           },
           "diff": [
             {
               "intentId": "add_backlog_item",
               "derived": "toolbar",
+              "alternate": "hero",
+              "kind": "divergent"
+            },
+            {
+              "intentId": "schedule_backlog_item",
+              "derived": "overlay",
               "alternate": "hero",
               "kind": "divergent"
             }
@@ -7446,19 +7299,19 @@
             {
               "intentId": "close_backlog_item",
               "derived": "toolbar",
-              "alternate": "overlay",
+              "alternate": "primaryCTA",
               "kind": "divergent"
             },
             {
               "intentId": "reject_backlog_item",
               "derived": "toolbar",
-              "alternate": "overlay",
+              "alternate": "primaryCTA",
               "kind": "divergent"
             },
             {
               "intentId": "schedule_backlog_item",
               "derived": "toolbar",
-              "alternate": "overlay",
+              "alternate": "primaryCTA",
               "kind": "divergent"
             },
             {
@@ -7518,15 +7371,21 @@
           "mainEntity": "PatternPromotion",
           "summary": {
             "total": 4,
-            "divergent": 1,
+            "divergent": 2,
             "derivedOnly": 0,
             "alternateOnly": 0,
-            "agreed": 3
+            "agreed": 2
           },
           "diff": [
             {
               "intentId": "request_pattern_promotion",
               "derived": "toolbar",
+              "alternate": "hero",
+              "kind": "divergent"
+            },
+            {
+              "intentId": "approve_pattern_promotion",
+              "derived": "overlay",
               "alternate": "hero",
               "kind": "divergent"
             }
@@ -7548,19 +7407,19 @@
             {
               "intentId": "approve_pattern_promotion",
               "derived": "toolbar",
-              "alternate": "overlay",
+              "alternate": "primaryCTA",
               "kind": "divergent"
             },
             {
               "intentId": "reject_pattern_promotion",
               "derived": "toolbar",
-              "alternate": "overlay",
+              "alternate": "primaryCTA",
               "kind": "divergent"
             },
             {
               "intentId": "ship_pattern_promotion",
               "derived": "toolbar",
-              "alternate": "overlay",
+              "alternate": "primaryCTA",
               "kind": "divergent"
             },
             {

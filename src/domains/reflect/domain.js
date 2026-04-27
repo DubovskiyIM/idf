@@ -1,8 +1,18 @@
 import { v4 as uuid } from "uuid";
-export { INTENTS } from "./intents.js";
+
+/* INTENT_SALIENCE merge (idf-sdk #434 tier-driven routing pilot) */
+import { INTENTS as RAW_INTENTS } from "./intents.js";
+import { INTENT_SALIENCE } from "./intent-salience.js";
+export const INTENTS = Object.fromEntries(
+  Object.entries(RAW_INTENTS).map(([id, intent]) =>
+    INTENT_SALIENCE[id] !== undefined && intent.salience === undefined
+      ? [id, { ...intent, salience: INTENT_SALIENCE[id] }]
+      : [id, intent]
+  )
+);
+
 export { PROJECTIONS, ROOT_PROJECTIONS } from "./projections.js";
 export { ONTOLOGY } from "./ontology.js";
-import { INTENTS } from "./intents.js";
 import { computeQuadrant, defaultEmotionForQuadrant } from "./emotions.js";
 
 export const DOMAIN_ID = "reflect";
