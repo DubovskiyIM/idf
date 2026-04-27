@@ -31,20 +31,28 @@ const CANDIDATES_DIR = process.env.IDF_REPO
   : "/Users/ignatdubovskiy/WebstormProjects/idf/refs/candidates";
 
 async function loadCandidates() {
-  const files = await readdir(CANDIDATES_DIR);
-  const out = [];
-  for (const f of files) {
-    if (!f.endsWith(".json")) continue;
-    if (!f.startsWith("2026-04-26-")) continue;
-    try {
-      const src = await readFile(join(CANDIDATES_DIR, f), "utf8");
-      const j = JSON.parse(src);
-      out.push({ file: f, data: j });
-    } catch (err) {
-      console.warn(`skip ${f}: ${err.message}`);
+  const dirs = [
+    CANDIDATES_DIR,
+    CANDIDATES_DIR.replace("/candidates", "/candidates-with-apply"),
+  ];
+  // Если есть apply-synthesized версия для того же id — она overrides candidate.
+  const merged = new Map();
+  for (const dir of dirs) {
+    let files;
+    try { files = await readdir(dir); } catch { continue; }
+    for (const f of files) {
+      if (!f.endsWith(".json")) continue;
+      if (!f.startsWith("2026-04-26-")) continue;
+      try {
+        const src = await readFile(join(dir, f), "utf8");
+        const j = JSON.parse(src);
+        merged.set(f, { file: f, data: j });
+      } catch (err) {
+        console.warn(`skip ${f}: ${err.message}`);
+      }
     }
   }
-  return out;
+  return [...merged.values()];
 }
 
 function scorePattern(c, stableIds) {
@@ -66,6 +74,9 @@ function scorePattern(c, stableIds) {
   // Structure: apply executable vs slot-only
   if (typeof c.structure?.apply === "object" || typeof c.structure?.apply === "string") {
     score += 5; reasons.push("structure.apply");
+  } else if (typeof c.structure?.applySource === "string") {
+    // §13.17 opt-c: marker-only synthesized apply.
+    score += 4; reasons.push("apply.synthesized");
   } else if (c.structure?.slot) {
     score += 1; reasons.push("slot-only");
   }
