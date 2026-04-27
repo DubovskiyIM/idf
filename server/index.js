@@ -16,6 +16,16 @@ app.use(express.json({ limit: "10mb" }));
 
 const workflowsRouter = require("./routes/workflows.js");
 
+// ─── Demo-tenant guards (no-op когда DEMO_MODE !== "1") ───
+// readOnlyGuard блокирует mutating-методы без X-Demo-Curator-Token,
+// rateLimit ограничивает per-IP, sseCap — общее число SSE-подключений.
+const { readOnlyGuard, rateLimit, sseCap, getStats: getDemoStats } = require("./demo-middleware.js");
+app.use("/api/effects", readOnlyGuard, rateLimit);
+app.use("/api/effects/stream", sseCap);
+app.use("/api/meta/llm", readOnlyGuard, rateLimit);
+app.use("/api/meta/llm/runs", sseCap);
+app.get("/api/demo/stats", (_req, res) => res.json(getDemoStats()));
+
 app.use("/api/effects", effectsRouter);
 app.use("/api", artifactsRouter);
 app.use("/api/workflows", workflowsRouter);
