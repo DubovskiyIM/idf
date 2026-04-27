@@ -1,0 +1,88 @@
+{
+  "id": "soft-delete-with-restore-window",
+  "version": 1,
+  "status": "candidate",
+  "archetype": "catalog",
+  "trigger": {
+    "requires": [
+      {
+        "kind": "entity-field",
+        "entity": "Page",
+        "field": "isArchived"
+      },
+      {
+        "kind": "intent-effect",
+        "intent": "archive_page",
+        "α": "remove",
+        "irreversibility": "high"
+      },
+      {
+        "kind": "intent-effect",
+        "intent": "restore_page",
+        "α": "replace",
+        "target": "isArchived"
+      },
+      {
+        "kind": "intent-effect",
+        "intent": "delete_page_permanently",
+        "α": "remove",
+        "irreversibility": "high"
+      }
+    ]
+  },
+  "structure": {
+    "slot": "sections",
+    "description": "Archive — soft-remove с предупреждением 'restorable for 30 days'; archived записи скрываются из основного catalog, но видимы в role-scoped Trash section с restore + permanent-delete CTAs.",
+    "applySource": "function apply(slots, context) {\n  // Auto-synthesized marker-only apply (§13.17 opt-c).\n  // Marks first un-marked item in slots.sections with source: \"derived:soft-delete-with-restore-window\".\n  // Idempotent: skip if already marked.\n  const slot = slots?.sections;\n  if (!Array.isArray(slot) || slot.length === 0) return slots;\n  const idx = slot.findIndex((x) => x && !x.source);\n  if (idx === -1) return slots;\n  const marker = \"derived:soft-delete-with-restore-window\";\n  if (slot[idx].source === marker) return slots;\n  return {\n    ...slots,\n    sections: slot.map((item, i) =>\n      i === idx ? { ...item, source: marker } : item),\n  };\n}",
+    "applyKind": "marker-only-synthesized",
+    "applySynthesizedAt": 1777280149900
+  },
+  "rationale": {
+    "hypothesis": "User-error rate high для destructive ops; одно-step removal провоцирует регрет. Two-tier soft → hard delete с visible restore-окном даёт reversibility-graceperiod без navigation-debris.",
+    "evidence": [
+      {
+        "source": "notion",
+        "description": "Archive 30 дней, потом hard-delete, Trash visible owner-only",
+        "reliability": "high"
+      },
+      {
+        "source": "gmail",
+        "description": "Trash 30 дней, restore доступен в той же UI",
+        "reliability": "high"
+      },
+      {
+        "source": "google-drive",
+        "description": "Trash → permanent delete с visible window",
+        "reliability": "high"
+      },
+      {
+        "source": "linear",
+        "description": "Cancelled vs Deleted — две стадии",
+        "reliability": "medium"
+      }
+    ],
+    "counterexample": [
+      {
+        "source": "git",
+        "description": "rm — immediate hard-delete, restore через reflog (для power-users only)",
+        "reliability": "medium"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [
+      {
+        "domain": "notion",
+        "projection": "pages_catalog",
+        "reason": "isArchived flag + archive/restore/delete_permanently триплет"
+      }
+    ],
+    "shouldNotMatch": [
+      {
+        "domain": "messenger",
+        "projection": "messages_catalog",
+        "reason": "Message delete — single-step, без archive intermediate"
+      }
+    ]
+  }
+}

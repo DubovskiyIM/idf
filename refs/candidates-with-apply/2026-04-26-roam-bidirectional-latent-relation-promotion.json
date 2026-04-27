@@ -1,0 +1,75 @@
+{
+  "id": "latent-relation-promotion",
+  "version": 1,
+  "status": "candidate",
+  "archetype": "detail",
+  "trigger": {
+    "requires": [
+      {
+        "kind": "entity-kind",
+        "entity": "PageLink",
+        "field": "kind",
+        "values": [
+          "explicit",
+          "unlinked-mention"
+        ]
+      },
+      {
+        "kind": "intent-effect",
+        "intent": "promote_unlinked_to_linked",
+        "alpha": "add",
+        "creates": "PageLink"
+      }
+    ]
+  },
+  "structure": {
+    "slot": "sections",
+    "description": "Каждая запись в Unlinked Mentions секции получает inline-CTA 'Link' / 'Promote', который материализует latent (string-match) ссылку в explicit relation одним кликом. После промоции запись переезжает в Linked секцию без перезагрузки.",
+    "applySource": "function apply(slots, context) {\n  // Auto-synthesized marker-only apply (§13.17 opt-c).\n  // Marks first un-marked item in slots.sections with source: \"derived:latent-relation-promotion\".\n  // Idempotent: skip if already marked.\n  const slot = slots?.sections;\n  if (!Array.isArray(slot) || slot.length === 0) return slots;\n  const idx = slot.findIndex((x) => x && !x.source);\n  if (idx === -1) return slots;\n  const marker = \"derived:latent-relation-promotion\";\n  if (slot[idx].source === marker) return slots;\n  return {\n    ...slots,\n    sections: slot.map((item, i) =>\n      i === idx ? { ...item, source: marker } : item),\n  };\n}",
+    "applyKind": "marker-only-synthesized",
+    "applySynthesizedAt": 1777280149912
+  },
+  "rationale": {
+    "hypothesis": "Алгоритм может найти кандидатов на связь (string-match), но не имеет authority утверждать связь. Один-клик-промоция делегирует решение пользователю с нулевой ценой ввода, превращая «возможно связано» в «точно связано» — дешевле чем заставлять пользователя вручную писать [[link]].",
+    "evidence": [
+      {
+        "source": "roam-research",
+        "description": "Каждая Unlinked Mention имеет 'Link' button → переезд в Linked секцию",
+        "reliability": "high"
+      },
+      {
+        "source": "obsidian",
+        "description": "'Link' action на unlinked mention пишет [[]] в исходный note",
+        "reliability": "high"
+      }
+    ],
+    "counterexample": [
+      {
+        "source": "gmail",
+        "description": "Suggested replies — кандидаты на ответ, но без in-place промоции (всегда отдельная отправка)",
+        "reliability": "low"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [
+      {
+        "domain": "notion",
+        "projection": "page_backlinks",
+        "reason": "Unlinked mention semantic + page link discriminator"
+      }
+    ],
+    "shouldNotMatch": [
+      {
+        "domain": "messenger",
+        "projection": "conversation_detail",
+        "reason": "Message не имеет latent/explicit разделения"
+      },
+      {
+        "domain": "delivery",
+        "projection": "order_detail",
+        "reason": "Order-Item связь жёсткая, не latent"
+      }
+    ]
+  }
+}

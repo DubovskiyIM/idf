@@ -1,0 +1,83 @@
+{
+  "id": "hover-drag-handle-menu",
+  "version": 1,
+  "status": "candidate",
+  "archetype": "detail",
+  "trigger": {
+    "requires": [
+      {
+        "kind": "sub-entity-exists",
+        "child": "Block",
+        "ordered": true
+      },
+      {
+        "kind": "entity-field",
+        "entity": "Block",
+        "field": "position"
+      },
+      {
+        "kind": "intent-effect",
+        "intent": "drag_block",
+        "α": "replace",
+        "target": "position"
+      },
+      {
+        "kind": "intent-count",
+        "filter": {
+          "target": "blocks"
+        },
+        "min": 2
+      }
+    ]
+  },
+  "structure": {
+    "slot": "body",
+    "description": "Каждый ordered child получает hover-only drag handle (⋮⋮) слева; click открывает контекстное меню с per-row intents (delete/duplicate/turn-into/comment), drag меняет position.",
+    "applySource": "function apply(slots, context) {\n  // Auto-synthesized marker-only apply (§13.17 opt-c).\n  // Marks first un-marked item in slots.body with source: \"derived:hover-drag-handle-menu\".\n  // Idempotent: skip if already marked.\n  const slot = slots?.body;\n  if (!Array.isArray(slot) || slot.length === 0) return slots;\n  const idx = slot.findIndex((x) => x && !x.source);\n  if (idx === -1) return slots;\n  const marker = \"derived:hover-drag-handle-menu\";\n  if (slot[idx].source === marker) return slots;\n  return {\n    ...slots,\n    body: slot.map((item, i) =>\n      i === idx ? { ...item, source: marker } : item),\n  };\n}",
+    "applyKind": "marker-only-synthesized",
+    "applySynthesizedAt": 1777280149901
+  },
+  "rationale": {
+    "hypothesis": "Per-row CTA bar в каждом блоке создаёт визуальный шум; hover-handle прячет действия пока курсор не на блоке, сохраняя clean reading mode и обеспечивая reorder через тот же affordance.",
+    "evidence": [
+      {
+        "source": "notion",
+        "description": "Drag handle ⋮⋮ on hover для каждого block-row",
+        "reliability": "high"
+      },
+      {
+        "source": "linear",
+        "description": "Issue rows показывают actions menu только on hover",
+        "reliability": "high"
+      },
+      {
+        "source": "height",
+        "description": "Task-list rows с hover handle для reorder",
+        "reliability": "medium"
+      }
+    ],
+    "counterexample": [
+      {
+        "source": "trello",
+        "description": "Drag за всю карточку, без отдельного handle — работает для крупных card-ов",
+        "reliability": "medium"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [
+      {
+        "domain": "notion",
+        "projection": "page_detail",
+        "reason": "Block с position + drag_block + 4 row-level intents"
+      }
+    ],
+    "shouldNotMatch": [
+      {
+        "domain": "invest",
+        "projection": "portfolio_detail",
+        "reason": "Position rows не имеют user-controlled ordering"
+      }
+    ]
+  }
+}

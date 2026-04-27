@@ -1,0 +1,72 @@
+{
+  "id": "live-formula-bar-with-preview",
+  "version": 1,
+  "status": "candidate",
+  "archetype": "detail",
+  "trigger": {
+    "requires": [
+      {
+        "kind": "entity-field",
+        "entity": "Column",
+        "field": "formula",
+        "fieldKind": "expression"
+      },
+      {
+        "kind": "intent-effect",
+        "α": "replace",
+        "target": "*.formula",
+        "confirmation": "enter"
+      }
+    ]
+  },
+  "structure": {
+    "slot": "footer",
+    "description": "Поле формулы рендерится не как plain text-input, а как formula-bar: monospace + autocomplete по схеме + live preview результата под полем + parser-ошибки inline (красный underline + hover-tooltip).",
+    "applySource": "function apply(slots, context) {\n  // Auto-synthesized marker-only apply (§13.17 opt-c).\n  // Marks first un-marked item in slots.footer with source: \"derived:live-formula-bar-with-preview\".\n  // Idempotent: skip if already marked.\n  const slot = slots?.footer;\n  if (!Array.isArray(slot) || slot.length === 0) return slots;\n  const idx = slot.findIndex((x) => x && !x.source);\n  if (idx === -1) return slots;\n  const marker = \"derived:live-formula-bar-with-preview\";\n  if (slot[idx].source === marker) return slots;\n  return {\n    ...slots,\n    footer: slot.map((item, i) =>\n      i === idx ? { ...item, source: marker } : item),\n  };\n}",
+    "applyKind": "marker-only-synthesized",
+    "applySynthesizedAt": 1777280149910
+  },
+  "rationale": {
+    "hypothesis": "Формула — это код, а не строка. Без autocomplete пользователь не может найти доступные имена колонок; без preview не понимает, правильна ли формула; без inline-ошибки не знает, где сломалось. Plain text-input для formula — UX-аборт.",
+    "evidence": [
+      {
+        "source": "coda",
+        "description": "Formula-bar с =Table.Column autocomplete и live-preview результата",
+        "reliability": "high"
+      },
+      {
+        "source": "airtable",
+        "description": "Formula-editor с inline error highlighting",
+        "reliability": "high"
+      },
+      {
+        "source": "notion",
+        "description": "Formula-popover с syntax-highlight",
+        "reliability": "high"
+      }
+    ],
+    "counterexample": [
+      {
+        "source": "google-sheets",
+        "description": "Formula-bar без preview — но result сразу виден в cell",
+        "reliability": "medium"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [
+      {
+        "domain": "automation",
+        "projection": "automation_detail",
+        "reason": "Condition formula с autocomplete по schema"
+      }
+    ],
+    "shouldNotMatch": [
+      {
+        "domain": "messenger",
+        "projection": "message_detail",
+        "reason": "Message.content — plain text, не expression"
+      }
+    ]
+  }
+}

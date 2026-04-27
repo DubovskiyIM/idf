@@ -1,0 +1,82 @@
+{
+  "id": "controlled-view-author-lock",
+  "version": 1,
+  "status": "candidate",
+  "archetype": "detail",
+  "trigger": {
+    "requires": [
+      {
+        "kind": "entity-field",
+        "entity": "*",
+        "field": "isControlled|isLocked",
+        "fieldRole": "boolean"
+      },
+      {
+        "kind": "intent-effect",
+        "α": "replace",
+        "target": "*.isControlled"
+      },
+      {
+        "kind": "entity-field",
+        "entity": "*",
+        "field": "filters|filterFormula|sort|visibleColumns",
+        "fieldRole": "preset"
+      }
+    ]
+  },
+  "structure": {
+    "slot": "header",
+    "description": "View-detail с двумя режимами: author-mode даёт полный доступ к filter/sort/visibility presets; viewer-mode (когда isControlled=true) скрывает controls и показывает 'Controlled view' badge — preset locked, но данные читаемы.",
+    "applySource": "function apply(slots, context) {\n  // Auto-synthesized marker-only apply (§13.17 opt-c).\n  // Marks first un-marked item in slots.header with source: \"derived:controlled-view-author-lock\".\n  // Idempotent: skip if already marked.\n  const slot = slots?.header;\n  if (!Array.isArray(slot) || slot.length === 0) return slots;\n  const idx = slot.findIndex((x) => x && !x.source);\n  if (idx === -1) return slots;\n  const marker = \"derived:controlled-view-author-lock\";\n  if (slot[idx].source === marker) return slots;\n  return {\n    ...slots,\n    header: slot.map((item, i) =>\n      i === idx ? { ...item, source: marker } : item),\n  };\n}",
+    "applyKind": "marker-only-synthesized",
+    "applySynthesizedAt": 1777280149903
+  },
+  "rationale": {
+    "hypothesis": "Когда автор кристаллизует определённый срез данных (filtered, sorted, projected) как первичную presentation для viewer'ов, давать viewer'у возможность переопределять эти presets разрушает авторский intent; controlled-режим = inline projection-as-contract.",
+    "evidence": [
+      {
+        "source": "coda",
+        "description": "Controlled view lock — viewer не может изменить filter/sort, но видит данные через preset",
+        "reliability": "high"
+      },
+      {
+        "source": "airtable",
+        "description": "View permissions с editor/commenter/read-only различаются по lock-status filters",
+        "reliability": "high"
+      },
+      {
+        "source": "notion",
+        "description": "Locked database views для shared workspaces",
+        "reliability": "medium"
+      }
+    ],
+    "counterexample": [
+      {
+        "source": "spreadsheet-classic",
+        "description": "Excel/Sheets — filter всегда editable per-viewer, нет controlled-mode концепции",
+        "reliability": "high"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [
+      {
+        "domain": "coda-table-document",
+        "projection": "view_detail",
+        "reason": "View.isControlled + filters/sort/visibleColumns presets — точное совпадение"
+      }
+    ],
+    "shouldNotMatch": [
+      {
+        "domain": "messenger",
+        "projection": "conversation_detail",
+        "reason": "Conversation не имеет controlled-presets, filters не concept"
+      },
+      {
+        "domain": "invest",
+        "projection": "portfolio_detail",
+        "reason": "Portfolio filters персональные у каждой роли, нет author-vs-viewer асимметрии"
+      }
+    ]
+  }
+}

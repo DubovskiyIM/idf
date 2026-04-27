@@ -1,0 +1,71 @@
+{
+  "id": "controlled-view-locked-affordance",
+  "version": 1,
+  "status": "candidate",
+  "archetype": "catalog",
+  "trigger": {
+    "requires": [
+      {
+        "kind": "entity-field",
+        "entity": "View",
+        "field": "isControlled",
+        "fieldKind": "boolean"
+      },
+      {
+        "kind": "intent-effect",
+        "α": "replace",
+        "target": "view.isControlled",
+        "confirmation": "click"
+      },
+      {
+        "kind": "has-role",
+        "role": "viewer"
+      }
+    ]
+  },
+  "structure": {
+    "slot": "toolbar",
+    "description": "Когда View.isControlled=true, фильтр-чипы и sort/groupBy controls рендерятся с lock-иконкой и disabled-стилем для всех ролей кроме owner/editor. Hover показывает 'controlled by author'. Editor видит toggle для изменения режима.",
+    "applySource": "function apply(slots, context) {\n  // Auto-synthesized marker-only apply (§13.17 opt-c).\n  // Marks first un-marked item in slots.toolbar with source: \"derived:controlled-view-locked-affordance\".\n  // Idempotent: skip if already marked.\n  const slot = slots?.toolbar;\n  if (!Array.isArray(slot) || slot.length === 0) return slots;\n  const idx = slot.findIndex((x) => x && !x.source);\n  if (idx === -1) return slots;\n  const marker = \"derived:controlled-view-locked-affordance\";\n  if (slot[idx].source === marker) return slots;\n  return {\n    ...slots,\n    toolbar: slot.map((item, i) =>\n      i === idx ? { ...item, source: marker } : item),\n  };\n}",
+    "applyKind": "marker-only-synthesized",
+    "applySynthesizedAt": 1777280149910
+  },
+  "rationale": {
+    "hypothesis": "Author может хотеть зафиксировать определённую конфигурацию view (например, 'только активные сделки в текущей фазе') и не позволить viewer'ам менять её. Без lock-affordance viewer случайно меняет фильтр и не понимает, почему данные пропали. С lock-иконкой контракт явный.",
+    "evidence": [
+      {
+        "source": "coda",
+        "description": "Controlled view — lock на filter-chips, viewer не может менять",
+        "reliability": "high"
+      },
+      {
+        "source": "airtable",
+        "description": "Locked view с явным affordance в header",
+        "reliability": "high"
+      }
+    ],
+    "counterexample": [
+      {
+        "source": "google-sheets",
+        "description": "Filter-views per-user — нет режима 'controlled by author'",
+        "reliability": "medium"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [
+      {
+        "domain": "compliance",
+        "projection": "control_catalog",
+        "reason": "Auditor не должен менять filters preparer'а"
+      }
+    ],
+    "shouldNotMatch": [
+      {
+        "domain": "lifequest",
+        "projection": "habit_catalog",
+        "reason": "Personal-domain без shared views"
+      }
+    ]
+  }
+}

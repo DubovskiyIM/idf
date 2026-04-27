@@ -1,0 +1,102 @@
+{
+  "id": "append-only-version-history-compare-restore",
+  "version": 1,
+  "status": "candidate",
+  "archetype": "detail",
+  "trigger": {
+    "requires": [
+      {
+        "kind": "sub-entity-exists",
+        "name": "Version",
+        "fkTo": "mainEntity",
+        "shape": "append-only"
+      },
+      {
+        "kind": "field-role-present",
+        "entity": "subEntity",
+        "fields": [
+          "versionNumber",
+          "createdAt",
+          "bodySnapshot"
+        ]
+      },
+      {
+        "kind": "intent-creates",
+        "intent": "compare_versions",
+        "α": "replace",
+        "targetField": "*.activeDiff"
+      },
+      {
+        "kind": "intent-effect",
+        "intent": "restore_version",
+        "α": "replace",
+        "irreversibility": "high"
+      }
+    ]
+  },
+  "structure": {
+    "slot": "sections",
+    "description": "Append-only sub-collection (Version) рендерится не как обычный subCollection-list, а как timeline с two-way checkbox/radio (выбрать 2 для compare), inline diff-pane между выбранными snapshot'ами, и inline restore-кнопка с irreversible-confirm. Текущая версия pinned сверху с маркером 'current'.",
+    "applySource": "function apply(slots, context) {\n  // Auto-synthesized marker-only apply (§13.17 opt-c).\n  // Marks first un-marked item in slots.sections with source: \"derived:append-only-version-history-compare-restore\".\n  // Idempotent: skip if already marked.\n  const slot = slots?.sections;\n  if (!Array.isArray(slot) || slot.length === 0) return slots;\n  const idx = slot.findIndex((x) => x && !x.source);\n  if (idx === -1) return slots;\n  const marker = \"derived:append-only-version-history-compare-restore\";\n  if (slot[idx].source === marker) return slots;\n  return {\n    ...slots,\n    sections: slot.map((item, i) =>\n      i === idx ? { ...item, source: marker } : item),\n  };\n}",
+    "applyKind": "marker-only-synthesized",
+    "applySynthesizedAt": 1777280149898
+  },
+  "rationale": {
+    "hypothesis": "Версионная история — особый append-only под-объект: пользователю нужны три операции (просмотр snapshot'а, diff между двумя, восстановление). Generic subCollection-list даёт только просмотр и теряет diff-affordance. Restore — irreversible, должен быть гейтован отдельным confirm с pre-image content.",
+    "evidence": [
+      {
+        "source": "confluence",
+        "description": "Page History — выделенный экран с side-by-side diff и кнопкой Restore this version",
+        "reliability": "high"
+      },
+      {
+        "source": "google-docs",
+        "description": "Version history pane справа с timeline и colored-diff",
+        "reliability": "high"
+      },
+      {
+        "source": "notion",
+        "description": "Page history с restore (Premium) на каждой версии в timeline",
+        "reliability": "high"
+      },
+      {
+        "source": "github",
+        "description": "Commit history с side-by-side diff и revert (concept-equivalent)",
+        "reliability": "high"
+      }
+    ],
+    "counterexample": [
+      {
+        "source": "messenger",
+        "description": "Message edits хранятся как append-only, но diff-UI был бы overkill — обычно показывают 'edited' badge без compare",
+        "reliability": "medium"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [
+      {
+        "domain": "confluence-space-wiki",
+        "projection": "page_detail",
+        "reason": "PageVersion sub-entity + compare_versions + restore_version (irreversibility=high)"
+      }
+    ],
+    "shouldNotMatch": [
+      {
+        "domain": "booking",
+        "projection": "booking_detail",
+        "reason": "Нет append-only version sub-entity"
+      },
+      {
+        "domain": "invest",
+        "projection": "transaction_detail",
+        "reason": "Transaction immutable, но нет concept версионирования снапшота с restore"
+      },
+      {
+        "domain": "sales",
+        "projection": "listing_detail",
+        "reason": "Listing редактируется in-place без хранения снапшотов"
+      }
+    ]
+  }
+}

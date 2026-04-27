@@ -1,0 +1,81 @@
+{
+  "id": "inline-comment-anchored-to-text-range",
+  "version": 1,
+  "status": "candidate",
+  "archetype": "detail",
+  "trigger": {
+    "requires": [
+      {
+        "kind": "sub-entity-exists",
+        "entity": "Comment",
+        "fkTo": "mainEntity"
+      },
+      {
+        "kind": "entity-field",
+        "entity": "Comment",
+        "field": "rangeAnchor"
+      },
+      {
+        "kind": "entity-field",
+        "entity": "Comment",
+        "field": "kind",
+        "discriminator": true
+      }
+    ]
+  },
+  "structure": {
+    "slot": "overlay",
+    "description": "Inline-comments (kind='inline') рендерятся как gutter-pins возле rangeAnchor в body, page-level comments (kind='page') идут в footer-секцию. Pin при клике раскрывает thread-popover; resolved-комменты сжимаются в minimal marker.",
+    "applySource": "function apply(slots, context) {\n  // Auto-synthesized marker-only apply (§13.17 opt-c).\n  // Marks first un-marked item in slots.overlay with source: \"derived:inline-comment-anchored-to-text-range\".\n  // Idempotent: skip if already marked.\n  const slot = slots?.overlay;\n  if (!Array.isArray(slot) || slot.length === 0) return slots;\n  const idx = slot.findIndex((x) => x && !x.source);\n  if (idx === -1) return slots;\n  const marker = \"derived:inline-comment-anchored-to-text-range\";\n  if (slot[idx].source === marker) return slots;\n  return {\n    ...slots,\n    overlay: slot.map((item, i) =>\n      i === idx ? { ...item, source: marker } : item),\n  };\n}",
+    "applyKind": "marker-only-synthesized",
+    "applySynthesizedAt": 1777280149905
+  },
+  "rationale": {
+    "hypothesis": "Discriminator kind на Comment с rangeAnchor — сигнал, что комментарии семантически разделены: inline закреплены к фрагменту content, page-level — глобальные. Рендерить их единым списком теряет spatial context (читатель не понимает к чему привязан комментарий). Gutter-pin сохраняет привязку, не размывая body.",
+    "evidence": [
+      {
+        "source": "confluence",
+        "description": "Inline comments как highlight + gutter pin, page comments отдельной секцией внизу",
+        "reliability": "high"
+      },
+      {
+        "source": "google-docs",
+        "description": "Selection comments в правом рейле с anchor-line к выделению",
+        "reliability": "high"
+      },
+      {
+        "source": "notion",
+        "description": "Inline comments как coloured highlight, открываются sidebar'ом",
+        "reliability": "medium"
+      }
+    ],
+    "counterexample": [
+      {
+        "source": "github-issues",
+        "description": "Comments чисто timeline без rangeAnchor — не закреплены к фрагменту",
+        "reliability": "high"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [
+      {
+        "domain": "confluence",
+        "projection": "page_detail",
+        "reason": "Comment.rangeAnchor + kind discriminator"
+      }
+    ],
+    "shouldNotMatch": [
+      {
+        "domain": "sales",
+        "projection": "listing_detail",
+        "reason": "Message-комментарий без rangeAnchor — flat list"
+      },
+      {
+        "domain": "booking",
+        "projection": "specialist_detail",
+        "reason": "Review без anchor к фрагменту body"
+      }
+    ]
+  }
+}

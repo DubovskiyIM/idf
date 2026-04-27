@@ -1,0 +1,78 @@
+{
+  "id": "pinned-vs-default-section-split",
+  "version": 1,
+  "status": "candidate",
+  "archetype": null,
+  "trigger": {
+    "requires": [
+      {
+        "kind": "entity-field",
+        "entity": "Page",
+        "field": "parentId",
+        "selfRef": true
+      },
+      {
+        "kind": "entity-field",
+        "entity": "Permission",
+        "field": "level"
+      },
+      {
+        "kind": "intent-count",
+        "filter": {
+          "creates": "Page"
+        },
+        "min": 2
+      }
+    ]
+  },
+  "structure": {
+    "slot": "sections",
+    "description": "Sidebar/nav разделяется на ≥2 группы: Pinned/Favorites (user-curated subset), Shared/Teamspace (visible to others), Private (owner-only). Те же entity-records, sectionning по permission/visibility.",
+    "applySource": "function apply(slots, context) {\n  // Auto-synthesized marker-only apply (§13.17 opt-c).\n  // Marks first un-marked item in slots.sections with source: \"derived:pinned-vs-default-section-split\".\n  // Idempotent: skip if already marked.\n  const slot = slots?.sections;\n  if (!Array.isArray(slot) || slot.length === 0) return slots;\n  const idx = slot.findIndex((x) => x && !x.source);\n  if (idx === -1) return slots;\n  const marker = \"derived:pinned-vs-default-section-split\";\n  if (slot[idx].source === marker) return slots;\n  return {\n    ...slots,\n    sections: slot.map((item, i) =>\n      i === idx ? { ...item, source: marker } : item),\n  };\n}",
+    "applyKind": "marker-only-synthesized",
+    "applySynthesizedAt": 1777280149906
+  },
+  "rationale": {
+    "hypothesis": "Flat list of N>20 entities без visual hierarchy убивает discoverability; semantic sections по pinned-status и visibility-scope дают O(1) frequency-based access без вынуждения user'а сортировать вручную.",
+    "evidence": [
+      {
+        "source": "notion",
+        "description": "Sidebar: Favorites / Shared / Private sections",
+        "reliability": "high"
+      },
+      {
+        "source": "slack",
+        "description": "Starred / Channels / DMs sections",
+        "reliability": "high"
+      },
+      {
+        "source": "vscode",
+        "description": "Pinned tabs vs regular tabs",
+        "reliability": "medium"
+      }
+    ],
+    "counterexample": [
+      {
+        "source": "linear",
+        "description": "Single project list, sectionning через filters не сегменты",
+        "reliability": "medium"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [
+      {
+        "domain": "notion",
+        "projection": "pages_sidebar",
+        "reason": "Page hierarchy + Permission level → pinned/shared/private split"
+      }
+    ],
+    "shouldNotMatch": [
+      {
+        "domain": "invest",
+        "projection": "positions_catalog",
+        "reason": "Position не имеет pinned-flag и visibility-scope"
+      }
+    ]
+  }
+}

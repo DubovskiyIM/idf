@@ -1,0 +1,82 @@
+{
+  "id": "permission-inheritance-with-override",
+  "version": 1,
+  "status": "candidate",
+  "archetype": "detail",
+  "trigger": {
+    "requires": [
+      {
+        "kind": "entity-field",
+        "entity": "Permission",
+        "field": "inheritedFrom"
+      },
+      {
+        "kind": "entity-field",
+        "entity": "Page",
+        "field": "parentId",
+        "selfRef": true
+      },
+      {
+        "kind": "intent-effect",
+        "intent": "change_permission_level",
+        "α": "replace",
+        "target": "level"
+      }
+    ]
+  },
+  "structure": {
+    "slot": "sections",
+    "description": "Permission section показывает inherited principal'ов греy/lock-icon с tooltip 'Inherited from {parent}'; click 'Override' клонирует запись в текущий уровень и делает её editable.",
+    "applySource": "function apply(slots, context) {\n  // Auto-synthesized marker-only apply (§13.17 opt-c).\n  // Marks first un-marked item in slots.sections with source: \"derived:permission-inheritance-with-override\".\n  // Idempotent: skip if already marked.\n  const slot = slots?.sections;\n  if (!Array.isArray(slot) || slot.length === 0) return slots;\n  const idx = slot.findIndex((x) => x && !x.source);\n  if (idx === -1) return slots;\n  const marker = \"derived:permission-inheritance-with-override\";\n  if (slot[idx].source === marker) return slots;\n  return {\n    ...slots,\n    sections: slot.map((item, i) =>\n      i === idx ? { ...item, source: marker } : item),\n  };\n}",
+    "applyKind": "marker-only-synthesized",
+    "applySynthesizedAt": 1777280149902
+  },
+  "rationale": {
+    "hypothesis": "Hierarchy с RBAC требует и default-через-родителя (admin scaling), и точечного override (sensitive sub-page). Visual distinction между inherited vs explicit предотвращает случайное лишение доступа всему поддереву.",
+    "evidence": [
+      {
+        "source": "notion",
+        "description": "Page.permissions показывает inherited из parent → teamspace → workspace",
+        "reliability": "high"
+      },
+      {
+        "source": "google-drive",
+        "description": "Folder permission inheritance с explicit override per file",
+        "reliability": "high"
+      },
+      {
+        "source": "confluence",
+        "description": "Space → Page → Restricted permissions cascade",
+        "reliability": "high"
+      },
+      {
+        "source": "github",
+        "description": "Repo → Branch protection с inherit/override",
+        "reliability": "medium"
+      }
+    ],
+    "counterexample": [
+      {
+        "source": "linear",
+        "description": "Workspace-flat permissions, без hierarchy и cascade",
+        "reliability": "medium"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [
+      {
+        "domain": "notion",
+        "projection": "page_detail",
+        "reason": "Permission.inheritedFrom + Page.parentId self-ref + change_permission_level"
+      }
+    ],
+    "shouldNotMatch": [
+      {
+        "domain": "sales",
+        "projection": "listing_detail",
+        "reason": "Нет permission-cascade hierarchy между listing'ами"
+      }
+    ]
+  }
+}

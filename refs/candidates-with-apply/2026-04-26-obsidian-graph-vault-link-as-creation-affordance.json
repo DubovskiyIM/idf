@@ -1,0 +1,87 @@
+{
+  "id": "link-as-creation-affordance",
+  "version": 1,
+  "status": "candidate",
+  "archetype": "detail",
+  "trigger": {
+    "requires": [
+      {
+        "kind": "intent-creates",
+        "creates": "WikiLink",
+        "fromInlineMention": true
+      },
+      {
+        "kind": "entity-field",
+        "entity": "WikiLink",
+        "field": "isResolved",
+        "fieldKind": "boolean"
+      },
+      {
+        "kind": "intent-effect",
+        "α": "add",
+        "creates": "<targetEntity>",
+        "trigger": "click-on-unresolved-link"
+      }
+    ]
+  },
+  "structure": {
+    "slot": "body",
+    "description": "Inline reference token ([[Title]]) renders as link if target exists, as create-affordance if not. Click on unresolved → creates target entity with that title and switches focus. Conflates discovery (autocomplete) with creation (instantiate) into one continuous gesture.",
+    "applySource": "function apply(slots, context) {\n  // Auto-synthesized marker-only apply (§13.17 opt-c).\n  // Marks first un-marked item in slots.body with source: \"derived:link-as-creation-affordance\".\n  // Idempotent: skip if already marked.\n  const slot = slots?.body;\n  if (!Array.isArray(slot) || slot.length === 0) return slots;\n  const idx = slot.findIndex((x) => x && !x.source);\n  if (idx === -1) return slots;\n  const marker = \"derived:link-as-creation-affordance\";\n  if (slot[idx].source === marker) return slots;\n  return {\n    ...slots,\n    body: slot.map((item, i) =>\n      i === idx ? { ...item, source: marker } : item),\n  };\n}",
+    "applyKind": "marker-only-synthesized",
+    "applySynthesizedAt": 1777280149908
+  },
+  "rationale": {
+    "hypothesis": "In knowledge-graph products, the moment of writing about something is also the moment of identifying it — gating creation behind a separate 'New Note' dialog breaks flow. Link-as-creation lets the author defer entity-existence decisions to writing time. Cheaper than a modal, recoverable on miss (just delete the empty target).",
+    "evidence": [
+      {
+        "source": "obsidian",
+        "description": "[[Foo]] click creates Foo.md if missing; autocomplete shows 'Create Foo' last",
+        "reliability": "high"
+      },
+      {
+        "source": "roam-research",
+        "description": "Same affordance: typing [[ opens fuzzy + create-on-enter",
+        "reliability": "high"
+      },
+      {
+        "source": "logseq",
+        "description": "Identical pattern",
+        "reliability": "high"
+      }
+    ],
+    "counterexample": [
+      {
+        "source": "notion",
+        "description": "@mention requires the target to exist; creation is a separate flow — different paradigm",
+        "reliability": "high"
+      },
+      {
+        "source": "jira",
+        "description": "Issue links require pre-existing keys — creation-as-link would conflict with workflow constraints",
+        "reliability": "high"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [
+      {
+        "domain": "notion",
+        "projection": "page_detail",
+        "reason": "Block.targetPageId references can be 'unresolved' — same affordance applicable"
+      }
+    ],
+    "shouldNotMatch": [
+      {
+        "domain": "invest",
+        "projection": "position_detail",
+        "reason": "Position cannot be created from inline reference; symbol must exist in market data"
+      },
+      {
+        "domain": "compliance",
+        "projection": "control_detail",
+        "reason": "Creation is gated by approval workflow; inline-create would bypass invariants"
+      }
+    ]
+  }
+}

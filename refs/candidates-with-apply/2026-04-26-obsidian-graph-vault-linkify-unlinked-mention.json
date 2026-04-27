@@ -1,0 +1,69 @@
+{
+  "id": "linkify-unlinked-mention",
+  "version": 1,
+  "status": "candidate",
+  "archetype": "detail",
+  "trigger": {
+    "requires": [
+      {
+        "kind": "entity-field",
+        "entity": "Backlink",
+        "field": "linkType",
+        "values": [
+          "linked",
+          "unlinked_mention"
+        ]
+      },
+      {
+        "kind": "intent-effect",
+        "α": "replace",
+        "target": "backlink.linkType"
+      }
+    ]
+  },
+  "structure": {
+    "slot": "sections",
+    "description": "Отдельная секция в reverse-association-browser для derived hits (text mentions без явной ссылки) с per-row CTA «linkify» — one-click promotion из weak signal в explicit relation.",
+    "applySource": "function apply(slots, context) {\n  // Auto-synthesized marker-only apply (§13.17 opt-c).\n  // Marks first un-marked item in slots.sections with source: \"derived:linkify-unlinked-mention\".\n  // Idempotent: skip if already marked.\n  const slot = slots?.sections;\n  if (!Array.isArray(slot) || slot.length === 0) return slots;\n  const idx = slot.findIndex((x) => x && !x.source);\n  if (idx === -1) return slots;\n  const marker = \"derived:linkify-unlinked-mention\";\n  if (slot[idx].source === marker) return slots;\n  return {\n    ...slots,\n    sections: slot.map((item, i) =>\n      i === idx ? { ...item, source: marker } : item),\n  };\n}",
+    "applyKind": "marker-only-synthesized",
+    "applySynthesizedAt": 1777280149912
+  },
+  "rationale": {
+    "hypothesis": "Система может детектить implicit references (текстовое упоминание имени без link-синтаксиса), но автоматическая промоция опасна (false positives). Solution: показать как separate section с per-row promotion CTA — пользователь подтверждает один-в-один, derived signal становится curated.",
+    "evidence": [
+      {
+        "source": "obsidian",
+        "description": "«Unlinked mentions» секция в backlinks panel с кнопкой Link",
+        "reliability": "high"
+      },
+      {
+        "source": "logseq",
+        "description": "Аналогичный «unlinked references» promotion-flow",
+        "reliability": "high"
+      }
+    ],
+    "counterexample": [
+      {
+        "source": "linear",
+        "description": "Issue mentions в комментариях — не нужны inferred mentions, текст не indexed как graph",
+        "reliability": "medium"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [
+      {
+        "domain": "obsidian",
+        "projection": "note_detail",
+        "reason": "Backlink.linkType с unlinked_mention + intent linkify_unlinked_mention"
+      }
+    ],
+    "shouldNotMatch": [
+      {
+        "domain": "messenger",
+        "projection": "conversation_detail",
+        "reason": "Mentions в чатах — не reference graph, нет concept of derived hits"
+      }
+    ]
+  }
+}

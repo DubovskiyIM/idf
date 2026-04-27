@@ -1,0 +1,75 @@
+{
+  "id": "polymorphic-mention-trigger",
+  "version": 1,
+  "status": "candidate",
+  "archetype": "detail",
+  "trigger": {
+    "requires": [
+      {
+        "kind": "polymorphic",
+        "entity": "Mention"
+      },
+      {
+        "kind": "intent-creates",
+        "creates": "Mention"
+      },
+      {
+        "kind": "intent-count",
+        "filter": {
+          "creates": "Mention"
+        },
+        "min": 2
+      }
+    ]
+  },
+  "structure": {
+    "slot": "overlay",
+    "description": "Триггер `@` в payload-editor открывает unified popover с табами по mention-kind (person/page/date/database); каждый kind резолвит targetId из соответствующей сущности. Создаёт single Mention entity с discriminator.",
+    "applySource": "function apply(slots, context) {\n  // Auto-synthesized marker-only apply (§13.17 opt-c).\n  // Marks first un-marked item in slots.overlay with source: \"derived:polymorphic-mention-trigger\".\n  // Idempotent: skip if already marked.\n  const slot = slots?.overlay;\n  if (!Array.isArray(slot) || slot.length === 0) return slots;\n  const idx = slot.findIndex((x) => x && !x.source);\n  if (idx === -1) return slots;\n  const marker = \"derived:polymorphic-mention-trigger\";\n  if (slot[idx].source === marker) return slots;\n  return {\n    ...slots,\n    overlay: slot.map((item, i) =>\n      i === idx ? { ...item, source: marker } : item),\n  };\n}",
+    "applyKind": "marker-only-synthesized",
+    "applySynthesizedAt": 1777280149907
+  },
+  "rationale": {
+    "hypothesis": "User думает о '@кого/что упомянуть' как о едином действии, но targets — разные entity-kinds. Polymorphic Mention с unified trigger сохраняет UX-единство, при этом kind определяет downstream-эффект (notification / backlink / reminder / linked).",
+    "evidence": [
+      {
+        "source": "notion",
+        "description": "@ → person/page/date/database в одном popover",
+        "reliability": "high"
+      },
+      {
+        "source": "slack",
+        "description": "@user / #channel — два trigger'а, но unified mention-stream",
+        "reliability": "medium"
+      },
+      {
+        "source": "linear",
+        "description": "@user / @issue в comments через single trigger",
+        "reliability": "medium"
+      }
+    ],
+    "counterexample": [
+      {
+        "source": "twitter",
+        "description": "@-mention только person'ы, без polymorphic targets",
+        "reliability": "medium"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [
+      {
+        "domain": "notion",
+        "projection": "page_detail",
+        "reason": "Mention polymorphic с 4 kind'ами + 2 mention intents"
+      }
+    ],
+    "shouldNotMatch": [
+      {
+        "domain": "messenger",
+        "projection": "conversation_detail",
+        "reason": "Mention single-kind (person), нет polymorphic discriminator"
+      }
+    ]
+  }
+}

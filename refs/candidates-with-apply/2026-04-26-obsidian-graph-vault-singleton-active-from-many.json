@@ -1,0 +1,79 @@
+{
+  "id": "singleton-active-from-many",
+  "version": 1,
+  "status": "candidate",
+  "archetype": "catalog",
+  "trigger": {
+    "requires": [
+      {
+        "kind": "entity-field",
+        "entity": "*",
+        "field": "isActive"
+      },
+      {
+        "kind": "intent-effect",
+        "α": "replace",
+        "target": "*.isActive"
+      },
+      {
+        "kind": "field-role-present",
+        "role": "boolean-singleton"
+      }
+    ]
+  },
+  "structure": {
+    "slot": "primaryCTA",
+    "description": "Catalog с invariant'ом «ровно один активный»: row активного — visual emphasis (checkmark, border), CTA для остальных — «Apply» (replace isActive=true с автоматическим caching других в false). Не radio-group в форме — direct action на row.",
+    "applySource": "function apply(slots, context) {\n  // Auto-synthesized marker-only apply (§13.17 opt-c).\n  // Marks first un-marked item in slots.primaryCTA with source: \"derived:singleton-active-from-many\".\n  // Idempotent: skip if already marked.\n  const slot = slots?.primaryCTA;\n  if (!Array.isArray(slot) || slot.length === 0) return slots;\n  const idx = slot.findIndex((x) => x && !x.source);\n  if (idx === -1) return slots;\n  const marker = \"derived:singleton-active-from-many\";\n  if (slot[idx].source === marker) return slots;\n  return {\n    ...slots,\n    primaryCTA: slot.map((item, i) =>\n      i === idx ? { ...item, source: marker } : item),\n  };\n}",
+    "applyKind": "marker-only-synthesized",
+    "applySynthesizedAt": 1777280149909
+  },
+  "rationale": {
+    "hypothesis": "Когда среди множества installable artifacts ровно один может быть активным (theme, language pack, sound profile), modal с radio-list требует двойной cognitive cost: открыть, выбрать, закрыть. Direct-action на row («Apply») делает выбор один-в-один, состояние видно сразу в каталоге.",
+    "evidence": [
+      {
+        "source": "obsidian",
+        "description": "Themes: один active, остальные installed; клик «Apply» переключает",
+        "reliability": "high"
+      },
+      {
+        "source": "vscode-themes",
+        "description": "Color theme picker: «Set Color Theme» в command palette",
+        "reliability": "high"
+      },
+      {
+        "source": "macos-system-prefs",
+        "description": "Wallpaper picker — клик на превью активирует",
+        "reliability": "medium"
+      }
+    ],
+    "counterexample": [
+      {
+        "source": "messenger",
+        "description": "Conversations можно держать множественно открытыми — не singleton",
+        "reliability": "high"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [
+      {
+        "domain": "obsidian",
+        "projection": "themes_catalog",
+        "reason": "Theme.isActive: boolean, ≤1 active, intent apply_theme"
+      }
+    ],
+    "shouldNotMatch": [
+      {
+        "domain": "invest",
+        "projection": "position_catalog",
+        "reason": "Multiple positions активны параллельно"
+      },
+      {
+        "domain": "lifequest",
+        "projection": "habit_catalog",
+        "reason": "Habits не singleton-active — параллельный tracking"
+      }
+    ]
+  }
+}
