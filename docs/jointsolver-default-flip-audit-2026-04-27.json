@@ -1,0 +1,1061 @@
+{
+  "generatedAt": "2026-04-27T15:15:06.236Z",
+  "domains": [
+    {
+      "domain": "booking",
+      "candidates": [
+        {
+          "projection": "service_catalog",
+          "mainEntity": "Service",
+          "intentId": "add_service",
+          "intentName": "Добавить услугу",
+          "category": "implicit-primary",
+          "reason": "creator-of-main, no explicit salience",
+          "confirmation": "form"
+        },
+        {
+          "projection": "my_bookings",
+          "mainEntity": "Booking",
+          "intentId": "create_booking",
+          "intentName": "Создать бронирование",
+          "category": "implicit-primary",
+          "reason": "creator-of-main, no explicit salience",
+          "confirmation": "form"
+        }
+      ],
+      "uniqueIntents": [
+        {
+          "projection": "service_catalog",
+          "mainEntity": "Service",
+          "intentId": "add_service",
+          "intentName": "Добавить услугу",
+          "category": "implicit-primary",
+          "reason": "creator-of-main, no explicit salience",
+          "confirmation": "form",
+          "projections": [
+            "service_catalog"
+          ]
+        },
+        {
+          "projection": "my_bookings",
+          "mainEntity": "Booking",
+          "intentId": "create_booking",
+          "intentName": "Создать бронирование",
+          "category": "implicit-primary",
+          "reason": "creator-of-main, no explicit salience",
+          "confirmation": "form",
+          "projections": [
+            "my_bookings"
+          ]
+        }
+      ],
+      "featureEnabled": false
+    },
+    {
+      "domain": "planning",
+      "candidates": [],
+      "uniqueIntents": [],
+      "featureEnabled": false
+    },
+    {
+      "domain": "workflow",
+      "candidates": [
+        {
+          "projection": "workflow_list",
+          "mainEntity": "Workflow",
+          "intentId": "import_workflow",
+          "intentName": "Импортировать",
+          "category": "implicit-primary",
+          "reason": "creator-of-main, no explicit salience",
+          "confirmation": "file"
+        }
+      ],
+      "uniqueIntents": [
+        {
+          "projection": "workflow_list",
+          "mainEntity": "Workflow",
+          "intentId": "import_workflow",
+          "intentName": "Импортировать",
+          "category": "implicit-primary",
+          "reason": "creator-of-main, no explicit salience",
+          "confirmation": "file",
+          "projections": [
+            "workflow_list"
+          ]
+        }
+      ],
+      "featureEnabled": false
+    },
+    {
+      "domain": "messenger",
+      "candidates": [
+        {
+          "projection": "conversation_list",
+          "mainEntity": "Conversation",
+          "intentId": "create_direct_chat",
+          "intentName": "Личный чат",
+          "category": "implicit-primary",
+          "reason": "creator-of-main, no explicit salience",
+          "confirmation": "clickForm"
+        },
+        {
+          "projection": "conversation_list",
+          "mainEntity": "Conversation",
+          "intentId": "create_group",
+          "intentName": "Групповой чат",
+          "category": "implicit-primary",
+          "reason": "creator-of-main, no explicit salience",
+          "confirmation": "form"
+        },
+        {
+          "projection": "conversation_list",
+          "mainEntity": "Conversation",
+          "intentId": "create_channel",
+          "intentName": "Создать канал",
+          "category": "implicit-primary",
+          "reason": "creator-of-main, no explicit salience",
+          "confirmation": "form"
+        }
+      ],
+      "uniqueIntents": [
+        {
+          "projection": "conversation_list",
+          "mainEntity": "Conversation",
+          "intentId": "create_direct_chat",
+          "intentName": "Личный чат",
+          "category": "implicit-primary",
+          "reason": "creator-of-main, no explicit salience",
+          "confirmation": "clickForm",
+          "projections": [
+            "conversation_list"
+          ]
+        },
+        {
+          "projection": "conversation_list",
+          "mainEntity": "Conversation",
+          "intentId": "create_group",
+          "intentName": "Групповой чат",
+          "category": "implicit-primary",
+          "reason": "creator-of-main, no explicit salience",
+          "confirmation": "form",
+          "projections": [
+            "conversation_list"
+          ]
+        },
+        {
+          "projection": "conversation_list",
+          "mainEntity": "Conversation",
+          "intentId": "create_channel",
+          "intentName": "Создать канал",
+          "category": "implicit-primary",
+          "reason": "creator-of-main, no explicit salience",
+          "confirmation": "form",
+          "projections": [
+            "conversation_list"
+          ]
+        }
+      ],
+      "featureEnabled": false
+    },
+    {
+      "domain": "sales",
+      "candidates": [
+        {
+          "projection": "category_browse",
+          "mainEntity": "Category",
+          "intentId": "create_category",
+          "intentName": "Создать категорию",
+          "category": "implicit-primary",
+          "reason": "creator-of-main, no explicit salience",
+          "confirmation": "enter"
+        },
+        {
+          "projection": "saved_searches",
+          "mainEntity": "SavedSearch",
+          "intentId": "save_search",
+          "intentName": "Сохранить поиск",
+          "category": "implicit-primary",
+          "reason": "creator-of-main, no explicit salience",
+          "confirmation": "enter"
+        }
+      ],
+      "uniqueIntents": [
+        {
+          "projection": "category_browse",
+          "mainEntity": "Category",
+          "intentId": "create_category",
+          "intentName": "Создать категорию",
+          "category": "implicit-primary",
+          "reason": "creator-of-main, no explicit salience",
+          "confirmation": "enter",
+          "projections": [
+            "category_browse"
+          ]
+        },
+        {
+          "projection": "saved_searches",
+          "mainEntity": "SavedSearch",
+          "intentId": "save_search",
+          "intentName": "Сохранить поиск",
+          "category": "implicit-primary",
+          "reason": "creator-of-main, no explicit salience",
+          "confirmation": "enter",
+          "projections": [
+            "saved_searches"
+          ]
+        }
+      ],
+      "featureEnabled": false
+    },
+    {
+      "domain": "lifequest",
+      "candidates": [],
+      "uniqueIntents": [],
+      "featureEnabled": false
+    },
+    {
+      "domain": "reflect",
+      "candidates": [
+        {
+          "projection": "activity_list",
+          "mainEntity": "Activity",
+          "intentId": "create_activity",
+          "intentName": "Создать активность",
+          "category": "implicit-primary",
+          "reason": "creator-of-main, no explicit salience",
+          "confirmation": "form"
+        },
+        {
+          "projection": "tag_list",
+          "mainEntity": "Tag",
+          "intentId": "create_tag",
+          "intentName": "Создать тег",
+          "category": "implicit-primary",
+          "reason": "creator-of-main, no explicit salience",
+          "confirmation": "form"
+        }
+      ],
+      "uniqueIntents": [
+        {
+          "projection": "activity_list",
+          "mainEntity": "Activity",
+          "intentId": "create_activity",
+          "intentName": "Создать активность",
+          "category": "implicit-primary",
+          "reason": "creator-of-main, no explicit salience",
+          "confirmation": "form",
+          "projections": [
+            "activity_list"
+          ]
+        },
+        {
+          "projection": "tag_list",
+          "mainEntity": "Tag",
+          "intentId": "create_tag",
+          "intentName": "Создать тег",
+          "category": "implicit-primary",
+          "reason": "creator-of-main, no explicit salience",
+          "confirmation": "form",
+          "projections": [
+            "tag_list"
+          ]
+        }
+      ],
+      "featureEnabled": false
+    },
+    {
+      "domain": "invest",
+      "candidates": [
+        {
+          "projection": "portfolios_root",
+          "mainEntity": "Portfolio",
+          "intentId": "create_portfolio",
+          "intentName": "Новый портфель",
+          "category": "implicit-primary",
+          "reason": "creator-of-main, no explicit salience"
+        },
+        {
+          "projection": "goals_root",
+          "mainEntity": "Goal",
+          "intentId": "create_goal",
+          "intentName": "Создать цель",
+          "category": "implicit-primary",
+          "reason": "creator-of-main, no explicit salience"
+        },
+        {
+          "projection": "watchlists_root",
+          "mainEntity": "Watchlist",
+          "intentId": "create_watchlist",
+          "intentName": "Новый список",
+          "category": "implicit-primary",
+          "reason": "creator-of-main, no explicit salience"
+        },
+        {
+          "projection": "recommendations_inbox",
+          "mainEntity": "Recommendation",
+          "intentId": "create_recommendation_for_client",
+          "intentName": "Рекомендация клиенту",
+          "category": "implicit-primary",
+          "reason": "creator-of-main, no explicit salience"
+        },
+        {
+          "projection": "advisor_clients",
+          "mainEntity": "Assignment",
+          "intentId": "assign_client",
+          "intentName": "Взять клиента",
+          "category": "implicit-primary",
+          "reason": "creator-of-main, no explicit salience"
+        }
+      ],
+      "uniqueIntents": [
+        {
+          "projection": "portfolios_root",
+          "mainEntity": "Portfolio",
+          "intentId": "create_portfolio",
+          "intentName": "Новый портфель",
+          "category": "implicit-primary",
+          "reason": "creator-of-main, no explicit salience",
+          "projections": [
+            "portfolios_root"
+          ]
+        },
+        {
+          "projection": "goals_root",
+          "mainEntity": "Goal",
+          "intentId": "create_goal",
+          "intentName": "Создать цель",
+          "category": "implicit-primary",
+          "reason": "creator-of-main, no explicit salience",
+          "projections": [
+            "goals_root"
+          ]
+        },
+        {
+          "projection": "watchlists_root",
+          "mainEntity": "Watchlist",
+          "intentId": "create_watchlist",
+          "intentName": "Новый список",
+          "category": "implicit-primary",
+          "reason": "creator-of-main, no explicit salience",
+          "projections": [
+            "watchlists_root"
+          ]
+        },
+        {
+          "projection": "recommendations_inbox",
+          "mainEntity": "Recommendation",
+          "intentId": "create_recommendation_for_client",
+          "intentName": "Рекомендация клиенту",
+          "category": "implicit-primary",
+          "reason": "creator-of-main, no explicit salience",
+          "projections": [
+            "recommendations_inbox"
+          ]
+        },
+        {
+          "projection": "advisor_clients",
+          "mainEntity": "Assignment",
+          "intentId": "assign_client",
+          "intentName": "Взять клиента",
+          "category": "implicit-primary",
+          "reason": "creator-of-main, no explicit salience",
+          "projections": [
+            "advisor_clients"
+          ]
+        }
+      ],
+      "featureEnabled": false
+    },
+    {
+      "domain": "delivery",
+      "candidates": [
+        {
+          "projection": "order_history",
+          "mainEntity": "Order",
+          "intentId": "create_draft_order",
+          "intentName": "Создать черновик заказа",
+          "category": "implicit-primary",
+          "reason": "creator-of-main, no explicit salience",
+          "confirmation": "auto"
+        },
+        {
+          "projection": "courier_lobby",
+          "mainEntity": "Delivery",
+          "intentId": "assign_courier_manual",
+          "intentName": "Назначить курьера вручную",
+          "category": "implicit-primary",
+          "reason": "creator-of-main, no explicit salience",
+          "confirmation": "auto"
+        },
+        {
+          "projection": "courier_lobby",
+          "mainEntity": "Delivery",
+          "intentId": "agent_auto_assign_courier",
+          "intentName": "Агент: авто-назначение курьера",
+          "category": "implicit-primary",
+          "reason": "creator-of-main, no explicit salience",
+          "confirmation": "none"
+        },
+        {
+          "projection": "delivery_history",
+          "mainEntity": "Delivery",
+          "intentId": "assign_courier_manual",
+          "intentName": "Назначить курьера вручную",
+          "category": "implicit-primary",
+          "reason": "creator-of-main, no explicit salience",
+          "confirmation": "auto"
+        },
+        {
+          "projection": "delivery_history",
+          "mainEntity": "Delivery",
+          "intentId": "agent_auto_assign_courier",
+          "intentName": "Агент: авто-назначение курьера",
+          "category": "implicit-primary",
+          "reason": "creator-of-main, no explicit salience",
+          "confirmation": "none"
+        },
+        {
+          "projection": "orders_feed",
+          "mainEntity": "Order",
+          "intentId": "create_draft_order",
+          "intentName": "Создать черновик заказа",
+          "category": "implicit-primary",
+          "reason": "creator-of-main, no explicit salience",
+          "confirmation": "auto"
+        }
+      ],
+      "uniqueIntents": [
+        {
+          "projection": "order_history",
+          "mainEntity": "Order",
+          "intentId": "create_draft_order",
+          "intentName": "Создать черновик заказа",
+          "category": "implicit-primary",
+          "reason": "creator-of-main, no explicit salience",
+          "confirmation": "auto",
+          "projections": [
+            "order_history",
+            "orders_feed"
+          ]
+        },
+        {
+          "projection": "courier_lobby",
+          "mainEntity": "Delivery",
+          "intentId": "assign_courier_manual",
+          "intentName": "Назначить курьера вручную",
+          "category": "implicit-primary",
+          "reason": "creator-of-main, no explicit salience",
+          "confirmation": "auto",
+          "projections": [
+            "courier_lobby",
+            "delivery_history"
+          ]
+        },
+        {
+          "projection": "courier_lobby",
+          "mainEntity": "Delivery",
+          "intentId": "agent_auto_assign_courier",
+          "intentName": "Агент: авто-назначение курьера",
+          "category": "implicit-primary",
+          "reason": "creator-of-main, no explicit salience",
+          "confirmation": "none",
+          "projections": [
+            "courier_lobby",
+            "delivery_history"
+          ]
+        }
+      ],
+      "featureEnabled": false
+    },
+    {
+      "domain": "freelance",
+      "candidates": [],
+      "uniqueIntents": [],
+      "featureEnabled": false
+    },
+    {
+      "domain": "compliance",
+      "candidates": [
+        {
+          "projection": "my_journal_entries",
+          "mainEntity": "JournalEntry",
+          "intentId": "create_journal_entry_draft",
+          "intentName": "Создать JE (черновик)",
+          "category": "implicit-primary",
+          "reason": "creator-of-main, no explicit salience",
+          "confirmation": "auto"
+        },
+        {
+          "projection": "review_queue",
+          "mainEntity": "JournalEntry",
+          "intentId": "create_journal_entry_draft",
+          "intentName": "Создать JE (черновик)",
+          "category": "implicit-primary",
+          "reason": "creator-of-main, no explicit salience",
+          "confirmation": "auto"
+        },
+        {
+          "projection": "approval_queue",
+          "mainEntity": "JournalEntry",
+          "intentId": "create_journal_entry_draft",
+          "intentName": "Создать JE (черновик)",
+          "category": "implicit-primary",
+          "reason": "creator-of-main, no explicit salience",
+          "confirmation": "auto"
+        },
+        {
+          "projection": "my_controls",
+          "mainEntity": "Control",
+          "intentId": "configure_control",
+          "intentName": "Добавить control",
+          "category": "implicit-primary",
+          "reason": "creator-of-main, no explicit salience",
+          "confirmation": "auto"
+        },
+        {
+          "projection": "findings_catalog",
+          "mainEntity": "Finding",
+          "intentId": "flag_finding",
+          "intentName": "Поднять Finding",
+          "category": "implicit-primary",
+          "reason": "creator-of-main, no explicit salience",
+          "confirmation": "manual"
+        },
+        {
+          "projection": "evidence_browser",
+          "mainEntity": "Evidence",
+          "intentId": "attach_evidence_to_je",
+          "intentName": "Прикрепить evidence к JE",
+          "category": "implicit-primary",
+          "reason": "creator-of-main, no explicit salience",
+          "confirmation": "auto"
+        },
+        {
+          "projection": "evidence_browser",
+          "mainEntity": "Evidence",
+          "intentId": "attach_evidence_to_attestation",
+          "intentName": "Evidence к attestation",
+          "category": "implicit-primary",
+          "reason": "creator-of-main, no explicit salience",
+          "confirmation": "auto"
+        },
+        {
+          "projection": "controls_admin",
+          "mainEntity": "Control",
+          "intentId": "configure_control",
+          "intentName": "Добавить control",
+          "category": "implicit-primary",
+          "reason": "creator-of-main, no explicit salience",
+          "confirmation": "auto"
+        },
+        {
+          "projection": "cycles_admin",
+          "mainEntity": "AttestationCycle",
+          "intentId": "open_cycle",
+          "intentName": "Открыть attestation cycle",
+          "category": "implicit-primary",
+          "reason": "creator-of-main, no explicit salience",
+          "confirmation": "manual"
+        }
+      ],
+      "uniqueIntents": [
+        {
+          "projection": "my_journal_entries",
+          "mainEntity": "JournalEntry",
+          "intentId": "create_journal_entry_draft",
+          "intentName": "Создать JE (черновик)",
+          "category": "implicit-primary",
+          "reason": "creator-of-main, no explicit salience",
+          "confirmation": "auto",
+          "projections": [
+            "my_journal_entries",
+            "review_queue",
+            "approval_queue"
+          ]
+        },
+        {
+          "projection": "my_controls",
+          "mainEntity": "Control",
+          "intentId": "configure_control",
+          "intentName": "Добавить control",
+          "category": "implicit-primary",
+          "reason": "creator-of-main, no explicit salience",
+          "confirmation": "auto",
+          "projections": [
+            "my_controls",
+            "controls_admin"
+          ]
+        },
+        {
+          "projection": "findings_catalog",
+          "mainEntity": "Finding",
+          "intentId": "flag_finding",
+          "intentName": "Поднять Finding",
+          "category": "implicit-primary",
+          "reason": "creator-of-main, no explicit salience",
+          "confirmation": "manual",
+          "projections": [
+            "findings_catalog"
+          ]
+        },
+        {
+          "projection": "evidence_browser",
+          "mainEntity": "Evidence",
+          "intentId": "attach_evidence_to_je",
+          "intentName": "Прикрепить evidence к JE",
+          "category": "implicit-primary",
+          "reason": "creator-of-main, no explicit salience",
+          "confirmation": "auto",
+          "projections": [
+            "evidence_browser"
+          ]
+        },
+        {
+          "projection": "evidence_browser",
+          "mainEntity": "Evidence",
+          "intentId": "attach_evidence_to_attestation",
+          "intentName": "Evidence к attestation",
+          "category": "implicit-primary",
+          "reason": "creator-of-main, no explicit salience",
+          "confirmation": "auto",
+          "projections": [
+            "evidence_browser"
+          ]
+        },
+        {
+          "projection": "cycles_admin",
+          "mainEntity": "AttestationCycle",
+          "intentId": "open_cycle",
+          "intentName": "Открыть attestation cycle",
+          "category": "implicit-primary",
+          "reason": "creator-of-main, no explicit salience",
+          "confirmation": "manual",
+          "projections": [
+            "cycles_admin"
+          ]
+        }
+      ],
+      "featureEnabled": false
+    },
+    {
+      "domain": "keycloak",
+      "candidates": [
+        {
+          "projection": "realm_list",
+          "mainEntity": "Realm",
+          "intentId": "createRealm",
+          "intentName": "createRealm",
+          "category": "implicit-primary",
+          "reason": "creator-of-main, no explicit salience",
+          "confirmation": "enter"
+        },
+        {
+          "projection": "client_list",
+          "mainEntity": "Client",
+          "intentId": "createClient",
+          "intentName": "createClient",
+          "category": "implicit-primary",
+          "reason": "creator-of-main, no explicit salience",
+          "confirmation": "enter"
+        },
+        {
+          "projection": "user_list",
+          "mainEntity": "User",
+          "intentId": "createUser",
+          "intentName": "createUser",
+          "category": "implicit-primary",
+          "reason": "creator-of-main, no explicit salience",
+          "confirmation": "enter"
+        },
+        {
+          "projection": "group_list",
+          "mainEntity": "Group",
+          "intentId": "createGroup",
+          "intentName": "createGroup",
+          "category": "implicit-primary",
+          "reason": "creator-of-main, no explicit salience",
+          "confirmation": "enter"
+        },
+        {
+          "projection": "role_list",
+          "mainEntity": "Role",
+          "intentId": "createRole",
+          "intentName": "createRole",
+          "category": "implicit-primary",
+          "reason": "creator-of-main, no explicit salience",
+          "confirmation": "enter"
+        },
+        {
+          "projection": "identityprovider_list",
+          "mainEntity": "IdentityProvider",
+          "intentId": "createIdentityProvider",
+          "intentName": "createIdentityProvider",
+          "category": "implicit-primary",
+          "reason": "creator-of-main, no explicit salience",
+          "confirmation": "enter"
+        },
+        {
+          "projection": "clientscope_list",
+          "mainEntity": "ClientScope",
+          "intentId": "createClientScope",
+          "intentName": "createClientScope",
+          "category": "implicit-primary",
+          "reason": "creator-of-main, no explicit salience",
+          "confirmation": "enter"
+        },
+        {
+          "projection": "component_list",
+          "mainEntity": "Component",
+          "intentId": "createComponent",
+          "intentName": "createComponent",
+          "category": "implicit-primary",
+          "reason": "creator-of-main, no explicit salience",
+          "confirmation": "enter"
+        },
+        {
+          "projection": "organization_list",
+          "mainEntity": "Organization",
+          "intentId": "createOrganization",
+          "intentName": "createOrganization",
+          "category": "implicit-primary",
+          "reason": "creator-of-main, no explicit salience",
+          "confirmation": "enter"
+        },
+        {
+          "projection": "workflow_list",
+          "mainEntity": "Workflow",
+          "intentId": "createWorkflow",
+          "intentName": "createWorkflow",
+          "category": "implicit-primary",
+          "reason": "creator-of-main, no explicit salience",
+          "confirmation": "enter"
+        }
+      ],
+      "uniqueIntents": [
+        {
+          "projection": "realm_list",
+          "mainEntity": "Realm",
+          "intentId": "createRealm",
+          "intentName": "createRealm",
+          "category": "implicit-primary",
+          "reason": "creator-of-main, no explicit salience",
+          "confirmation": "enter",
+          "projections": [
+            "realm_list"
+          ]
+        },
+        {
+          "projection": "client_list",
+          "mainEntity": "Client",
+          "intentId": "createClient",
+          "intentName": "createClient",
+          "category": "implicit-primary",
+          "reason": "creator-of-main, no explicit salience",
+          "confirmation": "enter",
+          "projections": [
+            "client_list"
+          ]
+        },
+        {
+          "projection": "user_list",
+          "mainEntity": "User",
+          "intentId": "createUser",
+          "intentName": "createUser",
+          "category": "implicit-primary",
+          "reason": "creator-of-main, no explicit salience",
+          "confirmation": "enter",
+          "projections": [
+            "user_list"
+          ]
+        },
+        {
+          "projection": "group_list",
+          "mainEntity": "Group",
+          "intentId": "createGroup",
+          "intentName": "createGroup",
+          "category": "implicit-primary",
+          "reason": "creator-of-main, no explicit salience",
+          "confirmation": "enter",
+          "projections": [
+            "group_list"
+          ]
+        },
+        {
+          "projection": "role_list",
+          "mainEntity": "Role",
+          "intentId": "createRole",
+          "intentName": "createRole",
+          "category": "implicit-primary",
+          "reason": "creator-of-main, no explicit salience",
+          "confirmation": "enter",
+          "projections": [
+            "role_list"
+          ]
+        },
+        {
+          "projection": "identityprovider_list",
+          "mainEntity": "IdentityProvider",
+          "intentId": "createIdentityProvider",
+          "intentName": "createIdentityProvider",
+          "category": "implicit-primary",
+          "reason": "creator-of-main, no explicit salience",
+          "confirmation": "enter",
+          "projections": [
+            "identityprovider_list"
+          ]
+        },
+        {
+          "projection": "clientscope_list",
+          "mainEntity": "ClientScope",
+          "intentId": "createClientScope",
+          "intentName": "createClientScope",
+          "category": "implicit-primary",
+          "reason": "creator-of-main, no explicit salience",
+          "confirmation": "enter",
+          "projections": [
+            "clientscope_list"
+          ]
+        },
+        {
+          "projection": "component_list",
+          "mainEntity": "Component",
+          "intentId": "createComponent",
+          "intentName": "createComponent",
+          "category": "implicit-primary",
+          "reason": "creator-of-main, no explicit salience",
+          "confirmation": "enter",
+          "projections": [
+            "component_list"
+          ]
+        },
+        {
+          "projection": "organization_list",
+          "mainEntity": "Organization",
+          "intentId": "createOrganization",
+          "intentName": "createOrganization",
+          "category": "implicit-primary",
+          "reason": "creator-of-main, no explicit salience",
+          "confirmation": "enter",
+          "projections": [
+            "organization_list"
+          ]
+        },
+        {
+          "projection": "workflow_list",
+          "mainEntity": "Workflow",
+          "intentId": "createWorkflow",
+          "intentName": "createWorkflow",
+          "category": "implicit-primary",
+          "reason": "creator-of-main, no explicit salience",
+          "confirmation": "enter",
+          "projections": [
+            "workflow_list"
+          ]
+        }
+      ],
+      "featureEnabled": false
+    },
+    {
+      "domain": "argocd",
+      "candidates": [
+        {
+          "projection": "application_list",
+          "mainEntity": "Application",
+          "intentId": "createApplication",
+          "intentName": "createApplication",
+          "category": "implicit-primary",
+          "reason": "creator-of-main, no explicit salience",
+          "confirmation": "enter"
+        },
+        {
+          "projection": "applicationset_list",
+          "mainEntity": "Applicationset",
+          "intentId": "createApplicationSet",
+          "intentName": "createApplicationSet",
+          "category": "implicit-primary",
+          "reason": "creator-of-main, no explicit salience",
+          "confirmation": "enter"
+        },
+        {
+          "projection": "project_list",
+          "mainEntity": "Project",
+          "intentId": "createProject",
+          "intentName": "createProject",
+          "category": "implicit-primary",
+          "reason": "creator-of-main, no explicit salience",
+          "confirmation": "enter"
+        },
+        {
+          "projection": "cluster_list",
+          "mainEntity": "Cluster",
+          "intentId": "createCluster",
+          "intentName": "createCluster",
+          "category": "implicit-primary",
+          "reason": "creator-of-main, no explicit salience",
+          "confirmation": "enter"
+        },
+        {
+          "projection": "repository_list",
+          "mainEntity": "Repository",
+          "intentId": "createRepository",
+          "intentName": "createRepository",
+          "category": "implicit-primary",
+          "reason": "creator-of-main, no explicit salience",
+          "confirmation": "enter"
+        },
+        {
+          "projection": "certificate_list",
+          "mainEntity": "Certificate",
+          "intentId": "createCertificate",
+          "intentName": "createCertificate",
+          "category": "implicit-primary",
+          "reason": "creator-of-main, no explicit salience",
+          "confirmation": "enter"
+        },
+        {
+          "projection": "gpgkey_list",
+          "mainEntity": "Gpgkey",
+          "intentId": "createGpgkey",
+          "intentName": "createGpgkey",
+          "category": "implicit-primary",
+          "reason": "creator-of-main, no explicit salience",
+          "confirmation": "enter"
+        }
+      ],
+      "uniqueIntents": [
+        {
+          "projection": "application_list",
+          "mainEntity": "Application",
+          "intentId": "createApplication",
+          "intentName": "createApplication",
+          "category": "implicit-primary",
+          "reason": "creator-of-main, no explicit salience",
+          "confirmation": "enter",
+          "projections": [
+            "application_list"
+          ]
+        },
+        {
+          "projection": "applicationset_list",
+          "mainEntity": "Applicationset",
+          "intentId": "createApplicationSet",
+          "intentName": "createApplicationSet",
+          "category": "implicit-primary",
+          "reason": "creator-of-main, no explicit salience",
+          "confirmation": "enter",
+          "projections": [
+            "applicationset_list"
+          ]
+        },
+        {
+          "projection": "project_list",
+          "mainEntity": "Project",
+          "intentId": "createProject",
+          "intentName": "createProject",
+          "category": "implicit-primary",
+          "reason": "creator-of-main, no explicit salience",
+          "confirmation": "enter",
+          "projections": [
+            "project_list"
+          ]
+        },
+        {
+          "projection": "cluster_list",
+          "mainEntity": "Cluster",
+          "intentId": "createCluster",
+          "intentName": "createCluster",
+          "category": "implicit-primary",
+          "reason": "creator-of-main, no explicit salience",
+          "confirmation": "enter",
+          "projections": [
+            "cluster_list"
+          ]
+        },
+        {
+          "projection": "repository_list",
+          "mainEntity": "Repository",
+          "intentId": "createRepository",
+          "intentName": "createRepository",
+          "category": "implicit-primary",
+          "reason": "creator-of-main, no explicit salience",
+          "confirmation": "enter",
+          "projections": [
+            "repository_list"
+          ]
+        },
+        {
+          "projection": "certificate_list",
+          "mainEntity": "Certificate",
+          "intentId": "createCertificate",
+          "intentName": "createCertificate",
+          "category": "implicit-primary",
+          "reason": "creator-of-main, no explicit salience",
+          "confirmation": "enter",
+          "projections": [
+            "certificate_list"
+          ]
+        },
+        {
+          "projection": "gpgkey_list",
+          "mainEntity": "Gpgkey",
+          "intentId": "createGpgkey",
+          "intentName": "createGpgkey",
+          "category": "implicit-primary",
+          "reason": "creator-of-main, no explicit salience",
+          "confirmation": "enter",
+          "projections": [
+            "gpgkey_list"
+          ]
+        }
+      ],
+      "featureEnabled": false
+    },
+    {
+      "domain": "notion",
+      "candidates": [],
+      "uniqueIntents": [],
+      "featureEnabled": false
+    },
+    {
+      "domain": "automation",
+      "candidates": [],
+      "uniqueIntents": [],
+      "featureEnabled": false
+    },
+    {
+      "domain": "gravitino",
+      "candidates": [
+        {
+          "projection": "metalake_list",
+          "mainEntity": "Metalake",
+          "intentId": "createMetalake",
+          "intentName": "createMetalake",
+          "category": "implicit-primary",
+          "reason": "creator-of-main, no explicit salience",
+          "confirmation": "enter"
+        }
+      ],
+      "uniqueIntents": [
+        {
+          "projection": "metalake_list",
+          "mainEntity": "Metalake",
+          "intentId": "createMetalake",
+          "intentName": "createMetalake",
+          "category": "implicit-primary",
+          "reason": "creator-of-main, no explicit salience",
+          "confirmation": "enter",
+          "projections": [
+            "metalake_list"
+          ]
+        }
+      ],
+      "featureEnabled": false
+    },
+    {
+      "domain": "meta",
+      "candidates": [],
+      "uniqueIntents": [],
+      "featureEnabled": false
+    }
+  ]
+}
