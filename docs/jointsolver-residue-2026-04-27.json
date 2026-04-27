@@ -1,0 +1,815 @@
+{
+  "generatedAt": "2026-04-27T08:51:32.398Z",
+  "phase": "3f",
+  "totalRecords": 49,
+  "domains": [
+    {
+      "domain": "booking",
+      "records": []
+    },
+    {
+      "domain": "planning",
+      "records": []
+    },
+    {
+      "domain": "workflow",
+      "records": []
+    },
+    {
+      "domain": "messenger",
+      "records": [
+        {
+          "domain": "messenger",
+          "projection": "conversation_list",
+          "role": "contact",
+          "archetype": "catalog",
+          "mainEntity": "Conversation",
+          "intentId": "search_messages",
+          "slot": "toolbar",
+          "reasons": [
+            "missing-entity-reference"
+          ],
+          "intentExists": true,
+          "intentCreates": null,
+          "intentEntities": []
+        },
+        {
+          "domain": "messenger",
+          "projection": "contact_list",
+          "role": "contact",
+          "archetype": "catalog",
+          "mainEntity": "Contact",
+          "intentId": "search_messages",
+          "slot": "toolbar",
+          "reasons": [
+            "missing-entity-reference"
+          ],
+          "intentExists": true,
+          "intentCreates": null,
+          "intentEntities": []
+        },
+        {
+          "domain": "messenger",
+          "projection": "people_list",
+          "role": "contact",
+          "archetype": "catalog",
+          "mainEntity": "User",
+          "intentId": "search_messages",
+          "slot": "toolbar",
+          "reasons": [
+            "missing-entity-reference"
+          ],
+          "intentExists": true,
+          "intentCreates": null,
+          "intentEntities": []
+        }
+      ]
+    },
+    {
+      "domain": "sales",
+      "records": [
+        {
+          "domain": "sales",
+          "projection": "listing_feed",
+          "role": "buyer",
+          "archetype": "catalog",
+          "mainEntity": "Listing",
+          "intentId": "search_listings",
+          "slot": "toolbar",
+          "reasons": [
+            "missing-entity-reference"
+          ],
+          "intentExists": true,
+          "intentCreates": null,
+          "intentEntities": []
+        },
+        {
+          "domain": "sales",
+          "projection": "my_listings",
+          "role": "buyer",
+          "archetype": "catalog",
+          "mainEntity": "Listing",
+          "intentId": "search_listings",
+          "slot": "toolbar",
+          "reasons": [
+            "missing-entity-reference"
+          ],
+          "intentExists": true,
+          "intentCreates": null,
+          "intentEntities": []
+        },
+        {
+          "domain": "sales",
+          "projection": "my_bids",
+          "role": "buyer",
+          "archetype": "catalog",
+          "mainEntity": "Bid",
+          "intentId": "search_listings",
+          "slot": "toolbar",
+          "reasons": [
+            "missing-entity-reference"
+          ],
+          "intentExists": true,
+          "intentCreates": null,
+          "intentEntities": []
+        },
+        {
+          "domain": "sales",
+          "projection": "order_list",
+          "role": "buyer",
+          "archetype": "catalog",
+          "mainEntity": "Order",
+          "intentId": "search_listings",
+          "slot": "toolbar",
+          "reasons": [
+            "missing-entity-reference"
+          ],
+          "intentExists": true,
+          "intentCreates": null,
+          "intentEntities": []
+        },
+        {
+          "domain": "sales",
+          "projection": "watchlist",
+          "role": "buyer",
+          "archetype": "catalog",
+          "mainEntity": "Watchlist",
+          "intentId": "search_listings",
+          "slot": "toolbar",
+          "reasons": [
+            "missing-entity-reference"
+          ],
+          "intentExists": true,
+          "intentCreates": null,
+          "intentEntities": []
+        },
+        {
+          "domain": "sales",
+          "projection": "category_browse",
+          "role": "buyer",
+          "archetype": "catalog",
+          "mainEntity": "Category",
+          "intentId": "search_listings",
+          "slot": "toolbar",
+          "reasons": [
+            "missing-entity-reference"
+          ],
+          "intentExists": true,
+          "intentCreates": null,
+          "intentEntities": []
+        },
+        {
+          "domain": "sales",
+          "projection": "notifications",
+          "role": "buyer",
+          "archetype": "catalog",
+          "mainEntity": "Notification",
+          "intentId": "search_listings",
+          "slot": "toolbar",
+          "reasons": [
+            "missing-entity-reference"
+          ],
+          "intentExists": true,
+          "intentCreates": null,
+          "intentEntities": []
+        },
+        {
+          "domain": "sales",
+          "projection": "saved_searches",
+          "role": "buyer",
+          "archetype": "catalog",
+          "mainEntity": "SavedSearch",
+          "intentId": "search_listings",
+          "slot": "toolbar",
+          "reasons": [
+            "missing-entity-reference"
+          ],
+          "intentExists": true,
+          "intentCreates": null,
+          "intentEntities": []
+        },
+        {
+          "domain": "sales",
+          "projection": "listing_feed",
+          "role": "agent",
+          "archetype": "catalog",
+          "mainEntity": "Listing",
+          "intentId": "search_listings",
+          "slot": "toolbar",
+          "reasons": [
+            "missing-entity-reference"
+          ],
+          "intentExists": true,
+          "intentCreates": null,
+          "intentEntities": []
+        },
+        {
+          "domain": "sales",
+          "projection": "my_listings",
+          "role": "agent",
+          "archetype": "catalog",
+          "mainEntity": "Listing",
+          "intentId": "search_listings",
+          "slot": "toolbar",
+          "reasons": [
+            "missing-entity-reference"
+          ],
+          "intentExists": true,
+          "intentCreates": null,
+          "intentEntities": []
+        },
+        {
+          "domain": "sales",
+          "projection": "my_bids",
+          "role": "agent",
+          "archetype": "catalog",
+          "mainEntity": "Bid",
+          "intentId": "search_listings",
+          "slot": "toolbar",
+          "reasons": [
+            "missing-entity-reference"
+          ],
+          "intentExists": true,
+          "intentCreates": null,
+          "intentEntities": []
+        },
+        {
+          "domain": "sales",
+          "projection": "order_list",
+          "role": "agent",
+          "archetype": "catalog",
+          "mainEntity": "Order",
+          "intentId": "search_listings",
+          "slot": "toolbar",
+          "reasons": [
+            "missing-entity-reference"
+          ],
+          "intentExists": true,
+          "intentCreates": null,
+          "intentEntities": []
+        },
+        {
+          "domain": "sales",
+          "projection": "watchlist",
+          "role": "agent",
+          "archetype": "catalog",
+          "mainEntity": "Watchlist",
+          "intentId": "search_listings",
+          "slot": "toolbar",
+          "reasons": [
+            "missing-entity-reference"
+          ],
+          "intentExists": true,
+          "intentCreates": null,
+          "intentEntities": []
+        },
+        {
+          "domain": "sales",
+          "projection": "category_browse",
+          "role": "agent",
+          "archetype": "catalog",
+          "mainEntity": "Category",
+          "intentId": "search_listings",
+          "slot": "toolbar",
+          "reasons": [
+            "missing-entity-reference"
+          ],
+          "intentExists": true,
+          "intentCreates": null,
+          "intentEntities": []
+        },
+        {
+          "domain": "sales",
+          "projection": "notifications",
+          "role": "agent",
+          "archetype": "catalog",
+          "mainEntity": "Notification",
+          "intentId": "search_listings",
+          "slot": "toolbar",
+          "reasons": [
+            "missing-entity-reference"
+          ],
+          "intentExists": true,
+          "intentCreates": null,
+          "intentEntities": []
+        },
+        {
+          "domain": "sales",
+          "projection": "saved_searches",
+          "role": "agent",
+          "archetype": "catalog",
+          "mainEntity": "SavedSearch",
+          "intentId": "search_listings",
+          "slot": "toolbar",
+          "reasons": [
+            "missing-entity-reference"
+          ],
+          "intentExists": true,
+          "intentCreates": null,
+          "intentEntities": []
+        }
+      ]
+    },
+    {
+      "domain": "lifequest",
+      "records": []
+    },
+    {
+      "domain": "reflect",
+      "records": []
+    },
+    {
+      "domain": "invest",
+      "records": []
+    },
+    {
+      "domain": "delivery",
+      "records": []
+    },
+    {
+      "domain": "freelance",
+      "records": []
+    },
+    {
+      "domain": "compliance",
+      "records": []
+    },
+    {
+      "domain": "keycloak",
+      "records": []
+    },
+    {
+      "domain": "argocd",
+      "records": []
+    },
+    {
+      "domain": "notion",
+      "records": [
+        {
+          "domain": "notion",
+          "projection": "page_detail",
+          "role": "workspaceOwner",
+          "archetype": "detail",
+          "mainEntity": "Page",
+          "intentId": "move_page",
+          "slot": "toolbar",
+          "reasons": [
+            "missing-entity-reference"
+          ],
+          "intentExists": true,
+          "intentCreates": null,
+          "intentEntities": null
+        },
+        {
+          "domain": "notion",
+          "projection": "page_detail",
+          "role": "workspaceOwner",
+          "archetype": "detail",
+          "mainEntity": "Page",
+          "intentId": "pin_to_sidebar",
+          "slot": "overlay",
+          "reasons": [
+            "missing-entity-reference"
+          ],
+          "intentExists": true,
+          "intentCreates": null,
+          "intentEntities": null
+        },
+        {
+          "domain": "notion",
+          "projection": "page_detail",
+          "role": "workspaceOwner",
+          "archetype": "detail",
+          "mainEntity": "Page",
+          "intentId": "search_workspace",
+          "slot": "overlay",
+          "reasons": [
+            "missing-entity-reference"
+          ],
+          "intentExists": true,
+          "intentCreates": null,
+          "intentEntities": null
+        },
+        {
+          "domain": "notion",
+          "projection": "database_views_list",
+          "role": "workspaceOwner",
+          "archetype": "catalog",
+          "mainEntity": "DatabaseView",
+          "intentId": "add_filter",
+          "slot": "overlay",
+          "reasons": [
+            "missing-entity-reference"
+          ],
+          "intentExists": true,
+          "intentCreates": null,
+          "intentEntities": null
+        },
+        {
+          "domain": "notion",
+          "projection": "database_properties_list",
+          "role": "workspaceOwner",
+          "archetype": "catalog",
+          "mainEntity": "Property",
+          "intentId": "change_property_kind",
+          "slot": "overlay",
+          "reasons": [
+            "missing-entity-reference"
+          ],
+          "intentExists": true,
+          "intentCreates": null,
+          "intentEntities": null
+        },
+        {
+          "domain": "notion",
+          "projection": "database_table_view",
+          "role": "workspaceOwner",
+          "archetype": "catalog",
+          "mainEntity": "DatabaseRow",
+          "intentId": "add_database_row",
+          "slot": "toolbar",
+          "reasons": [
+            "missing-entity-reference"
+          ],
+          "intentExists": true,
+          "intentCreates": null,
+          "intentEntities": null
+        },
+        {
+          "domain": "notion",
+          "projection": "database_board_view",
+          "role": "workspaceOwner",
+          "archetype": "catalog",
+          "mainEntity": "DatabaseRow",
+          "intentId": "add_database_row",
+          "slot": "toolbar",
+          "reasons": [
+            "missing-entity-reference"
+          ],
+          "intentExists": true,
+          "intentCreates": null,
+          "intentEntities": null
+        },
+        {
+          "domain": "notion",
+          "projection": "database_gallery_view",
+          "role": "workspaceOwner",
+          "archetype": "catalog",
+          "mainEntity": "DatabaseRow",
+          "intentId": "add_database_row",
+          "slot": "toolbar",
+          "reasons": [
+            "missing-entity-reference"
+          ],
+          "intentExists": true,
+          "intentCreates": null,
+          "intentEntities": null
+        },
+        {
+          "domain": "notion",
+          "projection": "page_detail",
+          "role": "editor",
+          "archetype": "detail",
+          "mainEntity": "Page",
+          "intentId": "move_page",
+          "slot": "toolbar",
+          "reasons": [
+            "missing-entity-reference"
+          ],
+          "intentExists": true,
+          "intentCreates": null,
+          "intentEntities": null
+        },
+        {
+          "domain": "notion",
+          "projection": "page_detail",
+          "role": "editor",
+          "archetype": "detail",
+          "mainEntity": "Page",
+          "intentId": "pin_to_sidebar",
+          "slot": "overlay",
+          "reasons": [
+            "missing-entity-reference"
+          ],
+          "intentExists": true,
+          "intentCreates": null,
+          "intentEntities": null
+        },
+        {
+          "domain": "notion",
+          "projection": "page_detail",
+          "role": "editor",
+          "archetype": "detail",
+          "mainEntity": "Page",
+          "intentId": "search_workspace",
+          "slot": "overlay",
+          "reasons": [
+            "missing-entity-reference"
+          ],
+          "intentExists": true,
+          "intentCreates": null,
+          "intentEntities": null
+        },
+        {
+          "domain": "notion",
+          "projection": "database_views_list",
+          "role": "editor",
+          "archetype": "catalog",
+          "mainEntity": "DatabaseView",
+          "intentId": "add_filter",
+          "slot": "overlay",
+          "reasons": [
+            "missing-entity-reference"
+          ],
+          "intentExists": true,
+          "intentCreates": null,
+          "intentEntities": null
+        },
+        {
+          "domain": "notion",
+          "projection": "database_properties_list",
+          "role": "editor",
+          "archetype": "catalog",
+          "mainEntity": "Property",
+          "intentId": "change_property_kind",
+          "slot": "overlay",
+          "reasons": [
+            "missing-entity-reference"
+          ],
+          "intentExists": true,
+          "intentCreates": null,
+          "intentEntities": null
+        },
+        {
+          "domain": "notion",
+          "projection": "database_table_view",
+          "role": "editor",
+          "archetype": "catalog",
+          "mainEntity": "DatabaseRow",
+          "intentId": "add_database_row",
+          "slot": "toolbar",
+          "reasons": [
+            "missing-entity-reference"
+          ],
+          "intentExists": true,
+          "intentCreates": null,
+          "intentEntities": null
+        },
+        {
+          "domain": "notion",
+          "projection": "database_board_view",
+          "role": "editor",
+          "archetype": "catalog",
+          "mainEntity": "DatabaseRow",
+          "intentId": "add_database_row",
+          "slot": "toolbar",
+          "reasons": [
+            "missing-entity-reference"
+          ],
+          "intentExists": true,
+          "intentCreates": null,
+          "intentEntities": null
+        },
+        {
+          "domain": "notion",
+          "projection": "database_gallery_view",
+          "role": "editor",
+          "archetype": "catalog",
+          "mainEntity": "DatabaseRow",
+          "intentId": "add_database_row",
+          "slot": "toolbar",
+          "reasons": [
+            "missing-entity-reference"
+          ],
+          "intentExists": true,
+          "intentCreates": null,
+          "intentEntities": null
+        },
+        {
+          "domain": "notion",
+          "projection": "page_detail",
+          "role": "commenter",
+          "archetype": "detail",
+          "mainEntity": "Page",
+          "intentId": "open_recent",
+          "slot": "toolbar",
+          "reasons": [
+            "missing-entity-reference"
+          ],
+          "intentExists": true,
+          "intentCreates": null,
+          "intentEntities": null
+        },
+        {
+          "domain": "notion",
+          "projection": "page_detail",
+          "role": "commenter",
+          "archetype": "detail",
+          "mainEntity": "Page",
+          "intentId": "search_workspace",
+          "slot": "toolbar",
+          "reasons": [
+            "missing-entity-reference"
+          ],
+          "intentExists": true,
+          "intentCreates": null,
+          "intentEntities": null
+        },
+        {
+          "domain": "notion",
+          "projection": "page_detail",
+          "role": "viewer",
+          "archetype": "detail",
+          "mainEntity": "Page",
+          "intentId": "open_recent",
+          "slot": "toolbar",
+          "reasons": [
+            "missing-entity-reference"
+          ],
+          "intentExists": true,
+          "intentCreates": null,
+          "intentEntities": null
+        },
+        {
+          "domain": "notion",
+          "projection": "page_detail",
+          "role": "viewer",
+          "archetype": "detail",
+          "mainEntity": "Page",
+          "intentId": "search_workspace",
+          "slot": "toolbar",
+          "reasons": [
+            "missing-entity-reference"
+          ],
+          "intentExists": true,
+          "intentCreates": null,
+          "intentEntities": null
+        },
+        {
+          "domain": "notion",
+          "projection": "page_detail",
+          "role": "agent",
+          "archetype": "detail",
+          "mainEntity": "Page",
+          "intentId": "agent_summarize_page",
+          "slot": "toolbar",
+          "reasons": [
+            "missing-entity-reference"
+          ],
+          "intentExists": true,
+          "intentCreates": null,
+          "intentEntities": null
+        }
+      ]
+    },
+    {
+      "domain": "automation",
+      "records": [
+        {
+          "domain": "automation",
+          "projection": "credential_vault",
+          "role": "editor",
+          "archetype": "catalog",
+          "mainEntity": "Credential",
+          "intentId": "share_credential",
+          "slot": "overlay",
+          "reasons": [
+            "missing-entity-reference"
+          ],
+          "intentExists": true,
+          "intentCreates": null,
+          "intentEntities": null
+        }
+      ]
+    },
+    {
+      "domain": "gravitino",
+      "records": [
+        {
+          "domain": "gravitino",
+          "projection": "user_list",
+          "role": "owner",
+          "archetype": "catalog",
+          "mainEntity": "User",
+          "intentId": "grantRoleToUser",
+          "slot": "overlay",
+          "reasons": [
+            "missing-entity-reference"
+          ],
+          "intentExists": true,
+          "intentCreates": null,
+          "intentEntities": null
+        },
+        {
+          "domain": "gravitino",
+          "projection": "user_list",
+          "role": "owner",
+          "archetype": "catalog",
+          "mainEntity": "User",
+          "intentId": "revokeRoleFromUser",
+          "slot": "overlay",
+          "reasons": [
+            "missing-entity-reference"
+          ],
+          "intentExists": true,
+          "intentCreates": null,
+          "intentEntities": null
+        },
+        {
+          "domain": "gravitino",
+          "projection": "user_detail",
+          "role": "owner",
+          "archetype": "detail",
+          "mainEntity": "User",
+          "intentId": "grantRoleToUser",
+          "slot": "overlay",
+          "reasons": [
+            "missing-entity-reference"
+          ],
+          "intentExists": true,
+          "intentCreates": null,
+          "intentEntities": null
+        },
+        {
+          "domain": "gravitino",
+          "projection": "user_detail",
+          "role": "owner",
+          "archetype": "detail",
+          "mainEntity": "User",
+          "intentId": "revokeRoleFromUser",
+          "slot": "overlay",
+          "reasons": [
+            "missing-entity-reference"
+          ],
+          "intentExists": true,
+          "intentCreates": null,
+          "intentEntities": null
+        },
+        {
+          "domain": "gravitino",
+          "projection": "group_list",
+          "role": "owner",
+          "archetype": "catalog",
+          "mainEntity": "Group",
+          "intentId": "grantRoleToGroup",
+          "slot": "overlay",
+          "reasons": [
+            "missing-entity-reference"
+          ],
+          "intentExists": true,
+          "intentCreates": null,
+          "intentEntities": null
+        },
+        {
+          "domain": "gravitino",
+          "projection": "group_list",
+          "role": "owner",
+          "archetype": "catalog",
+          "mainEntity": "Group",
+          "intentId": "revokeRoleFromGroup",
+          "slot": "overlay",
+          "reasons": [
+            "missing-entity-reference"
+          ],
+          "intentExists": true,
+          "intentCreates": null,
+          "intentEntities": null
+        },
+        {
+          "domain": "gravitino",
+          "projection": "group_detail",
+          "role": "owner",
+          "archetype": "detail",
+          "mainEntity": "Group",
+          "intentId": "grantRoleToGroup",
+          "slot": "overlay",
+          "reasons": [
+            "missing-entity-reference"
+          ],
+          "intentExists": true,
+          "intentCreates": null,
+          "intentEntities": null
+        },
+        {
+          "domain": "gravitino",
+          "projection": "group_detail",
+          "role": "owner",
+          "archetype": "detail",
+          "mainEntity": "Group",
+          "intentId": "revokeRoleFromGroup",
+          "slot": "overlay",
+          "reasons": [
+            "missing-entity-reference"
+          ],
+          "intentExists": true,
+          "intentCreates": null,
+          "intentEntities": null
+        }
+      ]
+    },
+    {
+      "domain": "meta",
+      "records": []
+    }
+  ]
+}
