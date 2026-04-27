@@ -621,10 +621,16 @@ WorkflowNode: {
 **Проблема.** Comment может быть прикреплён либо к Page, либо к Block (не оба). Закрывается двумя expression invariants — workaround. Polymorphic API закрывает variant'ы внутри одной сущности, не cross-entity attach.
 **Что нужно.** `field.kind: "polymorphicFk"` с alternatives `[{entity: "Page", field: "pageId"}, {entity: "Block", field: "blockId"}]` + автоматический cardinality(exactly-one).
 
-### 12.10 P0 — Block-canvas primitive отсутствует
+### 12.10 ✅ — BlockEditor через adapter capability (Tiptap)
 **Source.** Notion field test (page_detail.body = canvas).
-**Проблема.** Notion-style block-list (drag handles, slash commands, indent/outdent, kind-conversion) — нет `<BlockEditor>` в renderer/primitives. canvas slot для page_detail рендерится как пустой placeholder.
-**Что нужно.** Renderer primitive `BlockEditor` (15+ kind'ов с variant-fields), реагирующий на indent/outdent и slash-command intent'ы. Или признать, что rich-text editing — out of scope формата (`renderer.primitives.canvas` остаётся хост-слотом).
+**Проблема (исходная).** Notion-style block-list (drag handles, slash commands, indent/outdent, kind-conversion) — нет `<BlockEditor>` в renderer/primitives. canvas slot для page_detail рендерится как пустой placeholder.
+**Решение (2026-04-26).** Подключаем готовые block-editor библиотеки (Tiptap / BlockNote / Lexical) **через адаптер**, не реализуем свой primitive в renderer. Renderer оставляет `canvas` как хост-слот; адаптеры могут декларировать `capabilities.primitive.blockEditor` и подставлять обёртку над выбранной библиотекой. Для хостов, которым block-editing не нужен (большинство 13 текущих доменов), `canvas` остаётся пустым placeholder'ом — без штрафа в SDK-bundle. Адаптерный путь сохраняет format/reader-симметрию: voice/agent/document материализуют block-tree из Φ напрямую, pixels-reader делегирует визуализацию библиотеке.
+**Реализация.**
+- (1) `BlockEditor` primitive в `@intent-driven/renderer@~0.55` (idf-sdk PR #361) — резолвит реализацию через `getCapability("primitive","blockEditor")`, fallback — read-only список с kind-метками.
+- (2) Reference impl + capability declaration в `@intent-driven/adapter-antd@~1.10` (тот же #361) — textarea + Select для kind, минимум.
+- (3) `@intent-driven/adapter-antd-blockeditor-tiptap@0.3.0` opt-in пакет (idf-sdk #372 v0.2 + предыдущий v0.1) — Tiptap StarterKit, slash-commands menu (`/h1` / `/todo` / `/code`), InlineBubbleMenu (Bold / Italic / Strike / Code).
+- (4) Notion-host (idf #145 + #150) — `BlockCanvas` wrapper над renderer `BlockEditor`, kind/shape mapping (`heading_1 ↔ heading-1`), `applyTiptapBlockEditor(antdAdapter)` в bootstrap.
+**Roadmap v0.4+.** Drag-handles + indent (BlockNote upgrade), image / bookmark variants, mention extension.
 
 ### 12.11 P1 — `proj.views[]` не используется для multi-view database
 **Source.** Notion field test (database с 5 view-kind'ами).
@@ -642,7 +648,7 @@ WorkflowNode: {
 2. **P1** — §12.1 archetype/kind unification.
 3. **P1** — §12.2 voice materializer primary-field discovery.
 4. **P1** — §12.7 audit recognizes `__irr.point` shape.
-5. **P0** — §12.10 BlockEditor primitive (or explicit out-of-scope).
+5. ✅ **P0** — §12.10 BlockEditor через adapter capability (Tiptap pkg @0.3, idf-sdk #361 / #372 + idf #145 / #150 merged).
 6. **P2** — §12.3 / §12.4 / §12.5 / §12.6 — minor fixes / docs / audit polish.
 
 ## §13 — Meta-domain Level 1 (IDF-on-IDF, 2026-04-26, observability-only)
