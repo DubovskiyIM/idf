@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-04-27T13:24:23.734Z",
+  "generatedAt": "2026-04-27T15:34:17.374Z",
   "phase": "3e",
   "notes": "respectRoleCanExecute: true, per-role symmetric comparison",
   "domains": [
@@ -115,18 +115,12 @@
           "mainEntity": "Service",
           "summary": {
             "total": 3,
-            "divergent": 1,
+            "divergent": 0,
             "derivedOnly": 0,
             "alternateOnly": 1,
-            "agreed": 1
+            "agreed": 2
           },
           "diff": [
-            {
-              "intentId": "add_service",
-              "derived": "toolbar",
-              "alternate": "hero",
-              "kind": "divergent"
-            },
             {
               "intentId": "remove_service",
               "derived": null,
@@ -631,7 +625,7 @@
           },
           "diff": [
             {
-              "intentId": "create_direct_chat",
+              "intentId": "create_group",
               "derived": "toolbar",
               "alternate": "hero",
               "kind": "divergent"
@@ -733,7 +727,7 @@
           },
           "diff": [
             {
-              "intentId": "create_direct_chat",
+              "intentId": "create_group",
               "derived": "toolbar",
               "alternate": "hero",
               "kind": "divergent"
@@ -1021,7 +1015,7 @@
           },
           "diff": [
             {
-              "intentId": "create_direct_chat",
+              "intentId": "create_group",
               "derived": "toolbar",
               "alternate": "hero",
               "kind": "divergent"
@@ -6126,19 +6120,12 @@
           "mainEntity": "DatabaseView",
           "summary": {
             "total": 7,
-            "divergent": 1,
+            "divergent": 0,
             "derivedOnly": 0,
             "alternateOnly": 0,
-            "agreed": 6
+            "agreed": 7
           },
-          "diff": [
-            {
-              "intentId": "create_view",
-              "derived": "toolbar",
-              "alternate": "hero",
-              "kind": "divergent"
-            }
-          ]
+          "diff": []
         },
         {
           "projection": "database_properties_list",
@@ -6147,18 +6134,12 @@
           "mainEntity": "Property",
           "summary": {
             "total": 4,
-            "divergent": 2,
+            "divergent": 1,
             "derivedOnly": 0,
             "alternateOnly": 0,
-            "agreed": 2
+            "agreed": 3
           },
           "diff": [
-            {
-              "intentId": "add_property",
-              "derived": "toolbar",
-              "alternate": "hero",
-              "kind": "divergent"
-            },
             {
               "intentId": "delete_property",
               "derived": "overlay",
@@ -6174,19 +6155,12 @@
           "mainEntity": "DatabaseRow",
           "summary": {
             "total": 1,
-            "divergent": 1,
+            "divergent": 0,
             "derivedOnly": 0,
             "alternateOnly": 0,
-            "agreed": 0
+            "agreed": 1
           },
-          "diff": [
-            {
-              "intentId": "add_database_row",
-              "derived": "toolbar",
-              "alternate": "hero",
-              "kind": "divergent"
-            }
-          ]
+          "diff": []
         },
         {
           "projection": "database_board_view",
@@ -6195,19 +6169,12 @@
           "mainEntity": "DatabaseRow",
           "summary": {
             "total": 1,
-            "divergent": 1,
+            "divergent": 0,
             "derivedOnly": 0,
             "alternateOnly": 0,
-            "agreed": 0
+            "agreed": 1
           },
-          "diff": [
-            {
-              "intentId": "add_database_row",
-              "derived": "toolbar",
-              "alternate": "hero",
-              "kind": "divergent"
-            }
-          ]
+          "diff": []
         },
         {
           "projection": "database_gallery_view",
@@ -6216,19 +6183,12 @@
           "mainEntity": "DatabaseRow",
           "summary": {
             "total": 1,
-            "divergent": 1,
+            "divergent": 0,
             "derivedOnly": 0,
             "alternateOnly": 0,
-            "agreed": 0
+            "agreed": 1
           },
-          "diff": [
-            {
-              "intentId": "add_database_row",
-              "derived": "toolbar",
-              "alternate": "hero",
-              "kind": "divergent"
-            }
-          ]
+          "diff": []
         },
         {
           "projection": "page_permissions_panel",
@@ -6237,18 +6197,12 @@
           "mainEntity": "PagePermission",
           "summary": {
             "total": 2,
-            "divergent": 2,
+            "divergent": 1,
             "derivedOnly": 0,
             "alternateOnly": 0,
-            "agreed": 0
+            "agreed": 1
           },
           "diff": [
-            {
-              "intentId": "share_page",
-              "derived": "toolbar",
-              "alternate": "hero",
-              "kind": "divergent"
-            },
             {
               "intentId": "unshare_page",
               "derived": "overlay",
@@ -6264,19 +6218,12 @@
           "mainEntity": "WorkspaceMember",
           "summary": {
             "total": 3,
-            "divergent": 1,
+            "divergent": 0,
             "derivedOnly": 0,
             "alternateOnly": 0,
-            "agreed": 2
+            "agreed": 3
           },
-          "diff": [
-            {
-              "intentId": "invite_member",
-              "derived": "toolbar",
-              "alternate": "hero",
-              "kind": "divergent"
-            }
-          ]
+          "diff": []
         },
         {
           "projection": "page_detail",
@@ -6387,19 +6334,12 @@
           "mainEntity": "DatabaseView",
           "summary": {
             "total": 7,
-            "divergent": 1,
+            "divergent": 0,
             "derivedOnly": 0,
             "alternateOnly": 0,
-            "agreed": 6
+            "agreed": 7
           },
-          "diff": [
-            {
-              "intentId": "create_view",
-              "derived": "toolbar",
-              "alternate": "hero",
-              "kind": "divergent"
-            }
-          ]
+          "diff": []
         },
         {
           "projection": "database_properties_list",
@@ -6408,18 +6348,12 @@
           "mainEntity": "Property",
           "summary": {
             "total": 4,
-            "divergent": 2,
+            "divergent": 1,
             "derivedOnly": 0,
             "alternateOnly": 0,
-            "agreed": 2
+            "agreed": 3
           },
           "diff": [
-            {
-              "intentId": "add_property",
-              "derived": "toolbar",
-              "alternate": "hero",
-              "kind": "divergent"
-            },
             {
               "intentId": "delete_property",
               "derived": "overlay",
@@ -6435,19 +6369,12 @@
           "mainEntity": "DatabaseRow",
           "summary": {
             "total": 1,
-            "divergent": 1,
+            "divergent": 0,
             "derivedOnly": 0,
             "alternateOnly": 0,
-            "agreed": 0
+            "agreed": 1
           },
-          "diff": [
-            {
-              "intentId": "add_database_row",
-              "derived": "toolbar",
-              "alternate": "hero",
-              "kind": "divergent"
-            }
-          ]
+          "diff": []
         },
         {
           "projection": "database_board_view",
@@ -6456,19 +6383,12 @@
           "mainEntity": "DatabaseRow",
           "summary": {
             "total": 1,
-            "divergent": 1,
+            "divergent": 0,
             "derivedOnly": 0,
             "alternateOnly": 0,
-            "agreed": 0
+            "agreed": 1
           },
-          "diff": [
-            {
-              "intentId": "add_database_row",
-              "derived": "toolbar",
-              "alternate": "hero",
-              "kind": "divergent"
-            }
-          ]
+          "diff": []
         },
         {
           "projection": "database_gallery_view",
@@ -6477,19 +6397,12 @@
           "mainEntity": "DatabaseRow",
           "summary": {
             "total": 1,
-            "divergent": 1,
+            "divergent": 0,
             "derivedOnly": 0,
             "alternateOnly": 0,
-            "agreed": 0
+            "agreed": 1
           },
-          "diff": [
-            {
-              "intentId": "add_database_row",
-              "derived": "toolbar",
-              "alternate": "hero",
-              "kind": "divergent"
-            }
-          ]
+          "diff": []
         },
         {
           "projection": "page_permissions_panel",
@@ -6498,19 +6411,12 @@
           "mainEntity": "PagePermission",
           "summary": {
             "total": 1,
-            "divergent": 1,
+            "divergent": 0,
             "derivedOnly": 0,
             "alternateOnly": 0,
-            "agreed": 0
+            "agreed": 1
           },
-          "diff": [
-            {
-              "intentId": "share_page",
-              "derived": "toolbar",
-              "alternate": "hero",
-              "kind": "divergent"
-            }
-          ]
+          "diff": []
         },
         {
           "projection": "page_detail",
@@ -6605,19 +6511,12 @@
           "mainEntity": "Credential",
           "summary": {
             "total": 5,
-            "divergent": 1,
+            "divergent": 0,
             "derivedOnly": 0,
             "alternateOnly": 0,
-            "agreed": 4
+            "agreed": 5
           },
-          "diff": [
-            {
-              "intentId": "create_credential",
-              "derived": "toolbar",
-              "alternate": "hero",
-              "kind": "divergent"
-            }
-          ]
+          "diff": []
         },
         {
           "projection": "node_palette",
@@ -6626,19 +6525,12 @@
           "mainEntity": "NodeType",
           "summary": {
             "total": 3,
-            "divergent": 1,
+            "divergent": 0,
             "derivedOnly": 0,
             "alternateOnly": 0,
-            "agreed": 2
+            "agreed": 3
           },
-          "diff": [
-            {
-              "intentId": "register_node_type",
-              "derived": "toolbar",
-              "alternate": "hero",
-              "kind": "divergent"
-            }
-          ]
+          "diff": []
         }
       ]
     },
@@ -7197,18 +7089,12 @@
           "mainEntity": "PatternPromotion",
           "summary": {
             "total": 4,
-            "divergent": 2,
+            "divergent": 1,
             "derivedOnly": 0,
             "alternateOnly": 0,
-            "agreed": 2
+            "agreed": 3
           },
           "diff": [
-            {
-              "intentId": "request_pattern_promotion",
-              "derived": "toolbar",
-              "alternate": "hero",
-              "kind": "divergent"
-            },
             {
               "intentId": "approve_pattern_promotion",
               "derived": "overlay",
@@ -7263,18 +7149,12 @@
           "mainEntity": "BacklogItem",
           "summary": {
             "total": 4,
-            "divergent": 2,
+            "divergent": 1,
             "derivedOnly": 0,
             "alternateOnly": 0,
-            "agreed": 2
+            "agreed": 3
           },
           "diff": [
-            {
-              "intentId": "add_backlog_item",
-              "derived": "toolbar",
-              "alternate": "hero",
-              "kind": "divergent"
-            },
             {
               "intentId": "schedule_backlog_item",
               "derived": "overlay",
@@ -7329,19 +7209,12 @@
           "mainEntity": "BacklogItem",
           "summary": {
             "total": 1,
-            "divergent": 1,
+            "divergent": 0,
             "derivedOnly": 0,
             "alternateOnly": 0,
-            "agreed": 0
+            "agreed": 1
           },
-          "diff": [
-            {
-              "intentId": "add_backlog_item",
-              "derived": "toolbar",
-              "alternate": "hero",
-              "kind": "divergent"
-            }
-          ]
+          "diff": []
         },
         {
           "projection": "backlog_item_detail",
@@ -7371,18 +7244,12 @@
           "mainEntity": "PatternPromotion",
           "summary": {
             "total": 4,
-            "divergent": 2,
+            "divergent": 1,
             "derivedOnly": 0,
             "alternateOnly": 0,
-            "agreed": 2
+            "agreed": 3
           },
           "diff": [
-            {
-              "intentId": "request_pattern_promotion",
-              "derived": "toolbar",
-              "alternate": "hero",
-              "kind": "divergent"
-            },
             {
               "intentId": "approve_pattern_promotion",
               "derived": "overlay",
