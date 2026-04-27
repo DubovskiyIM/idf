@@ -39,6 +39,11 @@ export const PROJECTIONS = {
     // canvas/BlockEditor), не дочерний CRUD-каталог. Без opt-out R8 absorb'ит
     // block_list как subCollection и UI даёт двойное представление.
     absorbExclude: ["Block"],
+    // top-level subCollections (canonical shape — ArchetypeDetail/SDK consume отсюда).
+    subCollections: [
+      { projectionId: "comments_thread", foreignKey: "pageId", entity: "Comment" },
+      { projectionId: "page_permissions_panel", foreignKey: "pageId", entity: "PagePermission" },
+    ],
     witnesses: ["title", "icon", "coverImageUrl", "lastEditedById", "updatedAt"],
     slots: {
       hero: {
@@ -50,18 +55,6 @@ export const PROJECTIONS = {
         canvasId: "block_canvas",
         // Custom canvas рендерит Block-список с поддержкой 15 kind'ов
       },
-      subCollections: [
-        {
-          projectionId: "comments_thread",
-          foreignKey: "pageId",
-          entity: "Comment",
-        },
-        {
-          projectionId: "page_permissions_panel",
-          foreignKey: "pageId",
-          entity: "PagePermission",
-        },
-      ],
       toolbar: {
         intents: ["rename_page", "set_page_icon", "set_cover_image", "share_page", "archive_page", "duplicate_page"],
       },
