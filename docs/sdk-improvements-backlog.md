@@ -669,13 +669,20 @@ WorkflowNode: {
 - Compile trigger: ручной (CI / `npm run meta-compile`) или автоматический (post-confirmed-effect SSE → debounced compile).
 - Конфликт-разрешение: что если файл изменён руками после compile? — git merge / детекция через hash.
 
-### 13.1 P0 — `pattern.id` не уникален между bank'ами
+### 13.1 P0 — `pattern.id` не уникален между bank'ами (PR idf-sdk#418 open)
 
-**Источник.** При seed'е `pattern-bank/candidate/avito-rating-aggregate-hero.json` и `idf-sdk/packages/core/src/patterns/stable/detail/rating-aggregate-hero.js` дают одинаковый `id: "rating-aggregate-hero"`. Workaround в meta-seed — composite `${status}__${patternId}__${sourceProduct}`.
+**Источник.** При seed'е `pattern-bank/candidate/avito-rating-aggregate-hero.json` и `idf-sdk/packages/core/src/patterns/stable/detail/rating-aggregate-hero.js` дают одинаковый `id: "rating-aggregate-hero"`.
 
-**Проблема.** Identity паттерна де-факто составной ключ (status + id + sourceProduct), но формализован как plain string. Это работает локально внутри `stable/<archetype>/`, но не работает в кросс-bank-аналитике, и не работает в `pattern.witnesses[]` ссылках, если паттерн «начинался как candidate с product-prefix, мигрировал в stable».
+**Сделано.** SDK PR `idf-sdk#418`: новый composite-key API в `@intent-driven/core`:
+- `patternKey(p)` → `stable__<id>` / `candidate__<id>__<source?>` / `anti__<id>`
+- `isSameLogicalPattern(a, b)` — true для same logical-id независимо от bank
+- `findPatternByKey(patterns, key)` — collection lookup
+- `parsePatternKey(key)` → `{status, id, sourceProduct}` (round-trip)
+- `logicalId(p)` — bare id без prefix
 
-**Что нужно.** Либо `pattern.id` уникальный глобально (rename candidate'ов), либо официально composite-ключ + helper `patternKey(p) → "stable__hero-create"` в SDK.
+Backward-compat: `pattern.id` unchanged, helpers — optional layer. 16 unit-tests, 1881/1881 passed.
+
+После merge + bump в host: meta-seed мигрирует с ad-hoc compositeId на `patternKey(p)`. Закрывает prerequisite для §13.17 на масштабе.
 
 ### 13.2 P0 — `role.base: "admin"` не даёт автоматического nav-access
 
