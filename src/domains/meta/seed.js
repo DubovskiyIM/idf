@@ -7,19 +7,7 @@
  */
 
 import { SNAPSHOT as snapshot } from "./meta-snapshot.js";
-// NOTE: после merge idf-sdk#426 (re-export patternKey из root) — заменить
-// inline на `import { patternKey } from "@intent-driven/core"`. Сейчас
-// используем local copy чтобы не блокироваться на bump'е.
-function patternKey(pattern) {
-  if (!pattern) return null;
-  const id = pattern.id || pattern.patternId;
-  if (!id) return null;
-  const status = pattern.status || "stable";
-  if (status === "candidate" && pattern.sourceProduct) {
-    return `${status}__${id}__${pattern.sourceProduct}`;
-  }
-  return `${status}__${id}`;
-}
+import { patternKey } from "@intent-driven/core";
 
 const NOW = snapshot.snapshottedAt || Date.now();
 
