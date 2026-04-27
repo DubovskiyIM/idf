@@ -1,0 +1,11 @@
+{
+  "domain": "notion",
+  "generatedAt": "2026-04-27T10:47:26.469Z",
+  "note": "Numeric salience hints from author audit. NOT auto-applied to host (см. findings doc).",
+  "overrides": {
+    "set_default_view": {
+      "salience": 10,
+      "tier": "utility"
+    }
+  }
+}
