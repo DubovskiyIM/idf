@@ -32,6 +32,9 @@ export const PROJECTIONS = {
     mainEntity: "Intent",
     forRoles: ["formatAuthor", "domainAuthor"],
     witnesses: ["intentId", "domainId", "alpha", "target", "confirmation"],
+    // R8 absorbed:false — мета-домену нужны cross-domain каталоги в nav,
+    // не только в Domain.detail subCollection.
+    absorbed: false,
   },
   projection_list: {
     id: "projection_list",
@@ -40,6 +43,7 @@ export const PROJECTIONS = {
     mainEntity: "Projection",
     forRoles: ["formatAuthor", "domainAuthor"],
     witnesses: ["projectionId", "domainId", "archetype", "mainEntity"],
+    absorbed: false,
   },
   rrule_list: {
     id: "rrule_list",
@@ -48,6 +52,7 @@ export const PROJECTIONS = {
     mainEntity: "RRule",
     forRoles: ["formatAuthor", "domainAuthor"],
     witnesses: ["name", "domainId", "kind", "trigger"],
+    absorbed: false,
   },
   adapter_list: {
     id: "adapter_list",
@@ -56,6 +61,7 @@ export const PROJECTIONS = {
     mainEntity: "Adapter",
     forRoles: ["formatAuthor", "integrator"],
     witnesses: ["packageName", "version", "license", "style"],
+    absorbed: false,
   },
 
 
@@ -140,6 +146,7 @@ export const PROJECTIONS = {
     mainEntity: "Witness",
     forRoles: ["formatAuthor", "domainAuthor", "patternCurator"],
     witnesses: ["slotPath", "basis", "reliability", "patternId"],
+    absorbed: false,
     slots: {
       header: {
         kind: "facetFilter",
@@ -254,6 +261,7 @@ export const PROJECTIONS = {
     mainEntity: "Capability",
     forRoles: ["formatAuthor", "integrator"],
     witnesses: ["adapterId", "namespace", "key", "supported", "variant"],
+    absorbed: false,
     slots: {
       header: {
         kind: "facetFilter",
