@@ -61,10 +61,10 @@ export default function MetaStudioCanvas({ artifact, world, exec, viewer, projec
 
   return (
     <div style={{
-      // Fullscreen overlay поверх V2Shell side-nav / auth-bar / kit-picker —
-      // мета-Studio это primary surface, остальные слои не нужны.
-      position: "fixed", inset: 0, zIndex: 9999,
+      // Fills the V2Shell main area (не fixed) — оставляет side-nav доступной
+      // для перехода в Pattern Bank / Backlog / другие projections meta-домена.
       display: "flex", flexDirection: "column",
+      minHeight: "calc(100vh - 56px)", height: "calc(100vh - 56px)",
       background: "#0d0d10", color: "#e8e8ec",
       fontFamily: "Inter, -apple-system, system-ui, sans-serif",
     }}>
