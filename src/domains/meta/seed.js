@@ -7,6 +7,19 @@
  */
 
 import { SNAPSHOT as snapshot } from "./meta-snapshot.js";
+// NOTE: после merge idf-sdk#426 (re-export patternKey из root) — заменить
+// inline на `import { patternKey } from "@intent-driven/core"`. Сейчас
+// используем local copy чтобы не блокироваться на bump'е.
+function patternKey(pattern) {
+  if (!pattern) return null;
+  const id = pattern.id || pattern.patternId;
+  if (!id) return null;
+  const status = pattern.status || "stable";
+  if (status === "candidate" && pattern.sourceProduct) {
+    return `${status}__${id}__${pattern.sourceProduct}`;
+  }
+  return `${status}__${id}`;
+}
 
 const NOW = snapshot.snapshottedAt || Date.now();
 
@@ -93,13 +106,15 @@ export function getSeedEffects() {
   }
 
   // ── Patterns ───────────────────────────────────────────────────
-  // GAP-meta-1: patternId не уникален между stable и candidate банками
-  // (один и тот же паттерн может одновременно быть в SDK stable и в
-  // pattern-bank/candidate как «новое наблюдение в другом продукте»).
-  // Composite-id `${status}__${patternId}__${source?}` снимает коллизию
-  // на уровне Φ.
+  // §13.1 ЗАКРЫТО: используем formal `patternKey(p)` API из core@0.98+.
+  // Returns "stable__<id>" / "candidate__<id>__<source?>" / "anti__<id>",
+  // глобально уникален между bank'ами. До этого был ad-hoc compositeId.
   for (const pt of [...(snapshot.stablePatterns || []), ...(snapshot.candidatePatterns || [])]) {
-    const cid = compositeId([pt.status, pt.patternId, pt.sourceProduct]);
+    const cid = patternKey({
+      id: pt.patternId,
+      status: pt.status,
+      sourceProduct: pt.sourceProduct,
+    });
     out.push(
       ef("patterns", {
         id: cid,
