@@ -35,6 +35,10 @@ export const PROJECTIONS = {
     mainEntity: "Page",
     idParam: "pageId",
     forRoles: ["workspaceOwner", "editor", "commenter", "viewer"],
+    // §13d (idf-sdk #402): Block — content страницы (рендерится в body через
+    // canvas/BlockEditor), не дочерний CRUD-каталог. Без opt-out R8 absorb'ит
+    // block_list как subCollection и UI даёт двойное представление.
+    absorbExclude: ["Block"],
     witnesses: ["title", "icon", "coverImageUrl", "lastEditedById", "updatedAt"],
     slots: {
       hero: {
