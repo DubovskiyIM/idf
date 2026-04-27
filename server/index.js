@@ -44,6 +44,17 @@ app.use("/api/patterns", makePatternsRouter());
 const crystallizeRouter = require("./routes/crystallize.js");
 app.use("/api/crystallize", crystallizeRouter);
 
+// LLM bridge для мета-домена (§13.17): synthesize-apply через Claude CLI
+// subprocess. POST /api/meta/llm/synthesize-apply → 202 + runId,
+// GET /api/meta/llm/runs/:runId/stream → SSE прогресс. Эффекты попадают
+// в Φ через тот же effect-pipeline, что и REST/WS.
+const { makeMetaLlmRouter } = require("./routes/meta-llm.js");
+const { ingestEffect: hostIngestEffect } = require("./effect-pipeline.js");
+app.use("/api/meta/llm", makeMetaLlmRouter({
+  ingestEffect: hostIngestEffect,
+  broadcast: effectsRouter.broadcast,
+}));
+
 const { startSync, setBroadcast } = require("./boundary.js");
 const { executeWorkflow, setBroadcast: setExecBroadcast } = require("./executor.js");
 setBroadcast(effectsRouter.broadcast);
