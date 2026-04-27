@@ -12,6 +12,53 @@
  */
 
 export const PROJECTIONS = {
+  // Authored catalog'и для основных entity'ов мета-домена. Без них
+  // ROOT_PROJECTIONS даёт «Проекция не найдена», т.к. derived
+  // (`deriveProjections`) генерит list только если есть read-intent
+  // — у мета-домена он отсутствует (Level 1 read-only через Φ).
+  domain_list: {
+    id: "domain_list",
+    title: "Domain",
+    archetype: "catalog",
+    mainEntity: "Domain",
+    forRoles: ["formatAuthor", "domainAuthor"],
+    witnesses: ["title", "adapter", "fieldTestNumber", "entityCount", "intentCount"],
+    onItemClick: "domain_detail",
+  },
+  intent_list: {
+    id: "intent_list",
+    title: "Intent",
+    archetype: "catalog",
+    mainEntity: "Intent",
+    forRoles: ["formatAuthor", "domainAuthor"],
+    witnesses: ["intentId", "domainId", "alpha", "target", "confirmation"],
+  },
+  projection_list: {
+    id: "projection_list",
+    title: "Projection",
+    archetype: "catalog",
+    mainEntity: "Projection",
+    forRoles: ["formatAuthor", "domainAuthor"],
+    witnesses: ["projectionId", "domainId", "archetype", "mainEntity"],
+  },
+  rrule_list: {
+    id: "rrule_list",
+    title: "Reactive Rules",
+    archetype: "catalog",
+    mainEntity: "RRule",
+    forRoles: ["formatAuthor", "domainAuthor"],
+    witnesses: ["name", "domainId", "kind", "trigger"],
+  },
+  adapter_list: {
+    id: "adapter_list",
+    title: "Adapter",
+    archetype: "catalog",
+    mainEntity: "Adapter",
+    forRoles: ["formatAuthor", "integrator"],
+    witnesses: ["packageName", "version", "license", "style"],
+  },
+
+
   // Studio-shell projection — primary entry для /meta route. Layout двух
   // панелей (chat-history + tabbed spec-panel), повторяет визуальный
   // язык Fold Studio. Custom canvas, рендерится через registerCanvas.

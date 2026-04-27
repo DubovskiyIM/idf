@@ -61,7 +61,7 @@ describe("meta baseline", () => {
   });
 
   it("projections: 10 authored (Level 1 + Level 2 backlog + promotions + Studio shell)", () => {
-    expect(Object.keys(PROJECTIONS).length).toBe(10);
+    expect(Object.keys(PROJECTIONS).length).toBe(15);
     expect(PROJECTIONS.pattern_bank_browser.archetype).toBe("catalog");
     expect(PROJECTIONS.pattern_detail.archetype).toBe("detail");
     expect(PROJECTIONS.domain_detail.subCollections.length).toBe(4);
