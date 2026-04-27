@@ -53,13 +53,23 @@ describe("checkEnumValues", () => {
 });
 
 describe("checkEntityKind", () => {
-  it("entity без type даёт gap", () => {
+  // §12.5 (2026-04-26): default = "internal" (не gap).
+  // Помечаем только entity с явным невалидным kind/type.
+  it("entity без kind/type — не gap (default internal)", () => {
     const onto = { entities: { Foo: { fields: { id: { type: "id" } } } } };
-    expect(checkEntityKind(onto)).toEqual([{ kind: "entity-no-type", entity: "Foo" }]);
+    expect(checkEntityKind(onto)).toEqual([]);
   });
   it("entity с type=internal проходит", () => {
     const onto = { entities: { Foo: { fields: {}, type: "internal" } } };
     expect(checkEntityKind(onto)).toEqual([]);
+  });
+  it("entity с canonical kind='reference' проходит", () => {
+    const onto = { entities: { Foo: { fields: {}, kind: "reference" } } };
+    expect(checkEntityKind(onto)).toEqual([]);
+  });
+  it("entity с invalid kind даёт gap", () => {
+    const onto = { entities: { Foo: { fields: {}, kind: "garbage" } } };
+    expect(checkEntityKind(onto)).toEqual([{ kind: "entity-no-type", entity: "Foo", value: "garbage" }]);
   });
 });
 
@@ -232,6 +242,46 @@ describe("checkIrreversibility", () => {
     };
     expect(checkIrreversibility(intents)).toEqual([
       { kind: "irreversibility-missing", intent: "archive_x" },
+    ]);
+  });
+  // §12.7: per-effect __irr.point на одном из effects → не gap
+  it("intent.context.__irr.point=high — проходит (intent-level)", () => {
+    const intents = {
+      delete_x: {
+        context: { __irr: { point: "high", reason: "permanent" } },
+        particles: { effects: [{ α: "remove", target: "xs" }] },
+      },
+    };
+    expect(checkIrreversibility(intents)).toEqual([]);
+  });
+  it("per-effect context.__irr.point — проходит (multi-effect intent)", () => {
+    const intents = {
+      capture_payment: {
+        α: "create",
+        particles: {
+          effects: [
+            { α: "create", target: "Payment", fields: { id: "{{auto}}" } },
+            {
+              α: "replace",
+              target: "Order.status",
+              value: "paid",
+              context: { __irr: { point: "high", reason: "Payment captured" } },
+            },
+          ],
+        },
+      },
+    };
+    expect(checkIrreversibility(intents)).toEqual([]);
+  });
+  it("invalid __irr.point (typo) — gap остаётся", () => {
+    const intents = {
+      delete_x: {
+        context: { __irr: { point: "MEGA-HIGH" } },
+        particles: { effects: [{ α: "remove", target: "xs" }] },
+      },
+    };
+    expect(checkIrreversibility(intents)).toEqual([
+      { kind: "irreversibility-missing", intent: "delete_x" },
     ]);
   });
 });

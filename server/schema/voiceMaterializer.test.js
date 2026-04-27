@@ -18,6 +18,36 @@ const transactions = [
 
 const world = { portfolios, transactions };
 
+// Минимальная онтология для тестов — после §12.2 (notion-followups) voice
+// materializer берёт title через getPrimaryFieldValue(row, entityDef);
+// без ontology в opts entityDef = undefined и fallback идёт на row.id.
+// Декларируем primary-title чтобы тесты проверяли human-readable рендеринг.
+const ontology = {
+  entities: {
+    Portfolio: {
+      name: "Portfolio",
+      fields: {
+        id: { type: "string", role: "id" },
+        userId: { type: "string" },
+        name: { type: "text", role: "primary-title" },
+        baseCurrency: { type: "string" },
+        totalValue: { type: "number" },
+        pnl: { type: "number" },
+      },
+    },
+    Transaction: {
+      name: "Transaction",
+      fields: {
+        id: { type: "string", role: "id" },
+        portfolioId: { type: "string" },
+        message: { type: "text", role: "primary-title" },
+        timestamp: { type: "number" },
+      },
+    },
+  },
+};
+const opts = (extra = {}) => ({ ontology, ...extra });
+
 // ───────────────────────────────────────────────────────────
 describe("materializeAsVoice — catalog", () => {
   const proj = {
@@ -28,7 +58,7 @@ describe("materializeAsVoice — catalog", () => {
   };
 
   it("возвращает script с meta + turns", () => {
-    const script = materializeAsVoice(proj, world, viewer, { domain: "invest" });
+    const script = materializeAsVoice(proj, world, viewer, opts({ domain: "invest" }));
     expect(script.title).toBe("Мои портфели");
     expect(script.meta.materialization).toBe("voice");
     expect(script.meta.locale).toBe("ru-RU");
@@ -38,7 +68,7 @@ describe("materializeAsVoice — catalog", () => {
   });
 
   it("озвучивает количество элементов и top-3", () => {
-    const script = materializeAsVoice(proj, world, viewer, {});
+    const script = materializeAsVoice(proj, world, viewer, opts());
     const assistant = script.turns.find(t => t.role === "assistant");
     expect(assistant.text).toContain("4 элемента");
     expect(assistant.text).toContain("Основной");
@@ -48,14 +78,14 @@ describe("materializeAsVoice — catalog", () => {
   });
 
   it("обрезает до TOP_ITEMS и упоминает остаток", () => {
-    const script = materializeAsVoice(proj, world, viewer, {});
+    const script = materializeAsVoice(proj, world, viewer, opts());
     const assistant = script.turns.find(t => t.role === "assistant");
     // 4 свои → top 3, ещё 1
     expect(assistant.text).toContain("И ещё 1");
   });
 
   it("money-поля произносятся human-friendly (2 keyFacts на item)", () => {
-    const script = materializeAsVoice(proj, world, viewer, {});
+    const script = materializeAsVoice(proj, world, viewer, opts());
     const text = script.turns.find(t => t.role === "assistant").text;
     // catalog brevity: name + 2 keyFacts (baseCurrency, totalValue)
     expect(text).toMatch(/2.5 миллионов рублей/);
@@ -68,16 +98,16 @@ describe("materializeAsVoice — catalog", () => {
       idParam: "portfolioId", name: "Портфель",
       witnesses: ["name", "baseCurrency", "totalValue", "pnl"],
     };
-    const script = materializeAsVoice(detailProj, world, viewer, {
+    const script = materializeAsVoice(detailProj, world, viewer, opts({
       routeParams: { portfolioId: "pf1" },
-    });
+    }));
     const text = script.turns.find(t => t.role === "assistant").text;
     // detail берёт witnesses.slice(0,4), pnl попадает
     expect(text).toMatch(/187 тысяч рублей/);
   });
 
   it("пустой mainEntity → 'пока ничего нет'", () => {
-    const script = materializeAsVoice(proj, { portfolios: [] }, viewer, {});
+    const script = materializeAsVoice(proj, { portfolios: [] }, viewer, opts());
     const text = script.turns.find(t => t.role === "assistant").text;
     expect(text).toContain("пока ничего нет");
   });
@@ -95,9 +125,9 @@ describe("materializeAsVoice — detail", () => {
   };
 
   it("озвучивает title + facts + sub-collection упоминание", () => {
-    const script = materializeAsVoice(proj, world, viewer, {
+    const script = materializeAsVoice(proj, world, viewer, opts({
       routeParams: { portfolioId: "pf1" },
-    });
+    }));
     const text = script.turns.find(t => t.role === "assistant").text;
     expect(text).toContain("Основной");
     expect(text).toContain("RUB");
@@ -106,9 +136,9 @@ describe("materializeAsVoice — detail", () => {
   });
 
   it("несуществующий id → 'не найдена'", () => {
-    const script = materializeAsVoice(proj, world, viewer, {
+    const script = materializeAsVoice(proj, world, viewer, opts({
       routeParams: { portfolioId: "xxx" },
-    });
+    }));
     const text = script.turns.find(t => t.role === "assistant").text;
     expect(text).toContain("не найдена");
   });
@@ -122,7 +152,7 @@ describe("materializeAsVoice — feed", () => {
   };
 
   it("озвучивает количество + summary first items", () => {
-    const script = materializeAsVoice(proj, world, viewer, {});
+    const script = materializeAsVoice(proj, world, viewer, opts());
     const text = script.turns.find(t => t.role === "assistant").text;
     expect(text).toContain("2 элемента");
     expect(text).toMatch(/Купил|Продал/);
@@ -141,7 +171,7 @@ describe("materializeAsVoice — wizard", () => {
   };
 
   it("озвучивает первый шаг + system note про session", () => {
-    const script = materializeAsVoice(proj, world, viewer, {});
+    const script = materializeAsVoice(proj, world, viewer, opts());
     const assistant = script.turns.find(t => t.role === "assistant");
     expect(assistant.text).toContain("Шаг 1 из 3");
     expect(assistant.text).toContain("Горизонт");
@@ -186,7 +216,7 @@ describe("renderVoiceSsml", () => {
     const script = materializeAsVoice(
       { id: "p", kind: "catalog", mainEntity: "Portfolio", name: "T",
         witnesses: ["name"], filter: "userId === 'u1'" },
-      world, viewer, {}
+      world, viewer, opts()
     );
     const ssml = renderVoiceSsml(script);
     expect(ssml).toMatch(/^<\?xml/);
@@ -201,7 +231,7 @@ describe("renderVoiceSsml", () => {
     const script = materializeAsVoice(
       { id: "p", kind: "catalog", mainEntity: "Portfolio", name: "T",
         witnesses: ["name"], filter: "userId === 'u1'" },
-      dangerWorld, viewer, {}
+      dangerWorld, viewer, opts()
     );
     const ssml = renderVoiceSsml(script);
     expect(ssml).not.toContain("<script>alert");
@@ -215,7 +245,7 @@ describe("renderVoicePlain", () => {
     const script = materializeAsVoice(
       { id: "p", kind: "catalog", mainEntity: "Portfolio", name: "Портфели",
         witnesses: ["name"], filter: "userId === 'u1'" },
-      world, viewer, { domain: "invest" }
+      world, viewer, opts({ domain: "invest" })
     );
     const plain = renderVoicePlain(script);
     expect(plain).toContain("# Портфели");
