@@ -30,8 +30,11 @@ intent `request_pattern_promotion`. Compile делает `npm run meta-compile`.
 - **`candidate__trigger-condition-action-rule-form`** → detail · 2026-04-27
   Auto-triage score=12. evidence×5, slot-only, trigger×4, archetype:detail, rationale-ok. Source: 26-coda.
 
-### ✅ shipped (1)
+### ✅ shipped (2)
 
+- **`candidate__anchored-inline-comment-thread__confluence`** → detail → [SDK PR](https://github.com/DubovskiyIM/idf-sdk/pull/432) · 2026-04-27
+  4 prod sources (Confluence/Google Docs/Notion/Figma). Semantic apply манual: 2 overlay bands (anchored highlight+rail / unanchored footer). 12 tests passed.
+  fixtures: shouldMatch confluence/page_detail; shouldNotMatch messenger/sales/delivery (нет anchor).
 - **`candidate__paid-promotion-slot__avito`** → catalog → [SDK PR](https://github.com/DubovskiyIM/idf-sdk/pull/999) · 2026-04-27
   Наблюдается в 3 продуктах (avito/profi/ozon). Apply: badge + sort. Falsification: shouldNotMatch — projection без paidPromotionField в ontology.
   fixtures: shouldMatch: avito_listing_list (paidPromotionField=isPaidBoosted). shouldNotMatch: notion_page_list (нет такого поля).
