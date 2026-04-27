@@ -1,0 +1,87 @@
+{
+  "id": "multi-axis-orthogonal-navigation",
+  "version": 1,
+  "status": "candidate",
+  "archetype": "catalog",
+  "trigger": {
+    "requires": [
+      {
+        "kind": "entity-kind",
+        "value": "internal",
+        "name": "primaryEntity"
+      },
+      {
+        "kind": "sub-entity-exists",
+        "via": "self-ref-fk",
+        "description": "Hierarchy axis (folder/parent path)"
+      },
+      {
+        "kind": "sub-entity-exists",
+        "via": "edge-entity",
+        "description": "Graph/link axis (wiki-link target)"
+      },
+      {
+        "kind": "sub-entity-exists",
+        "via": "m2m-tag-junction",
+        "description": "Classifier axis (tag/label)"
+      }
+    ]
+  },
+  "structure": {
+    "slot": "sidebar",
+    "description": "Renders three independent navigation rails over the same primary entity: hierarchical (folder tree), relational (link/backlink graph), classifier (tag tree). Each rail filters/scopes the same catalog body without shadowing the others — user picks the lens, not the data."
+  },
+  "rationale": {
+    "hypothesis": "Knowledge bases have non-tree semantics: any one taxonomy is lossy. Forcing a single nav axis (Notion's page tree, Confluence's space tree) hides the long-tail of cross-cutting access. Three orthogonal rails preserve all three intuitions without forcing the author to canonicalize prematurely.",
+    "evidence": [
+      {
+        "source": "obsidian",
+        "description": "Left sidebar has Files / Tags / Bookmarks tabs — switchable rails over the same Note",
+        "reliability": "high"
+      },
+      {
+        "source": "logseq",
+        "description": "Pages / Tags / Graph each act as a top-level entry into the same atom",
+        "reliability": "high"
+      },
+      {
+        "source": "roam-research",
+        "description": "Sidebar surfaces page-list AND tag-list AND linked-references separately",
+        "reliability": "medium"
+      }
+    ],
+    "counterexample": [
+      {
+        "source": "notion",
+        "description": "Page-as-database forces single-tree; relations are second-class — the orthogonal-rail pattern is a deliberate departure",
+        "reliability": "high"
+      },
+      {
+        "source": "linear",
+        "description": "Single project hierarchy works fine when the entity is small and process-driven; orthogonal rails would be over-engineering",
+        "reliability": "high"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [
+      {
+        "domain": "notion",
+        "projection": "page_workspace",
+        "reason": "Page has folder-hierarchy (parentPageId), wiki-link edges (Block targetPageId), and tag-like properties — three rails fit"
+      }
+    ],
+    "shouldNotMatch": [
+      {
+        "domain": "booking",
+        "projection": "specialist_catalog",
+        "reason": "Single-axis catalog; no cross-cutting taxonomies"
+      },
+      {
+        "domain": "delivery",
+        "projection": "order_catalog",
+        "reason": "Lifecycle-driven; rails would be noise"
+      }
+    ]
+  }
+}

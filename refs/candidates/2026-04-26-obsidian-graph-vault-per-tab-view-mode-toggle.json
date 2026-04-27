@@ -1,0 +1,79 @@
+{
+  "id": "per-tab-view-mode-toggle",
+  "version": 1,
+  "status": "candidate",
+  "archetype": "detail",
+  "trigger": {
+    "requires": [
+      {
+        "kind": "entity-field",
+        "entity": "Tab",
+        "field": "mode",
+        "fieldKind": "enum",
+        "minValues": 2
+      },
+      {
+        "kind": "intent-creates",
+        "creates": "Tab"
+      },
+      {
+        "kind": "intent-effect",
+        "α": "replace",
+        "target": "*.mode",
+        "minCount": 2
+      }
+    ]
+  },
+  "structure": {
+    "slot": "header",
+    "description": "Per-tab tri-state toggle (source / live-preview / reading) sits in tab header, not global preferences. Each open tab carries its own mode — user can have one note in source, another in reading mode side-by-side. Mode is materialization-of-same-content, not a workflow status."
+  },
+  "rationale": {
+    "hypothesis": "When the same entity admits multiple presentational projections of the same content (raw / rendered / preview), per-instance mode beats global mode because users compare modes simultaneously. This is distinct from phase-aware-primary-cta (which is about workflow status driving CTA) — here mode is purely view, no state mutation.",
+    "evidence": [
+      {
+        "source": "obsidian",
+        "description": "Each tab has source/live-preview/reading toggle in tab header",
+        "reliability": "high"
+      },
+      {
+        "source": "vscode",
+        "description": "Per-editor preview/source toggle for markdown — same pattern",
+        "reliability": "high"
+      },
+      {
+        "source": "jupyter",
+        "description": "Per-cell rendered/source toggle",
+        "reliability": "medium"
+      }
+    ],
+    "counterexample": [
+      {
+        "source": "google-docs",
+        "description": "Single global edit/suggest/view mode — works because there is one document, not many tabs",
+        "reliability": "high"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [
+      {
+        "domain": "notion",
+        "projection": "page_detail",
+        "reason": "Page admits source/rendered/reading-mode equivalents per tab"
+      }
+    ],
+    "shouldNotMatch": [
+      {
+        "domain": "delivery",
+        "projection": "order_detail",
+        "reason": "Order.status is a workflow status, not a view mode — phase-aware-primary-cta covers it"
+      },
+      {
+        "domain": "messenger",
+        "projection": "conversation_detail",
+        "reason": "No per-tab presentational variants"
+      }
+    ]
+  }
+}

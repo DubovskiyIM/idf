@@ -1,5 +1,5 @@
 {
-  "source": "confluence-space-page-system",
+  "source": "confluence-enterprise-wiki",
   "entities": [
     {
       "name": "Space",
@@ -9,23 +9,26 @@
         "description",
         "type",
         "icon",
-        "homepageId",
+        "homePageId",
         "anonymousAccess",
-        "createdAt",
-        "createdBy"
+        "archived",
+        "createdAt"
       ],
-      "statusValues": []
+      "statusValues": [
+        "active",
+        "archived"
+      ]
     },
     {
       "name": "Page",
       "fields": [
         "title",
         "spaceId",
-        "parentId",
-        "body",
+        "parentPageId",
+        "content",
         "status",
-        "currentVersion",
-        "author",
+        "currentVersionId",
+        "authorId",
         "lastModifiedBy",
         "lastModifiedAt",
         "publishedAt",
@@ -39,122 +42,118 @@
         "published",
         "archived"
       ],
-      "foreignKey": "parentId→Page"
+      "foreignKey": "spaceId→Space, parentPageId→Page"
     },
     {
       "name": "PageVersion",
       "fields": [
         "pageId",
         "versionNumber",
-        "author",
+        "authorId",
         "createdAt",
-        "summary",
-        "bodySnapshot",
-        "changeType"
+        "changeSummary",
+        "contentSnapshot"
       ],
       "foreignKey": "pageId→Page"
     },
     {
-      "name": "BlogPost",
+      "name": "Block",
       "fields": [
-        "title",
-        "spaceId",
-        "body",
-        "author",
-        "publishedAt",
-        "status"
+        "pageId",
+        "type",
+        "content",
+        "order",
+        "parentBlockId"
       ],
       "statusValues": [
-        "draft",
-        "published"
+        "paragraph",
+        "heading",
+        "panel_info",
+        "panel_note",
+        "panel_warning",
+        "panel_success",
+        "expand",
+        "columns",
+        "divider",
+        "table",
+        "macro_jira",
+        "macro_roadmap",
+        "macro_status",
+        "macro_decision",
+        "macro_action_item",
+        "macro_toc",
+        "macro_mention"
       ],
-      "foreignKey": "spaceId→Space"
-    },
-    {
-      "name": "Template",
-      "fields": [
-        "name",
-        "category",
-        "scope",
-        "spaceId",
-        "body",
-        "description",
-        "isGlobal"
-      ],
-      "foreignKey": "spaceId→Space"
+      "foreignKey": "pageId→Page, parentBlockId→Block"
     },
     {
       "name": "Comment",
       "fields": [
         "pageId",
-        "author",
-        "body",
+        "blockId",
+        "rangeAnchor",
         "kind",
-        "anchorRange",
+        "content",
+        "authorId",
         "parentCommentId",
-        "createdAt",
         "resolved",
-        "resolvedBy"
+        "createdAt"
       ],
       "statusValues": [
         "open",
         "resolved"
       ],
-      "foreignKey": "pageId→Page"
+      "foreignKey": "pageId→Page, blockId→Block, parentCommentId→Comment"
     },
     {
-      "name": "ApprovalRequest",
+      "name": "Approval",
       "fields": [
         "pageId",
+        "versionId",
         "requestedBy",
-        "reviewers",
+        "reviewerId",
         "status",
-        "requestedAt",
-        "completedAt",
-        "decisionNotes"
+        "decidedAt",
+        "comment"
       ],
       "statusValues": [
         "pending",
         "approved",
-        "rejected",
-        "cancelled"
-      ],
-      "foreignKey": "pageId→Page"
-    },
-    {
-      "name": "ApprovalDecision",
-      "fields": [
-        "approvalRequestId",
-        "reviewerId",
-        "decision",
-        "comment",
-        "decidedAt"
-      ],
-      "statusValues": [
-        "approved",
         "rejected"
       ],
-      "foreignKey": "approvalRequestId→ApprovalRequest"
+      "foreignKey": "pageId→Page, versionId→PageVersion"
     },
     {
       "name": "PagePermission",
       "fields": [
         "pageId",
-        "principalKind",
+        "principalType",
         "principalId",
         "level",
-        "inheritsFromParent"
+        "inherits"
       ],
-      "statusValues": [],
+      "statusValues": [
+        "view",
+        "edit",
+        "restricted_view",
+        "restricted_edit"
+      ],
       "foreignKey": "pageId→Page"
     },
     {
       "name": "SpacePermission",
       "fields": [
         "spaceId",
-        "principalKind",
+        "principalType",
         "principalId",
-        "level"
+        "role"
+      ],
+      "statusValues": [
+        "space_admin",
+        "edit",
+        "view",
+        "comment",
+        "restrict_children"
       ],
       "foreignKey": "spaceId→Space"
     },
@@ -162,11 +161,14 @@
       "name": "Watch",
       "fields": [
         "userId",
-        "targetKind",
+        "targetType",
         "targetId",
         "createdAt"
       ],
-      "statusValues": []
+      "statusValues": [
+        "page",
+        "space"
+      ]
     },
     {
       "name": "InboxItem",
@@ -175,26 +177,36 @@
         "kind",
         "sourcePageId",
         "sourceCommentId",
-        "actor",
+        "actorId",
         "createdAt",
-        "read"
+        "readAt"
       ],
       "statusValues": [
-        "unread",
-        "read"
+        "mention",
+        "comment_reply",
+        "watched_page_update",
+        "approval_request",
+        "approval_decision"
       ],
-      "foreignKey": "userId→User"
+      "foreignKey": "userId→User, sourcePageId→Page, sourceCommentId→Comment"
     },
     {
-      "name": "Mention",
+      "name": "Template",
       "fields": [
-        "pageId",
-        "commentId",
-        "mentionedUserId",
-        "actorId",
-        "createdAt"
+        "name",
+        "category",
+        "scope",
+        "spaceId",
+        "content",
+        "isGlobal",
+        "installedFrom"
       ],
-      "foreignKey": "pageId→Page"
+      "statusValues": [
+        "global",
+        "space_local",
+        "custom"
+      ],
+      "foreignKey": "spaceId→Space"
     },
     {
       "name": "Calendar",
@@ -203,9 +215,14 @@
         "name",
         "type",
         "color",
-        "sourceJiraJql"
+        "jiraFilterId"
       ],
-      "statusValues": [],
+      "statusValues": [
+        "events",
+        "leave",
+        "sprint",
+        "deadline"
+      ],
       "foreignKey": "spaceId→Space"
     },
     {
@@ -213,46 +230,26 @@
       "fields": [
         "calendarId",
         "title",
-        "startsAt",
-        "endsAt",
-        "kind",
-        "owner"
+        "startAt",
+        "endAt",
+        "attendees",
+        "linkedJiraId"
       ],
       "foreignKey": "calendarId→Calendar"
     },
     {
-      "name": "JiraIssueEmbed",
+      "name": "JiraLink",
       "fields": [
         "pageId",
-        "jiraIssueKey",
-        "jql",
-        "displayMode",
-        "lastSyncedAt"
+        "issueKey",
+        "linkType",
+        "createdAt"
       ],
-      "foreignKey": "pageId→Page"
-    },
-    {
-      "name": "SmartLink",
-      "fields": [
-        "pageId",
-        "url",
-        "resourceType",
-        "title",
-        "status",
-        "assignee",
-        "lastResolvedAt"
+      "statusValues": [
+        "smart_link",
+        "macro",
+        "mention"
       ],
-      "foreignKey": "pageId→Page"
-    },
-    {
-      "name": "Macro",
-      "fields": [
-        "pageId",
-        "kind",
-        "config",
-        "position"
-      ],
-      "statusValues": [],
       "foreignKey": "pageId→Page"
     },
     {
@@ -268,16 +265,22 @@
       "foreignKey": "pageId→Page"
     },
     {
-      "name": "SearchQuery",
+      "name": "User",
       "fields": [
-        "userId",
-        "rawText",
-        "cqlExpression",
-        "filters",
-        "executedAt",
-        "resultCount"
+        "name",
+        "email",
+        "avatar",
+        "role",
+        "lastSeenAt"
       ],
-      "foreignKey": "userId→User"
+      "statusValues": [
+        "siteAdmin",
+        "spaceAdmin",
+        "member",
+        "spaceContributor",
+        "viewer",
+        "anonymousReader"
+      ]
     }
   ],
   "intents": [
@@ -289,10 +292,10 @@
     },
     {
       "id": "archive_space",
-      "α": "remove",
-      "target": "spaces",
-      "irreversibility": "high",
-      "confirmation": "form"
+      "α": "replace",
+      "target": "space.status",
+      "confirmation": "form",
+      "irreversibility": "high"
     },
     {
       "id": "configure_space_permissions",
@@ -301,7 +304,7 @@
       "confirmation": "form"
     },
     {
-      "id": "toggle_anonymous_access",
+      "id": "toggle_space_anonymous_access",
       "α": "replace",
       "target": "space.anonymousAccess",
       "confirmation": "click"
@@ -321,95 +324,68 @@
     {
       "id": "edit_page_draft",
       "α": "replace",
-      "target": "page.body",
+      "target": "page.content",
       "confirmation": "form"
     },
     {
       "id": "publish_page",
       "α": "replace",
       "target": "page.status",
-      "confirmation": "click"
-    },
-    {
-      "id": "unpublish_page",
-      "α": "replace",
-      "target": "page.status",
-      "confirmation": "click"
+      "confirmation": "click",
+      "irreversibility": "high"
     },
     {
       "id": "move_page",
       "α": "replace",
-      "target": "page.parentId",
-      "confirmation": "click"
+      "target": "page.parentPageId",
+      "confirmation": "form"
     },
     {
       "id": "move_page_between_spaces",
       "α": "replace",
       "target": "page.spaceId",
-      "confirmation": "form"
+      "confirmation": "form",
+      "irreversibility": "high"
     },
     {
       "id": "archive_page",
       "α": "remove",
-      "target": "pages",
-      "irreversibility": "high",
-      "confirmation": "click"
-    },
-    {
-      "id": "restore_archived_page",
-      "α": "replace",
-      "target": "page.status",
-      "confirmation": "click"
-    },
-    {
-      "id": "delete_page",
-      "α": "remove",
-      "target": "pages",
-      "irreversibility": "high",
-      "confirmation": "form"
-    },
-    {
-      "id": "duplicate_page",
-      "α": "add",
-      "creates": "Page",
-      "confirmation": "click"
-    },
-    {
-      "id": "compare_versions",
-      "α": "replace",
-      "target": "page.activeDiff",
-      "confirmation": "click"
+      "target": "entities",
+      "confirmation": "form",
+      "irreversibility": "high"
     },
     {
       "id": "restore_version",
       "α": "replace",
-      "target": "page.body",
-      "irreversibility": "high",
-      "confirmation": "form"
+      "target": "page.currentVersionId",
+      "confirmation": "form",
+      "irreversibility": "high"
+    },
+    {
+      "id": "compare_versions",
+      "α": "replace",
+      "target": "page.viewMode",
+      "confirmation": "click"
     },
     {
       "id": "request_approval",
       "α": "add",
-      "creates": "ApprovalRequest",
+      "creates": "Approval",
       "confirmation": "form"
     },
     {
       "id": "approve_page",
-      "α": "add",
-      "creates": "ApprovalDecision",
-      "confirmation": "form"
-    },
-    {
-      "id": "reject_page_approval",
-      "α": "add",
-      "creates": "ApprovalDecision",
-      "confirmation": "form"
-    },
-    {
-      "id": "cancel_approval_request",
       "α": "replace",
-      "target": "approvalRequest.status",
-      "confirmation": "click"
+      "target": "approval.status",
+      "confirmation": "form",
+      "irreversibility": "high"
+    },
+    {
+      "id": "reject_page",
+      "α": "replace",
+      "target": "approval.status",
+      "confirmation": "form",
+      "irreversibility": "high"
     },
     {
       "id": "restrict_page_permission",
@@ -420,14 +396,14 @@
     {
       "id": "remove_page_restriction",
       "α": "remove",
-      "target": "pagePermissions",
+      "target": "entities",
       "confirmation": "click"
     },
     {
       "id": "add_inline_comment",
       "α": "add",
       "creates": "Comment",
-      "confirmation": "enter"
+      "confirmation": "form"
     },
     {
       "id": "add_page_comment",
@@ -448,22 +424,9 @@
       "confirmation": "click"
     },
     {
-      "id": "reopen_comment",
-      "α": "replace",
-      "target": "comment.resolved",
-      "confirmation": "click"
-    },
-    {
-      "id": "delete_comment",
-      "α": "remove",
-      "target": "comments",
-      "irreversibility": "high",
-      "confirmation": "click"
-    },
-    {
       "id": "mention_user",
       "α": "add",
-      "creates": "Mention",
+      "creates": "InboxItem",
       "confirmation": "enter"
     },
     {
@@ -475,7 +438,7 @@
     {
       "id": "unwatch_page",
       "α": "remove",
-      "target": "watches",
+      "target": "entities",
       "confirmation": "click"
     },
     {
@@ -485,46 +448,40 @@
       "confirmation": "click"
     },
     {
-      "id": "mark_inbox_item_read",
+      "id": "mark_inbox_read",
       "α": "replace",
-      "target": "inboxItem.read",
+      "target": "inboxItem.readAt",
       "confirmation": "click"
-    },
-    {
-      "id": "mark_all_inbox_read",
-      "α": "replace",
-      "target": "inbox.allRead",
-      "confirmation": "click"
-    },
-    {
-      "id": "run_quick_search",
-      "α": "add",
-      "creates": "SearchQuery",
-      "confirmation": "enter"
     },
     {
       "id": "run_advanced_search",
-      "α": "add",
-      "creates": "SearchQuery",
-      "confirmation": "form"
+      "α": "replace",
+      "target": "search.query",
+      "confirmation": "enter"
     },
     {
       "id": "insert_jira_issue_macro",
       "α": "add",
-      "creates": "JiraIssueEmbed",
-      "confirmation": "form"
-    },
-    {
-      "id": "insert_macro",
-      "α": "add",
-      "creates": "Macro",
+      "creates": "Block",
       "confirmation": "form"
     },
     {
       "id": "paste_smart_link",
       "α": "add",
-      "creates": "SmartLink",
+      "creates": "JiraLink",
       "confirmation": "enter"
+    },
+    {
+      "id": "insert_macro",
+      "α": "add",
+      "creates": "Block",
+      "confirmation": "form"
+    },
+    {
+      "id": "insert_template",
+      "α": "replace",
+      "target": "page.content",
+      "confirmation": "form"
     },
     {
       "id": "create_template",
@@ -535,26 +492,7 @@
     {
       "id": "install_template",
       "α": "add",
-      "creates": "Page",
-      "confirmation": "click"
-    },
-    {
-      "id": "delete_template",
-      "α": "remove",
-      "target": "templates",
-      "irreversibility": "high",
-      "confirmation": "click"
-    },
-    {
-      "id": "create_blog_post",
-      "α": "add",
-      "creates": "BlogPost",
-      "confirmation": "form"
-    },
-    {
-      "id": "publish_blog_post",
-      "α": "replace",
-      "target": "blogPost.status",
+      "creates": "Template",
       "confirmation": "click"
     },
     {
@@ -564,50 +502,46 @@
       "confirmation": "form"
     },
     {
-      "id": "add_calendar_event",
+      "id": "create_calendar_event",
       "α": "add",
       "creates": "CalendarEvent",
       "confirmation": "form"
     },
     {
-      "id": "delete_calendar_event",
-      "α": "remove",
-      "target": "calendarEvents",
-      "irreversibility": "high",
+      "id": "view_page_analytics",
+      "α": "replace",
+      "target": "page.viewMode",
       "confirmation": "click"
     }
   ],
   "roles": [
-    "siteAdmin",
-    "spaceAdmin",
-    "member",
-    "spaceContributor",
+    "owner",
     "viewer",
-    "anonymousReader",
-    "agent"
+    "observer"
   ],
   "observations": [
-    "Space-centric navigation: каждый space имеет свой sidebar (Overview / Pages / Blog / Calendars / Questions) и собственный permission scope, что делает Space first-class container, а не просто tag",
-    "Page-tree sidebar внутри space — hierarchical с drag-to-reparent; parentId на Page формирует self-referential tree (recursive)",
-    "Page существует в lifecycle status machine: draft → in_review → approved → published → archived; status переходы — explicit intents (publish_page, request_approval, archive_page)",
-    "PageVersion как append-only history: каждый publish создаёт новую версию; compare и restore работают на immutable snapshots — это полностью реализованный case для §16 versioned-entity pattern",
-    "Permission inheritance: SpacePermission задаёт defaults, PagePermission overrides per-page (с inheritsFromParent flag); требует двух связанных entities + override-логики",
-    "Approval workflow — отдельная ApprovalRequest entity с N-to-many ApprovalDecision; status badge на Page (Draft / In Review / Approved) — derived from latest approval request",
-    "Inline comments pinned к anchorRange (text selection) vs page-level comments в footer — две kinds одной Comment entity, различаются по `kind` discriminator",
-    "@-mention создаёт Mention entity + порождает InboxItem у mentioned user — fan-out side-effect, классический Reactive Rule",
-    "Inbox — viewer-scoped projection: все mentions + watched-page updates + comments на own pages; синтезируется из Mention/Comment/Watch/PageVersion через filterWorldForRole",
-    "Watch toggle создаёт подписку на page/space; polymorphic targetKind в Watch указывает на гетерогенный target (Page или Space)",
-    "Search — два modes: quick search (type-ahead с filter chips) vs advanced search с CQL DSL; CQL — proper query language, не просто filter form",
-    "Macros (Jira issue list, ToC, Status, Decisions) — embedded compute blocks внутри page.body; каждая macro instance — Macro entity с kind discriminator + config",
-    "Smart Links — paste URL автоматически резолвится в card с status/assignee; SmartLink entity с lastResolvedAt — кэш external resource",
-    "Two-way Jira integration: page → Jira issue list (via macro) И Jira ticket → Confluence page (auto back-link); требует cross-system reference resolution",
-    "Анонимный доступ — per-space toggle; anonymousReader role — special case в filterWorldForRole с whitelist на published+anonymous-enabled spaces",
-    "Templates — два scope: global (site-level) и space-scoped; install_template — clone-and-fork, не reference",
-    "Block-based editor с panels (Info/Note/Warning), expand-collapse, columns, divider, table — page.body это structured content tree, не plain text",
-    "Real-time co-editing на draft → publish: draft и published — одно и то же Page с status flag, не два разных entity (collaboration на draft)",
-    "Calendars per-space (multiple) с different types (jira-sync / leave / events) — Calendar entity с type discriminator; CalendarEvent с polymorphic source",
-    "Page Analytics (Premium) — derived view: views/visitors/avgTime/topContributors агрегируется из event log, не stored на самой Page",
-    "Архивирование — soft delete (status='archived') с возможностью restore; жёсткий delete отдельный intent с form-confirmation",
-    "Restrict-children pattern: spaceAdmin может ограничить view/edit на subtree (parent + descendants) — требует tree-walk при permission check"
+    "Space-centric navigation: per-space sidebar (Overview / Pages / Blog / Calendars / Questions) — каждое Space — самостоятельная workspace-проекция, не tab внутри одного дерева",
+    "Page tree is hierarchical (self-ref Page.parentPageId), drag-to-reparent, scoped to parent Space",
+    "Spaces directory как глобальный catalog с фильтрами favorited/recent/type — отдельная projection поверх Space-коллекции",
+    "Block editor более document-like чем block-list: panels (info/note/warning/success), columns, expand, inline tables — semantics через Block.type discriminator (polymorphic-сценарий)",
+    "Macros как embedded live-data: Jira issue list, Roadmap, Status, Decisions, ToC — Block-variant с динамическим source, не статический content",
+    "Real-time co-editing — concurrent edit на draft state, commit через publish_page (явный transition draft → published, создаёт PageVersion)",
+    "Каждый publish создаёт PageVersion — append-only history sidebar с author/date/changeSummary",
+    "Compare versions — diff view (added/removed/changed) как отдельная projection (page detail viewMode = compare)",
+    "Restore previous — irreversible-high, форма с подтверждением, новая версия = snapshot выбранной",
+    "Permission-inheritance: SpacePermission → PagePermission override — fallback цепочка с явным «restrict» уровнем на странице, page-level cascadable к children через restrict_children",
+    "Anonymous access per-space toggle — единый булев на Space, не per-page",
+    "Approval workflow (Premium) — статус-бэйдж на странице (Draft / In Review / Approved), publish заблокирован пока approvals не собраны",
+    "Inline comments pinned к text-range (rangeAnchor) — отличаются от page-level (footer) comments по kind",
+    "@mention → InboxItem — каждое упоминание материализует item в личном inbox получателя (5 типов событий)",
+    "Watch как explicit subscription primitive — toggle на странице/space, генерит inbox-events при updates",
+    "Inbox как личная feed-проекция со фильтром по userId — независимая от space-scoping",
+    "Type-ahead search bar + advanced CQL editor — две projection одной search-сущности (simple vs structured DSL)",
+    "Jira integration двухсторонняя: Page → Issue через макрос/Smart Link, Issue → Page через автоматический backlink (JiraLink сущность)",
+    "Page Analytics как отдельная dashboard-projection (views/visitors/avg time/top contributors) — Premium-gate",
+    "Templates как два scope: global (site-wide, 100+ enterprise) + space-local + custom — Template.scope discriminator",
+    "Team Calendars per-space (multiple), интегрированы с Jira sprints / leave / events — calendar-events как первичный entity",
+    "Archive page и move-between-spaces — irreversible-high, требуют формы (не one-click)",
+    "Permission overrides на странице визуализируются явным badge (lock icon) — override-trail видим viewer'у"
   ]
 }

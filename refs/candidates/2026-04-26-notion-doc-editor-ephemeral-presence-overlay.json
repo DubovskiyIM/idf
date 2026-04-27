@@ -7,45 +7,43 @@
     "requires": [
       {
         "kind": "entity-field",
+        "entity": "<presence-entity>",
         "field": "lastSeenAt"
       },
       {
         "kind": "entity-field",
-        "field": "userId"
-      },
-      {
-        "kind": "entity-kind",
-        "kind-value": "ephemeral"
+        "entity": "<presence-entity>",
+        "field": "cursorPosition"
       }
     ]
   },
   "structure": {
-    "slot": "header",
-    "description": "Top-right overlay показывает stack of avatars currently-viewing entity; inline-cursor с user color + name следует за caret. Источник — non-Φ-confirmed ephemeral entity (presence-cursor), TTL короткий, не materialized в audit log."
+    "slot": "overlay",
+    "description": "Presence-сущность (avatars + cursors) рендерится как non-persistent overlay поверх detail-canvas; не входит в Φ-fold, не имеет CRUD, derives из active connections с TTL."
   },
   "rationale": {
-    "hypothesis": "Co-presence радикально снижает stepping-on-toes в shared editing. Persisting presence в Φ создаёт ненужный noise в audit-trail; ephemeral overlay даёт situational awareness без log-spam.",
+    "hypothesis": "Presence — derived state с millisecond TTL; помещение её в обычный CRUD поток создаёт write-storm, а в audit-log — мусор. Отдельный overlay-rail с TTL-driven decay изолирует ephemeral от durable.",
     "evidence": [
       {
-        "source": "notion",
-        "description": "Avatar-stack + inline cursors с color",
+        "source": "Notion",
+        "description": "Avatars + cursor-blots в верхнем-правом углу, исчезают через 30s после last-seen",
         "reliability": "high"
       },
       {
-        "source": "figma",
-        "description": "Live cursors + viewport-frustums",
+        "source": "Figma",
+        "description": "Multiplayer cursors с user-color и no-persistence",
         "reliability": "high"
       },
       {
-        "source": "google-docs",
-        "description": "Coloured carets + collaborator avatars в header",
+        "source": "Google Docs",
+        "description": "Avatars в title-bar + selection-color",
         "reliability": "high"
       }
     ],
     "counterexample": [
       {
-        "source": "single-user-tool",
-        "description": "Solo journaling — presence бесполезен, добавляет noise",
+        "source": "Single-user editor",
+        "description": "Без collaboration presence — лишняя инфраструктура",
         "reliability": "high"
       }
     ]
@@ -55,14 +53,19 @@
       {
         "domain": "notion",
         "projection": "page_detail",
-        "reason": "PresenceCursor — ephemeral entity, не Φ-confirmed"
+        "reason": "PresenceSession overlay поверх Page"
       }
     ],
     "shouldNotMatch": [
       {
         "domain": "lifequest",
-        "projection": "habits_catalog",
-        "reason": "Solo-domain, нет co-editing"
+        "projection": "goals",
+        "reason": "Single-user домен без presence"
+      },
+      {
+        "domain": "invest",
+        "projection": "portfolio_detail",
+        "reason": "Read-mostly без collaborative cursor'ов"
       }
     ]
   }

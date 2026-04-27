@@ -6,46 +6,44 @@
   "trigger": {
     "requires": [
       {
-        "kind": "entity-field",
-        "field": "parentPageId",
-        "self-ref": true
+        "kind": "entity-kind",
+        "value": "self-referential"
       },
       {
         "kind": "intent-effect",
-        "intent": "reparent_page",
         "α": "replace",
-        "target": ".parentPageId"
+        "targetField": "parentPageId"
       }
     ]
   },
   "structure": {
-    "slot": "sidebar",
-    "description": "Catalog рендерится как collapsible tree через self-ref FK; drag-and-drop меняет parent, hover показывает ⋮ + ⊕ для add-child; expand-state persistent per-user."
+    "slot": "body",
+    "description": "Sidebar tree primary-nav рендерит self-ref entity по parent-FK, intent reparent выводится в drag-handle между nodes; не отдельная form, а direct manipulation."
   },
   "rationale": {
-    "hypothesis": "Self-ref hierarchy — индикатор organizational drilldown, а не реляционной связи. Flat list скрывает структуру и заставляет пользователя помнить путь; tree даёт spatial memory + zero-cost reorganization через drag.",
+    "hypothesis": "Когда единственная навигация — иерархия и есть intent смены parent'а, превращать reparent в form означает прятать главное действие за двумя кликами; drag-and-drop делает структурную манипуляцию первоклассной операцией.",
     "evidence": [
       {
-        "source": "notion",
-        "description": "Sidebar — primary navigation; reparent через drag — основной способ организации workspace",
+        "source": "Notion",
+        "description": "Sidebar pages drag для reparent / reorder, hover показывает drop-targets",
         "reliability": "high"
       },
       {
-        "source": "obsidian",
-        "description": "File-tree pane с drag-to-folder, expand-state в graph",
+        "source": "Obsidian",
+        "description": "File explorer тот же drag-reparent + indent guides",
         "reliability": "high"
       },
       {
-        "source": "confluence",
-        "description": "Page-tree с ⋮ context menu и inline create-child",
-        "reliability": "high"
+        "source": "Roam",
+        "description": "Outliner с indent/outdent через keyboard как зеркало drag",
+        "reliability": "medium"
       }
     ],
     "counterexample": [
       {
-        "source": "linear",
-        "description": "Issues — flat queue с фильтрами; tree-структура была бы оверкиллом для transient workflow",
-        "reliability": "high"
+        "source": "Linear",
+        "description": "Issue-list с parent-issue имеет reparent через menu, не drag — потому что сортировка в иерархии не самоцель",
+        "reliability": "medium"
       }
     ]
   },
@@ -53,25 +51,20 @@
     "shouldMatch": [
       {
         "domain": "notion",
-        "projection": "pages_catalog",
-        "reason": "Page.parentPageId self-ref + reparent_page replace"
-      },
-      {
-        "domain": "workflow",
-        "projection": "nodes_tree",
-        "reason": "Node может иметь parent в group-структуре"
+        "projection": "page_tree",
+        "reason": "Page.parentPageId + reparent_page intent"
       }
     ],
     "shouldNotMatch": [
       {
         "domain": "messenger",
-        "projection": "conversations_list",
-        "reason": "Conversation — flat, нет parent"
+        "projection": "conversations",
+        "reason": "Conversation не self-ref, иерархии нет"
       },
       {
-        "domain": "delivery",
-        "projection": "orders_catalog",
-        "reason": "Order не образует hierarchy"
+        "domain": "sales",
+        "projection": "listings",
+        "reason": "Listing не self-ref"
       }
     ]
   }

@@ -1,0 +1,74 @@
+{
+  "id": "slash-command-inline-creator",
+  "version": 1,
+  "status": "candidate",
+  "archetype": "detail",
+  "trigger": {
+    "requires": [
+      {
+        "kind": "intent-creates",
+        "entity": "<sub-entity>"
+      },
+      {
+        "kind": "intent-confirmation",
+        "value": "enter"
+      },
+      {
+        "kind": "entity-field",
+        "field": "order"
+      }
+    ]
+  },
+  "structure": {
+    "slot": "composer",
+    "description": "В document-like контексте символ '/' открывает контекст-меню вставки на позиции каретки; insert-intent выполняется без перехода в форму, default insertion-point — текущий offset."
+  },
+  "rationale": {
+    "hypothesis": "Когда вставка ordered child'а — частая операция, форма-диалог разрывает поток письма; inline trigger + контекстное меню сохраняют caret-context и снижают cost-per-insert на порядок.",
+    "evidence": [
+      {
+        "source": "Notion",
+        "description": "/ меню с fuzzy-search по 30+ block-types",
+        "reliability": "high"
+      },
+      {
+        "source": "Coda",
+        "description": "/ меню для insert + commands",
+        "reliability": "high"
+      },
+      {
+        "source": "Slack",
+        "description": "/ команды как universal action-affordance",
+        "reliability": "medium"
+      }
+    ],
+    "counterexample": [
+      {
+        "source": "Catalog с реже добавляемыми сущностями",
+        "description": "Toolbar-button уместнее inline-trigger'а когда insert не основной flow",
+        "reliability": "high"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [
+      {
+        "domain": "notion",
+        "projection": "page_detail",
+        "reason": "Block insert + ordered children + writing-flow"
+      }
+    ],
+    "shouldNotMatch": [
+      {
+        "domain": "sales",
+        "projection": "listing_catalog",
+        "reason": "Listing-create не inline в потоке письма"
+      },
+      {
+        "domain": "booking",
+        "projection": "specialists",
+        "reason": "Booking-create явный CTA, не / в caret'е"
+      }
+    ]
+  }
+}

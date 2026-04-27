@@ -1,0 +1,83 @@
+{
+  "id": "sentinel-marker-queryable",
+  "version": 1,
+  "status": "candidate",
+  "archetype": "detail",
+  "trigger": {
+    "requires": [
+      {
+        "kind": "entity-kind",
+        "entity": "Todo",
+        "field": "done",
+        "type": "boolean"
+      },
+      {
+        "kind": "field-role-present",
+        "entity": "Todo",
+        "fieldRole": "blockId"
+      },
+      {
+        "kind": "intent-effect",
+        "intent": "mark_todo",
+        "alpha": "replace",
+        "target": "todo.done"
+      },
+      {
+        "kind": "intent-creates",
+        "creates": "Query"
+      }
+    ]
+  },
+  "structure": {
+    "slot": "body",
+    "description": "Todo рендерится не как отдельная entity-сущность с собственной формой, а как inline-checkbox-marker внутри произвольного Block-контента. Сам факт наличия marker'а делает родительский блок query-агрегабельным — отдельный create-form для Todo не предлагается."
+  },
+  "rationale": {
+    "hypothesis": "Когда status — это аспект существующего контента, а не отдельная сущность, выделение в самостоятельную проекцию ломает контекст. Sentinel-маркер сохраняет nest'инг автора, но открывает агрегацию через query — todo всё ещё 'видны вместе', но не вырваны из родителя.",
+    "evidence": [
+      {
+        "source": "roam-research",
+        "description": "{{[[TODO]]}} sentinel внутри блока; mark — toggle ✓; queryable через [[TODO]] tag",
+        "reliability": "high"
+      },
+      {
+        "source": "logseq",
+        "description": "TODO/DONE keyword в начале блока, query через :todo predicate",
+        "reliability": "high"
+      },
+      {
+        "source": "obsidian-tasks",
+        "description": "- [ ] markdown sentinel + plugin для агрегации",
+        "reliability": "high"
+      }
+    ],
+    "counterexample": [
+      {
+        "source": "linear",
+        "description": "Issue — first-class entity с own page, не sentinel в чужом контенте",
+        "reliability": "high"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [
+      {
+        "domain": "notion",
+        "projection": "page_detail",
+        "reason": "to-do block kind = sentinel-в-content"
+      }
+    ],
+    "shouldNotMatch": [
+      {
+        "domain": "lifequest",
+        "projection": "task_detail",
+        "reason": "Task — first-class entity со своим detail, не sentinel"
+      },
+      {
+        "domain": "delivery",
+        "projection": "order_detail",
+        "reason": "OrderItem — structured row, не inline marker"
+      }
+    ]
+  }
+}

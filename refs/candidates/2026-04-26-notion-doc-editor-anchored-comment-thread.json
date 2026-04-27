@@ -1,0 +1,77 @@
+{
+  "id": "anchored-comment-thread",
+  "version": 1,
+  "status": "candidate",
+  "archetype": "detail",
+  "trigger": {
+    "requires": [
+      {
+        "kind": "entity-field",
+        "entity": "<comment-entity>",
+        "field": "anchorRange"
+      },
+      {
+        "kind": "entity-field",
+        "entity": "<comment-entity>",
+        "field": "threadId"
+      },
+      {
+        "kind": "entity-field",
+        "entity": "<comment-entity>",
+        "field": "resolvedAt"
+      }
+    ]
+  },
+  "structure": {
+    "slot": "sections",
+    "description": "Comment на text-range/block рендерится как inline-marker (highlight) в body + thread-rail справа; resolved-thread сворачивается в сером виде, open thread виден до закрытия."
+  },
+  "rationale": {
+    "hypothesis": "Комментарий, прицепленный к конкретному фрагменту, должен сохранять spatial-link к якорю; flat-list комментариев теряет контекст ('к чему это относилось?'). Two-pane (anchor highlight + side thread) сохраняет связь.",
+    "evidence": [
+      {
+        "source": "Google Docs",
+        "description": "Highlight + side-rail с resolve toggle",
+        "reliability": "high"
+      },
+      {
+        "source": "Notion",
+        "description": "Block-comments + page-discussion параллельно",
+        "reliability": "high"
+      },
+      {
+        "source": "GitHub PR",
+        "description": "Line-comment + threading + resolve",
+        "reliability": "high"
+      }
+    ],
+    "counterexample": [
+      {
+        "source": "Forum threads",
+        "description": "Без spatial-anchor flat-list уместнее",
+        "reliability": "high"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [
+      {
+        "domain": "notion",
+        "projection": "page_detail",
+        "reason": "Comment.anchorRange + threadId + resolvedAt"
+      }
+    ],
+    "shouldNotMatch": [
+      {
+        "domain": "sales",
+        "projection": "listing_detail",
+        "reason": "Review без anchor-range на тексте listing"
+      },
+      {
+        "domain": "messenger",
+        "projection": "conversation",
+        "reason": "Message — самостоятельный artifact, не anchor"
+      }
+    ]
+  }
+}

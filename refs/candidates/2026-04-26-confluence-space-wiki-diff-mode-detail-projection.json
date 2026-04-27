@@ -1,0 +1,81 @@
+{
+  "id": "diff-mode-detail-projection",
+  "version": 1,
+  "status": "candidate",
+  "archetype": "detail",
+  "trigger": {
+    "requires": [
+      {
+        "kind": "intent-effect",
+        "α": "replace",
+        "target": "*.viewMode"
+      },
+      {
+        "kind": "sub-entity-exists",
+        "fkTo": "mainEntity",
+        "fields": [
+          "versionNumber",
+          "contentSnapshot"
+        ]
+      },
+      {
+        "kind": "intent-confirmation",
+        "values": [
+          "click"
+        ]
+      }
+    ]
+  },
+  "structure": {
+    "slot": "body",
+    "description": "compare_versions intent переключает body detail в two-pane diff-projection: left-version-picker / right-version-picker (default: latest и previous), centered diff с added/removed/changed подсветкой. Detail toolbar получает viewMode-toggle [Read | Compare]."
+  },
+  "rationale": {
+    "hypothesis": "Diff — это та же entity, но в transformed projection (две версии вместо одной). Делать его отдельным route ломает breadcrumb-context и теряет связь с current entity. Inline viewMode-toggle сохраняет identity и даёт reversible exit обратно в read-mode без потери позиции.",
+    "evidence": [
+      {
+        "source": "confluence",
+        "description": "'View page history' → click на две версии → diff-pane прямо в page detail",
+        "reliability": "high"
+      },
+      {
+        "source": "github-pr",
+        "description": "Files / Conversation tabs — diff как viewMode, не отдельная entity",
+        "reliability": "high"
+      },
+      {
+        "source": "google-docs",
+        "description": "Version history pane → click на snapshot → diff-overlay поверх current",
+        "reliability": "medium"
+      }
+    ],
+    "counterexample": [
+      {
+        "source": "messenger",
+        "description": "Сообщения не diff'ятся между версиями — нет contentSnapshot history",
+        "reliability": "high"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [
+      {
+        "domain": "confluence",
+        "projection": "page_detail",
+        "reason": "compare_versions replace viewMode + PageVersion.contentSnapshot"
+      }
+    ],
+    "shouldNotMatch": [
+      {
+        "domain": "booking",
+        "projection": "booking_detail",
+        "reason": "Нет version-snapshot, не diff'ится"
+      },
+      {
+        "domain": "delivery",
+        "projection": "order_detail",
+        "reason": "viewMode toggle отсутствует, snapshot не хранится"
+      }
+    ]
+  }
+}
