@@ -294,6 +294,54 @@ export const ONTOLOGY = {
       },
     },
 
+    // ── Level 2.1 pattern promotion ─────────────────────────────
+    // Очередь промоций candidate → stable. Compiler patches
+    // pattern-bank/PROMOTIONS.md между маркерами. Не пишет в SDK
+    // напрямую — финальный PR делается оператором, видя список.
+    PatternPromotion: {
+      ownerField: "requestedByUserId",
+      fields: {
+        id: { type: "text", fieldRole: "id" },
+        candidateId: {
+          type: "entityRef",
+          entity: "Pattern",
+          required: true,
+          label: "Candidate pattern",
+        },
+        targetArchetype: {
+          type: "select",
+          options: ["catalog", "cross", "detail", "feed"],
+          required: true,
+          label: "Куда промоутить",
+        },
+        rationale: {
+          type: "textarea",
+          required: true,
+          fieldRole: "primary",
+          label: "Обоснование (≥3 продукта / ≥1 апплай / falsification?)",
+        },
+        falsificationFixtures: {
+          type: "textarea",
+          label: "shouldMatch / shouldNotMatch fixtures",
+        },
+        status: {
+          type: "select",
+          options: ["pending", "approved", "rejected", "shipped"],
+          required: true,
+          valueLabels: {
+            pending: "В ожидании",
+            approved: "Одобрена",
+            rejected: "Отклонена",
+            shipped: "Отгружена в SDK",
+          },
+        },
+        sdkPrUrl: { type: "url", label: "SDK PR" },
+        requestedByUserId: { type: "entityRef", entity: "User" },
+        requestedAt: { type: "datetime", fieldRole: "createdAt" },
+        decidedAt: { type: "datetime", label: "Решение принято" },
+      },
+    },
+
     // ── Level 2 soft-authoring (§13.0 решение б) ─────────────
     // Φ-events этой сущности применяются compiler'ом к
     // docs/sdk-improvements-backlog.md между маркерами
@@ -362,12 +410,17 @@ export const ONTOLOGY = {
         Adapter: ["*"],
         Capability: ["*"],
         BacklogItem: ["*"],
+        PatternPromotion: ["*"],
       },
       canExecute: [
         "add_backlog_item",
         "schedule_backlog_item",
         "close_backlog_item",
         "reject_backlog_item",
+        "request_pattern_promotion",
+        "approve_pattern_promotion",
+        "reject_pattern_promotion",
+        "ship_pattern_promotion",
       ],
     },
 
@@ -390,8 +443,14 @@ export const ONTOLOGY = {
         Pattern: ["*"],
         Witness: ["*"],
         Projection: ["id", "projectionId", "domainId", "archetype", "title"],
+        PatternPromotion: ["*"],
       },
-      canExecute: [],
+      canExecute: [
+        "request_pattern_promotion",
+        "approve_pattern_promotion",
+        "reject_pattern_promotion",
+        "ship_pattern_promotion",
+      ],
     },
 
     integrator: {
@@ -409,8 +468,27 @@ export const ONTOLOGY = {
     { kind: "referential", from: "Intent.domainId", to: "Domain.id", name: "intent_in_domain" },
     { kind: "referential", from: "Projection.domainId", to: "Domain.id", name: "projection_in_domain" },
     { kind: "referential", from: "RRule.domainId", to: "Domain.id", name: "rule_in_domain" },
-    { kind: "referential", from: "Witness.projectionId", to: "Projection.id", name: "witness_on_projection" },
-    { kind: "referential", from: "Witness.patternId", to: "Pattern.id", name: "witness_via_pattern" },
+    // Witness.projectionId — информационный pointer; в редких edge-cases
+    // crystallize даёт witness на projection, не присутствующую в snapshot
+    // (например absorbed-by). Severity warning чтобы не блокировать ingest.
+    {
+      kind: "referential",
+      from: "Witness.projectionId",
+      to: "Projection.id",
+      name: "witness_on_projection",
+      severity: "warning",
+    },
+    // Witness.patternId — информационный pointer, не strict FK:
+    // Pattern.id у нас composite (`status__id__source`), а witness ловит
+    // plain pattern.id из crystallize. Понижено до warning, чтобы
+    // cascade не валил весь Φ. Resolve — §13.1 (pattern.id global uniqueness).
+    {
+      kind: "referential",
+      from: "Witness.patternId",
+      to: "Pattern.id",
+      name: "witness_via_pattern",
+      severity: "warning",
+    },
     { kind: "referential", from: "Capability.adapterId", to: "Adapter.id", name: "capability_of_adapter" },
     {
       kind: "expression",
@@ -429,6 +507,17 @@ export const ONTOLOGY = {
         rejected: ["open"],
       },
       name: "backlog_lifecycle",
+    },
+    {
+      kind: "transition",
+      entity: "PatternPromotion",
+      field: "status",
+      transitions: {
+        pending: ["approved", "rejected"],
+        approved: ["shipped", "rejected"],
+        rejected: ["pending"],
+      },
+      name: "promotion_lifecycle",
     },
   ],
 

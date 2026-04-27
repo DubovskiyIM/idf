@@ -29,9 +29,21 @@ import { fileURLToPath } from "node:url";
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const REPO_ROOT = join(__dirname, "..");
 
-const MARKER_OPEN = "<!-- meta-compile: backlog-inbox -->";
+const TARGETS = [
+  {
+    id: "backlog-inbox",
+    file: join(REPO_ROOT, "docs", "sdk-improvements-backlog.md"),
+    fold: "backlogItems",
+    render: "renderBacklogItems",
+  },
+  {
+    id: "pattern-promotions",
+    file: join(REPO_ROOT, "pattern-bank", "PROMOTIONS.md"),
+    fold: "patternPromotions",
+    render: "renderPatternPromotions",
+  },
+];
 const MARKER_CLOSE = "<!-- /meta-compile -->";
-const TARGET_FILE = join(REPO_ROOT, "docs", "sdk-improvements-backlog.md");
 
 const SERVER_URL = process.env.IDF_SERVER || "http://localhost:3001";
 const OFFLINE = process.argv.includes("--offline");
@@ -160,6 +172,76 @@ function escapeMarkdown(s) {
 }
 
 // ─────────────────────────────────────────────────────────────────
+// Pattern promotions fold + render
+// ─────────────────────────────────────────────────────────────────
+
+function foldPatternPromotions(effects) {
+  const items = {};
+  for (const ef of effects) {
+    const t = (ef.target || "").toLowerCase();
+    if (!t.startsWith("patternpromotions") && !t.startsWith("patternpromotion")) {
+      continue;
+    }
+    const ctx = typeof ef.context === "string" ? JSON.parse(ef.context) : ef.context;
+    const id = ctx?.id || ef.id;
+    switch (ef.alpha) {
+      case "add":
+      case "create":
+        items[id] = { ...(items[id] || {}), ...ctx };
+        break;
+      case "replace":
+        if (items[id]) items[id] = { ...items[id], ...ctx };
+        break;
+      case "remove":
+        delete items[id];
+        break;
+    }
+  }
+  return Object.values(items);
+}
+
+const STATUS_BADGE_PROMOTION = {
+  pending: "🟡 pending",
+  approved: "🟢 approved",
+  rejected: "⛔ rejected",
+  shipped: "✅ shipped",
+};
+
+function renderPatternPromotions(items) {
+  if (items.length === 0) {
+    return ["", "_Очередь промоций пуста._", ""].join("\n");
+  }
+  const grouped = { pending: [], approved: [], shipped: [], rejected: [] };
+  for (const it of items) (grouped[it.status] || (grouped[it.status] = [])).push(it);
+  for (const k of Object.keys(grouped)) {
+    grouped[k].sort((a, b) => (b.requestedAt || 0) - (a.requestedAt || 0));
+  }
+
+  const lines = [""];
+  for (const status of ["pending", "approved", "shipped", "rejected"]) {
+    const list = grouped[status];
+    if (!list || list.length === 0) continue;
+    lines.push(`### ${STATUS_BADGE_PROMOTION[status]} (${list.length})`);
+    lines.push("");
+    for (const it of list) {
+      const dt = it.requestedAt ? new Date(it.requestedAt).toISOString().slice(0, 10) : "—";
+      const pr = it.sdkPrUrl ? ` → [SDK PR](${it.sdkPrUrl})` : "";
+      lines.push(`- **\`${escapeMarkdown(it.candidateId || "—")}\`** → ${it.targetArchetype || "?"}${pr} · ${dt}`);
+      if (it.rationale) lines.push(`  ${escapeMarkdown(it.rationale)}`);
+      if (it.falsificationFixtures) lines.push(`  fixtures: ${escapeMarkdown(it.falsificationFixtures)}`);
+    }
+    lines.push("");
+  }
+  return lines.join("\n");
+}
+
+const RENDERERS = { renderBacklogItems, renderPatternPromotions };
+const FOLDERS = {
+  backlogItems: foldBacklogItems,
+  patternPromotions: foldPatternPromotions,
+};
+
+// ─────────────────────────────────────────────────────────────────
 // Patcher
 // ─────────────────────────────────────────────────────────────────
 
@@ -188,10 +270,6 @@ async function applyPatch(filePath, openMarker, closeMarker, newBlock) {
 // ─────────────────────────────────────────────────────────────────
 
 async function main() {
-  if (!existsSync(TARGET_FILE)) {
-    throw new Error(`target file missing: ${TARGET_FILE}`);
-  }
-
   let effects;
   try {
     effects = OFFLINE ? await readPhiOffline() : await readPhiOnline();
@@ -204,20 +282,25 @@ async function main() {
     }
   }
 
-  const items = foldBacklogItems(effects);
-  const block = renderBacklogItems(items);
-
-  const result = await applyPatch(TARGET_FILE, MARKER_OPEN, MARKER_CLOSE, block);
-
-  if (!result.changed) {
-    console.log(`meta-compile: backlog-inbox unchanged (${items.length} items, ${result.bytesBefore} bytes)`);
-    return;
+  for (const target of TARGETS) {
+    if (!existsSync(target.file)) {
+      console.warn(`meta-compile: skip ${target.id} (file missing: ${target.file})`);
+      continue;
+    }
+    const items = FOLDERS[target.fold](effects);
+    const block = RENDERERS[target.render](items);
+    const openMarker = `<!-- meta-compile: ${target.id} -->`;
+    const result = await applyPatch(target.file, openMarker, MARKER_CLOSE, block);
+    if (!result.changed) {
+      console.log(`meta-compile: ${target.id} unchanged (${items.length} items, ${result.bytesBefore} bytes)`);
+    } else {
+      const verb = result.dryRun ? "would patch" : "patched";
+      console.log(
+        `meta-compile: ${verb} ${target.id} (${items.length} items, ` +
+        `${result.bytesBefore} → ${result.bytesAfter} bytes)`,
+      );
+    }
   }
-  const verb = result.dryRun ? "would patch" : "patched";
-  console.log(
-    `meta-compile: ${verb} backlog-inbox (${items.length} items, ` +
-    `${result.bytesBefore} → ${result.bytesAfter} bytes)`,
-  );
 }
 
 main().catch((err) => {

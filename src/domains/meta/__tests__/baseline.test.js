@@ -25,15 +25,17 @@ import {
 } from "../domain.js";
 
 describe("meta baseline", () => {
-  it("ontology: 9 сущностей, 4 роли, 8 invariants, 0 rules", () => {
-    expect(Object.keys(ONTOLOGY.entities).length).toBe(9);
+  it("ontology: 10 сущностей, 4 роли, 9 invariants, 0 rules", () => {
+    expect(Object.keys(ONTOLOGY.entities).length).toBe(10);
     expect(Object.keys(ONTOLOGY.roles).length).toBe(4);
-    expect(ONTOLOGY.invariants.length).toBe(8);
+    expect(ONTOLOGY.invariants.length).toBe(9);
     expect(ONTOLOGY.rules.length).toBe(0);
-    // BacklogItem (Level 2 soft-authoring) + lifecycle invariant.
     expect(ONTOLOGY.entities.BacklogItem).toBeDefined();
+    expect(ONTOLOGY.entities.PatternPromotion).toBeDefined();
     const lifecycle = ONTOLOGY.invariants.find((i) => i.name === "backlog_lifecycle");
     expect(lifecycle?.kind).toBe("transition");
+    const promoLifecycle = ONTOLOGY.invariants.find((i) => i.name === "promotion_lifecycle");
+    expect(promoLifecycle?.kind).toBe("transition");
   });
 
   it("entities имеют primary fieldRole", () => {
@@ -48,16 +50,18 @@ describe("meta baseline", () => {
     }
   });
 
-  it("intents: 4 write-side (Level 2 soft-authoring §13.0)", () => {
-    expect(Object.keys(INTENTS).length).toBe(4);
+  it("intents: 8 write-side (4 backlog + 4 pattern promotion)", () => {
+    expect(Object.keys(INTENTS).length).toBe(8);
     expect(INTENTS.add_backlog_item.α).toBe("create");
+    expect(INTENTS.request_pattern_promotion.α).toBe("create");
+    expect(INTENTS.ship_pattern_promotion.context.__irr.point).toBe("high");
     expect(INTENTS.close_backlog_item.precondition).toEqual({
       "BacklogItem.status": ["open", "scheduled"],
     });
   });
 
-  it("projections: 8 authored (Level 1 + Level 2 backlog + Studio shell)", () => {
-    expect(Object.keys(PROJECTIONS).length).toBe(8);
+  it("projections: 10 authored (Level 1 + Level 2 backlog + promotions + Studio shell)", () => {
+    expect(Object.keys(PROJECTIONS).length).toBe(10);
     expect(PROJECTIONS.pattern_bank_browser.archetype).toBe("catalog");
     expect(PROJECTIONS.pattern_detail.archetype).toBe("detail");
     expect(PROJECTIONS.domain_detail.subCollections.length).toBe(4);
