@@ -1,6 +1,6 @@
 # JointSolver divergence — A2 Phase 3e validation re-run
 
-**Generated:** 2026-04-27T13:19:35.794Z
+**Generated:** 2026-04-27T13:24:23.735Z
 
 > Re-run Phase 3a/3c'' divergence collection с активированным `opts.respectRoleCanExecute: true` (Phase 3d.1/3d.2 SDK opt-in). Per-role symmetric comparison: derived per-role (через crystallizeV2 opts) vs alternate per-role (через computeAlternateAssignment).
 
