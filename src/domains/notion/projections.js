@@ -44,6 +44,11 @@ export const PROJECTIONS = {
       { projectionId: "comments_thread", foreignKey: "pageId", entity: "Comment" },
       { projectionId: "page_permissions_panel", foreignKey: "pageId", entity: "PagePermission" },
     ],
+    // top-level toolbar whitelist (canonical shape — assignToSlotsDetail
+    // консумирует projection.toolbar как Set<intentId>). add_block / duplicate_page
+    // фильтруются раньше (sub-creator / mainEntity-creator), inline-кнопки в
+    // BlockCanvas покрывают добавление блоков.
+    toolbar: ["rename_page", "set_page_icon", "set_cover_image", "share_page", "archive_page"],
     witnesses: ["title", "icon", "coverImageUrl", "lastEditedById", "updatedAt"],
     slots: {
       hero: {
@@ -54,9 +59,6 @@ export const PROJECTIONS = {
         kind: "canvas",
         canvasId: "block_canvas",
         // Custom canvas рендерит Block-список с поддержкой 15 kind'ов
-      },
-      toolbar: {
-        intents: ["add_block", "rename_page", "set_page_icon", "set_cover_image", "share_page", "archive_page", "duplicate_page"],
       },
     },
   },
