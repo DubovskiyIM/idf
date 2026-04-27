@@ -1,0 +1,81 @@
+{
+  "id": "transclusion-live-mirror",
+  "version": 1,
+  "status": "candidate",
+  "archetype": "detail",
+  "trigger": {
+    "requires": [
+      {
+        "kind": "mirror",
+        "entity": "*Reference"
+      },
+      {
+        "kind": "entity-field",
+        "entity": "*Reference",
+        "field": "kind|linkKind",
+        "statusValues": [
+          "embed",
+          "transclude"
+        ]
+      },
+      {
+        "kind": "intent-creates",
+        "entity": "*Reference"
+      }
+    ]
+  },
+  "structure": {
+    "slot": "body",
+    "description": "Reference-entity с kind='embed' рендерится не как ссылка, а как live-mirror содержимого target-сущности: правка target — instant-обновление во всех embed-точках. Renderer должен подписаться на target, а не сделать snapshot. Отличается от reference-link тем, что embed зеркалит, а reference указывает.",
+    "applySource": "function apply(slots, context) {\n  // Auto-synthesized marker-only apply (§13.17 opt-c).\n  // Marks first un-marked item in slots.body with source: \"derived:transclusion-live-mirror\".\n  // Idempotent: skip if already marked.\n  const slot = slots?.body;\n  if (!Array.isArray(slot) || slot.length === 0) return slots;\n  const idx = slot.findIndex((x) => x && !x.source);\n  if (idx === -1) return slots;\n  const marker = \"derived:transclusion-live-mirror\";\n  if (slot[idx].source === marker) return slots;\n  return {\n    ...slots,\n    body: slot.map((item, i) =>\n      i === idx ? { ...item, source: marker } : item),\n  };\n}",
+    "applyKind": "marker-only-synthesized",
+    "applySynthesizedAt": 1777280149910
+  },
+  "rationale": {
+    "hypothesis": "Copy-paste дублирует и расходится со временем (drift). Live-mirror гарантирует single-source-of-truth — изменение в одном месте отражается везде, что критично для шаблонов, дашбордов и meta-блоков. Семантически это композиция, не наследование.",
+    "evidence": [
+      {
+        "source": "roam-research",
+        "description": "(( )) syntax embed'ит блок live, edits propagate",
+        "reliability": "high"
+      },
+      {
+        "source": "logseq",
+        "description": "Block embed identical, with edit-propagation",
+        "reliability": "high"
+      },
+      {
+        "source": "notion-synced-block",
+        "description": "Synced block — позднее заимствование той же идеи (2021)",
+        "reliability": "high"
+      }
+    ],
+    "counterexample": [
+      {
+        "source": "google-docs",
+        "description": "Inline copy не sync'ится — ожидаемое поведение для linear-doc",
+        "reliability": "high"
+      },
+      {
+        "source": "jira-issue-link",
+        "description": "Link to issue показывает заголовок, не зеркалит описание — link, не mirror",
+        "reliability": "high"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [],
+    "shouldNotMatch": [
+      {
+        "domain": "messenger",
+        "projection": "message_quote",
+        "reason": "Quote — snapshot цитирования, не live-mirror; правка оригинала не должна менять цитату"
+      },
+      {
+        "domain": "sales",
+        "projection": "bid_detail",
+        "reason": "Bid фиксирует значение в момент создания — live-mirror цены сломал бы аудит"
+      }
+    ]
+  }
+}

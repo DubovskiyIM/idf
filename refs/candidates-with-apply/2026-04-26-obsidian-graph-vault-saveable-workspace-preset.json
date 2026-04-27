@@ -1,0 +1,88 @@
+{
+  "id": "saveable-workspace-preset",
+  "version": 1,
+  "status": "candidate",
+  "archetype": "cross",
+  "trigger": {
+    "requires": [
+      {
+        "kind": "entity-field",
+        "entity": "Workspace",
+        "field": "layout",
+        "fieldKind": "json"
+      },
+      {
+        "kind": "entity-field",
+        "entity": "Workspace",
+        "field": "openTabs",
+        "fieldKind": "array"
+      },
+      {
+        "kind": "intent-creates",
+        "creates": "Workspace",
+        "verb": "save"
+      },
+      {
+        "kind": "intent-effect",
+        "α": "replace",
+        "target": "workspace.layout",
+        "verb": "switch"
+      }
+    ]
+  },
+  "structure": {
+    "slot": "header",
+    "description": "Top-level switcher in shell header (or status bar): named layout presets the user has saved. Selecting a preset replaces full UI state (open tabs, panel positions, active sidebar). 'Save current as…' affordance creates a new preset from current state. Distinct from generic prefs — these are full-context snapshots, named by use-case ('writing', 'review').",
+    "applySource": "function apply(slots, context) {\n  // Auto-synthesized marker-only apply (§13.17 opt-c).\n  // Marks first un-marked item in slots.header with source: \"derived:saveable-workspace-preset\".\n  // Idempotent: skip if already marked.\n  const slot = slots?.header;\n  if (!Array.isArray(slot) || slot.length === 0) return slots;\n  const idx = slot.findIndex((x) => x && !x.source);\n  if (idx === -1) return slots;\n  const marker = \"derived:saveable-workspace-preset\";\n  if (slot[idx].source === marker) return slots;\n  return {\n    ...slots,\n    header: slot.map((item, i) =>\n      i === idx ? { ...item, source: marker } : item),\n  };\n}",
+    "applyKind": "marker-only-synthesized",
+    "applySynthesizedAt": 1777280149903
+  },
+  "rationale": {
+    "hypothesis": "Tools used across multiple contexts (research / writing / review) develop different layout needs per context. Re-arranging panels each time is friction; a named-preset switcher externalizes 'mode of work' as a first-class concept. The save action is rare and intentional (one or two presets per user), so it doesn't belong in toolbar — header switcher with secondary 'manage' is the right surface.",
+    "evidence": [
+      {
+        "source": "obsidian",
+        "description": "Workspaces core plugin saves panel layout + open tabs as named preset, status-bar switcher",
+        "reliability": "high"
+      },
+      {
+        "source": "vscode",
+        "description": "Workbench layouts; 'Open Workspace' shortcut",
+        "reliability": "medium"
+      },
+      {
+        "source": "figma",
+        "description": "No equivalent — confirms this is a multi-context tool's pattern",
+        "reliability": "medium"
+      }
+    ],
+    "counterexample": [
+      {
+        "source": "linear",
+        "description": "Single-context tool; layout preset would be over-configuration",
+        "reliability": "high"
+      },
+      {
+        "source": "messenger",
+        "description": "Real-time UI; no 'mode' concept",
+        "reliability": "high"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [
+      {
+        "domain": "notion",
+        "projection": "shell",
+        "reason": "Notion has split-view + multiple sidebars — layout-preset would help heavy users"
+      }
+    ],
+    "shouldNotMatch": [
+      {
+        "domain": "delivery",
+        "projection": "courier_shell",
+        "reason": "Single-purpose UI; layout presets add noise"
+      }
+    ]
+  }
+}

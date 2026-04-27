@@ -1,0 +1,67 @@
+{
+  "id": "row-as-page-duality",
+  "version": 1,
+  "status": "candidate",
+  "archetype": "catalog",
+  "trigger": {
+    "requires": [
+      {
+        "kind": "entity-field",
+        "entity": "<row-entity>",
+        "field": "linkedPageId"
+      },
+      {
+        "kind": "sub-entity-exists",
+        "parent": "<collection>",
+        "child": "<row-entity>"
+      }
+    ]
+  },
+  "structure": {
+    "slot": "body",
+    "description": "Каждая row в catalog рендерится как preview, но open трактуется как переход на full page-detail (не modal-edit); row-properties маппятся на hero+sections page-detail'а."
+  },
+  "rationale": {
+    "hypothesis": "Когда row хранит structured data + free-form content, modal-edit ограничен; full-page detail позволяет ту же row редактировать как rich document, унифицируя collection-item и standalone-document.",
+    "evidence": [
+      {
+        "source": "Notion",
+        "description": "Click row → opens row as page с hero + property panel + body",
+        "reliability": "high"
+      },
+      {
+        "source": "Coda",
+        "description": "Row → detail-view как полноценная страница",
+        "reliability": "high"
+      }
+    ],
+    "counterexample": [
+      {
+        "source": "Sales listing-table",
+        "description": "Listing-row → modal достаточно, отдельный page over-engineered",
+        "reliability": "medium"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [
+      {
+        "domain": "notion",
+        "projection": "database_row",
+        "reason": "DatabaseRow.linkedPageId связывает row с Page"
+      }
+    ],
+    "shouldNotMatch": [
+      {
+        "domain": "invest",
+        "projection": "positions",
+        "reason": "Position-row не имеет document-content"
+      },
+      {
+        "domain": "messenger",
+        "projection": "messages",
+        "reason": "Message не имеет page-duality"
+      }
+    ]
+  }
+}

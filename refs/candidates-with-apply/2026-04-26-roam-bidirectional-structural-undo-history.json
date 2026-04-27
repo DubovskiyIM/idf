@@ -1,0 +1,96 @@
+{
+  "id": "structural-undo-history",
+  "version": 1,
+  "status": "candidate",
+  "archetype": null,
+  "trigger": {
+    "requires": [
+      {
+        "kind": "intent-effect",
+        "intent": "indent_block",
+        "alpha": "replace"
+      },
+      {
+        "kind": "intent-effect",
+        "intent": "outdent_block",
+        "alpha": "replace"
+      },
+      {
+        "kind": "intent-effect",
+        "intent": "move_block",
+        "alpha": "replace"
+      },
+      {
+        "kind": "intent-effect",
+        "intent": "undo_action",
+        "alpha": "replace",
+        "target": "session.history"
+      }
+    ]
+  },
+  "structure": {
+    "slot": "toolbar",
+    "description": "Все structural-edit intents (indent/outdent/move/multi-action) автоматически попадают в undo-stack без явных checkpoint'ов. Cmd-Z откатывает последнюю операцию того же level'а — text-edit и structure-edit идут в один stack. Глубина — open-ended в рамках сессии.",
+    "applySource": "function apply(slots, context) {\n  // Auto-synthesized marker-only apply (§13.17 opt-c).\n  // Marks first un-marked item in slots.toolbar with source: \"derived:structural-undo-history\".\n  // Idempotent: skip if already marked.\n  const slot = slots?.toolbar;\n  if (!Array.isArray(slot) || slot.length === 0) return slots;\n  const idx = slot.findIndex((x) => x && !x.source);\n  if (idx === -1) return slots;\n  const marker = \"derived:structural-undo-history\";\n  if (slot[idx].source === marker) return slots;\n  return {\n    ...slots,\n    toolbar: slot.map((item, i) =>\n      i === idx ? { ...item, source: marker } : item),\n  };\n}",
+    "applyKind": "marker-only-synthesized",
+    "applySynthesizedAt": 1777280149903
+  },
+  "rationale": {
+    "hypothesis": "В outline-доменах структурные операции (indent/move) часто экспериментальны: автор пробует разные иерархии. Без cheap undo пользователь становится осторожен и теряет в скорости реструктуризации. Implicit-undo делает все структурные изменения reversible by default — это снимает страх перед drag-перестановкой.",
+    "evidence": [
+      {
+        "source": "roam-research",
+        "description": "Cmd-Z откатывает indent, move, multi-block recolor; стек глубокий",
+        "reliability": "high"
+      },
+      {
+        "source": "workflowy",
+        "description": "Полный undo для outline-операций — founding feature",
+        "reliability": "high"
+      },
+      {
+        "source": "google-docs",
+        "description": "Single Cmd-Z stack для text + structure",
+        "reliability": "high"
+      }
+    ],
+    "counterexample": [
+      {
+        "source": "git",
+        "description": "Structural операции требуют explicit commit/reflog — не undo-as-default",
+        "reliability": "high"
+      },
+      {
+        "source": "compliance-jrnl-edits",
+        "description": "JournalEntry изменения требуют amendment, не silent undo",
+        "reliability": "high"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [
+      {
+        "domain": "notion",
+        "projection": "page_detail",
+        "reason": "Block reorder + Cmd-Z undo"
+      },
+      {
+        "domain": "workflow",
+        "projection": "workflow_canvas",
+        "reason": "Node move/connect undo нужен для exploratory editing"
+      }
+    ],
+    "shouldNotMatch": [
+      {
+        "domain": "compliance",
+        "projection": "journal_detail",
+        "reason": "Explicit amendment required, undo-as-default запрещён"
+      },
+      {
+        "domain": "invest",
+        "projection": "transaction_detail",
+        "reason": "Confirmed transaction reversal через explicit reverse-transaction, не undo"
+      }
+    ]
+  }
+}

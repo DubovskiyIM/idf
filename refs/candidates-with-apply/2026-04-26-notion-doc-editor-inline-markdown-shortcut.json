@@ -1,0 +1,75 @@
+{
+  "id": "inline-markdown-shortcut",
+  "version": 1,
+  "status": "candidate",
+  "archetype": "detail",
+  "trigger": {
+    "requires": [
+      {
+        "kind": "polymorphic",
+        "entity": "Block"
+      },
+      {
+        "kind": "intent-effect",
+        "intent": "change_block_kind",
+        "α": "replace",
+        "target": "kind"
+      },
+      {
+        "kind": "intent-effect",
+        "intent": "edit_block_payload",
+        "α": "replace"
+      }
+    ]
+  },
+  "structure": {
+    "slot": "body",
+    "description": "Inline-парсер в payload-editor распознаёт markdown-prefixes ('# ', '- ', '> ', '[]', '**') и автоматически вызывает change_block_kind на текущей строке без явной команды.",
+    "applySource": "function apply(slots, context) {\n  // Auto-synthesized marker-only apply (§13.17 opt-c).\n  // Marks first un-marked item in slots.body with source: \"derived:inline-markdown-shortcut\".\n  // Idempotent: skip if already marked.\n  const slot = slots?.body;\n  if (!Array.isArray(slot) || slot.length === 0) return slots;\n  const idx = slot.findIndex((x) => x && !x.source);\n  if (idx === -1) return slots;\n  const marker = \"derived:inline-markdown-shortcut\";\n  if (slot[idx].source === marker) return slots;\n  return {\n    ...slots,\n    body: slot.map((item, i) =>\n      i === idx ? { ...item, source: marker } : item),\n  };\n}",
+    "applyKind": "marker-only-synthesized",
+    "applySynthesizedAt": 1777280149906
+  },
+  "rationale": {
+    "hypothesis": "Power-users печатают markdown-prefixes по привычке; авто-конверсия превращает встречающийся text-pattern в правильный block-kind, экономя slash-palette interaction для не-обычных kind'ов.",
+    "evidence": [
+      {
+        "source": "notion",
+        "description": "'# ' → heading_1, '- ' → bullet, '[]' → todo автоматически",
+        "reliability": "high"
+      },
+      {
+        "source": "obsidian",
+        "description": "Чистый markdown — каждый prefix renders соответствующий block",
+        "reliability": "high"
+      },
+      {
+        "source": "linear",
+        "description": "Comment editor поддерживает markdown-shortcuts inline",
+        "reliability": "medium"
+      }
+    ],
+    "counterexample": [
+      {
+        "source": "google-docs",
+        "description": "Опционально включается, по умолчанию выключено — пользователи pure-WYSIWYG ожидают literal characters",
+        "reliability": "medium"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [
+      {
+        "domain": "notion",
+        "projection": "page_detail",
+        "reason": "Block polymorphic с heading/bullet/todo/quote variants + change_block_kind intent"
+      }
+    ],
+    "shouldNotMatch": [
+      {
+        "domain": "invest",
+        "projection": "portfolio_detail",
+        "reason": "Нет polymorphic content-блоков и change-kind семантики"
+      }
+    ]
+  }
+}

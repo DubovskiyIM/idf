@@ -1,0 +1,77 @@
+{
+  "id": "multi-view-of-same-collection",
+  "version": 1,
+  "status": "candidate",
+  "archetype": "catalog",
+  "trigger": {
+    "requires": [
+      {
+        "kind": "sub-entity-exists",
+        "of": "View",
+        "with-discriminator": "kind"
+      },
+      {
+        "kind": "entity-field",
+        "field": "filters"
+      },
+      {
+        "kind": "entity-field",
+        "field": "sorts"
+      },
+      {
+        "kind": "entity-field",
+        "field": "groupBy"
+      }
+    ]
+  },
+  "structure": {
+    "slot": "header",
+    "description": "Tab-bar в header переключает renderer (table/board/gallery/list/calendar/timeline) над одним коллекционным датасетом; каждая View хранит свои filters/sorts/groupBy/visibleProperties и persistent. Запрос данных общий, конфигурация представления — per-view.",
+    "applySource": "function apply(slots, context) {\n  // Auto-synthesized marker-only apply (§13.17 opt-c).\n  // Marks first un-marked item in slots.header with source: \"derived:multi-view-of-same-collection\".\n  // Idempotent: skip if already marked.\n  const slot = slots?.header;\n  if (!Array.isArray(slot) || slot.length === 0) return slots;\n  const idx = slot.findIndex((x) => x && !x.source);\n  if (idx === -1) return slots;\n  const marker = \"derived:multi-view-of-same-collection\";\n  if (slot[idx].source === marker) return slots;\n  return {\n    ...slots,\n    header: slot.map((item, i) =>\n      i === idx ? { ...item, source: marker } : item),\n  };\n}",
+    "applyKind": "marker-only-synthesized",
+    "applySynthesizedAt": 1777280149902
+  },
+  "rationale": {
+    "hypothesis": "Один датасет нужен разным cognitive tasks (planning → calendar, status-tracking → board, scanning → table). Hardcoded single-renderer заставляет либо forking данных, либо подмены через filters; first-class View снимает оба.",
+    "evidence": [
+      {
+        "source": "notion",
+        "description": "table/board/gallery/list/calendar/timeline на одной database",
+        "reliability": "high"
+      },
+      {
+        "source": "linear",
+        "description": "Issue list / board / roadmap — три view над одной коллекцией issues",
+        "reliability": "high"
+      },
+      {
+        "source": "airtable",
+        "description": "Grid/Kanban/Calendar/Gallery/Form — per-view конфиги",
+        "reliability": "high"
+      }
+    ],
+    "counterexample": [
+      {
+        "source": "messenger",
+        "description": "Conversation-list имеет один смысловой renderer — multi-view был бы overkill",
+        "reliability": "high"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [
+      {
+        "domain": "notion",
+        "projection": "database_detail",
+        "reason": "DatabaseView.kind ∈ 6 вариантов, persistent per database"
+      }
+    ],
+    "shouldNotMatch": [
+      {
+        "domain": "booking",
+        "projection": "specialists_catalog",
+        "reason": "Один canonical view — list of cards"
+      }
+    ]
+  }
+}

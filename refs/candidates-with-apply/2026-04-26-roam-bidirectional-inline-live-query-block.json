@@ -1,0 +1,90 @@
+{
+  "id": "inline-live-query-block",
+  "version": 1,
+  "status": "candidate",
+  "archetype": "detail",
+  "trigger": {
+    "requires": [
+      {
+        "kind": "entity-field",
+        "entity": "*Query",
+        "field": "dsl",
+        "fieldRole": "expression"
+      },
+      {
+        "kind": "entity-field",
+        "entity": "*Query",
+        "field": "lastEvaluatedAt",
+        "fieldRole": "timestamp"
+      },
+      {
+        "kind": "sub-entity-exists",
+        "parent": "Block|*Container"
+      },
+      {
+        "kind": "intent-creates",
+        "entity": "*Query"
+      }
+    ]
+  },
+  "structure": {
+    "slot": "body",
+    "description": "Query stored как child-entity внутри content-container (block/note). Renderer dispatches на специальную примитиву: показывает источник DSL в edit-mode и live-результат в read-mode. lastEvaluatedAt отображается рядом, re-eval триггерится изменением world.",
+    "applySource": "function apply(slots, context) {\n  // Auto-synthesized marker-only apply (§13.17 opt-c).\n  // Marks first un-marked item in slots.body with source: \"derived:inline-live-query-block\".\n  // Idempotent: skip if already marked.\n  const slot = slots?.body;\n  if (!Array.isArray(slot) || slot.length === 0) return slots;\n  const idx = slot.findIndex((x) => x && !x.source);\n  if (idx === -1) return slots;\n  const marker = \"derived:inline-live-query-block\";\n  if (slot[idx].source === marker) return slots;\n  return {\n    ...slots,\n    body: slot.map((item, i) =>\n      i === idx ? { ...item, source: marker } : item),\n  };\n}",
+    "applyKind": "marker-only-synthesized",
+    "applySynthesizedAt": 1777280149903
+  },
+  "rationale": {
+    "hypothesis": "View-config отдельно от content создаёт двойной слой: «дашборд из X» и «контент с X» расходятся. Если query живёт как обычная сущность внутри контента, он версионируется, копируется, ссылается как любой другой блок — query становится first-class data, а не configuration.",
+    "evidence": [
+      {
+        "source": "roam-research",
+        "description": "{{query: ...}} stored as block, rendered with live results",
+        "reliability": "high"
+      },
+      {
+        "source": "logseq",
+        "description": "{{query ...}} identical, query как часть outline'а",
+        "reliability": "high"
+      },
+      {
+        "source": "notion-database-view",
+        "description": "Inline-database — родственная идея, но view-config separate from content",
+        "reliability": "medium"
+      }
+    ],
+    "counterexample": [
+      {
+        "source": "tableau",
+        "description": "Query/view — отдельный artifact, не часть документа, потому что аналитика — не writing",
+        "reliability": "high"
+      },
+      {
+        "source": "metabase",
+        "description": "Saved-question separated from any document — workflow analytical, не authoring",
+        "reliability": "high"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [
+      {
+        "domain": "reflect",
+        "projection": "hypothesis_evidence",
+        "reason": "Если hypothesis-evidence хранится как stored-query над moods, паттерн применим"
+      }
+    ],
+    "shouldNotMatch": [
+      {
+        "domain": "sales",
+        "projection": "listings_catalog",
+        "reason": "Catalog не содержит inline-query — фильтры внешние"
+      },
+      {
+        "domain": "messenger",
+        "projection": "conversation_detail",
+        "reason": "Сообщения не embed'ят queries — chat-content vs structured data"
+      }
+    ]
+  }
+}

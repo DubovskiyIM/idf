@@ -1,0 +1,66 @@
+{
+  "id": "dual-mode-search-simple-and-dsl",
+  "version": 1,
+  "status": "candidate",
+  "archetype": "catalog",
+  "trigger": {
+    "requires": [
+      {
+        "kind": "intent-confirmation",
+        "value": "enter"
+      },
+      {
+        "kind": "intent-count",
+        "filter": "search-related",
+        "min": 2
+      }
+    ]
+  },
+  "structure": {
+    "slot": "toolbar",
+    "description": "Search-bar поддерживает inline-DSL ('type:page in:<ws> by:<user>') и опциональный 'Advanced filters' panel с structured-form'ами; обе модальности проецируются в одну query-сущность."
+  },
+  "rationale": {
+    "hypothesis": "Power-users пишут DSL быстрее, novice'ы видят dropdown'ы; одна модальность отчуждает половину аудитории. Dual-mode даёт progressive-disclosure — простой синтаксис выводится из advanced-form'ы и наоборот.",
+    "evidence": [
+      {
+        "source": "Notion",
+        "description": "Quick-find DSL (type: in:) + Advanced filters drawer",
+        "reliability": "high"
+      },
+      {
+        "source": "GitHub",
+        "description": "is:open author:foo + Advanced search page",
+        "reliability": "high"
+      },
+      {
+        "source": "Gmail",
+        "description": "from: subject: + Advanced search modal",
+        "reliability": "high"
+      }
+    ],
+    "counterexample": [
+      {
+        "source": "Simple text-search domain",
+        "description": "Без множественных filter-полей DSL overengineered",
+        "reliability": "high"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [
+      {
+        "domain": "notion",
+        "projection": "quick_find",
+        "reason": "Multiple search intents с typed-filter chip dimensions"
+      }
+    ],
+    "shouldNotMatch": [
+      {
+        "domain": "lifequest",
+        "projection": "habits",
+        "reason": "Single-keyword search, нет filter-dimensions"
+      }
+    ]
+  }
+}

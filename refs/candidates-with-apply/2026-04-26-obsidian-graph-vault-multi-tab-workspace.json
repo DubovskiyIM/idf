@@ -1,0 +1,79 @@
+{
+  "id": "multi-tab-workspace",
+  "version": 1,
+  "status": "candidate",
+  "archetype": null,
+  "trigger": {
+    "requires": [
+      {
+        "kind": "intent-creates",
+        "creates": "Tab"
+      },
+      {
+        "kind": "entity-field",
+        "entity": "Tab",
+        "field": "noteId"
+      },
+      {
+        "kind": "entity-field",
+        "entity": "Workspace",
+        "field": "activeTabId"
+      }
+    ]
+  },
+  "structure": {
+    "slot": "shell",
+    "description": "Chrome-style верхняя строка табов: каждый таб — независимая инстанция detail-проекции с собственным per-tab state (viewMode, scroll). Активный таб переключает body, закрытие/перетаскивание — direct manipulation.",
+    "applySource": "function apply(slots, context) {\n  // Auto-synthesized marker-only apply (§13.17 opt-c).\n  // Marks first un-marked item in slots.shell with source: \"derived:multi-tab-workspace\".\n  // Idempotent: skip if already marked.\n  const slot = slots?.shell;\n  if (!Array.isArray(slot) || slot.length === 0) return slots;\n  const idx = slot.findIndex((x) => x && !x.source);\n  if (idx === -1) return slots;\n  const marker = \"derived:multi-tab-workspace\";\n  if (slot[idx].source === marker) return slots;\n  return {\n    ...slots,\n    shell: slot.map((item, i) =>\n      i === idx ? { ...item, source: marker } : item),\n  };\n}",
+    "applyKind": "marker-only-synthesized",
+    "applySynthesizedAt": 1777280149908
+  },
+  "rationale": {
+    "hypothesis": "Когда пользователь часто переключается между несколькими экземплярами одной detail-проекции (несколько заметок открыты одновременно), navigation-stack модель «один активный экран» создаёт когнитивный overhead reload'а контекста. Tabs хранят несколько активных контекстов параллельно с дешёвым переключением.",
+    "evidence": [
+      {
+        "source": "obsidian",
+        "description": "Tabs сверху, switch_workspace через клик/Cmd+Tab, per-tab viewMode",
+        "reliability": "high"
+      },
+      {
+        "source": "vscode",
+        "description": "Editor tabs с per-tab cursor position, drag-to-reorder",
+        "reliability": "high"
+      },
+      {
+        "source": "browser-chrome",
+        "description": "Архетип-первоисточник: tabs как ортогональная навигация к history-stack",
+        "reliability": "high"
+      }
+    ],
+    "counterexample": [
+      {
+        "source": "instagram-mobile",
+        "description": "Single-screen feed — multi-tab сломал бы swipe-driven flow",
+        "reliability": "high"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [
+      {
+        "domain": "obsidian",
+        "projection": "vault_workspace",
+        "reason": "Tab.noteId + Workspace.openTabs + Workspace.activeTabId — текстбук shape"
+      }
+    ],
+    "shouldNotMatch": [
+      {
+        "domain": "booking",
+        "projection": "specialist_catalog",
+        "reason": "Booking-flow линеен, multi-tab не добавляет ценности"
+      },
+      {
+        "domain": "delivery",
+        "projection": "order_catalog",
+        "reason": "Курьеру нужен один активный заказ, не параллель"
+      }
+    ]
+  }
+}

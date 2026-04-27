@@ -1,0 +1,88 @@
+{
+  "id": "marketplace-browse-install-enable",
+  "version": 1,
+  "status": "candidate",
+  "archetype": "catalog",
+  "trigger": {
+    "requires": [
+      {
+        "kind": "entity-field",
+        "entity": "Plugin",
+        "field": "isCommunity",
+        "fieldKind": "boolean"
+      },
+      {
+        "kind": "entity-field",
+        "entity": "Plugin",
+        "field": "isEnabled",
+        "fieldKind": "boolean"
+      },
+      {
+        "kind": "intent-creates",
+        "creates": "Plugin",
+        "verb": "install"
+      },
+      {
+        "kind": "intent-effect",
+        "α": "replace",
+        "target": "*.isEnabled",
+        "minCount": 2
+      }
+    ]
+  },
+  "structure": {
+    "slot": "primaryCTA",
+    "description": "Catalog has a tri-state primary CTA per item: Browse (not installed) → Install (creates instance) → Enable (replace .isEnabled true) → Disable (replace .isEnabled false). State machine encoded in CTA label and disabled-state, not in separate forms. Optional 'Uninstall' is exposed as secondary destructive action with irreversibility flag.",
+    "applySource": "function apply(slots, context) {\n  // Auto-synthesized marker-only apply (§13.17 opt-c).\n  // Marks first un-marked item in slots.primaryCTA with source: \"derived:marketplace-browse-install-enable\".\n  // Idempotent: skip if already marked.\n  const slot = slots?.primaryCTA;\n  if (!Array.isArray(slot) || slot.length === 0) return slots;\n  const idx = slot.findIndex((x) => x && !x.source);\n  if (idx === -1) return slots;\n  const marker = \"derived:marketplace-browse-install-enable\";\n  if (slot[idx].source === marker) return slots;\n  return {\n    ...slots,\n    primaryCTA: slot.map((item, i) =>\n      i === idx ? { ...item, source: marker } : item),\n  };\n}",
+    "applyKind": "marker-only-synthesized",
+    "applySynthesizedAt": 1777280149902
+  },
+  "rationale": {
+    "hypothesis": "Marketplaces have a non-obvious lifecycle: install ≠ enable. Conflating them (one button → installed-and-on) is convenient but wrong for plugins-with-side-effects (auth, network access) where enable is the consent moment. Splitting into install + enable + disable + uninstall as a 4-state CTA makes consent surfaces explicit, lets users sandbox-install before turning on, and makes 'why is this plugin running?' answerable.",
+    "evidence": [
+      {
+        "source": "obsidian",
+        "description": "Community Plugins: Browse → Install → Enable, with separate toggle in installed list",
+        "reliability": "high"
+      },
+      {
+        "source": "vscode-marketplace",
+        "description": "Install button → installed; per-extension Enable/Disable/Reload toggle in extensions list",
+        "reliability": "high"
+      },
+      {
+        "source": "chrome-web-store",
+        "description": "Add to Chrome (install+enable atomic), but per-extension on/off toggle in chrome://extensions — same conceptual lifecycle",
+        "reliability": "high"
+      }
+    ],
+    "counterexample": [
+      {
+        "source": "app-store-mobile",
+        "description": "Install = enabled by default for mobile apps; the install/enable split would be friction without security benefit at user level",
+        "reliability": "high"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [
+      {
+        "domain": "automation",
+        "projection": "integration_catalog",
+        "reason": "Integrations have install + enable as distinct moments"
+      }
+    ],
+    "shouldNotMatch": [
+      {
+        "domain": "sales",
+        "projection": "listing_catalog",
+        "reason": "Buying ≠ enabling; lifecycle is purchase-driven, not capability-driven"
+      },
+      {
+        "domain": "booking",
+        "projection": "service_catalog",
+        "reason": "Service has no install/enable lifecycle"
+      }
+    ]
+  }
+}

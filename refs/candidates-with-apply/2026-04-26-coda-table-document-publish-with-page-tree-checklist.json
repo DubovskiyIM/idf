@@ -1,0 +1,77 @@
+{
+  "id": "publish-with-page-tree-checklist",
+  "version": 1,
+  "status": "candidate",
+  "archetype": "detail",
+  "trigger": {
+    "requires": [
+      {
+        "kind": "intent-creates",
+        "creates": "PublishConfig",
+        "confirmation": "form"
+      },
+      {
+        "kind": "sub-entity-exists",
+        "parent": "Doc",
+        "child": "Page",
+        "selfRef": true
+      },
+      {
+        "kind": "entity-field",
+        "entity": "Page",
+        "field": "isHidden",
+        "fieldKind": "boolean"
+      }
+    ]
+  },
+  "structure": {
+    "slot": "overlay",
+    "description": "Publish-flow открывает modal не с flat-формой, а с checkbox-tree всех Page внутри Doc. Author выбирает, какие страницы войдут в публичную версию. Hidden pages по умолчанию unchecked. Preview-link обновляется live по выбору.",
+    "applySource": "function apply(slots, context) {\n  // Auto-synthesized marker-only apply (§13.17 opt-c).\n  // Marks first un-marked item in slots.overlay with source: \"derived:publish-with-page-tree-checklist\".\n  // Idempotent: skip if already marked.\n  const slot = slots?.overlay;\n  if (!Array.isArray(slot) || slot.length === 0) return slots;\n  const idx = slot.findIndex((x) => x && !x.source);\n  if (idx === -1) return slots;\n  const marker = \"derived:publish-with-page-tree-checklist\";\n  if (slot[idx].source === marker) return slots;\n  return {\n    ...slots,\n    overlay: slot.map((item, i) =>\n      i === idx ? { ...item, source: marker } : item),\n  };\n}",
+    "applyKind": "marker-only-synthesized",
+    "applySynthesizedAt": 1777280149904
+  },
+  "rationale": {
+    "hypothesis": "При публикации многостраничного документа author всегда хочет cherry-pick — не вся структура работа должна быть видна публично. Flat-список страниц теряет иерархию. Checkbox-tree сохраняет parent/child relationship и позволяет 'select all under this branch'.",
+    "evidence": [
+      {
+        "source": "coda",
+        "description": "Publish-modal с tree of pages для выбора public-set",
+        "reliability": "high"
+      },
+      {
+        "source": "notion",
+        "description": "Public page settings с per-subpage toggle",
+        "reliability": "high"
+      },
+      {
+        "source": "gitbook",
+        "description": "Publish-flow с tree-selection страниц",
+        "reliability": "medium"
+      }
+    ],
+    "counterexample": [
+      {
+        "source": "blog-post",
+        "description": "Single-document publish без иерархии — checklist избыточен",
+        "reliability": "high"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [
+      {
+        "domain": "notion",
+        "projection": "publish_config_form",
+        "reason": "Notion — это и есть source domain для паттерна"
+      }
+    ],
+    "shouldNotMatch": [
+      {
+        "domain": "delivery",
+        "projection": "order_detail",
+        "reason": "Order не имеет subtree для cherry-pick"
+      }
+    ]
+  }
+}

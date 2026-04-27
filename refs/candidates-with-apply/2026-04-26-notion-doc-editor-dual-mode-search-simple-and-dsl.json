@@ -1,0 +1,69 @@
+{
+  "id": "dual-mode-search-simple-and-dsl",
+  "version": 1,
+  "status": "candidate",
+  "archetype": "catalog",
+  "trigger": {
+    "requires": [
+      {
+        "kind": "intent-confirmation",
+        "value": "enter"
+      },
+      {
+        "kind": "intent-count",
+        "filter": "search-related",
+        "min": 2
+      }
+    ]
+  },
+  "structure": {
+    "slot": "toolbar",
+    "description": "Search-bar поддерживает inline-DSL ('type:page in:<ws> by:<user>') и опциональный 'Advanced filters' panel с structured-form'ами; обе модальности проецируются в одну query-сущность.",
+    "applySource": "function apply(slots, context) {\n  // Auto-synthesized marker-only apply (§13.17 opt-c).\n  // Marks first un-marked item in slots.toolbar with source: \"derived:dual-mode-search-simple-and-dsl\".\n  // Idempotent: skip if already marked.\n  const slot = slots?.toolbar;\n  if (!Array.isArray(slot) || slot.length === 0) return slots;\n  const idx = slot.findIndex((x) => x && !x.source);\n  if (idx === -1) return slots;\n  const marker = \"derived:dual-mode-search-simple-and-dsl\";\n  if (slot[idx].source === marker) return slots;\n  return {\n    ...slots,\n    toolbar: slot.map((item, i) =>\n      i === idx ? { ...item, source: marker } : item),\n  };\n}",
+    "applyKind": "marker-only-synthesized",
+    "applySynthesizedAt": 1777280149911
+  },
+  "rationale": {
+    "hypothesis": "Power-users пишут DSL быстрее, novice'ы видят dropdown'ы; одна модальность отчуждает половину аудитории. Dual-mode даёт progressive-disclosure — простой синтаксис выводится из advanced-form'ы и наоборот.",
+    "evidence": [
+      {
+        "source": "Notion",
+        "description": "Quick-find DSL (type: in:) + Advanced filters drawer",
+        "reliability": "high"
+      },
+      {
+        "source": "GitHub",
+        "description": "is:open author:foo + Advanced search page",
+        "reliability": "high"
+      },
+      {
+        "source": "Gmail",
+        "description": "from: subject: + Advanced search modal",
+        "reliability": "high"
+      }
+    ],
+    "counterexample": [
+      {
+        "source": "Simple text-search domain",
+        "description": "Без множественных filter-полей DSL overengineered",
+        "reliability": "high"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [
+      {
+        "domain": "notion",
+        "projection": "quick_find",
+        "reason": "Multiple search intents с typed-filter chip dimensions"
+      }
+    ],
+    "shouldNotMatch": [
+      {
+        "domain": "lifequest",
+        "projection": "habits",
+        "reason": "Single-keyword search, нет filter-dimensions"
+      }
+    ]
+  }
+}

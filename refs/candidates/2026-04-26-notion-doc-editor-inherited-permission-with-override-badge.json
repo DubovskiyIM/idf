@@ -1,0 +1,72 @@
+{
+  "id": "inherited-permission-with-override-badge",
+  "version": 1,
+  "status": "candidate",
+  "archetype": "detail",
+  "trigger": {
+    "requires": [
+      {
+        "kind": "entity-field",
+        "entity": "<permission-entity>",
+        "field": "inheritedFrom"
+      },
+      {
+        "kind": "entity-field",
+        "entity": "<permission-entity>",
+        "field": "override"
+      }
+    ]
+  },
+  "structure": {
+    "slot": "sections",
+    "description": "Permission row рендерит две части: 'inherited from <parent>' subdued строки + explicit override строки с warm-border badge; UI чётко разделяет 'наследуется' vs 'переопределено локально'."
+  },
+  "rationale": {
+    "hypothesis": "В permission-системе с inheritance chain'ом смешение унаследованных и явных правил порождает auditing-debt — пользователь не знает где менять; явный override-маркер делает разрыв chain'а видимым.",
+    "evidence": [
+      {
+        "source": "Notion",
+        "description": "Share-dialog показывает 'inherited from parent page' + 'restricted access' badge при override",
+        "reliability": "high"
+      },
+      {
+        "source": "GitHub",
+        "description": "Repo-permissions показывают inherited from org vs explicit",
+        "reliability": "high"
+      },
+      {
+        "source": "AWS IAM",
+        "description": "Inline policy vs attached managed-policy визуально разделены",
+        "reliability": "medium"
+      }
+    ],
+    "counterexample": [
+      {
+        "source": "Flat permission system",
+        "description": "Без иерархии inherited-vs-override — лишний UI",
+        "reliability": "high"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [
+      {
+        "domain": "notion",
+        "projection": "page_permissions",
+        "reason": "PagePermission.inheritedFrom + override fields"
+      }
+    ],
+    "shouldNotMatch": [
+      {
+        "domain": "compliance",
+        "projection": "controls",
+        "reason": "Control.permittedFor flat без inheritance chain"
+      },
+      {
+        "domain": "sales",
+        "projection": "users",
+        "reason": "Role flat без override semantics"
+      }
+    ]
+  }
+}

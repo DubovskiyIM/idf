@@ -1,0 +1,90 @@
+{
+  "id": "public-link-readonly-share",
+  "version": 1,
+  "status": "candidate",
+  "archetype": "detail",
+  "trigger": {
+    "requires": [
+      {
+        "kind": "entity-field",
+        "entity": "Graph",
+        "field": "visibility",
+        "values": [
+          "private",
+          "public-readonly"
+        ]
+      },
+      {
+        "kind": "entity-field",
+        "entity": "Graph",
+        "field": "customUrl"
+      },
+      {
+        "kind": "intent-effect",
+        "intent": "make_graph_public",
+        "alpha": "replace",
+        "target": "graph.visibility"
+      },
+      {
+        "kind": "intent-confirmation",
+        "intent": "make_graph_public",
+        "confirmation": "form"
+      }
+    ]
+  },
+  "structure": {
+    "slot": "header",
+    "description": "Detail header получает visibility-toggle (private ↔ public-readonly) с irreversible-confirm и preview публичного URL. После публикации в header показывается copy-link affordance с готовым custom URL; observer-роль автоматически получает read-only access к public-точке без аккаунта.",
+    "applySource": "function apply(slots, context) {\n  // Auto-synthesized marker-only apply (§13.17 opt-c).\n  // Marks first un-marked item in slots.header with source: \"derived:public-link-readonly-share\".\n  // Idempotent: skip if already marked.\n  const slot = slots?.header;\n  if (!Array.isArray(slot) || slot.length === 0) return slots;\n  const idx = slot.findIndex((x) => x && !x.source);\n  if (idx === -1) return slots;\n  const marker = \"derived:public-link-readonly-share\";\n  if (slot[idx].source === marker) return slots;\n  return {\n    ...slots,\n    header: slot.map((item, i) =>\n      i === idx ? { ...item, source: marker } : item),\n  };\n}",
+    "applyKind": "marker-only-synthesized",
+    "applySynthesizedAt": 1777280149903
+  },
+  "rationale": {
+    "hypothesis": "Sharing — это фундаментально другая операция чем invite (granular RBAC): приглашение требует known identity получателя, public-link — нет. Бинарное private↔public с custom-URL даёт pull-модель шаринга (отправитель копирует ссылку, получатель открывает анонимно), которая дешевле invite-flow для read-only сценариев и требует меньше permission-machinery.",
+    "evidence": [
+      {
+        "source": "roam-research",
+        "description": "Graph settings → 'Make graph public' → custom URL roamresearch.com/#/app/<custom>",
+        "reliability": "high"
+      },
+      {
+        "source": "notion-publish",
+        "description": "Page → Share → 'Publish to web' → public URL, anyone read-only",
+        "reliability": "high"
+      },
+      {
+        "source": "google-docs-anyone-with-link",
+        "description": "Same pattern: anyone-with-link viewer access",
+        "reliability": "high"
+      }
+    ],
+    "counterexample": [
+      {
+        "source": "compliance-domains",
+        "description": "Public read-only недопустим — все доступы требуют named identity",
+        "reliability": "high"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [
+      {
+        "domain": "notion",
+        "projection": "page_detail",
+        "reason": "Publish-to-web semantic совпадает"
+      }
+    ],
+    "shouldNotMatch": [
+      {
+        "domain": "compliance",
+        "projection": "control_detail",
+        "reason": "SOX требует named identity на любой доступ"
+      },
+      {
+        "domain": "invest",
+        "projection": "portfolio_overview",
+        "reason": "PII-данные не публикуются read-only"
+      }
+    ]
+  }
+}

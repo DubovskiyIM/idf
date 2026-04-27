@@ -1,0 +1,76 @@
+{
+  "id": "permission-override-trail-badge",
+  "version": 1,
+  "status": "candidate",
+  "archetype": "detail",
+  "trigger": {
+    "requires": [
+      {
+        "kind": "sub-entity-exists",
+        "entity": "*Permission",
+        "fkTo": "mainEntity"
+      },
+      {
+        "kind": "entity-field",
+        "entity": "*Permission",
+        "field": "inherits"
+      },
+      {
+        "kind": "intent-creates",
+        "creates": "*Permission"
+      }
+    ]
+  },
+  "structure": {
+    "slot": "header",
+    "description": "В header detail рядом с title — lock-badge когда у mainEntity есть permission-override (inherits=false или явное restriction). Click по badge раскрывает popover с inheritance-trail (Space → Page → override-source) и quick-action 'Remove restriction'."
+  },
+  "rationale": {
+    "hypothesis": "Permission-inheritance невидим по умолчанию — viewer не понимает почему 'Edit' заблокирован, или editor не видит что страница изолирована от space-policy. Explicit badge на override-границе делает invisible cascade видимым в точке разрыва, не мусоря header'ы у inherited-страниц.",
+    "evidence": [
+      {
+        "source": "confluence",
+        "description": "Lock-icon в header страницы с restriction, hover показывает 'Restricted to N people'",
+        "reliability": "high"
+      },
+      {
+        "source": "google-drive",
+        "description": "Файл с custom-permission получает 'restricted' label в file-list",
+        "reliability": "high"
+      },
+      {
+        "source": "notion",
+        "description": "Page с permission-override показывает lock-badge в title-bar",
+        "reliability": "medium"
+      }
+    ],
+    "counterexample": [
+      {
+        "source": "github-repos",
+        "description": "Permission на repo-level, не cascade с override-границами на конкретных файлах",
+        "reliability": "medium"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [
+      {
+        "domain": "confluence",
+        "projection": "page_detail",
+        "reason": "PagePermission.inherits + restrict_page_permission intent"
+      }
+    ],
+    "shouldNotMatch": [
+      {
+        "domain": "sales",
+        "projection": "listing_detail",
+        "reason": "Listing не имеет inherited permission cascade"
+      },
+      {
+        "domain": "lifequest",
+        "projection": "goal_detail",
+        "reason": "Personal entity, нет permission-cascade"
+      }
+    ]
+  }
+}

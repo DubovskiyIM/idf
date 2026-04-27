@@ -1,0 +1,85 @@
+{
+  "id": "multi-view-collection",
+  "version": 1,
+  "status": "candidate",
+  "archetype": "catalog",
+  "trigger": {
+    "requires": [
+      {
+        "kind": "sub-entity-exists",
+        "child": "View",
+        "parent": "Database"
+      },
+      {
+        "kind": "entity-field",
+        "entity": "View",
+        "field": "kind"
+      },
+      {
+        "kind": "intent-creates",
+        "creates": "View"
+      },
+      {
+        "kind": "intent-effect",
+        "intent": "change_view_kind",
+        "α": "replace",
+        "target": "kind"
+      }
+    ]
+  },
+  "structure": {
+    "slot": "header",
+    "description": "Header collection-projection'а получает tab-bar из user-defined View'ов, каждый со своим filter/sort/groupBy/visibleProperties; '+' добавляет новый view, click меняет активный.",
+    "applySource": "function apply(slots, context) {\n  // Auto-synthesized marker-only apply (§13.17 opt-c).\n  // Marks first un-marked item in slots.header with source: \"derived:multi-view-collection\".\n  // Idempotent: skip if already marked.\n  const slot = slots?.header;\n  if (!Array.isArray(slot) || slot.length === 0) return slots;\n  const idx = slot.findIndex((x) => x && !x.source);\n  if (idx === -1) return slots;\n  const marker = \"derived:multi-view-collection\";\n  if (slot[idx].source === marker) return slots;\n  return {\n    ...slots,\n    header: slot.map((item, i) =>\n      i === idx ? { ...item, source: marker } : item),\n  };\n}",
+    "applyKind": "marker-only-synthesized",
+    "applySynthesizedAt": 1777280149899
+  },
+  "rationale": {
+    "hypothesis": "Один dataset обслуживает разные jobs-to-be-done (overview vs progress-tracking vs scheduling); fixed view forces переключения между projections; user-saved views держат каждый job в своём kanban/calendar/table-режиме.",
+    "evidence": [
+      {
+        "source": "notion",
+        "description": "6 view-kind'ов на одном Database, tab-bar в header",
+        "reliability": "high"
+      },
+      {
+        "source": "linear",
+        "description": "Custom views с filter+layout per view",
+        "reliability": "high"
+      },
+      {
+        "source": "airtable",
+        "description": "Grid/Calendar/Kanban/Gallery views на одной table",
+        "reliability": "high"
+      },
+      {
+        "source": "height",
+        "description": "List/Board/Calendar views per project",
+        "reliability": "medium"
+      }
+    ],
+    "counterexample": [
+      {
+        "source": "trello",
+        "description": "Один board = одна view; поменять layout нельзя без plugin",
+        "reliability": "medium"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [
+      {
+        "domain": "notion",
+        "projection": "database_detail",
+        "reason": "View sub-entity + 6 kind'ов + create_view + change_view_kind"
+      }
+    ],
+    "shouldNotMatch": [
+      {
+        "domain": "messenger",
+        "projection": "conversations_catalog",
+        "reason": "Нет View entity, layout фиксирован"
+      }
+    ]
+  }
+}

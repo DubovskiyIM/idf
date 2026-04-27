@@ -1,0 +1,69 @@
+{
+  "id": "row-as-page-dual",
+  "version": 1,
+  "status": "candidate",
+  "archetype": "catalog",
+  "trigger": {
+    "requires": [
+      {
+        "kind": "entity-field",
+        "field": "pageId",
+        "references": "Page"
+      },
+      {
+        "kind": "sub-entity-exists",
+        "of": "DatabaseRow"
+      }
+    ]
+  },
+  "structure": {
+    "slot": "body",
+    "description": "DatabaseRow открывается как detail-archetype с двойственной семантикой: top-section — propertyValues (структурированные cells), body-section — block-canvas через page-association. Один entity, два модуса просмотра.",
+    "applySource": "function apply(slots, context) {\n  // Auto-synthesized marker-only apply (§13.17 opt-c).\n  // Marks first un-marked item in slots.body with source: \"derived:row-as-page-dual\".\n  // Idempotent: skip if already marked.\n  const slot = slots?.body;\n  if (!Array.isArray(slot) || slot.length === 0) return slots;\n  const idx = slot.findIndex((x) => x && !x.source);\n  if (idx === -1) return slots;\n  const marker = \"derived:row-as-page-dual\";\n  if (slot[idx].source === marker) return slots;\n  return {\n    ...slots,\n    body: slot.map((item, i) =>\n      i === idx ? { ...item, source: marker } : item),\n  };\n}",
+    "applyKind": "marker-only-synthesized",
+    "applySynthesizedAt": 1777280149911
+  },
+  "rationale": {
+    "hypothesis": "Структурированные данные и свободный документ часто описывают один объект (project, customer, ticket). Разрывать их по разным экранам — пенальти на context-switching; объединение даёт database-as-CMS без двойной CRUD.",
+    "evidence": [
+      {
+        "source": "notion",
+        "description": "Любой row в Database открывается как Page с full block-editor",
+        "reliability": "high"
+      },
+      {
+        "source": "coda",
+        "description": "Row detail = card view с полями + canvas-section",
+        "reliability": "high"
+      },
+      {
+        "source": "airtable",
+        "description": "Row expand → modal с полями + attached notes-block",
+        "reliability": "medium"
+      }
+    ],
+    "counterexample": [
+      {
+        "source": "linear",
+        "description": "Issue — единая модель description+fields, без разделения row/page; не нуждается в дуальности",
+        "reliability": "medium"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [
+      {
+        "domain": "notion",
+        "projection": "database_detail",
+        "reason": "DatabaseRow.pageId → Page (block-canvas)"
+      }
+    ],
+    "shouldNotMatch": [
+      {
+        "domain": "invest",
+        "projection": "positions_catalog",
+        "reason": "Position — pure data row без bodied document"
+      }
+    ]
+  }
+}

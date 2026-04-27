@@ -1,0 +1,86 @@
+{
+  "id": "template-scope-tier-installer",
+  "version": 1,
+  "status": "candidate",
+  "archetype": "catalog",
+  "trigger": {
+    "requires": [
+      {
+        "kind": "entity-field",
+        "entity": "mainEntity",
+        "field": "scope",
+        "discriminator": true
+      },
+      {
+        "kind": "entity-field",
+        "entity": "mainEntity",
+        "field": "isGlobal"
+      },
+      {
+        "kind": "intent-creates",
+        "creates": "mainEntity"
+      },
+      {
+        "kind": "intent-effect",
+        "α": "add",
+        "creates": "mainEntity",
+        "confirmation": "click"
+      }
+    ]
+  },
+  "structure": {
+    "slot": "sections",
+    "description": "Catalog разделён tab'ами по scope-discriminator (Global / Space-local / Custom), у каждой row — install-CTA (для global → создаёт local copy) и create-template-button в hero для tier='Custom'. Installed-from меняет icon row, давая trail откуда template пришёл.",
+    "applySource": "function apply(slots, context) {\n  // Auto-synthesized marker-only apply (§13.17 opt-c).\n  // Marks first un-marked item in slots.sections with source: \"derived:template-scope-tier-installer\".\n  // Idempotent: skip if already marked.\n  const slot = slots?.sections;\n  if (!Array.isArray(slot) || slot.length === 0) return slots;\n  const idx = slot.findIndex((x) => x && !x.source);\n  if (idx === -1) return slots;\n  const marker = \"derived:template-scope-tier-installer\";\n  if (slot[idx].source === marker) return slots;\n  return {\n    ...slots,\n    sections: slot.map((item, i) =>\n      i === idx ? { ...item, source: marker } : item),\n  };\n}",
+    "applyKind": "marker-only-synthesized",
+    "applySynthesizedAt": 1777280149901
+  },
+  "rationale": {
+    "hypothesis": "Когда у entity scope-discriminator с разной semantics (read-only catalog vs editable own), плоский список теряет mental model: какие можно редактировать, какие копировать, какие создать с нуля. Tier-разрез даёт scope-appropriate affordance per row (install vs edit vs create) без overload UI.",
+    "evidence": [
+      {
+        "source": "confluence",
+        "description": "Templates page: 'Featured / Created in this space / Created by me' tabs, install создаёт space-local копию",
+        "reliability": "high"
+      },
+      {
+        "source": "vscode-extensions",
+        "description": "Marketplace / Installed разделены, install-button материализует local entity",
+        "reliability": "high"
+      },
+      {
+        "source": "figma-community",
+        "description": "'Duplicate to my files' = install из global в personal scope",
+        "reliability": "medium"
+      }
+    ],
+    "counterexample": [
+      {
+        "source": "messenger",
+        "description": "Conversation не имеет scope-tier — все равноправны",
+        "reliability": "high"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [
+      {
+        "domain": "confluence",
+        "projection": "template_catalog",
+        "reason": "Template.scope discriminator + install_template + create_template"
+      }
+    ],
+    "shouldNotMatch": [
+      {
+        "domain": "sales",
+        "projection": "listing_catalog",
+        "reason": "Listing не имеет scope-tier"
+      },
+      {
+        "domain": "lifequest",
+        "projection": "habit_catalog",
+        "reason": "Habit без global vs local scope разреза"
+      }
+    ]
+  }
+}

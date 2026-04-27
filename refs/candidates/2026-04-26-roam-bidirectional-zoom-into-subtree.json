@@ -6,53 +6,46 @@
   "trigger": {
     "requires": [
       {
-        "kind": "entity-field",
-        "entity": "*",
+        "kind": "entity-kind",
+        "entity": "Block",
         "field": "parentBlockId",
-        "fieldRole": "self-reference"
+        "selfReference": true
       },
       {
         "kind": "intent-effect",
-        "target": "session.zoomedBlockId"
-      },
-      {
-        "kind": "intent-confirmation",
-        "value": "click"
+        "intent": "zoom_into_block",
+        "alpha": "replace",
+        "target": "session.zoomedBlock"
       }
     ]
   },
   "structure": {
-    "slot": "body",
-    "description": "Self-referential entity (parent → self) + intent, переключающий session.zoomedBlockId, разворачивает body-slot в subtree-view: текущий узел становится root, потомки рендерятся как nested outliner, breadcrumb-цепочка пишется в header."
+    "slot": "header",
+    "description": "Self-referencing tree-узел получает 'zoom' affordance — клик заменяет workspace-content на subtree выбранного узла, header выводит breadcrumb по ancestor-цепочке до root entity. Click по любому breadcrumb-узлу — un-zoom до этого уровня."
   },
   "rationale": {
-    "hypothesis": "Hierarchical tree-nav упирается в depth — на 5+ уровнях пользователь теряет контекст. Zoom-replace меняет workspace на subtree и оставляет breadcrumb, давая O(1) когнитивную сложность независимо от глубины. Это не drilldown в каталог (там items), а replace-frame в той же иерархии.",
+    "hypothesis": "Глубоко вложенный outline теряет читабельность из-за горизонтального indent'а и конкуренции за visual focus. Zoom превращает любой узел в temporary 'page' с собственным контекстом, освобождая внимание; breadcrumb сохраняет ориентацию в иерархии. Это дешевле чем сворачивать всё лишнее вручную.",
     "evidence": [
       {
         "source": "roam-research",
-        "description": "Click bullet → URL меняется на /block/<uuid>, workspace-frame показывает subtree",
+        "description": "Click on bullet → subtree становится full workspace, breadcrumb 'Page › Block › ...' в header",
         "reliability": "high"
       },
       {
         "source": "workflowy",
-        "description": "Zoom-into-bullet — главная навигационная метафора с 2010",
+        "description": "Founding pattern: zoom любой outline-node, breadcrumb навигация назад",
         "reliability": "high"
       },
       {
         "source": "logseq",
-        "description": "Block zoom через ((uuid)) clicks, breadcrumb обязательный",
+        "description": "Zoom-into-block с тем же breadcrumb UX",
         "reliability": "high"
       }
     ],
     "counterexample": [
       {
-        "source": "notion",
-        "description": "Pages иерархичны, но zoom — это open-page; subtree внутри страницы не zoomable, потому что block ≠ first-class addressable",
-        "reliability": "high"
-      },
-      {
-        "source": "jira-epics",
-        "description": "Drilldown в epic открывает list, не replace-frame — задача отображается отдельно",
+        "source": "google-docs",
+        "description": "Heading hierarchy — нет zoom-режима, навигация через outline-pane",
         "reliability": "medium"
       }
     ]
@@ -60,21 +53,26 @@
   "falsification": {
     "shouldMatch": [
       {
+        "domain": "notion",
+        "projection": "block_detail",
+        "reason": "Self-ref Block + zoom semantic"
+      },
+      {
         "domain": "workflow",
         "projection": "node_detail",
-        "reason": "Node имеет parent (граф иерархичен), zoom в sub-graph — естественная навигация"
+        "reason": "Self-ref nested workflow возможен"
       }
     ],
     "shouldNotMatch": [
       {
-        "domain": "messenger",
-        "projection": "conversation_detail",
-        "reason": "Сообщения — flat-список, нет parentMessageId с глубиной"
+        "domain": "invest",
+        "projection": "position_detail",
+        "reason": "Position не self-ref"
       },
       {
         "domain": "sales",
         "projection": "listing_detail",
-        "reason": "Listing не self-referential, иерархия категорий — внешний справочник"
+        "reason": "Listing flat"
       }
     ]
   }

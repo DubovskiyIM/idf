@@ -1,0 +1,77 @@
+{
+  "id": "append-only-version-history-rail",
+  "version": 1,
+  "status": "candidate",
+  "archetype": "detail",
+  "trigger": {
+    "requires": [
+      {
+        "kind": "sub-entity-exists",
+        "parent": "<main>",
+        "child": "<version-entity>"
+      },
+      {
+        "kind": "entity-field",
+        "entity": "<version-entity>",
+        "field": "snapshot"
+      },
+      {
+        "kind": "intent-effect",
+        "α": "replace",
+        "targetField": "snapshot"
+      }
+    ]
+  },
+  "structure": {
+    "slot": "sections",
+    "description": "Version-rail (right или drawer) перечисляет snapshot'ы в reverse-chronological; restore intent создаёт новую version, не мутирует прошлые; current state — head, не overwritable past."
+  },
+  "rationale": {
+    "hypothesis": "Mutable history теряет evidence ('что было до моего изменения?'); append-only snapshots + restore-as-new-version сохраняют полное прошлое и делают undo обратимой проекцией истории, а не destructive operation.",
+    "evidence": [
+      {
+        "source": "Notion",
+        "description": "Page history со списком snapshot'ов и restore=new version",
+        "reliability": "high"
+      },
+      {
+        "source": "Google Docs",
+        "description": "Version history с named versions и restore",
+        "reliability": "high"
+      },
+      {
+        "source": "Git",
+        "description": "Commits append-only; revert = new commit, не rewrite",
+        "reliability": "high"
+      }
+    ],
+    "counterexample": [
+      {
+        "source": "Ephemeral note",
+        "description": "Без compliance-нужды history — overhead",
+        "reliability": "medium"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [
+      {
+        "domain": "notion",
+        "projection": "page_detail",
+        "reason": "PageVersion.snapshot + restore_version"
+      }
+    ],
+    "shouldNotMatch": [
+      {
+        "domain": "messenger",
+        "projection": "conversation",
+        "reason": "Message неизменяемое, history не нужно"
+      },
+      {
+        "domain": "delivery",
+        "projection": "orders",
+        "reason": "Order не имеет append-only snapshot rail"
+      }
+    ]
+  }
+}

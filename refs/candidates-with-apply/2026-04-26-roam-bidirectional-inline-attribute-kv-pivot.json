@@ -1,0 +1,88 @@
+{
+  "id": "inline-attribute-kv-pivot",
+  "version": 1,
+  "status": "candidate",
+  "archetype": "detail",
+  "trigger": {
+    "requires": [
+      {
+        "kind": "entity-field",
+        "entity": "*Attribute",
+        "field": "key",
+        "fieldRole": "string"
+      },
+      {
+        "kind": "entity-field",
+        "entity": "*Attribute",
+        "field": "value",
+        "fieldRole": "string"
+      },
+      {
+        "kind": "sub-entity-exists",
+        "parent": "Block|*Container"
+      },
+      {
+        "kind": "intent-creates",
+        "entity": "*Attribute"
+      },
+      {
+        "kind": "intent-effect",
+        "target": "session.searchQuery"
+      }
+    ]
+  },
+  "structure": {
+    "slot": "body",
+    "description": "Attribute (key,value) рендерится двойственно: внутри content-container — как inline KV-row рядом с текстом, в catalog по key — как pivot-table «все entities со значением для этого ключа». Search-by-attribute сшивает оба view: один и тот же Attribute доступен как in-place property и как column.",
+    "applySource": "function apply(slots, context) {\n  // Auto-synthesized marker-only apply (§13.17 opt-c).\n  // Marks first un-marked item in slots.body with source: \"derived:inline-attribute-kv-pivot\".\n  // Idempotent: skip if already marked.\n  const slot = slots?.body;\n  if (!Array.isArray(slot) || slot.length === 0) return slots;\n  const idx = slot.findIndex((x) => x && !x.source);\n  if (idx === -1) return slots;\n  const marker = \"derived:inline-attribute-kv-pivot\";\n  if (slot[idx].source === marker) return slots;\n  return {\n    ...slots,\n    body: slot.map((item, i) =>\n      i === idx ? { ...item, source: marker } : item),\n  };\n}",
+    "applyKind": "marker-only-synthesized",
+    "applySynthesizedAt": 1777280149900
+  },
+  "rationale": {
+    "hypothesis": "Schema-on-read. Когда форма данных не известна заранее, фиксированные columns ломают write-flow, а pure free-text ломает read-flow. KV-attribute даёт обе семантики из одного storage'а: прозрачен при чтении content и автоматически индексируется как column для всех записей с тем же key.",
+    "evidence": [
+      {
+        "source": "roam-research",
+        "description": "Key:: Value syntax = attribute, появляется и в block, и в Attributes/Key namespace как table",
+        "reliability": "high"
+      },
+      {
+        "source": "logseq",
+        "description": "Properties — те же attribute с pivot-view",
+        "reliability": "high"
+      },
+      {
+        "source": "obsidian-dataview",
+        "description": "Inline-fields (key:: value) с DQL pivot — заимствование Roam'а",
+        "reliability": "high"
+      }
+    ],
+    "counterexample": [
+      {
+        "source": "notion-database",
+        "description": "Properties определяются на уровне DB-schema, не inline в content — strong-schema mode",
+        "reliability": "high"
+      },
+      {
+        "source": "airtable",
+        "description": "Schema first-class — нельзя добавить новое поле просто написав key:: value в ячейке",
+        "reliability": "high"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [],
+    "shouldNotMatch": [
+      {
+        "domain": "invest",
+        "projection": "asset_detail",
+        "reason": "Asset properties — fixed schema (price, ticker, sector), inline KV не даёт ничего"
+      },
+      {
+        "domain": "compliance",
+        "projection": "control_detail",
+        "reason": "Compliance требует strong-schema для аудита, inline-attributes недопустимы"
+      }
+    ]
+  }
+}
