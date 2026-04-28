@@ -317,7 +317,7 @@ Postmortem'ы: `docs/superpowers/specs/2026-04-14-sdk-core-postmortem.md` (Phase
 - **PatternInspector component test** — требует `@testing-library/react` + `jsdom`
 - **Cluster-friendly scheduler** — single-leader TimerQueue не distributed
 - **Reader-equivalence runtime-check (§23 axiom 5)** — спека есть в `drift-protection-spec.md`, Layer 3 detector не реализован
-- **Cross-stack conformance harness** — автоматический differential-test `fold(Φ)` через idf / idf-go / idf-rust / idf-swift на общих fixtures
+- ✅ **Cross-stack conformance harness** ЗАКРЫТ 2026-04-28 — `~/WebstormProjects/idf-spec/scripts/cross-stack-diff.mjs` + 3 stack-impl `--emit` mode (idf-go #4, idf-rust #2, idf-swift #2, idf-spec #8) + CI workflow (idf-spec #9). 219 pair-wise сравнений green. Слабая форма §23 axiom 5 reader-equivalence; полный Layer 3 detector ещё ждёт реализации
 - **Pattern Bank: ML/auto-learning** — автоматический анализ приложений для пополнения банка
 
 ## Приоритеты
@@ -325,4 +325,4 @@ Postmortem'ы: `docs/superpowers/specs/2026-04-14-sdk-core-postmortem.md` (Phase
 Roadmap: Часть VIII манифеста v2 `docs/manifesto-v2.md` (направления формата без дат) + GitHub issues (оперативные задачи) + `docs/backlog.md` (cross-cutting очередь между сессиями).
 
 - **Ближайшее (1-2 мес)**: domain scoping (`__domain` provenance), IrreversibleBadge auto-placement, invest visual polish для демо, публикация статьи, reader-equivalence runtime-check (v2.1 axiom 5), apply для 2 оставшихся matching-only паттернов (keyboard-property-popover, global-command-palette)
-- **Среднесрочное (2-4 мес)**: production-ready invest (первый pilot tenant), Pattern Bank → 50+ stable patterns через Researcher pipeline (сейчас 32 + 49+ candidate'ов в bank/), cross-stack conformance harness (differential-test через idf/go/rust/swift), X1-удаление explicit overrides, PatternInspector test-harness, composite groupBy/polymorphic entity kind, `@intent-driven/cli` → 2.0 с scaffold-path как дефолтный путь
+- **Среднесрочное (2-4 мес)**: production-ready invest (первый pilot tenant), Pattern Bank → 50+ stable patterns через Researcher pipeline (сейчас 32 + 49+ candidate'ов в bank/), X1-удаление explicit overrides, PatternInspector test-harness, composite groupBy/polymorphic entity kind, `@intent-driven/cli` → 2.0 с scaffold-path как дефолтный путь, port L3-evolution conformance class в три stack'а (hashOntology + effect.context.schemaVersion + upcaster pipeline)
