@@ -21,6 +21,7 @@ const { buildIntentSchema } = require("../schema/buildIntentSchema.cjs");
 const { computeAlgebra } = require("../schema/intentAlgebra.cjs");
 const { checkOwnership } = require("../schema/checkOwnership.cjs");
 const { filterWorldForRole } = require("../schema/filterWorld.cjs");
+const { getReaderPolicy, computeCanonicalGapSet } = require("../schema/readerGapPolicy.cjs");
 const { getEffectBuilder } = require("../schema/effectBuildersRegistry.cjs");
 const { parseCondition } = require("../schema/conditionParser.cjs");
 const { checkPreapproval } = require("../schema/preapprovalGuard.cjs");
@@ -213,11 +214,33 @@ function makeAgentRouter(broadcast) {
     const totalRows = Object.values(filtered).reduce((s, arr) => s + (arr?.length || 0), 0);
     const domain = req.params.domain;
     console.log(`[agent] GET /world ${domain} ${viewer.id} → 200 (${totalRows} rows)`);
+
+    // Φ schema-versioning Phase 4/5 — reader gap policy + observability.
+    // Декларируем agent gap policy и сообщаем canonical gap-set по filtered world,
+    // чтобы клиент мог использовать output как ReaderObservation для
+    // detectReaderEquivalenceDrift (Layer 4 detector).
+    let gapPolicy = null;
+    let gapsObserved = [];
+    try {
+      gapPolicy = getReaderPolicy("agent");
+      if (ontology?.entities) {
+        gapsObserved = computeCanonicalGapSet(filtered, ontology).cells;
+      }
+    } catch (err) {
+      // Не ломаем /world response, если gap-policy/scan throw'ает.
+      console.warn(`[agent] gap policy compute failed for ${domain}: ${err.message}`);
+    }
+
     res.json({
       domain: req.params.domain,
       role: ROLE,
       viewer,
-      world: filtered
+      world: filtered,
+      meta: {
+        gapPolicy,
+        gapsObserved,
+        materialization: "agent",
+      },
     });
   });
 
