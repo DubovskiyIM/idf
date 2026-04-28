@@ -105,9 +105,16 @@ function sanitizeAllowedIntent(i) {
 
 async function postIterate(workItem, iterationN, runId, allowedIntents) {
   const sanitized = allowedIntents?.map(sanitizeAllowedIntent);
+  const headers = { "content-type": "application/json" };
+  // Sweep support: per-request provider override через LLM_PROVIDER_MODEL env.
+  // routes/meta-llm.js перехватывает X-LLM-Provider-Model header и создаёт
+  // fresh OllamaProvider для запроса. Без рестартов server'а.
+  if (process.env.LLM_PROVIDER_MODEL) {
+    headers["X-LLM-Provider-Model"] = process.env.LLM_PROVIDER_MODEL;
+  }
   const res = await fetch(`${HOST}/api/meta/llm/iterate`, {
     method: "POST",
-    headers: { "content-type": "application/json" },
+    headers,
     body: JSON.stringify({
       runId,
       iterationN,
@@ -208,7 +215,12 @@ async function main() {
   const runId = `run-${new Date().toISOString().replace(/[:.]/g, "-")}`;
   console.log(`# Self-hosting fixed-point experiment — REAL RUN`);
   console.log(`runId: ${runId}`);
-  console.log(`N: ${N}, host: ${HOST}, mock: ${process.env.DEMO_LLM_MOCK === "1" ? "yes" : "no"}`);
+  const providerHint = process.env.DEMO_LLM_MOCK === "1"
+    ? "mock"
+    : process.env.LLM_PROVIDER_MODEL
+      ? `ollama:${process.env.LLM_PROVIDER_MODEL}`
+      : "default (claude-cli or OLLAMA_MODEL env)";
+  console.log(`N: ${N}, host: ${HOST}, provider: ${providerHint}`);
   console.log("");
 
   const turns = plan(N);
