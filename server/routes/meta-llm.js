@@ -37,14 +37,59 @@ function pickProvider() {
   return new ClaudeCliProvider();
 }
 
+/**
+ * Per-request provider override — для sweep'а по моделям без рестарта server'а.
+ * Принимает HTTP заголовок X-LLM-Provider-Model с Ollama model id (например
+ * `qwen2.5:7b`). Если задан — создаёт fresh OllamaProvider для этого запроса
+ * и подменяет в ctx. Default provider остаётся unchanged.
+ *
+ * Используется sweep-script'ом для прогона trajectory на разных моделях
+ * последовательно. Без overhead'а перезапуска server'а.
+ */
+function perRequestProviderMiddleware(defaultProvider) {
+  return (req, _res, next) => {
+    const override = req.get("X-LLM-Provider-Model");
+    if (typeof override === "string" && override.trim()) {
+      req._providerOverride = new OllamaProvider({ model: override.trim() });
+    }
+    next();
+  };
+}
+
 function makeMetaLlmRouter({ ingestEffect, broadcast }) {
   const sink = createHostEffectSink({ ingestEffect, broadcast });
-  const provider = pickProvider();
-  return createLlmBridgeRouter({
+  const defaultProvider = pickProvider();
+  const router = require("express").Router();
+  // Per-request provider switch для sweep'а.
+  router.use(perRequestProviderMiddleware(defaultProvider));
+  router.use((req, _res, next) => {
+    const provider = req._providerOverride ?? defaultProvider;
+    req._llmCtx = {
+      sink,
+      viewer: { role: "patternCurator", userId: "system" },
+      config: { timeoutMs: 10 * 60 * 1000, provider },
+    };
+    next();
+  });
+  // createLlmBridgeRouter принимает фиксированный ctx; для per-request swap'а
+  // мы создаём lazy router который пересоздаёт internal router'а при каждом
+  // запросе на основе _llmCtx. Дёшево — bridge router stateless кроме SSE
+  // subscribers, которые мы оставляем глобальными.
+  let baseRouter = createLlmBridgeRouter({
     sink,
     viewer: { role: "patternCurator", userId: "system" },
-    config: { timeoutMs: 5 * 60 * 1000, provider },
+    config: { timeoutMs: 10 * 60 * 1000, provider: defaultProvider },
   });
+  router.use((req, res, next) => {
+    if (req._providerOverride) {
+      // Only re-create base router если есть override (rare path — sweep).
+      const ctx = req._llmCtx;
+      const overrideRouter = createLlmBridgeRouter(ctx);
+      return overrideRouter(req, res, next);
+    }
+    return baseRouter(req, res, next);
+  });
+  return router;
 }
 
 module.exports = { makeMetaLlmRouter };
