@@ -549,6 +549,20 @@ export const ONTOLOGY = {
       severity: "warning",
     },
 
+    // H4 structural pressure (2026-04-29): на пару (projectionId,
+    // slotPath) допустим только один witness с reliability=heuristic.
+    // Это создаёт структурное давление для blind H4 protocol —
+    // если LLM пробует propose_witness на slot, где уже есть
+    // heuristic witness, host блокирует. Единственный path для
+    // mutation — newly-created intent с α=replace.
+    {
+      kind: "cardinality",
+      entity: "Witness",
+      groupBy: ["projectionId", "slotPath", "reliability"],
+      max: 1,
+      name: "witness_unique_per_slot_reliability",
+    },
+
     // propose_meta_intent через α:create Intent — α должна быть валидной
     // mутацией формата, не расширением списка α-операций «на лету».
     // Защита от деградации формата при self-modification.

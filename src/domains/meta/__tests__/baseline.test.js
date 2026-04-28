@@ -25,12 +25,13 @@ import {
 } from "../domain.js";
 
 describe("meta baseline", () => {
-  it("ontology: 10 сущностей, 4 роли, 11 invariants, 0 rules", () => {
+  it("ontology: 10 сущностей, 4 роли, 12 invariants, 0 rules", () => {
     expect(Object.keys(ONTOLOGY.entities).length).toBe(10);
     expect(Object.keys(ONTOLOGY.roles).length).toBe(4);
-    // 9 baseline + 2 self-hosting fixed-point experiment invariants
-    // (witness_unique_per_slot_basis, intent_alpha_in_canonical_set).
-    expect(ONTOLOGY.invariants.length).toBe(11);
+    // 9 baseline + 3 self-hosting fixed-point experiment invariants
+    // (witness_unique_per_slot_basis, intent_alpha_in_canonical_set,
+    // witness_unique_per_slot_reliability — H4 structural pressure).
+    expect(ONTOLOGY.invariants.length).toBe(12);
     expect(ONTOLOGY.rules.length).toBe(0);
     expect(ONTOLOGY.entities.BacklogItem).toBeDefined();
     expect(ONTOLOGY.entities.PatternPromotion).toBeDefined();
@@ -46,6 +47,11 @@ describe("meta baseline", () => {
       (i) => i.name === "intent_alpha_in_canonical_set",
     );
     expect(intentAlpha?.kind).toBe("expression");
+    const witnessRelCard = ONTOLOGY.invariants.find(
+      (i) => i.name === "witness_unique_per_slot_reliability",
+    );
+    expect(witnessRelCard?.kind).toBe("cardinality");
+    expect(witnessRelCard?.severity).toBeUndefined();
   });
 
   it("entities имеют primary fieldRole", () => {
