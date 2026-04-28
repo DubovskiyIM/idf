@@ -22,6 +22,7 @@ import {
   computeIterationMetrics,
   classifyOutcome,
   formatReportMarkdown,
+  DEFAULT_ALLOWED_INTENTS,
 } from "@intent-driven/llm-bridge";
 import { writeFileSync, mkdirSync } from "node:fs";
 import { join } from "node:path";
@@ -35,14 +36,11 @@ function plan(n) {
   const turns = [];
   for (let i = 1; i <= n; i++) {
     if (i === 5) {
-      // Real witness-promotion gap: existing 3 intents структурно НЕ
-      // могут закрыть transition Witness.reliability=heuristic →
-      // reliability=authorial после curator review. Это не synthetic
-      // checkpoint — natural mismatch между current 3-intent surface
-      // и required workflow. Если Claude всё равно отдаёт witness —
-      // это finding о fundamental limit; если propose_meta_intent с
-      // alpha:replace target:Witness.reliability — risk minimization
-      // была обусловленной, не структурной.
+      // Iter 5 — real witness-promotion gap (run 3 setup; H3 closed).
+      // After Claude propose_meta_intent confirmed, host adds new intent
+      // в dynamicAllowedIntents. Iter 7/11/17 ниже формулируют work
+      // items, которые попадают именно в этот gap → Claude может
+      // выбрать new intent для compounding evidence (H4).
       turns.push({
         kind: "meta-modification",
         target: "Witness.reliability:heuristic→authorial",
@@ -54,6 +52,23 @@ function plan(n) {
             "A new meta-intent: alpha=replace, target='Witness.reliability', taking witnessId + new reliability value as params. This is the intent you need to create.",
           observedReliabilityGap:
             "Many witnesses in Φ have reliability=heuristic. After curator review they become authorial. But Φ has no event for this transition — manual edits happen out-of-band. This is the gap.",
+        },
+      });
+    } else if (i === 7 || i === 11 || i === 17) {
+      // Run 4 H4 surface: 3 work items, которые требуют newly-created
+      // intent (after iter 5 confirmed). Если dynamic allowedIntents
+      // прокидывает this new intent в prompt, Claude может выбрать
+      // его — это compounding signal.
+      turns.push({
+        kind: "missing-witness",
+        target: `Witness:reviewed-${i}:promote-heuristic-to-authorial`,
+        priority: "P1",
+        context: {
+          existingWitnessId: `wit-mock-${i}`,
+          currentReliability: "heuristic",
+          curatorDecision: "approved-as-authorial",
+          note:
+            "Curator has reviewed this witness and confirmed it should be reliability=authorial. The intent created in iter 5 is the right tool — apply it here.",
         },
       });
     } else if (i === 14) {
@@ -73,7 +88,7 @@ function plan(n) {
   return turns;
 }
 
-async function postIterate(workItem, iterationN, runId) {
+async function postIterate(workItem, iterationN, runId, allowedIntents) {
   const res = await fetch(`${HOST}/api/meta/llm/iterate`, {
     method: "POST",
     headers: { "content-type": "application/json" },
@@ -82,6 +97,7 @@ async function postIterate(workItem, iterationN, runId) {
       iterationN,
       workItem,
       projectionSnapshot: { iteration: iterationN, hint: workItem.target },
+      ...(allowedIntents ? { allowedIntents } : {}),
     }),
   });
   if (res.status !== 202) {
@@ -141,6 +157,37 @@ async function countWitnesses() {
   return all.filter((e) => e.status === "confirmed").length;
 }
 
+async function fetchLastProposedMetaIntent(runId) {
+  const res = await fetch(
+    `${HOST}/api/effects?intents=propose_meta_intent&limit=200`
+  );
+  if (!res.ok) return null;
+  const all = await res.json();
+  // Нам нужен последний confirmed propose_meta_intent именно из текущего run'а.
+  // Source content включает "llm:claude-cli:iterate", но не runId напрямую —
+  // фильтруем по timestamp (в пределах последних 30 минут это достаточно).
+  const cutoff = Date.now() - 30 * 60 * 1000;
+  const matches = all
+    .map((e) => ({ e, ctx: parseContext(e.context), at: new Date(e.created_at).getTime() }))
+    .filter(
+      ({ e, ctx, at }) =>
+        e.status === "confirmed" &&
+        ctx.source &&
+        String(ctx.source).includes(":iterate") &&
+        at >= cutoff
+    )
+    .sort((a, b) => b.at - a.at);
+  if (matches.length === 0) return null;
+  const ctx = matches[0].ctx;
+  return {
+    intentId: ctx.intentId,
+    name: ctx.name,
+    alpha: ctx.alpha,
+    target: ctx.target,
+    rationale: ctx.rationale,
+  };
+}
+
 async function main() {
   const runId = `run-${new Date().toISOString().replace(/[:.]/g, "-")}`;
   console.log(`# Self-hosting fixed-point experiment — REAL RUN`);
@@ -154,12 +201,18 @@ async function main() {
   console.log(`witness baseline: ${witnessBaseline}`);
   console.log("");
 
+  // Run 4: dynamic allowedIntents. Стартуем с DEFAULT (built-in 3),
+  // расширяем после каждого confirmed propose_meta_intent. Передаём в
+  // POST /iterate body чтобы Claude видел extension'ы в prompt'е и
+  // schema их принимала.
+  const dynamicAllowedIntents = [...DEFAULT_ALLOWED_INTENTS];
+
   for (let i = 1; i <= N; i++) {
     const wi = turns[i - 1];
     const before = (await countWitnesses()) ?? witnessBaseline;
     process.stdout.write(`  ${String(i).padStart(2)}. [${wi.kind.padEnd(18)}] ${wi.target} ... `);
     try {
-      await postIterate(wi, i, runId);
+      await postIterate(wi, i, runId, dynamicAllowedIntents);
     } catch (e) {
       console.log(`ERR ${e.message}`);
       log.push({
@@ -193,6 +246,40 @@ async function main() {
         result.proposedIntent ? `  intent=${result.proposedIntent}` : ""
       }${witnessDelta ? `  witness+${witnessDelta}` : ""}  (${result.durationMs}ms)`
     );
+
+    // Run 4: после confirmed propose_meta_intent — извлечь intentId из
+    // последнего propose_meta_intent effect'а и расширить allowedIntents.
+    // С iter+1 LLM получает new intent в prompt'е и в dynamic schema.
+    if (
+      result.outcome === "confirmed" &&
+      result.proposedIntent === "propose_meta_intent"
+    ) {
+      const newIntent = await fetchLastProposedMetaIntent(runId);
+      if (newIntent && !dynamicAllowedIntents.find((x) => x.id === newIntent.intentId)) {
+        dynamicAllowedIntents.push({
+          id: newIntent.intentId,
+          description: `Newly created in iter ${i} (this run): ${newIntent.name}. ${newIntent.rationale ?? ""} α=${newIntent.alpha}, target=${newIntent.target}.`,
+          paramsSchema: `{ ...params for newly created intent ${newIntent.intentId} ... }`,
+          example: JSON.stringify(
+            {
+              intent: newIntent.intentId,
+              params: {
+                witnessId: "<existing-witness-id>",
+                reliability: "authorial",
+                alpha: newIntent.alpha,
+                target: newIntent.target,
+              },
+              rationale: "Apply the just-created meta-intent to the witness curator decision.",
+            },
+            null,
+            2
+          ),
+        });
+        console.log(
+          `      ↳ allowedIntents extended (+${newIntent.intentId}, total ${dynamicAllowedIntents.length})`
+        );
+      }
+    }
   }
 
   const metrics = computeIterationMetrics(log);
