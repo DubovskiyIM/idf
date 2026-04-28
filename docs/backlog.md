@@ -293,6 +293,41 @@ Bump `@intent-driven/enricher-claude` → `0.2.1`. После release — пер
 
 ---
 
+### 1.7 Cross-stack conformance — оставшееся по L3-evolution и формату
+
+**Контекст.** Cross-stack-diff harness ЗАКРЫТ 2026-04-28 (idf-spec / idf-go / idf-rust / idf-swift). L3-evolution §1 (hashOntology + schemaVersion) ЗАКРЫТ 2026-04-28: 3 stack ports, fixtures tagged, hash strip-evolution, 3 layers CI proof (self-test + cross-stack-diff + default-conformance).
+
+**Незакрытое (на момент паузы 2026-04-28):**
+
+#### §2 evolution log validation — port в rust/swift
+- **idf-go reference impl** ✓ — PR DubovskiyIM/idf-go#8 (open): `ParseEvolution` + `ValidateEvolutionLog` (5 invariants: hash format, uniqueness, exactly-one-root, no-dangling-parent, no-cycles) + `RehashAndVerifyRoot`
+- **idf-rust port** — mirror PR #8: `parse_evolution` + `validate_evolution_log` + `rehash_and_verify_root`. Идиоматичный Rust (Result<Vec<EvolutionEntry>, Error>, multi-error через Vec<Box<dyn Error>>).
+- **idf-swift port** — mirror: `SchemaVersion.parseEvolution` + `validateEvolutionLog`. Через standalone `verify-evolution` executable target (XCTest недоступен в CLT).
+
+#### Real evolution-log fixture
+- **library v2** — author synthetic step 1 → step 2 в `library/ontology.json`. Например: rename `Loan.borrowed_at` → `Loan.borrowedAt`. Evolution entries: root (hash=`1a23f3f820e80b`) + child (hash после rename, parentHash=root). Re-test всех 3 stack'ов — ontology с evolution[] всё ещё passes default conformance (поле strip'ается из hash); validation log passes.
+- (опц.) events v2 — параллельный путь.
+
+#### Conformance CLI Step 6 (L3-evolution)
+- Расширить cmd/conformance/main.go (+ rust/swift аналоги): после Step 5 (document) — Step 6 «L3-evolution validation». ParseEvolution → ValidateEvolutionLog → RehashAndVerifyRoot. Pass добавляет «L3-evolution CONFORMANT» в OVERALL string.
+- Cross-stack-diff harness расширяется: emit `validation/evolution.json` = `{ valid, errors[], rootRehash, rootDrift }` для cross-stack consistency самих validation results.
+
+#### §3 Upcaster pipeline (semantics)
+- Шаги нормированы в `idf-spec/spec/06-evolution.md` §3, schema добавлена в PR #17 (open). Реализация: при fold'е legacy effect (`schemaVersion ≠ current ontology hash`) пройти upcaster chain от effect's hash до current hash, применив declarative trans (rename/splitDiscriminator/setDefault/enumMap) или fn (если разрешён). idf-go reference + rust + swift ports + fixtures (legacy-phi с старым schemaVersion).
+
+#### Layer 3 reader-equivalence detector (drift-protection-spec §23 axiom 5)
+- Сейчас runtime-проверяется только pixel-материализация (через crystallize artifact). Voice / agent / document полная reader-equivalence: для одного среза Φ + viewer все 4 reader'а должны выдавать isomorphic information content. Спека есть в `idf-manifest-v2.1/docs/design/drift-protection-spec.md`; runtime-detector deferred — большая работа (semantic equivalence between heterogeneous output shapes).
+
+#### Расширение coverage
+- **3-й reference домен** в `idf-spec/spec/fixtures/` — стресс-test format с новыми patterns (e.g. m2m relationship, polymorphic entity, multi-owner). Текущие 2 (library, events) дают cross-stack convergence, но узкая база.
+- **idf-typescript** — четвёртый stack-impl. Браузер-side runtime → §1 манифеста полная (4 reader'а, не 3). Параллельная impl validates что format поддерживает client-side runtime.
+
+**Источник истины при возобновлении сессии:** последние HTML-отчёты в `~/Desktop/idf/2026-04-28-*.html` + `idf-spec/docs/cross-stack-conformance.md` (нормативная) + `idf-spec/spec/06-evolution.md` (спец §1-§3).
+
+**Триггер возобновления:** «cross-stack» / «conformance» / «evolution» в начале сессии.
+
+---
+
 ## 2. Architectural research / insights
 
 Философские находки, на которые стоит вернуться.
