@@ -190,12 +190,21 @@ Layer 4 detector в `drift-protection-spec.md`: проверяет, что outpu
 
 ## 8. Acceptance — что должно быть готово, чтобы закрыть backlog §2.8
 
-- [ ] `effect.context.schemaVersion` принимается ядром, persists в Φ, не ломает legacy fold.
-- [ ] `ontology.evolution[]` append-only лог формализован в JSON Schema.
-- [ ] `applyUpcaster` (declarative + fn) реализован в `@intent-driven/core`.
-- [ ] `fold(upcast(Φ, schema))` в production-ready для всех 4 readers.
-- [ ] Reader gap policy реализована и документирована.
-- [ ] Layer 4 detector в drift-protection-spec — runtime check.
-- [ ] Manifest v2.1 — глава «Эволюция онтологии» merged.
-- [ ] L3 conformance class — fixtures + L3 test runner.
-- [ ] Минимум 2 реальных upcast'а в production tenant'е (один declarative, один functional).
+- [x] `effect.context.schemaVersion` принимается ядром, persists в Φ, не ломает legacy fold. — **core@0.107.0 (PR idf-sdk#443)**
+- [x] `ontology.evolution[]` append-only лог формализован. — **core@0.108.0 (PR idf-sdk#447)**
+- [x] `applyUpcaster` (declarative + fn) реализован в `@intent-driven/core`. — **core@0.109.0 (PR idf-sdk#449)**
+- [x] `fold(upcast(Φ, schema))` в production-ready для всех 4 readers. — **`foldWithUpcast` в core@0.109.0**
+- [x] Reader gap policy реализована и документирована. — **core@0.110.0 (PR idf-sdk#451)**
+- [x] Layer 4 detector в drift-protection-spec — runtime check. — **core@0.111.0 (PR idf-sdk#453, `detectReaderEquivalenceDrift`)**
+- [x] Manifest v2.1 — глава «Эволюция онтологии» merged. — **`docs/manifesto-v2.1-ontology-evolution.md`**
+- [ ] L3 conformance class — fixtures + L3 test runner. — **отдельный PR в `idf-spec` (Phase 6 second half)**
+- [ ] Минимум 2 реальных upcast'а в production tenant'е (один declarative, один functional). — **milestone первого production pilot'а**
+
+## 9. Engine integration
+
+Phase 1 также добавил schemaVersion-tagging в engine validator:
+
+- `createEngine().schemaVersion` — `string` хэш онтологии при init.
+- Каждый submit'нутый эффект (confirmed или rejected) автоматически получает `context.schemaVersion` через `tagWithSchemaVersion` перед `persistence.appendEffect`.
+- `applySchemaVersionTag` обрабатывает: object context, JSON-string context (PG JSONB host-style), batch sub-effects через `value[]`.
+- engine@0.4.0 (PR idf-sdk#445).
