@@ -25,10 +25,12 @@ import {
 } from "../domain.js";
 
 describe("meta baseline", () => {
-  it("ontology: 10 сущностей, 4 роли, 9 invariants, 0 rules", () => {
+  it("ontology: 10 сущностей, 4 роли, 11 invariants, 0 rules", () => {
     expect(Object.keys(ONTOLOGY.entities).length).toBe(10);
     expect(Object.keys(ONTOLOGY.roles).length).toBe(4);
-    expect(ONTOLOGY.invariants.length).toBe(9);
+    // 9 baseline + 2 self-hosting fixed-point experiment invariants
+    // (witness_unique_per_slot_basis, intent_alpha_in_canonical_set).
+    expect(ONTOLOGY.invariants.length).toBe(11);
     expect(ONTOLOGY.rules.length).toBe(0);
     expect(ONTOLOGY.entities.BacklogItem).toBeDefined();
     expect(ONTOLOGY.entities.PatternPromotion).toBeDefined();
@@ -36,6 +38,14 @@ describe("meta baseline", () => {
     expect(lifecycle?.kind).toBe("transition");
     const promoLifecycle = ONTOLOGY.invariants.find((i) => i.name === "promotion_lifecycle");
     expect(promoLifecycle?.kind).toBe("transition");
+    const witnessCard = ONTOLOGY.invariants.find(
+      (i) => i.name === "witness_unique_per_slot_basis",
+    );
+    expect(witnessCard?.kind).toBe("cardinality");
+    const intentAlpha = ONTOLOGY.invariants.find(
+      (i) => i.name === "intent_alpha_in_canonical_set",
+    );
+    expect(intentAlpha?.kind).toBe("expression");
   });
 
   it("entities имеют primary fieldRole", () => {
@@ -50,24 +60,33 @@ describe("meta baseline", () => {
     }
   });
 
-  it("intents: 8 write-side (4 backlog + 4 pattern promotion)", () => {
-    expect(Object.keys(INTENTS).length).toBe(8);
+  it("intents: 11 write-side (4 backlog + 4 pattern promotion + 3 experiment)", () => {
+    expect(Object.keys(INTENTS).length).toBe(11);
     expect(INTENTS.add_backlog_item.α).toBe("create");
     expect(INTENTS.request_pattern_promotion.α).toBe("create");
     expect(INTENTS.ship_pattern_promotion.context.__irr.point).toBe("high");
     expect(INTENTS.close_backlog_item.precondition).toEqual({
       "BacklogItem.status": ["open", "scheduled"],
     });
+    // Self-hosting fixed-point experiment intents.
+    expect(INTENTS.propose_witness.α).toBe("create");
+    expect(INTENTS.propose_witness.target).toBe("Witness");
+    expect(INTENTS.propose_intent_salience.α).toBe("replace");
+    expect(INTENTS.propose_meta_intent.α).toBe("create");
+    expect(INTENTS.propose_meta_intent.context.__irr.point).toBe("medium");
   });
 
-  it("projections: 10 authored (Level 1 + Level 2 backlog + promotions + Studio shell)", () => {
-    expect(Object.keys(PROJECTIONS).length).toBe(10);
+  it("projections: 11 authored (Level 1 + Level 2 backlog + promotions + Studio shell + experiment)", () => {
+    expect(Object.keys(PROJECTIONS).length).toBe(11);
     expect(PROJECTIONS.pattern_bank_browser.archetype).toBe("catalog");
     expect(PROJECTIONS.pattern_detail.archetype).toBe("detail");
     expect(PROJECTIONS.domain_detail.subCollections.length).toBe(4);
     // Level 2 — soft-authoring backlog projections.
     expect(PROJECTIONS.backlog_inbox.archetype).toBe("catalog");
     expect(PROJECTIONS.backlog_item_detail.idParam).toBe("backlogItemId");
+    // Self-hosting fixed-point experiment work queue.
+    expect(PROJECTIONS.meta_work_queue.archetype).toBe("catalog");
+    expect(PROJECTIONS.meta_work_queue.mainEntity).toBe("Intent");
   });
 
   it("ROOT_PROJECTIONS — array of sections (V2Shell контракт)", () => {

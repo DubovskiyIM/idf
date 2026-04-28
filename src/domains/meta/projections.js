@@ -223,6 +223,29 @@ export const PROJECTIONS = {
       },
     },
   },
+
+  // ── Self-hosting fixed-point experiment (2026-04-28) ─────────
+  // Work queue для LLM-агента: Intent'ы без salience — work item
+  // kind=missing-salience. Catalog поверх Intent с filter в shape.
+  // Дополнительные work-item kinds (missing-witness, meta-modification)
+  // выводятся orchestrator'ом из Φ; они не имеют отдельной projection,
+  // потому что witness-gap'ы — отрицание данных, не данные.
+  meta_work_queue: {
+    id: "meta_work_queue",
+    title: "Meta work queue (experiment)",
+    archetype: "catalog",
+    mainEntity: "Intent",
+    forRoles: ["formatAuthor"],
+    witnesses: ["intentId", "domainId", "name", "alpha", "salience", "category"],
+    slots: {
+      header: {
+        kind: "facetFilter",
+        field: "salience",
+        options: ["primary", "secondary", "tertiary"],
+      },
+      hero: { kind: "intent", intentId: "propose_intent_salience" },
+    },
+  },
 };
 
 // V2Shell контракт: ROOT_PROJECTIONS — flat array или array of {section, items}.
@@ -248,5 +271,9 @@ export const ROOT_PROJECTIONS = [
   {
     section: "Backlog (Level 2)",
     items: ["backlog_inbox"],
+  },
+  {
+    section: "Experiment",
+    items: ["meta_work_queue"],
   },
 ];
