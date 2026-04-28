@@ -59,7 +59,7 @@
     "@intent-driven/effect-sink": "^0.2.1",
     "@intent-driven/engine": "^0.3.0",
     "@intent-driven/importer-openapi": "^0.15.0",
-    "@intent-driven/llm-bridge": "^0.2.1",
+    "@intent-driven/llm-bridge": "^0.3.0",
     "@intent-driven/llm-subprocess": "^0.2.1",
     "@intent-driven/renderer": "^0.58.0",
     "@mantine/core": "^9.0.1",
