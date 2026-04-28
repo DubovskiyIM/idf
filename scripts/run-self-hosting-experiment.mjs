@@ -91,13 +91,17 @@ function parseContext(c) {
 }
 
 async function waitForIterationCompletion(runId, iterationN) {
+  // Bridge'овский finalize пишет replace_iteration_log_status с
+  // entityId = `${runId}:${iterationN}` — host effects-adapter мапит
+  // его в context.id. Других маркеров нет, ищем по composite id.
+  const composite = `${runId}:${iterationN}`;
   const start = Date.now();
   while (Date.now() - start < POLL_TIMEOUT_MS) {
     const effects = await fetchEffects();
     const replaceLog = effects.find((e) => {
       if (e.intent_id !== "replace_iteration_log_status") return false;
       const ctx = parseContext(e.context);
-      return ctx.runId === runId && ctx.iterationN === iterationN;
+      return ctx.id === composite;
     });
     if (replaceLog) {
       const ctx = parseContext(replaceLog.context);
