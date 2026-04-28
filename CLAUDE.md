@@ -22,7 +22,7 @@
 - **Design-спеки** (`docs/design/`) — `intent-salience-spec.md`, `2026-04-20-sdk-p0-integration-design.md`.
 - **Архив манифестов v1.3–v1.12** (`docs/archive/`) — исторические версии с change-log тоном. Актуальные факты — в v2 + implementation-status.
 - **Спецификация формата v0.1** — репо `~/WebstormProjects/idf-spec/`. JSON Schema для core-объектов, conformance classes L1–L2, test fixtures. L3–L4 резервируются для v0.2+.
-- **Cross-stack реализации** — `~/WebstormProjects/idf-{go,rust,swift}/` — три независимые реализации против `idf-spec` (L1+L2). Структурный стресс-тест «формат decoupled от языка».
+- **Cross-stack реализации** — `~/WebstormProjects/idf-{go,rust,swift}/` — три независимые реализации против `idf-spec` (L1+L2+L3 partial document, L3-evolution §1 hash). Структурный стресс-тест «формат decoupled от языка». **Cross-stack-diff harness** в idf-spec (`scripts/cross-stack-diff.mjs` + CI) pair-wise semantic-сравнивает emit-mode выход 3 стэков; pinned 2026-04-28: events 33 + library 42 = 225 pair-wise сравнений green incl. `hash/ontology.json`.
 - **Manifesto v2.1 (in-flight)** — `~/WebstormProjects/idf-manifest-v2.1/` — рабочий репо для v2.1. Содержит `docs/design/drift-protection-spec.md` (три detector'а поверх §24 + reader-equivalence как §23 аксиома 5), intent-salience-spec, rule-R9/R10/R1b специфика, debugging-derived-ui-spec, layered authoring draft.
 - **Полевые тесты 1–11** (`docs/field-test-*.md`) — от очереди чтения до delivery. Файлы `field-test-8/9/12/13` отсутствуют в docs (частичное покрытие numbering'а); freelance и compliance документированы только в implementation-status + sdk-backlog.
 
@@ -300,6 +300,14 @@ Postmortem'ы: `docs/superpowers/specs/2026-04-14-sdk-core-postmortem.md` (Phase
 - ✅ **4 candidate-паттерна** (idf-sdk PR #338, P0.3) — `human-in-the-loop-gate`, `composition-as-callable`, `agent-plan-preview-approve`, `lifecycle-gates-on-run`; `CURATED_CANDIDATES.length` 6 → 10
 - ✅ **CI scaffold-smoke OOM fix** (idf-sdk PR #339) — `SKIP_DTS=true` env для `pnpm -r build`
 
+**Sprint 2026-04-28 (L3-evolution §1 cross-stack ramp-up):**
+- ✅ **idf-spec hash-function spec** (idf-spec #10) — нормативный `spec/schemas/hash-function.md` + 14 test-vectors. Pseudocode для cyrb53 (53-bit pure hash) + hashOntology (canonicalize + JSON.stringify + cyrb53 + hex pad14); UTF-16 code units; sequential h2-finalization (не parallel — поймано при go-port'е).
+- ✅ **idf-go schemaversion package** (idf-go #5) — port cyrb53 + hashOntology + helpers, 14/14 vectors pass.
+- ✅ **idf-rust schemaversion module** (idf-rust #3) — port, 14/14 vectors pass.
+- ✅ **idf-swift SchemaVersion + verify-vectors target** (idf-swift #3) — port + standalone executable верификатор (XCTest недоступен в Command Line Tools без Xcode); 14/14 + 7 sanity. Поймал NSNumber Bool/Int ambiguity bug через CFGetTypeID.
+- ✅ **Cross-stack hash convergence runtime** — emit-mode CLI пишет `hash/ontology.json` на raw-JSON (не на parsed struct). idf-go #6 / idf-rust #4 / idf-swift #4 / idf-spec #11 (harness paths + docs). Library hash `1a23f3f820e80b`, events hash `157d1cacf37eaa` byte-в-byte на всех 3 стэках.
+- ✅ **fixtures L3-evolution §1 conformance** (idf-spec #12) — все 63 effects в 11 phi-files tagged `effect.context.schemaVersion`; style-preserving regex injection (compact-формат сохранён). Outed pre-existing events feed-archetype `itemDisplay` leak (4 fails, не от этого PR'а).
+
 **Sprint 2026-04-26 (Notion dogfood, 18-й полевой тест):**
 - ✅ **`notion` домен** (idf PR pending) — block-based KB; 12 сущностей / 5 ролей / ~60 intent'ов / 30 invariants / 15 projections; первое полевое использование `entity.kind: "polymorphic"` (Block с 15 variants); self-ref `Page.parentPageId`; sparse-FK Comment (pageId XOR blockId); multi-view database (5 view-kind'ов).
 - ✅ **Pattern research на 4 эталонных продуктах** — Coda (11), Obsidian (8), Roam Research (8), Confluence (10) → 37 кандидатов в `refs/candidates/`. Notion-doc-editor failed на JSON parse (single retry possible).
@@ -325,4 +333,4 @@ Postmortem'ы: `docs/superpowers/specs/2026-04-14-sdk-core-postmortem.md` (Phase
 Roadmap: Часть VIII манифеста v2 `docs/manifesto-v2.md` (направления формата без дат) + GitHub issues (оперативные задачи) + `docs/backlog.md` (cross-cutting очередь между сессиями).
 
 - **Ближайшее (1-2 мес)**: domain scoping (`__domain` provenance), IrreversibleBadge auto-placement, invest visual polish для демо, публикация статьи, reader-equivalence runtime-check (v2.1 axiom 5), apply для 2 оставшихся matching-only паттернов (keyboard-property-popover, global-command-palette)
-- **Среднесрочное (2-4 мес)**: production-ready invest (первый pilot tenant), Pattern Bank → 50+ stable patterns через Researcher pipeline (сейчас 32 + 49+ candidate'ов в bank/), X1-удаление explicit overrides, PatternInspector test-harness, composite groupBy/polymorphic entity kind, `@intent-driven/cli` → 2.0 с scaffold-path как дефолтный путь, port L3-evolution conformance class в три stack'а (hashOntology + effect.context.schemaVersion + upcaster pipeline)
+- **Среднесрочное (2-4 мес)**: production-ready invest (первый pilot tenant), Pattern Bank → 50+ stable patterns через Researcher pipeline (сейчас 32 + 49+ candidate'ов в bank/), X1-удаление explicit overrides, PatternInspector test-harness, composite groupBy/polymorphic entity kind, `@intent-driven/cli` → 2.0 с scaffold-path как дефолтный путь. **L3-evolution §1 (hashOntology + schemaVersion) ЗАКРЫТ 2026-04-28** в трёх стэках; следующие фазы — §2 ontology.evolution[] log + §3 upcaster pipeline.
