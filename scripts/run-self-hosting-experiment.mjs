@@ -88,7 +88,23 @@ function plan(n) {
   return turns;
 }
 
+function sanitizeAllowedIntent(i) {
+  // zod instance в paramsZodSchema нельзя сериализовать через JSON.stringify
+  // (получится "{}" — non-nullish, и nullish-coalescing на bridge'е не
+  // сработает, schema упадёт на parsing). Отправляем только
+  // serializable-поля; bridge восстанавливает paramsZodSchema для
+  // known built-in IDs из BUILT_IN_PARAMS_SCHEMAS, для extension intents
+  // fallback'ит на generic z.record(z.string(), z.unknown()).
+  return {
+    id: i.id,
+    description: i.description,
+    paramsSchema: i.paramsSchema,
+    ...(i.example !== undefined ? { example: i.example } : {}),
+  };
+}
+
 async function postIterate(workItem, iterationN, runId, allowedIntents) {
+  const sanitized = allowedIntents?.map(sanitizeAllowedIntent);
   const res = await fetch(`${HOST}/api/meta/llm/iterate`, {
     method: "POST",
     headers: { "content-type": "application/json" },
@@ -97,7 +113,7 @@ async function postIterate(workItem, iterationN, runId, allowedIntents) {
       iterationN,
       workItem,
       projectionSnapshot: { iteration: iterationN, hint: workItem.target },
-      ...(allowedIntents ? { allowedIntents } : {}),
+      ...(sanitized ? { allowedIntents: sanitized } : {}),
     }),
   });
   if (res.status !== 202) {
