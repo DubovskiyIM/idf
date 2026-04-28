@@ -94,6 +94,16 @@ export const ONTOLOGY = {
           options: ["high", "medium", "low"],
           label: "Точка невозврата",
         },
+        salience: {
+          type: "select",
+          options: ["primary", "secondary", "tertiary", null],
+          valueLabels: {
+            primary: "Primary",
+            secondary: "Secondary",
+            tertiary: "Tertiary",
+          },
+          label: "Salience",
+        },
       },
     },
 
@@ -421,6 +431,10 @@ export const ONTOLOGY = {
         "approve_pattern_promotion",
         "reject_pattern_promotion",
         "ship_pattern_promotion",
+        // Self-hosting fixed-point experiment (2026-04-28).
+        "propose_witness",
+        "propose_intent_salience",
+        "propose_meta_intent",
       ],
     },
 
@@ -518,6 +532,32 @@ export const ONTOLOGY = {
         rejected: ["pending"],
       },
       name: "promotion_lifecycle",
+    },
+
+    // ── Self-hosting fixed-point experiment (2026-04-28) ───────────
+    // Эксперимент: LLM-агент propose'ит witness'ы и intent'ы через
+    // мета-домен. Эти invariants защищают целостность propose'ов.
+
+    // Witness уникален по (projectionId, slotPath, basis) — не позволяет
+    // LLM спамить дубликатами.
+    {
+      kind: "cardinality",
+      entity: "Witness",
+      groupBy: ["projectionId", "slotPath", "basis"],
+      max: 1,
+      name: "witness_unique_per_slot_basis",
+      severity: "warning",
+    },
+
+    // propose_meta_intent через α:create Intent — α должна быть валидной
+    // mутацией формата, не расширением списка α-операций «на лету».
+    // Защита от деградации формата при self-modification.
+    {
+      kind: "expression",
+      name: "intent_alpha_in_canonical_set",
+      entity: "Intent",
+      predicate:
+        "(row) => !row.alpha || ['create','update','replace','remove','add'].includes(row.alpha)",
     },
   ],
 
