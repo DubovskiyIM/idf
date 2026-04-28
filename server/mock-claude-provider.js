@@ -85,16 +85,22 @@ function buildProposedEffectForIteration(prompt) {
   const iterN = m ? Number(m[1]) : ++iterateCallCounter;
 
   if (iterN === 5) {
+    // Mock симулирует "идеальный" Claude-ответ на witness-promotion
+    // gap workItem: создаёт новый meta-intent для transition'а
+    // Witness.reliability heuristic → authorial. Это даёт нам H3 ✓
+    // на mock-side если pipeline жив; real Claude может пойти
+    // другим путём — это и есть тест.
     return {
       intent: "propose_meta_intent",
       params: {
-        intentId: "promote_witness_review",
-        name: "Promote witness review",
-        alpha: "create",
-        target: "WitnessReview",
+        intentId: "promote_witness_to_authorial",
+        name: "Promote witness reliability to authorial",
+        alpha: "replace",
+        target: "Witness.reliability",
         confirmation: "form",
         domainId: "meta",
-        rationale: "5-iter checkpoint — расширяем мета-домен witness-review intent'ом",
+        rationale:
+          "Closes the witness-promotion gap: takes witnessId + sets reliability=authorial. Existing 3 intents cannot express this — propose_witness only creates, propose_intent_salience targets Intent, propose_meta_intent creates Intents not Witness mutations.",
       },
     };
   }
