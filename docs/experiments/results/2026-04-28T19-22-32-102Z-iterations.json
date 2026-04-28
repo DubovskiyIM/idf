@@ -1,0 +1,341 @@
+{
+  "runId": "run-2026-04-28T19-22-32-102Z",
+  "N": 20,
+  "turns": [
+    {
+      "kind": "missing-witness",
+      "target": "Projection:meta:domain_detail:slot_1",
+      "priority": "P0"
+    },
+    {
+      "kind": "missing-witness",
+      "target": "Projection:meta:domain_detail:slot_2",
+      "priority": "P0"
+    },
+    {
+      "kind": "missing-witness",
+      "target": "Projection:meta:domain_detail:slot_3",
+      "priority": "P0"
+    },
+    {
+      "kind": "missing-witness",
+      "target": "Projection:meta:domain_detail:slot_4",
+      "priority": "P0"
+    },
+    {
+      "kind": "meta-modification",
+      "target": "meta-domain",
+      "priority": "P0",
+      "context": {
+        "reason": "5-iter checkpoint — propose new meta-intent"
+      }
+    },
+    {
+      "kind": "missing-witness",
+      "target": "Projection:meta:domain_detail:slot_6",
+      "priority": "P0"
+    },
+    {
+      "kind": "missing-witness",
+      "target": "Projection:meta:domain_detail:slot_7",
+      "priority": "P0"
+    },
+    {
+      "kind": "missing-witness",
+      "target": "Projection:meta:domain_detail:slot_8",
+      "priority": "P0"
+    },
+    {
+      "kind": "missing-witness",
+      "target": "Projection:meta:domain_detail:slot_9",
+      "priority": "P0"
+    },
+    {
+      "kind": "missing-witness",
+      "target": "Projection:meta:domain_detail:slot_10",
+      "priority": "P0"
+    },
+    {
+      "kind": "missing-witness",
+      "target": "Projection:meta:domain_detail:slot_11",
+      "priority": "P0"
+    },
+    {
+      "kind": "missing-witness",
+      "target": "Projection:meta:domain_detail:slot_12",
+      "priority": "P0"
+    },
+    {
+      "kind": "missing-witness",
+      "target": "Projection:meta:domain_detail:slot_13",
+      "priority": "P0"
+    },
+    {
+      "kind": "missing-salience",
+      "target": "Intent:meta:add_backlog_item",
+      "priority": "P1"
+    },
+    {
+      "kind": "missing-witness",
+      "target": "Projection:meta:domain_detail:slot_15",
+      "priority": "P0"
+    },
+    {
+      "kind": "missing-witness",
+      "target": "Projection:meta:domain_detail:slot_16",
+      "priority": "P0"
+    },
+    {
+      "kind": "missing-witness",
+      "target": "Projection:meta:domain_detail:slot_17",
+      "priority": "P0"
+    },
+    {
+      "kind": "missing-witness",
+      "target": "Projection:meta:domain_detail:slot_18",
+      "priority": "P0"
+    },
+    {
+      "kind": "missing-witness",
+      "target": "Projection:meta:domain_detail:slot_19",
+      "priority": "P0"
+    },
+    {
+      "kind": "missing-witness",
+      "target": "Projection:meta:domain_detail:slot_20",
+      "priority": "P0"
+    }
+  ],
+  "log": [
+    {
+      "iterationN": 1,
+      "outcome": "confirmed",
+      "proposedIntent": "propose_witness",
+      "durationMs": 6458,
+      "witnessCoverageBefore": 0,
+      "witnessCoverageAfter": 0.01
+    },
+    {
+      "iterationN": 2,
+      "outcome": "confirmed",
+      "proposedIntent": "propose_witness",
+      "durationMs": 7599,
+      "witnessCoverageBefore": 0.01,
+      "witnessCoverageAfter": 0.02
+    },
+    {
+      "iterationN": 3,
+      "outcome": "confirmed",
+      "proposedIntent": "propose_witness",
+      "durationMs": 8162,
+      "witnessCoverageBefore": 0.02,
+      "witnessCoverageAfter": 0.03
+    },
+    {
+      "iterationN": 4,
+      "outcome": "confirmed",
+      "proposedIntent": "propose_witness",
+      "durationMs": 7235,
+      "witnessCoverageBefore": 0.03,
+      "witnessCoverageAfter": 0.04
+    },
+    {
+      "iterationN": 5,
+      "outcome": "invalid_output",
+      "durationMs": 9244,
+      "witnessCoverageBefore": 0.04,
+      "witnessCoverageAfter": 0.04
+    },
+    {
+      "iterationN": 6,
+      "outcome": "confirmed",
+      "proposedIntent": "propose_witness",
+      "durationMs": 11259,
+      "witnessCoverageBefore": 0.04,
+      "witnessCoverageAfter": 0.05
+    },
+    {
+      "iterationN": 7,
+      "outcome": "confirmed",
+      "proposedIntent": "propose_witness",
+      "durationMs": 7092,
+      "witnessCoverageBefore": 0.05,
+      "witnessCoverageAfter": 0.06
+    },
+    {
+      "iterationN": 8,
+      "outcome": "confirmed",
+      "proposedIntent": "propose_witness",
+      "durationMs": 6968,
+      "witnessCoverageBefore": 0.06,
+      "witnessCoverageAfter": 0.07
+    },
+    {
+      "iterationN": 9,
+      "outcome": "confirmed",
+      "proposedIntent": "propose_witness",
+      "durationMs": 6747,
+      "witnessCoverageBefore": 0.07,
+      "witnessCoverageAfter": 0.08
+    },
+    {
+      "iterationN": 10,
+      "outcome": "confirmed",
+      "proposedIntent": "propose_witness",
+      "durationMs": 8209,
+      "witnessCoverageBefore": 0.08,
+      "witnessCoverageAfter": 0.09
+    },
+    {
+      "iterationN": 11,
+      "outcome": "confirmed",
+      "proposedIntent": "propose_witness",
+      "durationMs": 8018,
+      "witnessCoverageBefore": 0.09,
+      "witnessCoverageAfter": 0.1
+    },
+    {
+      "iterationN": 12,
+      "outcome": "confirmed",
+      "proposedIntent": "propose_witness",
+      "durationMs": 6792,
+      "witnessCoverageBefore": 0.1,
+      "witnessCoverageAfter": 0.11
+    },
+    {
+      "iterationN": 13,
+      "outcome": "confirmed",
+      "proposedIntent": "propose_witness",
+      "durationMs": 6736,
+      "witnessCoverageBefore": 0.11,
+      "witnessCoverageAfter": 0.12
+    },
+    {
+      "iterationN": 14,
+      "outcome": "confirmed",
+      "proposedIntent": "propose_intent_salience",
+      "durationMs": 7306,
+      "witnessCoverageBefore": 0.12,
+      "witnessCoverageAfter": 0.12
+    },
+    {
+      "iterationN": 15,
+      "outcome": "confirmed",
+      "proposedIntent": "propose_witness",
+      "durationMs": 6542,
+      "witnessCoverageBefore": 0.12,
+      "witnessCoverageAfter": 0.13
+    },
+    {
+      "iterationN": 16,
+      "outcome": "confirmed",
+      "proposedIntent": "propose_witness",
+      "durationMs": 6873,
+      "witnessCoverageBefore": 0.13,
+      "witnessCoverageAfter": 0.14
+    },
+    {
+      "iterationN": 17,
+      "outcome": "confirmed",
+      "proposedIntent": "propose_witness",
+      "durationMs": 6541,
+      "witnessCoverageBefore": 0.14,
+      "witnessCoverageAfter": 0.15
+    },
+    {
+      "iterationN": 18,
+      "outcome": "confirmed",
+      "proposedIntent": "propose_witness",
+      "durationMs": 7643,
+      "witnessCoverageBefore": 0.15,
+      "witnessCoverageAfter": 0.16
+    },
+    {
+      "iterationN": 19,
+      "outcome": "confirmed",
+      "proposedIntent": "propose_witness",
+      "durationMs": 7471,
+      "witnessCoverageBefore": 0.16,
+      "witnessCoverageAfter": 0.17
+    },
+    {
+      "iterationN": 20,
+      "outcome": "confirmed",
+      "proposedIntent": "propose_witness",
+      "durationMs": 8452,
+      "witnessCoverageBefore": 0.17,
+      "witnessCoverageAfter": 0.18
+    }
+  ],
+  "metrics": {
+    "iterationCount": 20,
+    "confirmationRate": 0.95,
+    "witnessCoverageCurve": [
+      0.01,
+      0.02,
+      0.03,
+      0.04,
+      0.04,
+      0.05,
+      0.06,
+      0.07,
+      0.08,
+      0.09,
+      0.1,
+      0.11,
+      0.12,
+      0.12,
+      0.13,
+      0.14,
+      0.15,
+      0.16,
+      0.17,
+      0.18
+    ],
+    "monotonicViolations": 0,
+    "numSelfMods": 0,
+    "compoundingObserved": false,
+    "meanDurationMs": 7567.35,
+    "rejectionCodeBreakdown": {}
+  },
+  "report": {
+    "metrics": {
+      "iterationCount": 20,
+      "confirmationRate": 0.95,
+      "witnessCoverageCurve": [
+        0.01,
+        0.02,
+        0.03,
+        0.04,
+        0.04,
+        0.05,
+        0.06,
+        0.07,
+        0.08,
+        0.09,
+        0.1,
+        0.11,
+        0.12,
+        0.12,
+        0.13,
+        0.14,
+        0.15,
+        0.16,
+        0.17,
+        0.18
+      ],
+      "monotonicViolations": 0,
+      "numSelfMods": 0,
+      "compoundingObserved": false,
+      "meanDurationMs": 7567.35,
+      "rejectionCodeBreakdown": {}
+    },
+    "hypotheses": {
+      "H1": true,
+      "H2": true,
+      "H3": false,
+      "H4": false
+    },
+    "outcome": "partial-A"
+  }
+}
