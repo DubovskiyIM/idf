@@ -76,29 +76,72 @@ const CANNED = {
 const PROGRESS_DELAY_MS = 600;
 const PROGRESS_STEPS = ["analyzing trigger", "matching falsification", "drafting structure", "validating apply"];
 
+// Сounter для self-hosting-experiment iterate prompt'а — раздаёт canned
+// ProposedEffect'ы по plan'у, симметричному dry-run'у в idf-infra.
+let iterateCallCounter = 0;
+
+function buildProposedEffectForIteration(prompt) {
+  const m = String(prompt).match(/^# Iteration (\d+)/m);
+  const iterN = m ? Number(m[1]) : ++iterateCallCounter;
+
+  if (iterN === 5) {
+    return {
+      intent: "propose_meta_intent",
+      params: {
+        intentId: "promote_witness_review",
+        name: "Promote witness review",
+        alpha: "create",
+        target: "WitnessReview",
+        confirmation: "form",
+        domainId: "meta",
+        rationale: "5-iter checkpoint — расширяем мета-домен witness-review intent'ом",
+      },
+    };
+  }
+  if (iterN === 14) {
+    return {
+      intent: "propose_intent_salience",
+      params: { id: "intent:meta:add_backlog_item", salience: "primary" },
+    };
+  }
+  return {
+    intent: "propose_witness",
+    params: {
+      projectionId: "meta:domain_detail",
+      slotPath: `slots.body.fields.iter${iterN}`,
+      basis: iterN % 2 === 0 ? "pattern-bank" : "crystallize-rule",
+      reliability: "rule-based",
+      rationale: `Mock witness for iteration ${iterN}`,
+    },
+  };
+}
+
 class MockClaudeProvider {
   async run(prompt, { signal, onProgress } = {}) {
-    // Выбор canned по prompt
-    const m = String(prompt || "").match(/candidate[:\s"]+([a-z][a-z0-9-]+)/i);
-    const key = m && CANNED[m[1]] ? m[1] : "default";
-    const canned = CANNED[key];
-
-    // Stream progress
+    // Stream progress (общий для обоих режимов)
     for (const step of PROGRESS_STEPS) {
       if (signal?.aborted) throw new Error("AbortError");
       await sleep(PROGRESS_DELAY_MS);
       onProgress?.({ type: "token", text: `· ${step}\n` });
     }
-
     if (signal?.aborted) throw new Error("AbortError");
 
+    // Detection: iteration prompt содержит "## Allowed intents", synthesize-apply нет.
+    const isIterate = /## Allowed intents/.test(String(prompt));
+    if (isIterate) {
+      const proposed = buildProposedEffectForIteration(prompt);
+      const text = JSON.stringify(proposed, null, 2);
+      return { text, usage: { inputTokens: estimateTokens(prompt), outputTokens: estimateTokens(text) } };
+    }
+
+    // Synthesize-apply branch (existing demo behaviour).
+    const m = String(prompt || "").match(/candidate[:\s"]+([a-z][a-z0-9-]+)/i);
+    const key = m && CANNED[m[1]] ? m[1] : "default";
+    const canned = CANNED[key];
     const text = JSON.stringify(canned, null, 2);
     return {
       text,
-      usage: {
-        inputTokens: estimateTokens(prompt),
-        outputTokens: estimateTokens(text),
-      },
+      usage: { inputTokens: estimateTokens(prompt), outputTokens: estimateTokens(text) },
     };
   }
 }
