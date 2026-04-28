@@ -342,15 +342,17 @@ npm run build        # prod-сборка (периодически падает,
 
 Помимо референсной (React/Node), формат валидируется **тремя параллельными реализациями** на альтернативных стеках. Каждая пишется в изоляции: единственный input — `~/WebstormProjects/idf-spec/`, чтение исходников idf / idf-sdk / чужих реализаций запрещено.
 
-| Репо | Стек | Scope | Состояние (2026-04-22) |
+| Репо | Стек | Scope | Состояние (2026-04-28) |
 |---|---|---|---|
-| `~/WebstormProjects/idf-go/` | Go 1.22+, `xeipuuv/gojsonschema` | L1 + L2 + L3 | v0.1.3 — materializeAsDocument package + CLI Step 5; library + events L1+L2+L3 CONFORMANT (16/16 docs) |
-| `~/WebstormProjects/idf-rust/` | Rust 1.95+, `serde`, `jsonschema` | L1 + L2 + L3 | v0.1.1 — materializeAsDocument module; oба домена L1+L2+L3 CONFORMANT (16/16 docs) |
-| `~/WebstormProjects/idf-swift/` | Swift 6.2 (Package.swift) | L1 + L2 + L3 | v0.1.1 — materializeAsDocument module; oба домена L1+L2+L3 CONFORMANT (16/16 docs) |
+| `~/WebstormProjects/idf-go/` | Go 1.22+, `xeipuuv/gojsonschema` | L1 + L2 + L3 | v0.1.3 + emit-mode CLI; library + events L1+L2+L3 CONFORMANT (16/16 docs) |
+| `~/WebstormProjects/idf-rust/` | Rust 1.95+, `serde`, `jsonschema` | L1 + L2 + L3 | v0.1.1 + emit-mode CLI; oба домена L1+L2+L3 CONFORMANT (16/16 docs) |
+| `~/WebstormProjects/idf-swift/` | Swift 6.2 (Package.swift) | L1 + L2 + L3 | v0.1.1 + emit-mode CLI; oба домена L1+L2+L3 CONFORMANT (16/16 docs) |
 
 Эти реализации — структурный стресс-тест формата: если все четыре стека `fold(Φ)` одинакового фикстура дают одинаковый world, формат decoupled от языка. Расхождение — прямой баг-репорт к спеке. **Document materialization (L3) добавлен синхронно во все три стека 2026-04-21** вместе с нормированием в `idf-spec` v0.2.0.
 
-Манифест §26 называет «второй reference implementation» направлением развития. Фактически уже идут три; §26 следует переформулировать в следующей ревизии манифеста.
+**Cross-stack differential harness (2026-04-28)** — `~/WebstormProjects/idf-spec/scripts/cross-stack-diff.mjs` запускает `conformance --emit <tmp>` во всех трёх стеках и pair-wise semantic-сравнивает выход (рекурсивная сортировка ключей, `_meta` игнорируется). На library + events: 73 файла × 3 stacks × 2 пары = **219 pair-wise сравнений green, drift = 0**. CI workflow в `.github/workflows/cross-stack-diff.yml` (idf-spec PR #9) — runtime-блок на каждом push/PR. Закрывает open item «cross-stack conformance harness» из roadmap'а. Это runtime-проверка §1 манифеста v2 (Часть IV: четыре читателя формата) и слабая форма §23 axiom 5 (reader-equivalence) — Layer 3 detector из drift-protection-spec пока остаётся спекой, не runtime check'ом.
+
+Манифест §26 называет «второй reference implementation» направлением развития. Фактически уже идут три, и они runtime-сравниваются между собой — §26 следует переформулировать в следующей ревизии манифеста.
 
 ---
 
