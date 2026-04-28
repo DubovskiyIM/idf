@@ -348,10 +348,12 @@ Bump `@intent-driven/enricher-claude` → `0.2.1`. После release — пер
 **Action:** Deferred — требует design о semantic-tag format.
 **Owner:** `idf-manifest-v2.1/docs/design/` (будущий `manifest-drift-linking-spec.md`)
 
-### 2.8 Φ schema-versioning + ontology evolution log + reader gap policy ⚠️ P0-architecture
+### 2.8 Φ schema-versioning + ontology evolution log + reader gap policy ✅ ЗАКРЫТО 2026-04-28
 
-**Дата:** 2026-04-26 (внешний review)
-**Severity:** **P0 для архитектуры формата.** Закрывать **до первого production pilot'а с Φ ≥ 10k эффектов и ≥ 6 месяцев истории**, пока цена не выросла квадратично с числом доменов и линейно с возрастом каждого Φ.
+**Дата открытия:** 2026-04-26 (внешний review)
+**Дата закрытия:** 2026-04-28 (Phase 0–6 shipped)
+**Closure summary:** 6 PR'ов в `idf-sdk` (#443/#445/#447/#449/#451/#453) + manifest v2.1 chapter (этот PR в `idf`) + L3 conformance follow-up в `idf-spec`. Подробности — `docs/manifesto-v2.1-ontology-evolution.md` §I.
+**Severity (history):** **P0 для архитектуры формата.** Закрывать **до первого production pilot'а с Φ ≥ 10k эффектов и ≥ 6 месяцев истории**, пока цена не выросла квадратично с числом доменов и линейно с возрастом каждого Φ.
 
 **Контекст.** Φ — append-only лог `confirmed` эффектов, записанных в терминах **текущей** онтологии (ссылки на entity/field/role/invariants). Когда онтология эволюционирует (новое поле, ужесточённый enum, split entity, ужесточённая роль) — старые эффекты остаются, но `fold(Φ)` интерпретирует их через новую схему. Схему, в которой эффект был эмиттен, **сейчас никто не помнит**: ни эффект (нет `schemaVersion` в context), ни ontology (нет evolution log).
 

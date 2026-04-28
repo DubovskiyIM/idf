@@ -209,6 +209,35 @@ Invest использует все четыре в одном домене.
 
 ---
 
+## 5a. Φ schema-versioning (закрыт 2026-04-28)
+
+P0-architecture sprint от внешнего design review 2026-04-26. 6 phases shipped в `@intent-driven/core` + `@intent-driven/engine`:
+
+| Phase | Что | Где |
+|---|---|---|
+| 0 | helpers `UNKNOWN_SCHEMA_VERSION`, `getSchemaVersion`, `tagWithSchemaVersion`, `hashOntology` | core@0.107.0 (PR idf-sdk#443) |
+| 1 | engine validator проставляет `effect.context.schemaVersion` при confirm/reject | engine@0.4.0 (PR idf-sdk#445) |
+| 2 | `ontology.evolution[]` append-only лог + helpers (`getEvolutionLog`, `addEvolutionEntry`, `getAncestry`, ...) | core@0.108.0 (PR idf-sdk#447) |
+| 3 | `applyUpcaster` (4 declarative + functional fn) + `pathFromTo` + `upcastEffect/Effects` + `foldWithUpcast` | core@0.109.0 (PR idf-sdk#449) |
+| 4 | Reader gap policy (4 reader'а × 3 gap kinds × 6 actions) + `detectFieldGap` / `resolveGap` / `scanEntityGaps` | core@0.110.0 (PR idf-sdk#451) |
+| 5 | Layer 4 drift detector — `computeCanonicalGapSet`, `compareReaderObservations`, `detectReaderEquivalenceDrift` | core@0.111.0 (PR idf-sdk#453) |
+| 6 | Manifest v2.1 chapter «Эволюция онтологии» (`docs/manifesto-v2.1-ontology-evolution.md`) + L3-evolution conformance class в `idf-spec` | этот PR + idf-spec follow-up |
+
+**Жёсткие архитектурные пункты, зафиксированные в spec'е:**
+1. Фиксированный порядок declarative-шагов (rename → splitDiscriminator → setDefault → enumMap) — нормативен для cross-stack
+2. `fn` upcaster — design-time only, никакого runtime-LLM (иначе смерть детерминизма)
+3. fn-throw → safe fallback на declarative result + `console.warn`
+4. cyrb53 hash + canonicalize JSON — алгоритм нормирован для cross-stack совместимости
+
+**Reader-equivalence (§23 axiom 5)** теперь runtime-проверяемое свойство, а не аксиома. `detectReaderEquivalenceDrift(world, ontology, observations)` сравнивает gap-set'ы 4 reader'ов; дивергенция в пересечении scope = drift event. Не сравнивает rendered output (incomparable shapes), не проверяет equivalence actions (это контракт по policy).
+
+**Backward compat:** legacy эффекты с `UNKNOWN_SCHEMA_VERSION` проходят полную цепочку upcaster'ов от root до target. Онтологии без `evolution[]` работают через обычный `fold` без изменений.
+
+**Open items до production pilot'а:**
+- L3-evolution conformance class в `idf-spec` (отдельный PR, идёт параллельно)
+- Минимум 2 реальных upcast'а в production tenant'е (один declarative, один functional) — milestone первого pilot'а
+- Reader integrations в renderer / voiceMaterializer / documentMaterializer / agent route — follow-up PRs по мере подключения
+
 ## 6. Open items
 
 ### Перенесённые из архивного v1.12
