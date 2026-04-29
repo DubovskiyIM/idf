@@ -1,0 +1,597 @@
+{
+  "runId": "blind-treatment-2026-04-28T22-53-50-405Z",
+  "mode": "treatment",
+  "N": 40,
+  "provider": "default",
+  "metrics": {
+    "iterationCount": 40,
+    "confirmationRate": 1,
+    "witnessCoverageCurve": [
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    "monotonicViolations": 0,
+    "numSelfMods": 1,
+    "compoundingObserved": false,
+    "meanDurationMs": 8326.225,
+    "rejectionCodeBreakdown": {}
+  },
+  "hypothesisGrid": {
+    "H1": true,
+    "H2": true,
+    "H3": true,
+    "H4": false
+  },
+  "outcomeByMetric": "partial-B",
+  "explicitNameMatchTailUses": 0,
+  "newIntentIdsCreated": [
+    "promote_witness_reliability"
+  ],
+  "intentBreakdown": {
+    "propose_witness": 38,
+    "propose_meta_intent": 1,
+    "propose_intent_salience": 1
+  },
+  "workItemTargets": [
+    {
+      "iter": 1,
+      "kind": "missing-witness",
+      "target": "Projection:meta:domain_detail:slot_1"
+    },
+    {
+      "iter": 2,
+      "kind": "missing-witness",
+      "target": "Projection:meta:domain_detail:slot_2"
+    },
+    {
+      "iter": 3,
+      "kind": "missing-witness",
+      "target": "Projection:meta:domain_detail:slot_3"
+    },
+    {
+      "iter": 4,
+      "kind": "missing-witness",
+      "target": "Projection:meta:domain_detail:slot_4"
+    },
+    {
+      "iter": 5,
+      "kind": "meta-modification",
+      "target": "Φ:Witness reliability distribution"
+    },
+    {
+      "iter": 6,
+      "kind": "missing-witness",
+      "target": "Projection:meta:domain_detail:slot_6"
+    },
+    {
+      "iter": 7,
+      "kind": "missing-witness",
+      "target": "Projection:meta:domain_detail:slot_7"
+    },
+    {
+      "iter": 8,
+      "kind": "missing-witness",
+      "target": "Projection:meta:domain_detail:slot_8"
+    },
+    {
+      "iter": 9,
+      "kind": "missing-witness",
+      "target": "Projection:meta:domain_detail:slot_9"
+    },
+    {
+      "iter": 10,
+      "kind": "missing-witness",
+      "target": "Projection:meta:domain_detail:slot_10"
+    },
+    {
+      "iter": 11,
+      "kind": "missing-witness",
+      "target": "Projection:meta:domain_detail:slot_11"
+    },
+    {
+      "iter": 12,
+      "kind": "missing-witness",
+      "target": "Projection:meta:domain_detail:slot_12"
+    },
+    {
+      "iter": 13,
+      "kind": "missing-witness",
+      "target": "Projection:meta:domain_detail:slot_13"
+    },
+    {
+      "iter": 14,
+      "kind": "missing-salience",
+      "target": "Intent:meta:add_backlog_item"
+    },
+    {
+      "iter": 15,
+      "kind": "missing-witness",
+      "target": "Projection:meta:domain_detail:slot_15"
+    },
+    {
+      "iter": 16,
+      "kind": "missing-witness",
+      "target": "Projection:meta:domain_detail:slot_16"
+    },
+    {
+      "iter": 17,
+      "kind": "missing-witness",
+      "target": "Projection:meta:domain_detail:slot_17"
+    },
+    {
+      "iter": 18,
+      "kind": "missing-witness",
+      "target": "Projection:meta:domain_detail:slot_18"
+    },
+    {
+      "iter": 19,
+      "kind": "missing-witness",
+      "target": "Projection:meta:domain_detail:slot_19"
+    },
+    {
+      "iter": 20,
+      "kind": "missing-witness",
+      "target": "Projection:meta:domain_detail:slot_20"
+    },
+    {
+      "iter": 21,
+      "kind": "missing-witness",
+      "target": "Projection:meta:domain_detail:slot_21"
+    },
+    {
+      "iter": 22,
+      "kind": "missing-witness",
+      "target": "Projection:meta:domain_detail:slot_22"
+    },
+    {
+      "iter": 23,
+      "kind": "missing-witness",
+      "target": "Projection:meta:domain_detail:slot_23"
+    },
+    {
+      "iter": 24,
+      "kind": "missing-witness",
+      "target": "Projection:meta:domain_detail:slot_24"
+    },
+    {
+      "iter": 25,
+      "kind": "missing-witness",
+      "target": "Projection:meta:domain_detail:slot_25"
+    },
+    {
+      "iter": 26,
+      "kind": "missing-witness",
+      "target": "Projection:meta:domain_detail:slot_26"
+    },
+    {
+      "iter": 27,
+      "kind": "missing-witness",
+      "target": "Projection:meta:domain_detail:slot_27"
+    },
+    {
+      "iter": 28,
+      "kind": "missing-witness",
+      "target": "Projection:meta:domain_detail:slot_28"
+    },
+    {
+      "iter": 29,
+      "kind": "missing-witness",
+      "target": "Projection:meta:domain_detail:slot_29"
+    },
+    {
+      "iter": 30,
+      "kind": "missing-witness",
+      "target": "Projection:meta:domain_detail:slot_30"
+    },
+    {
+      "iter": 31,
+      "kind": "missing-witness",
+      "target": "Projection:meta:domain_detail:slot_31"
+    },
+    {
+      "iter": 32,
+      "kind": "missing-witness",
+      "target": "Projection:meta:domain_detail:slot_32"
+    },
+    {
+      "iter": 33,
+      "kind": "missing-witness",
+      "target": "Projection:meta:domain_detail:slot_33"
+    },
+    {
+      "iter": 34,
+      "kind": "missing-witness",
+      "target": "Projection:meta:domain_detail:slot_34"
+    },
+    {
+      "iter": 35,
+      "kind": "missing-witness",
+      "target": "Projection:meta:domain_detail:slot_35"
+    },
+    {
+      "iter": 36,
+      "kind": "missing-witness",
+      "target": "Projection:meta:domain_detail:slot_36"
+    },
+    {
+      "iter": 37,
+      "kind": "missing-witness",
+      "target": "Projection:meta:domain_detail:slot_37"
+    },
+    {
+      "iter": 38,
+      "kind": "missing-witness",
+      "target": "Projection:meta:domain_detail:slot_38"
+    },
+    {
+      "iter": 39,
+      "kind": "missing-witness",
+      "target": "Projection:meta:domain_detail:slot_39"
+    },
+    {
+      "iter": 40,
+      "kind": "missing-witness",
+      "target": "Projection:meta:domain_detail:slot_40"
+    }
+  ],
+  "log": [
+    {
+      "iterationN": 1,
+      "outcome": "confirmed",
+      "proposedIntent": "propose_witness",
+      "durationMs": 11763,
+      "workItemKind": "missing-witness",
+      "workItemTarget": "Projection:meta:domain_detail:slot_1"
+    },
+    {
+      "iterationN": 2,
+      "outcome": "confirmed",
+      "proposedIntent": "propose_witness",
+      "durationMs": 6739,
+      "workItemKind": "missing-witness",
+      "workItemTarget": "Projection:meta:domain_detail:slot_2"
+    },
+    {
+      "iterationN": 3,
+      "outcome": "confirmed",
+      "proposedIntent": "propose_witness",
+      "durationMs": 8144,
+      "workItemKind": "missing-witness",
+      "workItemTarget": "Projection:meta:domain_detail:slot_3"
+    },
+    {
+      "iterationN": 4,
+      "outcome": "confirmed",
+      "proposedIntent": "propose_witness",
+      "durationMs": 7113,
+      "workItemKind": "missing-witness",
+      "workItemTarget": "Projection:meta:domain_detail:slot_4"
+    },
+    {
+      "iterationN": 5,
+      "outcome": "confirmed",
+      "proposedIntent": "propose_meta_intent",
+      "durationMs": 8418,
+      "workItemKind": "meta-modification",
+      "workItemTarget": "Φ:Witness reliability distribution"
+    },
+    {
+      "iterationN": 6,
+      "outcome": "confirmed",
+      "proposedIntent": "propose_witness",
+      "durationMs": 10042,
+      "workItemKind": "missing-witness",
+      "workItemTarget": "Projection:meta:domain_detail:slot_6"
+    },
+    {
+      "iterationN": 7,
+      "outcome": "confirmed",
+      "proposedIntent": "propose_witness",
+      "durationMs": 8806,
+      "workItemKind": "missing-witness",
+      "workItemTarget": "Projection:meta:domain_detail:slot_7"
+    },
+    {
+      "iterationN": 8,
+      "outcome": "confirmed",
+      "proposedIntent": "propose_witness",
+      "durationMs": 7812,
+      "workItemKind": "missing-witness",
+      "workItemTarget": "Projection:meta:domain_detail:slot_8"
+    },
+    {
+      "iterationN": 9,
+      "outcome": "confirmed",
+      "proposedIntent": "propose_witness",
+      "durationMs": 7277,
+      "workItemKind": "missing-witness",
+      "workItemTarget": "Projection:meta:domain_detail:slot_9"
+    },
+    {
+      "iterationN": 10,
+      "outcome": "confirmed",
+      "proposedIntent": "propose_witness",
+      "durationMs": 7654,
+      "workItemKind": "missing-witness",
+      "workItemTarget": "Projection:meta:domain_detail:slot_10"
+    },
+    {
+      "iterationN": 11,
+      "outcome": "confirmed",
+      "proposedIntent": "propose_witness",
+      "durationMs": 9185,
+      "workItemKind": "missing-witness",
+      "workItemTarget": "Projection:meta:domain_detail:slot_11"
+    },
+    {
+      "iterationN": 12,
+      "outcome": "confirmed",
+      "proposedIntent": "propose_witness",
+      "durationMs": 7478,
+      "workItemKind": "missing-witness",
+      "workItemTarget": "Projection:meta:domain_detail:slot_12"
+    },
+    {
+      "iterationN": 13,
+      "outcome": "confirmed",
+      "proposedIntent": "propose_witness",
+      "durationMs": 8810,
+      "workItemKind": "missing-witness",
+      "workItemTarget": "Projection:meta:domain_detail:slot_13"
+    },
+    {
+      "iterationN": 14,
+      "outcome": "confirmed",
+      "proposedIntent": "propose_intent_salience",
+      "durationMs": 6834,
+      "workItemKind": "missing-salience",
+      "workItemTarget": "Intent:meta:add_backlog_item"
+    },
+    {
+      "iterationN": 15,
+      "outcome": "confirmed",
+      "proposedIntent": "propose_witness",
+      "durationMs": 9025,
+      "workItemKind": "missing-witness",
+      "workItemTarget": "Projection:meta:domain_detail:slot_15"
+    },
+    {
+      "iterationN": 16,
+      "outcome": "confirmed",
+      "proposedIntent": "propose_witness",
+      "durationMs": 8766,
+      "workItemKind": "missing-witness",
+      "workItemTarget": "Projection:meta:domain_detail:slot_16"
+    },
+    {
+      "iterationN": 17,
+      "outcome": "confirmed",
+      "proposedIntent": "propose_witness",
+      "durationMs": 8673,
+      "workItemKind": "missing-witness",
+      "workItemTarget": "Projection:meta:domain_detail:slot_17"
+    },
+    {
+      "iterationN": 18,
+      "outcome": "confirmed",
+      "proposedIntent": "propose_witness",
+      "durationMs": 7873,
+      "workItemKind": "missing-witness",
+      "workItemTarget": "Projection:meta:domain_detail:slot_18"
+    },
+    {
+      "iterationN": 19,
+      "outcome": "confirmed",
+      "proposedIntent": "propose_witness",
+      "durationMs": 10063,
+      "workItemKind": "missing-witness",
+      "workItemTarget": "Projection:meta:domain_detail:slot_19"
+    },
+    {
+      "iterationN": 20,
+      "outcome": "confirmed",
+      "proposedIntent": "propose_witness",
+      "durationMs": 10418,
+      "workItemKind": "missing-witness",
+      "workItemTarget": "Projection:meta:domain_detail:slot_20"
+    },
+    {
+      "iterationN": 21,
+      "outcome": "confirmed",
+      "proposedIntent": "propose_witness",
+      "durationMs": 7928,
+      "workItemKind": "missing-witness",
+      "workItemTarget": "Projection:meta:domain_detail:slot_21"
+    },
+    {
+      "iterationN": 22,
+      "outcome": "confirmed",
+      "proposedIntent": "propose_witness",
+      "durationMs": 7150,
+      "workItemKind": "missing-witness",
+      "workItemTarget": "Projection:meta:domain_detail:slot_22"
+    },
+    {
+      "iterationN": 23,
+      "outcome": "confirmed",
+      "proposedIntent": "propose_witness",
+      "durationMs": 7571,
+      "workItemKind": "missing-witness",
+      "workItemTarget": "Projection:meta:domain_detail:slot_23"
+    },
+    {
+      "iterationN": 24,
+      "outcome": "confirmed",
+      "proposedIntent": "propose_witness",
+      "durationMs": 8718,
+      "workItemKind": "missing-witness",
+      "workItemTarget": "Projection:meta:domain_detail:slot_24"
+    },
+    {
+      "iterationN": 25,
+      "outcome": "confirmed",
+      "proposedIntent": "propose_witness",
+      "durationMs": 7594,
+      "workItemKind": "missing-witness",
+      "workItemTarget": "Projection:meta:domain_detail:slot_25"
+    },
+    {
+      "iterationN": 26,
+      "outcome": "confirmed",
+      "proposedIntent": "propose_witness",
+      "durationMs": 8215,
+      "workItemKind": "missing-witness",
+      "workItemTarget": "Projection:meta:domain_detail:slot_26"
+    },
+    {
+      "iterationN": 27,
+      "outcome": "confirmed",
+      "proposedIntent": "propose_witness",
+      "durationMs": 8507,
+      "workItemKind": "missing-witness",
+      "workItemTarget": "Projection:meta:domain_detail:slot_27"
+    },
+    {
+      "iterationN": 28,
+      "outcome": "confirmed",
+      "proposedIntent": "propose_witness",
+      "durationMs": 8168,
+      "workItemKind": "missing-witness",
+      "workItemTarget": "Projection:meta:domain_detail:slot_28"
+    },
+    {
+      "iterationN": 29,
+      "outcome": "confirmed",
+      "proposedIntent": "propose_witness",
+      "durationMs": 7234,
+      "workItemKind": "missing-witness",
+      "workItemTarget": "Projection:meta:domain_detail:slot_29"
+    },
+    {
+      "iterationN": 30,
+      "outcome": "confirmed",
+      "proposedIntent": "propose_witness",
+      "durationMs": 7739,
+      "workItemKind": "missing-witness",
+      "workItemTarget": "Projection:meta:domain_detail:slot_30"
+    },
+    {
+      "iterationN": 31,
+      "outcome": "confirmed",
+      "proposedIntent": "propose_witness",
+      "durationMs": 8137,
+      "workItemKind": "missing-witness",
+      "workItemTarget": "Projection:meta:domain_detail:slot_31"
+    },
+    {
+      "iterationN": 32,
+      "outcome": "confirmed",
+      "proposedIntent": "propose_witness",
+      "durationMs": 7068,
+      "workItemKind": "missing-witness",
+      "workItemTarget": "Projection:meta:domain_detail:slot_32"
+    },
+    {
+      "iterationN": 33,
+      "outcome": "confirmed",
+      "proposedIntent": "propose_witness",
+      "durationMs": 7307,
+      "workItemKind": "missing-witness",
+      "workItemTarget": "Projection:meta:domain_detail:slot_33"
+    },
+    {
+      "iterationN": 34,
+      "outcome": "confirmed",
+      "proposedIntent": "propose_witness",
+      "durationMs": 7645,
+      "workItemKind": "missing-witness",
+      "workItemTarget": "Projection:meta:domain_detail:slot_34"
+    },
+    {
+      "iterationN": 35,
+      "outcome": "confirmed",
+      "proposedIntent": "propose_witness",
+      "durationMs": 11947,
+      "workItemKind": "missing-witness",
+      "workItemTarget": "Projection:meta:domain_detail:slot_35"
+    },
+    {
+      "iterationN": 36,
+      "outcome": "confirmed",
+      "proposedIntent": "propose_witness",
+      "durationMs": 7002,
+      "workItemKind": "missing-witness",
+      "workItemTarget": "Projection:meta:domain_detail:slot_36"
+    },
+    {
+      "iterationN": 37,
+      "outcome": "confirmed",
+      "proposedIntent": "propose_witness",
+      "durationMs": 11439,
+      "workItemKind": "missing-witness",
+      "workItemTarget": "Projection:meta:domain_detail:slot_37"
+    },
+    {
+      "iterationN": 38,
+      "outcome": "confirmed",
+      "proposedIntent": "propose_witness",
+      "durationMs": 7574,
+      "workItemKind": "missing-witness",
+      "workItemTarget": "Projection:meta:domain_detail:slot_38"
+    },
+    {
+      "iterationN": 39,
+      "outcome": "confirmed",
+      "proposedIntent": "propose_witness",
+      "durationMs": 7939,
+      "workItemKind": "missing-witness",
+      "workItemTarget": "Projection:meta:domain_detail:slot_39"
+    },
+    {
+      "iterationN": 40,
+      "outcome": "confirmed",
+      "proposedIntent": "propose_witness",
+      "durationMs": 7274,
+      "workItemKind": "missing-witness",
+      "workItemTarget": "Projection:meta:domain_detail:slot_40"
+    }
+  ]
+}
