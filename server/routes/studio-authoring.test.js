@@ -2,6 +2,9 @@ import { describe, it, expect, beforeEach, vi } from "vitest";
 import express from "express";
 import request from "supertest";
 import { createRequire } from "node:module";
+import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
+import path from "node:path";
 
 const req = createRequire(import.meta.url);
 const { makeStudioAuthoringRouter } = req("./studio-authoring.js");
@@ -18,10 +21,10 @@ function makeMockClaude(responseSequence) {
   };
 }
 
-function makeApp({ claudeClient }) {
+function makeApp({ claudeClient, targetDirOverride } = {}) {
   const app = express();
   app.use(express.json());
-  const router = makeStudioAuthoringRouter({ claudeClient });
+  const router = makeStudioAuthoringRouter({ claudeClient, targetDirOverride });
   app.use("/api/studio/domain", router);
   app._routerInstance = router;
   return app;
@@ -181,5 +184,110 @@ describe("POST /api/studio/domain/:id/author/reset", () => {
 
     const stateRes = await request(app).get("/api/studio/domain/reset-1/author/state");
     expect(stateRes.status).toBe(404);
+  });
+});
+
+describe("GET /api/studio/domain/:id/author/spec", () => {
+  let tmpDir;
+  beforeEach(() => { tmpDir = mkdtempSync(path.join(tmpdir(), "spec-get-")); });
+
+  it("возвращает spec из committed файла, если сессии нет", async () => {
+    const file = path.join(tmpDir, "domain.js");
+    writeFileSync(file,
+      `export const META = { id: "ghost-test", description: "x" };\n` +
+      `export const INTENTS = { create_x: { α: "create", target: "X" } };\n` +
+      `export const ONTOLOGY = { entities: { X: { fields: {} } }, roles: {}, invariants: [] };\n` +
+      `export const PROJECTIONS = {};\n` +
+      `export default { META, INTENTS, ONTOLOGY, PROJECTIONS };\n`,
+      "utf8"
+    );
+    const app = makeApp({ claudeClient: makeMockClaude({}), targetDirOverride: tmpDir });
+    const res = await request(app).get(`/api/studio/domain/ghost-test/author/spec`);
+    expect(res.status).toBe(200);
+    expect(res.body.source).toBe("file");
+    expect(res.body.spec.INTENTS.create_x).toBeDefined();
+  });
+
+  it("возвращает spec из активной сессии, если она есть", async () => {
+    const claude = makeMockClaude({
+      userFacing: "ok",
+      patch: { meta: { description: "session-spec" } },
+      nextState: "kickoff",
+    });
+    const app = makeApp({ claudeClient: claude });
+    const id = `sess-spec-${Date.now()}`;
+    await request(app).post(`/api/studio/domain/${id}/author/turn`).send({ userText: "hi" }).buffer(true).parse((r,cb)=>{let d="";r.on("data",c=>d+=c);r.on("end",()=>cb(null,d));});
+    const res = await request(app).get(`/api/studio/domain/${id}/author/spec`);
+    expect(res.status).toBe(200);
+    expect(res.body.source).toBe("session");
+    expect(res.body.spec.meta.description).toBe("session-spec");
+  });
+
+  it("404 если ни сессии, ни committed файла", async () => {
+    const app = makeApp({ claudeClient: makeMockClaude({}), targetDirOverride: "/tmp/idf-nonexistent-xxx" });
+    const res = await request(app).get(`/api/studio/domain/ghost-${Date.now()}/author/spec`);
+    expect(res.status).toBe(404);
+    expect(res.body.error).toBe("no_spec");
+  });
+});
+
+describe("PUT /api/studio/domain/:id/author/spec", () => {
+  let tmpDir;
+  beforeEach(() => { tmpDir = mkdtempSync(path.join(tmpdir(), "spec-put-")); });
+
+  it("заменяет spec в сессии и валидирует — переход в preview", async () => {
+    const app = makeApp({ claudeClient: makeMockClaude({}) });
+    const id = `put-spec-${Date.now()}`;
+    const newSpec = {
+      meta: { id },
+      INTENTS: { create_x: { α: "create", target: "X" } },
+      ONTOLOGY: { entities: { X: { fields: {} } }, roles: {}, invariants: [] },
+      PROJECTIONS: {},
+    };
+    const res = await request(app).put(`/api/studio/domain/${id}/author/spec`).send({ spec: newSpec });
+    expect(res.status).toBe(200);
+    expect(res.body.ok).toBe(true);
+    expect(res.body.canFinalize).toBe(true);
+    expect(res.body.state).toBe("preview");
+    expect(res.body.committed).toBe(false);
+    expect(res.body.validationIssues).toEqual([]);
+  });
+
+  it("400 если spec не объект", async () => {
+    const app = makeApp({ claudeClient: makeMockClaude({}) });
+    const res = await request(app).put(`/api/studio/domain/bad/author/spec`).send({ spec: "not-an-object" });
+    expect(res.status).toBe(400);
+    expect(res.body.error).toBe("invalid_spec");
+  });
+
+  it("400 если commit=true но spec не finalizable", async () => {
+    const app = makeApp({ claudeClient: makeMockClaude({}) });
+    const id = `put-empty-${Date.now()}`;
+    const emptySpec = {
+      meta: { id }, INTENTS: {}, ONTOLOGY: { entities: {}, roles: {}, invariants: [] }, PROJECTIONS: {},
+    };
+    const res = await request(app).put(`/api/studio/domain/${id}/author/spec`).send({ spec: emptySpec, commit: true });
+    expect(res.status).toBe(400);
+    expect(res.body.error).toBe("not_finalizable");
+  });
+
+  it("если commit=true — пишет файл и hot-reload'ит", async () => {
+    const app = makeApp({ claudeClient: makeMockClaude({}) });
+    const id = `put-commit-${Date.now()}`;
+    const newSpec = {
+      meta: { id },
+      INTENTS: { create_x: { α: "create", target: "X" } },
+      ONTOLOGY: { entities: { X: { fields: {} } }, roles: {}, invariants: [] },
+      PROJECTIONS: {},
+    };
+    const res = await request(app)
+      .put(`/api/studio/domain/${id}/author/spec`)
+      .send({ spec: newSpec, commit: true, targetDir: tmpDir });
+    expect(res.status).toBe(200);
+    expect(res.body.committed).toBe(true);
+    expect(res.body.path).toBeTruthy();
+    const fs = require("node:fs");
+    const written = fs.readFileSync(res.body.path, "utf8");
+    expect(written).toContain("create_x");
   });
 });

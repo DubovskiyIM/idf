@@ -11,17 +11,23 @@
 
 const path = require("node:path");
 const { Router } = require("express");
-const { initAuthoring, applyTurn, canFinalize } = require("../schema/authoringStateMachine.cjs");
+const { initAuthoring, applyTurn, canFinalize, applyManualSpec } = require("../schema/authoringStateMachine.cjs");
 const { buildMessages } = require("../schema/authoringPrompts.cjs");
 const { callClaude } = require("../schema/claudeClient.cjs");
 const { finalizeDomain } = require("../schema/authoringCommit.cjs");
 const { registerOntology } = require("../ontologyRegistry.cjs");
+const { loadSpecFromFile, saveSpecToFile } = require("../schema/specSerializer.cjs");
 const intentsModule = require("../intents.js");
 
 const sessions = new Map(); // domainId -> state
 
-function makeStudioAuthoringRouter({ claudeClient } = {}) {
+function makeStudioAuthoringRouter({ claudeClient, targetDirOverride } = {}) {
   const router = Router({ mergeParams: true });
+
+  const resolveTargetDir = (id) =>
+    targetDirOverride
+      ? targetDirOverride
+      : path.resolve(__dirname, "../../src/domains", id);
 
   router.post("/:id/author/turn", async (req, res) => {
     const id = String(req.params.id || "").trim();
@@ -86,6 +92,77 @@ function makeStudioAuthoringRouter({ claudeClient } = {}) {
       validationIssues: s.validationIssues,
       canFinalize: canFinalize(s),
       turnIndex: s.history.length,
+    });
+  });
+
+  router.get("/:id/author/spec", async (req, res) => {
+    const id = String(req.params.id || "");
+    const session = sessions.get(id);
+    if (session) {
+      return res.json({
+        source: "session",
+        spec: session.spec,
+        state: session.state,
+        validationIssues: session.validationIssues,
+        canFinalize: canFinalize(session),
+      });
+    }
+    const filePath = path.join(resolveTargetDir(id), "domain.js");
+    try {
+      const spec = await loadSpecFromFile(filePath);
+      return res.json({ source: "file", spec });
+    } catch (err) {
+      return res.status(404).json({ error: "no_spec", domainId: id, detail: err.message });
+    }
+  });
+
+  router.put("/:id/author/spec", async (req, res) => {
+    const id = String(req.params.id || "");
+    const newSpec = req.body?.spec;
+    const commit = req.body?.commit === true;
+    if (!newSpec || typeof newSpec !== "object" || Array.isArray(newSpec)) {
+      return res.status(400).json({ error: "invalid_spec" });
+    }
+    if (!sessions.has(id)) sessions.set(id, initAuthoring({ domainId: id }));
+    const before = sessions.get(id);
+    const next = applyManualSpec(before, newSpec);
+    sessions.set(id, next);
+
+    let committed = false;
+    let writtenPath = null;
+    if (commit) {
+      if (!canFinalize(next)) {
+        return res.status(400).json({
+          error: "not_finalizable",
+          state: next.state,
+          validationIssues: next.validationIssues,
+        });
+      }
+      const targetDir = req.body?.targetDir
+        ? path.resolve(req.body.targetDir)
+        : resolveTargetDir(id);
+      writtenPath = path.join(targetDir, "domain.js");
+      try {
+        await saveSpecToFile(next.spec, writtenPath);
+        try {
+          registerOntology(id, next.spec.ONTOLOGY || {});
+          intentsModule.registerIntents(next.spec.INTENTS || {}, id);
+        } catch {
+          // hot-reload failure — non-critical
+        }
+        sessions.set(id, { ...next, state: "committed" });
+        committed = true;
+      } catch (err) {
+        return res.status(500).json({ error: "commit_failed", detail: err.message });
+      }
+    }
+    res.json({
+      ok: true,
+      state: sessions.get(id).state,
+      validationIssues: next.validationIssues,
+      canFinalize: canFinalize(next),
+      committed,
+      path: writtenPath,
     });
   });
 
