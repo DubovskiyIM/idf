@@ -67,4 +67,28 @@ describe("HeaderBar", () => {
     fireEvent.click(screen.getByRole("button", { name: /настройки|settings|⚙/i }));
     expect(screen.getByText(/роль:/i)).toBeInTheDocument();
   });
+
+  it("Esc закрывает popover", () => {
+    render(<HeaderBar {...baseProps} />);
+    fireEvent.click(screen.getByRole("button", { name: /настройки|⚙/i }));
+    expect(screen.getByText(/слой/i)).toBeInTheDocument();
+    fireEvent.keyDown(document, { key: "Escape" });
+    expect(screen.queryByText(/слой/i)).toBeNull();
+  });
+
+  it("клик по 'Компакт' вызывает setPref('density', 'compact')", () => {
+    const props = { ...baseProps, setPref: vi.fn() };
+    render(<HeaderBar {...props} />);
+    fireEvent.click(screen.getByRole("button", { name: /настройки|⚙/i }));
+    fireEvent.click(screen.getByRole("button", { name: /компакт/i }));
+    expect(props.setPref).toHaveBeenCalledWith("density", "compact");
+  });
+
+  it("клик по 'Сбросить' вызывает resetPrefs", () => {
+    const props = { ...baseProps, resetPrefs: vi.fn() };
+    render(<HeaderBar {...props} />);
+    fireEvent.click(screen.getByRole("button", { name: /настройки|⚙/i }));
+    fireEvent.click(screen.getByRole("button", { name: /сбросить/i }));
+    expect(props.resetPrefs).toHaveBeenCalledTimes(1);
+  });
 });

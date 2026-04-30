@@ -41,12 +41,12 @@ export default function HeaderBar({
   onLogout,
   activeRole,
   roleOptions = [],
-  onSwitchRole,
+  onSwitchRole = () => {},
   currentKit,
-  onChangeKit,
-  prefs,
-  setPref,
-  resetPrefs,
+  onChangeKit = () => {},
+  prefs = {},
+  setPref = () => {},
+  resetPrefs = () => {},
 }) {
   const [open, setOpen] = useState(false);
   const popoverRef = useRef(null);
@@ -59,8 +59,13 @@ export default function HeaderBar({
       if (buttonRef.current?.contains(e.target)) return;
       setOpen(false);
     };
+    const onKey = (e) => { if (e.key === "Escape") setOpen(false); };
     document.addEventListener("mousedown", onDocClick);
-    return () => document.removeEventListener("mousedown", onDocClick);
+    document.addEventListener("keydown", onKey);
+    return () => {
+      document.removeEventListener("mousedown", onDocClick);
+      document.removeEventListener("keydown", onKey);
+    };
   }, [open]);
 
   return (
@@ -106,7 +111,7 @@ export default function HeaderBar({
       {open && (
         <div
           ref={popoverRef}
-          role="dialog"
+          aria-label="Настройки"
           style={{
             position: "absolute", top: "calc(100% + 4px)", right: 16,
             minWidth: 320, maxWidth: 400,
