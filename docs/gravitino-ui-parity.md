@@ -31,8 +31,8 @@
 |---|---|---|---|---|
 | A1 | Top nav: контекстная (Metalakes vs внутри metalake) | Plain top nav без контекстных режимов | 🟡 | Сделать nav-projections режима |
 | A2 | `/metalakes` — список с CRUD | `metalake_list` dataGrid (Name/Creator/Owner/CreatedAt/Properties/Comment/Actions) | ✅ | U1 — owner placeholder до U5 |
-| A3 | `/catalogs?metalake=X` — split-pane: tree слева + detail справа | Один detail без tree-explorer | ❌ | Pattern: split-pane-tree-explorer (новый) |
-| A4 | Tree node hierarchy: metalake → catalog → schema → {table,fileset,topic,model,function} | hierarchy-tree-nav в `metalake_detail` (sidebar) | 🟡 | Lazy-load, expand/collapse persist |
+| A3 | `/catalogs?metalake=X` — split-pane: tree слева + detail справа | `metalake_workspace` canvas: `<CatalogExplorer/>` с breadcrumb + 2-col layout | ✅ | U2.1 — page-local |
+| A4 | Tree node hierarchy: metalake → catalog → schema → {table,fileset,topic,model,function} | `<CatalogTree/>` tabs (Relational/Messaging/Fileset/Model) + search; до catalog-level | 🟡 | U2.3 — schema/table уровни + lazy-load |
 | A5 | URL query params как state (`?metalake=X&catalog=Y&schema=Z&table=T`) | URL-routing через `/projection/id` | 🟡 | Поддержать nested context-params |
 | A6 | `/access` redirect hub → users/userGroups/roles | 3 root projections (user/group/role _list) | 🟡 | Сгруппировать в "Access" submenu |
 | A7 | `/compliance` redirect hub → tags/policies | 2 root projections | 🟡 | Сгруппировать в "Compliance" submenu |
@@ -89,7 +89,7 @@
 
 | Строка | Pattern | Их реализация | Наша | Статус |
 |---|---|---|---|---|
-| D1 | Split-pane catalog explorer | AntD `Splitter` + `TreeComponent` | ❌ | ❌ Новый pattern для bank |
+| D1 | Split-pane catalog explorer | AntD `Splitter` + `TreeComponent` | host `<CatalogExplorer/>` (page-local в `gravitino/explorer/`) | ✅ U2.1 |
 | D2 | Tabbed entity detail (tabs внутри detail) | AntD `Tabs` | Detail без tabs | ❌ |
 | D3 | Resizable table columns | `react-antd-column-resize` | adapter capability? | 🟡 |
 | D4 | Properties popover | Inline cell с count + popover | `propertyPopover` primitive | ✅ |
@@ -132,3 +132,4 @@
 
 - **2026-05-01** — документ создан (этот snapshot). Inventory baseline web-v2 vs `src/domains/gravitino/`.
 - **2026-05-01 (Sprint U1)** — `metalake_list` → dataGrid с 7 колонками паритетно web-v2 (Name/Creator/Owner/CreatedAt/Properties popover/Comment/Actions gear). HeaderBar (компактный header + ⚙-popover) заменил inline `toolbarBar` в V2Shell — освобождает строку под основной UI. Дубль top-bar в `standalone.jsx` отключён для v2-доменов. AntD dark theme + brand primary `#6478f7` per-domain (только gravitino, остальные AntD-домены не тронуты). Зависит от SDK PR #459 (DataGrid nested dataPath / kind:datetime / kind:propertyPopover) для full visual fidelity. Закрыто: A2, D7, D8.
+- **2026-05-01 (Sprint U2.1)** — `metalake_workspace` canvas-projection + `<CatalogExplorer/>` (split-pane: `<CatalogTree/>` слева с filter-tabs Relational/Messaging/Fileset/Model + search; `<CatalogsTable/>` справа с breadcrumb «Metalakes › {metalake.name}»). Entry — клик по metalake_list row (`onItemClick.to` обновлён). Закрыто: A3, D1; A4 → 🟡 (до schema/table уровней). Out of scope U2.5: Tags/Policies inline-popovers.

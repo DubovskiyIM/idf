@@ -115,8 +115,10 @@ export const PROJECTIONS = {
       source: "metalakes",
       emptyLabel: "Нет metalakes — создайте первый",
       onItemClick: {
+        // U2.1: клик по metalake row открывает workspace (split-pane catalog explorer);
+        // metalake_detail (metadata page) доступен из workspace toolbar отдельной кнопкой.
         action: "navigate",
-        to: "metalake_detail",
+        to: "metalake_workspace",
         params: { metalakeId: "item.id" },
       },
       columns: [
@@ -145,6 +147,24 @@ export const PROJECTIONS = {
   metalake_detail: detail("Metalake", "Metalake",
     ["name", "comment", "properties", "audit"],
     [{ entity: "Catalog", foreignKey: "metalakeId", title: "Catalogs" }]),
+
+  // metalake_workspace — split-pane catalog explorer для metalake (U2.1).
+  // Архетип canvas — host регистрирует <CatalogExplorer/> компонент через
+  // registerCanvas("metalake_workspace", ...). Левая панель — tree-explorer
+  // catalogs (с tabs filter Relational/Messaging/Fileset/Model + search),
+  // правая — таблица catalogs или selected catalog detail.
+  //
+  // Entry: клик по metalake_list row (см. onItemClick выше). Прямой URL —
+  // /gravitino/metalake_workspace?metalakeId=<uuid>.
+  metalake_workspace: {
+    name: "Workspace",
+    kind: "canvas",
+    mainEntity: "Metalake",
+    entities: ["Metalake", "Catalog", "Schema"],
+    idParam: "metalakeId",
+    witnesses: ["name"],
+    body: { kind: "canvas", canvasId: "metalake_workspace" },
+  },
 
   // ═══ Catalog ═══════════════════════════════════════════════════════════════
   // type: relational/fileset/messaging/model; provider: hive/iceberg/...

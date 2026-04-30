@@ -124,4 +124,21 @@ describe("gravitino domain — Stage 1 baseline", () => {
     expect(typeof proj.description).toBe("string");
     expect(proj.description.length).toBeGreaterThan(20);
   });
+
+  it("metalake_workspace: canvas-projection с canvasId='metalake_workspace'", () => {
+    const proj = PROJECTIONS.metalake_workspace;
+    expect(proj).toBeDefined();
+    expect(proj.kind).toBe("canvas");
+    expect(proj.mainEntity).toBe("Metalake");
+    expect(proj.idParam).toBe("metalakeId");
+    expect(proj.body).toBeDefined();
+    expect(proj.body.kind).toBe("canvas");
+    expect(proj.body.canvasId).toBe("metalake_workspace");
+  });
+
+  it("metalake_list: onItemClick переходит в metalake_workspace (а не metalake_detail)", () => {
+    const proj = PROJECTIONS.metalake_list;
+    expect(proj.bodyOverride.onItemClick.to).toBe("metalake_workspace");
+    expect(proj.bodyOverride.onItemClick.params).toEqual({ metalakeId: "item.id" });
+  });
 });
