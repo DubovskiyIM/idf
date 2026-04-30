@@ -22,9 +22,10 @@
  * итерация U2.5b. Сейчас держим map { catalogId: { tags, policies } } и
  * мерджим поверх catalog.tags / catalog.policies из world перед рендером.
  */
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import CatalogTree from "./CatalogTree.jsx";
 import CatalogsTable from "./CatalogsTable.jsx";
+import CreateCatalogDialog from "./CreateCatalogDialog.jsx";
 
 export default function CatalogExplorer({ world = {}, routeParams, ctx }) {
   const params = routeParams ?? ctx?.routeParams ?? {};
@@ -39,6 +40,32 @@ export default function CatalogExplorer({ world = {}, routeParams, ctx }) {
   // U2.5: optimistic UI-state для tags/policies assignments per catalog.
   // Backend exec (associateTags / associatePoliciesForObject) — отдельная итерация.
   const [assignments, setAssignments] = useState({}); // { catalogId: { tags, policies } }
+
+  // U3: optimistic created catalogs (без backend exec — реальный intent createCatalog в U3.5).
+  const [creating, setCreating] = useState(false);
+  const [createdCatalogs, setCreatedCatalogs] = useState([]);
+
+  const handleCreate = (formData) => {
+    const newCatalog = {
+      id: `c_new_${Date.now()}`,
+      name: formData.name,
+      type: formData.type,
+      provider: formData.provider,
+      comment: formData.comment,
+      properties: formData.properties,
+      metalakeId,
+      tags: [],
+      policies: [],
+    };
+    setCreatedCatalogs(prev => [...prev, newCatalog]);
+    setCreating(false);
+  };
+
+  // myCatalogsAll = seed (world) + optimistic created для текущего metalake.
+  const myCatalogsAll = useMemo(
+    () => [...myCatalogs, ...createdCatalogs.filter(c => c.metalakeId === metalakeId)],
+    [myCatalogs, createdCatalogs, metalakeId]
+  );
 
   const applyAssignments = (cat) => {
     const a = assignments[cat.id];
@@ -64,7 +91,7 @@ export default function CatalogExplorer({ world = {}, routeParams, ctx }) {
     );
   }
 
-  const visibleCatalogs = (selectedCatalog ? [selectedCatalog] : myCatalogs).map(applyAssignments);
+  const visibleCatalogs = (selectedCatalog ? [selectedCatalog] : myCatalogsAll).map(applyAssignments);
 
   return (
     <div style={{
@@ -77,13 +104,13 @@ export default function CatalogExplorer({ world = {}, routeParams, ctx }) {
         flex: 1, minHeight: 0,
       }}>
         <CatalogTree
-          catalogs={allCatalogs}
+          catalogs={myCatalogsAll}
           world={world}
           metalakeId={metalakeId}
           onSelect={(node) => {
             // U2.3 минимально: только catalog меняет правую панель;
             // schema/table/etc. selection — backlog (U2.4 detail-pane swap).
-            if (node && allCatalogs.some(c => c.id === node.id)) {
+            if (node && myCatalogsAll.some(c => c.id === node.id)) {
               setSelectedCatalog(node);
             }
           }}
@@ -98,9 +125,15 @@ export default function CatalogExplorer({ world = {}, routeParams, ctx }) {
             availablePolicies={availablePolicies}
             onSelect={setSelectedCatalog}
             onAssociate={onAssociate}
+            onCreate={() => setCreating(true)}
           />
         </div>
       </div>
+      <CreateCatalogDialog
+        visible={creating}
+        onClose={() => setCreating(false)}
+        onSubmit={handleCreate}
+      />
     </div>
   );
 }
