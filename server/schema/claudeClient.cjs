@@ -46,7 +46,10 @@ async function callClaude({ messages, model = DEFAULT_MODEL, maxTokens = DEFAULT
 
   const sdkClient = client || (() => {
     const Anthropic = require("@anthropic-ai/sdk").default || require("@anthropic-ai/sdk");
-    return new Anthropic({ apiKey });
+    return new Anthropic({
+      apiKey,
+      defaultHeaders: { "anthropic-beta": "files-api-2025-04-14" },
+    });
   })();
 
   const { system, chat } = splitMessages(messages);

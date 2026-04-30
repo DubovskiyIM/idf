@@ -114,4 +114,33 @@ describe("authoringPrompts.buildMessages", () => {
     expect(joined).not.toContain("turn-1");
     expect(joined).toContain("turn-9");
   });
+
+  it("если передан attachments[], добавляет document content-block перед текстом юзера", () => {
+    const msgs = buildMessages({
+      state: "entities",
+      spec: { meta: { id: "demo" }, INTENTS: {}, ONTOLOGY: { entities: {}, roles: {}, invariants: [] }, PROJECTIONS: {} },
+      userText: "Импортируй ресурсы из этой спецификации",
+      history: [],
+      attachments: [{ fileId: "file_abc", mediaType: "application/yaml", name: "petstore.yaml" }],
+    });
+    const lastMsg = msgs[msgs.length - 1];
+    expect(lastMsg.role).toBe("user");
+    expect(Array.isArray(lastMsg.content)).toBe(true);
+    const docBlock = lastMsg.content.find((b) => b.type === "document");
+    expect(docBlock).toBeDefined();
+    expect(docBlock.source.type).toBe("file");
+    expect(docBlock.source.file_id).toBe("file_abc");
+    const textBlock = lastMsg.content.find((b) => b.type === "text");
+    expect(textBlock).toBeDefined();
+    expect(textBlock.text).toMatch(/Импортируй/);
+  });
+
+  it("если attachments не передан, content юзера — обычная строка", () => {
+    const msgs = buildMessages({
+      state: "entities", spec: { meta: {}, INTENTS: {}, ONTOLOGY: { entities: {}, roles: {}, invariants: [] }, PROJECTIONS: {} },
+      userText: "hi", history: [],
+    });
+    const last = msgs[msgs.length - 1];
+    expect(typeof last.content).toBe("string");
+  });
 });

@@ -37,14 +37,17 @@ function loadPrompt(name) {
  *       { type: "text", text: <spec snapshot + state instruction> }
  *     ] },
  *     ...history (last 6, user/assistant pairs),
- *     { role: "user", content: userText }
+ *     { role: "user", content: userText | [document blocks + text block] }
  *   ]
  *
  * Anthropic ephemeral cache работает на первый блок в content, поэтому
  * большой system-prompt вынесен в первый text-block (> 90% дискаунт при
  * повторных turn'ах одной сессии).
+ *
+ * Если передан attachments, последний user-message содержит array с document
+ * content-block'ами (Anthropic Files API) перед текстовым блоком.
  */
-function buildMessages({ state, spec, userText, history = [] }) {
+function buildMessages({ state, spec, userText, history = [], attachments = null }) {
   const system = loadPrompt("system");
   const stateSpecific = loadPrompt(state);
 
@@ -75,10 +78,22 @@ function buildMessages({ state, spec, userText, history = [] }) {
     });
   }
 
+  let lastUser;
+  if (attachments && attachments.length > 0) {
+    const blocks = attachments.map((a) => ({
+      type: "document",
+      source: { type: "file", file_id: a.fileId },
+    }));
+    blocks.push({ type: "text", text: userText });
+    lastUser = { role: "user", content: blocks };
+  } else {
+    lastUser = { role: "user", content: userText };
+  }
+
   return [
     systemBlock,
     ...historyMessages,
-    { role: "user", content: userText },
+    lastUser,
   ];
 }
 

@@ -100,4 +100,24 @@ describe("callClaude", () => {
     });
     expect(result.userFacing).toBe("combined");
   });
+
+  it("проносит attachments через document content-block в Anthropic SDK", async () => {
+    const create = vi.fn().mockResolvedValue({ content: [{ type: "text", text: '{"ok":1}' }] });
+    const fakeClient = { messages: { create } };
+    await callClaude({
+      messages: [
+        { role: "system", content: "sys" },
+        { role: "user", content: [
+          { type: "document", source: { type: "file", file_id: "f1" } },
+          { type: "text", text: "go" },
+        ]},
+      ],
+      client: fakeClient,
+    });
+    const arg = create.mock.calls[0][0];
+    const last = arg.messages[arg.messages.length - 1];
+    expect(Array.isArray(last.content)).toBe(true);
+    expect(last.content[0].type).toBe("document");
+    expect(last.content[0].source.file_id).toBe("f1");
+  });
 });
