@@ -9,9 +9,9 @@ import {
 } from "./authoringStateMachine.cjs";
 
 describe("authoringStateMachine", () => {
-  it("STATES — 7 последовательных состояний", () => {
+  it("STATES — 9 последовательных состояний", () => {
     expect(STATES).toEqual([
-      "empty", "kickoff", "entities", "intents", "roles", "ontology_detail", "preview", "committed",
+      "empty", "kickoff", "entities", "intents", "roles", "ontology_detail", "preview", "import_openapi", "committed",
     ]);
   });
 
@@ -218,5 +218,28 @@ describe("applyManualSpec", () => {
     const s2 = applyManualSpec(s0, newSpec);
     expect(s2.validationIssues).toHaveLength(1);
     expect(s2.validationIssues[0].code).toBe("unknown_entity");
+  });
+});
+
+describe("STATES.import_openapi", () => {
+  const { STATES, initAuthoring, applyTurn } = require("./authoringStateMachine.cjs");
+
+  it("STATES содержит import_openapi", () => {
+    expect(STATES).toContain("import_openapi");
+  });
+
+  it("applyTurn может перевести из import_openapi в entities", async () => {
+    const s0 = initAuthoring({ domainId: "demo" });
+    const sIm = { ...s0, state: "import_openapi" };
+    const next = await applyTurn(sIm, {
+      userText: "import",
+      llmResponse: {
+        patch: { ONTOLOGY: { entities: { Pet: { fields: { id: { type: "number" } } } } } },
+        nextState: "entities",
+        userFacing: "Извлёк 1 entity",
+      },
+    });
+    expect(next.state).toBe("entities");
+    expect(next.spec.ONTOLOGY.entities.Pet).toBeDefined();
   });
 });

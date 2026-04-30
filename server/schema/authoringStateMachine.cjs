@@ -1,8 +1,8 @@
 /**
  * Studio authoring state machine.
  *
- * 7 последовательных состояний, которые PM проходит в live-demo:
- *   empty → kickoff → entities → intents → roles → ontology_detail → preview → committed
+ * 9 состояний, которые PM проходит в live-demo:
+ *   empty → kickoff → entities → intents → roles → ontology_detail → preview → [import_openapi] → committed
  *
  * Каждый ход (turn) — это reply от LLM в формате:
  *   { userFacing, patch, nextState, nextPrompt }
@@ -14,7 +14,9 @@
  */
 
 const STATES = [
-  "empty", "kickoff", "entities", "intents", "roles", "ontology_detail", "preview", "committed",
+  "empty", "kickoff", "entities", "intents", "roles", "ontology_detail", "preview",
+  "import_openapi",   // boundary state — открывается через /author/attach
+  "committed",
 ];
 
 function initAuthoring({ domainId }) {
