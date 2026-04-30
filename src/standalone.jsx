@@ -304,8 +304,9 @@ export default function StandaloneApp({ domainId }) {
       display: "flex", flexDirection: "column",
       ...mantineOverride,
     }}>
-      {/* Top bar with user info — скрыт для lifequest (логаут в PrefsPanel) */}
-      {currentUser && !isLifequest && (
+      {/* Top bar with user info — скрыт для lifequest (логаут в PrefsPanel)
+          и для v2-доменов (V2Shell сам рендерит HeaderBar) */}
+      {currentUser && !isLifequest && !isV2 && (
         <div style={{
           display: "flex", alignItems: "center", gap: 10,
           padding: "8px 16px",
