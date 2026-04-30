@@ -166,3 +166,57 @@ describe("authoringStateMachine", () => {
     expect(s1.spec).toEqual(s0.spec);
   });
 });
+
+describe("applyManualSpec", () => {
+  const { initAuthoring, applyManualSpec, canFinalize } = require("./authoringStateMachine.cjs");
+
+  it("заменяет spec целиком, не трогая history/domainId", () => {
+    const s0 = initAuthoring({ domainId: "demo" });
+    const s1 = { ...s0, history: [{ userText: "x", llmResponse: {} }] };
+    const newSpec = {
+      meta: { id: "demo" },
+      INTENTS: { create_x: { α: "create", target: "X" } },
+      ONTOLOGY: { entities: { X: { fields: {} } }, roles: {}, invariants: [] },
+      PROJECTIONS: {},
+    };
+    const s2 = applyManualSpec(s1, newSpec);
+    expect(s2.spec).toEqual(newSpec);
+    expect(s2.history).toEqual(s1.history);
+    expect(s2.domainId).toBe("demo");
+  });
+
+  it("если spec имеет intents+entities, переводит state в preview", () => {
+    const s0 = initAuthoring({ domainId: "demo" });
+    const newSpec = {
+      meta: { id: "demo" },
+      INTENTS: { create_x: { α: "create", target: "X" } },
+      ONTOLOGY: { entities: { X: { fields: {} } }, roles: {}, invariants: [] },
+      PROJECTIONS: {},
+    };
+    const s2 = applyManualSpec(s0, newSpec);
+    expect(s2.state).toBe("preview");
+    expect(canFinalize(s2)).toBe(true);
+  });
+
+  it("если spec пуст, оставляет state empty", () => {
+    const s0 = initAuthoring({ domainId: "demo" });
+    const s2 = applyManualSpec(s0, {
+      meta: { id: "demo" }, INTENTS: {}, ONTOLOGY: { entities: {}, roles: {}, invariants: [] }, PROJECTIONS: {},
+    });
+    expect(s2.state).toBe("empty");
+    expect(canFinalize(s2)).toBe(false);
+  });
+
+  it("validatePartial запускается на новом spec — unknown_entity ловится", () => {
+    const s0 = initAuthoring({ domainId: "demo" });
+    const newSpec = {
+      meta: { id: "demo" },
+      INTENTS: { create_x: { α: "create", target: "Missing" } },
+      ONTOLOGY: { entities: { X: { fields: {} } }, roles: {}, invariants: [] },
+      PROJECTIONS: {},
+    };
+    const s2 = applyManualSpec(s0, newSpec);
+    expect(s2.validationIssues).toHaveLength(1);
+    expect(s2.validationIssues[0].code).toBe("unknown_entity");
+  });
+});

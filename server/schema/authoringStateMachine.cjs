@@ -103,6 +103,29 @@ function canFinalize(state) {
   return hasIntents && hasEntities;
 }
 
+function applyManualSpec(state, newSpec) {
+  const safeSpec = {
+    meta: newSpec.meta || { id: state.domainId },
+    INTENTS: newSpec.INTENTS || {},
+    PROJECTIONS: newSpec.PROJECTIONS || {},
+    ONTOLOGY: {
+      entities: newSpec.ONTOLOGY?.entities || {},
+      roles: newSpec.ONTOLOGY?.roles || {},
+      invariants: newSpec.ONTOLOGY?.invariants || [],
+    },
+  };
+  const issues = validatePartial(safeSpec);
+  const hasIntents = Object.keys(safeSpec.INTENTS).length > 0;
+  const hasEntities = Object.keys(safeSpec.ONTOLOGY.entities).length > 0;
+  const nextState = (hasIntents && hasEntities) ? "preview" : state.state;
+  return {
+    ...state,
+    spec: safeSpec,
+    state: nextState,
+    validationIssues: issues,
+  };
+}
+
 module.exports = {
   STATES,
   initAuthoring,
@@ -110,4 +133,5 @@ module.exports = {
   canFinalize,
   mergePatch,
   validatePartial,
+  applyManualSpec,
 };
