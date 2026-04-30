@@ -94,4 +94,34 @@ describe("gravitino domain — Stage 1 baseline", () => {
       expect(schemaIds.has(t.schemaId), `Table ${t.id} → несуществующий schema ${t.schemaId}`).toBe(true);
     }
   });
+
+  it("metalake_list: dataGrid с колонками name/creator/owner/createdAt/properties/comment/actions", () => {
+    const proj = PROJECTIONS.metalake_list;
+    expect(proj.bodyOverride).toBeDefined();
+    expect(proj.bodyOverride.type).toBe("dataGrid");
+    const keys = proj.bodyOverride.columns.map(c => c.key);
+    expect(keys).toEqual(expect.arrayContaining([
+      "name", "creator", "owner", "createdAt", "properties", "comment", "_actions",
+    ]));
+    const nameCol = proj.bodyOverride.columns.find(c => c.key === "name");
+    expect(nameCol.sortable).toBe(true);
+    expect(nameCol.filterable).toBe(true);
+    const createdAtCol = proj.bodyOverride.columns.find(c => c.key === "createdAt");
+    expect(createdAtCol.sortable).toBe(true);
+    const actionsCol = proj.bodyOverride.columns.find(c => c.key === "_actions");
+    expect(actionsCol.kind).toBe("actions");
+    expect(actionsCol.actions.length).toBeGreaterThanOrEqual(1);
+    // Param-key contract: должен совпадать с openapi-declared `name` (path /metalakes/:name).
+    // user_list использует `user` потому что path там /metalakes/{m}/users/{user}; здесь — `name`.
+    const editAction = actionsCol.actions.find(a => a.intent === "alterMetalake");
+    const deleteAction = actionsCol.actions.find(a => a.intent === "dropMetalake");
+    expect(Object.keys(editAction.params)).toEqual(["name"]);
+    expect(Object.keys(deleteAction.params)).toEqual(["name"]);
+  });
+
+  it("metalake_list: имеет subtitle/description", () => {
+    const proj = PROJECTIONS.metalake_list;
+    expect(typeof proj.description).toBe("string");
+    expect(proj.description.length).toBeGreaterThan(20);
+  });
 });

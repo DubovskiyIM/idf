@@ -296,6 +296,20 @@ export default function StandaloneApp({ domainId }) {
     "--font-doodle": "system-ui, sans-serif",
     "--radius-doodle": "6px",
   } : {};
+  const gravitinoOverride = domainId === "gravitino" ? {
+    "--mantine-color-body": "#1f2937",
+    "--mantine-color-text": "#f1f5f9",
+    "--mantine-color-dimmed": "#94a3b8",
+    "--mantine-color-default": "#334155",
+    "--mantine-color-default-border": "#475569",
+    "--mantine-color-default-hover": "#3f4a5e",
+    "--idf-card": "#334155",
+    "--idf-text": "#f1f5f9",
+    "--idf-text-muted": "#94a3b8",
+    "--idf-border": "#475569",
+    "--idf-surface": "#3f4a5e",
+    "--idf-primary": "#6478f7",
+  } : {};
   const content = (
     <div key={adapterKey} style={{
       height: "100vh",
@@ -303,9 +317,11 @@ export default function StandaloneApp({ domainId }) {
       overflow: isV2 ? "hidden" : "auto",
       display: "flex", flexDirection: "column",
       ...mantineOverride,
+      ...gravitinoOverride,
     }}>
-      {/* Top bar with user info — скрыт для lifequest (логаут в PrefsPanel) */}
-      {currentUser && !isLifequest && (
+      {/* Top bar with user info — скрыт для lifequest (логаут в PrefsPanel)
+          и для v2-доменов (V2Shell сам рендерит HeaderBar) */}
+      {currentUser && !isLifequest && !isV2 && (
         <div style={{
           display: "flex", alignItems: "center", gap: 10,
           padding: "8px 16px",
@@ -349,15 +365,32 @@ export default function StandaloneApp({ domainId }) {
     </div>
   );
 
+  // Per-domain AntD theme tokens. Gravitino — брендовый primary #6478f7,
+  // тёмная тема (паритет с web-v2).
+  const antdThemeConfig = (() => {
+    if (domainId === "gravitino") {
+      return {
+        algorithm: antTheme.darkAlgorithm,
+        token: {
+          colorPrimary: "#6478f7",
+          colorSuccess: "#71DD37",
+          colorError: "#FF3E1D",
+          colorWarning: "#FFAB00",
+          colorInfo: "#03C3EC",
+          borderRadius: 8,
+          colorBgBase: "#1f2937",
+        },
+      };
+    }
+    return {
+      algorithm: antTheme.defaultAlgorithm,
+      token: { colorPrimary: "#1677ff", borderRadius: 8 },
+    };
+  })();
+
   const wrapped = adapter === antdAdapter
     ? (
-      <AntConfigProvider
-        locale={ruRU}
-        theme={{
-          algorithm: antTheme.defaultAlgorithm,
-          token: { colorPrimary: "#1677ff", borderRadius: 8 },
-        }}
-      >
+      <AntConfigProvider locale={ruRU} theme={antdThemeConfig}>
         {content}
       </AntConfigProvider>
     )
