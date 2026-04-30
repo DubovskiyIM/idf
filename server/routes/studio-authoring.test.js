@@ -3,8 +3,13 @@ import express from "express";
 import request from "supertest";
 import { createRequire } from "node:module";
 import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import fs from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
+import { fileURLToPath } from "node:url";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const req = createRequire(import.meta.url);
 const { makeStudioAuthoringRouter } = req("./studio-authoring.js");
@@ -21,10 +26,10 @@ function makeMockClaude(responseSequence) {
   };
 }
 
-function makeApp({ claudeClient, targetDirOverride } = {}) {
+function makeApp({ claudeClient, targetDirOverride, anthropicClientFactory } = {}) {
   const app = express();
   app.use(express.json());
-  const router = makeStudioAuthoringRouter({ claudeClient, targetDirOverride });
+  const router = makeStudioAuthoringRouter({ claudeClient, targetDirOverride, anthropicClientFactory });
   app.use("/api/studio/domain", router);
   app._routerInstance = router;
   return app;
@@ -286,8 +291,80 @@ describe("PUT /api/studio/domain/:id/author/spec", () => {
     expect(res.status).toBe(200);
     expect(res.body.committed).toBe(true);
     expect(res.body.path).toBeTruthy();
-    const fs = require("node:fs");
-    const written = fs.readFileSync(res.body.path, "utf8");
+    const nodeFs = require("node:fs");
+    const written = nodeFs.readFileSync(res.body.path, "utf8");
     expect(written).toContain("create_x");
+  });
+});
+
+describe("POST /api/studio/domain/:id/author/attach", () => {
+  it("принимает multipart YAML, регистрирует на сессии, переводит state в import_openapi", async () => {
+    const fakeUpload = vi.fn().mockResolvedValue({ id: "file_xx", filename: "pet.yaml" });
+    const app = makeApp({
+      anthropicClientFactory: () => ({ beta: { files: { upload: fakeUpload } } }),
+    });
+    const fixture = await fs.readFile(path.resolve(__dirname, "../__fixtures__/openapi/petstore-mini.yaml"));
+    const res = await request(app)
+      .post(`/api/studio/domain/attach-${Date.now()}/author/attach`)
+      .attach("file", fixture, "petstore-mini.yaml");
+    expect(res.status).toBe(200);
+    expect(res.body.fileId).toBe("file_xx");
+    expect(res.body.name).toBe("petstore-mini.yaml");
+    expect(res.body.state).toBe("import_openapi");
+    expect(fakeUpload).toHaveBeenCalledOnce();
+  });
+
+  it("400 без файла", async () => {
+    const app = makeApp({ claudeClient: makeMockClaude({}) });
+    const res = await request(app).post(`/api/studio/domain/no-file/author/attach`);
+    expect(res.status).toBe(400);
+  });
+
+  it("400 на bad extension", async () => {
+    const app = makeApp({
+      anthropicClientFactory: () => ({ beta: { files: { upload: vi.fn() } } }),
+    });
+    const res = await request(app)
+      .post(`/api/studio/domain/bad-ext/author/attach`)
+      .attach("file", Buffer.from("x"), "evil.exe");
+    expect(res.status).toBe(400);
+    expect(res.body.error).toMatch(/extension/);
+  });
+
+  it("следующий /turn проносит attachment как document content-block", async () => {
+    const fakeUpload = vi.fn().mockResolvedValue({ id: "file_yy", filename: "pet.yaml" });
+    const messagesCreate = vi.fn().mockResolvedValue({
+      content: [{ type: "text", text: '{"userFacing":"ok","patch":{},"nextState":"entities","nextPrompt":""}' }],
+    });
+    const app = makeApp({
+      anthropicClientFactory: () => ({
+        beta: { files: { upload: fakeUpload } },
+        messages: { create: messagesCreate },
+      }),
+    });
+    const id = `attach-flow-${Date.now()}`;
+    const fixture = await fs.readFile(path.resolve(__dirname, "../__fixtures__/openapi/petstore-mini.yaml"));
+    await request(app)
+      .post(`/api/studio/domain/${id}/author/attach`)
+      .attach("file", fixture, "petstore-mini.yaml");
+    await request(app)
+      .post(`/api/studio/domain/${id}/author/turn`)
+      .send({ userText: "Импортируй" })
+      .buffer(true).parse((r,cb)=>{let d="";r.on("data",c=>d+=c);r.on("end",()=>cb(null,d));});
+    expect(messagesCreate).toHaveBeenCalled();
+    const callArg = messagesCreate.mock.calls[0][0];
+    const lastMsg = callArg.messages[callArg.messages.length - 1];
+    expect(Array.isArray(lastMsg.content)).toBe(true);
+    expect(lastMsg.content.find((b) => b.type === "document")).toBeDefined();
+
+    // Attachment одноразовый — следующий /turn не проносит его
+    messagesCreate.mockClear();
+    await request(app)
+      .post(`/api/studio/domain/${id}/author/turn`)
+      .send({ userText: "ещё что-нибудь" })
+      .buffer(true).parse((r,cb)=>{let d="";r.on("data",c=>d+=c);r.on("end",()=>cb(null,d));});
+    const secondCall = messagesCreate.mock.calls[0][0];
+    const secondLast = secondCall.messages[secondCall.messages.length - 1];
+    expect(typeof secondLast.content).toBe("string");
   });
 });

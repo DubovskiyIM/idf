@@ -18,10 +18,14 @@ const { finalizeDomain } = require("../schema/authoringCommit.cjs");
 const { registerOntology } = require("../ontologyRegistry.cjs");
 const { loadSpecFromFile, saveSpecToFile } = require("../schema/specSerializer.cjs");
 const intentsModule = require("../intents.js");
+const multer = require("multer");
+const { saveAttachment, uploadToAnthropic, removeAttachment } = require("../schema/openapiAttach.cjs");
+const STAGING_DIR = path.resolve(__dirname, "../../tmp/openapi-attachments");
+const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 10 * 1024 * 1024 } });
 
 const sessions = new Map(); // domainId -> state
 
-function makeStudioAuthoringRouter({ claudeClient, targetDirOverride } = {}) {
+function makeStudioAuthoringRouter({ claudeClient, targetDirOverride, anthropicClientFactory } = {}) {
   const router = Router({ mergeParams: true });
 
   const resolveTargetDir = (id) =>
@@ -50,6 +54,7 @@ function makeStudioAuthoringRouter({ claudeClient, targetDirOverride } = {}) {
 
     writeEvent("pending", { state: state.state, turnIndex: state.history.length });
 
+    const attachments = state.pendingAttachment ? [state.pendingAttachment] : null;
     let llmResponse;
     try {
       const messages = buildMessages({
@@ -57,14 +62,20 @@ function makeStudioAuthoringRouter({ claudeClient, targetDirOverride } = {}) {
         spec: state.spec,
         userText,
         history: state.history,
+        attachments,
       });
-      llmResponse = await callClaude({ messages, client: claudeClient });
+      const turnClient = claudeClient || (anthropicClientFactory ? anthropicClientFactory() : undefined);
+      llmResponse = await callClaude({ messages, client: turnClient });
     } catch (err) {
       writeEvent("error", { message: err.message });
       return res.end();
     }
 
     const next = await applyTurn(state, { userText, llmResponse });
+    // Attachment одноразовый — снимаем pending после первого turn'а
+    if (state.pendingAttachment) {
+      next.pendingAttachment = null;
+    }
     sessions.set(id, next);
 
     writeEvent("response", {
@@ -196,6 +207,46 @@ function makeStudioAuthoringRouter({ claudeClient, targetDirOverride } = {}) {
     const id = String(req.params.id || "");
     sessions.delete(id);
     res.json({ ok: true });
+  });
+
+  router.post("/:id/author/attach", upload.single("file"), async (req, res) => {
+    const id = String(req.params.id || "");
+    if (!req.file) return res.status(400).json({ error: "no_file" });
+    if (!sessions.has(id)) sessions.set(id, initAuthoring({ domainId: id }));
+    const session = sessions.get(id);
+    let saved;
+    try {
+      saved = await saveAttachment({
+        stagingDir: STAGING_DIR,
+        sessionId: id,
+        originalName: req.file.originalname,
+        buffer: req.file.buffer,
+      });
+    } catch (e) {
+      return res.status(400).json({ error: e.message });
+    }
+    let uploaded;
+    try {
+      const client = anthropicClientFactory ? anthropicClientFactory() : undefined;
+      uploaded = await uploadToAnthropic({ filePath: saved.path, client });
+    } catch (e) {
+      await removeAttachment(saved.path).catch(() => {});
+      return res.status(502).json({ error: "anthropic_upload_failed", detail: e.message });
+    }
+    // Cleanup local staging file — Anthropic уже хранит копию
+    await removeAttachment(saved.path).catch(() => {});
+    sessions.set(id, {
+      ...session,
+      state: "import_openapi",
+      pendingAttachment: { fileId: uploaded.fileId, name: req.file.originalname, mediaType: saved.mediaType },
+    });
+    res.json({
+      ok: true,
+      fileId: uploaded.fileId,
+      name: req.file.originalname,
+      size: saved.size,
+      state: "import_openapi",
+    });
   });
 
   router.post("/:id/author/commit", async (req, res) => {
