@@ -86,6 +86,10 @@ registerCanvas("block_canvas", NotionBlockCanvas);
 import { registerMetaCanvases } from "./domains/meta/canvas/registerCanvases.jsx";
 registerMetaCanvases();
 
+// Gravitino metalake_workspace canvas (U2.1 — split-pane catalog explorer)
+import CatalogExplorer from "./domains/gravitino/explorer/CatalogExplorer.jsx";
+registerCanvas("metalake_workspace", CatalogExplorer);
+
 // Домены с переключением адаптера
 const DOMAIN_ADAPTERS = {
   lifequest: appleAdapter,
