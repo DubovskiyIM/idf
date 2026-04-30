@@ -3,19 +3,12 @@ import { usePersonalPrefs, prefsToStyle } from "../personal/usePersonalPrefs.js"
 import { ProjectionRendererV2, useProjectionRoute, Breadcrumbs, getAdaptedComponent, ViewSwitcher, AdminShell } from "@intent-driven/renderer";
 import { crystallizeV2, generateEditProjections, deriveProjections, isProjectionAvailableForRole } from "@intent-driven/core";
 import BottomTabs from "./BottomTabs.jsx";
+import HeaderBar from "./HeaderBar.jsx";
 import PatternInspector from "./PatternInspector.jsx";
 import CrystallizeInspector from "./CrystallizeInspector.jsx";
 import MaterializationsViewer from "./MaterializationsViewer.jsx";
 import XrayHUD from "./XrayHUD.jsx";
 import { humanizeProjectionId } from "./humanizeProjectionId.js";
-
-const UI_KIT_OPTIONS = [
-  { value: null, label: "авто" },
-  { value: "mantine", label: "Mantine" },
-  { value: "shadcn", label: "Doodle" },
-  { value: "apple", label: "Apple" },
-  { value: "antd", label: "AntD" },
-];
 
 const ROLE_LABELS = {
   customer: "Заказчик", executor: "Исполнитель",
@@ -351,66 +344,18 @@ export default function V2Shell({
   const onChangeKit = useCallback((v) => setPref("uiKit", v), [setPref]);
 
   const toolbarBar = (
-    <div style={{
-      display: "flex", alignItems: "center", gap: 16,
-      padding: "6px 14px",
-      background: "var(--idf-card, #f8f9fa)",
-      borderBottom: "1px solid var(--idf-border, #e9ecef)",
-      fontSize: 12, flexWrap: "wrap",
-    }}>
-      {hasRoleSwitch && (
-        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-          <span style={{ color: "var(--idf-text-muted, #868e96)", fontWeight: 500 }}>Роль:</span>
-          <div style={{
-            display: "flex", gap: 2, padding: 2,
-            borderRadius: 6, background: "var(--idf-surface, #e9ecef)",
-          }}>
-            {roleOptions.map(({ role, label }) => (
-              <button
-                key={role}
-                type="button"
-                onClick={() => handleRoleSwitch(role)}
-                style={{
-                  border: "none",
-                  padding: "4px 12px",
-                  borderRadius: 4,
-                  cursor: "pointer",
-                  fontSize: 12,
-                  fontWeight: 500,
-                  background: activeRole === role ? "var(--idf-primary, #228be6)" : "transparent",
-                  color: activeRole === role ? "white" : "var(--idf-text, #495057)",
-                }}
-              >{label}</button>
-            ))}
-          </div>
-        </div>
-      )}
-      <div style={{ display: "flex", alignItems: "center", gap: 8, marginLeft: hasRoleSwitch ? 0 : "auto" }}>
-        <span style={{ color: "var(--idf-text-muted, #868e96)", fontWeight: 500 }}>Слой:</span>
-        <div style={{
-          display: "flex", gap: 2, padding: 2,
-          borderRadius: 6, background: "var(--idf-surface, #e9ecef)",
-        }}>
-          {UI_KIT_OPTIONS.map(({ value, label }) => (
-            <button
-              key={value ?? "auto"}
-              type="button"
-              onClick={() => onChangeKit(value)}
-              style={{
-                border: "none",
-                padding: "4px 10px",
-                borderRadius: 4,
-                cursor: "pointer",
-                fontSize: 12,
-                fontWeight: 500,
-                background: currentKit === value ? "var(--idf-primary, #228be6)" : "transparent",
-                color: currentKit === value ? "white" : "var(--idf-text, #495057)",
-              }}
-            >{label}</button>
-          ))}
-        </div>
-      </div>
-    </div>
+    <HeaderBar
+      viewer={viewer}
+      onLogout={onLogout}
+      activeRole={activeRole}
+      roleOptions={hasRoleSwitch ? roleOptions : []}
+      onSwitchRole={handleRoleSwitch}
+      currentKit={currentKit}
+      onChangeKit={onChangeKit}
+      prefs={prefs}
+      setPref={setPref}
+      resetPrefs={resetPrefs}
+    />
   );
 
   // Deep-link ?inspect=<patternId> — читается один раз при первом mount.
