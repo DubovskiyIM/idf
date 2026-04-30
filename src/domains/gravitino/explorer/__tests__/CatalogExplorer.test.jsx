@@ -46,4 +46,19 @@ describe("CatalogExplorer", () => {
     render(<CatalogExplorer world={world} routeParams={{ metalakeId: "missing" }} exec={vi.fn()} />);
     expect(screen.getByText(/metalake.*не найден|not found/i)).toBeTruthy();
   });
+
+  // ArchetypeCanvas в @intent-driven/renderer передаёт canvas-component
+  // props { artifact, ctx, world, exec, viewer } — routeParams живут на
+  // ctx.routeParams, не на top-level. Контракт идентичен notion BlockCanvas.
+  // Этот тест пинит ctx-extraction path, чтобы регрессия ловилась.
+  it("читает routeParams из ctx когда top-level routeParams не передан", () => {
+    render(
+      <CatalogExplorer
+        world={world}
+        ctx={{ routeParams: { metalakeId: "m1" } }}
+      />
+    );
+    expect(screen.getByText("prod_lake")).toBeTruthy();
+    expect(screen.queryByText(/metalake.*не найден/i)).toBeNull();
+  });
 });

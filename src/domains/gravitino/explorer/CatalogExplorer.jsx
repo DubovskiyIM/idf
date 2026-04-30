@@ -10,15 +10,20 @@
  *   └─────────────────┴────────────────────────────────────────────┘
  *
  * Регистрируется как canvas через registerCanvas("metalake_workspace", ...)
- * в standalone.jsx. Получает props: world, exec, execBatch, viewer,
- * routeParams (с metalakeId).
+ * в standalone.jsx. ArchetypeCanvas передаёт props { artifact, ctx, world,
+ * exec, viewer } — `routeParams` живут на `ctx.routeParams` (паттерн
+ * идентичен notion BlockCanvas, см. src/domains/notion/canvas/BlockCanvas.jsx).
+ *
+ * Тесты могут передавать `routeParams` напрямую top-level — поддерживаем оба
+ * варианта через fallback `routeParams ?? ctx?.routeParams ?? {}`.
  */
 import { useState } from "react";
 import CatalogTree from "./CatalogTree.jsx";
 import CatalogsTable from "./CatalogsTable.jsx";
 
-export default function CatalogExplorer({ world = {}, routeParams = {} }) {
-  const metalakeId = routeParams.metalakeId;
+export default function CatalogExplorer({ world = {}, routeParams, ctx }) {
+  const params = routeParams ?? ctx?.routeParams ?? {};
+  const metalakeId = params.metalakeId;
   const metalake = (world.metalakes || []).find(m => m.id === metalakeId);
   const allCatalogs = world.catalogs || [];
   const myCatalogs = allCatalogs.filter(c => c.metalakeId === metalakeId);
