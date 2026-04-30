@@ -24,7 +24,7 @@
 ## 0. SaaS packaging — путь к первому paying PM
 
 **Источник истины:** `docs/superpowers/specs/2026-04-21-pm-autonomy-roadmap-design.md` (Variant D, 6 мес план).
-**Текущая фаза:** M1.1 закрыт (2026-04-21), M1.2 начинается. План на месяц — `~/.claude/plans/deep-humming-nova.md`.
+**Текущая фаза:** M1.1 закрыт (2026-04-21), **M1.2 фактически закрыт** (2026-04-30 audit — см. §0.2). M1.3 частично шипнут параллельно через idf-studio PR #82. План на месяц — `~/.claude/plans/deep-humming-nova.md`.
 
 ### 0.1 M1.1 tail (закрыть в первые 1-2 дня)
 
@@ -54,27 +54,62 @@
 **Контекст:** `/opt/idf-runtime/register-tenant.sh` на VPS работает полу-автоматически. Сейчас deploy flow оставляет nginx/certbot на user'е.
 **Action:** `idf-studio/server/src/vps/vps-client.ts::createTenant` вызывает `register-tenant.sh <slug> <port>` через docker-exec или ssh. Первая итерация: keep manual fallback для первых 3-5 tenant'ов.
 
-### 0.2 M1.2 (месяц 1, следующий спринт): Studio as control plane
+### 0.2 M1.2: Studio as control plane — ✅ ЗАКРЫТ (audit 2026-04-30)
 
-**B1. Port 7-state authoring machine из `.worktrees/pm-demo/` в multi-tenant studio.**
-Состояния: `landing → describe → entities → intents → roles → projections → rules → preview → commit`.
-Место: `idf-studio/server/src/sessions/*` + `idf-studio/web/src/pages/project-detail.tsx`.
+Аудит расхождения plan↔code на 2026-04-30 показал, что M1.2 фактически шипнут — не одним big-bang, а через 13+ PR в `idf-studio` за 2026-04-26..30 (orchestrator/preview/snapshots/role-permissions). Все B1-B5 + C2-C4 done; C1 partial (валидация LLM-side есть, foldWorld pre-push fixtures нет).
 
-**B2. System prompts из pm-demo в `idf-studio/server/src/sessions/prompts.ts`** (cache-friendly, skeleton уже есть).
+**B1. Port 7-state authoring machine.** ✅ Done + расширен.
+- `idf-studio/server/sessions/state-machine.ts` (719 LOC vs pm-demo `authoringStateMachine.cjs` 113 LOC)
+- Deep-merge intents/entities/roles с null-delete (vs shallow-merge в pm-demo), whitelist полей (intent / role / role.base), auto-sync `entity.fields` из `intent.parameters` (с self-ref skip), implicit-id awareness, 8 validation issue codes (vs 1), `rewindTo()` для rollback
+- 7 состояний → 8 (+`committed` terminal)
 
-**B3. Turn-log first-class:** append-only `sessions.turns[]` persist в Postgres, resume через GET `/api/sessions/:id`.
+**B2. System prompts из pm-demo.** ✅ Done + расширен.
+- `idf-studio/server/sessions/prompts/{system,kickoff,empty,entities,intents,roles,ontology_detail,preview}.md` — все 8 файлов
+- 5 идентичны pm-demo source; 3 значительно расширены: `system.md` (+55 LOC), `intents.md` (+250 LOC), `ontology_detail.md` (+111 LOC)
+- `prompts.ts` builder с ephemeral cache_control + commit-failure auto-repair patches (parsed rejected-effects → field summary → example patch)
 
-**B4. Rollback to turn N UI.**
+**B3. Turn-log first-class.** ✅ Done.
+- `sessions` table в `db/schema.ts` с `turns: jsonb` (`default([])`)
+- `routes.ts` persist'ит `turns: next.history` после каждого turn'а
+- Resume через `GET /api/sessions/:id` возвращает `hydrateHistory(session.turns)`
 
-**B5. Live 4-channel preview panel:** pixels (iframe) / voice (audio `?format=audio`) / document (HTML) / agent (JSON). Debounce 300ms.
+**B4. Rollback to turn N.** ✅ Done.
+- `POST /api/sessions/:id/rewind` (routes.ts:478) использует `rewindTo` из state-machine + persist обновлённый turns array
 
-**C1. Dry-run validator:** `foldWorld` на sample fixtures до push'а в data plane. Блокирует deploy при ошибке.
+**B5. Live 4-channel preview panel.** ✅ Done — серия PR #84-#90 (2026-04-29):
+- #84 `signedFetch real Φ-world` — preview через HMAC к runtime `/admin/world`
+- #87 `backfill projection.witnesses` — preview не падает на authored entities
+- #88 `table-section в локальный renderDocumentHtml` — document channel
+- #89 `live Agent SSE-канал — task input + tool-use log` — agent channel
+- #86 `viewer role=admin для bypass owner-фильтра` — preview видит весь world
+- #85 `strip system-turns перед TTS-синтезом` — voice channel
+- #90 `claude-cli rate-limit overage fix` — orchestrator stability
+- #91 `MergedSnapshot client reshape`
 
-**C2. Integrity check ↔ studio UI diff:** если `/admin/reload` вернул rejected effects — показать diff в Studio, не просто 500.
+**C1. Dry-run validator (foldWorld на sample fixtures).** ⚠️ Partial.
+- LLM-side есть: `validatePartial()` в state-machine эмитит 8 codes до push'а (unknown_entity, intent_target_field_missing, dangling_entity_ref, …)
+- Runtime-side не реализован: `foldWorld` на sample fixtures до push'а в data plane не вызывается; вместо этого orchestrator делает `/admin/reload` на runtime и ловит `integrity_check_failed` post-deploy с rejected effects
+- Deferred: реальный foldWorld pre-push не блокирует C2/C4 (rejected loop работает), но добавил бы fail-fast для PM. Trackable как item M1.7.
 
-**C3. Deploy history tab** — читает `deploys` table.
+**C2. Integrity check ↔ studio UI diff.** ✅ Done.
+- `idf-studio/server/deploys/orchestrator.ts:280` бросает `integrity_check_failed` с `rejectedEffects`
+- `sessions/prompts.ts:122` парсит rejected effects → `field summary` + auto-generated example patch
+- Claude автоматически отвечает repair-патчем, не общими словами
 
-**C4. Snapshot Φ кнопка в studio UI** (использует `/admin/snapshot` skeleton из runtime commit `482e8bb`).
+**C3. Deploy history tab.** ✅ Done.
+- `deploys` table (id / projectId / version / domainJsonSnapshot / status / hostUrl / hostContainerName / hostPort / error / startedAt / finishedAt)
+- `GET /api/projects/:id/deploys` (`server/deploys/routes.ts:42`)
+
+**C4. Snapshot Φ кнопка в studio UI.** ✅ Done — закрыт через M1.3 PR #82 (`feat: M1.3 data safety — snapshots / restore / breaking-gate / renames / audit / diff`):
+- `snapshots` table + UI кнопка
+- `change-classifier` (safe/caution/breaking)
+- Renames first-class через `RenameEntry` в state-machine
+- Audit log viewer (PR #83 `audit role/until filters` в idf-runtime)
+- Per-deploy diff (`server/diff/classifier.ts`)
+
+**Out-of-band:** A2 (Re-deploy runtime с full V2Shell bundle) выполнен — runtime запушил `feat(agent): generic demo runner + DEMO_AGENT_RUNNER env` (#82 в idf-runtime). A4 (cross-plane E2E smoke) — частично через `fold-invest-agent-smoke.mjs` в host'е.
+
+**Hard blocker для прод-использования M1.2:** A3 ANTHROPIC_API_KEY не установлен в prod `/opt/idf-studio/.env` — без него SSE authoring session падает на `createClaude` init. Требует выбор Max OAuth vs API key (см. §0.1 A3). Локально в dev работает.
 
 ### 0.3 M1.3 (месяц 2): Data safety
 
