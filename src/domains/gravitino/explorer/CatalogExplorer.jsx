@@ -1,21 +1,26 @@
 /**
- * CatalogExplorer — split-pane root для metalake_workspace (U2.1).
+ * CatalogExplorer — split-pane root для metalake_workspace (U2.1 + U2.5).
  *
  * Структура (паритет gravitino/web-v2 /catalogs):
  *   ┌──────────────────────────────────────────────────────────────┐
  *   │ Breadcrumb: Metalakes › <metalake.name> [› <catalog.name>]   │
  *   ├─────────────────┬────────────────────────────────────────────┤
  *   │ CatalogTree     │ CatalogsTable (default) или catalog detail │
- *   │ (tabs + search) │                                            │
+ *   │ (tabs + search) │  + Tags/Policies колонки (U2.5)            │
  *   └─────────────────┴────────────────────────────────────────────┘
  *
  * Регистрируется как canvas через registerCanvas("metalake_workspace", ...)
  * в standalone.jsx. ArchetypeCanvas передаёт props { artifact, ctx, world,
  * exec, viewer } — `routeParams` живут на `ctx.routeParams` (паттерн
- * идентичен notion BlockCanvas, см. src/domains/notion/canvas/BlockCanvas.jsx).
+ * идентичен notion BlockCanvas).
  *
  * Тесты могут передавать `routeParams` напрямую top-level — поддерживаем оба
  * варианта через fallback `routeParams ?? ctx?.routeParams ?? {}`.
+ *
+ * U2.5: optimistic UI-state для tags/policies assignments per catalog.
+ * Backend exec (associateTags / associatePoliciesForObject) — отдельная
+ * итерация U2.5b. Сейчас держим map { catalogId: { tags, policies } } и
+ * мерджим поверх catalog.tags / catalog.policies из world перед рендером.
  */
 import { useState } from "react";
 import CatalogTree from "./CatalogTree.jsx";
@@ -27,8 +32,26 @@ export default function CatalogExplorer({ world = {}, routeParams, ctx }) {
   const metalake = (world.metalakes || []).find(m => m.id === metalakeId);
   const allCatalogs = world.catalogs || [];
   const myCatalogs = allCatalogs.filter(c => c.metalakeId === metalakeId);
+  const availableTags = world.tags || [];
+  const availablePolicies = world.policies || [];
 
   const [selectedCatalog, setSelectedCatalog] = useState(null);
+  // U2.5: optimistic UI-state для tags/policies assignments per catalog.
+  // Backend exec (associateTags / associatePoliciesForObject) — отдельная итерация.
+  const [assignments, setAssignments] = useState({}); // { catalogId: { tags, policies } }
+
+  const applyAssignments = (cat) => {
+    const a = assignments[cat.id];
+    if (!a) return cat;
+    return { ...cat, tags: a.tags ?? cat.tags, policies: a.policies ?? cat.policies };
+  };
+
+  const onAssociate = (catalogId, type, names) => {
+    setAssignments(prev => ({
+      ...prev,
+      [catalogId]: { ...(prev[catalogId] || {}), [type]: names },
+    }));
+  };
 
   if (!metalake) {
     return (
@@ -40,6 +63,8 @@ export default function CatalogExplorer({ world = {}, routeParams, ctx }) {
       </div>
     );
   }
+
+  const visibleCatalogs = (selectedCatalog ? [selectedCatalog] : myCatalogs).map(applyAssignments);
 
   return (
     <div style={{
@@ -61,8 +86,11 @@ export default function CatalogExplorer({ world = {}, routeParams, ctx }) {
           background: "var(--idf-card, #fff)",
         }}>
           <CatalogsTable
-            catalogs={selectedCatalog ? [selectedCatalog] : myCatalogs}
+            catalogs={visibleCatalogs}
+            availableTags={availableTags}
+            availablePolicies={availablePolicies}
             onSelect={setSelectedCatalog}
+            onAssociate={onAssociate}
           />
         </div>
       </div>
