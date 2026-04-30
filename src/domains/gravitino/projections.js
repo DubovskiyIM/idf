@@ -96,8 +96,46 @@ export const PROJECTIONS = {
   // для user_list/group_list, где нужна actions-column (gear menu).
 
   // ═══ Metalake ══════════════════════════════════════════════════════════════
-  metalake_list: catalog("Metalake", "Metalakes",
-    ["name", "comment"]),
+  // metalake_list — паритет с web-v2 /metalakes:
+  //   Name (sort+filter) / Creator / Owner / Created At (sort) / Properties (popover) / Comment / Actions (gear).
+  //   creator/createdAt — projected из nested audit dict (audit.creator, audit.createTime).
+  //   owner — placeholder до Sprint U5 (cross-entity owner-assignment).
+  metalake_list: {
+    ...catalog("Metalake", "Metalakes", ["name", "comment"]),
+    description: "Metalake — top-level контейнер метаданных. Внутри каждого metalake: каталоги, схемы, таблицы.",
+    bodyOverride: {
+      type: "dataGrid",
+      items: [],
+      source: "metalakes",
+      emptyLabel: "Нет metalakes — создайте первый",
+      onItemClick: {
+        action: "navigate",
+        to: "metalake_detail",
+        params: { metalakeId: "item.id" },
+      },
+      columns: [
+        { key: "name", label: "Name", sortable: true, filterable: true },
+        { key: "creator", label: "Creator", dataPath: "audit.creator", sortable: true },
+        { key: "owner", label: "Owner", dataPath: "owner", placeholder: "—" },
+        { key: "createdAt", label: "Created At", dataPath: "audit.createTime", sortable: true, kind: "datetime" },
+        { key: "properties", label: "Properties", kind: "propertyPopover" },
+        { key: "comment", label: "Comment" },
+        {
+          key: "_actions",
+          label: "Actions",
+          kind: "actions",
+          icon: "gear",
+          menuLabel: "Metalake actions",
+          actions: [
+            { intent: "alterMetalake", label: "Edit",
+              params: { metalake: "item.name" } },
+            { intent: "dropMetalake", label: "Delete",
+              params: { metalake: "item.name" }, danger: true },
+          ],
+        },
+      ],
+    },
+  },
   metalake_detail: detail("Metalake", "Metalake",
     ["name", "comment", "properties", "audit"],
     [{ entity: "Catalog", foreignKey: "metalakeId", title: "Catalogs" }]),
