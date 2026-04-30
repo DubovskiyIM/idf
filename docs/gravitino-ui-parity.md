@@ -58,7 +58,7 @@
 | B11 | **User** | name, roles | name, roles (`chipList`), audit + grant/revoke/delete actions | ✅ | Сравнить actions UX |
 | B12 | **Role** | name, privileges (resource × action tree) | name, securableObjects (`permissionMatrix`), properties | 🟡 | Нужна сверка permission-matrix UX vs их tree |
 | B13 | **UserGroup** | name, members | `Group`: name, roles, audit | 🟡 | Members editing — отдельный flow |
-| B14 | **Tag** | name, comment, audit + assignment to metadata objects | name, comment, inherited, properties, audit | 🟡 | Нет assignment-popover на target-entities |
+| B14 | **Tag** | name, comment, audit + assignment to metadata objects | + AssociatePopover на CatalogsTable (catalog-level) | ✅ U2.5 catalog · 🟡 schema/table U6 |
 | B15 | **Policy** | name, rules (resource × action × effect) | name, policyType, enabled, content, audit, inherited, comment | 🟡 | Нет UI для rules/assignment |
 | B16 | **Job** | jobId, status, startTime, endTime, details + cancel + drawer | ❌ | ❌ | Stage 3 |
 | B17 | **JobTemplate** | name, config, description | ❌ | ❌ | Stage 3 |
@@ -76,8 +76,8 @@
 | C4 | Test Connection (catalog) | Кнопка перед save | ❌ | ❌ Side-effect intent с external check |
 | C5 | Grant Role to User/Group | Через user/group row-action | ✅ row-action | ✅ |
 | C6 | Revoke Role | Через user/group row-action | ✅ | ✅ |
-| C7 | Assign Tag to metadata object | Popover на entity-row | ❌ | ❌ Cross-cutting popover paradigm |
-| C8 | Assign Policy to metadata object | Popover | ❌ | ❌ Аналогично |
+| C7 | Assign Tag to metadata object | Popover на entity-row | AssociatePopover в CatalogsTable (UI-state, exec в U2.5b) | ✅ U2.5 catalog |
+| C8 | Assign Policy to metadata object | Popover | AssociatePopover в CatalogsTable | ✅ U2.5 catalog |
 | C9 | Link/Unlink Model Version | `LinkVersionDialog` | ❌ | ❌ |
 | C10 | Browse Files (fileset) | `ListFiles` page | ❌ | ❌ Read-only filesystem nav |
 | C11 | Cancel Job | Drawer | ❌ | ❌ Stage 3 |
@@ -93,7 +93,7 @@
 | D2 | Tabbed entity detail (tabs внутри detail) | AntD `Tabs` | Detail без tabs | ❌ |
 | D3 | Resizable table columns | `react-antd-column-resize` | adapter capability? | 🟡 |
 | D4 | Properties popover | Inline cell с count + popover | `propertyPopover` primitive | ✅ |
-| D5 | Tag/Policy chip с remove | `CustomTags` | `chipList` для roles | 🟡 Расширить chipList variant'ы |
+| D5 | Tag/Policy chip с remove | `CustomTags` | `<ChipList/>` в CatalogsTable + AssociatePopover для add/remove | ✅ U2.5 |
 | D6 | Confirmation by name-match (delete) | `ConfirmInput` (тип "DELETE-name") | ❌ | ❌ Irreversibility integration |
 | D7 | Dark theme | next-themes + AntD ConfigProvider | per-domain antdThemeConfig + darkAlgorithm + CSS-vars override (gravitino-only) | ✅ U1 |
 | D8 | Brand primary `#6478f7` | Tailwind + AntD theme | colorPrimary `#6478f7` через ConfigProvider | ✅ U1 |
@@ -133,3 +133,4 @@
 - **2026-05-01** — документ создан (этот snapshot). Inventory baseline web-v2 vs `src/domains/gravitino/`.
 - **2026-05-01 (Sprint U1)** — `metalake_list` → dataGrid с 7 колонками паритетно web-v2 (Name/Creator/Owner/CreatedAt/Properties popover/Comment/Actions gear). HeaderBar (компактный header + ⚙-popover) заменил inline `toolbarBar` в V2Shell — освобождает строку под основной UI. Дубль top-bar в `standalone.jsx` отключён для v2-доменов. AntD dark theme + brand primary `#6478f7` per-domain (только gravitino, остальные AntD-домены не тронуты). Зависит от SDK PR #459 (DataGrid nested dataPath / kind:datetime / kind:propertyPopover) для full visual fidelity. Закрыто: A2, D7, D8.
 - **2026-05-01 (Sprint U2.1)** — `metalake_workspace` canvas-projection + `<CatalogExplorer/>` (split-pane: `<CatalogTree/>` слева с filter-tabs Relational/Messaging/Fileset/Model + search; `<CatalogsTable/>` справа с breadcrumb «Metalakes › {metalake.name}»). Entry — клик по metalake_list row (`onItemClick.to` обновлён). Закрыто: A3, D1; A4 → 🟡 (до schema/table уровней). Out of scope U2.5: Tags/Policies inline-popovers.
+- **2026-05-01 (Sprint U2.5)** — `<AssociatePopover/>` (multiselect tag/policy с search) + Tags/Policies колонки на `<CatalogsTable/>` (chip-list assignments + «+ Associate Tag/Policy» кнопки). Seed: 3 prod catalogs получили demo `tags`/`policies`. UI-state в `CatalogExplorer.assignments` (optimistic, без backend exec — реальные intents `associateTags` / `associatePoliciesForObject` в U2.5b). Закрыто: B14 catalog-level, C7, C8, D5. Schema/table-level — U6.
