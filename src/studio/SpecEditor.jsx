@@ -1,7 +1,8 @@
-import React, { useState, useEffect, useCallback, useMemo } from "react";
+import React, { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import CodeMirror from "@uiw/react-codemirror";
 import { json } from "@codemirror/lang-json";
 import { getSpec, putSpec } from "./api/spec.js";
+import { uploadAttachment, runAuthoringTurn } from "./api/attach.js";
 
 const dark = {
   bg: "#0b1220", panel: "#0f172a", border: "#1e293b",
@@ -74,6 +75,33 @@ export default function SpecEditor({ domainId }) {
     }
   }, [domainId, parsed, text, meta.source]);
 
+  const fileRef = useRef(null);
+  const [importStatus, setImportStatus] = useState(null); // null | {kind, msg}
+
+  const handlePickFile = async (e) => {
+    const file = e.target.files?.[0];
+    e.target.value = "";
+    if (!file || !domainId) return;
+    setImportStatus({ kind: "uploading", msg: `Загружаю ${file.name}…` });
+    setError(null);
+    try {
+      const att = await uploadAttachment(domainId, file);
+      setImportStatus({ kind: "thinking", msg: `Файл прикреплён (${(att.size / 1024).toFixed(1)} KB) · Claude извлекает сущности…` });
+      let lastResp = null;
+      await runAuthoringTurn(domainId, "Импортируй ресурсы из этой спецификации, отбери самые важные.", {
+        onEvent: ({ event, data }) => {
+          if (event === "response") lastResp = data;
+          if (event === "error") throw new Error(data.message || "turn error");
+        },
+      });
+      setImportStatus({ kind: "ok", msg: lastResp?.userFacing || "Импорт готов" });
+      await load(); // reload spec from session
+      setTimeout(() => setImportStatus(null), 4000);
+    } catch (e) {
+      setImportStatus({ kind: "err", msg: e.body?.error || e.message });
+    }
+  };
+
   if (!domainId) {
     return <Empty msg="Выбери домен во вкладке «Граф»" />;
   }
@@ -83,10 +111,13 @@ export default function SpecEditor({ domainId }) {
       <Header
         domainId={domainId} meta={meta} dirty={dirty} parsedError={parsed.error}
         busy={busy} statusMsg={statusMsg} error={error}
+        importStatus={importStatus}
         onReload={load}
         onSave={() => save(false)}
         onCommit={() => save(true)}
+        onPickFile={() => fileRef.current?.click()}
       />
+      <input ref={fileRef} type="file" accept=".yaml,.yml,.json" style={{ display: "none" }} onChange={handlePickFile} />
       <div style={{ flex: 1, overflow: "auto", borderTop: `1px solid ${dark.border}`, minHeight: 0 }}>
         <CodeMirror
           value={text}
@@ -104,17 +135,29 @@ export default function SpecEditor({ domainId }) {
   );
 }
 
-function Header({ domainId, meta, dirty, parsedError, busy, statusMsg, error, onReload, onSave, onCommit }) {
+function Header({ domainId, meta, dirty, parsedError, busy, statusMsg, error, importStatus, onReload, onSave, onCommit, onPickFile }) {
+  const importColor = importStatus?.kind === "err" ? dark.err : importStatus?.kind === "ok" ? dark.ok : dark.muted;
   return (
-    <div style={{ padding: "12px 18px", display: "flex", alignItems: "center", gap: 12, fontSize: 13 }}>
+    <div style={{ padding: "12px 18px", display: "flex", alignItems: "center", gap: 12, fontSize: 13, flexWrap: "wrap" }}>
       <div style={{ fontFamily: "ui-monospace, monospace", color: dark.text }}>{domainId}/domain.js</div>
       <Badge kind={meta.source === "file" ? "ok" : meta.source === "session" ? "warn" : "muted"}
              text={meta.source === "file" ? "от commited файла" : meta.source === "session" ? "сессионный draft" : "—"} />
       {meta.state && <Badge kind="muted" text={`state: ${meta.state}`} />}
       <div style={{ flex: 1 }} />
+      {importStatus && (
+        <span style={{ color: importColor, fontSize: 12 }}>
+          {importStatus.kind === "uploading" || importStatus.kind === "thinking" ? "⏳ " : importStatus.kind === "ok" ? "✓ " : "✗ "}
+          {importStatus.msg}
+        </span>
+      )}
       {parsedError && <span style={{ color: dark.err, fontSize: 12 }}>JSON-ошибка: {parsedError}</span>}
       {error && <span style={{ color: dark.err, fontSize: 12 }}>{error}</span>}
       {statusMsg && <span style={{ color: dark.ok, fontSize: 12 }}>{statusMsg}</span>}
+      <button disabled={busy || !!importStatus && (importStatus.kind === "uploading" || importStatus.kind === "thinking")}
+              onClick={onPickFile} style={btn("ghost")}
+              title="Прикрепить YAML/JSON OpenAPI спеку — Claude импортирует сущности">
+        📎 OpenAPI
+      </button>
       <button disabled={busy} onClick={onReload} style={btn("ghost")}>Перечитать</button>
       <button disabled={busy || !dirty || !!parsedError} onClick={onSave} style={btn("primary")}>Сохранить в сессию</button>
       <button disabled={busy || !!parsedError || !meta.canFinalize}
