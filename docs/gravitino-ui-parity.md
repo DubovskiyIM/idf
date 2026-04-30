@@ -47,8 +47,8 @@
 |---|---|---|---|---|---|
 | B1 | **Metalake** | name, creator, owner, properties, comment, audit, in-use toggle | name, comment, properties, audit | 🟡 | Нет: in-use toggle, owner display inline |
 | B2 | **Catalog** | name, type, provider, comment, properties + **provider-specific config** (500+ props через EntityPropertiesFormItem) | + CreateCatalogDialog с dynamic form (6 providers across 4 types: hive/iceberg/jdbc-postgresql/kafka/hadoop/model-registry) | ✅ U3 minimum · 🟡 остальные 5+ providers и edit-flow в U3.5 |
-| B3 | **Schema** | name, comment, properties, audit + tabs (tables/filesets/models/functions/tags/policies/properties) | name, comment, properties, audit + sub-collections | 🟡 | Нет вкладок tags/policies на schema |
-| B4 | **Table** | columns, partitioning, distribution, sortOrder, indexes, properties + tabs (Columns / Partitioning / Associated Filesets / Tags / Policies / Properties) | columns (`schemaEditor`), partitioning, distribution, sortOrders, indexes, properties | 🟡 | Tabbed-detail не реализован, indexes/sortOrder не рендерятся |
+| B3 | **Schema** | name, comment, properties, audit + tabs (tables/filesets/models/functions/tags/policies/properties) | + SchemaDetailPane (Tables/Filesets/Models/Properties в зависимости от catalog.type) | ✅ U4 minimum · 🟡 functions/tags/policies tabs (U6, U2.5b) |
+| B4 | **Table** | columns, partitioning, distribution, sortOrder, indexes, properties + tabs (Columns / Partitioning / Associated Filesets / Tags / Policies / Properties) | + TableDetailPane (Columns/Partitioning/Properties tabs) | ✅ U4 minimum · 🟡 distribution/sortOrder/indexes/associatedFilesets/tags/policies (U6, U2.5b) |
 | B5 | **Column** (nested) | name, type, comment, nullable, autoIncrement, defaultValue + complex types (struct/map/array) | Через `schemaEditor` primitive | 🟡 | Сложные типы (nested struct) — gap |
 | B6 | **Fileset** | name, location, properties + Browse Files | name, type, storageLocation, comment, properties | 🟡 | Browse Files (file list) не реализован |
 | B7 | **Topic** | name, comment, properties | name, comment, properties | ✅ | Близко к parity |
@@ -90,7 +90,7 @@
 | Строка | Pattern | Их реализация | Наша | Статус |
 |---|---|---|---|---|
 | D1 | Split-pane catalog explorer | AntD `Splitter` + `TreeComponent` | host `<CatalogExplorer/>` (page-local в `gravitino/explorer/`) | ✅ U2.1 |
-| D2 | Tabbed entity detail (tabs внутри detail) | AntD `Tabs` | Detail без tabs | ❌ |
+| D2 | Tabbed entity detail (tabs внутри detail) | AntD `Tabs` | Tabs.jsx (host-side) + SchemaDetailPane / TableDetailPane | ✅ U4 |
 | D3 | Resizable table columns | `react-antd-column-resize` | adapter capability? | 🟡 |
 | D4 | Properties popover | Inline cell с count + popover | `propertyPopover` primitive | ✅ |
 | D5 | Tag/Policy chip с remove | `CustomTags` | `<ChipList/>` в CatalogsTable + AssociatePopover для add/remove | ✅ U2.5 |
@@ -136,3 +136,4 @@
 - **2026-05-01 (Sprint U2.5)** — `<AssociatePopover/>` (multiselect tag/policy с search) + Tags/Policies колонки на `<CatalogsTable/>` (chip-list assignments + «+ Associate Tag/Policy» кнопки). Seed: 3 prod catalogs получили demo `tags`/`policies`. UI-state в `CatalogExplorer.assignments` (optimistic, без backend exec — реальные intents `associateTags` / `associatePoliciesForObject` в U2.5b). Закрыто: B14 catalog-level, C7, C8, D5. Schema/table-level — U6.
 - **2026-05-01 (Sprint U2.3)** — `<CatalogTree/>` расширен до nested уровней: catalog → schemas (relational/fileset/model) или topics (messaging) → leaf entities (tables/filesets/topics/models). Expand/collapse state, icons (📂/🗒/📁/📡/🤖). Click по non-catalog узлу пока не меняет правую панель (детали в U2.4). Function — U6. Закрыто: A4.
 - **2026-05-01 (Sprint U3)** — `<CreateCatalogDialog/>` (modal с cascade Type→Provider→dynamic fields) + кнопка «+ Create Catalog» в `<CatalogsTable/>`. PROVIDER_SCHEMA — 6 representative providers (hive/lakehouse-iceberg/jdbc-postgresql/kafka/hadoop/model-registry) covering 4 type-categories. Optimistic add в `CatalogExplorer.createdCatalogs` (без backend exec — реальный intent `createCatalog` в U3.5). Закрыто (minimum): B2.
+- **2026-05-01 (Sprint U4)** — `<Tabs/>` (host) + `<SchemaDetailPane/>` (tabs Tables/Filesets/Models/Properties в зависимости от catalog.type) + `<TableDetailPane/>` (tabs Columns/Partitioning/Properties). CatalogExplorer переключает right-pane на detail при клике schema/table в tree. Multi-level breadcrumb: Metalakes › metalake › catalog › schema › table. Tags/Policies tabs внутри detail — U2.5b; functions/distribution/sortOrder/indexes — U6. Закрыто (minimum): B3, B4, D2.
