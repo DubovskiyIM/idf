@@ -100,6 +100,12 @@ export const PROJECTIONS = {
   //   Name (sort+filter) / Creator / Owner / Created At (sort) / Properties (popover) / Comment / Actions (gear).
   //   creator/createdAt — projected из nested audit dict (audit.creator, audit.createTime).
   //   owner — placeholder до Sprint U5 (cross-entity owner-assignment).
+  //
+  // Отклоняемся от user_list/group_list pattern (`catalog(..., { columns })`)
+  // потому что нужны три override'а помимо columns: description (subtitle),
+  // emptyLabel и onItemClick. Helper их пока не принимает; threading через
+  // helper signature — отдельный refactor (не в U1). Пока — explicit
+  // bodyOverride, как было в первоначальном catalog-helper'е до idf-sdk#224.
   metalake_list: {
     ...catalog("Metalake", "Metalakes", ["name", "comment"]),
     description: "Metalake — top-level контейнер метаданных. Внутри каждого metalake: каталоги, схемы, таблицы.",
@@ -128,9 +134,9 @@ export const PROJECTIONS = {
           menuLabel: "Metalake actions",
           actions: [
             { intent: "alterMetalake", label: "Edit",
-              params: { metalake: "item.name" } },
+              params: { name: "item.name" } },
             { intent: "dropMetalake", label: "Delete",
-              params: { metalake: "item.name" }, danger: true },
+              params: { name: "item.name" }, danger: true },
           ],
         },
       ],

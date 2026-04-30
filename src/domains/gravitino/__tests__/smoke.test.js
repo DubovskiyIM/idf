@@ -111,6 +111,12 @@ describe("gravitino domain — Stage 1 baseline", () => {
     const actionsCol = proj.bodyOverride.columns.find(c => c.key === "_actions");
     expect(actionsCol.kind).toBe("actions");
     expect(actionsCol.actions.length).toBeGreaterThanOrEqual(1);
+    // Param-key contract: должен совпадать с openapi-declared `name` (path /metalakes/:name).
+    // user_list использует `user` потому что path там /metalakes/{m}/users/{user}; здесь — `name`.
+    const editAction = actionsCol.actions.find(a => a.intent === "alterMetalake");
+    const deleteAction = actionsCol.actions.find(a => a.intent === "dropMetalake");
+    expect(Object.keys(editAction.params)).toEqual(["name"]);
+    expect(Object.keys(deleteAction.params)).toEqual(["name"]);
   });
 
   it("metalake_list: имеет subtitle/description", () => {
