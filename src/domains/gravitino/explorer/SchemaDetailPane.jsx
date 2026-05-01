@@ -17,7 +17,7 @@
  * parent: onChildEdit / onChildSetOwner / onChildDelete / onChildAssociate.
  */
 import { useState } from "react";
-import AssociatePopover from "./AssociatePopover.jsx";
+import { AssociatePopover } from "@intent-driven/renderer";
 import ConfirmDialog from "./ConfirmDialog.jsx";
 import { ChipsAssoc, OwnerBlock } from "./DetailPaneCommon.jsx";
 import Tabs from "./Tabs.jsx";

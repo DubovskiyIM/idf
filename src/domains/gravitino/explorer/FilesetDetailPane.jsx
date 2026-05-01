@@ -4,8 +4,8 @@
  * filtered by filesetId (mock в seed; real listFiles intent — U6.5).
  */
 import { useState } from "react";
+import { IllustratedEmptyState as EmptyState } from "@intent-driven/renderer";
 import Tabs from "./Tabs.jsx";
-import EmptyState from "./EmptyState.jsx";
 
 const TABS = [
   { key: "files", label: "Files" },
