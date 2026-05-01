@@ -9,13 +9,11 @@ import { useMemo, useState } from "react";
 import Breadcrumb from "./Breadcrumb.jsx";
 import CatalogTree from "./CatalogTree.jsx";
 import CatalogsTable from "./CatalogsTable.jsx";
-import ConfirmDialog from "./ConfirmDialog.jsx";
-import CreateCatalogDialog from "./CreateCatalogDialog.jsx";
+import ContextNav from "./ContextNav.jsx";
+import ExplorerDialogs from "./ExplorerDialogs.jsx";
 import FilesetDetailPane from "./FilesetDetailPane.jsx";
 import FunctionDetailPane from "./FunctionDetailPane.jsx";
-import LinkVersionDialog from "./LinkVersionDialog.jsx";
 import ModelDetailPane from "./ModelDetailPane.jsx";
-import OwnerDialogs from "./OwnerDialogs.jsx";
 import SchemaDetailPane from "./SchemaDetailPane.jsx";
 import TableDetailPane from "./TableDetailPane.jsx";
 import { ToastProvider, useToast } from "./Toast.jsx";
@@ -226,11 +224,17 @@ function CatalogExplorerInner({ world = {}, routeParams, ctx }) {
     );
   };
 
+  // Navigate из ContextNav: window.location в соответствующий root.
+  const handleContextNav = (target) => {
+    if (typeof window !== "undefined") window.location.href = `/gravitino/${target}`;
+  };
+
   return (
     <div style={{
       display: "flex", flexDirection: "column", height: "100%", minHeight: 0,
       background: "var(--idf-surface, #f8fafc)",
     }}>
+      <ContextNav active="catalogs" onNavigate={handleContextNav} />
       <Breadcrumb
         metalake={metalake}
         catalog={selectedCatalog}
@@ -255,43 +259,31 @@ function CatalogExplorerInner({ world = {}, routeParams, ctx }) {
           {renderRightPane()}
         </div>
       </div>
-      <CreateCatalogDialog
-        visible={creating}
-        onClose={() => setCreating(false)}
-        onSubmit={handleCreate}
-      />
-      <OwnerDialogs users={world.users || []} groups={world.groups || []} items={[
-        {
-          id: ownerDialogTarget,
-          owner: ownerDialogTarget && (ownerOverrides[ownerDialogTarget] ?? myCatalogsAll.find(c => c.id === ownerDialogTarget)?.owner),
-          onClose: () => setOwnerDialogTarget(null),
-          onSubmit: handleSetOwner,
-        },
-        {
-          id: schemaOwnerDialogTarget,
-          owner: schemaOwnerDialogTarget && (schemaOv.ownerOverrides[schemaOwnerDialogTarget] ?? (world.schemas || []).find(s => s.id === schemaOwnerDialogTarget)?.owner),
-          onClose: () => setSchemaOwnerDialogTarget(null),
-          onSubmit: ({ name }) => { schemaOv.setOwner(schemaOwnerDialogTarget, name); toast(`Schema owner назначен: ${name}`, "success"); setSchemaOwnerDialogTarget(null); },
-        },
-        {
-          id: tableOwnerDialogTarget,
-          owner: tableOwnerDialogTarget && (tableOv.ownerOverrides[tableOwnerDialogTarget] ?? (world.tables || []).find(t => t.id === tableOwnerDialogTarget)?.owner),
-          onClose: () => setTableOwnerDialogTarget(null),
-          onSubmit: ({ name }) => { tableOv.setOwner(tableOwnerDialogTarget, name); toast(`Table owner назначен: ${name}`, "success"); setTableOwnerDialogTarget(null); },
-        },
-      ]} />
-      <LinkVersionDialog
-        visible={!!linkingForModel}
+      <ExplorerDialogs
+        world={world}
+        creating={creating}
+        onCloseCreate={() => setCreating(false)}
+        onSubmitCreate={handleCreate}
+        ownerDialogTarget={ownerDialogTarget}
+        ownerOverrides={ownerOverrides}
+        myCatalogsAll={myCatalogsAll}
+        onCloseOwnerDialog={() => setOwnerDialogTarget(null)}
+        onSubmitOwner={handleSetOwner}
+        schemaOwnerDialogTarget={schemaOwnerDialogTarget}
+        schemaOv={schemaOv}
+        onCloseSchemaOwner={() => setSchemaOwnerDialogTarget(null)}
+        onSubmitSchemaOwner={({ name }) => { schemaOv.setOwner(schemaOwnerDialogTarget, name); toast(`Schema owner назначен: ${name}`, "success"); setSchemaOwnerDialogTarget(null); }}
+        tableOwnerDialogTarget={tableOwnerDialogTarget}
+        tableOv={tableOv}
+        onCloseTableOwner={() => setTableOwnerDialogTarget(null)}
+        onSubmitTableOwner={({ name }) => { tableOv.setOwner(tableOwnerDialogTarget, name); toast(`Table owner назначен: ${name}`, "success"); setTableOwnerDialogTarget(null); }}
+        linkingForModel={linkingForModel}
         suggestedVersion={suggestedVersion}
-        onClose={() => setLinkingForModel(null)}
-        onSubmit={handleLinkVersion}
-      />
-      <ConfirmDialog
-        visible={!!deleteTarget}
-        entityName={deleteTarget?.name}
-        entityKind="catalog"
-        onCancel={() => setDeleteTarget(null)}
-        onConfirm={handleConfirmDelete}
+        onCloseLinkVersion={() => setLinkingForModel(null)}
+        onSubmitLinkVersion={handleLinkVersion}
+        deleteTarget={deleteTarget}
+        onCancelDelete={() => setDeleteTarget(null)}
+        onConfirmDelete={handleConfirmDelete}
       />
     </div>
   );

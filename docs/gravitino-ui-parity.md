@@ -29,7 +29,7 @@
 
 | Строка | Их web-v2 | У нас сейчас | Статус | План |
 |---|---|---|---|---|
-| A1 | Top nav: контекстная (Metalakes vs внутри metalake) | Plain top nav без контекстных режимов | 🟡 | Сделать nav-projections режима |
+| A1 | Top nav: контекстная (Metalakes vs внутри metalake) | <ContextNav/> strip внутри metalake_workspace (4 tabs Catalogs/Jobs/Compliance/Access) — host-only solution без V2Shell ext | ✅ U-context-nav (in-metalake) · 🟡 outer flat nav остаётся (top-level Metalakes/Jobs/Access/Compliance — V2Shell-level swap deferred) |
 | A2 | `/metalakes` — список с CRUD | host MetalakesHub canvas (Name → workspace / Creator / Owner avatar+✎ / Created / Properties / Comment / In-Use toggle / Delete с typed-name confirm) | ✅ | U5.5 — заменили SDK dataGrid на host-rendered |
 | A3 | `/catalogs?metalake=X` — split-pane: tree слева + detail справа | `metalake_workspace` canvas: `<CatalogExplorer/>` с breadcrumb + 2-col layout | ✅ | U2.1 — page-local |
 | A4 | Tree node hierarchy: metalake → catalog → schema → {table,fileset,topic,model,function} | `<CatalogTree/>` все уровни до leaf (table/fileset/topic/model). Function — U6 | ✅ U2.3 |
