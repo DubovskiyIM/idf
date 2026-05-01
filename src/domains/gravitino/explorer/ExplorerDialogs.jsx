@@ -10,6 +10,7 @@
  */
 import ConfirmDialog from "./ConfirmDialog.jsx";
 import CreateCatalogDialog from "./CreateCatalogDialog.jsx";
+import EditTableDialog from "./EditTableDialog.jsx";
 import LinkVersionDialog from "./LinkVersionDialog.jsx";
 import OwnerDialogs from "./OwnerDialogs.jsx";
 
@@ -26,6 +27,8 @@ export default function ExplorerDialogs({
   linkingForModel, suggestedVersion, onCloseLinkVersion, onSubmitLinkVersion,
   // Delete confirm
   deleteTarget, onCancelDelete, onConfirmDelete,
+  // Edit table (U-edit-table)
+  editTableTarget, onCloseEditTable, onSubmitEditTable,
 }) {
   return (
     <>
@@ -66,6 +69,12 @@ export default function ExplorerDialogs({
         entityKind="catalog"
         onCancel={onCancelDelete}
         onConfirm={onConfirmDelete}
+      />
+      <EditTableDialog
+        visible={!!editTableTarget}
+        initial={editTableTarget}
+        onClose={onCloseEditTable}
+        onSubmit={onSubmitEditTable}
       />
     </>
   );

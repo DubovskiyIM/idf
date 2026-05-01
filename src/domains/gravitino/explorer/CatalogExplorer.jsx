@@ -61,6 +61,7 @@ function CatalogExplorerInner({ world = {}, routeParams, ctx, exec = () => {}, v
   const [deleteTarget, setDeleteTarget] = useState(null);
   const [schemaOwnerDialogTarget, setSchemaOwnerDialogTarget] = useState(null);
   const [tableOwnerDialogTarget, setTableOwnerDialogTarget] = useState(null);
+  const [editTableTarget, setEditTableTarget] = useState(null);
 
   const resetLeaves = () => {
     setSelectedTable(null); setSelectedModel(null);
@@ -113,7 +114,8 @@ function CatalogExplorerInner({ world = {}, routeParams, ctx, exec = () => {}, v
     if (selectedTable) return (
       <TableDetailPane table={selectedTable} world={world}
         onSetOwner={setTableOwnerDialogTarget}
-        onAssociate={(_id, type, names) => h.handleEntityAssociate("tables", selectedTable, type, names)} />
+        onAssociate={(_id, type, names) => h.handleEntityAssociate("tables", selectedTable, type, names)}
+        onEdit={() => setEditTableTarget(selectedTable)} />
     );
     if (selectedSchema) return (
       <SchemaDetailPane schema={selectedSchema} catalog={selectedCatalog} world={world}
@@ -185,6 +187,27 @@ function CatalogExplorerInner({ world = {}, routeParams, ctx, exec = () => {}, v
         deleteTarget={deleteTarget}
         onCancelDelete={() => setDeleteTarget(null)}
         onConfirmDelete={h.handleConfirmDelete(deleteTarget)}
+        editTableTarget={editTableTarget}
+        onCloseEditTable={() => setEditTableTarget(null)}
+        onSubmitEditTable={(payload) => {
+          // alterTable — generic SDK handler делает full-payload replace by id
+          // (preserved partitioning / distribution / sortOrders / properties pass-through из initial).
+          exec({
+            intent: "alterTable",
+            params: {
+              metalake: metalake?.name,
+              catalog: selectedCatalog?.name,
+              schema: selectedSchema?.name,
+              table: payload.name,
+            },
+            context: {
+              ...payload,
+              audit: payload.audit || { creator: viewer?.name || "ui", createTime: new Date().toISOString() },
+            },
+          });
+          toast(`Table «${payload.name}» обновлена`, "success");
+          setEditTableTarget(null);
+        }}
       />
     </div>
   );
