@@ -1,9 +1,16 @@
 /**
  * CatalogExplorer — split-pane root для metalake_workspace.
  * Breadcrumb › CatalogTree │ Right pane (CatalogsTable / *DetailPane).
- * Optimistic UI-state без backend exec (реальные intents в U*.5):
- * U2.5 tags/policies, U3 created, U5 owner, U6.1 ModelVersions,
- * U-polish-1 deletedIds + ToastProvider.
+ *
+ * U-backend-exec: createCatalog / dropCatalog через реальный exec. Generic
+ * effect handler применяет particles.effects (Catalog op=replace|remove) —
+ * fold обновляет world.catalogs. Локальный createdCatalogs + deletedIds
+ * для catalog'ов удалён.
+ *
+ * Остаётся optimistic (→ U-backend-exec-2): U2.5 tags/policies assignments,
+ * U5 owner overrides, U6.1 ModelVersion link/unlink/aliases, U-polish-3
+ * enabled overrides, schema/table-level overrides — все modify-nested
+ * операции, generic handler не справится.
  */
 import { useMemo, useState } from "react";
 import Breadcrumb from "./Breadcrumb.jsx";
@@ -31,7 +38,7 @@ export default function CatalogExplorer(props) {
   );
 }
 
-function CatalogExplorerInner({ world = {}, routeParams, ctx }) {
+function CatalogExplorerInner({ world = {}, routeParams, ctx, exec = () => {}, viewer }) {
   const toast = useToast();
   const params = routeParams ?? ctx?.routeParams ?? {};
   const metalakeId = params.metalakeId;
@@ -55,18 +62,16 @@ function CatalogExplorerInner({ world = {}, routeParams, ctx }) {
   // U2.5: optimistic UI-state для tags/policies assignments per catalog.
   const [assignments, setAssignments] = useState({});
 
-  // U3: optimistic created catalogs.
+  // U3 → U-backend-exec: createCatalog через exec (Catalog op=replace).
   const [creating, setCreating] = useState(false);
-  const [createdCatalogs, setCreatedCatalogs] = useState([]);
 
   // U5: optimistic owner overrides.
   const [ownerDialogTarget, setOwnerDialogTarget] = useState(null);
   const [ownerOverrides, setOwnerOverrides] = useState({});
 
-  // U-polish-1: Delete-confirm + optimistic delete (без backend exec — реальный
-  // intent dropCatalog в U6.5 batch).
+  // U-polish-1 → U-backend-exec: Delete-confirm + dropCatalog через exec
+  // (Catalog op=remove). Локальный deletedIds-state удалён.
   const [deleteTarget, setDeleteTarget] = useState(null);
-  const [deletedIds, setDeletedIds] = useState(new Set());
 
   // U-polish-3: optimistic enabled overrides (In-Use toggle, C3).
   const [enabledOverrides, setEnabledOverrides] = useState({});
@@ -78,22 +83,22 @@ function CatalogExplorerInner({ world = {}, routeParams, ctx }) {
   const [tableOwnerDialogTarget, setTableOwnerDialogTarget] = useState(null);
 
   const handleCreate = (formData) => {
-    const newCatalog = {
-      id: `c_new_${Date.now()}`,
-      name: formData.name, type: formData.type, provider: formData.provider,
-      comment: formData.comment, properties: formData.properties,
-      metalakeId, tags: [], policies: [],
-    };
-    setCreatedCatalogs(prev => [...prev, newCatalog]);
+    exec({
+      intent: "createCatalog",
+      params: { metalake: metalake?.name },
+      context: {
+        ...formData,
+        metalakeId,
+        tags: [],
+        policies: [],
+        audit: { creator: viewer?.name || "ui", createTime: new Date().toISOString() },
+      },
+    });
     setCreating(false);
     toast(`Catalog «${formData.name}» создан`, "success");
   };
 
-  const myCatalogsAll = useMemo(
-    () => [...myCatalogs, ...createdCatalogs.filter(c => c.metalakeId === metalakeId)]
-      .filter(c => !deletedIds.has(c.id)),
-    [myCatalogs, createdCatalogs, metalakeId, deletedIds]
-  );
+  const myCatalogsAll = useMemo(() => myCatalogs, [myCatalogs]);
 
   const applyAssignments = (cat) => {
     const a = assignments[cat.id];
@@ -125,7 +130,11 @@ function CatalogExplorerInner({ world = {}, routeParams, ctx }) {
   const handleConfirmDelete = () => {
     const target = deleteTarget;
     if (!target) return;
-    setDeletedIds(prev => { const next = new Set(prev); next.add(target.id); return next; });
+    exec({
+      intent: "dropCatalog",
+      params: { metalake: metalake?.name, catalog: target.name },
+      context: {},
+    });
     if (selectedCatalog?.id === target.id) {
       setSelectedCatalog(null); setSelectedSchema(null); resetLeaves();
     }
