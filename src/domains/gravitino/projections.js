@@ -96,19 +96,17 @@ export const PROJECTIONS = {
   // для user_list/group_list, где нужна actions-column (gear menu).
 
   // ═══ Metalake ══════════════════════════════════════════════════════════════
-  // metalake_list — host-rendered (U5.5). Заменили SDK dataGrid на
-  // <MetalakesHub/> canvas: контролируем Owner avatar/edit, In-Use toggle,
-  // Delete с typed-name ConfirmDialog (D6). Click name → navigate в
-  // metalake_workspace. Регистрация — registerCanvas("metalake_list",
-  // MetalakesHub) в src/standalone.jsx.
+  // metalake_list — derived (U-derive Phase 3.5). MetalakesHub canvas удалён.
+  // SDK auto-derive поверх Phase 2 patterns + ontology enrichment (Phase 3.2):
+  //   columns = name + owner:ownerAvatar + tags:chipList + policies:chipList
+  //             + comment + _actions:actions
+  // - In-Use toggle / Delete / Set Owner — через _actions menu (alterMetalake/
+  //   dropMetalake/setOwner intents).
+  // - Click row → navigate metalake_workspace через onItemClick.
   metalake_list: {
-    name: "Metalakes",
-    kind: "canvas",
-    mainEntity: "Metalake",
-    entities: ["Metalake", "User", "Group"],
-    witnesses: ["name", "comment"],
+    ...catalog("Metalake", "Metalakes", ["name", "comment"], { onItemClick: false }),
     description: "Metalake — top-level контейнер метаданных. Внутри каждого metalake: каталоги, схемы, таблицы.",
-    body: { kind: "canvas", canvasId: "metalake_list" },
+    onItemClick: { action: "navigate", to: "metalake_workspace", params: { metalakeId: "item.id" } },
   },
   metalake_detail: detail("Metalake", "Metalake",
     ["name", "comment", "properties", "audit"],
