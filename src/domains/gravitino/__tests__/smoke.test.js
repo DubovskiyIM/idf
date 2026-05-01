@@ -156,7 +156,14 @@ describe("gravitino domain — Stage 1 baseline", () => {
     expect(proj.body.canvasId).toBe("compliance_hub");
   });
 
-  it("ROOT_PROJECTIONS: 3 hubs (metalake_list / access_hub / compliance_hub)", () => {
-    expect(ROOT_PROJECTIONS).toEqual(["metalake_list", "access_hub", "compliance_hub"]);
+  it("ROOT_PROJECTIONS: 4 hubs (metalake_list / jobs_hub / access_hub / compliance_hub)", () => {
+    expect(ROOT_PROJECTIONS).toEqual(["metalake_list", "jobs_hub", "access_hub", "compliance_hub"]);
+  });
+
+  it("jobs_hub: canvas-projection с canvasId='jobs_hub'", () => {
+    const proj = PROJECTIONS.jobs_hub;
+    expect(proj).toBeDefined();
+    expect(proj.kind).toBe("canvas");
+    expect(proj.body.canvasId).toBe("jobs_hub");
   });
 });
