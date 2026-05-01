@@ -1,7 +1,15 @@
 /**
  * AccessHub — 2-pane: left submenu (Users/User Groups/Roles), right table.
- * Wires CreateRoleDialog + GrantRoleDialog (U-iam2.b).
- * Optimistic state — createdRoles + grantedRoles overrides без backend exec.
+ * Wires CreateRoleDialog + GrantRoleDialog.
+ *
+ * U-backend-exec: createRole / deleteRole / removeUser / removeGroup через
+ * реальный exec. Generic effect handler в SDK применяет
+ * intent.particles.effects (Role/User/Group с op=replace|remove). Локальный
+ * createdRoles + deletedIds для этих сущностей удалён.
+ *
+ * Остаётся optimistic (требует custom buildEffects, → U-backend-exec-2):
+ * grantRoleToUser/Group (modify nested User.roles array),
+ * setOwner для Role (modify nested owner field).
  */
 import { useState } from "react";
 import TwoPaneLayout from "./TwoPaneLayout.jsx";
@@ -21,25 +29,34 @@ export default function AccessHub(props) {
   return <ToastProvider><Inner {...props} /></ToastProvider>;
 }
 
-function Inner({ world = {} }) {
+function Inner({ world = {}, exec = () => {}, viewer }) {
   const toast = useToast();
   const [active, setActive] = useState("users");
-  const [deletedIds, setDeletedIds] = useState(new Set());
+  // U-backend-exec-2: grant через exec — нужен custom buildEffect для User.roles append.
   const [grantTarget, setGrantTarget] = useState(null);
-  const [createRoleOpen, setCreateRoleOpen] = useState(false);
-  const [createdRoles, setCreatedRoles] = useState([]);
   const [grantedRoles, setGrantedRoles] = useState({}); // {id: [roles]}
-  const [roleOwnerTarget, setRoleOwnerTarget] = useState(null); // role | null
+  const [createRoleOpen, setCreateRoleOpen] = useState(false);
+  // U-backend-exec-2: setOwner для Role — modify-nested, generic handler не справится.
+  const [roleOwnerTarget, setRoleOwnerTarget] = useState(null);
   const [roleOwnerOverrides, setRoleOwnerOverrides] = useState({}); // {roleId: ownerName}
 
-  const filterDel = (xs) => (xs || []).filter(x => !deletedIds.has(x.id));
+  const metalakeName = (world.metalakes || [])[0]?.name || "default";
+
   const onDelete = (kind) => (entity) => {
-    setDeletedIds(prev => new Set(prev).add(entity.id));
+    const intentId = { User: "removeUser", Group: "removeGroup", Role: "deleteRole" }[kind];
+    const paramKey = { User: "user", Group: "group", Role: "role" }[kind];
+    if (!intentId || !paramKey) return;
+    exec({
+      intent: intentId,
+      params: { metalake: metalakeName, [paramKey]: entity.name },
+      context: {},
+    });
     toast(`${kind} «${entity.name}» удалён`, "error");
   };
 
-  const allRoles = [...(world.roles || []), ...createdRoles]
-    .map(r => roleOwnerOverrides[r.id] !== undefined ? { ...r, owner: roleOwnerOverrides[r.id] } : r);
+  const allRoles = (world.roles || []).map(r =>
+    roleOwnerOverrides[r.id] !== undefined ? { ...r, owner: roleOwnerOverrides[r.id] } : r
+  );
   const enrichedUsers = (world.users || []).map(u => ({ ...u, roles: grantedRoles[u.id] ?? u.roles ?? [] }));
   const enrichedGroups = (world.groups || []).map(g => ({ ...g, roles: grantedRoles[g.id] ?? g.roles ?? [] }));
 
@@ -47,7 +64,7 @@ function Inner({ world = {} }) {
     <TwoPaneLayout sections={SECTIONS} active={active} onSelect={setActive} title="Access">
       {active === "users"  && (
         <UsersTable
-          users={filterDel(enrichedUsers)}
+          users={enrichedUsers}
           onAdd={() => toast("Add User — backend U-iam2c", "info")}
           onGrantRole={(u) => setGrantTarget({ kind: "user", id: u.id, name: u.name, roles: u.roles || [] })}
           onDelete={onDelete("User")}
@@ -55,7 +72,7 @@ function Inner({ world = {} }) {
       )}
       {active === "groups" && (
         <GroupsTable
-          groups={filterDel(enrichedGroups)}
+          groups={enrichedGroups}
           onAdd={() => toast("Add User Group — backend U-iam2c", "info")}
           onGrantRole={(g) => setGrantTarget({ kind: "group", id: g.id, name: g.name, roles: g.roles || [] })}
           onDelete={onDelete("Group")}
@@ -63,7 +80,7 @@ function Inner({ world = {} }) {
       )}
       {active === "roles"  && (
         <RolesTable
-          roles={filterDel(allRoles)}
+          roles={allRoles}
           onCreate={() => setCreateRoleOpen(true)}
           onEdit={(r) => toast(`Edit Role ${r.name} — U-iam2c`, "info")}
           onDelete={onDelete("Role")}
@@ -75,12 +92,15 @@ function Inner({ world = {} }) {
         visible={createRoleOpen}
         onClose={() => setCreateRoleOpen(false)}
         onSubmit={(payload) => {
-          setCreatedRoles(prev => [...prev, {
-            id: `r_new_${Date.now()}`,
-            owner: "current_user",
-            audit: { createTime: new Date().toISOString() },
-            ...payload,
-          }]);
+          exec({
+            intent: "createRole",
+            params: { metalake: metalakeName },
+            context: {
+              ...payload,
+              owner: viewer?.name || "ui",
+              audit: { creator: viewer?.name || "ui", createTime: new Date().toISOString() },
+            },
+          });
           toast(`Role «${payload.name}» создан`, "success");
           setCreateRoleOpen(false);
         }}
@@ -88,10 +108,11 @@ function Inner({ world = {} }) {
       <GrantRoleDialog
         visible={!!grantTarget}
         target={grantTarget}
-        availableRoles={filterDel(allRoles)}
+        availableRoles={allRoles}
         currentRoles={grantTarget?.roles || []}
         onClose={() => setGrantTarget(null)}
         onSubmit={(rolesList) => {
+          // U-backend-exec-2: optimistic — нужен custom buildEffect для grantRoleToUser/Group.
           setGrantedRoles(prev => ({ ...prev, [grantTarget.id]: rolesList }));
           toast(`Roles обновлены для ${grantTarget.kind} ${grantTarget.name}`, "success");
           setGrantTarget(null);
@@ -104,6 +125,7 @@ function Inner({ world = {} }) {
         groups={world.groups || []}
         onClose={() => setRoleOwnerTarget(null)}
         onSubmit={({ name }) => {
+          // U-backend-exec-2: setOwner — modify-nested, generic handler не справится.
           setRoleOwnerOverrides(prev => ({ ...prev, [roleOwnerTarget.id]: name }));
           toast(`Owner role «${roleOwnerTarget.name}» назначен: ${name}`, "success");
           setRoleOwnerTarget(null);
