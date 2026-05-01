@@ -287,21 +287,19 @@ export const PROJECTIONS = {
   // role_list имеет только 1 witness (name) — ниже порога pattern apply
   // (trigger требует ≥2 witnesses), поэтому остаётся default card-layout.
   // Acceptable: у Role ещё нет других scalar полей для column-display.
-  role_list: catalog("Role", "Roles",
-    ["name"]),
-  // role_detail — host-rendered (U-iam, B12).
-  // Canvas <RoleDetailCanvas/> читает routeParams.roleId и передаёт role
-  // в RoleDetailPane (Privileges tab — securableObjects сгруппированы по
-  // type, ALLOW/DENY chips цветные; Properties tab — key-value).
-  role_detail: {
-    name: "Role",
-    kind: "canvas",
-    mainEntity: "Role",
-    entities: ["Role"],
-    idParam: "roleId",
-    witnesses: ["name"],
-    body: { kind: "canvas", canvasId: "role_detail" },
+  // Override onItemClick — role_detail identified by name (consistent с
+  // tag/policy convention для metadata-object lookup'а).
+  role_list: {
+    ...catalog("Role", "Roles", ["name"], { onItemClick: false }),
+    onItemClick: { action: "navigate", to: "role_detail", params: { roleName: "item.name" } },
   },
+  // role_detail — derived (U-derive Phase 3.8). RoleDetailCanvas + Pane удалены.
+  // SDK detail с permissionMatrix primitive для securableObjects (Stage 5
+  // ontology enrichment) + propertyPopover для properties.
+  role_detail: detail("Role", "Role",
+    ["name", "securableObjects", "properties"],
+    [],
+    "roleName"),
 
   // ═══ Tag ═══════════════════════════════════════════════════════════════════
   // tag_list — auto-derive (Phase 3.2). Override onItemClick — tag_detail
