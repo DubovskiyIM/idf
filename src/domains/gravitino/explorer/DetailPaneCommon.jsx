@@ -23,13 +23,13 @@ export function OwnerBlock({ owner, onSetOwner }) {
     );
   }
   return (
-    <span style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: 12 }}>
+    <span style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: 12, color: "var(--idf-text)" }}>
       <span style={{
         display: "inline-flex", alignItems: "center", justifyContent: "center",
         width: 20, height: 20, borderRadius: "50%",
         background: "var(--idf-primary, #6478f7)", color: "white", fontSize: 10, fontWeight: 600,
       }}>{owner.slice(0, 1).toUpperCase()}</span>
-      <span>{owner}</span>
+      <span style={{ color: "var(--idf-text)" }}>{owner}</span>
       <button
         type="button"
         onClick={onSetOwner}
