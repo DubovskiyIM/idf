@@ -2,23 +2,29 @@
  * MetalakesHub — canvas root для metalake_list (U5.5).
  *
  * Заменяет SDK dataGrid: state-management для inUseOverrides /
- * ownerOverrides / deletedIds, dialogs (SetOwner, typed-name Confirm),
+ * ownerOverrides, dialogs (SetOwner, typed-name Confirm),
  * inline toast (auto-dismiss 2.5s).
  *
  * Click name → navigate в /gravitino/metalake_workspace?metalakeId=<id>.
+ *
+ * U-backend-exec: Drop metalake через реальный exec({intent:"dropMetalake"}).
+ * Generic effect handler применяет particles.effects (Metalake op=remove) —
+ * fold обновляет world.metalakes. Локальный deletedIds-state удалён.
+ *
+ * Остаётся optimistic (→ U-backend-exec-2): inUseOverrides (enable/disable
+ * — modify nested boolean), ownerOverrides (setOwner — modify nested field).
  */
 import { useEffect, useMemo, useState } from "react";
 import MetalakesTable from "./MetalakesTable.jsx";
 import SetOwnerDialog from "./SetOwnerDialog.jsx";
 
-export default function MetalakesHub({ world = {}, ctx, navigate }) {
+export default function MetalakesHub({ world = {}, ctx, navigate, exec = () => {} }) {
   const baseMetalakes = world.metalakes || [];
   const users = world.users || [];
   const groups = world.groups || [];
 
   const [ownerOverrides, setOwnerOverrides] = useState({});
   const [inUseOverrides, setInUseOverrides] = useState({});
-  const [deletedIds, setDeletedIds] = useState(() => new Set());
   const [setOwnerTarget, setSetOwnerTarget] = useState(null);
   const [deleteTarget, setDeleteTarget] = useState(null);
   const [toast, setToast] = useState(null); // { msg, tone }
@@ -34,14 +40,12 @@ export default function MetalakesHub({ world = {}, ctx, navigate }) {
   }, [toast]);
 
   const metalakes = useMemo(() => {
-    return baseMetalakes
-      .filter(m => !deletedIds.has(m.id))
-      .map(m => ({
-        ...m,
-        owner: ownerOverrides[m.id] ?? m.owner,
-        inUse: inUseOverrides[m.id] !== undefined ? inUseOverrides[m.id] : m.inUse,
-      }));
-  }, [baseMetalakes, ownerOverrides, inUseOverrides, deletedIds]);
+    return baseMetalakes.map(m => ({
+      ...m,
+      owner: ownerOverrides[m.id] ?? m.owner,
+      inUse: inUseOverrides[m.id] !== undefined ? inUseOverrides[m.id] : m.inUse,
+    }));
+  }, [baseMetalakes, ownerOverrides, inUseOverrides]);
 
   const onSelect = (m) => {
     // Navigate в workspace через V2Shell navigate prop (если доступен)
@@ -94,12 +98,11 @@ export default function MetalakesHub({ world = {}, ctx, navigate }) {
           metalakeName={deleteTarget.name}
           onCancel={() => setDeleteTarget(null)}
           onConfirm={() => {
-            const id = deleteTarget.id;
             const name = deleteTarget.name;
-            setDeletedIds(prev => {
-              const next = new Set(prev);
-              next.add(id);
-              return next;
+            exec({
+              intent: "dropMetalake",
+              params: { name },
+              context: {},
             });
             showToast(`Metalake «${name}» удалён`, "error");
             setDeleteTarget(null);
