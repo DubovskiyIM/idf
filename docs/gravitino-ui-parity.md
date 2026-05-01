@@ -34,8 +34,8 @@
 | A3 | `/catalogs?metalake=X` — split-pane: tree слева + detail справа | `metalake_workspace` canvas: `<CatalogExplorer/>` с breadcrumb + 2-col layout | ✅ | U2.1 — page-local |
 | A4 | Tree node hierarchy: metalake → catalog → schema → {table,fileset,topic,model,function} | `<CatalogTree/>` все уровни до leaf (table/fileset/topic/model). Function — U6 | ✅ U2.3 |
 | A5 | URL query params как state (`?metalake=X&catalog=Y&schema=Z&table=T`) | URL-routing через `/projection/id` | 🟡 | Поддержать nested context-params |
-| A6 | `/access` redirect hub → users/userGroups/roles | 3 root projections (user/group/role _list) | 🟡 | Сгруппировать в "Access" submenu |
-| A7 | `/compliance` redirect hub → tags/policies | 2 root projections | 🟡 | Сгруппировать в "Compliance" submenu |
+| A6 | `/access` redirect hub → users/userGroups/roles | access_hub canvas (HubGrid: Users/Groups/Roles tiles) | ✅ U2.6 |
+| A7 | `/compliance` redirect hub → tags/policies | compliance_hub canvas (HubGrid: Tags/Policies tiles) | ✅ U2.6 |
 | A8 | `/jobs`, `/jobTemplates` | ❌ нет projections | ❌ | Stage 3 — Job/JobTemplate проекции |
 | A9 | OIDC login + `/oauth/callback` | 🚫 | 🚫 | Out of scope (host-level auth) |
 
@@ -137,3 +137,4 @@
 - **2026-05-01 (Sprint U2.3)** — `<CatalogTree/>` расширен до nested уровней: catalog → schemas (relational/fileset/model) или topics (messaging) → leaf entities (tables/filesets/topics/models). Expand/collapse state, icons (📂/🗒/📁/📡/🤖). Click по non-catalog узлу пока не меняет правую панель (детали в U2.4). Function — U6. Закрыто: A4.
 - **2026-05-01 (Sprint U3)** — `<CreateCatalogDialog/>` (modal с cascade Type→Provider→dynamic fields) + кнопка «+ Create Catalog» в `<CatalogsTable/>`. PROVIDER_SCHEMA — 6 representative providers (hive/lakehouse-iceberg/jdbc-postgresql/kafka/hadoop/model-registry) covering 4 type-categories. Optimistic add в `CatalogExplorer.createdCatalogs` (без backend exec — реальный intent `createCatalog` в U3.5). Закрыто (minimum): B2.
 - **2026-05-01 (Sprint U4)** — `<Tabs/>` (host) + `<SchemaDetailPane/>` (tabs Tables/Filesets/Models/Properties в зависимости от catalog.type) + `<TableDetailPane/>` (tabs Columns/Partitioning/Properties). CatalogExplorer переключает right-pane на detail при клике schema/table в tree. Multi-level breadcrumb: Metalakes › metalake › catalog › schema › table. Tags/Policies tabs внутри detail — U2.5b; functions/distribution/sortOrder/indexes — U6. Закрыто (minimum): B3, B4, D2.
+- **2026-05-01 (Sprint U2.6)** — top-nav grouping: 6 flat root projections (metalake/user/group/role/tag/policy _list) → 3 hubs (metalake_list / access_hub / compliance_hub). Новые canvas-projections + `<HubGrid/>` (generic tile-grid с link-tiles на inner projections). Inner projections доступны через direct URL и tile-click. Закрыто: A6, A7.
