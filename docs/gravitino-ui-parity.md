@@ -52,8 +52,8 @@
 | B5 | **Column** (nested) | name, type, comment, nullable, autoIncrement, defaultValue + complex types (struct/map/array) | Через `schemaEditor` primitive | 🟡 | Сложные типы (nested struct) — gap |
 | B6 | **Fileset** | name, location, properties + Browse Files | name, type, storageLocation, comment, properties | 🟡 | Browse Files (file list) не реализован |
 | B7 | **Topic** | name, comment, properties | name, comment, properties | ✅ | Близко к parity |
-| B8 | **Model** | name, comment, latestVersion, properties + Versions tab + Link Version dialog | name, latestVersion, comment, properties | 🟡 | ModelVersion как сущность не выведена в UI |
-| B9 | **ModelVersion** | version, modelObject, aliases, properties | imported, нет projection | ❌ | Создать `model_version_list` под model_detail |
+| B8 | **Model** | name, comment, latestVersion, properties + Versions tab + Link Version dialog | + ModelDetailPane (tabs Versions/Properties) с таблицей версий + Link Version button | ✅ U6.1 |
+| B9 | **ModelVersion** | version, modelObject, aliases, properties | seed (10 versions) + render в ModelDetailPane (Versions table с aliases-chips) | ✅ U6.1 |
 | B10 | **Function** | name, comment, functionBody (read-only) | imported, нет projection | ❌ | `function_list` под schema_detail |
 | B11 | **User** | name, roles | name, roles (`chipList`), audit + grant/revoke/delete actions | ✅ | Сравнить actions UX |
 | B12 | **Role** | name, privileges (resource × action tree) | name, securableObjects (`permissionMatrix`), properties | 🟡 | Нужна сверка permission-matrix UX vs их tree |
@@ -78,7 +78,7 @@
 | C6 | Revoke Role | Через user/group row-action | ✅ | ✅ |
 | C7 | Assign Tag to metadata object | Popover на entity-row | AssociatePopover в CatalogsTable (UI-state, exec в U2.5b) | ✅ U2.5 catalog |
 | C8 | Assign Policy to metadata object | Popover | AssociatePopover в CatalogsTable | ✅ U2.5 catalog |
-| C9 | Link/Unlink Model Version | `LinkVersionDialog` | ❌ | ❌ |
+| C9 | Link/Unlink Model Version | `LinkVersionDialog` | <LinkVersionDialog/> (modal: version + modelObject + aliases) с optimistic-add | ✅ U6.1 link · 🟡 unlink/edit U6.2 |
 | C10 | Browse Files (fileset) | `ListFiles` page | ❌ | ❌ Read-only filesystem nav |
 | C11 | Cancel Job | Drawer | ❌ | ❌ Stage 3 |
 | C12 | Add Partitions (table) | (нет в UI?) | imported intent есть | n/a |
@@ -139,3 +139,4 @@
 - **2026-05-01 (Sprint U4)** — `<Tabs/>` (host) + `<SchemaDetailPane/>` (tabs Tables/Filesets/Models/Properties в зависимости от catalog.type) + `<TableDetailPane/>` (tabs Columns/Partitioning/Properties). CatalogExplorer переключает right-pane на detail при клике schema/table в tree. Multi-level breadcrumb: Metalakes › metalake › catalog › schema › table. Tags/Policies tabs внутри detail — U2.5b; functions/distribution/sortOrder/indexes — U6. Закрыто (minimum): B3, B4, D2.
 - **2026-05-01 (Sprint U2.6)** — top-nav grouping: 6 flat root projections (metalake/user/group/role/tag/policy _list) → 3 hubs (metalake_list / access_hub / compliance_hub). Новые canvas-projections + `<HubGrid/>` (generic tile-grid с link-tiles на inner projections). Inner projections доступны через direct URL и tile-click. Закрыто: A6, A7.
 - **2026-05-01 (Sprint U5)** — `<SetOwnerDialog/>` (modal cascader с tabs Users/Groups + search) + Owner колонка в `<CatalogsTable/>` (avatar-letter + ✎ edit / + Set Owner placeholder). Seed: owner на 3 metalakes + 3 prod catalogs. UI-state в `CatalogExplorer.ownerOverrides` (optimistic, без backend exec — реальный intent `setMetalakeOwner` / `setCatalogOwner` в U5b). Закрыто (catalog-level): C2, D14; B1 catalog-side. Metalake/schema/table set-owner — U5.5.
+- **2026-05-01 (Sprint U6.1)** — Model versions UI: seed 10 ModelVersion записей под 4 models (price_optimizer 4 versions, churn 2, fraud 2, recsys 2; aliases production/staging/candidate/champion/shadow). `<ModelDetailPane/>` (tabs Versions/Properties; header с latest-badge; Versions-таблица: Version / Model Object (URI mono) / Aliases (chips) / Properties (compact JSON)). `<LinkVersionDialog/>` (modal: version (default = max+1) / modelObject required / aliases comma-separated). CatalogExplorer wire: click model в tree → ModelDetailPane; Link Version → optimistic add в `linkedVersions` state (паттерн как U2.5 assignments + U3 createdCatalogs + U5 ownerOverrides). Закрыто: B8, B9, C9 (link). Unlink/edit version — U6.2.
