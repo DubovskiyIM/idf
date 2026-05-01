@@ -36,6 +36,11 @@ export const DOMAIN_NAME = "Gravitino — metadata catalog";
  * NESTED_INTENTS — список intent-id, для которых generic handler не
  * справится (modify nested field, не whole-entity replace). Для них
  * собираем full-entity overwrite через α:"add" с тем же id.
+ *
+ * U-fix-toggle-tabs: enable* и disable* intents удалены — их нет в
+ * imported.js (Gravitino REST API не имеет таких endpoints). Toggle
+ * In-Use идёт через alterMetalake и alterCatalog (PUT с full body) —
+ * передаём inUse и enabled override в context.
  */
 const NESTED_INTENTS = new Set([
   "setOwner",
@@ -43,8 +48,10 @@ const NESTED_INTENTS = new Set([
   "associatePoliciesForObject",
   "grantRoleToUser",
   "grantRoleToGroup",
-  "enableMetalake", "disableMetalake",
-  "enableCatalog", "disableCatalog",
+  "alterMetalake",
+  "alterCatalog",
+  "alterSchema",
+  "alterTable",
   "linkModelVersion",
   "deleteModelVersion",
   "updateModelVersionAlias",
@@ -100,15 +107,28 @@ export function buildEffects(intentId, ctx = {}) {
     return [makeEffect("groups", "add", intentId, { ...ctx.group, roles: ctx.roles || [] })];
   }
 
-  if (intentId === "enableMetalake" || intentId === "disableMetalake") {
+  // alterMetalake / alterCatalog / alterSchema / alterTable — generic
+  // overwrite c merged overrides (например {inUse: true} / {enabled: false}).
+  // ctx: { entity, ...overrides }.
+  if (intentId === "alterMetalake") {
     if (!ctx.entity) return null;
-    const inUse = intentId === "enableMetalake";
-    return [makeEffect("metalakes", "add", intentId, { ...ctx.entity, inUse })];
+    const { entity, ...overrides } = ctx;
+    return [makeEffect("metalakes", "add", intentId, { ...entity, ...overrides })];
   }
-  if (intentId === "enableCatalog" || intentId === "disableCatalog") {
+  if (intentId === "alterCatalog") {
     if (!ctx.entity) return null;
-    const enabled = intentId === "enableCatalog";
-    return [makeEffect("catalogs", "add", intentId, { ...ctx.entity, enabled })];
+    const { entity, ...overrides } = ctx;
+    return [makeEffect("catalogs", "add", intentId, { ...entity, ...overrides })];
+  }
+  if (intentId === "alterSchema") {
+    if (!ctx.entity) return null;
+    const { entity, ...overrides } = ctx;
+    return [makeEffect("schemas", "add", intentId, { ...entity, ...overrides })];
+  }
+  if (intentId === "alterTable") {
+    if (!ctx.entity) return null;
+    const { entity, ...overrides } = ctx;
+    return [makeEffect("tables", "add", intentId, { ...entity, ...overrides })];
   }
 
   if (intentId === "linkModelVersion") {

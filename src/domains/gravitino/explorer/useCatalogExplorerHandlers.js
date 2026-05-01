@@ -80,10 +80,12 @@ export function useCatalogExplorerHandlers({
   const handleToggleEnabled = (catalogId, next) => {
     const c = allCatalogs.find(x => x.id === catalogId);
     if (!c) return;
+    // U-fix-toggle-tabs: enableCatalog/disableCatalog не существуют в
+    // imported.js. alterCatalog (PUT full body) + enabled override.
     exec({
-      intent: next ? "enableCatalog" : "disableCatalog",
+      intent: "alterCatalog",
       params: { metalake: metalake?.name, catalog: c.name },
-      context: { entity: c },
+      context: { entity: c, enabled: next },
     });
     toast(`Catalog ${next ? "включён" : "приостановлен"}`, next ? "success" : "warning");
   };

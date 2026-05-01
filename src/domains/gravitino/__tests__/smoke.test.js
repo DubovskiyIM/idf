@@ -170,11 +170,25 @@ describe("gravitino domain — Stage 1 baseline", () => {
     expect(eff[0].target).toBe("catalogs");
   });
 
-  it("buildEffects: enableCatalog/disableCatalog меняют enabled", async () => {
+  it("buildEffects: alterCatalog → replace c overrides (enabled toggle)", async () => {
     const { buildEffects } = await import("../domain.js");
     const entity = { id: "c1", name: "hive", enabled: false };
-    expect(buildEffects("enableCatalog",  { entity })[0].context.enabled).toBe(true);
-    expect(buildEffects("disableCatalog", { entity })[0].context.enabled).toBe(false);
+    const eff = buildEffects("alterCatalog", { entity, enabled: true });
+    expect(eff).toHaveLength(1);
+    expect(eff[0].alpha).toBe("add");
+    expect(eff[0].target).toBe("catalogs");
+    expect(eff[0].context.enabled).toBe(true);
+    expect(eff[0].context.id).toBe("c1");
+  });
+
+  it("buildEffects: alterMetalake → replace c overrides (inUse toggle)", async () => {
+    const { buildEffects } = await import("../domain.js");
+    const entity = { id: "m1", name: "prod", inUse: true };
+    const eff = buildEffects("alterMetalake", { entity, inUse: false });
+    expect(eff).toHaveLength(1);
+    expect(eff[0].target).toBe("metalakes");
+    expect(eff[0].context.inUse).toBe(false);
+    expect(eff[0].context.id).toBe("m1");
   });
 
   it("buildEffects: cancelJob → add c status=cancelled, endTime=now", async () => {
