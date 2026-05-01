@@ -90,6 +90,12 @@ registerMetaCanvases();
 import CatalogExplorer from "./domains/gravitino/explorer/CatalogExplorer.jsx";
 registerCanvas("metalake_workspace", CatalogExplorer);
 
+// Gravitino metalake_list canvas (U5.5 — host-rendered MetalakesHub).
+// Заменил SDK dataGrid из U1: даёт нам Owner avatar+edit / In-Use toggle /
+// Delete с typed-name ConfirmDialog (B1 metalake-side + C3 metalake).
+import MetalakesHub from "./domains/gravitino/explorer/MetalakesHub.jsx";
+registerCanvas("metalake_list", MetalakesHub);
+
 // Gravitino nav-hubs (U2.6 — A6/A7): top-nav 6→3 (Metalakes / Access / Compliance)
 import AccessHub from "./domains/gravitino/explorer/AccessHub.jsx";
 import ComplianceHub from "./domains/gravitino/explorer/ComplianceHub.jsx";
