@@ -62,15 +62,35 @@ const KIND_ICON = {
   function: "𝑓",
 };
 
+const STORAGE_KEY = "gravitino-tree-expanded";
+
+function loadExpanded() {
+  if (typeof localStorage === "undefined") return new Set();
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return new Set();
+    const arr = JSON.parse(raw);
+    return new Set(Array.isArray(arr) ? arr : []);
+  } catch { return new Set(); }
+}
+
+function saveExpanded(set) {
+  if (typeof localStorage === "undefined") return;
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify([...set]));
+  } catch { /* quota / private mode */ }
+}
+
 export default function CatalogTree({ catalogs = [], world = {}, metalakeId, onSelect = () => {} }) {
   const [activeTab, setActiveTab] = useState("relational");
   const [search, setSearch] = useState("");
-  const [expanded, setExpanded] = useState(() => new Set());
+  const [expanded, setExpanded] = useState(loadExpanded);
 
   const toggle = (nodeId) => setExpanded(prev => {
     const next = new Set(prev);
     if (next.has(nodeId)) next.delete(nodeId);
     else next.add(nodeId);
+    saveExpanded(next);
     return next;
   });
 

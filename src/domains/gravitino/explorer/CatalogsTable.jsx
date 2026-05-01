@@ -10,6 +10,7 @@
  */
 import { useState } from "react";
 import AssociatePopover from "./AssociatePopover.jsx";
+import EmptyState from "./EmptyState.jsx";
 
 export default function CatalogsTable({
   catalogs = [],
@@ -19,6 +20,7 @@ export default function CatalogsTable({
   onAssociate = () => {},
   onCreate = () => {},
   onSetOwner = () => {},
+  onDelete = () => {},
 }) {
   const [popover, setPopover] = useState(null); // { catalogId, type: "tags"|"policies" }
 
@@ -41,9 +43,13 @@ export default function CatalogsTable({
     <>
       <Header />
       {catalogs.length === 0 ? (
-        <div style={{ padding: 40, textAlign: "center", color: "var(--idf-text-muted)", fontSize: 13 }}>
-          Нет catalogs в этом metalake
-        </div>
+        <EmptyState
+          icon="catalogs"
+          title="Нет catalogs в этом metalake"
+          description="Создайте первый catalog для подключения к источнику данных."
+          actionLabel="+ Create Catalog"
+          onAction={onCreate}
+        />
       ) : (
     <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13, color: "var(--idf-text)" }}>
       <thead>
@@ -55,6 +61,7 @@ export default function CatalogsTable({
           <th style={cellStyle}>Comment</th>
           <th style={cellStyle}>Tags</th>
           <th style={cellStyle}>Policies</th>
+          <th style={{ ...cellStyle, textAlign: "right" }}>Actions</th>
         </tr>
       </thead>
       <tbody>
@@ -132,6 +139,19 @@ export default function CatalogsTable({
                   />
                 </FloatingPopover>
               )}
+            </td>
+            <td style={{ ...cellStyle, textAlign: "right" }}>
+              <button
+                type="button"
+                onClick={() => onDelete(cat)}
+                title="Delete catalog"
+                style={{
+                  padding: "4px 8px", fontSize: 11,
+                  border: "1px solid #FF3E1D", borderRadius: 4,
+                  background: "transparent", color: "#FF3E1D",
+                  cursor: "pointer",
+                }}
+              >Delete</button>
             </td>
           </tr>
         ))}
