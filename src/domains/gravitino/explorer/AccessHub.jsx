@@ -11,6 +11,10 @@
  * (α:'add' с тем же id) на users/groups/roles. Локальные grantedRoles +
  * roleOwnerOverrides удалены — display прямо из world.{users,groups,roles};
  * fold обновляет мир после exec.
+ *
+ * U-edit-flows: Edit Role reuse single CreateRoleDialog instance с prop
+ * `initial`. Submit с preserved id/owner/audit → тот же createRole intent
+ * делает overwrite by id. Placeholder toast «Edit Role — U-iam2c» удалён.
  */
 import { useState } from "react";
 import TwoPaneLayout from "./TwoPaneLayout.jsx";
@@ -35,6 +39,7 @@ function Inner({ world = {}, exec = () => {}, viewer }) {
   const [active, setActive] = useState("users");
   const [grantTarget, setGrantTarget] = useState(null);
   const [createRoleOpen, setCreateRoleOpen] = useState(false);
+  const [editRoleTarget, setEditRoleTarget] = useState(null);
   const [roleOwnerTarget, setRoleOwnerTarget] = useState(null);
 
   const metalakeName = (world.metalakes || [])[0]?.name || "default";
@@ -105,27 +110,29 @@ function Inner({ world = {}, exec = () => {}, viewer }) {
         <RolesTable
           roles={roles}
           onCreate={() => setCreateRoleOpen(true)}
-          onEdit={(r) => toast(`Edit Role ${r.name} — U-iam2c`, "info")}
+          onEdit={(r) => setEditRoleTarget(r)}
           onDelete={onDelete("Role")}
           onSetOwner={(role) => setRoleOwnerTarget(role)}
         />
       )}
 
       <CreateRoleDialog
-        visible={createRoleOpen}
-        onClose={() => setCreateRoleOpen(false)}
+        visible={createRoleOpen || !!editRoleTarget}
+        initial={editRoleTarget}
+        onClose={() => { setCreateRoleOpen(false); setEditRoleTarget(null); }}
         onSubmit={(payload) => {
+          const isEdit = !!editRoleTarget;
           exec({
             intent: "createRole",
             params: { metalake: metalakeName },
             context: {
               ...payload,
-              owner: viewer?.name || "ui",
-              audit: { creator: viewer?.name || "ui", createTime: new Date().toISOString() },
+              owner: payload.owner || viewer?.name || "ui",
+              audit: payload.audit || { creator: viewer?.name || "ui", createTime: new Date().toISOString() },
             },
           });
-          toast(`Role «${payload.name}» создан`, "success");
-          setCreateRoleOpen(false);
+          toast(isEdit ? `Role «${payload.name}» обновлён` : `Role «${payload.name}» создан`, "success");
+          setCreateRoleOpen(false); setEditRoleTarget(null);
         }}
       />
       <GrantRoleDialog

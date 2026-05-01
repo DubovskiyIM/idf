@@ -6,6 +6,11 @@
  * реальный exec({intent, params, context}). Generic effect handler в SDK
  * применяет intent.particles.effects (Tag/Policy с op=replace|remove) — fold
  * обновляет world.tags / world.policies. Локальный optimistic state удалён.
+ *
+ * U-edit-flows: Edit Tag / Edit Policy reuse тот же dialog instance с prop
+ * `initial` (entity-target). Submit передаёт payload с preserved id → тот
+ * же createTag/createPolicy intent → generic SDK handler делает overwrite
+ * by id. Placeholder toasts «Edit X — U-iam2c» удалены.
  */
 import { useState } from "react";
 import TwoPaneLayout from "./TwoPaneLayout.jsx";
@@ -30,6 +35,8 @@ function Inner({ world = {}, exec = () => {}, viewer }) {
   const [active, setActive] = useState("tags");
   const [createTagOpen, setCreateTagOpen] = useState(false);
   const [createPolicyOpen, setCreatePolicyOpen] = useState(false);
+  const [editTagTarget, setEditTagTarget] = useState(null);
+  const [editPolicyTarget, setEditPolicyTarget] = useState(null);
 
   // Метаlake-name берём из первого metalake в world (в реальной gravitino UI
   // selector или URL-param). В заглушечном domain используется единственный.
@@ -52,7 +59,7 @@ function Inner({ world = {}, exec = () => {}, viewer }) {
         <TagsTable
           tags={world.tags || []}
           onCreate={() => setCreateTagOpen(true)}
-          onEdit={(t) => toast(`Edit Tag ${t.name} — U-iam2c`, "info")}
+          onEdit={(t) => setEditTagTarget(t)}
           onDelete={onDelete("Tag")}
         />
       )}
@@ -60,42 +67,46 @@ function Inner({ world = {}, exec = () => {}, viewer }) {
         <PoliciesTable
           policies={world.policies || []}
           onCreate={() => setCreatePolicyOpen(true)}
-          onEdit={(p) => toast(`Edit Policy ${p.name} — U-iam2c`, "info")}
+          onEdit={(p) => setEditPolicyTarget(p)}
           onView={(p) => toast(`View Policy ${p.name}`, "info")}
           onDelete={onDelete("Policy")}
         />
       )}
 
       <CreateTagDialog
-        visible={createTagOpen}
-        onClose={() => setCreateTagOpen(false)}
+        visible={createTagOpen || !!editTagTarget}
+        initial={editTagTarget}
+        onClose={() => { setCreateTagOpen(false); setEditTagTarget(null); }}
         onSubmit={(payload) => {
+          const isEdit = !!editTagTarget;
           exec({
             intent: "createTag",
             params: { metalake: metalakeName },
             context: {
               ...payload,
-              audit: { creator: viewer?.name || "ui", createTime: new Date().toISOString() },
+              audit: payload.audit || { creator: viewer?.name || "ui", createTime: new Date().toISOString() },
             },
           });
-          toast(`Tag «${payload.name}» создан`, "success");
-          setCreateTagOpen(false);
+          toast(isEdit ? `Tag «${payload.name}» обновлён` : `Tag «${payload.name}» создан`, "success");
+          setCreateTagOpen(false); setEditTagTarget(null);
         }}
       />
       <CreatePolicyDialog
-        visible={createPolicyOpen}
-        onClose={() => setCreatePolicyOpen(false)}
+        visible={createPolicyOpen || !!editPolicyTarget}
+        initial={editPolicyTarget}
+        onClose={() => { setCreatePolicyOpen(false); setEditPolicyTarget(null); }}
         onSubmit={(payload) => {
+          const isEdit = !!editPolicyTarget;
           exec({
             intent: "createPolicy",
             params: { metalake: metalakeName },
             context: {
               ...payload,
-              audit: { creator: viewer?.name || "ui", createTime: new Date().toISOString() },
+              audit: payload.audit || { creator: viewer?.name || "ui", createTime: new Date().toISOString() },
             },
           });
-          toast(`Policy «${payload.name}» создана`, "success");
-          setCreatePolicyOpen(false);
+          toast(isEdit ? `Policy «${payload.name}» обновлена` : `Policy «${payload.name}» создана`, "success");
+          setCreatePolicyOpen(false); setEditPolicyTarget(null);
         }}
       />
     </TwoPaneLayout>
