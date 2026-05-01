@@ -64,7 +64,7 @@
     "@intent-driven/importer-openapi": "^0.15.0",
     "@intent-driven/llm-bridge": "^0.4.1",
     "@intent-driven/llm-subprocess": "^0.2.1",
-    "@intent-driven/renderer": "^0.61.0",
+    "@intent-driven/renderer": "^0.62.0",
     "@mantine/core": "^9.0.1",
     "@mantine/dates": "^9.0.1",
     "@mantine/hooks": "^9.0.1",
