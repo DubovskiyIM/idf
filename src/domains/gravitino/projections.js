@@ -267,18 +267,16 @@ export const PROJECTIONS = {
         },
       ],
     }),
-  // group_detail — host-rendered (U-iam, B13).
-  // Canvas <GroupDetailCanvas/> читает routeParams.groupId и передаёт group +
-  // users в GroupDetailPane (Members/Roles tabs + add/remove членов).
-  group_detail: {
-    name: "Group",
-    kind: "canvas",
-    mainEntity: "Group",
-    entities: ["Group", "User"],
-    idParam: "groupId",
-    witnesses: ["name"],
-    body: { kind: "canvas", canvasId: "group_detail" },
-  },
+  // group_detail — derived (U-derive Phase 3.10). GroupDetailCanvas + Pane удалены.
+  // SDK detail с roles auto-rendered через chipList primitive (Stage 7 enrichment),
+  // audit через propertyPopover. UX regression: Members tab убран — был
+  // optimistic-only (Group ontology не имеет members field, нет backend
+  // intent'ов addGroupMember/removeGroupMember). Восстановление — после
+  // ontology extension + intent'ов в отдельном PR.
+  group_detail: detail("Group", "Group",
+    ["name", "roles", "audit"],
+    [],
+    "groupId"),
 
   // ═══ Role ══════════════════════════════════════════════════════════════════
   // securableObjects — matrix, только на detail. properties — json,
