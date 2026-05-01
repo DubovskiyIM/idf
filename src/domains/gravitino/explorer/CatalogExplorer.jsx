@@ -19,6 +19,7 @@ import TableDetailPane from "./TableDetailPane.jsx";
 import { ToastProvider, useToast } from "./Toast.jsx";
 import TopicDetailPane from "./TopicDetailPane.jsx";
 import { useEntityOverrides } from "./useEntityOverrides.js";
+import { useModelVersionOverrides } from "./useModelVersionOverrides.js";
 import { makeTreeSelectHandler } from "./useTreeSelection.js";
 
 export default function CatalogExplorer(props) {
@@ -47,9 +48,10 @@ function CatalogExplorerInner({ world = {}, routeParams, ctx }) {
   const [selectedFileset, setSelectedFileset] = useState(null);
   const [selectedFunction, setSelectedFunction] = useState(null);
   const [selectedTopic, setSelectedTopic] = useState(null);
-  // U6.1: optimistic ModelVersion-add (без backend exec — реальный intent linkModelVersion в U6.5).
+  // U6.1 + U-detail-polish: optimistic ModelVersion link / unlink / aliases-edit
+  // (backend exec в U6.5 — здесь только client-state через хук).
   const [linkingForModel, setLinkingForModel] = useState(null);
-  const [linkedVersions, setLinkedVersions] = useState([]);
+  const versionOv = useModelVersionOverrides();
   // U2.5: optimistic UI-state для tags/policies assignments per catalog.
   const [assignments, setAssignments] = useState({});
 
@@ -137,15 +139,15 @@ function CatalogExplorerInner({ world = {}, routeParams, ctx }) {
     ? Math.max(
         0,
         ...((world.model_versions || []).filter(v => v.modelId === linkingForModel).map(v => v.version || 0)),
-        ...linkedVersions.filter(v => v.modelId === linkingForModel).map(v => v.version || 0),
+        ...versionOv.linkedVersions.filter(v => v.modelId === linkingForModel).map(v => v.version || 0),
       ) + 1
     : 1;
 
   const handleLinkVersion = ({ version, modelObject, aliases }) => {
-    setLinkedVersions(prev => [...prev, {
+    versionOv.link({
       id: `mv_new_${Date.now()}`, modelId: linkingForModel,
       version, modelObject, aliases, properties: {},
-    }]);
+    });
     setLinkingForModel(null);
   };
 
@@ -183,19 +185,15 @@ function CatalogExplorerInner({ world = {}, routeParams, ctx }) {
     if (selectedFunction) return <FunctionDetailPane function={selectedFunction} />;
     if (selectedTopic)    return <TopicDetailPane topic={selectedTopic} />;
     if (selectedFileset)  return <FilesetDetailPane fileset={selectedFileset} world={world} />;
-    if (selectedModel) {
-      const mergedWorld = {
-        ...world,
-        model_versions: [...(world.model_versions || []), ...linkedVersions],
-      };
-      return (
-        <ModelDetailPane
-          model={selectedModel}
-          world={mergedWorld}
-          onLinkVersion={() => setLinkingForModel(selectedModel.id)}
-        />
-      );
-    }
+    if (selectedModel) return (
+      <ModelDetailPane
+        model={selectedModel}
+        world={{ ...world, model_versions: versionOv.applyTo(world.model_versions || []) }}
+        onLinkVersion={() => setLinkingForModel(selectedModel.id)}
+        onUnlinkVersion={(id) => { versionOv.unlink(id); toast(`Version unlinked`, "warning"); }}
+        onEditAliases={(id, aliases) => { versionOv.editAliases(id, aliases); toast(`Aliases обновлены`, "success"); }}
+      />
+    );
     const assocFor = (kind, ov) => (id, type, names) => {
       ov.setAssoc(id, type, names);
       toast(`${kind} ${type === "tags" ? "tag" : "policy"} обновлён`, "success");
