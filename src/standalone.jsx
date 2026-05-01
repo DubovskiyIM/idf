@@ -99,10 +99,10 @@ registerCanvas("access_hub", AccessHub);
 registerCanvas("compliance_hub", ComplianceHub);
 registerCanvas("jobs_hub", JobsHub);
 
-// Gravitino IAM detail-canvases (U-iam — B12/B13)
-import RoleDetailCanvas from "./domains/gravitino/explorer/RoleDetailCanvas.jsx";
+// Gravitino IAM detail-canvases (U-iam — B13). role_detail dropped in Phase 3.8
+// (SDK detail с permissionMatrix). group_detail остаётся canvas — Members tab
+// требует interactive add/remove + filter.
 import GroupDetailCanvas from "./domains/gravitino/explorer/GroupDetailCanvas.jsx";
-registerCanvas("role_detail", RoleDetailCanvas);
 registerCanvas("group_detail", GroupDetailCanvas);
 
 // Домены с переключением адаптера
