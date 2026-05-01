@@ -8,8 +8,8 @@
  * + 🗑 Unlink (ConfirmDialog с typed-version match).
  */
 import { useState } from "react";
+import { IllustratedEmptyState as EmptyState } from "@intent-driven/renderer";
 import ConfirmDialog from "./ConfirmDialog.jsx";
-import EmptyState from "./EmptyState.jsx";
 import Tabs from "./Tabs.jsx";
 
 const TABS = [

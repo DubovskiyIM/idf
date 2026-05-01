@@ -4,7 +4,7 @@
  * table + EmptyState; row-actions iconified (✎ / 🗑 / 🔑 grant-role).
  */
 import { useState } from "react";
-import EmptyState from "./EmptyState.jsx";
+import { IllustratedEmptyState as EmptyState, ColoredChip } from "@intent-driven/renderer";
 import ConfirmDialog from "./ConfirmDialog.jsx";
 
 function HeaderBar({ title, subtitle, actionLabel, onAction, search, onSearch, searchPlaceholder = "Search..." }) {
@@ -18,13 +18,6 @@ function HeaderBar({ title, subtitle, actionLabel, onAction, search, onSearch, s
         {actionLabel && <button type="button" onClick={onAction} style={primaryBtn}>{actionLabel}</button>}
       </div>
     </div>
-  );
-}
-
-function ChipColored({ name, color }) {
-  return (
-    <span style={{ display: "inline-block", padding: "3px 12px", borderRadius: 4, fontSize: 12, fontWeight: 600,
-      background: color || "rgba(100,120,247,0.18)", color: color ? "white" : "var(--idf-primary, #6478f7)" }}>{name}</span>
   );
 }
 
@@ -61,7 +54,7 @@ export function TagsTable({ tags = [], onCreate = () => {}, onEdit = () => {}, o
           <tbody>
             {filtered.map(t => (
               <tr key={t.id} style={{ borderBottom: "1px solid var(--idf-border, #e5e7eb)" }}>
-                <td style={cellStyle}><ChipColored name={t.name} color={t.color} /></td>
+                <td style={cellStyle}><ColoredChip text={t.name} color={t.color} /></td>
                 <td style={{ ...cellStyle, color: "var(--idf-text-muted)", fontSize: 12 }}>{fmtTime(t.audit?.createTime)}</td>
                 <td style={{ ...cellStyle, color: "var(--idf-text-muted)" }}>{t.comment || "—"}</td>
                 <td style={{ ...cellStyle, textAlign: "right", whiteSpace: "nowrap" }}>
@@ -108,7 +101,7 @@ export function PoliciesTable({ policies = [], onCreate = () => {}, onEdit = () 
           <tbody>
             {filtered.map(p => (
               <tr key={p.id} style={{ borderBottom: "1px solid var(--idf-border, #e5e7eb)" }}>
-                <td style={cellStyle}><ChipColored name={p.name} /></td>
+                <td style={cellStyle}><ColoredChip text={p.name} /></td>
                 <td style={{ ...cellStyle, color: "var(--idf-text-muted)", fontFamily: "monospace", fontSize: 12 }}>{p.policyType || "—"}</td>
                 <td style={{ ...cellStyle, color: "var(--idf-text-muted)" }}>{p.comment || "—"}</td>
                 <td style={{ ...cellStyle, textAlign: "right", whiteSpace: "nowrap" }}>

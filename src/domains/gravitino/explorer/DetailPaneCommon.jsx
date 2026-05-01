@@ -5,7 +5,7 @@
  * Вынесены отдельно ради LOC-budget'а в *DetailPane.jsx (<300 LOC).
  */
 import { useState } from "react";
-import AssociatePopover from "./AssociatePopover.jsx";
+import { AssociatePopover } from "@intent-driven/renderer";
 
 export function OwnerBlock({ owner, onSetOwner }) {
   if (!owner) {

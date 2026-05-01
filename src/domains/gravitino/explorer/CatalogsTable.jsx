@@ -9,8 +9,7 @@
  * лежит на caller (CatalogExplorer).
  */
 import { useState } from "react";
-import AssociatePopover from "./AssociatePopover.jsx";
-import EmptyState from "./EmptyState.jsx";
+import { AssociatePopover, IllustratedEmptyState as EmptyState } from "@intent-driven/renderer";
 
 export default function CatalogsTable({
   catalogs = [],
