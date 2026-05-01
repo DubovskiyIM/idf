@@ -6,8 +6,10 @@
  * Generic effect handler применяет particles.effects (Run/Template
  * op=replace) — fold обновляет world.jobs / world.job_templates.
  *
- * Остаётся optimistic (→ U-backend-exec-2): cancelJob — modify nested
- * status field, generic handler не справится.
+ * U-backend-exec-2: cancelJob через exec — custom buildEffects в
+ * gravitino/domain.js собирает full-entity overwrite (α:'add' с тем же
+ * id) на jobs коллекции c status=cancelled, endTime=now. Локальный
+ * cancelledIds Set удалён — display прямо из world.jobs.
  */
 import { useMemo, useState } from "react";
 import Tabs from "./Tabs.jsx";
@@ -24,28 +26,26 @@ const TABS = [
 export default function JobsHub({ world = {}, exec = () => {}, viewer }) {
   const [active, setActive] = useState("jobs");
   const [drawerJobId, setDrawerJobId] = useState(null);
-  // U-backend-exec-2: cancelJob — modify-nested на job.status.
-  const [cancelledIds, setCancelledIds] = useState(new Set());
   const [runJobOpen, setRunJobOpen] = useState(false);
   const [registerOpen, setRegisterOpen] = useState(false);
 
   const metalakeName = (world.metalakes || [])[0]?.name || "default";
 
-  const baseJobs = world.jobs || [];
-  const baseTemplates = world.job_templates || [];
-  const templates = baseTemplates;
+  const jobs = world.jobs || [];
+  const templates = world.job_templates || [];
   const templatesById = useMemo(() => Object.fromEntries(templates.map(t => [t.id, t])), [templates]);
-
-  const jobs = useMemo(
-    () => baseJobs.map(j => cancelledIds.has(j.id) ? { ...j, status: "cancelled" } : j),
-    [baseJobs, cancelledIds]
-  );
 
   const drawerJob = jobs.find(j => j.id === drawerJobId);
   const drawerTemplate = drawerJob ? templatesById[drawerJob.templateId] : null;
 
   const onCancel = (jobId) => {
-    setCancelledIds(prev => new Set(prev).add(jobId));
+    const j = jobs.find(x => x.id === jobId);
+    if (!j) { setDrawerJobId(null); return; }
+    exec({
+      intent: "cancelJob",
+      params: { metalake: metalakeName, jobId: j.jobId },
+      context: { entity: j },
+    });
     setDrawerJobId(null);
   };
 

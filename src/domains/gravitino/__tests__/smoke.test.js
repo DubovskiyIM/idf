@@ -146,4 +146,73 @@ describe("gravitino domain — Stage 1 baseline", () => {
     expect(proj.kind).toBe("canvas");
     expect(proj.body.canvasId).toBe("jobs_hub");
   });
+
+  // U-backend-exec-2: custom buildEffects для 11 modify-nested intents.
+  // Generic SDK handler не справится (modify nested field), поэтому
+  // используем α:"add" с тем же entity.id — applyEffect перезаписывает
+  // collections[type][id] = { ...ctx } (overwrite семантика).
+  it("buildEffects: setOwner возвращает add-effect c merged owner", async () => {
+    const { buildEffects } = await import("../domain.js");
+    const entity = { id: "m1", name: "prod", owner: "old@acme" };
+    const eff = buildEffects("setOwner", { entity, entityType: "metalakes", newOwnerName: "new@acme" });
+    expect(eff).toHaveLength(1);
+    expect(eff[0].alpha).toBe("add");
+    expect(eff[0].target).toBe("metalakes");
+    expect(eff[0].context.owner).toBe("new@acme");
+    expect(eff[0].context.id).toBe("m1");
+  });
+
+  it("buildEffects: associateTags → add c tags array", async () => {
+    const { buildEffects } = await import("../domain.js");
+    const entity = { id: "c1", name: "hive", tags: ["A"] };
+    const eff = buildEffects("associateTags", { entity, entityType: "catalogs", tags: ["A", "B"] });
+    expect(eff[0].context.tags).toEqual(["A", "B"]);
+    expect(eff[0].target).toBe("catalogs");
+  });
+
+  it("buildEffects: enableCatalog/disableCatalog меняют enabled", async () => {
+    const { buildEffects } = await import("../domain.js");
+    const entity = { id: "c1", name: "hive", enabled: false };
+    expect(buildEffects("enableCatalog",  { entity })[0].context.enabled).toBe(true);
+    expect(buildEffects("disableCatalog", { entity })[0].context.enabled).toBe(false);
+  });
+
+  it("buildEffects: cancelJob → add c status=cancelled, endTime=now", async () => {
+    const { buildEffects } = await import("../domain.js");
+    const entity = { id: "j1", jobId: "x", status: "running" };
+    const eff = buildEffects("cancelJob", { entity });
+    expect(eff[0].context.status).toBe("cancelled");
+    expect(eff[0].context.endTime).toBeTruthy();
+    expect(eff[0].target).toBe("jobs");
+  });
+
+  it("buildEffects: linkModelVersion → add new ModelVersion с auto-id", async () => {
+    const { buildEffects } = await import("../domain.js");
+    const eff = buildEffects("linkModelVersion", { version: { modelId: "m1", version: 3 } });
+    expect(eff[0].alpha).toBe("add");
+    expect(eff[0].target).toBe("model_versions");
+    expect(eff[0].context.id).toBeTruthy();
+    expect(eff[0].context.version).toBe(3);
+  });
+
+  it("buildEffects: deleteModelVersion → remove с versionId", async () => {
+    const { buildEffects } = await import("../domain.js");
+    const eff = buildEffects("deleteModelVersion", { versionId: "mv_5" });
+    expect(eff[0].alpha).toBe("remove");
+    expect(eff[0].target).toBe("model_versions");
+    expect(eff[0].context.id).toBe("mv_5");
+  });
+
+  it("buildEffects: grantRoleToUser → add User c merged roles", async () => {
+    const { buildEffects } = await import("../domain.js");
+    const eff = buildEffects("grantRoleToUser", { user: { id: "u1", name: "alice" }, roles: ["admin", "viewer"] });
+    expect(eff[0].target).toBe("users");
+    expect(eff[0].context.roles).toEqual(["admin", "viewer"]);
+    expect(eff[0].context.id).toBe("u1");
+  });
+
+  it("buildEffects: unknown intent returns null (generic fallback)", async () => {
+    const { buildEffects } = await import("../domain.js");
+    expect(buildEffects("createTag", { name: "x" })).toBeNull();
+  });
 });

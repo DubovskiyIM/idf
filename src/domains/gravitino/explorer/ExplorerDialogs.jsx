@@ -4,6 +4,9 @@
  *
  * Group: CreateCatalogDialog · OwnerDialogs (catalog/schema/table) · LinkVersionDialog
  * · ConfirmDialog (delete catalog).
+ *
+ * U-backend-exec-2: текущий owner читается прямо из world.{catalogs,schemas,
+ * tables} — после exec fold обновляет мир, optimistic-overrides не нужны.
  */
 import ConfirmDialog from "./ConfirmDialog.jsx";
 import CreateCatalogDialog from "./CreateCatalogDialog.jsx";
@@ -15,10 +18,10 @@ export default function ExplorerDialogs({
   // Create catalog
   creating, onCloseCreate, onSubmitCreate,
   // Owner dialogs (catalog/schema/table)
-  ownerDialogTarget, ownerOverrides, myCatalogsAll,
+  ownerDialogTarget, myCatalogsAll,
   onCloseOwnerDialog, onSubmitOwner,
-  schemaOwnerDialogTarget, schemaOv, onCloseSchemaOwner, onSubmitSchemaOwner,
-  tableOwnerDialogTarget, tableOv, onCloseTableOwner, onSubmitTableOwner,
+  schemaOwnerDialogTarget, onCloseSchemaOwner, onSubmitSchemaOwner,
+  tableOwnerDialogTarget, onCloseTableOwner, onSubmitTableOwner,
   // Link version
   linkingForModel, suggestedVersion, onCloseLinkVersion, onSubmitLinkVersion,
   // Delete confirm
@@ -34,19 +37,19 @@ export default function ExplorerDialogs({
       <OwnerDialogs users={world.users || []} groups={world.groups || []} items={[
         {
           id: ownerDialogTarget,
-          owner: ownerDialogTarget && (ownerOverrides[ownerDialogTarget] ?? myCatalogsAll.find(c => c.id === ownerDialogTarget)?.owner),
+          owner: ownerDialogTarget && myCatalogsAll.find(c => c.id === ownerDialogTarget)?.owner,
           onClose: onCloseOwnerDialog,
           onSubmit: onSubmitOwner,
         },
         {
           id: schemaOwnerDialogTarget,
-          owner: schemaOwnerDialogTarget && (schemaOv.ownerOverrides[schemaOwnerDialogTarget] ?? (world.schemas || []).find(s => s.id === schemaOwnerDialogTarget)?.owner),
+          owner: schemaOwnerDialogTarget && (world.schemas || []).find(s => s.id === schemaOwnerDialogTarget)?.owner,
           onClose: onCloseSchemaOwner,
           onSubmit: onSubmitSchemaOwner,
         },
         {
           id: tableOwnerDialogTarget,
-          owner: tableOwnerDialogTarget && (tableOv.ownerOverrides[tableOwnerDialogTarget] ?? (world.tables || []).find(t => t.id === tableOwnerDialogTarget)?.owner),
+          owner: tableOwnerDialogTarget && (world.tables || []).find(t => t.id === tableOwnerDialogTarget)?.owner,
           onClose: onCloseTableOwner,
           onSubmit: onSubmitTableOwner,
         },

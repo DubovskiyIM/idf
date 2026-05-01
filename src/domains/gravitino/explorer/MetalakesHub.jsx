@@ -1,20 +1,21 @@
 /**
  * MetalakesHub — canvas root для metalake_list (U5.5).
  *
- * Заменяет SDK dataGrid: state-management для inUseOverrides /
- * ownerOverrides, dialogs (SetOwner, typed-name Confirm),
+ * Заменяет SDK dataGrid: dialogs (SetOwner, typed-name Confirm),
  * inline toast (auto-dismiss 2.5s).
  *
  * Click name → navigate в /gravitino/metalake_workspace?metalakeId=<id>.
  *
- * U-backend-exec: Drop metalake через реальный exec({intent:"dropMetalake"}).
- * Generic effect handler применяет particles.effects (Metalake op=remove) —
- * fold обновляет world.metalakes. Локальный deletedIds-state удалён.
+ * U-backend-exec: Drop metalake через exec({intent:"dropMetalake"}) — generic
+ * handler применяет particles.effects (Metalake op=remove). Локальный
+ * deletedIds-state удалён.
  *
- * Остаётся optimistic (→ U-backend-exec-2): inUseOverrides (enable/disable
- * — modify nested boolean), ownerOverrides (setOwner — modify nested field).
+ * U-backend-exec-2: setOwner + enable/disable через exec — custom
+ * buildEffects в gravitino/domain.js собирает full-entity overwrite
+ * (α:'add' с тем же id) на metalakes коллекции. Локальные ownerOverrides
+ * / inUseOverrides удалены — fold обновляет world.metalakes напрямую.
  */
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import MetalakesTable from "./MetalakesTable.jsx";
 import SetOwnerDialog from "./SetOwnerDialog.jsx";
 
@@ -23,8 +24,6 @@ export default function MetalakesHub({ world = {}, ctx, navigate, exec = () => {
   const users = world.users || [];
   const groups = world.groups || [];
 
-  const [ownerOverrides, setOwnerOverrides] = useState({});
-  const [inUseOverrides, setInUseOverrides] = useState({});
   const [setOwnerTarget, setSetOwnerTarget] = useState(null);
   const [deleteTarget, setDeleteTarget] = useState(null);
   const [toast, setToast] = useState(null); // { msg, tone }
@@ -39,14 +38,6 @@ export default function MetalakesHub({ world = {}, ctx, navigate, exec = () => {
     return () => clearTimeout(t);
   }, [toast]);
 
-  const metalakes = useMemo(() => {
-    return baseMetalakes.map(m => ({
-      ...m,
-      owner: ownerOverrides[m.id] ?? m.owner,
-      inUse: inUseOverrides[m.id] !== undefined ? inUseOverrides[m.id] : m.inUse,
-    }));
-  }, [baseMetalakes, ownerOverrides, inUseOverrides]);
-
   const onSelect = (m) => {
     // Navigate в workspace через V2Shell navigate prop (если доступен)
     // либо ctx.navigate, либо window.location fallback.
@@ -60,18 +51,30 @@ export default function MetalakesHub({ world = {}, ctx, navigate, exec = () => {
   };
 
   const onToggleInUse = (id, next) => {
-    setInUseOverrides(prev => ({ ...prev, [id]: next }));
+    const m = baseMetalakes.find(x => x.id === id);
+    if (!m) return;
+    exec({
+      intent: next ? "enableMetalake" : "disableMetalake",
+      params: { name: m.name },
+      context: { entity: m },
+    });
     showToast(`Metalake ${next ? "включён" : "приостановлен"}`, next ? "success" : "warning");
   };
 
   const handleSetOwner = ({ name }) => {
     if (!setOwnerTarget) return;
-    setOwnerOverrides(prev => ({ ...prev, [setOwnerTarget]: name }));
+    const m = baseMetalakes.find(x => x.id === setOwnerTarget);
+    if (!m) return;
+    exec({
+      intent: "setOwner",
+      params: { metalake: m.name, metadataObjectType: "metalake", metadataObjectFullName: m.name },
+      context: { entity: m, entityType: "metalakes", newOwnerName: name },
+    });
     showToast(`Owner назначен: ${name}`, "success");
     setSetOwnerTarget(null);
   };
 
-  const targetMetalake = setOwnerTarget && metalakes.find(m => m.id === setOwnerTarget);
+  const targetMetalake = setOwnerTarget && baseMetalakes.find(m => m.id === setOwnerTarget);
 
   return (
     <div style={{ padding: 16, height: "100%", overflow: "auto", color: "var(--idf-text)" }}>
@@ -79,7 +82,7 @@ export default function MetalakesHub({ world = {}, ctx, navigate, exec = () => {
         Metalakes
       </h2>
       <MetalakesTable
-        metalakes={metalakes}
+        metalakes={baseMetalakes}
         onSelect={onSelect}
         onSetOwner={(id) => setSetOwnerTarget(id)}
         onToggleInUse={onToggleInUse}
