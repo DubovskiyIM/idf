@@ -17,18 +17,33 @@ export default function CatalogsTable({
   availablePolicies = [],
   onSelect = () => {},
   onAssociate = () => {},
+  onCreate = () => {},
 }) {
   const [popover, setPopover] = useState(null); // { catalogId, type: "tags"|"policies" }
 
-  if (catalogs.length === 0) {
-    return (
-      <div style={{ padding: 40, textAlign: "center", color: "var(--idf-text-muted)", fontSize: 13 }}>
-        Нет catalogs в этом metalake
-      </div>
-    );
-  }
+  const Header = () => (
+    <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: 12 }}>
+      <button
+        type="button"
+        onClick={onCreate}
+        style={{
+          padding: "6px 14px", fontSize: 12, fontWeight: 600,
+          border: "1px solid var(--idf-primary, #6478f7)",
+          background: "var(--idf-primary, #6478f7)", color: "white",
+          borderRadius: 4, cursor: "pointer",
+        }}
+      >+ Create Catalog</button>
+    </div>
+  );
 
   return (
+    <>
+      <Header />
+      {catalogs.length === 0 ? (
+        <div style={{ padding: 40, textAlign: "center", color: "var(--idf-text-muted)", fontSize: 13 }}>
+          Нет catalogs в этом metalake
+        </div>
+      ) : (
     <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13, color: "var(--idf-text)" }}>
       <thead>
         <tr style={{ background: "var(--idf-surface, #f3f4f6)" }}>
@@ -84,6 +99,8 @@ export default function CatalogsTable({
         ))}
       </tbody>
     </table>
+      )}
+    </>
   );
 }
 
