@@ -9,6 +9,7 @@ import { UsersTable, GroupsTable, RolesTable } from "./iamTables.jsx";
 import { ToastProvider, useToast } from "./Toast.jsx";
 import CreateRoleDialog from "./CreateRoleDialog.jsx";
 import GrantRoleDialog from "./GrantRoleDialog.jsx";
+import SetOwnerDialog from "./SetOwnerDialog.jsx";
 
 const SECTIONS = [
   { key: "users",  label: "Users" },
@@ -28,6 +29,8 @@ function Inner({ world = {} }) {
   const [createRoleOpen, setCreateRoleOpen] = useState(false);
   const [createdRoles, setCreatedRoles] = useState([]);
   const [grantedRoles, setGrantedRoles] = useState({}); // {id: [roles]}
+  const [roleOwnerTarget, setRoleOwnerTarget] = useState(null); // role | null
+  const [roleOwnerOverrides, setRoleOwnerOverrides] = useState({}); // {roleId: ownerName}
 
   const filterDel = (xs) => (xs || []).filter(x => !deletedIds.has(x.id));
   const onDelete = (kind) => (entity) => {
@@ -35,7 +38,8 @@ function Inner({ world = {} }) {
     toast(`${kind} «${entity.name}» удалён`, "error");
   };
 
-  const allRoles = [...(world.roles || []), ...createdRoles];
+  const allRoles = [...(world.roles || []), ...createdRoles]
+    .map(r => roleOwnerOverrides[r.id] !== undefined ? { ...r, owner: roleOwnerOverrides[r.id] } : r);
   const enrichedUsers = (world.users || []).map(u => ({ ...u, roles: grantedRoles[u.id] ?? u.roles ?? [] }));
   const enrichedGroups = (world.groups || []).map(g => ({ ...g, roles: grantedRoles[g.id] ?? g.roles ?? [] }));
 
@@ -63,6 +67,7 @@ function Inner({ world = {} }) {
           onCreate={() => setCreateRoleOpen(true)}
           onEdit={(r) => toast(`Edit Role ${r.name} — U-iam2c`, "info")}
           onDelete={onDelete("Role")}
+          onSetOwner={(role) => setRoleOwnerTarget(role)}
         />
       )}
 
@@ -90,6 +95,18 @@ function Inner({ world = {} }) {
           setGrantedRoles(prev => ({ ...prev, [grantTarget.id]: rolesList }));
           toast(`Roles обновлены для ${grantTarget.kind} ${grantTarget.name}`, "success");
           setGrantTarget(null);
+        }}
+      />
+      <SetOwnerDialog
+        visible={!!roleOwnerTarget}
+        currentOwner={roleOwnerTarget?.owner}
+        users={world.users || []}
+        groups={world.groups || []}
+        onClose={() => setRoleOwnerTarget(null)}
+        onSubmit={({ name }) => {
+          setRoleOwnerOverrides(prev => ({ ...prev, [roleOwnerTarget.id]: name }));
+          toast(`Owner role «${roleOwnerTarget.name}» назначен: ${name}`, "success");
+          setRoleOwnerTarget(null);
         }}
       />
     </TwoPaneLayout>
