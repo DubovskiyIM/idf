@@ -284,11 +284,14 @@ export function getSeedEffects() {
   USERS.forEach(u => ef("users", u));
 
   // ═══ Groups ═════════════════════════════════════════════════════════════
+  // members — массив user-names (matches Gravitino API shape:
+  // /metalakes/{m}/groups/{g}/members → list<string>). U-iam B13 — UI для
+  // add/remove members оптимистично; backend exec — отдельный flow (U-iam-b).
   const GROUPS = [
-    { id: "g_analytics",   name: "analytics",   roles: ["analyst", "data_viewer"],       audit: audit("system", 250) },
-    { id: "g_platform",    name: "platform",    roles: ["admin", "data_engineer"],       audit: audit("system", 300) },
-    { id: "g_finance",     name: "finance",     roles: ["finance_analyst", "data_viewer"], audit: audit("system", 200) },
-    { id: "g_ml",          name: "ml",          roles: ["data_engineer", "mlops"],       audit: audit("system", 180) },
+    { id: "g_analytics",   name: "analytics",   members: ["alice@acme", "eve@acme"],          roles: ["analyst", "data_viewer"],         audit: audit("system", 250) },
+    { id: "g_platform",    name: "platform",    members: ["alice@acme", "bob@acme", "charlie@acme"], roles: ["admin", "data_engineer"], audit: audit("system", 300) },
+    { id: "g_finance",     name: "finance",     members: ["diane@acme"],                       roles: ["finance_analyst", "data_viewer"], audit: audit("system", 200) },
+    { id: "g_ml",          name: "ml",          members: ["charlie@acme"],                     roles: ["data_engineer", "mlops"],         audit: audit("system", 180) },
   ];
   GROUPS.forEach(g => ef("groups", g));
 
