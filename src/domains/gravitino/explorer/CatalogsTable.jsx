@@ -18,6 +18,7 @@ export default function CatalogsTable({
   onSelect = () => {},
   onAssociate = () => {},
   onCreate = () => {},
+  onSetOwner = () => {},
 }) {
   const [popover, setPopover] = useState(null); // { catalogId, type: "tags"|"policies" }
 
@@ -50,6 +51,7 @@ export default function CatalogsTable({
           <th style={cellStyle}>Catalog Name</th>
           <th style={cellStyle}>Provider</th>
           <th style={cellStyle}>Type</th>
+          <th style={cellStyle}>Owner</th>
           <th style={cellStyle}>Comment</th>
           <th style={cellStyle}>Tags</th>
           <th style={cellStyle}>Policies</th>
@@ -64,6 +66,42 @@ export default function CatalogsTable({
             <td style={{ ...cellStyle, fontWeight: 500, cursor: "pointer" }} onClick={() => onSelect(cat)}>{cat.name}</td>
             <td style={cellStyle}>{cat.provider}</td>
             <td style={cellStyle}>{cat.type}</td>
+            <td style={cellStyle}>
+              {cat.owner ? (
+                <span style={{
+                  display: "inline-flex", alignItems: "center", gap: 4,
+                  fontSize: 12, color: "var(--idf-text)",
+                }}>
+                  <span style={{
+                    display: "inline-flex", alignItems: "center", justifyContent: "center",
+                    width: 18, height: 18, borderRadius: "50%",
+                    background: "var(--idf-primary, #6478f7)", color: "white", fontSize: 10, fontWeight: 600,
+                  }}>{cat.owner.slice(0, 1).toUpperCase()}</span>
+                  <span>{cat.owner}</span>
+                  <button
+                    type="button"
+                    onClick={() => onSetOwner(cat.id)}
+                    title="Set owner"
+                    aria-label="Edit owner"
+                    style={{
+                      background: "transparent", border: "none", cursor: "pointer",
+                      fontSize: 10, color: "var(--idf-text-muted)", padding: "0 4px",
+                    }}
+                  >✎</button>
+                </span>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => onSetOwner(cat.id)}
+                  style={{
+                    padding: "2px 8px", fontSize: 11,
+                    border: "1px dashed var(--idf-border, #e5e7eb)", borderRadius: 4,
+                    background: "transparent", color: "var(--idf-text-muted)",
+                    cursor: "pointer",
+                  }}
+                >+ Set Owner</button>
+              )}
+            </td>
             <td style={{ ...cellStyle, color: "var(--idf-text-muted)" }}>{cat.comment || "—"}</td>
             <td style={{ ...cellStyle, position: "relative" }}>
               <ChipList items={cat.tags || []} variant="tag" />

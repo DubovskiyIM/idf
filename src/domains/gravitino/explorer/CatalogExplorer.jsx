@@ -28,6 +28,7 @@ import CatalogTree from "./CatalogTree.jsx";
 import CatalogsTable from "./CatalogsTable.jsx";
 import CreateCatalogDialog from "./CreateCatalogDialog.jsx";
 import SchemaDetailPane from "./SchemaDetailPane.jsx";
+import SetOwnerDialog from "./SetOwnerDialog.jsx";
 import TableDetailPane from "./TableDetailPane.jsx";
 
 export default function CatalogExplorer({ world = {}, routeParams, ctx }) {
@@ -48,6 +49,10 @@ export default function CatalogExplorer({ world = {}, routeParams, ctx }) {
   // U3: optimistic created catalogs (без backend exec — реальный intent createCatalog в U3.5).
   const [creating, setCreating] = useState(false);
   const [createdCatalogs, setCreatedCatalogs] = useState([]);
+
+  // U5: optimistic owner overrides per catalog (без backend exec — реальный intent setCatalogOwner в U5b).
+  const [ownerDialogTarget, setOwnerDialogTarget] = useState(null); // catalogId | null
+  const [ownerOverrides, setOwnerOverrides] = useState({}); // { catalogId: ownerName }
 
   const handleCreate = (formData) => {
     const newCatalog = {
@@ -73,8 +78,11 @@ export default function CatalogExplorer({ world = {}, routeParams, ctx }) {
 
   const applyAssignments = (cat) => {
     const a = assignments[cat.id];
-    if (!a) return cat;
-    return { ...cat, tags: a.tags ?? cat.tags, policies: a.policies ?? cat.policies };
+    const ownerOv = ownerOverrides[cat.id];
+    let next = cat;
+    if (a) next = { ...next, tags: a.tags ?? next.tags, policies: a.policies ?? next.policies };
+    if (ownerOv !== undefined) next = { ...next, owner: ownerOv };
+    return next;
   };
 
   const onAssociate = (catalogId, type, names) => {
@@ -82,6 +90,12 @@ export default function CatalogExplorer({ world = {}, routeParams, ctx }) {
       ...prev,
       [catalogId]: { ...(prev[catalogId] || {}), [type]: names },
     }));
+  };
+
+  const handleSetOwner = ({ kind, name }) => {
+    if (!ownerDialogTarget) return;
+    setOwnerOverrides(prev => ({ ...prev, [ownerDialogTarget]: name }));
+    setOwnerDialogTarget(null);
   };
 
   // U4: при клике в tree разруливаем kind узла по world-коллекциям.
@@ -144,6 +158,7 @@ export default function CatalogExplorer({ world = {}, routeParams, ctx }) {
           onSelect={(cat) => { setSelectedCatalog(cat); setSelectedSchema(null); setSelectedTable(null); }}
           onAssociate={onAssociate}
           onCreate={() => setCreating(true)}
+          onSetOwner={(catalogId) => setOwnerDialogTarget(catalogId)}
         />
       </div>
     );
@@ -181,6 +196,17 @@ export default function CatalogExplorer({ world = {}, routeParams, ctx }) {
         visible={creating}
         onClose={() => setCreating(false)}
         onSubmit={handleCreate}
+      />
+      <SetOwnerDialog
+        visible={!!ownerDialogTarget}
+        currentOwner={ownerDialogTarget && (
+          ownerOverrides[ownerDialogTarget]
+          ?? myCatalogsAll.find(c => c.id === ownerDialogTarget)?.owner
+        )}
+        users={world.users || []}
+        groups={world.groups || []}
+        onClose={() => setOwnerDialogTarget(null)}
+        onSubmit={handleSetOwner}
       />
     </div>
   );

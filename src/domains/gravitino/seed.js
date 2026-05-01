@@ -50,18 +50,18 @@ export function getSeedEffects() {
 
   // ═══ Metalakes ══════════════════════════════════════════════════════════
   const METALAKES = [
-    { id: "m_prod",    name: "prod_lake",    comment: "Production metadata lake — регулируемые данные", properties: { env: "prod", "compliance.tier": "tier-1", "owner.team": "data-platform", "region": "eu-central-1" }, audit: audit("alice@acme", 120) },
-    { id: "m_staging", name: "staging_lake", comment: "Pre-prod staging для валидации schemas", properties: { env: "staging", "auto-promotion": "true", "retention.days": "30" }, audit: audit("bob@acme", 80) },
-    { id: "m_dev",     name: "dev_lake",     comment: "Development sandbox для экспериментов", properties: { env: "dev", "owner.team": "engineering" }, audit: audit("charlie@acme", 45) },
+    { id: "m_prod",    name: "prod_lake",    comment: "Production metadata lake — регулируемые данные", properties: { env: "prod", "compliance.tier": "tier-1", "owner.team": "data-platform", "region": "eu-central-1" }, owner: "alice@acme", audit: audit("alice@acme", 120) },
+    { id: "m_staging", name: "staging_lake", comment: "Pre-prod staging для валидации schemas", properties: { env: "staging", "auto-promotion": "true", "retention.days": "30" }, owner: "bob@acme", audit: audit("bob@acme", 80) },
+    { id: "m_dev",     name: "dev_lake",     comment: "Development sandbox для экспериментов", properties: { env: "dev", "owner.team": "engineering" }, owner: "engineering", audit: audit("charlie@acme", 45) },
   ];
   METALAKES.forEach(m => ef("metalakes", m));
 
   // ═══ Catalogs ════════════════════════════════════════════════════════════
   const CATALOGS = [
     // Prod
-    { id: "c_hive_prod",    name: "hive_warehouse",   type: "relational", provider: "hive",             comment: "Hive on S3 — analytics warehouse",            properties: { "uri": "thrift://hms.prod:9083", "warehouse.dir": "s3://prod-warehouse" }, tags: ["PII", "Financial"], policies: ["pii-mask", "retention-365d"], metalakeId: "m_prod", audit: audit("alice@acme", 90) },
-    { id: "c_iceberg_prod", name: "iceberg_lakehouse", type: "relational", provider: "lakehouse-iceberg", comment: "Iceberg REST catalog — ACID tables",         properties: { "uri": "https://iceberg-rest.prod", "catalog-type": "rest", "s3.bucket": "prod-iceberg" }, tags: ["GDPR"], policies: ["pii-mask"], metalakeId: "m_prod", audit: audit("alice@acme", 60) },
-    { id: "c_jdbc_prod",    name: "analytics_jdbc",   type: "relational", provider: "jdbc-postgresql",  comment: "Postgres через JDBC — operational data",      properties: { "jdbc.url": "jdbc:postgresql://prod-pg:5432/analytics", "jdbc.user": "readonly" }, tags: ["Internal"], policies: [], metalakeId: "m_prod", audit: audit("alice@acme", 45) },
+    { id: "c_hive_prod",    name: "hive_warehouse",   type: "relational", provider: "hive",             comment: "Hive on S3 — analytics warehouse",            properties: { "uri": "thrift://hms.prod:9083", "warehouse.dir": "s3://prod-warehouse" }, tags: ["PII", "Financial"], policies: ["pii-mask", "retention-365d"], owner: "alice@acme", metalakeId: "m_prod", audit: audit("alice@acme", 90) },
+    { id: "c_iceberg_prod", name: "iceberg_lakehouse", type: "relational", provider: "lakehouse-iceberg", comment: "Iceberg REST catalog — ACID tables",         properties: { "uri": "https://iceberg-rest.prod", "catalog-type": "rest", "s3.bucket": "prod-iceberg" }, tags: ["GDPR"], policies: ["pii-mask"], owner: "analytics", metalakeId: "m_prod", audit: audit("alice@acme", 60) },
+    { id: "c_jdbc_prod",    name: "analytics_jdbc",   type: "relational", provider: "jdbc-postgresql",  comment: "Postgres через JDBC — operational data",      properties: { "jdbc.url": "jdbc:postgresql://prod-pg:5432/analytics", "jdbc.user": "readonly" }, tags: ["Internal"], policies: [], owner: "bob@acme", metalakeId: "m_prod", audit: audit("alice@acme", 45) },
     { id: "c_fs_prod",      name: "raw_landing",      type: "fileset",    provider: "hadoop",           comment: "S3 landing zone для external feeds",           properties: { "location": "s3://prod-landing", "default.location-provider": "s3" }, metalakeId: "m_prod", audit: audit("alice@acme", 100) },
     // Staging
     { id: "c_iceberg_stg",  name: "iceberg_staging",  type: "relational", provider: "lakehouse-iceberg", comment: "Staging Iceberg — promotion pipeline",       properties: { "uri": "https://iceberg-rest.staging" }, metalakeId: "m_staging", audit: audit("bob@acme", 70) },

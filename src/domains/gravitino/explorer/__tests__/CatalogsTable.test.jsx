@@ -55,4 +55,24 @@ describe("CatalogsTable", () => {
     fireEvent.click(screen.getByRole("button", { name: /apply/i }));
     expect(onAssociate).toHaveBeenCalledWith("c2", "tags", ["GDPR"]);
   });
+
+  it("Owner column: с owner → показывает name + edit-кнопку", () => {
+    const cats = [{ id: "c1", name: "hive", type: "relational", provider: "hive", comment: "", tags: [], policies: [], owner: "alice@acme" }];
+    render(<CatalogsTable catalogs={cats} availableTags={[]} availablePolicies={[]} onSetOwner={vi.fn()} />);
+    expect(screen.getByText("alice@acme")).toBeTruthy();
+  });
+
+  it("Owner column: без owner → '+ Set Owner' кнопка", () => {
+    const cats = [{ id: "c1", name: "hive", type: "relational", provider: "hive", comment: "", tags: [], policies: [] }];
+    render(<CatalogsTable catalogs={cats} availableTags={[]} availablePolicies={[]} onSetOwner={vi.fn()} />);
+    expect(screen.getByRole("button", { name: /set owner/i })).toBeTruthy();
+  });
+
+  it("click + Set Owner → onSetOwner(catalogId)", () => {
+    const onSetOwner = vi.fn();
+    const cats = [{ id: "c1", name: "hive", type: "relational", provider: "hive", comment: "", tags: [], policies: [] }];
+    render(<CatalogsTable catalogs={cats} availableTags={[]} availablePolicies={[]} onSetOwner={onSetOwner} />);
+    fireEvent.click(screen.getByRole("button", { name: /set owner/i }));
+    expect(onSetOwner).toHaveBeenCalledWith("c1");
+  });
 });
