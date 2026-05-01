@@ -68,4 +68,32 @@ describe("CreateCatalogDialog", () => {
       properties: { location: "s3://test-bucket" },
     });
   });
+
+  it("Test Connection кнопка появляется после выбора provider (C4)", () => {
+    render(<CreateCatalogDialog visible={true} onClose={vi.fn()} onSubmit={vi.fn()} />);
+    expect(screen.queryByRole("button", { name: /test connection/i })).toBeNull();
+    fireEvent.change(screen.getByLabelText(/type/i), { target: { value: "relational" } });
+    fireEvent.change(screen.getByLabelText(/provider/i), { target: { value: "hive" } });
+    expect(screen.getByRole("button", { name: /test connection/i })).toBeTruthy();
+  });
+
+  it("Test Connection с валидным URI → success message (async, C4)", async () => {
+    render(<CreateCatalogDialog visible={true} onClose={vi.fn()} onSubmit={vi.fn()} />);
+    fireEvent.change(screen.getByLabelText(/type/i), { target: { value: "relational" } });
+    fireEvent.change(screen.getByLabelText(/provider/i), { target: { value: "hive" } });
+    fireEvent.change(screen.getByLabelText(/metastore uri/i), { target: { value: "thrift://hms.prod:9083" } });
+    fireEvent.click(screen.getByRole("button", { name: /test connection/i }));
+    await new Promise(r => setTimeout(r, 800));
+    expect(screen.getByText(/connection.*ok|✓/i)).toBeTruthy();
+  });
+
+  it("Test Connection с невалидным URI → failure message (C4)", async () => {
+    render(<CreateCatalogDialog visible={true} onClose={vi.fn()} onSubmit={vi.fn()} />);
+    fireEvent.change(screen.getByLabelText(/type/i), { target: { value: "relational" } });
+    fireEvent.change(screen.getByLabelText(/provider/i), { target: { value: "hive" } });
+    fireEvent.change(screen.getByLabelText(/metastore uri/i), { target: { value: "garbage" } });
+    fireEvent.click(screen.getByRole("button", { name: /test connection/i }));
+    await new Promise(r => setTimeout(r, 800));
+    expect(screen.getByText(/failed|invalid|✗/i)).toBeTruthy();
+  });
 });

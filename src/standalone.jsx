@@ -97,10 +97,13 @@ import MetalakesHub from "./domains/gravitino/explorer/MetalakesHub.jsx";
 registerCanvas("metalake_list", MetalakesHub);
 
 // Gravitino nav-hubs (U2.6 — A6/A7): top-nav 6→3 (Metalakes / Access / Compliance)
+// U7 (A8) добавляет Jobs hub — top-nav 4-й tab
 import AccessHub from "./domains/gravitino/explorer/AccessHub.jsx";
 import ComplianceHub from "./domains/gravitino/explorer/ComplianceHub.jsx";
+import JobsHub from "./domains/gravitino/explorer/JobsHub.jsx";
 registerCanvas("access_hub", AccessHub);
 registerCanvas("compliance_hub", ComplianceHub);
+registerCanvas("jobs_hub", JobsHub);
 
 // Домены с переключением адаптера
 const DOMAIN_ADAPTERS = {

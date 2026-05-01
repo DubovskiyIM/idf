@@ -36,7 +36,7 @@
 | A5 | URL query params как state (`?metalake=X&catalog=Y&schema=Z&table=T`) | URL-routing через `/projection/id` | 🟡 | Поддержать nested context-params |
 | A6 | `/access` redirect hub → users/userGroups/roles | access_hub canvas (HubGrid: Users/Groups/Roles tiles) | ✅ U2.6 |
 | A7 | `/compliance` redirect hub → tags/policies | compliance_hub canvas (HubGrid: Tags/Policies tiles) | ✅ U2.6 |
-| A8 | `/jobs`, `/jobTemplates` | ❌ нет projections | ❌ | Stage 3 — Job/JobTemplate проекции |
+| A8 | `/jobs`, `/jobTemplates` | jobs_hub canvas (tabs Jobs/Templates) — top-nav 4-й tab | ✅ U7 |
 | A9 | OIDC login + `/oauth/callback` | 🚫 | 🚫 | Out of scope (host-level auth) |
 
 ---
@@ -60,8 +60,8 @@
 | B13 | **UserGroup** | name, members | `Group`: name, roles, audit | 🟡 | Members editing — отдельный flow |
 | B14 | **Tag** | name, comment, audit + assignment to metadata objects | + AssociatePopover на CatalogsTable (catalog-level) | ✅ U2.5 catalog · 🟡 schema/table U6 |
 | B15 | **Policy** | name, rules (resource × action × effect) | name, policyType, enabled, content, audit, inherited, comment | 🟡 | Нет UI для rules/assignment |
-| B16 | **Job** | jobId, status, startTime, endTime, details + cancel + drawer | ❌ | ❌ | Stage 3 |
-| B17 | **JobTemplate** | name, config, description | ❌ | ❌ | Stage 3 |
+| B16 | **Job** | jobId, status, startTime, endTime, details + cancel + drawer | seed (6 runs: success/failed/running/queued) + JobsTable + JobDetailDrawer + Cancel optimistic | ✅ U7 |
+| B17 | **JobTemplate** | name, config, description | seed (3 templates: spark/shell/airflow) + TemplatesTable | ✅ U7 |
 | B18 | **Audit** (везде) | creator, createTime, lastModifier, lastModifyTime | `propertyPopover` | ✅ | Унифицировано |
 
 ---
@@ -73,14 +73,14 @@
 | C1 | Create / Edit / Delete для всех 12+ сущностей | Modal dialogs | ✅ form-архетип | ✅ |
 | C2 | Set Owner | `SetOwnerDialog` (User/Group cascader) | SetOwnerDialog wired в catalog (U5) + metalake (U5.5); schema/table — U6.3 | ✅ catalog/metalake · 🟡 schema/table |
 | C3 | Toggle In-Use (metalake/catalog) | Switch | In-Use toggle в MetalakesHub (✓ In Use / × Disabled, optimistic); catalog-level — U5.6 | ✅ U5.5 metalake · 🟡 catalog |
-| C4 | Test Connection (catalog) | Кнопка перед save | ❌ | ❌ Side-effect intent с external check |
+| C4 | Test Connection (catalog) | Кнопка перед save | Test Connection кнопка в CreateCatalogDialog (mock async — heuristic isPlausibleUri); реальный probe — U6.5 backend | ✅ U-polish-2 (mock) |
 | C5 | Grant Role to User/Group | Через user/group row-action | ✅ row-action | ✅ |
 | C6 | Revoke Role | Через user/group row-action | ✅ | ✅ |
 | C7 | Assign Tag to metadata object | Popover на entity-row | AssociatePopover в CatalogsTable (UI-state, exec в U2.5b) | ✅ U2.5 catalog |
 | C8 | Assign Policy to metadata object | Popover | AssociatePopover в CatalogsTable | ✅ U2.5 catalog |
 | C9 | Link/Unlink Model Version | `LinkVersionDialog` | <LinkVersionDialog/> (modal: version + modelObject + aliases) с optimistic-add | ✅ U6.1 link · 🟡 unlink/edit U6.2 |
 | C10 | Browse Files (fileset) | `ListFiles` page | Files tab в FilesetDetailPane (mock в seed.fileset_files; real listFiles intent — U6.5) | ✅ U6.2 (mock) |
-| C11 | Cancel Job | Drawer | ❌ | ❌ Stage 3 |
+| C11 | Cancel Job | Drawer | Cancel-кнопка в JobDetailDrawer (только для running/queued); optimistic status="cancelled" в JobsHub state | ✅ U7 |
 | C12 | Add Partitions (table) | (нет в UI?) | imported intent есть | n/a |
 
 ---
@@ -94,16 +94,16 @@
 | D3 | Resizable table columns | `react-antd-column-resize` | adapter capability? | 🟡 |
 | D4 | Properties popover | Inline cell с count + popover | `propertyPopover` primitive | ✅ |
 | D5 | Tag/Policy chip с remove | `CustomTags` | `<ChipList/>` в CatalogsTable + AssociatePopover для add/remove | ✅ U2.5 |
-| D6 | Confirmation by name-match (delete) | `ConfirmInput` (тип "DELETE-name") | ConfirmDeleteDialog в MetalakesHub (typed-name match → активирует Delete button) | ✅ U5.5 metalake · 🟡 catalog/schema/table |
+| D6 | Confirmation by name-match (delete) | `ConfirmInput` (тип "DELETE-name") | <ConfirmDialog/> с typed-name match (catalog Delete в CatalogsTable) | ✅ U-polish-1 catalog · 🟡 metalake/schema/table — host-расширение |
 | D7 | Dark theme | next-themes + AntD ConfigProvider | per-domain antdThemeConfig + darkAlgorithm + CSS-vars override (gravitino-only) | ✅ U1 |
 | D8 | Brand primary `#6478f7` | Tailwind + AntD theme | colorPrimary `#6478f7` через ConfigProvider | ✅ U1 |
 | D9 | Loading skeletons | Custom `Loading` | adapter capability | 🟡 |
-| D10 | Empty-state иллюстрации | Брендовые | дефолт AntD | 🟡 |
-| D11 | Toast notifications | `StyledToast` | adapter | 🟡 |
+| D10 | Empty-state иллюстрации | Брендовые | <EmptyState/> с inline-SVG (4 kinds: catalogs/files/versions/jobs); применён в CatalogsTable/FilesetDetailPane/ModelDetailPane | ✅ U-polish-2 |
+| D11 | Toast notifications | `StyledToast` | <ToastProvider/> + useToast() — fires на assignments / owner / create / delete | ✅ U-polish-1 |
 | D12 | Iconify + custom SVG (40KB icon set) | `Icons.js` | adapter icons | 🟡 |
 | D13 | Search bar (client-side filter) | AntD `Input.Search` | catalog-archetype filterBar | ✅ |
 | D14 | Owner avatar inline | + click → `SetOwnerDialog` | Owner cell с avatar-letter chip + ✎ edit (CatalogsTable) | ✅ U5 |
-| D15 | Tree expand/collapse persist | Redux store | ❌ | ❌ Pattern для bank |
+| D15 | Tree expand/collapse persist | Redux store | localStorage `gravitino-tree-expanded` JSON-array of node IDs | ✅ U-polish-2 |
 
 ---
 
@@ -141,4 +141,6 @@
 - **2026-05-01 (Sprint U5)** — `<SetOwnerDialog/>` (modal cascader с tabs Users/Groups + search) + Owner колонка в `<CatalogsTable/>` (avatar-letter + ✎ edit / + Set Owner placeholder). Seed: owner на 3 metalakes + 3 prod catalogs. UI-state в `CatalogExplorer.ownerOverrides` (optimistic, без backend exec — реальный intent `setMetalakeOwner` / `setCatalogOwner` в U5b). Закрыто (catalog-level): C2, D14; B1 catalog-side. Metalake/schema/table set-owner — U5.5.
 - **2026-05-01 (Sprint U6.1)** — Model versions UI: seed 10 ModelVersion записей под 4 models (price_optimizer 4 versions, churn 2, fraud 2, recsys 2; aliases production/staging/candidate/champion/shadow). `<ModelDetailPane/>` (tabs Versions/Properties; header с latest-badge; Versions-таблица: Version / Model Object (URI mono) / Aliases (chips) / Properties (compact JSON)). `<LinkVersionDialog/>` (modal: version (default = max+1) / modelObject required / aliases comma-separated). CatalogExplorer wire: click model в tree → ModelDetailPane; Link Version → optimistic add в `linkedVersions` state (паттерн как U2.5 assignments + U3 createdCatalogs + U5 ownerOverrides). Закрыто: B8, B9, C9 (link). Unlink/edit version — U6.2.
 - **2026-05-01 (Sprint U6.2)** — leaf detail panes для Fileset / Function / Topic + seed extensions (3 functions под s_marketing/s_finance/s_sales: revenue_split / currency_normalize / pii_mask; 6 fileset_files под fs_vendor_raw / fs_dev_scratch). `<FilesetDetailPane/>` (tabs Files/Properties с path/size/modified + human-readable size formatting KB/MB/GB). `<FunctionDetailPane/>` (read-only body в `<pre>` + properties). `<TopicDetailPane/>` (header + Properties с kafka-tokens retention.ms / partitions / cleanup.policy). `<CatalogTree/>` расширен: getSchemaChildren возвращает массив групп — функции под relational schema показываются alongside tables (icon 𝑓). `<CatalogExplorer/>` wire: click fileset/function/topic в tree → respective pane (паттерн как U4 table/U6.1 model). Breadcrumb extracted в отдельный файл (`<Breadcrumb/>`) для соблюдения <300 LOC лимита. Закрыто: B6 (mock files), B10 (read-only function), C10 (mock browse); B7 enhanced.
-- **2026-05-01 (Sprint U5.5)** — `<MetalakesTable/>` + `<MetalakesHub/>` canvas projection заменили SDK dataGrid metalake_list. Owner: avatar-letter chip + ✎ → SetOwnerDialog. In-Use toggle (optimistic, ✓/× pill). Delete → typed-name ConfirmDeleteDialog (D6 паттерн: имя metalake нужно ввести вручную для активации destructive button). Inline ToastBanner feedback (auto-dismiss 2.5s) на все actions. Seed: `inUse` флаг на 3 metalakes (m_dev: false для demo). Закрыто: B1 metalake-side (полное), C3 metalake, D6 metalake. UI-state в `MetalakesHub.{ownerOverrides, inUseOverrides, deletedIds}` (optimistic, без backend exec — реальные intents `setMetalakeOwner` / `enableMetalake` / `disableMetalake` / `dropMetalake` в U5.6 / U6.5).
+- **2026-05-01 (Sprint U-polish-2)** — `<EmptyState/>` (inline-SVG для 4 kinds: catalogs/files/versions/jobs + optional action button) — применён в CatalogsTable/FilesetDetailPane/ModelDetailPane. CatalogTree expanded state persist через localStorage (D15). CreateCatalogDialog Test Connection кнопка (mock async ~500ms + isPlausibleUri heuristic — C4 mock; реальный probe в U6.5). Закрыто: D10, D15, C4 (mock).
+- **2026-05-01 (Sprint U7)** — Jobs/JobTemplates entity area. Seed: 3 templates (spark_daily_etl/metastore_backup/data_quality_checks) + 6 jobs (success/failed/running/queued mix). `<JobStatusBadge/>` (5 цветов: success/failed/running/queued/cancelled). `<JobDetailDrawer/>` (right-side: Template/Started/Finished/Duration/Details + Cancel button для running/queued). `<JobsHub/>` (canvas: tabs Jobs/Templates, click row → drawer). Новая `jobs_hub` projection — 4-й root в top-nav (Metalakes / **Jobs** / Access / Compliance). Закрыто: A8, B16, B17, C11.
+- **2026-05-01 (Sprint U-polish-1)** — Topic seed `schemaId` → `catalogId` fix (теперь topics видны в Messaging tab tree под `c_kafka_dev`). `<ConfirmDialog/>` (typed-name match per web-v2 ConfirmInput) + Delete action в CatalogsTable rows + optimistic delete state (`deletedIds`). `<ToastProvider/>` + `useToast()` — feedback на все optimistic actions (catalog created / owner set / tag/policy associated / catalog deleted) с success/error/info kinds. CatalogExplorer обёрнут двойным компонентом (Provider + Inner) для корректного hook-ordering. Закрыто (catalog-level): D6, D11.
