@@ -45,11 +45,8 @@ function Inner({ world = {}, exec = () => {}, viewer }) {
   const onDelete = (kind) => (entity) => {
     const intentId = kind === "Tag" ? "deleteTag" : "deletePolicy";
     const paramKey = kind === "Tag" ? "tag" : "policy";
-    exec({
-      intent: intentId,
-      params: { metalake: metalakeName, [paramKey]: entity.name },
-      context: {},
-    });
+    // U-fix-exec-signature: exec(intentId, flatCtx).
+    exec(intentId, { metalake: metalakeName, [paramKey]: entity.name });
     toast(`${kind} «${entity.name}» удалён`, "error");
   };
 
@@ -84,13 +81,10 @@ function Inner({ world = {}, exec = () => {}, viewer }) {
         onClose={() => { setCreateTagOpen(false); setEditTagTarget(null); }}
         onSubmit={(payload) => {
           const isEdit = !!editTagTarget;
-          exec({
-            intent: "createTag",
-            params: { metalake: metalakeName },
-            context: {
-              ...payload,
-              audit: payload.audit || { creator: viewer?.name || "ui", createTime: new Date().toISOString() },
-            },
+          exec("createTag", {
+            ...payload,
+            metalake: metalakeName,
+            audit: payload.audit || { creator: viewer?.name || "ui", createTime: new Date().toISOString() },
           });
           toast(isEdit ? `Tag «${payload.name}» обновлён` : `Tag «${payload.name}» создан`, "success");
           setCreateTagOpen(false); setEditTagTarget(null);
@@ -102,13 +96,10 @@ function Inner({ world = {}, exec = () => {}, viewer }) {
         onClose={() => { setCreatePolicyOpen(false); setEditPolicyTarget(null); }}
         onSubmit={(payload) => {
           const isEdit = !!editPolicyTarget;
-          exec({
-            intent: "createPolicy",
-            params: { metalake: metalakeName },
-            context: {
-              ...payload,
-              audit: payload.audit || { creator: viewer?.name || "ui", createTime: new Date().toISOString() },
-            },
+          exec("createPolicy", {
+            ...payload,
+            metalake: metalakeName,
+            audit: payload.audit || { creator: viewer?.name || "ui", createTime: new Date().toISOString() },
           });
           toast(isEdit ? `Policy «${payload.name}» обновлена` : `Policy «${payload.name}» создана`, "success");
           setCreatePolicyOpen(false); setEditPolicyTarget(null);

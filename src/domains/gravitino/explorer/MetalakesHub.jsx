@@ -56,11 +56,8 @@ export default function MetalakesHub({ world = {}, ctx, navigate, exec = () => {
     // U-fix-toggle-tabs: enableMetalake/disableMetalake не существуют в
     // imported.js — engine отвергал, toggle был silent. Используем
     // alterMetalake (PUT с full body) + inUse override в context.
-    exec({
-      intent: "alterMetalake",
-      params: { name: m.name },
-      context: { entity: m, inUse: next },
-    });
+    // U-fix-exec-signature: exec(intentId, flatCtx) — params + context flatten.
+    exec("alterMetalake", { entity: m, inUse: next, name: m.name });
     showToast(`Metalake ${next ? "включён" : "приостановлен"}`, next ? "success" : "warning");
   };
 
@@ -68,10 +65,9 @@ export default function MetalakesHub({ world = {}, ctx, navigate, exec = () => {
     if (!setOwnerTarget) return;
     const m = baseMetalakes.find(x => x.id === setOwnerTarget);
     if (!m) return;
-    exec({
-      intent: "setOwner",
-      params: { metalake: m.name, metadataObjectType: "metalake", metadataObjectFullName: m.name },
-      context: { entity: m, entityType: "metalakes", newOwnerName: name },
+    exec("setOwner", {
+      entity: m, entityType: "metalakes", newOwnerName: name,
+      metalake: m.name, metadataObjectType: "metalake", metadataObjectFullName: m.name,
     });
     showToast(`Owner назначен: ${name}`, "success");
     setSetOwnerTarget(null);
@@ -105,11 +101,7 @@ export default function MetalakesHub({ world = {}, ctx, navigate, exec = () => {
           onCancel={() => setDeleteTarget(null)}
           onConfirm={() => {
             const name = deleteTarget.name;
-            exec({
-              intent: "dropMetalake",
-              params: { name },
-              context: {},
-            });
+            exec("dropMetalake", { name });
             showToast(`Metalake «${name}» удалён`, "error");
             setDeleteTarget(null);
           }}
