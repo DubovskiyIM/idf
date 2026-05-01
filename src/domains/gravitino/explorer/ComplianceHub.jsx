@@ -57,6 +57,12 @@ function Inner({ world = {}, exec = () => {}, viewer }) {
           tags={world.tags || []}
           onCreate={() => setCreateTagOpen(true)}
           onEdit={(t) => setEditTagTarget(t)}
+          onView={(t) => {
+            // Navigate в tag_detail canvas (TagDetailCanvas → MetadataObjectsPane).
+            if (typeof window !== "undefined") {
+              window.location.href = `/gravitino/tag_detail?tagId=${encodeURIComponent(t.id)}`;
+            }
+          }}
           onDelete={onDelete("Tag")}
         />
       )}
