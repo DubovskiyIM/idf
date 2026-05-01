@@ -51,6 +51,12 @@ describe("RolesTable", () => {
     expect(screen.getByText("test")).toBeTruthy();
     expect(screen.getByText("alice@acme")).toBeTruthy();
   });
+  it("Set Owner gear icon вызывает onSetOwner(role)", () => {
+    const onSetOwner = vi.fn();
+    render(<RolesTable roles={ROLES} onCreate={vi.fn()} onEdit={vi.fn()} onDelete={vi.fn()} onSetOwner={onSetOwner} />);
+    fireEvent.click(screen.getByTitle(/set owner/i));
+    expect(onSetOwner).toHaveBeenCalledWith(expect.objectContaining({ id: "r1" }));
+  });
 });
 
 describe("PoliciesTable", () => {

@@ -71,7 +71,7 @@
 | Строка | Action | Где у них | У нас | Статус |
 |---|---|---|---|---|
 | C1 | Create / Edit / Delete для всех 12+ сущностей | Modal dialogs | ✅ form-архетип | ✅ |
-| C2 | Set Owner | `SetOwnerDialog` (User/Group cascader) | SetOwnerDialog wired для catalog/metalake/schema/table (полное покрытие) | ✅ U6.3 |
+| C2 | Set Owner | `SetOwnerDialog` (User/Group cascader) | SetOwnerDialog wired для catalog/metalake/schema/table/role (полное покрытие 5 entity-уровней) | ✅ U6.3 + U-iam-polish |
 | C3 | Toggle In-Use (metalake/catalog) | Switch | In-Use toggle в MetalakesHub (U5.5) + CatalogsTable (U-polish-3, optimistic per id) | ✅ U-polish-3 (metalake+catalog) |
 | C4 | Test Connection (catalog) | Кнопка перед save | Test Connection кнопка в CreateCatalogDialog (mock async — heuristic isPlausibleUri); реальный probe — U6.5 backend | ✅ U-polish-2 (mock) |
 | C5 | Grant Role to User/Group | Через user/group row-action | ✅ row-action | ✅ |

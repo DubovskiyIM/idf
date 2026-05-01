@@ -236,7 +236,7 @@ export function GroupsTable({ groups = [], onAdd = () => {}, onGrantRole = () =>
 }
 
 // ═══ RolesTable ═══════════════════════════════════════════════════════
-export function RolesTable({ roles = [], onCreate = () => {}, onEdit = () => {}, onDelete = () => {} }) {
+export function RolesTable({ roles = [], onCreate = () => {}, onEdit = () => {}, onDelete = () => {}, onSetOwner = () => {} }) {
   const [search, setSearch] = useState("");
   const [deleteTarget, setDeleteTarget] = useState(null);
   const filtered = roles.filter(r => !search || (r.name || "").toLowerCase().includes(search.toLowerCase()));
@@ -261,6 +261,7 @@ export function RolesTable({ roles = [], onCreate = () => {}, onEdit = () => {},
                 <td style={{ ...cellStyle, color: "var(--idf-text-muted)" }}>{r.owner || "—"}</td>
                 <td style={{ ...cellStyle, textAlign: "right", whiteSpace: "nowrap" }}>
                   <IconBtn icon="✎" title="Edit" onClick={() => onEdit(r)} />
+                  <IconBtn icon="⚙" title="Set Owner" onClick={() => onSetOwner(r)} />
                   <IconBtn icon="🗑" title="Delete" danger onClick={() => setDeleteTarget(r)} />
                 </td>
               </tr>
