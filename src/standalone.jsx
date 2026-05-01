@@ -347,6 +347,11 @@ export default function StandaloneApp({ domainId }) {
     "--idf-bg-subtle": "#3f4a5e",
     "--idf-border-subtle": "#475569",
     "--idf-primary": "#6478f7",
+    // SDK Breadcrumbs2 (← Назад button) использует --idf-hover; без override
+    // на тёмной теме fallback'ится в browser default = white → текст невидим.
+    "--idf-hover": "#475569",
+    "--idf-accent": "#6478f7",
+    "--idf-accent-light": "rgba(100,120,247,0.18)",
   } : {};
   const content = (
     <div key={adapterKey} style={{

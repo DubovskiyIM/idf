@@ -130,6 +130,12 @@ function CatalogExplorerInner({ world = {}, routeParams, ctx, exec = () => {}, v
         // нет dialog'ов — toast. Delete → exec(dropTable / dropFileset /
         // deleteModel). Associate — reuse handleEntityAssociate для tables;
         // для filesets/models — toast (associate intent есть, но без UI flow).
+        onChildSelect={(item, kind) => {
+          // Click name → navigate в детали (parity web-v2 inside-tree drill).
+          if (kind === "tables") setSelectedTable(item);
+          else if (kind === "filesets") setSelectedFileset(item);
+          else if (kind === "models") setSelectedModel(item);
+        }}
         onChildEdit={(item, kind) => {
           toast(`Edit ${kind} «${item.name}» — out of scope для текущего sprint'а`, "info");
         }}

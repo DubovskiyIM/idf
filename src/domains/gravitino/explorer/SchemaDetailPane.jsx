@@ -28,6 +28,7 @@ export default function SchemaDetailPane({
   world = {},
   onSetOwner = () => {},
   onAssociate = () => {},
+  onChildSelect = () => {},
   onChildEdit = () => {},
   onChildSetOwner = () => {},
   onChildDelete = () => {},
@@ -57,6 +58,7 @@ export default function SchemaDetailPane({
               items={children}
               kind={childKind}
               world={world}
+              onSelect={onChildSelect}
               onEdit={onChildEdit}
               onSetOwner={onChildSetOwner}
               onDelete={onChildDelete}
@@ -109,7 +111,7 @@ function Header({ schema, onSetOwner }) {
  * SchemaChildTable — full-parity таблица для Tables/Filesets/Models (parity
  * с CatalogsTable). Колонки: Name / Tags / Policies / Actions.
  */
-function SchemaChildTable({ items, kind, world, onEdit, onSetOwner, onDelete, onAssociate }) {
+function SchemaChildTable({ items, kind, world, onSelect, onEdit, onSetOwner, onDelete, onAssociate }) {
   const [popover, setPopover] = useState(null); // { itemId, type: "tags"|"policies" }
   const [deleteTarget, setDeleteTarget] = useState(null);
   const availableTags = world.tags || [];
@@ -131,7 +133,10 @@ function SchemaChildTable({ items, kind, world, onEdit, onSetOwner, onDelete, on
         <tbody>
           {items.map(it => (
             <tr key={it.id} style={{ borderBottom: "1px solid var(--idf-border, #e5e7eb)", verticalAlign: "top" }}>
-              <td style={{ ...cellStyle, fontWeight: 500 }}>{it.name}</td>
+              <td
+                style={{ ...cellStyle, fontWeight: 500, cursor: onSelect ? "pointer" : "default", color: onSelect ? "var(--idf-primary, #6478f7)" : undefined }}
+                onClick={() => onSelect && onSelect(it, kind)}
+              >{it.name}</td>
               <td style={{ ...cellStyle, position: "relative" }}>
                 <ChipList items={it.tags || []} variant="tag" />
                 <AssocBtn label="+ Associate Tag" onClick={() => setPopover({ itemId: it.id, type: "tags" })} />
