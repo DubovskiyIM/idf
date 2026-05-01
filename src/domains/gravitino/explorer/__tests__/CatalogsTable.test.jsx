@@ -76,6 +76,20 @@ describe("CatalogsTable", () => {
     expect(onSetOwner).toHaveBeenCalledWith("c1");
   });
 
+  it("In-Use toggle для enabled catalog → '✓ In Use' label", () => {
+    const cats = [{ id: "c1", name: "hive", type: "relational", provider: "hive", comment: "", tags: [], policies: [], enabled: true }];
+    render(<CatalogsTable catalogs={cats} availableTags={[]} availablePolicies={[]} onToggleEnabled={vi.fn()} />);
+    expect(screen.getAllByText(/in use/i).length).toBeGreaterThan(0);
+  });
+
+  it("click In-Use toggle → onToggleEnabled(id, !enabled)", () => {
+    const onToggle = vi.fn();
+    const cats = [{ id: "c1", name: "hive", type: "relational", provider: "hive", comment: "", tags: [], policies: [], enabled: true }];
+    render(<CatalogsTable catalogs={cats} availableTags={[]} availablePolicies={[]} onToggleEnabled={onToggle} />);
+    fireEvent.click(screen.getByRole("button", { name: /in use/i }));
+    expect(onToggle).toHaveBeenCalledWith("c1", false);
+  });
+
   it("Delete-кнопка вызывает onDelete(catalog)", () => {
     const onDelete = vi.fn();
     const cats = [{ id: "c1", name: "hive", type: "relational", provider: "hive", comment: "", tags: [], policies: [] }];

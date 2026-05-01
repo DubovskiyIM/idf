@@ -59,7 +59,7 @@
 | B12 | **Role** | name, privileges (resource × action tree) | RoleDetailPane: privileges grouped by resource type (metalake/catalog/...) с ALLOW/DENY chips | ✅ U-iam |
 | B13 | **UserGroup** | name, members | GroupDetailPane: tabs Members/Roles + add (selector доступных users) / remove (per row) — optimistic | ✅ U-iam |
 | B14 | **Tag** | name, comment, audit + assignment to metadata objects | + AssociatePopover на CatalogsTable (catalog-level) | ✅ U2.5 catalog · 🟡 schema/table U6 |
-| B15 | **Policy** | name, rules (resource × action × effect) | name, policyType, enabled, content, audit, inherited, comment | 🟡 | Нет UI для rules/assignment |
+| B15 | **Policy** | name, rules (resource × action × effect) | PolicyDetailPane: Rules summary chips (per policyType heuristic) + JSON pretty-print + enabled/disabled badge | ✅ U-polish-3 (read-only) · 🟡 rules editor U-polish-3b |
 | B16 | **Job** | jobId, status, startTime, endTime, details + cancel + drawer | seed (6 runs: success/failed/running/queued) + JobsTable + JobDetailDrawer + Cancel optimistic | ✅ U7 |
 | B17 | **JobTemplate** | name, config, description | seed (3 templates: spark/shell/airflow) + TemplatesTable | ✅ U7 |
 | B18 | **Audit** (везде) | creator, createTime, lastModifier, lastModifyTime | `propertyPopover` | ✅ | Унифицировано |
@@ -72,7 +72,7 @@
 |---|---|---|---|---|
 | C1 | Create / Edit / Delete для всех 12+ сущностей | Modal dialogs | ✅ form-архетип | ✅ |
 | C2 | Set Owner | `SetOwnerDialog` (User/Group cascader) | SetOwnerDialog wired в catalog (U5) + metalake (U5.5); schema/table — U6.3 | ✅ catalog/metalake · 🟡 schema/table |
-| C3 | Toggle In-Use (metalake/catalog) | Switch | In-Use toggle в MetalakesHub (✓ In Use / × Disabled, optimistic); catalog-level — U5.6 | ✅ U5.5 metalake · 🟡 catalog |
+| C3 | Toggle In-Use (metalake/catalog) | Switch | In-Use toggle в MetalakesHub (U5.5) + CatalogsTable (U-polish-3, optimistic per id) | ✅ U-polish-3 (metalake+catalog) |
 | C4 | Test Connection (catalog) | Кнопка перед save | Test Connection кнопка в CreateCatalogDialog (mock async — heuristic isPlausibleUri); реальный probe — U6.5 backend | ✅ U-polish-2 (mock) |
 | C5 | Grant Role to User/Group | Через user/group row-action | ✅ row-action | ✅ |
 | C6 | Revoke Role | Через user/group row-action | ✅ | ✅ |
@@ -144,3 +144,4 @@
 - **2026-05-01 (Sprint U-polish-2)** — `<EmptyState/>` (inline-SVG для 4 kinds: catalogs/files/versions/jobs + optional action button) — применён в CatalogsTable/FilesetDetailPane/ModelDetailPane. CatalogTree expanded state persist через localStorage (D15). CreateCatalogDialog Test Connection кнопка (mock async ~500ms + isPlausibleUri heuristic — C4 mock; реальный probe в U6.5). Закрыто: D10, D15, C4 (mock).
 - **2026-05-01 (Sprint U7)** — Jobs/JobTemplates entity area. Seed: 3 templates (spark_daily_etl/metastore_backup/data_quality_checks) + 6 jobs (success/failed/running/queued mix). `<JobStatusBadge/>` (5 цветов: success/failed/running/queued/cancelled). `<JobDetailDrawer/>` (right-side: Template/Started/Finished/Duration/Details + Cancel button для running/queued). `<JobsHub/>` (canvas: tabs Jobs/Templates, click row → drawer). Новая `jobs_hub` projection — 4-й root в top-nav (Metalakes / **Jobs** / Access / Compliance). Закрыто: A8, B16, B17, C11.
 - **2026-05-01 (Sprint U-polish-1)** — Topic seed `schemaId` → `catalogId` fix (теперь topics видны в Messaging tab tree под `c_kafka_dev`). `<ConfirmDialog/>` (typed-name match per web-v2 ConfirmInput) + Delete action в CatalogsTable rows + optimistic delete state (`deletedIds`). `<ToastProvider/>` + `useToast()` — feedback на все optimistic actions (catalog created / owner set / tag/policy associated / catalog deleted) с success/error/info kinds. CatalogExplorer обёрнут двойным компонентом (Provider + Inner) для корректного hook-ordering. Закрыто (catalog-level): D6, D11.
+- **2026-05-01 (Sprint U-polish-3)** — `<PolicyDetailPane/>` (read-only: tabs Rules/Properties; Rules tab — human-readable summary chips per policyType heuristic + raw JSON content; enabled/disabled badge в header) + `<PolicyDetailCanvas/>`. policy_detail → canvas. CatalogsTable получил In-Use toggle column (паттерн identical to MetalakesHub из U5.5). Seed: enabled flag на 9 catalogs (один — false для demo). Закрыто: B15 (read-only), C3 catalog.

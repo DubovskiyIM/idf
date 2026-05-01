@@ -66,6 +66,9 @@ function CatalogExplorerInner({ world = {}, routeParams, ctx }) {
   const [deleteTarget, setDeleteTarget] = useState(null);
   const [deletedIds, setDeletedIds] = useState(new Set());
 
+  // U-polish-3: optimistic enabled overrides (In-Use toggle, C3).
+  const [enabledOverrides, setEnabledOverrides] = useState({});
+
   const handleCreate = (formData) => {
     const newCatalog = {
       id: `c_new_${Date.now()}`,
@@ -87,9 +90,11 @@ function CatalogExplorerInner({ world = {}, routeParams, ctx }) {
   const applyAssignments = (cat) => {
     const a = assignments[cat.id];
     const ownerOv = ownerOverrides[cat.id];
+    const enabledOv = enabledOverrides[cat.id];
     let next = cat;
     if (a) next = { ...next, tags: a.tags ?? next.tags, policies: a.policies ?? next.policies };
     if (ownerOv !== undefined) next = { ...next, owner: ownerOv };
+    if (enabledOv !== undefined) next = { ...next, enabled: enabledOv };
     return next;
   };
 
@@ -136,6 +141,11 @@ function CatalogExplorerInner({ world = {}, routeParams, ctx }) {
       version, modelObject, aliases, properties: {},
     }]);
     setLinkingForModel(null);
+  };
+
+  const handleToggleEnabled = (catalogId, next) => {
+    setEnabledOverrides(prev => ({ ...prev, [catalogId]: next }));
+    toast(`Catalog ${next ? "включён" : "приостановлен"}`, next ? "success" : "warning");
   };
 
   // Сбрасывает все leaf-selections (table/model/fileset/function/topic).
@@ -229,6 +239,7 @@ function CatalogExplorerInner({ world = {}, routeParams, ctx }) {
           onAssociate={onAssociate}
           onCreate={() => setCreating(true)}
           onSetOwner={(catalogId) => setOwnerDialogTarget(catalogId)}
+          onToggleEnabled={handleToggleEnabled}
           onDelete={(cat) => setDeleteTarget(cat)}
         />
       </div>
