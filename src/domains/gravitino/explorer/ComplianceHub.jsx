@@ -68,7 +68,12 @@ function Inner({ world = {}, exec = () => {}, viewer }) {
           policies={world.policies || []}
           onCreate={() => setCreatePolicyOpen(true)}
           onEdit={(p) => setEditPolicyTarget(p)}
-          onView={(p) => toast(`View Policy ${p.name}`, "info")}
+          onView={(p) => {
+            // Navigate в policy_detail canvas (PolicyDetailPane).
+            if (typeof window !== "undefined") {
+              window.location.href = `/gravitino/policy_detail?policyId=${encodeURIComponent(p.id)}`;
+            }
+          }}
           onDelete={onDelete("Policy")}
         />
       )}
