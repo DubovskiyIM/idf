@@ -58,6 +58,9 @@ export default function CatalogExplorer({ world = {}, routeParams, ctx }) {
   const [ownerDialogTarget, setOwnerDialogTarget] = useState(null);
   const [ownerOverrides, setOwnerOverrides] = useState({});
 
+  // U-polish-3: optimistic enabled overrides (In-Use toggle, C3).
+  const [enabledOverrides, setEnabledOverrides] = useState({});
+
   const handleCreate = (formData) => {
     const newCatalog = {
       id: `c_new_${Date.now()}`,
@@ -77,9 +80,11 @@ export default function CatalogExplorer({ world = {}, routeParams, ctx }) {
   const applyAssignments = (cat) => {
     const a = assignments[cat.id];
     const ownerOv = ownerOverrides[cat.id];
+    const enabledOv = enabledOverrides[cat.id];
     let next = cat;
     if (a) next = { ...next, tags: a.tags ?? next.tags, policies: a.policies ?? next.policies };
     if (ownerOv !== undefined) next = { ...next, owner: ownerOv };
+    if (enabledOv !== undefined) next = { ...next, enabled: enabledOv };
     return next;
   };
 
@@ -94,6 +99,10 @@ export default function CatalogExplorer({ world = {}, routeParams, ctx }) {
     if (!ownerDialogTarget) return;
     setOwnerOverrides(prev => ({ ...prev, [ownerDialogTarget]: name }));
     setOwnerDialogTarget(null);
+  };
+
+  const handleToggleEnabled = (catalogId, next) => {
+    setEnabledOverrides(prev => ({ ...prev, [catalogId]: next }));
   };
 
   // Сбрасывает все leaf-selections (table/model/fileset/function/topic).
@@ -187,6 +196,7 @@ export default function CatalogExplorer({ world = {}, routeParams, ctx }) {
           onAssociate={onAssociate}
           onCreate={() => setCreating(true)}
           onSetOwner={(catalogId) => setOwnerDialogTarget(catalogId)}
+          onToggleEnabled={handleToggleEnabled}
         />
       </div>
     );
