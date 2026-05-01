@@ -166,6 +166,29 @@ export const PROJECTIONS = {
     body: { kind: "canvas", canvasId: "metalake_workspace" },
   },
 
+  // access_hub — navigation-hub для IAM (U2.6 — A6 закрытие).
+  // 3 tiles: Users / Groups / Roles. Inner projections остаются доступны
+  // через direct URL (/gravitino/user_list), клик по tile навигирует туда же.
+  access_hub: {
+    name: "Access",
+    kind: "canvas",
+    mainEntity: "User",
+    entities: ["User", "Group", "Role"],
+    witnesses: [],
+    body: { kind: "canvas", canvasId: "access_hub" },
+  },
+
+  // compliance_hub — navigation-hub для metadata-governance (U2.6 — A7).
+  // 2 tiles: Tags / Policies.
+  compliance_hub: {
+    name: "Data Compliance",
+    kind: "canvas",
+    mainEntity: "Tag",
+    entities: ["Tag", "Policy"],
+    witnesses: [],
+    body: { kind: "canvas", canvasId: "compliance_hub" },
+  },
+
   // ═══ Catalog ═══════════════════════════════════════════════════════════════
   // type: relational/fileset/messaging/model; provider: hive/iceberg/...
   catalog_list: catalog("Catalog", "Catalogs",
@@ -301,14 +324,11 @@ export const PROJECTIONS = {
 };
 
 export const ROOT_PROJECTIONS = [
-  // Top-level nav: metalake (hierarchy root), user/group/role (IAM surface),
-  // tag/policy (metadata governance). catalog/schema/table/fileset/topic/model
-  // доступны через drilldown из metalake_detail → ... (absorbedBy R8 если
-  // FK chain matched; иначе — временно через direct nav).
+  // Top-level nav: metalake (hierarchy entry) + 2 hubs (access / compliance).
+  // Inner projections (user_list/group_list/role_list/tag_list/policy_list)
+  // остаются accessible через direct URL и через tiles внутри hubs (U2.6).
+  // Структура соответствует gravitino/web-v2 nav grouping.
   "metalake_list",
-  "user_list",
-  "group_list",
-  "role_list",
-  "tag_list",
-  "policy_list",
+  "access_hub",
+  "compliance_hub",
 ];
