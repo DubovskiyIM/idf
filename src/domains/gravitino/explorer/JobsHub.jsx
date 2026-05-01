@@ -1,10 +1,13 @@
 /**
  * JobsHub — canvas root для jobs_hub projection (U7 — A8 закрытие).
  * Tabs: Jobs (runs) / Templates. Click row job → JobDetailDrawer.
- * Cancel running job → optimistic status="cancelled".
  *
- * U-iam2.a: + Run Job dialog → optimistic add в createdJobs;
- * + Register Job Template dialog → optimistic add в createdTemplates.
+ * U-backend-exec: runJob / registerJobTemplate через реальный exec.
+ * Generic effect handler применяет particles.effects (Run/Template
+ * op=replace) — fold обновляет world.jobs / world.job_templates.
+ *
+ * Остаётся optimistic (→ U-backend-exec-2): cancelJob — modify nested
+ * status field, generic handler не справится.
  */
 import { useMemo, useState } from "react";
 import Tabs from "./Tabs.jsx";
@@ -18,22 +21,25 @@ const TABS = [
   { key: "templates", label: "Templates" },
 ];
 
-export default function JobsHub({ world = {} }) {
+export default function JobsHub({ world = {}, exec = () => {}, viewer }) {
   const [active, setActive] = useState("jobs");
   const [drawerJobId, setDrawerJobId] = useState(null);
+  // U-backend-exec-2: cancelJob — modify-nested на job.status.
   const [cancelledIds, setCancelledIds] = useState(new Set());
   const [runJobOpen, setRunJobOpen] = useState(false);
   const [registerOpen, setRegisterOpen] = useState(false);
-  const [createdJobs, setCreatedJobs] = useState([]);
-  const [createdTemplates, setCreatedTemplates] = useState([]);
+
+  const metalakeName = (world.metalakes || [])[0]?.name || "default";
 
   const baseJobs = world.jobs || [];
   const baseTemplates = world.job_templates || [];
-  const templates = useMemo(() => [...baseTemplates, ...createdTemplates], [baseTemplates, createdTemplates]);
+  const templates = baseTemplates;
   const templatesById = useMemo(() => Object.fromEntries(templates.map(t => [t.id, t])), [templates]);
 
-  const allJobs = useMemo(() => [...baseJobs, ...createdJobs], [baseJobs, createdJobs]);
-  const jobs = useMemo(() => allJobs.map(j => cancelledIds.has(j.id) ? { ...j, status: "cancelled" } : j), [allJobs, cancelledIds]);
+  const jobs = useMemo(
+    () => baseJobs.map(j => cancelledIds.has(j.id) ? { ...j, status: "cancelled" } : j),
+    [baseJobs, cancelledIds]
+  );
 
   const drawerJob = jobs.find(j => j.id === drawerJobId);
   const drawerTemplate = drawerJob ? templatesById[drawerJob.templateId] : null;
@@ -64,13 +70,21 @@ export default function JobsHub({ world = {} }) {
         templates={templates}
         onClose={() => setRunJobOpen(false)}
         onRegisterTemplate={() => { setRunJobOpen(false); setRegisterOpen(true); }}
-        onSubmit={({ templateId, templateName }) => {
-          setCreatedJobs(prev => [...prev, {
-            id: `j_new_${Date.now()}`,
-            jobId: `${templateName}-${new Date().toISOString().slice(0,16).replace(/[:T-]/g,"")}`,
-            templateId, status: "queued",
-            startTime: null, endTime: null, details: { triggeredBy: "UI" },
-          }]);
+        onSubmit={({ templateId, templateName, config }) => {
+          exec({
+            intent: "runJob",
+            params: { metalake: metalakeName },
+            context: {
+              templateId,
+              templateName,
+              jobId: `${templateName}-${new Date().toISOString().slice(0, 16).replace(/[:T-]/g, "")}`,
+              status: "queued",
+              startTime: new Date().toISOString(),
+              endTime: null,
+              config,
+              details: { triggeredBy: viewer?.name || "UI" },
+            },
+          });
           setRunJobOpen(false);
         }}
       />
@@ -78,7 +92,14 @@ export default function JobsHub({ world = {} }) {
         visible={registerOpen}
         onClose={() => setRegisterOpen(false)}
         onSubmit={(tpl) => {
-          setCreatedTemplates(prev => [...prev, { id: `jt_new_${Date.now()}`, ...tpl }]);
+          exec({
+            intent: "registerJobTemplate",
+            params: { metalake: metalakeName },
+            context: {
+              ...tpl,
+              audit: { creator: viewer?.name || "ui", createTime: new Date().toISOString() },
+            },
+          });
           setRegisterOpen(false);
         }}
       />
