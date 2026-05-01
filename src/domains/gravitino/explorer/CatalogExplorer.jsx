@@ -2,7 +2,8 @@
  * CatalogExplorer — split-pane root для metalake_workspace.
  *
  * Breadcrumb › CatalogTree │ Right pane (CatalogsTable / SchemaDetailPane /
- * TableDetailPane / ModelDetailPane). Регистрируется как canvas через
+ * TableDetailPane / ModelDetailPane / FilesetDetailPane / FunctionDetailPane /
+ * TopicDetailPane). Регистрируется как canvas через
  * `registerCanvas("metalake_workspace", ...)`. `routeParams` приходят либо
  * top-level (тесты), либо на `ctx.routeParams` (ArchetypeCanvas).
  *
@@ -10,17 +11,22 @@
  *   U2.5 — tags/policies assignments per catalog;
  *   U3   — created catalogs;
  *   U5   — owner overrides;
- *   U6.1 — linked ModelVersions.
+ *   U6.1 — linked ModelVersions;
+ *   U6.2 — fileset/function/topic — read-only display, optimistic-state не нужен.
  */
 import { useMemo, useState } from "react";
+import Breadcrumb from "./Breadcrumb.jsx";
 import CatalogTree from "./CatalogTree.jsx";
 import CatalogsTable from "./CatalogsTable.jsx";
 import CreateCatalogDialog from "./CreateCatalogDialog.jsx";
+import FilesetDetailPane from "./FilesetDetailPane.jsx";
+import FunctionDetailPane from "./FunctionDetailPane.jsx";
 import LinkVersionDialog from "./LinkVersionDialog.jsx";
 import ModelDetailPane from "./ModelDetailPane.jsx";
 import SchemaDetailPane from "./SchemaDetailPane.jsx";
 import SetOwnerDialog from "./SetOwnerDialog.jsx";
 import TableDetailPane from "./TableDetailPane.jsx";
+import TopicDetailPane from "./TopicDetailPane.jsx";
 
 export default function CatalogExplorer({ world = {}, routeParams, ctx }) {
   const params = routeParams ?? ctx?.routeParams ?? {};
@@ -35,37 +41,34 @@ export default function CatalogExplorer({ world = {}, routeParams, ctx }) {
   const [selectedSchema, setSelectedSchema] = useState(null);
   const [selectedTable, setSelectedTable] = useState(null);
   const [selectedModel, setSelectedModel] = useState(null);
+  const [selectedFileset, setSelectedFileset] = useState(null);
+  const [selectedFunction, setSelectedFunction] = useState(null);
+  const [selectedTopic, setSelectedTopic] = useState(null);
   // U6.1: optimistic ModelVersion-add (без backend exec — реальный intent linkModelVersion в U6.5).
-  const [linkingForModel, setLinkingForModel] = useState(null); // model.id | null
-  const [linkedVersions, setLinkedVersions] = useState([]); // optimistic-list
+  const [linkingForModel, setLinkingForModel] = useState(null);
+  const [linkedVersions, setLinkedVersions] = useState([]);
   // U2.5: optimistic UI-state для tags/policies assignments per catalog.
-  const [assignments, setAssignments] = useState({}); // { catalogId: { tags, policies } }
+  const [assignments, setAssignments] = useState({});
 
-  // U3: optimistic created catalogs (без backend exec — реальный intent createCatalog в U3.5).
+  // U3: optimistic created catalogs.
   const [creating, setCreating] = useState(false);
   const [createdCatalogs, setCreatedCatalogs] = useState([]);
 
-  // U5: optimistic owner overrides per catalog (без backend exec — реальный intent setCatalogOwner в U5b).
-  const [ownerDialogTarget, setOwnerDialogTarget] = useState(null); // catalogId | null
-  const [ownerOverrides, setOwnerOverrides] = useState({}); // { catalogId: ownerName }
+  // U5: optimistic owner overrides.
+  const [ownerDialogTarget, setOwnerDialogTarget] = useState(null);
+  const [ownerOverrides, setOwnerOverrides] = useState({});
 
   const handleCreate = (formData) => {
     const newCatalog = {
       id: `c_new_${Date.now()}`,
-      name: formData.name,
-      type: formData.type,
-      provider: formData.provider,
-      comment: formData.comment,
-      properties: formData.properties,
-      metalakeId,
-      tags: [],
-      policies: [],
+      name: formData.name, type: formData.type, provider: formData.provider,
+      comment: formData.comment, properties: formData.properties,
+      metalakeId, tags: [], policies: [],
     };
     setCreatedCatalogs(prev => [...prev, newCatalog]);
     setCreating(false);
   };
 
-  // myCatalogsAll = seed (world) + optimistic created для текущего metalake.
   const myCatalogsAll = useMemo(
     () => [...myCatalogs, ...createdCatalogs.filter(c => c.metalakeId === metalakeId)],
     [myCatalogs, createdCatalogs, metalakeId]
@@ -93,67 +96,72 @@ export default function CatalogExplorer({ world = {}, routeParams, ctx }) {
     setOwnerDialogTarget(null);
   };
 
-  // U4 + U6.1: при клике в tree разруливаем kind узла по world-коллекциям.
-  // Catalog → reset schema/table/model; schema → reset table/model + auto-set
-  // parent catalog; table → auto-set parent schema + parent catalog; model →
-  // ModelDetailPane + auto-set parent schema/catalog. Filesets/topics —
-  // dedicated detail panes (U6.2+), пока tree-click игнорируется (no crash).
+  // Сбрасывает все leaf-selections (table/model/fileset/function/topic).
+  const resetLeaves = () => {
+    setSelectedTable(null); setSelectedModel(null);
+    setSelectedFileset(null); setSelectedFunction(null); setSelectedTopic(null);
+  };
+
+  // Walk schema → catalog для leaf-узлов (U6.2: fileset/function в добавление к table/model).
+  const walkToCatalog = (schemaId) => {
+    const parentSch = (world.schemas || []).find(s => s.id === schemaId);
+    if (parentSch) {
+      setSelectedSchema(parentSch);
+      const parentCat = myCatalogsAll.find(c => c.id === parentSch.catalogId);
+      if (parentCat) setSelectedCatalog(parentCat);
+    }
+  };
+
+  // U4 + U6.1 + U6.2: при клике в tree разруливаем kind узла по world-коллекциям.
   const handleTreeSelect = (node) => {
     if (!node) return;
     if (myCatalogsAll.some(c => c.id === node.id)) {
-      setSelectedCatalog(node);
-      setSelectedSchema(null);
-      setSelectedTable(null);
-      setSelectedModel(null);
-      return;
+      setSelectedCatalog(node); setSelectedSchema(null); resetLeaves(); return;
     }
     if ((world.schemas || []).some(s => s.id === node.id)) {
-      setSelectedSchema(node);
-      setSelectedTable(null);
-      setSelectedModel(null);
+      setSelectedSchema(node); resetLeaves();
       const parentCat = myCatalogsAll.find(c => c.id === node.catalogId);
       if (parentCat) setSelectedCatalog(parentCat);
       return;
     }
     if ((world.tables || []).some(t => t.id === node.id)) {
-      setSelectedTable(node);
-      setSelectedModel(null);
-      const parentSch = (world.schemas || []).find(s => s.id === node.schemaId);
-      if (parentSch) {
-        setSelectedSchema(parentSch);
-        const parentCat = myCatalogsAll.find(c => c.id === parentSch.catalogId);
-        if (parentCat) setSelectedCatalog(parentCat);
-      }
-      return;
+      resetLeaves(); setSelectedTable(node); walkToCatalog(node.schemaId); return;
     }
     if ((world.models || []).some(m => m.id === node.id)) {
-      setSelectedModel(node);
-      setSelectedTable(null);
-      const parentSch = (world.schemas || []).find(s => s.id === node.schemaId);
-      if (parentSch) {
-        setSelectedSchema(parentSch);
-        const parentCat = myCatalogsAll.find(c => c.id === parentSch.catalogId);
-        if (parentCat) setSelectedCatalog(parentCat);
+      resetLeaves(); setSelectedModel(node); walkToCatalog(node.schemaId); return;
+    }
+    if ((world.filesets || []).some(f => f.id === node.id)) {
+      resetLeaves(); setSelectedFileset(node); walkToCatalog(node.schemaId); return;
+    }
+    if ((world.functions || []).some(fn => fn.id === node.id)) {
+      resetLeaves(); setSelectedFunction(node); walkToCatalog(node.schemaId); return;
+    }
+    if ((world.topics || []).some(t => t.id === node.id)) {
+      resetLeaves(); setSelectedTopic(node);
+      // topic в seed имеет schemaId; CatalogTree.getCatalogChildren фильтрует
+      // topics по catalogId (legacy quirk). Walk через schema если есть.
+      if (node.schemaId) walkToCatalog(node.schemaId);
+      else if (node.catalogId) {
+        const parentCat = myCatalogsAll.find(c => c.id === node.catalogId);
+        if (parentCat) { setSelectedCatalog(parentCat); setSelectedSchema(null); }
       }
       return;
     }
-    // filesets/topics — без dedicated detail (U6.2+).
   };
 
   if (!metalake) {
     return (
-      <div style={{
-        padding: 40, textAlign: "center",
-        color: "var(--idf-text-muted)", fontSize: 13,
-      }}>
+      <div style={{ padding: 40, textAlign: "center", color: "var(--idf-text-muted)", fontSize: 13 }}>
         Metalake не найден (metalakeId: {String(metalakeId)})
       </div>
     );
   }
 
   const renderRightPane = () => {
+    if (selectedFunction) return <FunctionDetailPane function={selectedFunction} />;
+    if (selectedTopic)    return <TopicDetailPane topic={selectedTopic} />;
+    if (selectedFileset)  return <FilesetDetailPane fileset={selectedFileset} world={world} />;
     if (selectedModel) {
-      // Сливаем seed-versions с optimistic-добавленными.
       const mergedWorld = {
         ...world,
         model_versions: [...(world.model_versions || []), ...linkedVersions],
@@ -166,12 +174,8 @@ export default function CatalogExplorer({ world = {}, routeParams, ctx }) {
         />
       );
     }
-    if (selectedTable) {
-      return <TableDetailPane table={selectedTable} />;
-    }
-    if (selectedSchema) {
-      return <SchemaDetailPane schema={selectedSchema} catalog={selectedCatalog} world={world} />;
-    }
+    if (selectedTable)  return <TableDetailPane table={selectedTable} />;
+    if (selectedSchema) return <SchemaDetailPane schema={selectedSchema} catalog={selectedCatalog} world={world} />;
     const visible = (selectedCatalog ? [selectedCatalog] : myCatalogsAll).map(applyAssignments);
     return (
       <div style={{ padding: 16, overflow: "auto", height: "100%", background: "var(--idf-card, #fff)" }}>
@@ -179,7 +183,7 @@ export default function CatalogExplorer({ world = {}, routeParams, ctx }) {
           catalogs={visible}
           availableTags={availableTags}
           availablePolicies={availablePolicies}
-          onSelect={(cat) => { setSelectedCatalog(cat); setSelectedSchema(null); setSelectedTable(null); setSelectedModel(null); }}
+          onSelect={(cat) => { setSelectedCatalog(cat); setSelectedSchema(null); resetLeaves(); }}
           onAssociate={onAssociate}
           onCreate={() => setCreating(true)}
           onSetOwner={(catalogId) => setOwnerDialogTarget(catalogId)}
@@ -199,14 +203,14 @@ export default function CatalogExplorer({ world = {}, routeParams, ctx }) {
         schema={selectedSchema}
         table={selectedTable}
         model={selectedModel}
-        onMetalakeClick={() => { setSelectedCatalog(null); setSelectedSchema(null); setSelectedTable(null); setSelectedModel(null); }}
-        onCatalogClick={() => { setSelectedSchema(null); setSelectedTable(null); setSelectedModel(null); }}
-        onSchemaClick={() => { setSelectedTable(null); setSelectedModel(null); }}
+        fileset={selectedFileset}
+        fn={selectedFunction}
+        topic={selectedTopic}
+        onMetalakeClick={() => { setSelectedCatalog(null); setSelectedSchema(null); resetLeaves(); }}
+        onCatalogClick={() => { setSelectedSchema(null); resetLeaves(); }}
+        onSchemaClick={() => { resetLeaves(); }}
       />
-      <div style={{
-        display: "grid", gridTemplateColumns: "260px 1fr",
-        flex: 1, minHeight: 0,
-      }}>
+      <div style={{ display: "grid", gridTemplateColumns: "260px 1fr", flex: 1, minHeight: 0 }}>
         <CatalogTree
           catalogs={myCatalogsAll}
           world={world}
@@ -255,42 +259,5 @@ export default function CatalogExplorer({ world = {}, routeParams, ctx }) {
         }}
       />
     </div>
-  );
-}
-
-function Breadcrumb({ metalake, catalog, schema, table, model, onMetalakeClick, onCatalogClick, onSchemaClick }) {
-  const items = [
-    { label: "Metalakes", href: "/gravitino/metalake_list" },
-    { label: metalake.name, onClick: onMetalakeClick, active: !catalog },
-    ...(catalog ? [{ label: catalog.name, onClick: onCatalogClick, active: !schema }] : []),
-    ...(schema  ? [{ label: schema.name,  onClick: onSchemaClick,  active: !table && !model }] : []),
-    ...(table   ? [{ label: table.name,   active: true }] : []),
-    ...(model && !table ? [{ label: model.name, active: true }] : []),
-  ];
-  return (
-    <nav aria-label="breadcrumb" style={{
-      display: "flex", alignItems: "center", gap: 6,
-      padding: "10px 16px", fontSize: 12,
-      background: "var(--idf-card, #fff)",
-      borderBottom: "1px solid var(--idf-border, #e5e7eb)",
-      color: "var(--idf-text-muted)",
-    }}>
-      {items.map((it, i) => (
-        <span key={i} style={{ display: "flex", alignItems: "center", gap: 6 }}>
-          {i > 0 && <span>›</span>}
-          {it.href ? (
-            <a href={it.href} style={{ color: "var(--idf-text-muted)", textDecoration: "none" }}>{it.label}</a>
-          ) : it.onClick ? (
-            <button type="button" onClick={it.onClick} style={{
-              background: "none", border: "none", padding: 0, cursor: "pointer",
-              color: it.active ? "var(--idf-text)" : "var(--idf-text-muted)",
-              fontWeight: it.active ? 500 : 400, fontSize: 12,
-            }}>{it.label}</button>
-          ) : (
-            <span style={{ color: "var(--idf-text)", fontWeight: 500 }}>{it.label}</span>
-          )}
-        </span>
-      ))}
-    </nav>
   );
 }
