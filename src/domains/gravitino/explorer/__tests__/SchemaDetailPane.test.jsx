@@ -40,4 +40,39 @@ describe("SchemaDetailPane", () => {
     expect(screen.getByText("owner")).toBeTruthy();
     expect(screen.getByText("analytics")).toBeTruthy();
   });
+
+  it("Tags tab — chip-list + AssociatePopover для add/remove", () => {
+    const sch = { id: "s1", name: "sales", catalogId: "c1", tags: ["PII", "GDPR"], policies: [] };
+    const onAssociate = vi.fn();
+    render(<SchemaDetailPane
+      schema={sch}
+      catalog={CATALOG_REL}
+      world={{ tables: TABLES, tags: [{ id: "t1", name: "PII" }, { id: "t2", name: "GDPR" }, { id: "t3", name: "Internal" }] }}
+      onAssociate={onAssociate}
+    />);
+    fireEvent.click(screen.getByRole("tab", { name: /^tags$/i }));
+    expect(screen.getByText("PII")).toBeTruthy();
+    expect(screen.getByText("GDPR")).toBeTruthy();
+    expect(screen.getByRole("button", { name: /associate tag/i })).toBeTruthy();
+  });
+
+  it("Policies tab — chip-list", () => {
+    const sch = { id: "s1", name: "sales", catalogId: "c1", tags: [], policies: ["pii-mask"] };
+    render(<SchemaDetailPane
+      schema={sch}
+      catalog={CATALOG_REL}
+      world={{ tables: TABLES, policies: [{ id: "p1", name: "pii-mask" }] }}
+      onAssociate={vi.fn()}
+    />);
+    fireEvent.click(screen.getByRole("tab", { name: /policies/i }));
+    expect(screen.getByText("pii-mask")).toBeTruthy();
+  });
+
+  it("Set Owner-кнопка в header вызывает onSetOwner(schemaId)", () => {
+    const onSetOwner = vi.fn();
+    const sch = { id: "s1", name: "sales", catalogId: "c1", owner: "alice@acme" };
+    render(<SchemaDetailPane schema={sch} catalog={CATALOG_REL} world={{ tables: TABLES }} onSetOwner={onSetOwner} />);
+    fireEvent.click(screen.getByRole("button", { name: /edit owner/i }));
+    expect(onSetOwner).toHaveBeenCalledWith("s1");
+  });
 });

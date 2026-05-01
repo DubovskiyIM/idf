@@ -75,10 +75,10 @@ export function getSeedEffects() {
 
   // ═══ Schemas ═════════════════════════════════════════════════════════════
   const SCHEMAS = [
-    // hive_warehouse
-    { id: "s_sales",       name: "sales",       comment: "Sales & revenue fact tables",          properties: { "owner": "analytics", "pii": "true" }, catalogId: "c_hive_prod",    audit: audit("alice@acme", 85) },
-    { id: "s_marketing",   name: "marketing",   comment: "Marketing attribution data",            properties: { "owner": "marketing-analytics" },      catalogId: "c_hive_prod",    audit: audit("alice@acme", 78) },
-    { id: "s_finance",     name: "finance",     comment: "Financial ledger & reports",            properties: { "owner": "finance", "confidential": "true" }, catalogId: "c_hive_prod", audit: audit("diane@acme", 70) },
+    // hive_warehouse — три schema получают tags/policies/owner для demo (U6.3, B3/C2/B14)
+    { id: "s_sales",       name: "sales",       comment: "Sales & revenue fact tables",          properties: { "owner": "analytics", "pii": "true" }, tags: ["PII"],        policies: ["pii-mask"],                     owner: "alice@acme", catalogId: "c_hive_prod",    audit: audit("alice@acme", 85) },
+    { id: "s_marketing",   name: "marketing",   comment: "Marketing attribution data",            properties: { "owner": "marketing-analytics" },      tags: ["Internal"],   policies: [],                                owner: "bob@acme",   catalogId: "c_hive_prod",    audit: audit("alice@acme", 78) },
+    { id: "s_finance",     name: "finance",     comment: "Financial ledger & reports",            properties: { "owner": "finance", "confidential": "true" }, tags: ["Financial"], policies: ["pii-mask", "retention-365d"], owner: "diane@acme", catalogId: "c_hive_prod", audit: audit("diane@acme", 70) },
     // iceberg_lakehouse
     { id: "s_clicks",      name: "clicks",      comment: "Iceberg clickstream — partitioned by date", properties: { "partition-spec": "event_date" }, catalogId: "c_iceberg_prod", audit: audit("alice@acme", 50) },
     { id: "s_inventory",   name: "inventory",   comment: "Real-time inventory changes",           properties: { "mode": "streaming" },              catalogId: "c_iceberg_prod", audit: audit("diane@acme", 42) },
@@ -183,8 +183,26 @@ export function getSeedEffects() {
   ];
 
   const TABLES = [
-    { id: "t_fact_orders",   name: "fact_orders",   comment: "Order fact — grain: order_line",    properties: { "location": "s3://prod-warehouse/sales/fact_orders", "format": "parquet" }, columns: COL_FACT_ORDERS,   schemaId: "s_sales",      audit: audit("alice@acme", 80) },
-    { id: "t_dim_customer",  name: "dim_customer",  comment: "Customer SCD-1 dimension",          properties: { "scd-type": "1" },                                                         columns: COL_DIM_CUSTOMER,  schemaId: "s_sales",      audit: audit("alice@acme", 75) },
+    // U6.3: t_fact_orders + t_dim_customer получают tags/policies/owner + indexes/distribution/sortOrders
+    { id: "t_fact_orders",   name: "fact_orders",   comment: "Order fact — grain: order_line",    properties: { "location": "s3://prod-warehouse/sales/fact_orders", "format": "parquet" }, columns: COL_FACT_ORDERS,   schemaId: "s_sales",      audit: audit("alice@acme", 80),
+      tags: ["PII"], policies: ["pii-mask"], owner: "alice@acme",
+      indexes: [
+        { name: "pk_orders",    type: "PRIMARY_KEY", fieldNames: [["order_id"]] },
+        { name: "idx_customer", type: "BTREE",       fieldNames: [["customer_id"]] },
+      ],
+      distribution: { strategy: "HASH", number: 8, expressions: [["customer_id"]] },
+      sortOrders: [
+        { expression: "order_ts", direction: "DESC", nullOrder: "FIRST" },
+      ],
+    },
+    { id: "t_dim_customer",  name: "dim_customer",  comment: "Customer SCD-1 dimension",          properties: { "scd-type": "1" },                                                         columns: COL_DIM_CUSTOMER,  schemaId: "s_sales",      audit: audit("alice@acme", 75),
+      tags: ["PII"], policies: ["pii-mask"], owner: "alice@acme",
+      indexes: [
+        { name: "pk_customer", type: "PRIMARY_KEY", fieldNames: [["customer_id"]] },
+      ],
+      distribution: null,
+      sortOrders: [],
+    },
     { id: "t_dim_product",   name: "dim_product",   comment: "Product catalog dimension",         properties: {},                                                                          columns: COL_DIM_PRODUCT,   schemaId: "s_sales",      audit: audit("alice@acme", 70) },
     { id: "t_campaigns",     name: "campaigns",     comment: "Marketing campaign master",         properties: {},                                                                          columns: COL_CAMPAIGNS,     schemaId: "s_marketing",  audit: audit("alice@acme", 60) },
     { id: "t_attribution",   name: "attribution",   comment: "Multi-touch attribution fact",      properties: {},                                                                          columns: COL_ATTRIBUTION,   schemaId: "s_marketing",  audit: audit("alice@acme", 55) },

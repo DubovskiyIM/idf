@@ -15,11 +15,13 @@ import FilesetDetailPane from "./FilesetDetailPane.jsx";
 import FunctionDetailPane from "./FunctionDetailPane.jsx";
 import LinkVersionDialog from "./LinkVersionDialog.jsx";
 import ModelDetailPane from "./ModelDetailPane.jsx";
+import OwnerDialogs from "./OwnerDialogs.jsx";
 import SchemaDetailPane from "./SchemaDetailPane.jsx";
-import SetOwnerDialog from "./SetOwnerDialog.jsx";
 import TableDetailPane from "./TableDetailPane.jsx";
 import { ToastProvider, useToast } from "./Toast.jsx";
 import TopicDetailPane from "./TopicDetailPane.jsx";
+import { useEntityOverrides } from "./useEntityOverrides.js";
+import { makeTreeSelectHandler } from "./useTreeSelection.js";
 
 export default function CatalogExplorer(props) {
   // ToastProvider оборачивает всё дерево, чтобы useToast() работал в children.
@@ -68,6 +70,12 @@ function CatalogExplorerInner({ world = {}, routeParams, ctx }) {
 
   // U-polish-3: optimistic enabled overrides (In-Use toggle, C3).
   const [enabledOverrides, setEnabledOverrides] = useState({});
+
+  // U6.3: schema/table-level owner + assignments через общий хук.
+  const schemaOv = useEntityOverrides();
+  const tableOv = useEntityOverrides();
+  const [schemaOwnerDialogTarget, setSchemaOwnerDialogTarget] = useState(null);
+  const [tableOwnerDialogTarget, setTableOwnerDialogTarget] = useState(null);
 
   const handleCreate = (formData) => {
     const newCatalog = {
@@ -154,52 +162,16 @@ function CatalogExplorerInner({ world = {}, routeParams, ctx }) {
     setSelectedFileset(null); setSelectedFunction(null); setSelectedTopic(null);
   };
 
-  // Walk schema → catalog для leaf-узлов (U6.2: fileset/function в добавление к table/model).
-  const walkToCatalog = (schemaId) => {
-    const parentSch = (world.schemas || []).find(s => s.id === schemaId);
-    if (parentSch) {
-      setSelectedSchema(parentSch);
-      const parentCat = myCatalogsAll.find(c => c.id === parentSch.catalogId);
-      if (parentCat) setSelectedCatalog(parentCat);
-    }
-  };
-
   // U4 + U6.1 + U6.2: при клике в tree разруливаем kind узла по world-коллекциям.
-  const handleTreeSelect = (node) => {
-    if (!node) return;
-    if (myCatalogsAll.some(c => c.id === node.id)) {
-      setSelectedCatalog(node); setSelectedSchema(null); resetLeaves(); return;
-    }
-    if ((world.schemas || []).some(s => s.id === node.id)) {
-      setSelectedSchema(node); resetLeaves();
-      const parentCat = myCatalogsAll.find(c => c.id === node.catalogId);
-      if (parentCat) setSelectedCatalog(parentCat);
-      return;
-    }
-    if ((world.tables || []).some(t => t.id === node.id)) {
-      resetLeaves(); setSelectedTable(node); walkToCatalog(node.schemaId); return;
-    }
-    if ((world.models || []).some(m => m.id === node.id)) {
-      resetLeaves(); setSelectedModel(node); walkToCatalog(node.schemaId); return;
-    }
-    if ((world.filesets || []).some(f => f.id === node.id)) {
-      resetLeaves(); setSelectedFileset(node); walkToCatalog(node.schemaId); return;
-    }
-    if ((world.functions || []).some(fn => fn.id === node.id)) {
-      resetLeaves(); setSelectedFunction(node); walkToCatalog(node.schemaId); return;
-    }
-    if ((world.topics || []).some(t => t.id === node.id)) {
-      resetLeaves(); setSelectedTopic(node);
-      // topic в seed имеет schemaId; CatalogTree.getCatalogChildren фильтрует
-      // topics по catalogId (legacy quirk). Walk через schema если есть.
-      if (node.schemaId) walkToCatalog(node.schemaId);
-      else if (node.catalogId) {
-        const parentCat = myCatalogsAll.find(c => c.id === node.catalogId);
-        if (parentCat) { setSelectedCatalog(parentCat); setSelectedSchema(null); }
-      }
-      return;
-    }
-  };
+  const handleTreeSelect = makeTreeSelectHandler({
+    world, myCatalogsAll,
+    setters: {
+      setSelectedCatalog, setSelectedSchema,
+      setSelectedTable, setSelectedModel,
+      setSelectedFileset, setSelectedFunction, setSelectedTopic,
+    },
+    resetLeaves,
+  });
 
   if (!metalake) {
     return (
@@ -226,8 +198,18 @@ function CatalogExplorerInner({ world = {}, routeParams, ctx }) {
         />
       );
     }
-    if (selectedTable)  return <TableDetailPane table={selectedTable} />;
-    if (selectedSchema) return <SchemaDetailPane schema={selectedSchema} catalog={selectedCatalog} world={world} />;
+    const assocFor = (kind, ov) => (id, type, names) => {
+      ov.setAssoc(id, type, names);
+      toast(`${kind} ${type === "tags" ? "tag" : "policy"} обновлён`, "success");
+    };
+    if (selectedTable) return (
+      <TableDetailPane table={tableOv.apply(selectedTable)} world={world}
+        onSetOwner={setTableOwnerDialogTarget} onAssociate={assocFor("Table", tableOv)} />
+    );
+    if (selectedSchema) return (
+      <SchemaDetailPane schema={schemaOv.apply(selectedSchema)} catalog={selectedCatalog} world={world}
+        onSetOwner={setSchemaOwnerDialogTarget} onAssociate={assocFor("Schema", schemaOv)} />
+    );
     const visible = (selectedCatalog ? [selectedCatalog] : myCatalogsAll).map(applyAssignments);
     return (
       <div style={{ padding: 16, overflow: "auto", height: "100%", background: "var(--idf-card, #fff)" }}>
@@ -280,17 +262,26 @@ function CatalogExplorerInner({ world = {}, routeParams, ctx }) {
         onClose={() => setCreating(false)}
         onSubmit={handleCreate}
       />
-      <SetOwnerDialog
-        visible={!!ownerDialogTarget}
-        currentOwner={ownerDialogTarget && (
-          ownerOverrides[ownerDialogTarget]
-          ?? myCatalogsAll.find(c => c.id === ownerDialogTarget)?.owner
-        )}
-        users={world.users || []}
-        groups={world.groups || []}
-        onClose={() => setOwnerDialogTarget(null)}
-        onSubmit={handleSetOwner}
-      />
+      <OwnerDialogs users={world.users || []} groups={world.groups || []} items={[
+        {
+          id: ownerDialogTarget,
+          owner: ownerDialogTarget && (ownerOverrides[ownerDialogTarget] ?? myCatalogsAll.find(c => c.id === ownerDialogTarget)?.owner),
+          onClose: () => setOwnerDialogTarget(null),
+          onSubmit: handleSetOwner,
+        },
+        {
+          id: schemaOwnerDialogTarget,
+          owner: schemaOwnerDialogTarget && (schemaOv.ownerOverrides[schemaOwnerDialogTarget] ?? (world.schemas || []).find(s => s.id === schemaOwnerDialogTarget)?.owner),
+          onClose: () => setSchemaOwnerDialogTarget(null),
+          onSubmit: ({ name }) => { schemaOv.setOwner(schemaOwnerDialogTarget, name); toast(`Schema owner назначен: ${name}`, "success"); setSchemaOwnerDialogTarget(null); },
+        },
+        {
+          id: tableOwnerDialogTarget,
+          owner: tableOwnerDialogTarget && (tableOv.ownerOverrides[tableOwnerDialogTarget] ?? (world.tables || []).find(t => t.id === tableOwnerDialogTarget)?.owner),
+          onClose: () => setTableOwnerDialogTarget(null),
+          onSubmit: ({ name }) => { tableOv.setOwner(tableOwnerDialogTarget, name); toast(`Table owner назначен: ${name}`, "success"); setTableOwnerDialogTarget(null); },
+        },
+      ]} />
       <LinkVersionDialog
         visible={!!linkingForModel}
         suggestedVersion={suggestedVersion}

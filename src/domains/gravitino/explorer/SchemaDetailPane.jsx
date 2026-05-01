@@ -1,20 +1,27 @@
 /**
- * SchemaDetailPane — tabbed detail view для schema (U4).
+ * SchemaDetailPane — tabbed detail view для schema (U4 + U6.3).
  *
- * Header: schema name + comment.
- * Tabs (зависят от catalog.type):
- *   - relational → Tables / Properties
- *   - fileset    → Filesets / Properties
- *   - model      → Models / Properties
- *   - default    → Properties only
+ * Header: schema name + comment + owner avatar + ✎ Set Owner.
+ * Tabs (зависят от catalog.type + всегда tags/policies/properties):
+ *   - relational → Tables / Tags / Policies / Properties
+ *   - fileset    → Filesets / Tags / Policies / Properties
+ *   - model      → Models / Tags / Policies / Properties
+ *   - default    → Tags / Policies / Properties
  *
- * Каждый children-tab — простая таблица (Name / Comment).
- * Tags / Policies / Functions tabs — backlog (U2.5b / U6).
+ * Tags / Policies — chip-list + AssociatePopover (U6.3, B3/B14).
+ * Functions tab — backlog (U-functions).
  */
 import { useState } from "react";
+import { ChipsAssoc, OwnerBlock } from "./DetailPaneCommon.jsx";
 import Tabs from "./Tabs.jsx";
 
-export default function SchemaDetailPane({ schema, catalog, world = {} }) {
+export default function SchemaDetailPane({
+  schema,
+  catalog,
+  world = {},
+  onSetOwner = () => {},
+  onAssociate = () => {},
+}) {
   const childKind = catalog?.type === "relational" ? "tables"
                   : catalog?.type === "fileset"    ? "filesets"
                   : catalog?.type === "model"      ? "models"
@@ -22,6 +29,8 @@ export default function SchemaDetailPane({ schema, catalog, world = {} }) {
   const childLabel = { tables: "Tables", filesets: "Filesets", models: "Models" }[childKind];
   const tabs = [
     ...(childKind ? [{ key: childKind, label: childLabel }] : []),
+    { key: "tags", label: "Tags" },
+    { key: "policies", label: "Policies" },
     { key: "properties", label: "Properties" },
   ];
   const [active, setActive] = useState(tabs[0].key);
@@ -29,10 +38,28 @@ export default function SchemaDetailPane({ schema, catalog, world = {} }) {
 
   return (
     <div style={{ display: "flex", flexDirection: "column", height: "100%" }}>
-      <Header name={schema.name} subtitle={schema.comment} />
+      <Header schema={schema} onSetOwner={() => onSetOwner(schema.id)} />
       <div style={{ flex: 1, minHeight: 0 }}>
         <Tabs tabs={tabs} active={active} onChange={setActive}>
           {active === childKind && <ChildTable items={children} />}
+          {active === "tags" && (
+            <ChipsAssoc
+              entityId={schema.id}
+              type="tags"
+              selected={schema.tags || []}
+              available={world.tags || []}
+              onAssociate={onAssociate}
+            />
+          )}
+          {active === "policies" && (
+            <ChipsAssoc
+              entityId={schema.id}
+              type="policies"
+              selected={schema.policies || []}
+              available={world.policies || []}
+              onAssociate={onAssociate}
+            />
+          )}
           {active === "properties" && <PropsTable obj={schema.properties || {}} />}
         </Tabs>
       </div>
@@ -40,15 +67,19 @@ export default function SchemaDetailPane({ schema, catalog, world = {} }) {
   );
 }
 
-function Header({ name, subtitle }) {
+function Header({ schema, onSetOwner }) {
   return (
     <div style={{
       padding: "14px 16px",
       borderBottom: "1px solid var(--idf-border, #e5e7eb)",
       background: "var(--idf-card, #fff)",
+      display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12,
     }}>
-      <div style={{ fontSize: 18, fontWeight: 600, color: "var(--idf-text)" }}>{name}</div>
-      {subtitle && <div style={{ fontSize: 12, color: "var(--idf-text-muted)", marginTop: 2 }}>{subtitle}</div>}
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <div style={{ fontSize: 18, fontWeight: 600, color: "var(--idf-text)" }}>{schema.name}</div>
+        {schema.comment && <div style={{ fontSize: 12, color: "var(--idf-text-muted)", marginTop: 2 }}>{schema.comment}</div>}
+      </div>
+      <OwnerBlock owner={schema.owner} onSetOwner={onSetOwner} />
     </div>
   );
 }
