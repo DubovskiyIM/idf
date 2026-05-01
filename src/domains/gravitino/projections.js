@@ -308,8 +308,18 @@ export const PROJECTIONS = {
   // ═══ Tag ═══════════════════════════════════════════════════════════════════
   tag_list: catalog("Tag", "Tags",
     ["name", "comment", "inherited"]),
-  tag_detail: detail("Tag", "Tag",
-    ["name", "comment", "inherited", "properties", "audit"]),
+  // tag_detail — host-rendered (U-tag-policy-objects).
+  // Canvas <TagDetailCanvas/> рендерит MetadataObjectsPane (reverse-lookup
+  // entities ассоциированных с этим тегом).
+  tag_detail: {
+    name: "Tag",
+    kind: "canvas",
+    mainEntity: "Tag",
+    entities: ["Tag"],
+    idParam: "tagId",
+    witnesses: ["name"],
+    body: { kind: "canvas", canvasId: "tag_detail" },
+  },
 
   // ═══ Policy ════════════════════════════════════════════════════════════════
   // После idf-sdk#227 flattenSchema — importer сливает PolicyBase +

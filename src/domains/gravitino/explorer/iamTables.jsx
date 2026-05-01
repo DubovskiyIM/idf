@@ -39,7 +39,7 @@ const cellStyle = { padding: "10px 14px", textAlign: "left" };
 const primaryBtn = { padding: "7px 14px", fontSize: 12, fontWeight: 600, border: "1px solid var(--idf-primary, #6478f7)", background: "var(--idf-primary, #6478f7)", color: "white", borderRadius: 4, cursor: "pointer" };
 
 // ═══ TagsTable ═════════════════════════════════════════════════════════
-export function TagsTable({ tags = [], onCreate = () => {}, onEdit = () => {}, onDelete = () => {} }) {
+export function TagsTable({ tags = [], onCreate = () => {}, onEdit = () => {}, onDelete = () => {}, onView = () => {} }) {
   const [search, setSearch] = useState("");
   const [deleteTarget, setDeleteTarget] = useState(null);
   const filtered = tags.filter(t => !search || (t.name || "").toLowerCase().includes(search.toLowerCase()));
@@ -66,6 +66,7 @@ export function TagsTable({ tags = [], onCreate = () => {}, onEdit = () => {}, o
                 <td style={{ ...cellStyle, color: "var(--idf-text-muted)" }}>{t.comment || "—"}</td>
                 <td style={{ ...cellStyle, textAlign: "right", whiteSpace: "nowrap" }}>
                   <IconBtn icon="✎" title="Edit" onClick={() => onEdit(t)} />
+                  <IconBtn icon="👁" title="View" onClick={() => onView(t)} />
                   <IconBtn icon="🗑" title="Delete" danger onClick={() => setDeleteTarget(t)} />
                 </td>
               </tr>
