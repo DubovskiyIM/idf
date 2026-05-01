@@ -322,6 +322,11 @@ export default function StandaloneApp({ domainId }) {
     "--idf-text-muted": "#94a3b8",
     "--idf-border": "#475569",
     "--idf-surface": "#3f4a5e",
+    // SDK DataGrid использует --idf-bg-subtle (header thead + toolbar) и
+    // --idf-border-subtle. Без override — fallback'ятся на белые tokens
+    // (#f9fafb / #f3f4f6) и в тёмной теме gravitino торчат светлые полосы.
+    "--idf-bg-subtle": "#3f4a5e",
+    "--idf-border-subtle": "#475569",
     "--idf-primary": "#6478f7",
   } : {};
   const content = (
