@@ -75,4 +75,46 @@ describe("SchemaDetailPane", () => {
     fireEvent.click(screen.getByRole("button", { name: /edit owner/i }));
     expect(onSetOwner).toHaveBeenCalledWith("s1");
   });
+
+  // U-fix-toggle-tabs: child-tables parity (Tags / Policies / Actions).
+  it("Tables tab показывает Tags + Policies колонки", () => {
+    const sch = { id: "s1", name: "sales", catalogId: "c1" };
+    const tbls = [{ id: "t1", name: "fact_orders", schemaId: "s1", tags: ["PII"], policies: ["pii-mask"] }];
+    render(<SchemaDetailPane
+      schema={sch}
+      catalog={CATALOG_REL}
+      world={{ tables: tbls, tags: [{ id: "tg1", name: "PII" }], policies: [{ id: "p1", name: "pii-mask" }] }}
+    />);
+    expect(screen.getByText("fact_orders")).toBeTruthy();
+    expect(screen.getByText("PII")).toBeTruthy();
+    expect(screen.getByText("pii-mask")).toBeTruthy();
+  });
+
+  it("Tables tab — Edit action вызывает onChildEdit(item, 'tables')", () => {
+    const sch = { id: "s1", name: "sales", catalogId: "c1" };
+    const tbls = [{ id: "t1", name: "fact_orders", schemaId: "s1", tags: [], policies: [] }];
+    const onChildEdit = vi.fn();
+    render(<SchemaDetailPane
+      schema={sch}
+      catalog={CATALOG_REL}
+      world={{ tables: tbls }}
+      onChildEdit={onChildEdit}
+    />);
+    fireEvent.click(screen.getByRole("button", { name: /^edit$/i }));
+    expect(onChildEdit).toHaveBeenCalledWith(expect.objectContaining({ id: "t1" }), "tables");
+  });
+
+  it("Tables tab — Set Owner action вызывает onChildSetOwner(item, 'tables')", () => {
+    const sch = { id: "s1", name: "sales", catalogId: "c1" };
+    const tbls = [{ id: "t1", name: "fact_orders", schemaId: "s1", tags: [], policies: [] }];
+    const onChildSetOwner = vi.fn();
+    render(<SchemaDetailPane
+      schema={sch}
+      catalog={CATALOG_REL}
+      world={{ tables: tbls }}
+      onChildSetOwner={onChildSetOwner}
+    />);
+    fireEvent.click(screen.getByRole("button", { name: /set owner/i }));
+    expect(onChildSetOwner).toHaveBeenCalledWith(expect.objectContaining({ id: "t1" }), "tables");
+  });
 });
