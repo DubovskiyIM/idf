@@ -105,15 +105,6 @@ import GroupDetailCanvas from "./domains/gravitino/explorer/GroupDetailCanvas.js
 registerCanvas("role_detail", RoleDetailCanvas);
 registerCanvas("group_detail", GroupDetailCanvas);
 
-// Gravitino policy_detail (U-polish-3 — B15: Rules summary + JSON + Properties)
-// + Metadata Objects tab (U-tag-policy-objects).
-import PolicyDetailCanvas from "./domains/gravitino/explorer/PolicyDetailCanvas.jsx";
-registerCanvas("policy_detail", PolicyDetailCanvas);
-
-// Gravitino tag_detail (U-tag-policy-objects — Metadata Objects reverse-lookup)
-import TagDetailCanvas from "./domains/gravitino/explorer/TagDetailCanvas.jsx";
-registerCanvas("tag_detail", TagDetailCanvas);
-
 // Домены с переключением адаптера
 const DOMAIN_ADAPTERS = {
   lifequest: appleAdapter,

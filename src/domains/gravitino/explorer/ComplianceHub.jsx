@@ -58,9 +58,9 @@ function Inner({ world = {}, exec = () => {}, viewer }) {
           onCreate={() => setCreateTagOpen(true)}
           onEdit={(t) => setEditTagTarget(t)}
           onView={(t) => {
-            // Navigate в tag_detail canvas (TagDetailCanvas → MetadataObjectsPane).
+            // U-derive Phase 3.6: tag_detail derived projection — lookup by tagName.
             if (typeof window !== "undefined") {
-              window.location.href = `/gravitino/tag_detail?tagId=${encodeURIComponent(t.id)}`;
+              window.location.href = `/gravitino/tag_detail?tagName=${encodeURIComponent(t.name)}`;
             }
           }}
           onDelete={onDelete("Tag")}
@@ -72,9 +72,9 @@ function Inner({ world = {}, exec = () => {}, viewer }) {
           onCreate={() => setCreatePolicyOpen(true)}
           onEdit={(p) => setEditPolicyTarget(p)}
           onView={(p) => {
-            // Navigate в policy_detail canvas (PolicyDetailPane).
+            // U-derive Phase 3.7: policy_detail derived projection — lookup by policyName.
             if (typeof window !== "undefined") {
-              window.location.href = `/gravitino/policy_detail?policyId=${encodeURIComponent(p.id)}`;
+              window.location.href = `/gravitino/policy_detail?policyName=${encodeURIComponent(p.name)}`;
             }
           }}
           onDelete={onDelete("Policy")}

@@ -304,38 +304,40 @@ export const PROJECTIONS = {
   },
 
   // ═══ Tag ═══════════════════════════════════════════════════════════════════
-  tag_list: catalog("Tag", "Tags",
-    ["name", "comment", "inherited"]),
-  // tag_detail — host-rendered (U-tag-policy-objects).
-  // Canvas <TagDetailCanvas/> рендерит MetadataObjectsPane (reverse-lookup
-  // entities ассоциированных с этим тегом).
-  tag_detail: {
-    name: "Tag",
-    kind: "canvas",
-    mainEntity: "Tag",
-    entities: ["Tag"],
-    idParam: "tagId",
-    witnesses: ["name"],
-    body: { kind: "canvas", canvasId: "tag_detail" },
+  // tag_list — auto-derive (Phase 3.2). Override onItemClick — tag_detail
+  // identified by name (Gravitino convention для metadata-object lookup'а
+  // в metadata-objects-reverse-lookup pattern).
+  tag_list: {
+    ...catalog("Tag", "Tags", ["name", "comment", "inherited"], { onItemClick: false }),
+    onItemClick: { action: "navigate", to: "tag_detail", params: { tagName: "item.name" } },
   },
+  // tag_detail — derived (U-derive Phase 3.6). TagDetailCanvas удалён.
+  // SDK detail с subCollection источника derived:metadata-objects-by-tag —
+  // pattern metadata-objects-reverse-lookup (cross layer, @intent-driven/core
+  // 0.113+) сканирует world.{catalogs|schemas|tables|filesets|topics|models}
+  // и populate'ит items entities ассоциированных с этим тегом.
+  tag_detail: detail("Tag", "Tag",
+    ["name", "comment", "audit"],
+    [{ source: "derived:metadata-objects-by-tag", title: "Metadata Objects" }],
+    "tagName"),
 
   // ═══ Policy ════════════════════════════════════════════════════════════════
   // После idf-sdk#227 flattenSchema — importer сливает PolicyBase +
   // CustomPolicy (allOf) + Policy (oneOf) в единый entity с полями
   // name / comment / policyType / enabled / audit / inherited / content.
-  // Host enrichment в ontology.js снят.
-  policy_list: catalog("Policy", "Policies",
-    ["name", "policyType", "enabled", "comment"]),
-  // policy_detail — host-rendered (U-polish-3, B15).
-  policy_detail: {
-    name: "Policy",
-    kind: "canvas",
-    mainEntity: "Policy",
-    entities: ["Policy"],
-    idParam: "policyId",
-    witnesses: ["name"],
-    body: { kind: "canvas", canvasId: "policy_detail" },
+  policy_list: {
+    ...catalog("Policy", "Policies", ["name", "policyType", "enabled", "comment"], { onItemClick: false }),
+    onItemClick: { action: "navigate", to: "policy_detail", params: { policyName: "item.name" } },
   },
+  // policy_detail — derived (U-derive Phase 3.7). PolicyDetailCanvas + Pane удалены.
+  // SDK detail с propertyPopover для content/properties/audit (ontology Stage 7
+  // enrichment) + derived subCollection metadata-objects-by-policy. Custom
+  // rule-summary chips (humanReadable per policyType) ушли — content
+  // отображается через propertyPopover (key/value dict).
+  policy_detail: detail("Policy", "Policy",
+    ["name", "policyType", "enabled", "comment", "content", "audit"],
+    [{ source: "derived:metadata-objects-by-policy", title: "Metadata Objects" }],
+    "policyName"),
 };
 
 export const ROOT_PROJECTIONS = [
