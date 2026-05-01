@@ -56,8 +56,8 @@
 | B9 | **ModelVersion** | version, modelObject, aliases, properties | seed (10 versions) + render в ModelDetailPane (Versions table с aliases-chips) | ✅ U6.1 |
 | B10 | **Function** | name, comment, functionBody (read-only) | + FunctionDetailPane (read-only body + properties); CatalogTree показывает functions под relational schema | ✅ U6.2 |
 | B11 | **User** | name, roles | name, roles (`chipList`), audit + grant/revoke/delete actions | ✅ | Сравнить actions UX |
-| B12 | **Role** | name, privileges (resource × action tree) | name, securableObjects (`permissionMatrix`), properties | 🟡 | Нужна сверка permission-matrix UX vs их tree |
-| B13 | **UserGroup** | name, members | `Group`: name, roles, audit | 🟡 | Members editing — отдельный flow |
+| B12 | **Role** | name, privileges (resource × action tree) | RoleDetailPane: privileges grouped by resource type (metalake/catalog/...) с ALLOW/DENY chips | ✅ U-iam |
+| B13 | **UserGroup** | name, members | GroupDetailPane: tabs Members/Roles + add (selector доступных users) / remove (per row) — optimistic | ✅ U-iam |
 | B14 | **Tag** | name, comment, audit + assignment to metadata objects | + AssociatePopover на CatalogsTable (catalog-level) | ✅ U2.5 catalog · 🟡 schema/table U6 |
 | B15 | **Policy** | name, rules (resource × action × effect) | name, policyType, enabled, content, audit, inherited, comment | 🟡 | Нет UI для rules/assignment |
 | B16 | **Job** | jobId, status, startTime, endTime, details + cancel + drawer | seed (6 runs: success/failed/running/queued) + JobsTable + JobDetailDrawer + Cancel optimistic | ✅ U7 |
