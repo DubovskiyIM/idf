@@ -2,11 +2,16 @@
  * JobsHub — canvas root для jobs_hub projection (U7 — A8 закрытие).
  * Tabs: Jobs (runs) / Templates. Click row job → JobDetailDrawer.
  * Cancel running job → optimistic status="cancelled".
+ *
+ * U-iam2.a: + Run Job dialog → optimistic add в createdJobs;
+ * + Register Job Template dialog → optimistic add в createdTemplates.
  */
 import { useMemo, useState } from "react";
 import Tabs from "./Tabs.jsx";
 import JobStatusBadge from "./JobStatusBadge.jsx";
 import JobDetailDrawer from "./JobDetailDrawer.jsx";
+import RunJobDialog from "./RunJobDialog.jsx";
+import RegisterJobTemplateDialog from "./RegisterJobTemplateDialog.jsx";
 
 const TABS = [
   { key: "jobs", label: "Jobs" },
@@ -17,12 +22,18 @@ export default function JobsHub({ world = {} }) {
   const [active, setActive] = useState("jobs");
   const [drawerJobId, setDrawerJobId] = useState(null);
   const [cancelledIds, setCancelledIds] = useState(new Set());
+  const [runJobOpen, setRunJobOpen] = useState(false);
+  const [registerOpen, setRegisterOpen] = useState(false);
+  const [createdJobs, setCreatedJobs] = useState([]);
+  const [createdTemplates, setCreatedTemplates] = useState([]);
 
   const baseJobs = world.jobs || [];
-  const templates = world.job_templates || [];
+  const baseTemplates = world.job_templates || [];
+  const templates = useMemo(() => [...baseTemplates, ...createdTemplates], [baseTemplates, createdTemplates]);
   const templatesById = useMemo(() => Object.fromEntries(templates.map(t => [t.id, t])), [templates]);
 
-  const jobs = useMemo(() => baseJobs.map(j => cancelledIds.has(j.id) ? { ...j, status: "cancelled" } : j), [baseJobs, cancelledIds]);
+  const allJobs = useMemo(() => [...baseJobs, ...createdJobs], [baseJobs, createdJobs]);
+  const jobs = useMemo(() => allJobs.map(j => cancelledIds.has(j.id) ? { ...j, status: "cancelled" } : j), [allJobs, cancelledIds]);
 
   const drawerJob = jobs.find(j => j.id === drawerJobId);
   const drawerTemplate = drawerJob ? templatesById[drawerJob.templateId] : null;
@@ -34,7 +45,7 @@ export default function JobsHub({ world = {} }) {
 
   return (
     <div style={{ display: "flex", flexDirection: "column", height: "100%" }}>
-      <Header title="Jobs & Templates" subtitle="Job runs и зарегистрированные templates" />
+      <Header title="Jobs & Templates" subtitle="Job runs и зарегистрированные templates" actionLabel="+ Run Job" onAction={() => setRunJobOpen(true)} />
       <div style={{ flex: 1, minHeight: 0 }}>
         <Tabs tabs={TABS} active={active} onChange={setActive}>
           {active === "jobs"      && <JobsTable jobs={jobs} templatesById={templatesById} onRowClick={(j) => setDrawerJobId(j.id)} />}
@@ -48,19 +59,49 @@ export default function JobsHub({ world = {} }) {
         onClose={() => setDrawerJobId(null)}
         onCancel={onCancel}
       />
+      <RunJobDialog
+        visible={runJobOpen}
+        templates={templates}
+        onClose={() => setRunJobOpen(false)}
+        onRegisterTemplate={() => { setRunJobOpen(false); setRegisterOpen(true); }}
+        onSubmit={({ templateId, templateName }) => {
+          setCreatedJobs(prev => [...prev, {
+            id: `j_new_${Date.now()}`,
+            jobId: `${templateName}-${new Date().toISOString().slice(0,16).replace(/[:T-]/g,"")}`,
+            templateId, status: "queued",
+            startTime: null, endTime: null, details: { triggeredBy: "UI" },
+          }]);
+          setRunJobOpen(false);
+        }}
+      />
+      <RegisterJobTemplateDialog
+        visible={registerOpen}
+        onClose={() => setRegisterOpen(false)}
+        onSubmit={(tpl) => {
+          setCreatedTemplates(prev => [...prev, { id: `jt_new_${Date.now()}`, ...tpl }]);
+          setRegisterOpen(false);
+        }}
+      />
     </div>
   );
 }
 
-function Header({ title, subtitle }) {
+function Header({ title, subtitle, actionLabel, onAction }) {
   return (
     <div style={{
       padding: "14px 18px",
       borderBottom: "1px solid var(--idf-border, #e5e7eb)",
       background: "var(--idf-card, #fff)",
+      display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12,
     }}>
-      <h2 style={{ margin: 0, fontSize: 18, fontWeight: 600, color: "var(--idf-text)" }}>{title}</h2>
-      {subtitle && <div style={{ fontSize: 12, color: "var(--idf-text-muted)", marginTop: 2 }}>{subtitle}</div>}
+      <div>
+        <h2 style={{ margin: 0, fontSize: 18, fontWeight: 600, color: "var(--idf-text)" }}>{title}</h2>
+        {subtitle && <div style={{ fontSize: 12, color: "var(--idf-text-muted)", marginTop: 2 }}>{subtitle}</div>}
+      </div>
+      {actionLabel && (
+        <button type="button" onClick={onAction}
+          style={{ padding: "7px 14px", fontSize: 12, fontWeight: 600, border: "1px solid var(--idf-primary, #6478f7)", background: "var(--idf-primary, #6478f7)", color: "white", borderRadius: 4, cursor: "pointer" }}>{actionLabel}</button>
+      )}
     </div>
   );
 }
