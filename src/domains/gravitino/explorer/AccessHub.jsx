@@ -23,6 +23,7 @@ import { ToastProvider, useToast } from "./Toast.jsx";
 import CreateRoleDialog from "./CreateRoleDialog.jsx";
 import GrantRoleDialog from "./GrantRoleDialog.jsx";
 import SetOwnerDialog from "./SetOwnerDialog.jsx";
+import AddUserGroupDialog from "./AddUserGroupDialog.jsx";
 
 const SECTIONS = [
   { key: "users",  label: "Users" },
@@ -41,6 +42,7 @@ function Inner({ world = {}, exec = () => {}, viewer }) {
   const [createRoleOpen, setCreateRoleOpen] = useState(false);
   const [editRoleTarget, setEditRoleTarget] = useState(null);
   const [roleOwnerTarget, setRoleOwnerTarget] = useState(null);
+  const [addOpen, setAddOpen] = useState(null); // "user" | "group" | null
 
   const metalakeName = (world.metalakes || [])[0]?.name || "default";
 
@@ -93,7 +95,7 @@ function Inner({ world = {}, exec = () => {}, viewer }) {
       {active === "users"  && (
         <UsersTable
           users={users}
-          onAdd={() => toast("Add User — backend U-iam2c", "info")}
+          onAdd={() => setAddOpen("user")}
           onGrantRole={(u) => setGrantTarget({ kind: "user", id: u.id, name: u.name, roles: u.roles || [] })}
           onDelete={onDelete("User")}
         />
@@ -101,7 +103,7 @@ function Inner({ world = {}, exec = () => {}, viewer }) {
       {active === "groups" && (
         <GroupsTable
           groups={groups}
-          onAdd={() => toast("Add User Group — backend U-iam2c", "info")}
+          onAdd={() => setAddOpen("group")}
           onGrantRole={(g) => setGrantTarget({ kind: "group", id: g.id, name: g.name, roles: g.roles || [] })}
           onDelete={onDelete("Group")}
         />
@@ -150,6 +152,21 @@ function Inner({ world = {}, exec = () => {}, viewer }) {
         groups={groups}
         onClose={() => setRoleOwnerTarget(null)}
         onSubmit={handleRoleSetOwner}
+      />
+      <AddUserGroupDialog
+        visible={addOpen !== null}
+        kind={addOpen}
+        onClose={() => setAddOpen(null)}
+        onSubmit={({ name }) => {
+          const intentId = addOpen === "group" ? "addGroup" : "addUser";
+          exec({
+            intent: intentId,
+            params: { metalake: metalakeName },
+            context: { name, roles: [], audit: { creator: viewer?.name || "ui", createTime: new Date().toISOString() } },
+          });
+          toast(`${addOpen === "group" ? "Group" : "User"} «${name}» добавлен`, "success");
+          setAddOpen(null);
+        }}
       />
     </TwoPaneLayout>
   );
