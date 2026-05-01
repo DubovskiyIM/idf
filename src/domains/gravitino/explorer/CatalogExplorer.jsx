@@ -1,23 +1,15 @@
 /**
  * CatalogExplorer — split-pane root для metalake_workspace.
- *
- * Breadcrumb › CatalogTree │ Right pane (CatalogsTable / SchemaDetailPane /
- * TableDetailPane / ModelDetailPane / FilesetDetailPane / FunctionDetailPane /
- * TopicDetailPane). Регистрируется как canvas через
- * `registerCanvas("metalake_workspace", ...)`. `routeParams` приходят либо
- * top-level (тесты), либо на `ctx.routeParams` (ArchetypeCanvas).
- *
- * Optimistic UI-state (без backend exec — реальные intents в U*.5):
- *   U2.5 — tags/policies assignments per catalog;
- *   U3   — created catalogs;
- *   U5   — owner overrides;
- *   U6.1 — linked ModelVersions;
- *   U6.2 — fileset/function/topic — read-only display, optimistic-state не нужен.
+ * Breadcrumb › CatalogTree │ Right pane (CatalogsTable / *DetailPane).
+ * Optimistic UI-state без backend exec (реальные intents в U*.5):
+ * U2.5 tags/policies, U3 created, U5 owner, U6.1 ModelVersions,
+ * U-polish-1 deletedIds + ToastProvider.
  */
 import { useMemo, useState } from "react";
 import Breadcrumb from "./Breadcrumb.jsx";
 import CatalogTree from "./CatalogTree.jsx";
 import CatalogsTable from "./CatalogsTable.jsx";
+import ConfirmDialog from "./ConfirmDialog.jsx";
 import CreateCatalogDialog from "./CreateCatalogDialog.jsx";
 import FilesetDetailPane from "./FilesetDetailPane.jsx";
 import FunctionDetailPane from "./FunctionDetailPane.jsx";
@@ -26,9 +18,20 @@ import ModelDetailPane from "./ModelDetailPane.jsx";
 import SchemaDetailPane from "./SchemaDetailPane.jsx";
 import SetOwnerDialog from "./SetOwnerDialog.jsx";
 import TableDetailPane from "./TableDetailPane.jsx";
+import { ToastProvider, useToast } from "./Toast.jsx";
 import TopicDetailPane from "./TopicDetailPane.jsx";
 
-export default function CatalogExplorer({ world = {}, routeParams, ctx }) {
+export default function CatalogExplorer(props) {
+  // ToastProvider оборачивает всё дерево, чтобы useToast() работал в children.
+  return (
+    <ToastProvider>
+      <CatalogExplorerInner {...props} />
+    </ToastProvider>
+  );
+}
+
+function CatalogExplorerInner({ world = {}, routeParams, ctx }) {
+  const toast = useToast();
   const params = routeParams ?? ctx?.routeParams ?? {};
   const metalakeId = params.metalakeId;
   const metalake = (world.metalakes || []).find(m => m.id === metalakeId);
@@ -58,6 +61,11 @@ export default function CatalogExplorer({ world = {}, routeParams, ctx }) {
   const [ownerDialogTarget, setOwnerDialogTarget] = useState(null);
   const [ownerOverrides, setOwnerOverrides] = useState({});
 
+  // U-polish-1: Delete-confirm + optimistic delete (без backend exec — реальный
+  // intent dropCatalog в U6.5 batch).
+  const [deleteTarget, setDeleteTarget] = useState(null);
+  const [deletedIds, setDeletedIds] = useState(new Set());
+
   const handleCreate = (formData) => {
     const newCatalog = {
       id: `c_new_${Date.now()}`,
@@ -67,11 +75,13 @@ export default function CatalogExplorer({ world = {}, routeParams, ctx }) {
     };
     setCreatedCatalogs(prev => [...prev, newCatalog]);
     setCreating(false);
+    toast(`Catalog «${formData.name}» создан`, "success");
   };
 
   const myCatalogsAll = useMemo(
-    () => [...myCatalogs, ...createdCatalogs.filter(c => c.metalakeId === metalakeId)],
-    [myCatalogs, createdCatalogs, metalakeId]
+    () => [...myCatalogs, ...createdCatalogs.filter(c => c.metalakeId === metalakeId)]
+      .filter(c => !deletedIds.has(c.id)),
+    [myCatalogs, createdCatalogs, metalakeId, deletedIds]
   );
 
   const applyAssignments = (cat) => {
@@ -88,12 +98,44 @@ export default function CatalogExplorer({ world = {}, routeParams, ctx }) {
       ...prev,
       [catalogId]: { ...(prev[catalogId] || {}), [type]: names },
     }));
+    const catName = myCatalogsAll.find(c => c.id === catalogId)?.name || catalogId;
+    toast(`${type === "tags" ? "Tag" : "Policy"} обновлён для ${catName}`, "success");
   };
 
   const handleSetOwner = ({ kind, name }) => {
     if (!ownerDialogTarget) return;
     setOwnerOverrides(prev => ({ ...prev, [ownerDialogTarget]: name }));
     setOwnerDialogTarget(null);
+    toast(`Owner назначен: ${name}`, "success");
+  };
+
+  const handleConfirmDelete = () => {
+    const target = deleteTarget;
+    if (!target) return;
+    setDeletedIds(prev => { const next = new Set(prev); next.add(target.id); return next; });
+    if (selectedCatalog?.id === target.id) {
+      setSelectedCatalog(null); setSelectedSchema(null); resetLeaves();
+    }
+    toast(`Catalog «${target.name}» удалён`, "error");
+    setDeleteTarget(null);
+  };
+
+  // Вычисляет следующий version-номер для linkModelVersion (max+1 по существующим
+  // backend versions + optimistically linked).
+  const suggestedVersion = linkingForModel
+    ? Math.max(
+        0,
+        ...((world.model_versions || []).filter(v => v.modelId === linkingForModel).map(v => v.version || 0)),
+        ...linkedVersions.filter(v => v.modelId === linkingForModel).map(v => v.version || 0),
+      ) + 1
+    : 1;
+
+  const handleLinkVersion = ({ version, modelObject, aliases }) => {
+    setLinkedVersions(prev => [...prev, {
+      id: `mv_new_${Date.now()}`, modelId: linkingForModel,
+      version, modelObject, aliases, properties: {},
+    }]);
+    setLinkingForModel(null);
   };
 
   // Сбрасывает все leaf-selections (table/model/fileset/function/topic).
@@ -187,6 +229,7 @@ export default function CatalogExplorer({ world = {}, routeParams, ctx }) {
           onAssociate={onAssociate}
           onCreate={() => setCreating(true)}
           onSetOwner={(catalogId) => setOwnerDialogTarget(catalogId)}
+          onDelete={(cat) => setDeleteTarget(cat)}
         />
       </div>
     );
@@ -239,24 +282,16 @@ export default function CatalogExplorer({ world = {}, routeParams, ctx }) {
       />
       <LinkVersionDialog
         visible={!!linkingForModel}
-        suggestedVersion={
-          linkingForModel
-            ? Math.max(
-                0,
-                ...((world.model_versions || []).filter(v => v.modelId === linkingForModel).map(v => v.version || 0)),
-                ...linkedVersions.filter(v => v.modelId === linkingForModel).map(v => v.version || 0),
-              ) + 1
-            : 1
-        }
+        suggestedVersion={suggestedVersion}
         onClose={() => setLinkingForModel(null)}
-        onSubmit={({ version, modelObject, aliases }) => {
-          setLinkedVersions(prev => [...prev, {
-            id: `mv_new_${Date.now()}`,
-            modelId: linkingForModel,
-            version, modelObject, aliases, properties: {},
-          }]);
-          setLinkingForModel(null);
-        }}
+        onSubmit={handleLinkVersion}
+      />
+      <ConfirmDialog
+        visible={!!deleteTarget}
+        entityName={deleteTarget?.name}
+        entityKind="catalog"
+        onCancel={() => setDeleteTarget(null)}
+        onConfirm={handleConfirmDelete}
       />
     </div>
   );
