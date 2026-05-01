@@ -1,6 +1,11 @@
 /**
  * ComplianceHub — 2-pane: Tags / Policies (Row Filters / Column Masks disabled
- * placeholders как у gravitino/web-v2). Wires CreateTagDialog + CreatePolicyDialog (U-iam2.b).
+ * placeholders как у gravitino/web-v2). Wires CreateTagDialog + CreatePolicyDialog.
+ *
+ * U-backend-exec: Create Tag / Create Policy + Drop Tag / Drop Policy через
+ * реальный exec({intent, params, context}). Generic effect handler в SDK
+ * применяет intent.particles.effects (Tag/Policy с op=replace|remove) — fold
+ * обновляет world.tags / world.policies. Локальный optimistic state удалён.
  */
 import { useState } from "react";
 import TwoPaneLayout from "./TwoPaneLayout.jsx";
@@ -20,29 +25,32 @@ export default function ComplianceHub(props) {
   return <ToastProvider><Inner {...props} /></ToastProvider>;
 }
 
-function Inner({ world = {} }) {
+function Inner({ world = {}, exec = () => {}, viewer }) {
   const toast = useToast();
   const [active, setActive] = useState("tags");
-  const [deletedIds, setDeletedIds] = useState(new Set());
   const [createTagOpen, setCreateTagOpen] = useState(false);
   const [createPolicyOpen, setCreatePolicyOpen] = useState(false);
-  const [createdTags, setCreatedTags] = useState([]);
-  const [createdPolicies, setCreatedPolicies] = useState([]);
 
-  const filterDel = (xs) => (xs || []).filter(x => !deletedIds.has(x.id));
+  // Метаlake-name берём из первого metalake в world (в реальной gravitino UI
+  // selector или URL-param). В заглушечном domain используется единственный.
+  const metalakeName = (world.metalakes || [])[0]?.name || "default";
+
   const onDelete = (kind) => (entity) => {
-    setDeletedIds(prev => new Set(prev).add(entity.id));
+    const intentId = kind === "Tag" ? "deleteTag" : "deletePolicy";
+    const paramKey = kind === "Tag" ? "tag" : "policy";
+    exec({
+      intent: intentId,
+      params: { metalake: metalakeName, [paramKey]: entity.name },
+      context: {},
+    });
     toast(`${kind} «${entity.name}» удалён`, "error");
   };
-
-  const allTags = [...(world.tags || []), ...createdTags];
-  const allPolicies = [...(world.policies || []), ...createdPolicies];
 
   return (
     <TwoPaneLayout sections={SECTIONS} active={active} onSelect={setActive} title="Data Compliance">
       {active === "tags" && (
         <TagsTable
-          tags={filterDel(allTags)}
+          tags={world.tags || []}
           onCreate={() => setCreateTagOpen(true)}
           onEdit={(t) => toast(`Edit Tag ${t.name} — U-iam2c`, "info")}
           onDelete={onDelete("Tag")}
@@ -50,7 +58,7 @@ function Inner({ world = {} }) {
       )}
       {active === "policies" && (
         <PoliciesTable
-          policies={filterDel(allPolicies)}
+          policies={world.policies || []}
           onCreate={() => setCreatePolicyOpen(true)}
           onEdit={(p) => toast(`Edit Policy ${p.name} — U-iam2c`, "info")}
           onView={(p) => toast(`View Policy ${p.name}`, "info")}
@@ -62,11 +70,14 @@ function Inner({ world = {} }) {
         visible={createTagOpen}
         onClose={() => setCreateTagOpen(false)}
         onSubmit={(payload) => {
-          setCreatedTags(prev => [...prev, {
-            id: `tag_new_${Date.now()}`,
-            audit: { createTime: new Date().toISOString() },
-            ...payload,
-          }]);
+          exec({
+            intent: "createTag",
+            params: { metalake: metalakeName },
+            context: {
+              ...payload,
+              audit: { creator: viewer?.name || "ui", createTime: new Date().toISOString() },
+            },
+          });
           toast(`Tag «${payload.name}» создан`, "success");
           setCreateTagOpen(false);
         }}
@@ -75,11 +86,14 @@ function Inner({ world = {} }) {
         visible={createPolicyOpen}
         onClose={() => setCreatePolicyOpen(false)}
         onSubmit={(payload) => {
-          setCreatedPolicies(prev => [...prev, {
-            id: `pol_new_${Date.now()}`,
-            audit: { createTime: new Date().toISOString() },
-            ...payload,
-          }]);
+          exec({
+            intent: "createPolicy",
+            params: { metalake: metalakeName },
+            context: {
+              ...payload,
+              audit: { creator: viewer?.name || "ui", createTime: new Date().toISOString() },
+            },
+          });
           toast(`Policy «${payload.name}» создана`, "success");
           setCreatePolicyOpen(false);
         }}
