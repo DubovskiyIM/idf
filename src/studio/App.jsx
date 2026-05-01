@@ -10,6 +10,7 @@ import PatternsView from "./patterns/PatternsView.jsx";
 import OntologyView from "./OntologyView.jsx";
 import IntegrityView from "./IntegrityView.jsx";
 import AlgebraView from "./AlgebraView.jsx";
+import SpecEditor from "./SpecEditor.jsx";
 import PrototypeHealth from "./PrototypeHealth.jsx";
 import PhiDrawer from "./PhiDrawer.jsx";
 import StudioPrefsPanel from "./StudioPrefsPanel.jsx";
@@ -95,6 +96,7 @@ function TabStrip({ view, setView, domainName, onTogglePhi, phiOpen, onToggleCha
         {domainOnly("ontology", "Онтология")}
         {domainOnly("algebra", "Алгебра")}
         {domainOnly("integrity", "Целостность")}
+        {domainOnly("spec", "IDF")}
         <button onClick={() => setView("patterns")} style={tabStyle(view === "patterns")}>Паттерны</button>
       </div>
       <div style={{ flex: 1 }} />
@@ -148,7 +150,7 @@ function initialViewFromUrl() {
   if (typeof window === "undefined") return "graph";
   try {
     const v = new URLSearchParams(window.location.search).get("view");
-    return ["graph", "prototype", "ontology", "algebra", "integrity", "patterns"].includes(v) ? v : "graph";
+    return ["graph", "prototype", "ontology", "algebra", "integrity", "patterns", "spec"].includes(v) ? v : "graph";
   } catch { return "graph"; }
 }
 
@@ -216,7 +218,7 @@ export default function App() {
   // domain-specific tabs (Прототип/Онтология/Целостность) не остались в
   // «disabled but current» состоянии.
   useEffect(() => {
-    if (!domain && ["prototype", "ontology", "algebra", "integrity"].includes(view)) {
+    if (!domain && ["prototype", "ontology", "algebra", "integrity", "spec"].includes(view)) {
       setView("graph");
     }
   }, [domain, view]);
@@ -474,6 +476,7 @@ export default function App() {
           : view === "ontology" ? <OntologyView domainId={domain} />
           : view === "algebra" ? <AlgebraView domainId={domain} />
           : view === "integrity" ? <IntegrityView domainId={domain} onFixWithClaude={readonly ? undefined : onFixIntegrityIssue} />
+          : view === "spec" ? <SpecEditor domainId={domain} />
           : <PatternsView />}
         {/* Drawers (Chat, Φ) рендерятся в общем контейнере — доступны во всех табах */}
         {domain && (

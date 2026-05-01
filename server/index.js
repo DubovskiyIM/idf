@@ -45,6 +45,14 @@ app.use("/api/document/:domain", makeDocumentRouter());
 const { makeVoiceRouter } = require("./routes/voice.js");
 app.use("/api/voice/:domain", makeVoiceRouter());
 
+// Studio authoring flow — LLM-driven domain authoring (Phase 2 MVP):
+// POST /api/studio/domain/:id/author/turn  — SSE turn
+// GET  /api/studio/domain/:id/author/state — snapshot
+// POST /api/studio/domain/:id/author/undo  — rollback last turn
+// POST /api/studio/domain/:id/author/reset — clear session
+const { makeStudioAuthoringRouter } = require("./routes/studio-authoring.js");
+app.use("/api/studio/domain", makeStudioAuthoringRouter());
+
 // UX Pattern Layer (v1.8): Pattern Bank surface.
 // /api/patterns/catalog → stable/candidate/anti паттерны с trigger/structure/rationale/falsification.
 const { makePatternsRouter } = require("./routes/patterns.js");
