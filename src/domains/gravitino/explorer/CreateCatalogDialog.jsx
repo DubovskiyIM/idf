@@ -10,20 +10,36 @@
 import { useEffect, useId, useMemo, useState } from "react";
 import { TYPES, providersForType, fieldsForProvider } from "./providerSchema.js";
 
+// C4 — heuristic для mock Test Connection: URI должен начинаться с
+// известной схемы (https? / thrift / jdbc / s3 / mlflow / hdfs / file).
+function isPlausibleUri(value) {
+  if (!value) return false;
+  return /^(https?|thrift|jdbc|s3|mlflow|hdfs|file):\/{0,2}/.test(String(value).trim());
+}
+
 export default function CreateCatalogDialog({ visible, onClose = () => {}, onSubmit = () => {} }) {
   const [name, setName] = useState("");
   const [comment, setComment] = useState("");
   const [type, setType] = useState("");
   const [provider, setProvider] = useState("");
   const [props, setProps] = useState({});
+  const [testStatus, setTestStatus] = useState(null); // null | "loading" | "ok" | "fail"
+  const [testMessage, setTestMessage] = useState("");
   const idPrefix = useId();
 
   useEffect(() => {
     if (!visible) {
       // Reset при close
       setName(""); setComment(""); setType(""); setProvider(""); setProps({});
+      setTestStatus(null); setTestMessage("");
     }
   }, [visible]);
+
+  // Reset Test Connection state при смене provider/type
+  useEffect(() => {
+    setTestStatus(null);
+    setTestMessage("");
+  }, [provider, type]);
 
   const providers = useMemo(() => providersForType(type), [type]);
   const fields = useMemo(() => fieldsForProvider(type, provider), [type, provider]);
@@ -153,6 +169,41 @@ export default function CreateCatalogDialog({ visible, onClose = () => {}, onSub
             </Field>
           );
         })}
+
+        {provider && (
+          <div style={{ marginBottom: 12 }}>
+            <button
+              type="button"
+              onClick={async () => {
+                setTestStatus("loading");
+                setTestMessage("Проверка подключения...");
+                await new Promise(r => setTimeout(r, 500));
+                // эвристика: ищем первое URI-подобное поле
+                const uriField = fields.find(f => /uri|url|location|servers/i.test(f.key));
+                const uriValue = uriField ? props[uriField.key] : null;
+                const ok = isPlausibleUri(uriValue);
+                setTestStatus(ok ? "ok" : "fail");
+                setTestMessage(ok
+                  ? `✓ Connection OK: ${uriValue}`
+                  : `✗ Invalid URI: ${uriValue || "(empty)"}`);
+              }}
+              disabled={testStatus === "loading"}
+              style={{
+                padding: "5px 12px", fontSize: 11, borderRadius: 4,
+                border: "1px solid var(--idf-border, #e5e7eb)",
+                background: "transparent",
+                cursor: testStatus === "loading" ? "wait" : "pointer",
+                color: "var(--idf-text-muted)",
+              }}
+            >Test Connection</button>
+            {testStatus && testStatus !== "loading" && (
+              <span style={{
+                marginLeft: 10, fontSize: 11,
+                color: testStatus === "ok" ? "#71DD37" : "#FF3E1D",
+              }}>{testMessage}</span>
+            )}
+          </div>
+        )}
 
         <div style={{ display: "flex", justifyContent: "flex-end", gap: 8, marginTop: 16 }}>
           <button type="button" onClick={onClose} style={btnSecondary}>Cancel</button>
