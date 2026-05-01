@@ -342,5 +342,51 @@ export function getSeedEffects() {
   ];
   POLICIES.forEach(p => ef("policies", p));
 
+  // ═══ Job Templates ═════════════════════════════════════════════════════
+  // 3 template'а — Spark / shell-script / Airflow.
+  const JOB_TEMPLATES = [
+    { id: "jt_spark_etl", name: "spark_daily_etl", description: "Daily ETL: bronze → silver → gold pipeline на Spark",
+      config: { kind: "spark", entrypoint: "s3://jobs/spark/etl.py", driver: { cores: 4, memory: "8g" }, executor: { cores: 2, memory: "4g", instances: 8 } },
+      audit: audit("alice@acme", 90) },
+    { id: "jt_shell_backup", name: "metastore_backup", description: "pg_dump Hive metastore + upload в S3",
+      config: { kind: "shell", script: "pg_dump $HMS_DB | aws s3 cp - s3://backups/hms/$(date +%F).sql" },
+      audit: audit("bob@acme", 60) },
+    { id: "jt_airflow_dq", name: "data_quality_checks", description: "Airflow DAG — freshness + completeness checks по prod tables",
+      config: { kind: "airflow", dagId: "data_quality_v3", schedule: "0 */6 * * *" },
+      audit: audit("alice@acme", 30) },
+  ];
+  JOB_TEMPLATES.forEach(t => ef("job_templates", t));
+
+  // ═══ Job Runs ══════════════════════════════════════════════════════════
+  // 6 jobs с разными status — для UI demo (success / failed / running / queued).
+  const ONE_HOUR = 3600 * 1000;
+  const ONE_DAY = 86400 * 1000;
+  const JOBS = [
+    { id: "j_001", jobId: "spark-etl-2026-04-30-0600", templateId: "jt_spark_etl",
+      status: "success", startTime: new Date(now - 1 * ONE_DAY - 6 * ONE_HOUR).toISOString(),
+      endTime: new Date(now - 1 * ONE_DAY - 5 * ONE_HOUR).toISOString(),
+      details: { rowsProcessed: 12_500_000, stages: 8, executors: 8 } },
+    { id: "j_002", jobId: "spark-etl-2026-04-30-1200", templateId: "jt_spark_etl",
+      status: "success", startTime: new Date(now - 1 * ONE_DAY).toISOString(),
+      endTime: new Date(now - 1 * ONE_DAY + 50 * 60_000).toISOString(),
+      details: { rowsProcessed: 13_120_345, stages: 8, executors: 8 } },
+    { id: "j_003", jobId: "metastore-backup-2026-04-30", templateId: "jt_shell_backup",
+      status: "success", startTime: new Date(now - 12 * ONE_HOUR).toISOString(),
+      endTime: new Date(now - 12 * ONE_HOUR + 8 * 60_000).toISOString(),
+      details: { backupSize: "1.2 GB", s3Path: "s3://backups/hms/2026-04-30.sql" } },
+    { id: "j_004", jobId: "spark-etl-2026-05-01-0600", templateId: "jt_spark_etl",
+      status: "failed", startTime: new Date(now - 4 * ONE_HOUR).toISOString(),
+      endTime: new Date(now - 3 * ONE_HOUR - 10 * 60_000).toISOString(),
+      details: { error: "OOM in stage 5: executor lost", failedStage: 5, attemptsLeft: 1 } },
+    { id: "j_005", jobId: "data-quality-2026-05-01", templateId: "jt_airflow_dq",
+      status: "running", startTime: new Date(now - 25 * 60_000).toISOString(),
+      endTime: null,
+      details: { currentTask: "freshness_check_orders", completedTasks: 3, totalTasks: 12 } },
+    { id: "j_006", jobId: "spark-etl-2026-05-01-1200", templateId: "jt_spark_etl",
+      status: "queued", startTime: null, endTime: null,
+      details: { queuedReason: "waiting for cluster capacity" } },
+  ];
+  JOBS.forEach(j => ef("jobs", j));
+
   return effects;
 }

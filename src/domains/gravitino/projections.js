@@ -189,6 +189,17 @@ export const PROJECTIONS = {
     body: { kind: "canvas", canvasId: "compliance_hub" },
   },
 
+  // jobs_hub — top-nav root для Jobs/Templates section (U7 — A8 закрытие).
+  // Canvas: <JobsHub/> с tabs Jobs / Templates.
+  jobs_hub: {
+    name: "Jobs",
+    kind: "canvas",
+    mainEntity: "Job",
+    entities: ["Job", "JobTemplate"],
+    witnesses: [],
+    body: { kind: "canvas", canvasId: "jobs_hub" },
+  },
+
   // ═══ Catalog ═══════════════════════════════════════════════════════════════
   // type: relational/fileset/messaging/model; provider: hive/iceberg/...
   catalog_list: catalog("Catalog", "Catalogs",
@@ -324,11 +335,12 @@ export const PROJECTIONS = {
 };
 
 export const ROOT_PROJECTIONS = [
-  // Top-level nav: metalake (hierarchy entry) + 2 hubs (access / compliance).
+  // Top-level nav: metalake (hierarchy entry) + jobs_hub + 2 hubs (access / compliance).
   // Inner projections (user_list/group_list/role_list/tag_list/policy_list)
   // остаются accessible через direct URL и через tiles внутри hubs (U2.6).
-  // Структура соответствует gravitino/web-v2 nav grouping.
+  // Структура соответствует gravitino/web-v2 nav grouping (U7 — A8 закрытие).
   "metalake_list",
+  "jobs_hub",
   "access_hub",
   "compliance_hub",
 ];
