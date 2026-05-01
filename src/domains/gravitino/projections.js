@@ -292,8 +292,18 @@ export const PROJECTIONS = {
         },
       ],
     }),
-  group_detail: detail("Group", "Group",
-    ["name", "roles", "audit"]),
+  // group_detail — host-rendered (U-iam, B13).
+  // Canvas <GroupDetailCanvas/> читает routeParams.groupId и передаёт group +
+  // users в GroupDetailPane (Members/Roles tabs + add/remove членов).
+  group_detail: {
+    name: "Group",
+    kind: "canvas",
+    mainEntity: "Group",
+    entities: ["Group", "User"],
+    idParam: "groupId",
+    witnesses: ["name"],
+    body: { kind: "canvas", canvasId: "group_detail" },
+  },
 
   // ═══ Role ══════════════════════════════════════════════════════════════════
   // securableObjects — matrix, только на detail. properties — json,
@@ -304,8 +314,19 @@ export const PROJECTIONS = {
   // Acceptable: у Role ещё нет других scalar полей для column-display.
   role_list: catalog("Role", "Roles",
     ["name"]),
-  role_detail: detail("Role", "Role",
-    ["name", "securableObjects", "properties"]),
+  // role_detail — host-rendered (U-iam, B12).
+  // Canvas <RoleDetailCanvas/> читает routeParams.roleId и передаёт role
+  // в RoleDetailPane (Privileges tab — securableObjects сгруппированы по
+  // type, ALLOW/DENY chips цветные; Properties tab — key-value).
+  role_detail: {
+    name: "Role",
+    kind: "canvas",
+    mainEntity: "Role",
+    entities: ["Role"],
+    idParam: "roleId",
+    witnesses: ["name"],
+    body: { kind: "canvas", canvasId: "role_detail" },
+  },
 
   // ═══ Tag ═══════════════════════════════════════════════════════════════════
   tag_list: catalog("Tag", "Tags",

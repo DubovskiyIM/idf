@@ -96,6 +96,12 @@ import ComplianceHub from "./domains/gravitino/explorer/ComplianceHub.jsx";
 registerCanvas("access_hub", AccessHub);
 registerCanvas("compliance_hub", ComplianceHub);
 
+// Gravitino IAM detail-canvases (U-iam — B12/B13)
+import RoleDetailCanvas from "./domains/gravitino/explorer/RoleDetailCanvas.jsx";
+import GroupDetailCanvas from "./domains/gravitino/explorer/GroupDetailCanvas.jsx";
+registerCanvas("role_detail", RoleDetailCanvas);
+registerCanvas("group_detail", GroupDetailCanvas);
+
 // Домены с переключением адаптера
 const DOMAIN_ADAPTERS = {
   lifequest: appleAdapter,
