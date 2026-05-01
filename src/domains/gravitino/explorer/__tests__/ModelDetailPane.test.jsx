@@ -49,4 +49,40 @@ describe("ModelDetailPane", () => {
     render(<ModelDetailPane model={MODEL} world={{ model_versions: [] }} onLinkVersion={vi.fn()} />);
     expect(screen.getByText(/нет версий|no versions/i)).toBeTruthy();
   });
+
+  it("Unlink-кнопка вызывает onUnlinkVersion(versionId)", () => {
+    const onUnlink = vi.fn();
+    render(<ModelDetailPane
+      model={MODEL}
+      world={{ model_versions: VERSIONS }}
+      onLinkVersion={vi.fn()}
+      onUnlinkVersion={onUnlink}
+      onEditAliases={vi.fn()}
+    />);
+    const unlinks = screen.getAllByRole("button", { name: /unlink/i });
+    fireEvent.click(unlinks[0]);
+    // ConfirmDialog появился — placeholder совпадает с entityName ("v7")
+    const input = screen.getByPlaceholderText(/^v\d+$/);
+    fireEvent.change(input, { target: { value: input.placeholder } });
+    fireEvent.click(screen.getByRole("button", { name: /^unlink$/i }));
+    expect(onUnlink).toHaveBeenCalled();
+  });
+
+  it("Edit Aliases открывает popover с aliases CSV и сохраняет массив", () => {
+    const onEdit = vi.fn();
+    render(<ModelDetailPane
+      model={MODEL}
+      world={{ model_versions: VERSIONS }}
+      onLinkVersion={vi.fn()}
+      onUnlinkVersion={vi.fn()}
+      onEditAliases={onEdit}
+    />);
+    const editBtns = screen.getAllByRole("button", { name: /edit aliases|edit alias/i });
+    fireEvent.click(editBtns[0]);
+    const aliasInput = screen.getByPlaceholderText(/staging.*production.*candidate/i);
+    expect(aliasInput.value).toMatch(/production|champion|staging|candidate/);
+    fireEvent.change(aliasInput, { target: { value: "production, primary" } });
+    fireEvent.click(screen.getByRole("button", { name: /^save$|apply/i }));
+    expect(onEdit).toHaveBeenCalledWith(expect.any(String), ["production", "primary"]);
+  });
 });

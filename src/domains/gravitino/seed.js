@@ -111,6 +111,10 @@ export function getSeedEffects() {
     { name: "order_status",type: "varchar",   length: 16, nullable: false, comment: "pending/paid/shipped/refunded" },
     { name: "order_ts",    type: "timestamp", nullable: false },
     { name: "channel",     type: "varchar",   length: 32 },
+    // U-detail-polish (B5): nested-type колонки для demo expandable rows.
+    { name: "metadata",          type: "struct<source:string, version:int, tags:array<string>>",         nullable: true,  comment: "Event metadata struct" },
+    { name: "line_items",        type: "array<struct<sku:string, qty:int, price:decimal(10,2)>>",        nullable: false, comment: "Order line items" },
+    { name: "address_overrides", type: "map<string, string>",                                            nullable: true,  comment: "Per-channel address overrides" },
   ];
   const COL_DIM_CUSTOMER = [
     { name: "customer_id", type: "bigint",    nullable: false, comment: "Surrogate PK" },

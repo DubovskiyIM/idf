@@ -14,6 +14,7 @@
  * Associated Filesets (cross-link) — backlog (U-cross).
  */
 import { useState } from "react";
+import ColumnsTab from "./ColumnsTab.jsx";
 import { ChipsAssoc, OwnerBlock } from "./DetailPaneCommon.jsx";
 import Tabs from "./Tabs.jsx";
 
@@ -41,7 +42,7 @@ export default function TableDetailPane({
       <Header table={table} onSetOwner={() => onSetOwner(table.id)} />
       <div style={{ flex: 1, minHeight: 0 }}>
         <Tabs tabs={tabs} active={active} onChange={setActive}>
-          {active === "columns"      && <ColumnsTable columns={table.columns} />}
+          {active === "columns"      && <ColumnsTab columns={table.columns} />}
           {active === "partitioning" && <PartitioningView spec={table.partitioning} />}
           {active === "distribution" && <DistributionView dist={table.distribution} />}
           {active === "sortOrders"   && <SortOrdersView orders={table.sortOrders} />}
@@ -75,32 +76,6 @@ function Header({ table, onSetOwner }) {
       </div>
       <OwnerBlock owner={table.owner} onSetOwner={onSetOwner} />
     </div>
-  );
-}
-
-function ColumnsTable({ columns = [] }) {
-  if (columns.length === 0) return <Empty>Нет колонок</Empty>;
-  return (
-    <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13, color: "var(--idf-text)" }}>
-      <thead>
-        <tr style={{ background: "var(--idf-surface, #f3f4f6)" }}>
-          <th style={cellStyle}>Name</th>
-          <th style={cellStyle}>Type</th>
-          <th style={cellStyle}>Nullable</th>
-          <th style={cellStyle}>Comment</th>
-        </tr>
-      </thead>
-      <tbody>
-        {columns.map(col => (
-          <tr key={col.name} style={{ borderBottom: "1px solid var(--idf-border, #e5e7eb)" }}>
-            <td style={{ ...cellStyle, fontWeight: 500 }}>{col.name}</td>
-            <td style={{ ...cellStyle, fontFamily: "monospace", color: "var(--idf-primary, #6478f7)" }}>{col.type}</td>
-            <td style={cellStyle}>{col.nullable === false ? "NOT NULL" : "NULL"}</td>
-            <td style={{ ...cellStyle, color: "var(--idf-text-muted)" }}>{col.comment || "—"}</td>
-          </tr>
-        ))}
-      </tbody>
-    </table>
   );
 }
 
