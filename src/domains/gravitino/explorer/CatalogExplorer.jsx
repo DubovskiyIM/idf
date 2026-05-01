@@ -116,9 +116,52 @@ function CatalogExplorerInner({ world = {}, routeParams, ctx, exec = () => {}, v
         onAssociate={(_id, type, names) => h.handleEntityAssociate("tables", selectedTable, type, names)} />
     );
     if (selectedSchema) return (
-      <SchemaDetailPane schema={selectedSchema} catalog={selectedCatalog} world={world}
+      <SchemaDetailPane
+        schema={selectedSchema}
+        catalog={selectedCatalog}
+        world={world}
         onSetOwner={setSchemaOwnerDialogTarget}
-        onAssociate={(_id, type, names) => h.handleEntityAssociate("schemas", selectedSchema, type, names)} />
+        onAssociate={(_id, type, names) => h.handleEntityAssociate("schemas", selectedSchema, type, names)}
+        // U-fix-toggle-tabs: child-tables (Tables/Filesets/Models) callbacks.
+        // Edit — out of scope для всех kind'ов (нет EditDialog); toast
+        // placeholder. SetOwner для tables reuse dialog; для filesets/models
+        // нет dialog'ов — toast. Delete → exec(dropTable / dropFileset /
+        // deleteModel). Associate — reuse handleEntityAssociate для tables;
+        // для filesets/models — toast (associate intent есть, но без UI flow).
+        onChildEdit={(item, kind) => {
+          toast(`Edit ${kind} «${item.name}» — out of scope для текущего sprint'а`, "info");
+        }}
+        onChildSetOwner={(item, kind) => {
+          if (kind === "tables") setTableOwnerDialogTarget(item.id);
+          else toast(`Set Owner для ${kind} — out of scope`, "info");
+        }}
+        onChildDelete={(item, kind) => {
+          const intentByKind = { tables: "dropTable", filesets: "dropFileset", models: "deleteModel" };
+          const paramKey = { tables: "table", filesets: "fileset", models: "model" }[kind];
+          const intentId = intentByKind[kind];
+          if (!intentId || !paramKey) return;
+          exec({
+            intent: intentId,
+            params: {
+              metalake: metalake?.name,
+              catalog: selectedCatalog?.name,
+              schema: selectedSchema?.name,
+              [paramKey]: item.name,
+            },
+            context: {},
+          });
+          toast(`${kind} «${item.name}» удалён`, "error");
+        }}
+        onChildAssociate={(itemId, type, names, kind) => {
+          if (kind === "tables") {
+            const t = (world.tables || []).find(x => x.id === itemId);
+            if (!t) return;
+            h.handleEntityAssociate("tables", t, type, names);
+          } else {
+            toast(`Associate ${type} для ${kind} — out of scope`, "info");
+          }
+        }}
+      />
     );
     const visible = selectedCatalog ? [selectedCatalog] : myCatalogs;
     return (
