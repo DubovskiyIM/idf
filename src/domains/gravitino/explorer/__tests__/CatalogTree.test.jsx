@@ -120,6 +120,22 @@ describe("CatalogTree", () => {
     expect(screen.getByText("orders_topic")).toBeTruthy();
   });
 
+  it("expand schema (relational) → видны и tables, и functions если есть (U6.2)", () => {
+    const FNS = [{ id: "fn1", name: "revenue_split", schemaId: "s_sales" }];
+    render(
+      <CatalogTree
+        catalogs={CATALOGS}
+        world={{ schemas: SCHEMAS_EXT, tables: TABLES, functions: FNS, topics: [], models: [], filesets: [] }}
+        metalakeId="m1"
+        onSelect={vi.fn()}
+      />
+    );
+    fireEvent.click(screen.getByRole("button", { name: /expand-catalog:c1/i }));
+    fireEvent.click(screen.getByRole("button", { name: /expand-schema:s_sales/i }));
+    expect(screen.getByText("fact_orders")).toBeTruthy();
+    expect(screen.getByText("revenue_split")).toBeTruthy();
+  });
+
   it("click на table узел вызывает onSelect с table объектом", () => {
     const onSelect = vi.fn();
     render(

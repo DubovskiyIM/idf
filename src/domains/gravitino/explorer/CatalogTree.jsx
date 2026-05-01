@@ -35,16 +35,21 @@ function getCatalogChildren(catalog, world) {
   };
 }
 
+// Возвращает массив групп { kind, items[] } — relational schema может
+// содержать одновременно tables и functions (U6.2).
 function getSchemaChildren(schema, catalog, world) {
   switch (catalog.type) {
     case "relational":
-      return { kind: "table", items: (world.tables || []).filter(t => t.schemaId === schema.id) };
+      return [
+        { kind: "table",    items: (world.tables    || []).filter(t => t.schemaId === schema.id) },
+        { kind: "function", items: (world.functions || []).filter(f => f.schemaId === schema.id) },
+      ].filter(g => g.items.length > 0);
     case "fileset":
-      return { kind: "fileset", items: (world.filesets || []).filter(f => f.schemaId === schema.id) };
+      return [{ kind: "fileset", items: (world.filesets || []).filter(f => f.schemaId === schema.id) }];
     case "model":
-      return { kind: "model", items: (world.models || []).filter(m => m.schemaId === schema.id) };
+      return [{ kind: "model", items: (world.models || []).filter(m => m.schemaId === schema.id) }];
     default:
-      return { kind: null, items: [] };
+      return [];
   }
 }
 
@@ -54,6 +59,7 @@ const KIND_ICON = {
   fileset: "📁",
   topic: "📡",
   model: "🤖",
+  function: "𝑓",
 };
 
 export default function CatalogTree({ catalogs = [], world = {}, metalakeId, onSelect = () => {} }) {
@@ -184,8 +190,8 @@ function CatalogNode({ catalog, world, depth, expanded, toggle, onSelect }) {
 function SchemaNode({ schema, catalog, world, depth, expanded, toggle, onSelect }) {
   const nodeId = `schema:${schema.id}`;
   const isOpen = expanded.has(nodeId);
-  const { kind, items: children } = getSchemaChildren(schema, catalog, world);
-  const hasChildren = children.length > 0;
+  const groups = getSchemaChildren(schema, catalog, world);
+  const hasChildren = groups.some(g => g.items.length > 0);
   return (
     <li>
       <Row
@@ -200,9 +206,11 @@ function SchemaNode({ schema, catalog, world, depth, expanded, toggle, onSelect 
       />
       {isOpen && hasChildren && (
         <ul style={{ listStyle: "none", margin: 0, padding: 0 }}>
-          {children.map(item => (
-            <LeafNode key={item.id} item={item} kind={kind} depth={depth + 1} onSelect={onSelect} />
-          ))}
+          {groups.flatMap(group =>
+            group.items.map(item => (
+              <LeafNode key={`${group.kind}:${item.id}`} item={item} kind={group.kind} depth={depth + 1} onSelect={onSelect} />
+            ))
+          )}
         </ul>
       )}
     </li>

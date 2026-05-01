@@ -204,6 +204,37 @@ export function getSeedEffects() {
   ];
   FILESETS.forEach(fs => ef("filesets", fs));
 
+  // ═══ Fileset Files ═════════════════════════════════════════════════════
+  // Mock file-listing на нескольких filesets для UI demo Browse Files (U6.2).
+  // Реальный listFiles intent — U6.5; пока — статичные fixtures в seed.
+  const FILESET_FILES = [
+    // fs_vendor_raw — внешние vendor feeds
+    { id: "ff1", filesetId: "fs_vendor_raw", path: "vendor_a/2026/04/30/orders.parquet",  size: 12_485_730,  modifiedAt: "2026-04-30T14:22:01Z" },
+    { id: "ff2", filesetId: "fs_vendor_raw", path: "vendor_a/2026/04/30/items.parquet",   size: 4_220_911,   modifiedAt: "2026-04-30T14:22:08Z" },
+    { id: "ff3", filesetId: "fs_vendor_raw", path: "vendor_b/2026/04/30/clicks.json.gz",  size: 88_341_204,  modifiedAt: "2026-04-30T13:15:44Z" },
+    { id: "ff4", filesetId: "fs_vendor_raw", path: "vendor_b/2026/04/29/clicks.json.gz",  size: 91_558_902,  modifiedAt: "2026-04-29T13:15:31Z" },
+    // fs_dev_scratch — dev sandbox
+    { id: "ff5", filesetId: "fs_dev_scratch", path: "experiments/notebook_alpha.ipynb",   size: 145_220,     modifiedAt: "2026-04-28T10:40:00Z" },
+    { id: "ff6", filesetId: "fs_dev_scratch", path: "experiments/output_v3.csv",          size: 2_109_544,   modifiedAt: "2026-04-29T16:02:11Z" },
+  ];
+  FILESET_FILES.forEach(f => ef("fileset_files", f));
+
+  // ═══ Functions ════════════════════════════════════════════════════════
+  // Hive UDFs / SQL-functions под relational schemas (read-only в UI, U6.2).
+  // web-v2 не имеет create/edit flow для функций — только display.
+  const FUNCTIONS = [
+    { id: "fn_revenue_split",  name: "revenue_split",     comment: "Revenue по каналам — UDF для marketing attribution",
+      functionBody: "CREATE FUNCTION revenue_split(amount DECIMAL, channel STRING) RETURNS DECIMAL AS 'com.acme.RevenueSplit'",
+      properties: { language: "Java", deterministic: "true" }, schemaId: "s_marketing", audit: audit("alice@acme", 60) },
+    { id: "fn_currency_norm",  name: "currency_normalize", comment: "Конвертация валют по daily-rate snapshot",
+      functionBody: "SELECT CAST(amount * (SELECT rate FROM fx_rates WHERE day = CURRENT_DATE AND ccy = currency) AS DECIMAL)",
+      properties: { language: "SQL", deterministic: "false" }, schemaId: "s_finance", audit: audit("diane@acme", 45) },
+    { id: "fn_pii_mask",       name: "pii_mask",           comment: "Format-preserving masking для PII columns",
+      functionBody: "CREATE FUNCTION pii_mask(s STRING) RETURNS STRING AS 'com.acme.PiiMask' USING JAR 's3://udfs/pii.jar'",
+      properties: { language: "Java", deterministic: "true", "format-preserving": "true" }, schemaId: "s_sales", audit: audit("alice@acme", 50) },
+  ];
+  FUNCTIONS.forEach(f => ef("functions", f));
+
   // ═══ Topics (Kafka) ═════════════════════════════════════════════════════
   const TOPICS = [
     { id: "top_orders",      name: "orders",       comment: "Order events (prod kafka)",   properties: { "partitions": 24, "retention.ms": "604800000" }, schemaId: "s_dev_events",  audit: audit("charlie@acme", 18) },
