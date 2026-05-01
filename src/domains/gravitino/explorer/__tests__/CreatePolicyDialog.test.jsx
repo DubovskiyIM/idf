@@ -37,4 +37,29 @@ describe("CreatePolicyDialog", () => {
     const after = screen.getAllByPlaceholderText(/rule name/i).length;
     expect(after).toBe(before + 1);
   });
+
+  it("initial prop pre-fills поля + title=Edit Policy", () => {
+    const initial = {
+      id: "p1", name: "pii-mask", policyType: "data_masking",
+      enabled: true, supportedObjectTypes: ["table"], rules: [], comment: "",
+    };
+    render(<CreatePolicyDialog visible={true} initial={initial} onClose={vi.fn()} onSubmit={vi.fn()} />);
+    expect(screen.getByRole("heading", { name: /edit policy/i })).toBeTruthy();
+    const nameInput = screen.getByPlaceholderText(/must start/i);
+    expect(nameInput.value).toBe("pii-mask");
+    expect(screen.getByRole("button", { name: /save/i })).toBeTruthy();
+  });
+
+  it("submit с initial preserves id", () => {
+    const onSubmit = vi.fn();
+    const initial = {
+      id: "p1", name: "pii-mask", policyType: "data_masking",
+      enabled: true, supportedObjectTypes: ["table"], rules: [], comment: "",
+    };
+    render(<CreatePolicyDialog visible={true} initial={initial} onClose={vi.fn()} onSubmit={onSubmit} />);
+    fireEvent.click(screen.getByRole("button", { name: /save/i }));
+    expect(onSubmit).toHaveBeenCalledWith(expect.objectContaining({
+      id: "p1", name: "pii-mask",
+    }));
+  });
 });
