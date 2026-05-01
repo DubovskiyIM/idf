@@ -96,6 +96,10 @@ import ComplianceHub from "./domains/gravitino/explorer/ComplianceHub.jsx";
 registerCanvas("access_hub", AccessHub);
 registerCanvas("compliance_hub", ComplianceHub);
 
+// Gravitino policy_detail (U-polish-3 — B15: Rules summary + JSON + Properties)
+import PolicyDetailCanvas from "./domains/gravitino/explorer/PolicyDetailCanvas.jsx";
+registerCanvas("policy_detail", PolicyDetailCanvas);
+
 // Домены с переключением адаптера
 const DOMAIN_ADAPTERS = {
   lifequest: appleAdapter,

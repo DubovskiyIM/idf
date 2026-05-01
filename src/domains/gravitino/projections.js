@@ -320,7 +320,16 @@ export const PROJECTIONS = {
   // Host enrichment в ontology.js снят.
   policy_list: catalog("Policy", "Policies",
     ["name", "policyType", "enabled", "comment"]),
-  policy_detail: detail("Policy", "Policy", ["name", "policyType", "enabled", "comment", "content", "audit", "inherited"]),
+  // policy_detail — host-rendered (U-polish-3, B15).
+  policy_detail: {
+    name: "Policy",
+    kind: "canvas",
+    mainEntity: "Policy",
+    entities: ["Policy"],
+    idParam: "policyId",
+    witnesses: ["name"],
+    body: { kind: "canvas", canvasId: "policy_detail" },
+  },
 };
 
 export const ROOT_PROJECTIONS = [
