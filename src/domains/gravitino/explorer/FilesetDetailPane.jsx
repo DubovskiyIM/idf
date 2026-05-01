@@ -5,6 +5,7 @@
  */
 import { useState } from "react";
 import Tabs from "./Tabs.jsx";
+import EmptyState from "./EmptyState.jsx";
 
 const TABS = [
   { key: "files", label: "Files" },
@@ -50,7 +51,9 @@ function Header({ name, location, subtitle }) {
 }
 
 function FilesTable({ files }) {
-  if (files.length === 0) return <Empty>Нет файлов в этом fileset</Empty>;
+  if (files.length === 0) {
+    return <EmptyState icon="files" title="Нет файлов" description="Этот fileset пуст или ещё не индексирован." />;
+  }
   return (
     <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13, color: "var(--idf-text)" }}>
       <thead>

@@ -10,6 +10,7 @@
  */
 import { useState } from "react";
 import AssociatePopover from "./AssociatePopover.jsx";
+import EmptyState from "./EmptyState.jsx";
 
 export default function CatalogsTable({
   catalogs = [],
@@ -41,9 +42,13 @@ export default function CatalogsTable({
     <>
       <Header />
       {catalogs.length === 0 ? (
-        <div style={{ padding: 40, textAlign: "center", color: "var(--idf-text-muted)", fontSize: 13 }}>
-          Нет catalogs в этом metalake
-        </div>
+        <EmptyState
+          icon="catalogs"
+          title="Нет catalogs в этом metalake"
+          description="Создайте первый catalog для подключения к источнику данных."
+          actionLabel="+ Create Catalog"
+          onAction={onCreate}
+        />
       ) : (
     <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13, color: "var(--idf-text)" }}>
       <thead>

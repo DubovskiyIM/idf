@@ -8,6 +8,7 @@
  */
 import { useState } from "react";
 import Tabs from "./Tabs.jsx";
+import EmptyState from "./EmptyState.jsx";
 
 const TABS = [
   { key: "versions", label: "Versions" },
@@ -70,7 +71,13 @@ function VersionsTable({ versions, onLinkVersion }) {
         >+ Link Version</button>
       </div>
       {versions.length === 0 ? (
-        <Empty>Нет версий</Empty>
+        <EmptyState
+          icon="versions"
+          title="Нет версий"
+          description="Свяжите первую model version через Link Version."
+          actionLabel="+ Link Version"
+          onAction={onLinkVersion}
+        />
       ) : (
         <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13, color: "var(--idf-text)" }}>
           <thead>
