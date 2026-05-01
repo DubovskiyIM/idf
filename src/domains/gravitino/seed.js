@@ -221,6 +221,26 @@ export function getSeedEffects() {
   ];
   MODELS.forEach(m => ef("models", m));
 
+  // ═══ Model Versions ════════════════════════════════════════════════════
+  // 2-4 версии на модель. modelObject — mlflow:// или s3:// URI.
+  const MODEL_VERSIONS = [
+    // price_optimizer (4 последние версии, latest=v7)
+    { id: "mv_price_v4", version: 4, modelObject: "mlflow://models/price_optimizer/4", aliases: [],            properties: { framework: "xgboost", "training.dataset": "orders_2025q4" }, modelId: "mdl_price_opt", audit: audit("charlie@acme", 60) },
+    { id: "mv_price_v5", version: 5, modelObject: "mlflow://models/price_optimizer/5", aliases: ["staging"],   properties: { framework: "xgboost", "training.dataset": "orders_2026q1" }, modelId: "mdl_price_opt", audit: audit("charlie@acme", 30) },
+    { id: "mv_price_v6", version: 6, modelObject: "mlflow://models/price_optimizer/6", aliases: ["candidate"], properties: { framework: "lightgbm", "training.dataset": "orders_2026q2" }, modelId: "mdl_price_opt", audit: audit("charlie@acme", 14) },
+    { id: "mv_price_v7", version: 7, modelObject: "mlflow://models/price_optimizer/7", aliases: ["production", "champion"], properties: { framework: "lightgbm", "training.dataset": "orders_2026q2", "rmse": "0.142" }, modelId: "mdl_price_opt", audit: audit("charlie@acme", 5) },
+    // churn_predictor (latest=v3)
+    { id: "mv_churn_v2", version: 2, modelObject: "s3://models/churn/v2.pkl", aliases: ["staging"],    properties: { framework: "sklearn", "auc": "0.81" }, modelId: "mdl_churn", audit: audit("charlie@acme", 40) },
+    { id: "mv_churn_v3", version: 3, modelObject: "s3://models/churn/v3.pkl", aliases: ["production"], properties: { framework: "sklearn", "auc": "0.84" }, modelId: "mdl_churn", audit: audit("charlie@acme", 12) },
+    // fraud_detector (latest=v12)
+    { id: "mv_fraud_v11", version: 11, modelObject: "s3://models/fraud/v11.onnx", aliases: ["shadow"],     properties: { framework: "pytorch", "f1": "0.91" }, modelId: "mdl_fraud", audit: audit("charlie@acme", 20) },
+    { id: "mv_fraud_v12", version: 12, modelObject: "s3://models/fraud/v12.onnx", aliases: ["production"], properties: { framework: "pytorch", "f1": "0.93" }, modelId: "mdl_fraud", audit: audit("charlie@acme", 7) },
+    // product_recsys (latest=v2)
+    { id: "mv_recsys_v1", version: 1, modelObject: "mlflow://models/recsys/1", aliases: [],              properties: { framework: "tensorflow" }, modelId: "mdl_recommender", audit: audit("charlie@acme", 90) },
+    { id: "mv_recsys_v2", version: 2, modelObject: "mlflow://models/recsys/2", aliases: ["production"],  properties: { framework: "tensorflow", "ndcg@10": "0.62" }, modelId: "mdl_recommender", audit: audit("charlie@acme", 25) },
+  ];
+  MODEL_VERSIONS.forEach(v => ef("model_versions", v));
+
   // ═══ Users ══════════════════════════════════════════════════════════════
   const USERS = [
     { id: "u_alice",   name: "alice@acme",   roles: ["admin", "data_owner"],        audit: audit("system", 365) },

@@ -1,32 +1,23 @@
 /**
- * CatalogExplorer — split-pane root для metalake_workspace (U2.1 + U2.5 + U4).
+ * CatalogExplorer — split-pane root для metalake_workspace.
  *
- * Структура (паритет gravitino/web-v2 /catalogs):
- *   ┌──────────────────────────────────────────────────────────────┐
- *   │ Breadcrumb: Metalakes › <metalake> [› <catalog> [› <schema>  │
- *   │                                       [› <table>]]]          │
- *   ├─────────────────┬────────────────────────────────────────────┤
- *   │ CatalogTree     │ Right pane:                                │
- *   │ (tabs + search) │   - default        → CatalogsTable         │
- *   │                 │   - schema selected → SchemaDetailPane     │
- *   │                 │   - table  selected → TableDetailPane      │
- *   └─────────────────┴────────────────────────────────────────────┘
+ * Breadcrumb › CatalogTree │ Right pane (CatalogsTable / SchemaDetailPane /
+ * TableDetailPane / ModelDetailPane). Регистрируется как canvas через
+ * `registerCanvas("metalake_workspace", ...)`. `routeParams` приходят либо
+ * top-level (тесты), либо на `ctx.routeParams` (ArchetypeCanvas).
  *
- * Регистрируется как canvas через registerCanvas("metalake_workspace", ...)
- * в standalone.jsx. ArchetypeCanvas передаёт props { artifact, ctx, world,
- * exec, viewer } — `routeParams` живут на `ctx.routeParams`.
- *
- * Тесты могут передавать `routeParams` напрямую top-level — поддерживаем оба
- * варианта через fallback `routeParams ?? ctx?.routeParams ?? {}`.
- *
- * U2.5: optimistic UI-state для tags/policies assignments per catalog.
- * U3:   optimistic created catalogs (без backend exec).
- * U4:   schema/table click в tree свапает правую панель на detail-pane.
+ * Optimistic UI-state (без backend exec — реальные intents в U*.5):
+ *   U2.5 — tags/policies assignments per catalog;
+ *   U3   — created catalogs;
+ *   U5   — owner overrides;
+ *   U6.1 — linked ModelVersions.
  */
 import { useMemo, useState } from "react";
 import CatalogTree from "./CatalogTree.jsx";
 import CatalogsTable from "./CatalogsTable.jsx";
 import CreateCatalogDialog from "./CreateCatalogDialog.jsx";
+import LinkVersionDialog from "./LinkVersionDialog.jsx";
+import ModelDetailPane from "./ModelDetailPane.jsx";
 import SchemaDetailPane from "./SchemaDetailPane.jsx";
 import SetOwnerDialog from "./SetOwnerDialog.jsx";
 import TableDetailPane from "./TableDetailPane.jsx";
@@ -43,6 +34,10 @@ export default function CatalogExplorer({ world = {}, routeParams, ctx }) {
   const [selectedCatalog, setSelectedCatalog] = useState(null);
   const [selectedSchema, setSelectedSchema] = useState(null);
   const [selectedTable, setSelectedTable] = useState(null);
+  const [selectedModel, setSelectedModel] = useState(null);
+  // U6.1: optimistic ModelVersion-add (без backend exec — реальный intent linkModelVersion в U6.5).
+  const [linkingForModel, setLinkingForModel] = useState(null); // model.id | null
+  const [linkedVersions, setLinkedVersions] = useState([]); // optimistic-list
   // U2.5: optimistic UI-state для tags/policies assignments per catalog.
   const [assignments, setAssignments] = useState({}); // { catalogId: { tags, policies } }
 
@@ -98,27 +93,31 @@ export default function CatalogExplorer({ world = {}, routeParams, ctx }) {
     setOwnerDialogTarget(null);
   };
 
-  // U4: при клике в tree разруливаем kind узла по world-коллекциям.
-  // Catalog → reset schema/table; schema → reset table + auto-set parent catalog;
-  // table → auto-set parent schema + parent catalog. Filesets/topics/models —
-  // dedicated detail panes в U6, пока tree-click игнорируется (no crash).
+  // U4 + U6.1: при клике в tree разруливаем kind узла по world-коллекциям.
+  // Catalog → reset schema/table/model; schema → reset table/model + auto-set
+  // parent catalog; table → auto-set parent schema + parent catalog; model →
+  // ModelDetailPane + auto-set parent schema/catalog. Filesets/topics —
+  // dedicated detail panes (U6.2+), пока tree-click игнорируется (no crash).
   const handleTreeSelect = (node) => {
     if (!node) return;
     if (myCatalogsAll.some(c => c.id === node.id)) {
       setSelectedCatalog(node);
       setSelectedSchema(null);
       setSelectedTable(null);
+      setSelectedModel(null);
       return;
     }
     if ((world.schemas || []).some(s => s.id === node.id)) {
       setSelectedSchema(node);
       setSelectedTable(null);
+      setSelectedModel(null);
       const parentCat = myCatalogsAll.find(c => c.id === node.catalogId);
       if (parentCat) setSelectedCatalog(parentCat);
       return;
     }
     if ((world.tables || []).some(t => t.id === node.id)) {
       setSelectedTable(node);
+      setSelectedModel(null);
       const parentSch = (world.schemas || []).find(s => s.id === node.schemaId);
       if (parentSch) {
         setSelectedSchema(parentSch);
@@ -127,7 +126,18 @@ export default function CatalogExplorer({ world = {}, routeParams, ctx }) {
       }
       return;
     }
-    // filesets/topics/models — без dedicated detail (U6).
+    if ((world.models || []).some(m => m.id === node.id)) {
+      setSelectedModel(node);
+      setSelectedTable(null);
+      const parentSch = (world.schemas || []).find(s => s.id === node.schemaId);
+      if (parentSch) {
+        setSelectedSchema(parentSch);
+        const parentCat = myCatalogsAll.find(c => c.id === parentSch.catalogId);
+        if (parentCat) setSelectedCatalog(parentCat);
+      }
+      return;
+    }
+    // filesets/topics — без dedicated detail (U6.2+).
   };
 
   if (!metalake) {
@@ -142,6 +152,20 @@ export default function CatalogExplorer({ world = {}, routeParams, ctx }) {
   }
 
   const renderRightPane = () => {
+    if (selectedModel) {
+      // Сливаем seed-versions с optimistic-добавленными.
+      const mergedWorld = {
+        ...world,
+        model_versions: [...(world.model_versions || []), ...linkedVersions],
+      };
+      return (
+        <ModelDetailPane
+          model={selectedModel}
+          world={mergedWorld}
+          onLinkVersion={() => setLinkingForModel(selectedModel.id)}
+        />
+      );
+    }
     if (selectedTable) {
       return <TableDetailPane table={selectedTable} />;
     }
@@ -155,7 +179,7 @@ export default function CatalogExplorer({ world = {}, routeParams, ctx }) {
           catalogs={visible}
           availableTags={availableTags}
           availablePolicies={availablePolicies}
-          onSelect={(cat) => { setSelectedCatalog(cat); setSelectedSchema(null); setSelectedTable(null); }}
+          onSelect={(cat) => { setSelectedCatalog(cat); setSelectedSchema(null); setSelectedTable(null); setSelectedModel(null); }}
           onAssociate={onAssociate}
           onCreate={() => setCreating(true)}
           onSetOwner={(catalogId) => setOwnerDialogTarget(catalogId)}
@@ -174,9 +198,10 @@ export default function CatalogExplorer({ world = {}, routeParams, ctx }) {
         catalog={selectedCatalog}
         schema={selectedSchema}
         table={selectedTable}
-        onMetalakeClick={() => { setSelectedCatalog(null); setSelectedSchema(null); setSelectedTable(null); }}
-        onCatalogClick={() => { setSelectedSchema(null); setSelectedTable(null); }}
-        onSchemaClick={() => { setSelectedTable(null); }}
+        model={selectedModel}
+        onMetalakeClick={() => { setSelectedCatalog(null); setSelectedSchema(null); setSelectedTable(null); setSelectedModel(null); }}
+        onCatalogClick={() => { setSelectedSchema(null); setSelectedTable(null); setSelectedModel(null); }}
+        onSchemaClick={() => { setSelectedTable(null); setSelectedModel(null); }}
       />
       <div style={{
         display: "grid", gridTemplateColumns: "260px 1fr",
@@ -208,17 +233,39 @@ export default function CatalogExplorer({ world = {}, routeParams, ctx }) {
         onClose={() => setOwnerDialogTarget(null)}
         onSubmit={handleSetOwner}
       />
+      <LinkVersionDialog
+        visible={!!linkingForModel}
+        suggestedVersion={
+          linkingForModel
+            ? Math.max(
+                0,
+                ...((world.model_versions || []).filter(v => v.modelId === linkingForModel).map(v => v.version || 0)),
+                ...linkedVersions.filter(v => v.modelId === linkingForModel).map(v => v.version || 0),
+              ) + 1
+            : 1
+        }
+        onClose={() => setLinkingForModel(null)}
+        onSubmit={({ version, modelObject, aliases }) => {
+          setLinkedVersions(prev => [...prev, {
+            id: `mv_new_${Date.now()}`,
+            modelId: linkingForModel,
+            version, modelObject, aliases, properties: {},
+          }]);
+          setLinkingForModel(null);
+        }}
+      />
     </div>
   );
 }
 
-function Breadcrumb({ metalake, catalog, schema, table, onMetalakeClick, onCatalogClick, onSchemaClick }) {
+function Breadcrumb({ metalake, catalog, schema, table, model, onMetalakeClick, onCatalogClick, onSchemaClick }) {
   const items = [
     { label: "Metalakes", href: "/gravitino/metalake_list" },
     { label: metalake.name, onClick: onMetalakeClick, active: !catalog },
     ...(catalog ? [{ label: catalog.name, onClick: onCatalogClick, active: !schema }] : []),
-    ...(schema  ? [{ label: schema.name,  onClick: onSchemaClick,  active: !table  }] : []),
+    ...(schema  ? [{ label: schema.name,  onClick: onSchemaClick,  active: !table && !model }] : []),
     ...(table   ? [{ label: table.name,   active: true }] : []),
+    ...(model && !table ? [{ label: model.name, active: true }] : []),
   ];
   return (
     <nav aria-label="breadcrumb" style={{
