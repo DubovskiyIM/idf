@@ -90,6 +90,12 @@ registerMetaCanvases();
 import CatalogExplorer from "./domains/gravitino/explorer/CatalogExplorer.jsx";
 registerCanvas("metalake_workspace", CatalogExplorer);
 
+// Gravitino nav-hubs (U2.6 — A6/A7): top-nav 6→3 (Metalakes / Access / Compliance)
+import AccessHub from "./domains/gravitino/explorer/AccessHub.jsx";
+import ComplianceHub from "./domains/gravitino/explorer/ComplianceHub.jsx";
+registerCanvas("access_hub", AccessHub);
+registerCanvas("compliance_hub", ComplianceHub);
+
 // Домены с переключением адаптера
 const DOMAIN_ADAPTERS = {
   lifequest: appleAdapter,
