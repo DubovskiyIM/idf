@@ -264,7 +264,11 @@ export default function StandaloneApp({ domainId }) {
   }, [domain]);
 
   const isV2 = domainId.endsWith("-v2");
-  const isFullWidth = domainId === "messenger" || isV2;
+  // Gravitino использует makeV2UI (V2Shell с собственным HeaderBar) но registered
+  // без `-v2` суффикса. Добавляем в «v2-shell» режим явно: hide дубль top-bar +
+  // full-width main, чтобы CatalogExplorer занимал всю страницу.
+  const usesV2Shell = isV2 || domainId === "gravitino";
+  const isFullWidth = domainId === "messenger" || usesV2Shell;
 
   // Messenger v2 manages own auth — render directly
   if (isMessengerV2) {
@@ -318,14 +322,14 @@ export default function StandaloneApp({ domainId }) {
     <div key={adapterKey} style={{
       height: "100vh",
       background: isDoodleAdapter ? lifequestBg : "var(--mantine-color-body)",
-      overflow: isV2 ? "hidden" : "auto",
+      overflow: usesV2Shell ? "hidden" : "auto",
       display: "flex", flexDirection: "column",
       ...mantineOverride,
       ...gravitinoOverride,
     }}>
       {/* Top bar with user info — скрыт для lifequest (логаут в PrefsPanel)
           и для v2-доменов (V2Shell сам рендерит HeaderBar) */}
-      {currentUser && !isLifequest && !isV2 && (
+      {currentUser && !isLifequest && !usesV2Shell && (
         <div style={{
           display: "flex", alignItems: "center", gap: 10,
           padding: "8px 16px",
@@ -348,7 +352,7 @@ export default function StandaloneApp({ domainId }) {
         </div>
       )}
       <div style={{
-        flex: isV2 ? 1 : "none",
+        flex: usesV2Shell ? 1 : "none",
         maxWidth: isFullWidth ? "100%" : 800,
         margin: "0 auto",
         padding: isFullWidth ? 0 : 24,
