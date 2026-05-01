@@ -30,7 +30,7 @@
 | Строка | Их web-v2 | У нас сейчас | Статус | План |
 |---|---|---|---|---|
 | A1 | Top nav: контекстная (Metalakes vs внутри metalake) | Plain top nav без контекстных режимов | 🟡 | Сделать nav-projections режима |
-| A2 | `/metalakes` — список с CRUD | `metalake_list` dataGrid (Name/Creator/Owner/CreatedAt/Properties/Comment/Actions) | ✅ | U1 — owner placeholder до U5 |
+| A2 | `/metalakes` — список с CRUD | host MetalakesHub canvas (Name → workspace / Creator / Owner avatar+✎ / Created / Properties / Comment / In-Use toggle / Delete с typed-name confirm) | ✅ | U5.5 — заменили SDK dataGrid на host-rendered |
 | A3 | `/catalogs?metalake=X` — split-pane: tree слева + detail справа | `metalake_workspace` canvas: `<CatalogExplorer/>` с breadcrumb + 2-col layout | ✅ | U2.1 — page-local |
 | A4 | Tree node hierarchy: metalake → catalog → schema → {table,fileset,topic,model,function} | `<CatalogTree/>` все уровни до leaf (table/fileset/topic/model). Function — U6 | ✅ U2.3 |
 | A5 | URL query params как state (`?metalake=X&catalog=Y&schema=Z&table=T`) | URL-routing через `/projection/id` | 🟡 | Поддержать nested context-params |
@@ -45,7 +45,7 @@
 
 | Строка | Entity | Их fields в UI | Наши fields | Статус | Заметки |
 |---|---|---|---|---|---|
-| B1 | **Metalake** | name, creator, owner, properties, comment, audit, in-use toggle | + owner column в metalake_list (seed-driven); SetOwner — пока только для catalog (U5), для metalake — следующая итерация | 🟡 catalog-level ✅ U5 · metalake-level + in-use toggle ⏳ |
+| B1 | **Metalake** | name, creator, owner, properties, comment, audit, in-use toggle | host MetalakesHub: Name (→ workspace) / Creator / Owner avatar+✎ / Created / Properties / Comment / In Use toggle / Delete с ConfirmDialog | ✅ U5.5 |
 | B2 | **Catalog** | name, type, provider, comment, properties + **provider-specific config** (500+ props через EntityPropertiesFormItem) | + CreateCatalogDialog с dynamic form (6 providers across 4 types: hive/iceberg/jdbc-postgresql/kafka/hadoop/model-registry) | ✅ U3 minimum · 🟡 остальные 5+ providers и edit-flow в U3.5 |
 | B3 | **Schema** | name, comment, properties, audit + tabs (tables/filesets/models/functions/tags/policies/properties) | + SchemaDetailPane (Tables/Filesets/Models/Properties в зависимости от catalog.type) | ✅ U4 minimum · 🟡 functions/tags/policies tabs (U6, U2.5b) |
 | B4 | **Table** | columns, partitioning, distribution, sortOrder, indexes, properties + tabs (Columns / Partitioning / Associated Filesets / Tags / Policies / Properties) | + TableDetailPane (Columns/Partitioning/Properties tabs) | ✅ U4 minimum · 🟡 distribution/sortOrder/indexes/associatedFilesets/tags/policies (U6, U2.5b) |
@@ -71,8 +71,8 @@
 | Строка | Action | Где у них | У нас | Статус |
 |---|---|---|---|---|
 | C1 | Create / Edit / Delete для всех 12+ сущностей | Modal dialogs | ✅ form-архетип | ✅ |
-| C2 | Set Owner | `SetOwnerDialog` (User/Group cascader) | <SetOwnerDialog/> с tabs Users/Groups + search; UI-state в CatalogExplorer.ownerOverrides (catalog-level) | ✅ U5 catalog · metalake/schema/table — U5.5 |
-| C3 | Toggle In-Use (metalake/catalog) | Switch | ❌ | ❌ |
+| C2 | Set Owner | `SetOwnerDialog` (User/Group cascader) | SetOwnerDialog wired в catalog (U5) + metalake (U5.5); schema/table — U6.3 | ✅ catalog/metalake · 🟡 schema/table |
+| C3 | Toggle In-Use (metalake/catalog) | Switch | In-Use toggle в MetalakesHub (✓ In Use / × Disabled, optimistic); catalog-level — U5.6 | ✅ U5.5 metalake · 🟡 catalog |
 | C4 | Test Connection (catalog) | Кнопка перед save | Test Connection кнопка в CreateCatalogDialog (mock async — heuristic isPlausibleUri); реальный probe — U6.5 backend | ✅ U-polish-2 (mock) |
 | C5 | Grant Role to User/Group | Через user/group row-action | ✅ row-action | ✅ |
 | C6 | Revoke Role | Через user/group row-action | ✅ | ✅ |

@@ -50,9 +50,9 @@ export function getSeedEffects() {
 
   // ═══ Metalakes ══════════════════════════════════════════════════════════
   const METALAKES = [
-    { id: "m_prod",    name: "prod_lake",    comment: "Production metadata lake — регулируемые данные", properties: { env: "prod", "compliance.tier": "tier-1", "owner.team": "data-platform", "region": "eu-central-1" }, owner: "alice@acme", audit: audit("alice@acme", 120) },
-    { id: "m_staging", name: "staging_lake", comment: "Pre-prod staging для валидации schemas", properties: { env: "staging", "auto-promotion": "true", "retention.days": "30" }, owner: "bob@acme", audit: audit("bob@acme", 80) },
-    { id: "m_dev",     name: "dev_lake",     comment: "Development sandbox для экспериментов", properties: { env: "dev", "owner.team": "engineering" }, owner: "engineering", audit: audit("charlie@acme", 45) },
+    { id: "m_prod",    name: "prod_lake",    comment: "Production metadata lake — регулируемые данные", properties: { env: "prod", "compliance.tier": "tier-1", "owner.team": "data-platform", "region": "eu-central-1" }, owner: "alice@acme", inUse: true,  audit: audit("alice@acme", 120) },
+    { id: "m_staging", name: "staging_lake", comment: "Pre-prod staging для валидации schemas", properties: { env: "staging", "auto-promotion": "true", "retention.days": "30" }, owner: "bob@acme", inUse: true,  audit: audit("bob@acme", 80) },
+    { id: "m_dev",     name: "dev_lake",     comment: "Development sandbox для экспериментов", properties: { env: "dev", "owner.team": "engineering" }, owner: "engineering", inUse: false, audit: audit("charlie@acme", 45) },
   ];
   METALAKES.forEach(m => ef("metalakes", m));
 
