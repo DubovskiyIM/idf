@@ -90,11 +90,26 @@ registerMetaCanvases();
 import CatalogExplorer from "./domains/gravitino/explorer/CatalogExplorer.jsx";
 registerCanvas("metalake_workspace", CatalogExplorer);
 
+// Gravitino metalake_list canvas (U5.5 — host-rendered MetalakesHub).
+// Заменил SDK dataGrid из U1: даёт нам Owner avatar+edit / In-Use toggle /
+// Delete с typed-name ConfirmDialog (B1 metalake-side + C3 metalake).
+import MetalakesHub from "./domains/gravitino/explorer/MetalakesHub.jsx";
+registerCanvas("metalake_list", MetalakesHub);
+
 // Gravitino nav-hubs (U2.6 — A6/A7): top-nav 6→3 (Metalakes / Access / Compliance)
+// U7 (A8) добавляет Jobs hub — top-nav 4-й tab
 import AccessHub from "./domains/gravitino/explorer/AccessHub.jsx";
 import ComplianceHub from "./domains/gravitino/explorer/ComplianceHub.jsx";
+import JobsHub from "./domains/gravitino/explorer/JobsHub.jsx";
 registerCanvas("access_hub", AccessHub);
 registerCanvas("compliance_hub", ComplianceHub);
+registerCanvas("jobs_hub", JobsHub);
+
+// Gravitino IAM detail-canvases (U-iam — B12/B13)
+import RoleDetailCanvas from "./domains/gravitino/explorer/RoleDetailCanvas.jsx";
+import GroupDetailCanvas from "./domains/gravitino/explorer/GroupDetailCanvas.jsx";
+registerCanvas("role_detail", RoleDetailCanvas);
+registerCanvas("group_detail", GroupDetailCanvas);
 
 // Gravitino policy_detail (U-polish-3 — B15: Rules summary + JSON + Properties)
 import PolicyDetailCanvas from "./domains/gravitino/explorer/PolicyDetailCanvas.jsx";

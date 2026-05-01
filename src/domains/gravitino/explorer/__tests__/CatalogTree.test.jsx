@@ -1,8 +1,12 @@
 // @vitest-environment jsdom
-import { afterEach, describe, it, expect, vi } from "vitest";
+import { afterEach, beforeEach, describe, it, expect, vi } from "vitest";
 import { render, screen, fireEvent, cleanup } from "@testing-library/react";
 import CatalogTree from "../CatalogTree.jsx";
 
+beforeEach(() => {
+  // localStorage persist (D15) → очищаем, чтобы тесты не заражались
+  if (typeof localStorage !== "undefined") localStorage.removeItem("gravitino-tree-expanded");
+});
 afterEach(cleanup);
 
 const CATALOGS = [
@@ -150,5 +154,33 @@ describe("CatalogTree", () => {
     fireEvent.click(screen.getByRole("button", { name: /expand-schema:s_sales/i }));
     fireEvent.click(screen.getByText("fact_orders"));
     expect(onSelect).toHaveBeenCalledWith(expect.objectContaining({ id: "t_orders", name: "fact_orders" }));
+  });
+
+  it("expand state persists в localStorage (D15)", () => {
+    // Очистить state перед тестом
+    localStorage.removeItem("gravitino-tree-expanded");
+    const { unmount } = render(
+      <CatalogTree
+        catalogs={CATALOGS}
+        world={{ schemas: SCHEMAS_EXT, tables: TABLES, topics: [], models: [], filesets: [], functions: [] }}
+        metalakeId="m1"
+        onSelect={vi.fn()}
+      />
+    );
+    fireEvent.click(screen.getByRole("button", { name: /expand-catalog:c1/i }));
+    // hive_warehouse expanded → schemas видны
+    expect(screen.getByText("sales")).toBeTruthy();
+    unmount();
+
+    // Re-render — expanded state восстанавливается
+    render(
+      <CatalogTree
+        catalogs={CATALOGS}
+        world={{ schemas: SCHEMAS_EXT, tables: TABLES, topics: [], models: [], filesets: [], functions: [] }}
+        metalakeId="m1"
+        onSelect={vi.fn()}
+      />
+    );
+    expect(screen.getByText("sales")).toBeTruthy(); // sales всё ещё виден
   });
 });

@@ -95,28 +95,14 @@ describe("gravitino domain — Stage 1 baseline", () => {
     }
   });
 
-  it("metalake_list: dataGrid с колонками name/creator/owner/createdAt/properties/comment/actions", () => {
+  it("metalake_list: canvas-projection (host MetalakesHub) — U5.5", () => {
     const proj = PROJECTIONS.metalake_list;
-    expect(proj.bodyOverride).toBeDefined();
-    expect(proj.bodyOverride.type).toBe("dataGrid");
-    const keys = proj.bodyOverride.columns.map(c => c.key);
-    expect(keys).toEqual(expect.arrayContaining([
-      "name", "creator", "owner", "createdAt", "properties", "comment", "_actions",
-    ]));
-    const nameCol = proj.bodyOverride.columns.find(c => c.key === "name");
-    expect(nameCol.sortable).toBe(true);
-    expect(nameCol.filterable).toBe(true);
-    const createdAtCol = proj.bodyOverride.columns.find(c => c.key === "createdAt");
-    expect(createdAtCol.sortable).toBe(true);
-    const actionsCol = proj.bodyOverride.columns.find(c => c.key === "_actions");
-    expect(actionsCol.kind).toBe("actions");
-    expect(actionsCol.actions.length).toBeGreaterThanOrEqual(1);
-    // Param-key contract: должен совпадать с openapi-declared `name` (path /metalakes/:name).
-    // user_list использует `user` потому что path там /metalakes/{m}/users/{user}; здесь — `name`.
-    const editAction = actionsCol.actions.find(a => a.intent === "alterMetalake");
-    const deleteAction = actionsCol.actions.find(a => a.intent === "dropMetalake");
-    expect(Object.keys(editAction.params)).toEqual(["name"]);
-    expect(Object.keys(deleteAction.params)).toEqual(["name"]);
+    expect(proj.kind).toBe("canvas");
+    expect(proj.body).toBeDefined();
+    expect(proj.body.canvasId).toBe("metalake_list");
+    expect(proj.mainEntity).toBe("Metalake");
+    // Old SDK dataGrid bodyOverride удалён в пользу host-rendered компонента.
+    expect(proj.bodyOverride).toBeUndefined();
   });
 
   it("metalake_list: имеет subtitle/description", () => {
@@ -136,12 +122,6 @@ describe("gravitino domain — Stage 1 baseline", () => {
     expect(proj.body.canvasId).toBe("metalake_workspace");
   });
 
-  it("metalake_list: onItemClick переходит в metalake_workspace (а не metalake_detail)", () => {
-    const proj = PROJECTIONS.metalake_list;
-    expect(proj.bodyOverride.onItemClick.to).toBe("metalake_workspace");
-    expect(proj.bodyOverride.onItemClick.params).toEqual({ metalakeId: "item.id" });
-  });
-
   it("access_hub: canvas-projection с canvasId='access_hub'", () => {
     const proj = PROJECTIONS.access_hub;
     expect(proj).toBeDefined();
@@ -156,7 +136,14 @@ describe("gravitino domain — Stage 1 baseline", () => {
     expect(proj.body.canvasId).toBe("compliance_hub");
   });
 
-  it("ROOT_PROJECTIONS: 3 hubs (metalake_list / access_hub / compliance_hub)", () => {
-    expect(ROOT_PROJECTIONS).toEqual(["metalake_list", "access_hub", "compliance_hub"]);
+  it("ROOT_PROJECTIONS: 4 hubs (metalake_list / jobs_hub / access_hub / compliance_hub)", () => {
+    expect(ROOT_PROJECTIONS).toEqual(["metalake_list", "jobs_hub", "access_hub", "compliance_hub"]);
+  });
+
+  it("jobs_hub: canvas-projection с canvasId='jobs_hub'", () => {
+    const proj = PROJECTIONS.jobs_hub;
+    expect(proj).toBeDefined();
+    expect(proj.kind).toBe("canvas");
+    expect(proj.body.canvasId).toBe("jobs_hub");
   });
 });

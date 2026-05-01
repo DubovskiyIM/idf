@@ -89,4 +89,12 @@ describe("CatalogsTable", () => {
     fireEvent.click(screen.getByRole("button", { name: /in use/i }));
     expect(onToggle).toHaveBeenCalledWith("c1", false);
   });
+
+  it("Delete-кнопка вызывает onDelete(catalog)", () => {
+    const onDelete = vi.fn();
+    const cats = [{ id: "c1", name: "hive", type: "relational", provider: "hive", comment: "", tags: [], policies: [] }];
+    render(<CatalogsTable catalogs={cats} availableTags={[]} availablePolicies={[]} onDelete={onDelete} />);
+    fireEvent.click(screen.getByRole("button", { name: /^delete$/i }));
+    expect(onDelete).toHaveBeenCalledWith(expect.objectContaining({ id: "c1", name: "hive" }));
+  });
 });

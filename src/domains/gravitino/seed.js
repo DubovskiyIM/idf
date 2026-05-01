@@ -50,9 +50,9 @@ export function getSeedEffects() {
 
   // ═══ Metalakes ══════════════════════════════════════════════════════════
   const METALAKES = [
-    { id: "m_prod",    name: "prod_lake",    comment: "Production metadata lake — регулируемые данные", properties: { env: "prod", "compliance.tier": "tier-1", "owner.team": "data-platform", "region": "eu-central-1" }, owner: "alice@acme", audit: audit("alice@acme", 120) },
-    { id: "m_staging", name: "staging_lake", comment: "Pre-prod staging для валидации schemas", properties: { env: "staging", "auto-promotion": "true", "retention.days": "30" }, owner: "bob@acme", audit: audit("bob@acme", 80) },
-    { id: "m_dev",     name: "dev_lake",     comment: "Development sandbox для экспериментов", properties: { env: "dev", "owner.team": "engineering" }, owner: "engineering", audit: audit("charlie@acme", 45) },
+    { id: "m_prod",    name: "prod_lake",    comment: "Production metadata lake — регулируемые данные", properties: { env: "prod", "compliance.tier": "tier-1", "owner.team": "data-platform", "region": "eu-central-1" }, owner: "alice@acme", inUse: true,  audit: audit("alice@acme", 120) },
+    { id: "m_staging", name: "staging_lake", comment: "Pre-prod staging для валидации schemas", properties: { env: "staging", "auto-promotion": "true", "retention.days": "30" }, owner: "bob@acme", inUse: true,  audit: audit("bob@acme", 80) },
+    { id: "m_dev",     name: "dev_lake",     comment: "Development sandbox для экспериментов", properties: { env: "dev", "owner.team": "engineering" }, owner: "engineering", inUse: false, audit: audit("charlie@acme", 45) },
   ];
   METALAKES.forEach(m => ef("metalakes", m));
 
@@ -236,10 +236,12 @@ export function getSeedEffects() {
   FUNCTIONS.forEach(f => ef("functions", f));
 
   // ═══ Topics (Kafka) ═════════════════════════════════════════════════════
+  // Топики живут напрямую под messaging-каталогом (Kafka model: catalog → topic),
+  // без промежуточного schema. Прицеплены к c_kafka_dev (где раньше был s_dev_events).
   const TOPICS = [
-    { id: "top_orders",      name: "orders",       comment: "Order events (prod kafka)",   properties: { "partitions": 24, "retention.ms": "604800000" }, schemaId: "s_dev_events",  audit: audit("charlie@acme", 18) },
-    { id: "top_inventory",   name: "inventory",    comment: "Inventory change events",     properties: { "partitions": 12 },                               schemaId: "s_dev_events",  audit: audit("charlie@acme", 15) },
-    { id: "top_audit",       name: "audit_log",    comment: "Application audit log stream",properties: { "partitions": 6, "cleanup.policy": "compact" }, schemaId: "s_dev_events",  audit: audit("charlie@acme", 10) },
+    { id: "top_orders",      name: "orders",       comment: "Order events (prod kafka)",   properties: { "partitions": 24, "retention.ms": "604800000" }, catalogId: "c_kafka_dev",  audit: audit("charlie@acme", 18) },
+    { id: "top_inventory",   name: "inventory",    comment: "Inventory change events",     properties: { "partitions": 12 },                               catalogId: "c_kafka_dev",  audit: audit("charlie@acme", 15) },
+    { id: "top_audit",       name: "audit_log",    comment: "Application audit log stream",properties: { "partitions": 6, "cleanup.policy": "compact" }, catalogId: "c_kafka_dev",  audit: audit("charlie@acme", 10) },
   ];
   TOPICS.forEach(t => ef("topics", t));
 
@@ -284,11 +286,14 @@ export function getSeedEffects() {
   USERS.forEach(u => ef("users", u));
 
   // ═══ Groups ═════════════════════════════════════════════════════════════
+  // members — массив user-names (matches Gravitino API shape:
+  // /metalakes/{m}/groups/{g}/members → list<string>). U-iam B13 — UI для
+  // add/remove members оптимистично; backend exec — отдельный flow (U-iam-b).
   const GROUPS = [
-    { id: "g_analytics",   name: "analytics",   roles: ["analyst", "data_viewer"],       audit: audit("system", 250) },
-    { id: "g_platform",    name: "platform",    roles: ["admin", "data_engineer"],       audit: audit("system", 300) },
-    { id: "g_finance",     name: "finance",     roles: ["finance_analyst", "data_viewer"], audit: audit("system", 200) },
-    { id: "g_ml",          name: "ml",          roles: ["data_engineer", "mlops"],       audit: audit("system", 180) },
+    { id: "g_analytics",   name: "analytics",   members: ["alice@acme", "eve@acme"],          roles: ["analyst", "data_viewer"],         audit: audit("system", 250) },
+    { id: "g_platform",    name: "platform",    members: ["alice@acme", "bob@acme", "charlie@acme"], roles: ["admin", "data_engineer"], audit: audit("system", 300) },
+    { id: "g_finance",     name: "finance",     members: ["diane@acme"],                       roles: ["finance_analyst", "data_viewer"], audit: audit("system", 200) },
+    { id: "g_ml",          name: "ml",          members: ["charlie@acme"],                     roles: ["data_engineer", "mlops"],         audit: audit("system", 180) },
   ];
   GROUPS.forEach(g => ef("groups", g));
 
@@ -339,6 +344,52 @@ export function getSeedEffects() {
     { id: "pol_disabled",    name: "legacy-masking",       policyType: "data_masking",   enabled: false, inherited: false, comment: "Disabled — superseded by pii-mask v2",  content: {},                                                                                                                  audit: audit("bob@acme",   200) },
   ];
   POLICIES.forEach(p => ef("policies", p));
+
+  // ═══ Job Templates ═════════════════════════════════════════════════════
+  // 3 template'а — Spark / shell-script / Airflow.
+  const JOB_TEMPLATES = [
+    { id: "jt_spark_etl", name: "spark_daily_etl", description: "Daily ETL: bronze → silver → gold pipeline на Spark",
+      config: { kind: "spark", entrypoint: "s3://jobs/spark/etl.py", driver: { cores: 4, memory: "8g" }, executor: { cores: 2, memory: "4g", instances: 8 } },
+      audit: audit("alice@acme", 90) },
+    { id: "jt_shell_backup", name: "metastore_backup", description: "pg_dump Hive metastore + upload в S3",
+      config: { kind: "shell", script: "pg_dump $HMS_DB | aws s3 cp - s3://backups/hms/$(date +%F).sql" },
+      audit: audit("bob@acme", 60) },
+    { id: "jt_airflow_dq", name: "data_quality_checks", description: "Airflow DAG — freshness + completeness checks по prod tables",
+      config: { kind: "airflow", dagId: "data_quality_v3", schedule: "0 */6 * * *" },
+      audit: audit("alice@acme", 30) },
+  ];
+  JOB_TEMPLATES.forEach(t => ef("job_templates", t));
+
+  // ═══ Job Runs ══════════════════════════════════════════════════════════
+  // 6 jobs с разными status — для UI demo (success / failed / running / queued).
+  const ONE_HOUR = 3600 * 1000;
+  const ONE_DAY = 86400 * 1000;
+  const JOBS = [
+    { id: "j_001", jobId: "spark-etl-2026-04-30-0600", templateId: "jt_spark_etl",
+      status: "success", startTime: new Date(now - 1 * ONE_DAY - 6 * ONE_HOUR).toISOString(),
+      endTime: new Date(now - 1 * ONE_DAY - 5 * ONE_HOUR).toISOString(),
+      details: { rowsProcessed: 12_500_000, stages: 8, executors: 8 } },
+    { id: "j_002", jobId: "spark-etl-2026-04-30-1200", templateId: "jt_spark_etl",
+      status: "success", startTime: new Date(now - 1 * ONE_DAY).toISOString(),
+      endTime: new Date(now - 1 * ONE_DAY + 50 * 60_000).toISOString(),
+      details: { rowsProcessed: 13_120_345, stages: 8, executors: 8 } },
+    { id: "j_003", jobId: "metastore-backup-2026-04-30", templateId: "jt_shell_backup",
+      status: "success", startTime: new Date(now - 12 * ONE_HOUR).toISOString(),
+      endTime: new Date(now - 12 * ONE_HOUR + 8 * 60_000).toISOString(),
+      details: { backupSize: "1.2 GB", s3Path: "s3://backups/hms/2026-04-30.sql" } },
+    { id: "j_004", jobId: "spark-etl-2026-05-01-0600", templateId: "jt_spark_etl",
+      status: "failed", startTime: new Date(now - 4 * ONE_HOUR).toISOString(),
+      endTime: new Date(now - 3 * ONE_HOUR - 10 * 60_000).toISOString(),
+      details: { error: "OOM in stage 5: executor lost", failedStage: 5, attemptsLeft: 1 } },
+    { id: "j_005", jobId: "data-quality-2026-05-01", templateId: "jt_airflow_dq",
+      status: "running", startTime: new Date(now - 25 * 60_000).toISOString(),
+      endTime: null,
+      details: { currentTask: "freshness_check_orders", completedTasks: 3, totalTasks: 12 } },
+    { id: "j_006", jobId: "spark-etl-2026-05-01-1200", templateId: "jt_spark_etl",
+      status: "queued", startTime: null, endTime: null,
+      details: { queuedReason: "waiting for cluster capacity" } },
+  ];
+  JOBS.forEach(j => ef("jobs", j));
 
   return effects;
 }
