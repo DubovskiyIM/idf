@@ -1,0 +1,80 @@
+{
+  "id": "public-share-toggle-with-options",
+  "version": 1,
+  "status": "candidate",
+  "archetype": "detail",
+  "trigger": {
+    "requires": [
+      {
+        "kind": "intent-creates",
+        "creates": "PublicShare"
+      },
+      {
+        "kind": "intent-effect",
+        "intent": "revoke_public_share",
+        "α": "remove",
+        "irreversibility": "high"
+      },
+      {
+        "kind": "entity-field",
+        "entity": "PublicShare",
+        "field": "url"
+      },
+      {
+        "kind": "intent-count",
+        "filter": {
+          "ofEntity": "PublicShare",
+          "α": "replace"
+        },
+        "min": 2
+      }
+    ]
+  },
+  "structure": {
+    "slot": "header",
+    "description": "Single toggle 'Share to web' создаёт/уничтожает PublicShare; когда on — раскрывается panel с copy-link + sub-toggles (allowEditing/allowCommenting/allowIndexing)."
+  },
+  "rationale": {
+    "hypothesis": "Публичная ссылка — бинарное решение с N тонких опций; raising create-form портит ergonomics single-click sharing. Toggle-with-disclosure объединяет on/off с granular controls, скрытыми когда off.",
+    "evidence": [
+      {
+        "source": "notion",
+        "description": "Share-popover: toggle + 3 sub-options + copyable URL",
+        "reliability": "high"
+      },
+      {
+        "source": "google-docs",
+        "description": "Share dialog с link toggle и role select",
+        "reliability": "high"
+      },
+      {
+        "source": "figma",
+        "description": "Public link toggle с allowEditing/allowComment selector",
+        "reliability": "medium"
+      }
+    ],
+    "counterexample": [
+      {
+        "source": "github",
+        "description": "Repo public/private — settings page, не toggle in header",
+        "reliability": "medium"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [
+      {
+        "domain": "notion",
+        "projection": "page_detail",
+        "reason": "PublicShare 0..1 cardinality + share/revoke + 3 boolean fields"
+      }
+    ],
+    "shouldNotMatch": [
+      {
+        "domain": "invest",
+        "projection": "portfolio_detail",
+        "reason": "Нет PublicShare-like sharable artifact"
+      }
+    ]
+  }
+}

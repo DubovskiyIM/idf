@@ -1,0 +1,78 @@
+{
+  "id": "transclusion-live-mirror",
+  "version": 1,
+  "status": "candidate",
+  "archetype": "detail",
+  "trigger": {
+    "requires": [
+      {
+        "kind": "mirror",
+        "entity": "*Reference"
+      },
+      {
+        "kind": "entity-field",
+        "entity": "*Reference",
+        "field": "kind|linkKind",
+        "statusValues": [
+          "embed",
+          "transclude"
+        ]
+      },
+      {
+        "kind": "intent-creates",
+        "entity": "*Reference"
+      }
+    ]
+  },
+  "structure": {
+    "slot": "body",
+    "description": "Reference-entity с kind='embed' рендерится не как ссылка, а как live-mirror содержимого target-сущности: правка target — instant-обновление во всех embed-точках. Renderer должен подписаться на target, а не сделать snapshot. Отличается от reference-link тем, что embed зеркалит, а reference указывает."
+  },
+  "rationale": {
+    "hypothesis": "Copy-paste дублирует и расходится со временем (drift). Live-mirror гарантирует single-source-of-truth — изменение в одном месте отражается везде, что критично для шаблонов, дашбордов и meta-блоков. Семантически это композиция, не наследование.",
+    "evidence": [
+      {
+        "source": "roam-research",
+        "description": "(( )) syntax embed'ит блок live, edits propagate",
+        "reliability": "high"
+      },
+      {
+        "source": "logseq",
+        "description": "Block embed identical, with edit-propagation",
+        "reliability": "high"
+      },
+      {
+        "source": "notion-synced-block",
+        "description": "Synced block — позднее заимствование той же идеи (2021)",
+        "reliability": "high"
+      }
+    ],
+    "counterexample": [
+      {
+        "source": "google-docs",
+        "description": "Inline copy не sync'ится — ожидаемое поведение для linear-doc",
+        "reliability": "high"
+      },
+      {
+        "source": "jira-issue-link",
+        "description": "Link to issue показывает заголовок, не зеркалит описание — link, не mirror",
+        "reliability": "high"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [],
+    "shouldNotMatch": [
+      {
+        "domain": "messenger",
+        "projection": "message_quote",
+        "reason": "Quote — snapshot цитирования, не live-mirror; правка оригинала не должна менять цитату"
+      },
+      {
+        "domain": "sales",
+        "projection": "bid_detail",
+        "reason": "Bid фиксирует значение в момент создания — live-mirror цены сломал бы аудит"
+      }
+    ]
+  }
+}

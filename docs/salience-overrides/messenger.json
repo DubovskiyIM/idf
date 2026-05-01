@@ -1,0 +1,51 @@
+{
+  "domain": "messenger",
+  "generatedAt": "2026-04-27T10:47:26.469Z",
+  "note": "Numeric salience hints from author audit. NOT auto-applied to host (см. findings doc).",
+  "overrides": {
+    "create_direct_chat": {
+      "salience": 80,
+      "tier": "primary"
+    },
+    "delete_avatar": {
+      "salience": 10,
+      "tier": "utility"
+    },
+    "enable_2fa": {
+      "salience": 10,
+      "tier": "utility"
+    },
+    "set_avatar": {
+      "salience": 10,
+      "tier": "utility"
+    },
+    "set_group_rules": {
+      "salience": 10,
+      "tier": "utility"
+    },
+    "set_language": {
+      "salience": 10,
+      "tier": "utility"
+    },
+    "set_notification_settings": {
+      "salience": 10,
+      "tier": "utility"
+    },
+    "set_privacy_settings": {
+      "salience": 10,
+      "tier": "utility"
+    },
+    "set_theme": {
+      "salience": 10,
+      "tier": "utility"
+    },
+    "set_welcome_message": {
+      "salience": 10,
+      "tier": "utility"
+    },
+    "update_profile": {
+      "salience": 10,
+      "tier": "utility"
+    }
+  }
+}

@@ -1,0 +1,80 @@
+{
+  "id": "block-level-transclusion",
+  "version": 1,
+  "status": "candidate",
+  "archetype": "detail",
+  "trigger": {
+    "requires": [
+      {
+        "kind": "entity-kind",
+        "entity": "BlockReference",
+        "field": "kind",
+        "values": [
+          "embed",
+          "reference"
+        ]
+      },
+      {
+        "kind": "intent-creates",
+        "creates": "BlockReference"
+      },
+      {
+        "kind": "field-role-present",
+        "entity": "Block",
+        "fieldRole": "uuid"
+      }
+    ]
+  },
+  "structure": {
+    "slot": "body",
+    "description": "Embed-узел рендерится как live-mirror исходного блока: правка source мгновенно отражается во всех embed-точках. Reference-узел рендерится как ссылка-pointer без mirror-семантики. Различие визуально кодируется (рамка для embed, chip для reference)."
+  },
+  "rationale": {
+    "hypothesis": "Когда сущность имеет stable identity (uuid) и может ссылаться на другую того же типа двумя способами (copy vs mirror), пользователю критично различать write-back семантику. Без визуального различия embed путают с copy и удивляются каскадным правкам.",
+    "evidence": [
+      {
+        "source": "roam-research",
+        "description": "((uuid)) рендерится как embed с серой рамкой; правка пробрасывается во все точки",
+        "reliability": "high"
+      },
+      {
+        "source": "logseq",
+        "description": "{{embed ((uuid))}} vs обычный block-ref имеют разный визуал",
+        "reliability": "high"
+      },
+      {
+        "source": "notion-synced-blocks",
+        "description": "Synced block имеет outline-индикатор + 'editing in N places' counter",
+        "reliability": "high"
+      }
+    ],
+    "counterexample": [
+      {
+        "source": "google-docs",
+        "description": "Comment-anchor — pointer без mirror, embed-семантика отсутствует",
+        "reliability": "medium"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [
+      {
+        "domain": "notion",
+        "projection": "page_detail",
+        "reason": "Block имеет uuid + transclusion semantic"
+      }
+    ],
+    "shouldNotMatch": [
+      {
+        "domain": "messenger",
+        "projection": "conversation_detail",
+        "reason": "Message reply ≠ live mirror"
+      },
+      {
+        "domain": "sales",
+        "projection": "listing_detail",
+        "reason": "Listing не имеет block-level addressing"
+      }
+    ]
+  }
+}

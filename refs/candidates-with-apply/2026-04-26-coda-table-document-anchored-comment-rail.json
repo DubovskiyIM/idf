@@ -1,0 +1,82 @@
+{
+  "id": "anchored-comment-rail",
+  "version": 1,
+  "status": "candidate",
+  "archetype": null,
+  "trigger": {
+    "requires": [
+      {
+        "kind": "entity-kind",
+        "entity": "Comment",
+        "anchored": true
+      },
+      {
+        "kind": "entity-field",
+        "entity": "Comment",
+        "field": "targetKind",
+        "fieldKind": "select"
+      },
+      {
+        "kind": "entity-field",
+        "entity": "Comment",
+        "field": "targetId",
+        "fieldKind": "polymorphic-ref"
+      },
+      {
+        "kind": "intent-effect",
+        "α": "replace",
+        "target": "comment.resolvedAt"
+      }
+    ]
+  },
+  "structure": {
+    "slot": "overlay",
+    "description": "Comments рендерятся не inline и не в bottom-feed, а в right-rail thread-list. Каждый thread anchored к target (block/cell/row) — клик скроллит к target и подсвечивает его. Фильтр по open/resolved над rail. Resolve меняет threading visibility.",
+    "applySource": "function apply(slots, context) {\n  // Auto-synthesized marker-only apply (§13.17 opt-c).\n  // Marks first un-marked item in slots.overlay with source: \"derived:anchored-comment-rail\".\n  // Idempotent: skip if already marked.\n  const slot = slots?.overlay;\n  if (!Array.isArray(slot) || slot.length === 0) return slots;\n  const idx = slot.findIndex((x) => x && !x.source);\n  if (idx === -1) return slots;\n  const marker = \"derived:anchored-comment-rail\";\n  if (slot[idx].source === marker) return slots;\n  return {\n    ...slots,\n    overlay: slot.map((item, i) =>\n      i === idx ? { ...item, source: marker } : item),\n  };\n}",
+    "applyKind": "marker-only-synthesized",
+    "applySynthesizedAt": 1777280149900
+  },
+  "rationale": {
+    "hypothesis": "Inline-комментарии ломают reading flow. Bottom-feed теряет связь с anchor'ом. Right-rail сохраняет канву для контента, делает thread-list scannable, и anchoring через highlight даёт двустороннюю связь content↔discussion. Resolve превращает thread в second-class без удаления.",
+    "evidence": [
+      {
+        "source": "coda",
+        "description": "Right-rail thread с anchor highlight на блок/cell",
+        "reliability": "high"
+      },
+      {
+        "source": "google-docs",
+        "description": "Right-rail comments с anchor-line к выделенному тексту",
+        "reliability": "high"
+      },
+      {
+        "source": "figma",
+        "description": "Comments-pin на canvas + side-panel thread",
+        "reliability": "high"
+      }
+    ],
+    "counterexample": [
+      {
+        "source": "github-pr",
+        "description": "Inline comments — но там code-review semantics, не collaborative editing",
+        "reliability": "medium"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [
+      {
+        "domain": "compliance",
+        "projection": "journal_entry_detail",
+        "reason": "Reviewer-комментарии должны якориться к conкретным полям"
+      }
+    ],
+    "shouldNotMatch": [
+      {
+        "domain": "messenger",
+        "projection": "conversation_detail",
+        "reason": "Message — это и есть thread, comment-rail дублирует"
+      }
+    ]
+  }
+}

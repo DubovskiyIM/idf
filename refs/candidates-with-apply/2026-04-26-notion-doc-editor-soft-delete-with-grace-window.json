@@ -1,0 +1,78 @@
+{
+  "id": "soft-delete-with-grace-window",
+  "version": 1,
+  "status": "candidate",
+  "archetype": "catalog",
+  "trigger": {
+    "requires": [
+      {
+        "kind": "entity-field",
+        "field": "archived"
+      },
+      {
+        "kind": "entity-field",
+        "field": "archivedAt"
+      },
+      {
+        "kind": "intent-effect",
+        "α": "remove",
+        "soft": true
+      },
+      {
+        "kind": "intent-effect",
+        "α": "remove",
+        "irreversibility": "high"
+      }
+    ]
+  },
+  "structure": {
+    "slot": "sections",
+    "description": "Archive-action soft-delete'ит (replace archived=true) с grace-counter в archived-rail; restore — non-destructive; permanent_delete (durable) живёт только в archived-view, irreversible-confirm + reason.",
+    "applySource": "function apply(slots, context) {\n  // Auto-synthesized marker-only apply (§13.17 opt-c).\n  // Marks first un-marked item in slots.sections with source: \"derived:soft-delete-with-grace-window\".\n  // Idempotent: skip if already marked.\n  const slot = slots?.sections;\n  if (!Array.isArray(slot) || slot.length === 0) return slots;\n  const idx = slot.findIndex((x) => x && !x.source);\n  if (idx === -1) return slots;\n  const marker = \"derived:soft-delete-with-grace-window\";\n  if (slot[idx].source === marker) return slots;\n  return {\n    ...slots,\n    sections: slot.map((item, i) =>\n      i === idx ? { ...item, source: marker } : item),\n  };\n}",
+    "applyKind": "marker-only-synthesized",
+    "applySynthesizedAt": 1777280149902
+  },
+  "rationale": {
+    "hypothesis": "Прямой destructive delete как primary-action нарушает 'одна ошибка — потеря данных'; two-stage flow (archive→permanent) даёт reversible default + explicit irreversible action для recovery scenarios.",
+    "evidence": [
+      {
+        "source": "Notion",
+        "description": "Archive с 30-day Trash, permanent delete только из Trash",
+        "reliability": "high"
+      },
+      {
+        "source": "Gmail",
+        "description": "Trash 30d retention + permanent only там",
+        "reliability": "high"
+      },
+      {
+        "source": "Linear",
+        "description": "Cancel issue + Hard delete двухступенчато",
+        "reliability": "high"
+      }
+    ],
+    "counterexample": [
+      {
+        "source": "Ephemeral data",
+        "description": "Draft чат-сообщение — direct delete достаточно",
+        "reliability": "high"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [
+      {
+        "domain": "notion",
+        "projection": "trash",
+        "reason": "Page.archived + archive_page + delete_page_permanent"
+      }
+    ],
+    "shouldNotMatch": [
+      {
+        "domain": "messenger",
+        "projection": "messages",
+        "reason": "Message direct delete, нет grace"
+      }
+    ]
+  }
+}

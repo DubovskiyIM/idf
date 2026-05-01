@@ -1,0 +1,28 @@
+{
+  "_meta": {
+    "generatedAt": "2026-04-25T23:56:42.604Z",
+    "dataset": "docs/salience-suggestions.json",
+    "totalWitnesses": 21,
+    "pairGroups": 79,
+    "totalPairwiseConstraints": 659,
+    "startLoss": 431,
+    "finalLoss": 356,
+    "converged": true,
+    "note": "Fitted weights для DEFAULT_SALIENCE_WEIGHTS в SDK (@intent-driven/core). SDK PR: DubovskiyIM/idf-sdk#342."
+  },
+  "weights": {
+    "explicitNumber": 100,
+    "explicitTier": 112,
+    "tier1CanonicalEdit": 80,
+    "tier2EditLike": 46,
+    "tier3Promotion": 60,
+    "tier4ReplaceMain": 50,
+    "creatorMain": 80,
+    "phaseTransition": 40,
+    "irreversibilityHigh": 35,
+    "removeMain": 30,
+    "readOnly": 10,
+    "ownershipMatch": 15,
+    "domainFrequency": 20
+  }
+}

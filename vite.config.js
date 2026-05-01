@@ -2,17 +2,22 @@ import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import basicSsl from '@vitejs/plugin-basic-ssl';
 import tailwindcss from '@tailwindcss/vite';
-import { resolve } from 'path';
-import { readFileSync } from 'fs';
+import { resolve, join } from 'path';
+import { readFileSync, readdirSync, statSync } from 'fs';
 
-// SPA fallback middleware: /lifequest, /reflect и т.д. → index.html
+// SPA fallback middleware: derives список из src/domains/* — single
+// source of truth для регистрации доменов (§13.10).
 function spaFallback() {
-  const SPA_ROUTES = [
-    '/lifequest', '/reflect', '/invest', '/sales',
-    '/booking', '/booking-v2', '/planning', '/planning-v2',
-    '/workflow', '/messenger', '/messenger-v2',
-    '/freelance',
-  ];
+  const domainsDir = resolve(__dirname, 'src', 'domains');
+  const DOMAIN_IDS = readdirSync(domainsDir).filter((d) => {
+    try {
+      return statSync(join(domainsDir, d)).isDirectory();
+    } catch {
+      return false;
+    }
+  });
+  const V2_ALIASES = ['booking-v2', 'planning-v2', 'messenger-v2'];
+  const SPA_ROUTES = [...DOMAIN_IDS, ...V2_ALIASES].map((d) => `/${d}`);
   return {
     name: 'spa-fallback',
     configureServer(server) {

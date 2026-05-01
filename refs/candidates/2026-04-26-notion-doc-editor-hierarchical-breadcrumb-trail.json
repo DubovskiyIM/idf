@@ -1,0 +1,68 @@
+{
+  "id": "hierarchical-breadcrumb-trail",
+  "version": 1,
+  "status": "candidate",
+  "archetype": "detail",
+  "trigger": {
+    "requires": [
+      {
+        "kind": "entity-field",
+        "entity": "Page",
+        "field": "parentId",
+        "selfRef": true
+      },
+      {
+        "kind": "entity-field",
+        "entity": "Page",
+        "field": "teamspaceId"
+      }
+    ]
+  },
+  "structure": {
+    "slot": "header",
+    "description": "Header показывает clickable breadcrumb-цепочку Workspace > Teamspace > ...ancestors > Current; каждый сегмент — навигационная ссылка, last сегмент — current title."
+  },
+  "rationale": {
+    "hypothesis": "Глубокая self-ref hierarchy теряет ориентацию пользователя при deep-linking; breadcrumb даёт O(1) jump к любому ancestor без back-navigation.",
+    "evidence": [
+      {
+        "source": "notion",
+        "description": "Breadcrumb сверху каждой Page с full-path",
+        "reliability": "high"
+      },
+      {
+        "source": "confluence",
+        "description": "Page-tree breadcrumb от Space root",
+        "reliability": "high"
+      },
+      {
+        "source": "github",
+        "description": "Path breadcrumb для file-tree navigation",
+        "reliability": "high"
+      }
+    ],
+    "counterexample": [
+      {
+        "source": "linear",
+        "description": "Issue не имеет parent-hierarchy, breadcrumb не нужен",
+        "reliability": "medium"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [
+      {
+        "domain": "notion",
+        "projection": "page_detail",
+        "reason": "Page.parentId self-ref + teamspaceId + workspaceId path"
+      }
+    ],
+    "shouldNotMatch": [
+      {
+        "domain": "invest",
+        "projection": "position_detail",
+        "reason": "Position не имеет self-ref ancestor chain"
+      }
+    ]
+  }
+}

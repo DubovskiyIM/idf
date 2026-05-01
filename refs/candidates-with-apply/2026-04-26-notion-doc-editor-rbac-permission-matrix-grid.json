@@ -1,0 +1,78 @@
+{
+  "id": "rbac-permission-matrix-grid",
+  "version": 1,
+  "status": "candidate",
+  "archetype": "detail",
+  "trigger": {
+    "requires": [
+      {
+        "kind": "has-role",
+        "min": 3
+      },
+      {
+        "kind": "intent-effect",
+        "α": "replace",
+        "targetField": "role"
+      },
+      {
+        "kind": "entity-kind",
+        "value": "membership"
+      }
+    ]
+  },
+  "structure": {
+    "slot": "body",
+    "description": "Workspace-settings рендерит role × capability grid: строки=roles, колонки=actions, ячейки=✓/✗; редактирование — toggle ячейки или change_member_role в member-list.",
+    "applySource": "function apply(slots, context) {\n  // Auto-synthesized marker-only apply (§13.17 opt-c).\n  // Marks first un-marked item in slots.body with source: \"derived:rbac-permission-matrix-grid\".\n  // Idempotent: skip if already marked.\n  const slot = slots?.body;\n  if (!Array.isArray(slot) || slot.length === 0) return slots;\n  const idx = slot.findIndex((x) => x && !x.source);\n  if (idx === -1) return slots;\n  const marker = \"derived:rbac-permission-matrix-grid\";\n  if (slot[idx].source === marker) return slots;\n  return {\n    ...slots,\n    body: slot.map((item, i) =>\n      i === idx ? { ...item, source: marker } : item),\n  };\n}",
+    "applyKind": "marker-only-synthesized",
+    "applySynthesizedAt": 1777280149907
+  },
+  "rationale": {
+    "hypothesis": "Когда ≥3 ролей и десятки intent'ов, list-of-roles-with-text-description нечитаем; explicit matrix делает capability-сравнение между ролями glance-able и подсвечивает gaps.",
+    "evidence": [
+      {
+        "source": "Notion",
+        "description": "Settings → Members → role-permission table",
+        "reliability": "high"
+      },
+      {
+        "source": "GitHub orgs",
+        "description": "Role × repo-action grid",
+        "reliability": "high"
+      },
+      {
+        "source": "Linear",
+        "description": "Member-roles + capability matrix",
+        "reliability": "medium"
+      }
+    ],
+    "counterexample": [
+      {
+        "source": "Domain c 2 ролями",
+        "description": "Owner/viewer — flat enough, matrix overhead",
+        "reliability": "high"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [
+      {
+        "domain": "notion",
+        "projection": "workspace_settings",
+        "reason": "5 ролей × 40+ intents"
+      }
+    ],
+    "shouldNotMatch": [
+      {
+        "domain": "lifequest",
+        "projection": "goals",
+        "reason": "Single-user домен без roles"
+      },
+      {
+        "domain": "planning",
+        "projection": "polls",
+        "reason": "Только organizer/participant — flat"
+      }
+    ]
+  }
+}

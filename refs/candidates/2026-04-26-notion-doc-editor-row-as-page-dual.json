@@ -1,0 +1,66 @@
+{
+  "id": "row-as-page-dual",
+  "version": 1,
+  "status": "candidate",
+  "archetype": "catalog",
+  "trigger": {
+    "requires": [
+      {
+        "kind": "entity-field",
+        "field": "pageId",
+        "references": "Page"
+      },
+      {
+        "kind": "sub-entity-exists",
+        "of": "DatabaseRow"
+      }
+    ]
+  },
+  "structure": {
+    "slot": "body",
+    "description": "DatabaseRow открывается как detail-archetype с двойственной семантикой: top-section — propertyValues (структурированные cells), body-section — block-canvas через page-association. Один entity, два модуса просмотра."
+  },
+  "rationale": {
+    "hypothesis": "Структурированные данные и свободный документ часто описывают один объект (project, customer, ticket). Разрывать их по разным экранам — пенальти на context-switching; объединение даёт database-as-CMS без двойной CRUD.",
+    "evidence": [
+      {
+        "source": "notion",
+        "description": "Любой row в Database открывается как Page с full block-editor",
+        "reliability": "high"
+      },
+      {
+        "source": "coda",
+        "description": "Row detail = card view с полями + canvas-section",
+        "reliability": "high"
+      },
+      {
+        "source": "airtable",
+        "description": "Row expand → modal с полями + attached notes-block",
+        "reliability": "medium"
+      }
+    ],
+    "counterexample": [
+      {
+        "source": "linear",
+        "description": "Issue — единая модель description+fields, без разделения row/page; не нуждается в дуальности",
+        "reliability": "medium"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [
+      {
+        "domain": "notion",
+        "projection": "database_detail",
+        "reason": "DatabaseRow.pageId → Page (block-canvas)"
+      }
+    ],
+    "shouldNotMatch": [
+      {
+        "domain": "invest",
+        "projection": "positions_catalog",
+        "reason": "Position — pure data row без bodied document"
+      }
+    ]
+  }
+}

@@ -1,0 +1,72 @@
+{
+  "id": "inline-markdown-shortcut",
+  "version": 1,
+  "status": "candidate",
+  "archetype": "detail",
+  "trigger": {
+    "requires": [
+      {
+        "kind": "polymorphic",
+        "entity": "Block"
+      },
+      {
+        "kind": "intent-effect",
+        "intent": "change_block_kind",
+        "α": "replace",
+        "target": "kind"
+      },
+      {
+        "kind": "intent-effect",
+        "intent": "edit_block_payload",
+        "α": "replace"
+      }
+    ]
+  },
+  "structure": {
+    "slot": "body",
+    "description": "Inline-парсер в payload-editor распознаёт markdown-prefixes ('# ', '- ', '> ', '[]', '**') и автоматически вызывает change_block_kind на текущей строке без явной команды."
+  },
+  "rationale": {
+    "hypothesis": "Power-users печатают markdown-prefixes по привычке; авто-конверсия превращает встречающийся text-pattern в правильный block-kind, экономя slash-palette interaction для не-обычных kind'ов.",
+    "evidence": [
+      {
+        "source": "notion",
+        "description": "'# ' → heading_1, '- ' → bullet, '[]' → todo автоматически",
+        "reliability": "high"
+      },
+      {
+        "source": "obsidian",
+        "description": "Чистый markdown — каждый prefix renders соответствующий block",
+        "reliability": "high"
+      },
+      {
+        "source": "linear",
+        "description": "Comment editor поддерживает markdown-shortcuts inline",
+        "reliability": "medium"
+      }
+    ],
+    "counterexample": [
+      {
+        "source": "google-docs",
+        "description": "Опционально включается, по умолчанию выключено — пользователи pure-WYSIWYG ожидают literal characters",
+        "reliability": "medium"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [
+      {
+        "domain": "notion",
+        "projection": "page_detail",
+        "reason": "Block polymorphic с heading/bullet/todo/quote variants + change_block_kind intent"
+      }
+    ],
+    "shouldNotMatch": [
+      {
+        "domain": "invest",
+        "projection": "portfolio_detail",
+        "reason": "Нет polymorphic content-блоков и change-kind семантики"
+      }
+    ]
+  }
+}

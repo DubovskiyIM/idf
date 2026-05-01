@@ -1,0 +1,91 @@
+{
+  "id": "reactive-derivation-with-source-ref",
+  "version": 1,
+  "status": "candidate",
+  "archetype": "detail",
+  "trigger": {
+    "requires": [
+      {
+        "kind": "entity-field",
+        "entity": "*",
+        "field": "sourceRef|sourceTableId|sourceQuery",
+        "fieldRole": "reference"
+      },
+      {
+        "kind": "entity-field",
+        "entity": "*",
+        "field": "autoUpdate|isReactive",
+        "fieldRole": "boolean"
+      },
+      {
+        "kind": "entity-field",
+        "entity": "*",
+        "field": "lastResult|cachedValue|lastRunAt",
+        "fieldRole": "derived-output"
+      },
+      {
+        "kind": "intent-effect",
+        "α": "replace",
+        "target": "*.lastResult",
+        "manualTrigger": true
+      }
+    ]
+  },
+  "structure": {
+    "slot": "body",
+    "description": "Detail derived-entity (AIBlock) рендерит три части: source-pane (что входит — ref на upstream Φ), prompt/transform-pane (как трансформирует), result-pane (последний output + lastRunAt + manual-rerun CTA); autoUpdate-toggle переключает между 'recompute on source change' и 'snapshot frozen'."
+  },
+  "rationale": {
+    "hypothesis": "Reactive derivations (AI, formula-cell, materialized view) имеют семантику источник→трансформация→результат; визуализация 'что было использовано / как / что вышло' восстанавливает auditable lineage в UI и снимает чёрный ящик AI-вывода; toggle auto vs manual решает trade-off между свежестью и стабильностью snapshot'а.",
+    "evidence": [
+      {
+        "source": "coda",
+        "description": "AI block с source citation + 'rerun' + 'auto-update on row change' toggle",
+        "reliability": "high"
+      },
+      {
+        "source": "notion-ai",
+        "description": "AI summary block с source-ref + manual refresh",
+        "reliability": "high"
+      },
+      {
+        "source": "observable",
+        "description": "Reactive cell с input dependencies + cached output + recompute",
+        "reliability": "medium"
+      },
+      {
+        "source": "looker-derived-tables",
+        "description": "Persistent derived tables — source query + materialization timestamp + manual rebuild",
+        "reliability": "medium"
+      }
+    ],
+    "counterexample": [
+      {
+        "source": "static-content",
+        "description": "Plain text-block без upstream — derivation концепция не применима",
+        "reliability": "high"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [
+      {
+        "domain": "coda-table-document",
+        "projection": "ai_block_detail",
+        "reason": "AIBlock.{sourceRef, prompt, lastResult, autoUpdate, lastRunAt} + ai_rerun — все compoenents паттерна"
+      }
+    ],
+    "shouldNotMatch": [
+      {
+        "domain": "messenger",
+        "projection": "message_detail",
+        "reason": "Message — terminal data, нет derivation lineage"
+      },
+      {
+        "domain": "planning",
+        "projection": "vote_detail",
+        "reason": "Vote — terminal действие, не reactive derivation"
+      }
+    ]
+  }
+}

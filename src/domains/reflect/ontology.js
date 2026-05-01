@@ -1,5 +1,12 @@
 export const ONTOLOGY = {
   systemCollections: ["hypotheses"],
+  // Pilot: opt-in tier-driven slot routing (idf-sdk PR #434, core@0.105.0).
+  // Активирует salience-driven promotion в hero/primaryCTA для intent'ов с
+  // explicit primary tier (intent.salience >= 80). Sidecar annotations
+  // в intent-salience.js merge'ятся через domain.js. См. idf #166 finding.
+  features: {
+    salienceDrivenRouting: true,
+  },
   entities: {
     User: {
       fields: {

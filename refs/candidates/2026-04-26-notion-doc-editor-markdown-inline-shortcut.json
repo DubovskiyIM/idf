@@ -1,0 +1,71 @@
+{
+  "id": "markdown-inline-shortcut",
+  "version": 1,
+  "status": "candidate",
+  "archetype": "detail",
+  "trigger": {
+    "requires": [
+      {
+        "kind": "intent-creates",
+        "creates": "Block"
+      },
+      {
+        "kind": "intent-effect",
+        "intent": "change_block_kind",
+        "α": "replace",
+        "target": ".kind"
+      },
+      {
+        "kind": "intent-confirmation",
+        "value": "enter"
+      }
+    ]
+  },
+  "structure": {
+    "slot": "composer",
+    "description": "Keyboard-driven shortcut (`# `, `- `, `[]`, `> `, `**…**`) распознаётся inline и атомарно выполняет add_block + change_block_kind без меню. Параллельный путь к slash-command-creator-menu для туннельных пользователей."
+  },
+  "rationale": {
+    "hypothesis": "Keyboard-fluent users теряют скорость на любом меню. Markdown — стандартизированный muscle-memory из dev-tools и chat'ов; распознавание prefix'а делает type creation invisible.",
+    "evidence": [
+      {
+        "source": "notion",
+        "description": "# / ## / [] / > / 1. — все известные markdown shortcuts работают",
+        "reliability": "high"
+      },
+      {
+        "source": "obsidian",
+        "description": "Markdown — native syntax, не shortcut",
+        "reliability": "high"
+      },
+      {
+        "source": "linear",
+        "description": "Markdown shortcuts в issue-описаниях",
+        "reliability": "high"
+      }
+    ],
+    "counterexample": [
+      {
+        "source": "wysiwyg-cms",
+        "description": "Wordpress-classic — нет shortcuts, всё через toolbar; пользователи не из dev-фона не теряют скорость",
+        "reliability": "medium"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [
+      {
+        "domain": "notion",
+        "projection": "page_detail",
+        "reason": "Block.kind с paragraph/heading/list + change_block_kind"
+      }
+    ],
+    "shouldNotMatch": [
+      {
+        "domain": "sales",
+        "projection": "listing_form",
+        "reason": "Form-fields, не block-stream"
+      }
+    ]
+  }
+}

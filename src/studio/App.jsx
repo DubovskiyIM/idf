@@ -436,6 +436,21 @@ export default function App() {
 
   return (
     <div style={{ height: "100vh", display: "flex", flexDirection: "column", background: "#0b1220", color: "#e2e8f0", fontFamily: "Inter, -apple-system, system-ui, sans-serif" }}>
+      <style>{`
+        @keyframes idf-deploy-shimmer {
+          0% { transform: translateX(-100%); }
+          100% { transform: translateX(400%); }
+        }
+      `}</style>
+      {chatBusy && (
+        <div style={{ position: "absolute", top: 44, left: 0, right: 0, height: 2, zIndex: 50, background: "#1e293b", overflow: "hidden" }}>
+          <div style={{
+            width: "25%", height: "100%",
+            background: "linear-gradient(90deg, transparent, #818cf8, #c7d2fe, #818cf8, transparent)",
+            animation: "idf-deploy-shimmer 1.4s ease-in-out infinite",
+          }} />
+        </div>
+      )}
       <TabStrip
         view={view}
         setView={setView}

@@ -1,0 +1,552 @@
+{
+  "source": "notion-style-pattern-batch-2026-04-26",
+  "entities": [
+    {
+      "name": "Workspace",
+      "fields": [
+        "name",
+        "icon",
+        "plan",
+        "ownerId",
+        "createdAt"
+      ],
+      "statusValues": []
+    },
+    {
+      "name": "WorkspaceMember",
+      "fields": [
+        "workspaceId",
+        "userId",
+        "role",
+        "invitedAt",
+        "acceptedAt",
+        "status"
+      ],
+      "foreignKey": "workspaceId→Workspace",
+      "statusValues": [
+        "invited",
+        "active",
+        "suspended",
+        "removed"
+      ]
+    },
+    {
+      "name": "Page",
+      "fields": [
+        "title",
+        "icon",
+        "cover",
+        "parentPageId",
+        "workspaceId",
+        "archived",
+        "archivedAt",
+        "publishedAt",
+        "createdBy",
+        "updatedAt"
+      ],
+      "foreignKey": "parentPageId→Page",
+      "statusValues": [
+        "draft",
+        "in_review",
+        "approved",
+        "published",
+        "archived"
+      ]
+    },
+    {
+      "name": "Block",
+      "fields": [
+        "pageId",
+        "parentBlockId",
+        "type",
+        "order",
+        "content",
+        "props",
+        "createdBy",
+        "createdAt"
+      ],
+      "foreignKey": "pageId→Page",
+      "statusValues": []
+    },
+    {
+      "name": "Database",
+      "fields": [
+        "pageId",
+        "name",
+        "icon",
+        "schemaVersion"
+      ],
+      "foreignKey": "pageId→Page"
+    },
+    {
+      "name": "Property",
+      "fields": [
+        "databaseId",
+        "name",
+        "kind",
+        "options",
+        "formula",
+        "visibilityFormula"
+      ],
+      "foreignKey": "databaseId→Database",
+      "statusValues": []
+    },
+    {
+      "name": "DatabaseRow",
+      "fields": [
+        "databaseId",
+        "linkedPageId",
+        "createdAt",
+        "updatedAt"
+      ],
+      "foreignKey": "databaseId→Database"
+    },
+    {
+      "name": "PropertyValue",
+      "fields": [
+        "rowId",
+        "propertyId",
+        "value"
+      ],
+      "foreignKey": "rowId→DatabaseRow"
+    },
+    {
+      "name": "DatabaseView",
+      "fields": [
+        "databaseId",
+        "kind",
+        "name",
+        "filters",
+        "sorts",
+        "groupBy",
+        "visibleFields",
+        "locked"
+      ],
+      "foreignKey": "databaseId→Database",
+      "statusValues": [
+        "table",
+        "board",
+        "gallery",
+        "calendar",
+        "timeline",
+        "list"
+      ]
+    },
+    {
+      "name": "Comment",
+      "fields": [
+        "pageId",
+        "blockId",
+        "anchorRange",
+        "threadId",
+        "author",
+        "content",
+        "resolvedAt",
+        "createdAt"
+      ],
+      "foreignKey": "pageId→Page",
+      "statusValues": [
+        "open",
+        "resolved"
+      ]
+    },
+    {
+      "name": "PagePermission",
+      "fields": [
+        "pageId",
+        "subjectKind",
+        "subjectId",
+        "level",
+        "inheritedFrom",
+        "override"
+      ],
+      "foreignKey": "pageId→Page",
+      "statusValues": [
+        "full_access",
+        "edit",
+        "comment",
+        "view",
+        "no_access"
+      ]
+    },
+    {
+      "name": "PageVersion",
+      "fields": [
+        "pageId",
+        "snapshot",
+        "author",
+        "createdAt",
+        "label"
+      ],
+      "foreignKey": "pageId→Page"
+    },
+    {
+      "name": "Mention",
+      "fields": [
+        "sourceBlockId",
+        "targetKind",
+        "targetId",
+        "createdAt"
+      ],
+      "foreignKey": "sourceBlockId→Block"
+    },
+    {
+      "name": "Template",
+      "fields": [
+        "name",
+        "scope",
+        "scopeId",
+        "tier",
+        "category",
+        "previewImage",
+        "blocks"
+      ],
+      "statusValues": [
+        "personal",
+        "workspace",
+        "marketplace"
+      ]
+    },
+    {
+      "name": "Invitation",
+      "fields": [
+        "workspaceId",
+        "email",
+        "role",
+        "token",
+        "expiresAt",
+        "acceptedAt"
+      ],
+      "foreignKey": "workspaceId→Workspace",
+      "statusValues": [
+        "pending",
+        "accepted",
+        "expired",
+        "revoked"
+      ]
+    },
+    {
+      "name": "PresenceSession",
+      "fields": [
+        "pageId",
+        "userId",
+        "cursorPosition",
+        "lastSeenAt"
+      ],
+      "foreignKey": "pageId→Page"
+    },
+    {
+      "name": "AiGeneration",
+      "fields": [
+        "blockId",
+        "prompt",
+        "model",
+        "output",
+        "createdAt",
+        "regeneratedFrom"
+      ],
+      "foreignKey": "blockId→Block"
+    },
+    {
+      "name": "PublishedPage",
+      "fields": [
+        "pageId",
+        "publicUrl",
+        "indexable",
+        "includesSubtree",
+        "publishedAt"
+      ],
+      "foreignKey": "pageId→Page"
+    }
+  ],
+  "intents": [
+    {
+      "id": "create_page",
+      "α": "add",
+      "creates": "Page",
+      "confirmation": "click"
+    },
+    {
+      "id": "rename_page",
+      "α": "replace",
+      "target": "page.title",
+      "confirmation": "enter"
+    },
+    {
+      "id": "set_page_icon",
+      "α": "replace",
+      "target": "page.icon",
+      "confirmation": "click"
+    },
+    {
+      "id": "reparent_page",
+      "α": "replace",
+      "target": "page.parentPageId",
+      "confirmation": "click"
+    },
+    {
+      "id": "archive_page",
+      "α": "remove",
+      "target": "pages",
+      "irreversibility": "high",
+      "confirmation": "click"
+    },
+    {
+      "id": "restore_page",
+      "α": "replace",
+      "target": "page.archived",
+      "confirmation": "click"
+    },
+    {
+      "id": "delete_page_permanent",
+      "α": "remove",
+      "target": "pages",
+      "irreversibility": "high",
+      "confirmation": "form"
+    },
+    {
+      "id": "publish_page",
+      "α": "add",
+      "creates": "PublishedPage",
+      "confirmation": "form"
+    },
+    {
+      "id": "unpublish_page",
+      "α": "remove",
+      "target": "publishedPages",
+      "irreversibility": "high",
+      "confirmation": "click"
+    },
+    {
+      "id": "insert_block",
+      "α": "add",
+      "creates": "Block",
+      "confirmation": "click"
+    },
+    {
+      "id": "convert_block_type",
+      "α": "replace",
+      "target": "block.type",
+      "confirmation": "click"
+    },
+    {
+      "id": "indent_block",
+      "α": "replace",
+      "target": "block.parentBlockId",
+      "confirmation": "click"
+    },
+    {
+      "id": "reorder_block",
+      "α": "replace",
+      "target": "block.order",
+      "confirmation": "click"
+    },
+    {
+      "id": "delete_block",
+      "α": "remove",
+      "target": "blocks",
+      "confirmation": "click"
+    },
+    {
+      "id": "create_database",
+      "α": "add",
+      "creates": "Database",
+      "confirmation": "click"
+    },
+    {
+      "id": "add_property",
+      "α": "add",
+      "creates": "Property",
+      "confirmation": "form"
+    },
+    {
+      "id": "rename_property",
+      "α": "replace",
+      "target": "property.name",
+      "confirmation": "enter"
+    },
+    {
+      "id": "delete_property",
+      "α": "remove",
+      "target": "properties",
+      "irreversibility": "high",
+      "confirmation": "form"
+    },
+    {
+      "id": "add_row",
+      "α": "add",
+      "creates": "DatabaseRow",
+      "confirmation": "click"
+    },
+    {
+      "id": "set_property_value",
+      "α": "replace",
+      "target": "propertyValue.value",
+      "confirmation": "enter"
+    },
+    {
+      "id": "create_view",
+      "α": "add",
+      "creates": "DatabaseView",
+      "confirmation": "form"
+    },
+    {
+      "id": "switch_view_kind",
+      "α": "replace",
+      "target": "databaseView.kind",
+      "confirmation": "click"
+    },
+    {
+      "id": "lock_view",
+      "α": "replace",
+      "target": "databaseView.locked",
+      "confirmation": "click"
+    },
+    {
+      "id": "set_visibility_formula",
+      "α": "replace",
+      "target": "property.visibilityFormula",
+      "confirmation": "form"
+    },
+    {
+      "id": "add_comment",
+      "α": "add",
+      "creates": "Comment",
+      "confirmation": "enter"
+    },
+    {
+      "id": "resolve_comment",
+      "α": "replace",
+      "target": "comment.resolvedAt",
+      "confirmation": "click"
+    },
+    {
+      "id": "share_page",
+      "α": "add",
+      "creates": "PagePermission",
+      "confirmation": "form"
+    },
+    {
+      "id": "change_permission_level",
+      "α": "replace",
+      "target": "pagePermission.level",
+      "confirmation": "click"
+    },
+    {
+      "id": "remove_permission",
+      "α": "remove",
+      "target": "pagePermissions",
+      "confirmation": "click"
+    },
+    {
+      "id": "invite_member",
+      "α": "add",
+      "creates": "Invitation",
+      "confirmation": "form"
+    },
+    {
+      "id": "revoke_invitation",
+      "α": "remove",
+      "target": "invitations",
+      "irreversibility": "high",
+      "confirmation": "click"
+    },
+    {
+      "id": "change_member_role",
+      "α": "replace",
+      "target": "workspaceMember.role",
+      "confirmation": "click"
+    },
+    {
+      "id": "remove_member",
+      "α": "remove",
+      "target": "workspaceMembers",
+      "irreversibility": "high",
+      "confirmation": "form"
+    },
+    {
+      "id": "submit_for_review",
+      "α": "replace",
+      "target": "page.status",
+      "confirmation": "click"
+    },
+    {
+      "id": "approve_page",
+      "α": "replace",
+      "target": "page.status",
+      "irreversibility": "high",
+      "confirmation": "click"
+    },
+    {
+      "id": "create_mention",
+      "α": "add",
+      "creates": "Mention",
+      "confirmation": "enter"
+    },
+    {
+      "id": "save_template",
+      "α": "add",
+      "creates": "Template",
+      "confirmation": "form"
+    },
+    {
+      "id": "instantiate_template",
+      "α": "add",
+      "creates": "Page",
+      "confirmation": "click"
+    },
+    {
+      "id": "regenerate_ai_block",
+      "α": "add",
+      "creates": "AiGeneration",
+      "confirmation": "click"
+    },
+    {
+      "id": "accept_ai_block",
+      "α": "replace",
+      "target": "block.content",
+      "confirmation": "click"
+    },
+    {
+      "id": "restore_version",
+      "α": "replace",
+      "target": "page.snapshot",
+      "irreversibility": "high",
+      "confirmation": "form"
+    }
+  ],
+  "roles": [
+    "workspaceOwner",
+    "editor",
+    "commenter",
+    "viewer",
+    "agent"
+  ],
+  "observations": [
+    "Self-referential page tree (Page.parentPageId) with drag-to-reparent — single hierarchical primary navigation",
+    "Block is polymorphic entity with discriminator field 'type' and 15+ variants (paragraph/heading/list/toggle/table/database/embed/code/callout/quote/divider/image/video/file/ai)",
+    "Slash-command (/) menu inserts blocks contextually at caret — inline creator surface",
+    "Markdown-style inline shortcuts auto-convert on space (## → heading, [] → todo, --- → divider)",
+    "Database is a Block whose payload is a multi-view collection (table/board/gallery/calendar/timeline/list) — same rows, different DatabaseView projections",
+    "Row-as-page duality: clicking a row opens it as a full Page detail with hero header + property panel",
+    "Property kinds form runtime-builder schema (text/number/select/multi-select/date/person/file/checkbox/url/email/phone/formula/relation/rollup/created_time/last_edited)",
+    "Conditional visibility via formula-driven Property.visibilityFormula expression",
+    "Linked databases project the same source rows under a different view (mirror projection, no copy)",
+    "Permission inheritance chain: PagePermission resolves through parent Page → Workspace, with explicit override badge when broken",
+    "Invitation lifecycle is separate entity with token + expiresAt + accepted/revoked states",
+    "Ephemeral PresenceSession overlay (avatars + cursors) is non-persistent, derived from active connections",
+    "Comments anchor to either Block or text range within a Block (multi-anchor) and form threads with resolve toggle",
+    "Typed mentions (@person, [[Page]], +database) auto-create Mention entities and produce backlinks on target",
+    "AI-generated content kept as separate AiGeneration record with regenerate-from lineage and accept-into-block transition",
+    "Template entity with scope tier (personal/workspace/marketplace) — installer pattern with category facets",
+    "Indent/outdent (Tab/Shift-Tab) reparents block under previous sibling — keyboard tree-builder",
+    "Inline-editable hero header with title, icon, cover — atomic detail-archetype heading",
+    "Quick-find (Cmd+P) palette with typed filter chips (type:/in:/by:) — global-command-palette",
+    "Page version history rail with append-only snapshots; restore creates new version, never mutates past",
+    "Soft-delete: archived flag with 30-day grace before hard-delete; restore is non-destructive replace",
+    "RBAC × resource permission matrix at workspace level (role × capability grid)",
+    "Publish-with-subtree checklist controls which child pages are exposed in public site",
+    "Sparse-FK Comment (pageId XOR blockId) — anchor target determined by which FK is set",
+    "Dual-mode search: simple typed-syntax bar and structured advanced filter — two projections of same query entity"
+  ]
+}

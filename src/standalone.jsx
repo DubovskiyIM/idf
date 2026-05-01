@@ -19,6 +19,12 @@ import * as salesDomain from "./domains/sales/domain.js";
 import * as lifequestDomain from "./domains/lifequest/domain.js";
 import * as reflectDomain from "./domains/reflect/domain.js";
 import * as investDomain from "./domains/invest/domain.js";
+import * as gravitinoDomain from "./domains/gravitino/domain.js";
+import * as keycloakDomain from "./domains/keycloak/domain.js";
+import * as argocdDomain from "./domains/argocd/domain.js";
+import * as automationDomain from "./domains/automation/domain.js";
+import * as notionDomain from "./domains/notion/domain.js";
+import * as metaDomain from "./domains/meta/domain.js";
 
 import BookingUI from "./domains/booking/ManualUI.jsx";
 import PlanningUI from "./domains/planning/ManualUI.jsx";
@@ -31,7 +37,14 @@ import { mantineAdapter } from "@intent-driven/adapter-mantine";
 import { shadcnAdapter } from "@intent-driven/adapter-shadcn";
 import { appleAdapter } from "@intent-driven/adapter-apple";
 import { antdAdapter } from "@intent-driven/adapter-antd";
+import { applyTiptapBlockEditor } from "@intent-driven/adapter-antd-blockeditor-tiptap";
 import { ConfigProvider as AntConfigProvider, theme as antTheme } from "antd";
+
+// §12.10 v0.2 — заменяем reference textarea-impl BlockEditor на Tiptap-backed
+// (rich-text inline-formatting через ProseMirror StarterKit). Идемпотентно;
+// host wrapper'ы (notion BlockCanvas) ничего не меняют — primitive contract
+// тот же. Capability flag inlineFormatting переключается false → true.
+applyTiptapBlockEditor(antdAdapter);
 import ruRU from "antd/locale/ru_RU";
 import { usePersonalPrefs } from "./runtime/renderer/personal/usePersonalPrefs.js";
 
@@ -65,11 +78,28 @@ registerCanvas("market_trends", MarketLineCanvas);
 registerCanvas("advisor_client_dashboard", AdvisorReviewCanvas);
 registerCanvas("regulator_report", RegulatorReportCanvas);
 
+// Notion canvas (block-editor через adapter capability §12.10)
+import NotionBlockCanvas from "./domains/notion/canvas/BlockCanvas.jsx";
+registerCanvas("block_canvas", NotionBlockCanvas);
+
+// Meta-домен canvas (Studio shell)
+import { registerMetaCanvases } from "./domains/meta/canvas/registerCanvases.jsx";
+registerMetaCanvases();
+
+// Gravitino metalake_workspace canvas (U2.1 — split-pane catalog explorer)
+import CatalogExplorer from "./domains/gravitino/explorer/CatalogExplorer.jsx";
+registerCanvas("metalake_workspace", CatalogExplorer);
+
 // Домены с переключением адаптера
 const DOMAIN_ADAPTERS = {
   lifequest: appleAdapter,
   reflect: appleAdapter,
   invest: antdAdapter,
+  gravitino: antdAdapter,
+  keycloak: antdAdapter,
+  argocd: antdAdapter,
+  notion: antdAdapter,
+  meta: antdAdapter,
 };
 
 function makeV2UI(domainId) {
@@ -91,7 +121,9 @@ function makeV2UI(domainId) {
   };
 }
 
-const DOMAINS_RAW = {
+// Экспортируется как single-source-of-truth для main.jsx и vite.config.js
+// (динамическая регистрация роутов вместо ручного списка). §13.10.
+export const DOMAINS_RAW = {
   booking: bookingDomain,
   planning: planningDomain,
   workflow: workflowDomain,
@@ -100,6 +132,12 @@ const DOMAINS_RAW = {
   lifequest: lifequestDomain,
   reflect: reflectDomain,
   invest: investDomain,
+  gravitino: gravitinoDomain,
+  keycloak: keycloakDomain,
+  argocd: argocdDomain,
+  automation: automationDomain,
+  notion: notionDomain,
+  meta: metaDomain,
 };
 
 const DOMAIN_TITLES = {
@@ -114,6 +152,12 @@ const DOMAIN_TITLES = {
   lifequest: "📓 LifeQuest",
   reflect: "🌀 Reflect",
   invest: "💼 Invest",
+  gravitino: "🗂 Gravitino",
+  keycloak: "🔐 Keycloak",
+  argocd: "🚀 ArgoCD",
+  automation: "⚙️ Automation",
+  notion: "📝 Notion",
+  meta: "🪞 Meta (IDF-on-IDF)",
 };
 
 const DOMAINS = {
@@ -128,6 +172,12 @@ const DOMAINS = {
   lifequest: { ...lifequestDomain, UI: makeV2UI("lifequest") },
   reflect: { ...reflectDomain, UI: makeV2UI("reflect") },
   invest: { ...investDomain, UI: makeV2UI("invest") },
+  gravitino: { ...gravitinoDomain, UI: makeV2UI("gravitino") },
+  keycloak: { ...keycloakDomain, UI: makeV2UI("keycloak") },
+  argocd: { ...argocdDomain, UI: makeV2UI("argocd") },
+  automation: { ...automationDomain, UI: makeV2UI("automation") },
+  notion: { ...notionDomain, UI: makeV2UI("notion") },
+  meta: { ...metaDomain, UI: makeV2UI("meta") },
 };
 
 export default function StandaloneApp({ domainId }) {
@@ -250,6 +300,20 @@ export default function StandaloneApp({ domainId }) {
     "--font-doodle": "system-ui, sans-serif",
     "--radius-doodle": "6px",
   } : {};
+  const gravitinoOverride = domainId === "gravitino" ? {
+    "--mantine-color-body": "#1f2937",
+    "--mantine-color-text": "#f1f5f9",
+    "--mantine-color-dimmed": "#94a3b8",
+    "--mantine-color-default": "#334155",
+    "--mantine-color-default-border": "#475569",
+    "--mantine-color-default-hover": "#3f4a5e",
+    "--idf-card": "#334155",
+    "--idf-text": "#f1f5f9",
+    "--idf-text-muted": "#94a3b8",
+    "--idf-border": "#475569",
+    "--idf-surface": "#3f4a5e",
+    "--idf-primary": "#6478f7",
+  } : {};
   const content = (
     <div key={adapterKey} style={{
       height: "100vh",
@@ -257,9 +321,11 @@ export default function StandaloneApp({ domainId }) {
       overflow: isV2 ? "hidden" : "auto",
       display: "flex", flexDirection: "column",
       ...mantineOverride,
+      ...gravitinoOverride,
     }}>
-      {/* Top bar with user info — скрыт для lifequest (логаут в PrefsPanel) */}
-      {currentUser && !isLifequest && (
+      {/* Top bar with user info — скрыт для lifequest (логаут в PrefsPanel)
+          и для v2-доменов (V2Shell сам рендерит HeaderBar) */}
+      {currentUser && !isLifequest && !isV2 && (
         <div style={{
           display: "flex", alignItems: "center", gap: 10,
           padding: "8px 16px",
@@ -303,15 +369,32 @@ export default function StandaloneApp({ domainId }) {
     </div>
   );
 
+  // Per-domain AntD theme tokens. Gravitino — брендовый primary #6478f7,
+  // тёмная тема (паритет с web-v2).
+  const antdThemeConfig = (() => {
+    if (domainId === "gravitino") {
+      return {
+        algorithm: antTheme.darkAlgorithm,
+        token: {
+          colorPrimary: "#6478f7",
+          colorSuccess: "#71DD37",
+          colorError: "#FF3E1D",
+          colorWarning: "#FFAB00",
+          colorInfo: "#03C3EC",
+          borderRadius: 8,
+          colorBgBase: "#1f2937",
+        },
+      };
+    }
+    return {
+      algorithm: antTheme.defaultAlgorithm,
+      token: { colorPrimary: "#1677ff", borderRadius: 8 },
+    };
+  })();
+
   const wrapped = adapter === antdAdapter
     ? (
-      <AntConfigProvider
-        locale={ruRU}
-        theme={{
-          algorithm: antTheme.defaultAlgorithm,
-          token: { colorPrimary: "#1677ff", borderRadius: 8 },
-        }}
-      >
+      <AntConfigProvider locale={ruRU} theme={antdThemeConfig}>
         {content}
       </AntConfigProvider>
     )

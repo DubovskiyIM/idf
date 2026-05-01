@@ -2,6 +2,15 @@
 
 **Назначение.** Отдельная очередь задач, инсайтов и находок, отложенных между сессиями. В отличие от `sdk-improvements-backlog.md` (специфичен для SDK и дискавери freelance'а), этот файл — cross-cutting: всё, что всплыло при работе, но не попало в текущий PR.
 
+**Структура.**
+
+- **§0 SaaS packaging (M1.2→M1.6)** — shippable path к первому paying PM. **Критический путь.** Всё, что блокирует упаковку для первых клиентов.
+- **§1 Format / SDK deferred implementation** — format maturity, идёт параллельно, не блокирует первых клиентов.
+- **§2 Architectural research / insights** — design-research для v2.1 манифеста.
+- **§3 Cross-cutting observations** — наблюдения, не привязанные к workstream.
+
+**Критерий разделения.** Если item блокирует деплой первого PM — §0. Если item улучшает format expressiveness без impact на PM end-user — §1-2.
+
 **Контракт.**
 
 - При завершении сессии — пройтись по «что хотел сделать но отложил» и записать сюда.
@@ -9,6 +18,152 @@
 - Пункты с датой находки, коротким контекстом, предлагаемым action'ом.
 - Когда пункт взят в работу — удалить из backlog'а и перевести в плановый workstream.
 - Если пункт устарел (решён параллельно, отменён решением) — удалить, не оставлять как «исторический».
+
+---
+
+## 0. SaaS packaging — путь к первому paying PM
+
+**Источник истины:** `docs/superpowers/specs/2026-04-21-pm-autonomy-roadmap-design.md` (Variant D, 6 мес план).
+**Текущая фаза:** M1.1 закрыт (2026-04-21), **M1.2 фактически закрыт** (2026-04-30 audit — см. §0.2). M1.3 частично шипнут параллельно через idf-studio PR #82. План на месяц — `~/.claude/plans/deep-humming-nova.md`.
+
+### 0.1 M1.1 tail (закрыть в первые 1-2 дня)
+
+**A1. Resend wire-up в production (`idf-auth`).**
+**Контекст:** Сейчас `EMAIL_DEV_MODE=true` на VPS — magic-link уходит в `docker compose logs`. Для реальных PM нужен Resend с DNS verification для `intent-design.tech`.
+**Action:** User создаёт Resend account + DNS-records; я ставлю `RESEND_API_KEY` + `EMAIL_DEV_MODE=false` в `/opt/idf-auth/.env`, redeploy.
+**Blocker:** user (API key).
+
+**A2. Re-deploy runtime с full V2Shell bundle.**
+**Контекст:** commit `72703b2` в idf-runtime содержит собранный V2Shell (6.3 MB) в `static/`, но prod пока отдаёт placeholder index.html (`94a89cf`).
+**Action:** `docker buildx build --platform linux/amd64` → scp на VPS → docker load + tag → docker compose up -d в `/opt/idf-runtime/demo/`.
+
+**A3. ANTHROPIC_API_KEY в control plane.**
+**Контекст:** Без ключа SSE authoring session падает на `createClaude` init.
+**Action:** user → `ANTHROPIC_API_KEY=sk-ant-...` → `/opt/idf-studio/.env` + restart.
+**Blocker:** user (API key).
+
+**A4. Cross-plane E2E smoke.**
+**Action:** signup incognito → login → create project → deploy demo tenant → открыть iframe, убедиться что V2Shell отдаёт 4-channel UI.
+**Dep:** A1-A3.
+
+**A5. Verify daily backup cron.**
+**Контекст:** `/etc/cron.daily/idf-backup` создан 2026-04-21, rotation 14 дней. Надо убедиться что `/var/backups/idf/` реально наполняется.
+**Action:** ssh → `bash /etc/cron.daily/idf-backup` → `ls -la /var/backups/idf/` → assert ≥3 файла (auth / studio / runtime-demo).
+
+**A6. Auto-nginx/certbot helper в orchestrator.**
+**Контекст:** `/opt/idf-runtime/register-tenant.sh` на VPS работает полу-автоматически. Сейчас deploy flow оставляет nginx/certbot на user'е.
+**Action:** `idf-studio/server/src/vps/vps-client.ts::createTenant` вызывает `register-tenant.sh <slug> <port>` через docker-exec или ssh. Первая итерация: keep manual fallback для первых 3-5 tenant'ов.
+
+### 0.2 M1.2: Studio as control plane — ✅ ЗАКРЫТ (audit 2026-04-30)
+
+Аудит расхождения plan↔code на 2026-04-30 показал, что M1.2 фактически шипнут — не одним big-bang, а через 13+ PR в `idf-studio` за 2026-04-26..30 (orchestrator/preview/snapshots/role-permissions). Все B1-B5 + C2-C4 done; C1 partial (валидация LLM-side есть, foldWorld pre-push fixtures нет).
+
+**B1. Port 7-state authoring machine.** ✅ Done + расширен.
+- `idf-studio/server/sessions/state-machine.ts` (719 LOC vs pm-demo `authoringStateMachine.cjs` 113 LOC)
+- Deep-merge intents/entities/roles с null-delete (vs shallow-merge в pm-demo), whitelist полей (intent / role / role.base), auto-sync `entity.fields` из `intent.parameters` (с self-ref skip), implicit-id awareness, 8 validation issue codes (vs 1), `rewindTo()` для rollback
+- 7 состояний → 8 (+`committed` terminal)
+
+**B2. System prompts из pm-demo.** ✅ Done + расширен.
+- `idf-studio/server/sessions/prompts/{system,kickoff,empty,entities,intents,roles,ontology_detail,preview}.md` — все 8 файлов
+- 5 идентичны pm-demo source; 3 значительно расширены: `system.md` (+55 LOC), `intents.md` (+250 LOC), `ontology_detail.md` (+111 LOC)
+- `prompts.ts` builder с ephemeral cache_control + commit-failure auto-repair patches (parsed rejected-effects → field summary → example patch)
+
+**B3. Turn-log first-class.** ✅ Done.
+- `sessions` table в `db/schema.ts` с `turns: jsonb` (`default([])`)
+- `routes.ts` persist'ит `turns: next.history` после каждого turn'а
+- Resume через `GET /api/sessions/:id` возвращает `hydrateHistory(session.turns)`
+
+**B4. Rollback to turn N.** ✅ Done.
+- `POST /api/sessions/:id/rewind` (routes.ts:478) использует `rewindTo` из state-machine + persist обновлённый turns array
+
+**B5. Live 4-channel preview panel.** ✅ Done — серия PR #84-#90 (2026-04-29):
+- #84 `signedFetch real Φ-world` — preview через HMAC к runtime `/admin/world`
+- #87 `backfill projection.witnesses` — preview не падает на authored entities
+- #88 `table-section в локальный renderDocumentHtml` — document channel
+- #89 `live Agent SSE-канал — task input + tool-use log` — agent channel
+- #86 `viewer role=admin для bypass owner-фильтра` — preview видит весь world
+- #85 `strip system-turns перед TTS-синтезом` — voice channel
+- #90 `claude-cli rate-limit overage fix` — orchestrator stability
+- #91 `MergedSnapshot client reshape`
+
+**C1. Dry-run validator (foldWorld на sample fixtures).** ⚠️ Partial.
+- LLM-side есть: `validatePartial()` в state-machine эмитит 8 codes до push'а (unknown_entity, intent_target_field_missing, dangling_entity_ref, …)
+- Runtime-side не реализован: `foldWorld` на sample fixtures до push'а в data plane не вызывается; вместо этого orchestrator делает `/admin/reload` на runtime и ловит `integrity_check_failed` post-deploy с rejected effects
+- Deferred: реальный foldWorld pre-push не блокирует C2/C4 (rejected loop работает), но добавил бы fail-fast для PM. Trackable как item M1.7.
+
+**C2. Integrity check ↔ studio UI diff.** ✅ Done.
+- `idf-studio/server/deploys/orchestrator.ts:280` бросает `integrity_check_failed` с `rejectedEffects`
+- `sessions/prompts.ts:122` парсит rejected effects → `field summary` + auto-generated example patch
+- Claude автоматически отвечает repair-патчем, не общими словами
+
+**C3. Deploy history tab.** ✅ Done.
+- `deploys` table (id / projectId / version / domainJsonSnapshot / status / hostUrl / hostContainerName / hostPort / error / startedAt / finishedAt)
+- `GET /api/projects/:id/deploys` (`server/deploys/routes.ts:42`)
+
+**C4. Snapshot Φ кнопка в studio UI.** ✅ Done — закрыт через M1.3 PR #82 (`feat: M1.3 data safety — snapshots / restore / breaking-gate / renames / audit / diff`):
+- `snapshots` table + UI кнопка
+- `change-classifier` (safe/caution/breaking)
+- Renames first-class через `RenameEntry` в state-machine
+- Audit log viewer (PR #83 `audit role/until filters` в idf-runtime)
+- Per-deploy diff (`server/diff/classifier.ts`)
+
+**Out-of-band:** A2 (Re-deploy runtime с full V2Shell bundle) выполнен — runtime запушил `feat(agent): generic demo runner + DEMO_AGENT_RUNNER env` (#82 в idf-runtime). A4 (cross-plane E2E smoke) — частично через `fold-invest-agent-smoke.mjs` в host'е.
+
+**Hard blocker для прод-использования M1.2:** A3 ANTHROPIC_API_KEY не установлен в prod `/opt/idf-studio/.env` — без него SSE authoring session падает на `createClaude` init. Требует выбор Max OAuth vs API key (см. §0.1 A3). Локально в dev работает.
+
+### 0.3 M1.3 (месяц 2): Data safety
+
+- Change classifier safe/caution/breaking в deploy preview UI.
+- Rename как first-class op (`domain.json.renames: [{entity, from, to}]`, idempotent JSONB update).
+- Φ snapshot / restore UI.
+- Audit log viewer с фильтрами (actor/entity/time-range/intent).
+- Per-field diff между deploy'ами.
+
+### 0.4 M1.4 (месяц 3): Governance & team
+
+- Team tab: invite UI, role assignment, revocation, agent tokens (long-lived JWT с preapproval limits, copy-once UX).
+- Rejected effects monitor.
+- «Explain why» rejection modal с suggested actions.
+- Export audit package (ZIP: domain.json + snapshots + rejected + members + optional Φ JSONL).
+
+### 0.5 M1.5 (месяц 4, RISKY — 60% frontend effort): Direct-manipulation editors
+
+- Role matrix editor (entities × roles, checkbox read/write/canExecute).
+- Projection palette (Pattern Bank user-facing, toggle enabled/disabled с live preview).
+- Rules builder no-code (drag-drop предикаты, schedule/threshold/aggregation).
+- Polish Graph3D editing mode (уже есть в Studio §27, нужен user-facing wrapper).
+
+**Degradable:** если timeline жмёт — сдвигать в M1.7, оставить LLM-only authoring в M1.
+
+### 0.6 M1.6 (месяц 5-6): Handoff + beta launch
+
+- Export tarball builder: `my-domain.tar.gz` с README / package.json / domain.json / extensions.ts-stub / Dockerfile / docker-compose.yml / Φ snapshot.
+- CLI dev-mode (`idf dev`, `idf test`, `idf publish` deferred в M2).
+- `domain.extensions.ts` typed interface (`DomainExtensions<T>` генерит TS-типы из domain.json).
+- Landing + pricing page + minimal Stripe (14-day trial, paid-only).
+- Beta cohort 3-5 PM → первый paying customer.
+
+### 0.7 Operational (continuous)
+
+- **Sentry** free tier на auth/runtime/studio (3 environments). Email alert на unhandled rejection.
+- **S3 off-site backup** (сейчас только local `/var/backups/idf/` на VPS — single point of failure).
+- **Security audit:** CSRF, cookie flags (Secure/HttpOnly/SameSite), rate-limit tuning, CORS policies.
+- **PG migrate runner → drizzle migrator** (все 3 плана имеют не-идемпотентный runner; второй прогон упадёт).
+- **Resend deliverability metrics** после wire-up (bounce rate, DMARC alignment).
+- **Port allocation race** в studio orchestrator (`allocatePort` без mutex, два параллельных deploy'я → collision).
+- **Persistent `hostPort` column в `tenants`** (сейчас port reuse из deploys history — хрупко).
+- **`docs/legal/dpa-template.pdf`** — минимальный processor-controller DPA для beta PM.
+- **`docs/ops/backup-recovery.md`** — runbook восстановления tenant из backup.
+- **Daily cron `/etc/cron.daily/idf-backup`** — healthcheck alert если за 24h не было нового файла.
+
+### 0.8 Open decisions (до beta)
+
+- **Product name.** «IDF» не маркетится. Варианты из roadmap: Folio / Crystallizer / Phi / Fold / Tacit.
+- **Licensing.** Studio/control plane — BSL или closed-source? Рекомендация roadmap: commercial SaaS поверх BSL SDK (Sentry/GitLab модель).
+- **LLM cost absorption.** M1 — в SaaS price; M2 — transactional billing.
+- **Freemium vs paid-only.** Roadmap рекомендует paid-only с 14-day trial.
+- **Ownership transfer в M1.** Manual через support email; automated в M2.
+- **Product demos.** M1: golden domain (Client Onboarding Tracker) + 2 templates (retro, project tasks). Vertical library — M2.
 
 ---
 
@@ -32,25 +187,15 @@
 **Owner:** Host `server/routes/effects.js` + SDK `fold.js`
 **Связано:** `docs/sdk-improvements-backlog.md` §1.4 (partial fix in Cluster A PR)
 
-### 1.4 Antd adapter patches — Cluster B (четыре P0 бага)
+### ✅ 1.4 Antd adapter patches — Cluster B (четыре P0 бага)
 
-**Дата:** 2026-04-20
-**Контекст:** Freelance field-test выявил 4 workaround'а в `idf/src/runtime/DomainRuntime.jsx`. Cluster B — самостоятельный PR.
-**Action:** Отдельная сессия:
-- **2.1** Button `label` vs `children` API mismatch — принимать оба, label приоритет
-- **2.2** `AntdDateTime` без времени — respect `spec.withTime` / `spec.precision: "minute"`
-- **2.3** `AntdNumber` не видит `fieldRole:"price"` — `isMoney = fieldRole ∈ {money, price}`
-- **2.4** `AntdTextInput` игнорирует `maxLength`/`minLength`/`pattern` — пробросить в `<Input>`
-**Owner:** `@intent-driven/adapter-antd`
-**Связано:** `docs/sdk-improvements-backlog.md` §2.1-2.4
+**Дата:** 2026-04-20. **Закрытие:** 2026-04-20 в adapter-antd@1.2.0 (2.1 label/children, 2.2 DateTime withTime, 2.3 fieldRole price, 2.4 maxLength/pattern). Host workarounds удалены.
+**Связано:** `docs/sdk-improvements-backlog.md` §2.1-2.4 (all ✅)
 
-### 1.5 `PrimaryCTAList` для multi-param phase-transitions
+### ✅ 1.5 `PrimaryCTAList` для multi-param phase-transitions
 
-**Дата:** 2026-04-20
-**Контекст:** `onClick={() => ctx.exec(spec.intentId, {id: target.id})}` — параметры `spec.parameters` теряются. Workaround: форсировать `irreversibility:"high"` на `submit_work_result`.
-**Action:** PrimaryCTAList рендерит overlay-form когда `spec.parameters.length > 0`. Или `assignToSlotsDetail` не кладёт multi-param intents в primaryCTA slot.
-**Owner:** `@intent-driven/renderer/archetypes/ArchetypeDetail.jsx`
-**Связано:** `docs/sdk-improvements-backlog.md` §3.1
+**Дата:** 2026-04-20. **Закрытие:** idf-sdk PR #50 — `wrapByConfirmation` → overlay-form для phase-transitions с параметрами. Host `irreversibility:"high"` workaround снят.
+**Связано:** `docs/sdk-improvements-backlog.md` §3.1 (✅)
 
 ### 1.6 `IrreversibleBadge` auto-placement
 
@@ -75,12 +220,11 @@
 **Owner:** `@intent-driven/core/crystallize_v2/` + `@intent-driven/core/patterns/`
 **Связано:** Open items v1.12 — «Pattern Bank: structure.apply для оставшихся 17 stable паттернов»
 
-### 1.8 Remaining 16 of 17 matching-only patterns — structure.apply
+### ~~1.8~~ Remaining matching-only patterns — structure.apply
 
-**Дата:** 2026-04-20
-**Контекст:** В v1.12 SDK три паттерна имеют apply (`subcollections`, `grid-card-layout`, `footer-inline-setter`). Остальные 16 stable — matching-only.
-**Action:** По одному — от простых к сложным. Hero-create исключён (см. 1.7 — blocked). Next candidates: `bulk-action-toolbar`, `global-command-palette`, `m2m-attach-dialog`.
-**Owner:** `@intent-driven/core/patterns/stable/`
+**Дата:** 2026-04-20. **Почти закрыт 2026-04-22:** из 17 matching-only осталось **2** (`global-command-palette`, `keyboard-property-popover`). Batch'и применены через idf-sdk PR #154 (`optimistic-replace-with-undo.apply`) + #177 (`catalog-action-cta` и др.). Из 17 stable → 32 stable → 30 apply.
+**Остающиеся 2:** оба — cross-cutting UI-affordance (shortcut-handling), apply не semantic-driven. By design matching-only (witness-of-crystallization).
+**Owner:** `@intent-driven/core/patterns/stable/` (closed для этого трека)
 
 ### 1.9 Domain audit findings — baseline 2026-04-20 (187 findings)
 
@@ -120,6 +264,102 @@ Derivation даёт им канонические имена (`portfolio_list`, 
 **Action:** Studio tab «Audit» — UI над JSON-report'ом. Severity badges per domain, per-axis filter, drill-down per finding. Либо fixture-driven (consume committed JSON), либо live через server endpoint `/api/studio/audit`.
 **Owner:** host + SDK renderer
 **Depends on:** stable schema `domain-audit.json` (этот PR даёт baseline)
+
+### 1.12 enricher-claude — structured_output wire-format регрессия
+
+**Дата:** 2026-04-22 (Gravitino dogfood Stage 1 Task 3).
+**Контекст:** `enricher-claude@0.2.0` вызывает `claude -p --output-format json` и читает `wrapper.result ?? wrapper.content ?? stdout` (`~/WebstormProjects/idf-sdk/packages/enricher-claude/src/subprocess.js:51`). Claude CLI 2.1.117 изменил wire-format: структурированный JSON теперь в `wrapper.structured_output`, а `wrapper.result` — пустая строка. Enricher падает с `Structured response не JSON: ` (пустой stdin в extractJson).
+
+**Action:** Добавить fallback в `subprocess.js`:
+```js
+if (wrapper.structured_output && typeof wrapper.structured_output === "object") {
+  return wrapper.structured_output;
+}
+```
+Bump `@intent-driven/enricher-claude` → `0.2.1`. После release — переиграть enrich на Gravitino imported.js идемпотентно (pre-enrich snapshot уже зафиксирован в `.fixtures/imported.pre-enrich.js`).
+
+**Owner:** `~/WebstormProjects/idf-sdk/packages/enricher-claude/`
+**Блокирует:** enrichment layer scaffold-пути (Этап 2). Importer работает без него, но ontology остаётся literal (~200 DTO envelope'ов не коллапсируются, роли/valueLabels/labels не добавляются).
+**Severity:** P1 — scaffold-путь в v0.2 формально closed (4 releases), но для real-world OpenAPI (Gravitino) критичен для UX.
+**Workaround на Stage 1:** продолжаем на pre-enrich ontology (120 intents / 218 entities достаточно для baseline render). Дополнительные enricher-gap'ы см. session-observation ниже.
+
+**Memory sync:** запись `feedback_claude_subprocess_over_sdk` (встроенные Claude-агенты = subprocess к локальному `claude` CLI) остаётся корректной по подходу; регрессия — на wire-format уровне, не архитектурном. Запись `project_m1_2_authoring_port_progress` (Blocker smoke: Anthropic $0 credit) — **неверная гипотеза**: credit тут ни при чём, OAuth keychain subprocess работает без billing; реальный root cause — wire-format.
+
+### 1.13 Gravitino dogfood-спринт — tracker
+
+**Дата начала:** 2026-04-22. **Source:** локальный spec `docs/superpowers/specs/2026-04-22-gravitino-dogfood-design.md` (8 стадий, horizontal-slice).
+
+**Цель:** довести SDK + AntD-адаптер до уровня, на котором derived UI Apache Gravitino metadata-catalog (12 модулей) рендерится как «золотое» demo. Horizontal slice по capability (не per-модуль Gravitino). Каждая стадия — draft PR, не мёрджим до финального approve в конце спринта.
+
+**Контуры dogfood:** (a) scaffold-путь Этап 1-3 на реальном enterprise OpenAPI, (b) SDK/adapter polish для enterprise-UX.
+
+**Stages.**
+
+| Stage | Capability | PR | Статус |
+|-------|-----------|----|----|
+| 1 | Bootstrap + baseline render + gap-каталог | [idf#105](https://github.com/DubovskiyIM/idf/pull/105) | draft, 14+ commits |
+| 2 | Deep tree nav + breadcrumbs | [idf#105](https://github.com/DubovskiyIM/idf/pull/105) + seed demo | done ✓ (SDK #190/#192/#193 merged + V2Shell entity-aware labels + demo seed) |
+| 3 | Composite / nested types | [idf#105](https://github.com/DubovskiyIM/idf/pull/105) + SDK #196 + #198 | done ✓ (SchemaEditor primitive + field.primitive hint merged + host annotation Table.columns) |
+| 4 | Advanced data-grid | SDK #200 | done SDK ✓ (DataGrid primitive merged/renderer@0.31.0); host-integration для catalog-projections отложен |
+| 5 | Permission matrix | SDK #202 | done ✓ (merged renderer@0.32.0 + host annotation Role.securableObjects active) |
+| 6 | Wizard dynamics + test-connection | SDK #204 | in-progress (Wizard primitive open PR) |
+| 7 | Property popover + associations | SDK #206 | in-progress (PropertyPopover + ChipList open PR; host annotations ready) |
+| 8 | Polish + demo | — | pending |
+
+**SDK PRs от Gravitino dogfood:**
+
+| PR | Контент | Статус |
+|----|---------|--------|
+| [idf-sdk#186](https://github.com/DubovskiyIM/idf-sdk/pull/186) | enricher-claude@0.2.1: structured_output wire-format | merged ✓ |
+| [idf-sdk#188](https://github.com/DubovskiyIM/idf-sdk/pull/188) | importer-openapi@0.5.0: path-derived FK synthesis | merged ✓ |
+| [idf-sdk#190](https://github.com/DubovskiyIM/idf-sdk/pull/190) | renderer@0.29.0: Breadcrumbs primitive | merged ✓ |
+| [idf-sdk#192](https://github.com/DubovskiyIM/idf-sdk/pull/192) | core@0.52.1: subcollections.apply render-ready shape (G14) | merged ✓ |
+| [idf-sdk#193](https://github.com/DubovskiyIM/idf-sdk/pull/193) | adapter-antd@1.5.0: Breadcrumb capability | merged ✓ |
+| [idf-sdk#196](https://github.com/DubovskiyIM/idf-sdk/pull/196) | renderer@0.30.0: SchemaEditor primitive (Stage 3) | merged ✓ |
+| [idf-sdk#198](https://github.com/DubovskiyIM/idf-sdk/pull/198) | core@0.53.0: field.primitive declarative hint | merged ✓ |
+| [idf-sdk#200](https://github.com/DubovskiyIM/idf-sdk/pull/200) | renderer@0.31.0: DataGrid primitive (Stage 4) | merged ✓ |
+| [idf-sdk#202](https://github.com/DubovskiyIM/idf-sdk/pull/202) | renderer@0.32.0: PermissionMatrix primitive (Stage 5) | merged ✓ |
+| [idf-sdk#204](https://github.com/DubovskiyIM/idf-sdk/pull/204) | renderer: Wizard primitive + test-connection (Stage 6) | open |
+| [idf-sdk#206](https://github.com/DubovskiyIM/idf-sdk/pull/206) | renderer: PropertyPopover + ChipList primitives (Stage 7) | open |
+
+**Gap-каталог:** `docs/gravitino-gaps.md`. **Закрыто:** G1 (tree-nav pattern apply); **G14** (subcollections render-ready) — ждёт merge SDK#192 + host bump. **Open:** G13 (TreeNav runtime-mode) — deferred в отдельный sprint. G15/G16/G17/G11/G2/G3/G12 — в SDK backlog / Stage 8 polish.
+
+**UX pattern bank кандидаты** (`docs/gravitino-ux-patterns-notes.md`): P-1 path-derived hierarchy, P-2 absolute-rooted hierarchy nav, P-3 auto-sections title inference.
+
+---
+
+### 1.7 Cross-stack conformance — оставшееся по L3-evolution и формату
+
+**Контекст.** Cross-stack-diff harness ЗАКРЫТ 2026-04-28 (idf-spec / idf-go / idf-rust / idf-swift). L3-evolution §1 (hashOntology + schemaVersion) ЗАКРЫТ 2026-04-28: 3 stack ports, fixtures tagged, hash strip-evolution, 3 layers CI proof (self-test + cross-stack-diff + default-conformance).
+
+**Незакрытое (на момент паузы 2026-04-28):**
+
+#### §2 evolution log validation — port в rust/swift
+- **idf-go reference impl** ✓ — PR DubovskiyIM/idf-go#8 (open): `ParseEvolution` + `ValidateEvolutionLog` (5 invariants: hash format, uniqueness, exactly-one-root, no-dangling-parent, no-cycles) + `RehashAndVerifyRoot`
+- **idf-rust port** — mirror PR #8: `parse_evolution` + `validate_evolution_log` + `rehash_and_verify_root`. Идиоматичный Rust (Result<Vec<EvolutionEntry>, Error>, multi-error через Vec<Box<dyn Error>>).
+- **idf-swift port** — mirror: `SchemaVersion.parseEvolution` + `validateEvolutionLog`. Через standalone `verify-evolution` executable target (XCTest недоступен в CLT).
+
+#### Real evolution-log fixture
+- **library v2** — author synthetic step 1 → step 2 в `library/ontology.json`. Например: rename `Loan.borrowed_at` → `Loan.borrowedAt`. Evolution entries: root (hash=`1a23f3f820e80b`) + child (hash после rename, parentHash=root). Re-test всех 3 stack'ов — ontology с evolution[] всё ещё passes default conformance (поле strip'ается из hash); validation log passes.
+- (опц.) events v2 — параллельный путь.
+
+#### Conformance CLI Step 6 (L3-evolution)
+- Расширить cmd/conformance/main.go (+ rust/swift аналоги): после Step 5 (document) — Step 6 «L3-evolution validation». ParseEvolution → ValidateEvolutionLog → RehashAndVerifyRoot. Pass добавляет «L3-evolution CONFORMANT» в OVERALL string.
+- Cross-stack-diff harness расширяется: emit `validation/evolution.json` = `{ valid, errors[], rootRehash, rootDrift }` для cross-stack consistency самих validation results.
+
+#### §3 Upcaster pipeline (semantics)
+- Шаги нормированы в `idf-spec/spec/06-evolution.md` §3, schema добавлена в PR #17 (open). Реализация: при fold'е legacy effect (`schemaVersion ≠ current ontology hash`) пройти upcaster chain от effect's hash до current hash, применив declarative trans (rename/splitDiscriminator/setDefault/enumMap) или fn (если разрешён). idf-go reference + rust + swift ports + fixtures (legacy-phi с старым schemaVersion).
+
+#### Layer 3 reader-equivalence detector (drift-protection-spec §23 axiom 5)
+- Сейчас runtime-проверяется только pixel-материализация (через crystallize artifact). Voice / agent / document полная reader-equivalence: для одного среза Φ + viewer все 4 reader'а должны выдавать isomorphic information content. Спека есть в `idf-manifest-v2.1/docs/design/drift-protection-spec.md`; runtime-detector deferred — большая работа (semantic equivalence between heterogeneous output shapes).
+
+#### Расширение coverage
+- **3-й reference домен** в `idf-spec/spec/fixtures/` — стресс-test format с новыми patterns (e.g. m2m relationship, polymorphic entity, multi-owner). Текущие 2 (library, events) дают cross-stack convergence, но узкая база.
+- **idf-typescript** — четвёртый stack-impl. Браузер-side runtime → §1 манифеста полная (4 reader'а, не 3). Параллельная impl validates что format поддерживает client-side runtime.
+
+**Источник истины при возобновлении сессии:** последние HTML-отчёты в `~/Desktop/idf/2026-04-28-*.html` + `idf-spec/docs/cross-stack-conformance.md` (нормативная) + `idf-spec/spec/06-evolution.md` (спец §1-§3).
+
+**Триггер возобновления:** «cross-stack» / «conformance» / «evolution» в начале сессии.
 
 ---
 
@@ -177,6 +417,304 @@ Derivation даёт им канонические имена (`portfolio_list`, 
 **Observation:** Нужен auto-link между manifest claim и concrete state. Один из подходов — manifest теги `[impl-status: ...]` с regex-probe from implementation-status. Drift-protection detector-0. Но это инструментальный слой, не blocking.
 **Action:** Deferred — требует design о semantic-tag format.
 **Owner:** `idf-manifest-v2.1/docs/design/` (будущий `manifest-drift-linking-spec.md`)
+
+### 2.8 Φ schema-versioning + ontology evolution log + reader gap policy ✅ ЗАКРЫТО 2026-04-28
+
+**Дата открытия:** 2026-04-26 (внешний review)
+**Дата закрытия:** 2026-04-28 (Phase 0–6 shipped)
+**Closure summary:** 6 PR'ов в `idf-sdk` (#443/#445/#447/#449/#451/#453) + manifest v2.1 chapter (этот PR в `idf`) + L3 conformance follow-up в `idf-spec`. Подробности — `docs/manifesto-v2.1-ontology-evolution.md` §I.
+**Severity (history):** **P0 для архитектуры формата.** Закрывать **до первого production pilot'а с Φ ≥ 10k эффектов и ≥ 6 месяцев истории**, пока цена не выросла квадратично с числом доменов и линейно с возрастом каждого Φ.
+
+**Контекст.** Φ — append-only лог `confirmed` эффектов, записанных в терминах **текущей** онтологии (ссылки на entity/field/role/invariants). Когда онтология эволюционирует (новое поле, ужесточённый enum, split entity, ужесточённая роль) — старые эффекты остаются, но `fold(Φ)` интерпретирует их через новую схему. Схему, в которой эффект был эмиттен, **сейчас никто не помнит**: ни эффект (нет `schemaVersion` в context), ни ontology (нет evolution log).
+
+**Полу-ответы, которые есть:**
+- `spec.renames` (studio PR #28) — declarative переименования entity/field. Idempotent JSONB update. Покрывает только renames на одну транзакцию.
+- Breaking-commit gate (studio #26) — превентивная блокировка deploy'я, ломающего legacy data. Не миграция, а отказ.
+- Φ snapshot/restore (studio #27) — даёт «откатимся к pre-deploy», не «прочтём legacy в новой схеме».
+- `effect.context.actor` + `materializeAuditLog` — provenance события, не схемы.
+
+**Чего нет:**
+- `effect.context.schemaVersion` — эффект не помнит свою схему.
+- `ontology.upcasts: [{ fromHash, toHash, fn }]` — функции миграции legacy effect → new schema. Должно быть first-class artifact в формате.
+- Φ-аналог для самой онтологии (append-only лог evolution с upcasters). Сейчас domain.json коммитится в `projects.domainJson` как plain JSONB.
+- **Reader gap policy** — каждый из 4 reader'ов (pixels / voice / agent / document) сейчас graceful'ничает legacy gap (missing field, unknown enum value) **по-своему**. Это **формально нарушает reader-equivalence (§23 axiom 5)**.
+
+**Четыре сценария боли (внешний review):**
+
+| Сценарий | Сейчас |
+|---|---|
+| Новое поле `task.priority` | `fold` возвращает `undefined`. Pixels рендерят пусто, voice промолчит, agent JSON отдаёт без ключа, document — «—». Reader-equivalence ломается. |
+| Enum сжался `open\|done` → `draft\|active\|done\|archived` | Старый row с `status:"open"`. Транзишн-инвариант проверялся на confirm, не пере-валидируется. `assignToSlotsCatalog` встречает unknown в `valueLabels` → crash в renderer (был в практике). |
+| `task` → `task` + `subtask` (split entity) | Никак. Старые `task.created` остаются в старом entity; новые subtask'и в новом. Совмещения нет. |
+| Роль `viewer` ужесточилась | Эффекты в Φ не пере-валидируются (audit trail). Но `filterWorldForRole` фильтрует на чтении по **текущей** ontology — viewer перестаёт видеть свою историю. |
+
+**Action (минимальный план):**
+1. `effect.context.schemaVersion = <hash domain.json>` — append-only лог онтологий по hash'у; эффект помнит свою. Backward compatible (zero migration через JSON).
+2. `ontology.upcasts: [{ fromHash, toHash, fn }]` first-class. `fold` становится `fold(upcast(Φ, currentSchema))` — формула меняется, но честно. Upcasters — code, design-time, тестируемые. **Жёсткий запрет runtime-LLM в upcast** (соблазн «LLM прочитает legacy» = смерть детерминизма).
+3. **Reader gap policy** в core: каждый reader декларирует strategy для missing/legacy (`hidden | omit | placeholder | error`) — частью контракта reader-equivalence. Пятый detector в `drift-protection-spec.md`.
+
+**Кросс-связи:**
+- `idf-manifest-v2.1/docs/design/drift-protection-spec.md` — Layer 3 (reader-equivalence) дополняется Layer 4 (legacy-data-equivalence).
+- §1.3 (`__domain` provenance) — параллельный schema-tagging вопрос.
+- Manifest v2.1 — добавить главу «Эволюция онтологии» в Часть III (Алгебра).
+
+**Owner:** `@intent-driven/core` (fold/upcast) + `@intent-driven/engine` (lifecycle) + manifest v2.1.
+**Источник:** External design review 2026-04-26 (`docs/design/2026-04-26-phi-schema-versioning-spec.md`).
+
+### 2.9 Provenance дизайна (LLM design-time → ontology lineage)
+
+**Дата:** 2026-04-26 (внешний review)
+**Severity:** **Полу-gap.** Pattern bank witnesses + anchoring дают derivation lineage; design-provenance в `domain.json` отсутствует. Закрывается append-only полями, не ломает `fold`. Retrofit на legacy intents — ad-hoc, но не катастрофа. Для compliance/healthcare аудитов — must.
+
+**Что есть:** Pattern bank `witness.basis/reliability`, anchoring witness-of-proof, `effect.context.actor`, `materializeAuditLog`, studio `sessions.turns[]` (Postgres append-only лог chat-сессии).
+
+**Чего нет:**
+- В самом `domain.json` — `intent.provenance: { authoredBy, llmModel, llmHash, acceptedAt, sessionId }`. Сейчас provenance **снаружи** формата (в studio.sessions Postgres), а для compliance должно быть **внутри** — иначе экспорт `domain.json.tar.gz` теряет lineage.
+- `pattern.promotedFrom: [{ domain, witness, sessionId }]` — pattern bank lineage. Дал бы эмпирический ответ на вопрос «сходится ли pattern bank на разумном размере».
+
+**Action:** Дизайн-спека о shape `intent.provenance` + `invariant.provenance` + `pattern.promotedFrom`. Append-only поля в format'е, populate'ятся studio orchestrator'ом при accept/promote.
+
+**Owner:** `@intent-driven/core` + studio sessions writer + manifest v2.1.
+
+### 2.10 Format extensibility — формальный x-namespace + federation Φ
+
+**Дата:** 2026-04-26 (внешний review)
+**Severity:** **Стратегический.** Базовая extensibility есть (open base-roles `owner/viewer/agent/observer/admin` как «открытое множество прецедентов», `ontology.features.*` flag-namespace). Формального `x-` namespace в духе OpenAPI extensions — нет. Federation Φ (cross-tenant agent flows) — даже не на roadmap'е.
+
+**Контекст.** IDF описывает приложение целиком (не интерфейс к существующему как OpenAPI / JSON-LD). Это значит, что в момент когда первый enterprise pilot упрётся в ограничение (org hierarchy не ложится на 5 base roles, делегация / имперсонация, временные пермиссии) — он должен иметь формальный путь расширения core, не ломая readers.
+
+**Action:**
+- Зафиксировать `x-<namespace>` соглашение для extension fields (на уровне `domain.x-acme.*` и `intent.x-acme.*`), readers игнорируют unknown `x-` keys.
+- Federation Φ — отдельный design в manifest v2.1 (cross-tenant intent-push, cryptographic effect signing, multi-Φ fold).
+
+**Owner:** manifest v2.1 + future SDK extension surface.
+
+### 2.11 Consumer-side tooling — социальный layer формата
+
+**Дата:** 2026-04-26 (внешний review)
+**Severity:** **Слабая зона.** Все текущие tools (Studio Graph3D, PatternInspector, derivation-diff CLI) — для **авторов**. У OpenAPI вирусность дала Swagger UI как бесплатный onboarding для consumer'ов. У IDF аналога нет.
+
+**Чего нет:**
+- Public domain explorer — упасть на чужой `domain.json`, увидеть schema/projections/intents без deploy.
+- Domain diff tool для consumer'а (есть для self в studio).
+- Embed-snippet (`<idf-embed src="example.json" projection="task_list">`) для блогов/статей.
+- Codegen для consumer'а — TS-типы из чужого `domain.json` для интеграции.
+- Domain marketplace (есть «Domain marketplace pitch» как M2 — это pitch, не реализация).
+
+**Action:** Не блокирующее, но влияет на adoption-curve. Когда первые 3-5 production tenant'ов работают — возможный dev-relations workstream.
+
+**Owner:** SDK packaging + сайт fold.software.
+
+### 2.12 Sheaf-формулировка целостности — формализация ядра (вторичное)
+
+**Дата:** 2026-04-26 (внешний review, второе письмо)
+**Категория:** Формализация ядра.
+**Severity:** **Вторичное.** Не на критическом пути M1.x; не блокирует первого production pilot'а. Operationally полезные подзадачи (§2.12a, §2.12b) — отдельные P1, делать в обычном потоке. Полная sheaf-теоретическая формализация требует математика и не должна предшествовать имплементации §2.8 (Φ schema-versioning) и §2.9 (provenance дизайна) — те **на критическом пути**.
+
+**Тезис.** Целостность IDF-домена можно переформулировать **не как набор инвариантов, которые мы проверяем**, а как **математическое свойство домена**, для которого инварианты — приближение. Структурно: роли образуют решётку (poset); `viewerWorld(role) = filterWorldForRole(world, role)` — это restriction map; presheaf на ролях даёт sheaf при выполнении аксиомы склейки. H⁰ = глобальные сечения, H¹ = препятствия к склейке. Это **переворот рамки** статуса формата: «формат с эвристическим валидатором» → «формат с математически определимым понятием корректности».
+
+**Что в IDF уже есть как **presheaf без названия**:**
+
+| Элемент sheaf | В IDF |
+|---|---|
+| База (poset) | 5 base roles (`owner / viewer / agent / observer / admin`) — открытое множество прецедентов |
+| Данные на роли | `viewerWorld(role) = filterWorldForRole(world, role, ontology)` |
+| Restriction maps | `filterWorldForRole` — фильтрация world'а под роль |
+| Покрытие (cover) | Set of roles — пока не формализовано |
+| Sheaf-аксиома | Не проверяется |
+
+**Что верно (сильные стороны формулировки):**
+
+1. Класс багов «agent зависит от поля, которое viewer должен одобрить, но не видит» — **реален**. Compliance-домен с SoD-инвариантами (`reviewer ≠ approver ≠ controlOwner`) ловит подобное на confirm; но если `intent.precondition` ссылается на поле, недоступное роли, которая может intent execute'ить, **никакая локальная проверка не ловит**. Это глобальное препятствие (нарушение H¹).
+2. Композиция доменов через restriction maps на пересечении онтологий — **натуральный язык** для проблемы, которую сейчас решаем ad-hoc через `__domain` provenance (§1.3). Formal: домены склеиваются, если restriction maps на пересечении согласованы и H¹ объединённого sheaf'а равен нулю.
+3. Иерархия warning'ов получает **природу**: H⁰-нарушения (поле невидимо для всех ролей, хотя должно быть), H¹-нарушения (попарная согласованность без глобальной), локальные. Это **операционно полезно** даже без формальной когомологии — даёт классификацию `domain-audit.json` findings по природе препятствия.
+
+**Где натяжки (слабые места):**
+
+1. **Решётка ролей не такая регулярная**, как предполагает sheaf-формулировка. У нас:
+   - `owner` владеет своими row'ами через `ownerField`
+   - `agent` может **execute** intents, которые `owner` не может (preapproved orders с budget guard)
+   - `observer` — read-only audit с `materializeAuditLog`
+   - `admin` — row-override, видит всё
+   
+   `agent ⊆ owner` по visible-set'ам, но `agent ⊄ owner` по execute-set'ам. Это **две решётки** (read-poset × execute-poset), и они не совпадают. Sheaf нужен над парой со специальной структурой — усложняет когомологию вдвое.
+
+2. **H¹ для конечного poset из 5 элементов вычисляется тривиально** (rank kernel - rank image на cochain complex). Гротендиковские topologies / sites / sheaves of categories Spivak'а — **аппарат для бесконечного / непрерывного**, у нас 5 ролей. Формализм полезен **как язык классификации**, не как computational tool.
+
+3. **Cosheaf-Φ — спекулятивно.** Φ — единый append-only лог, не разделённый по ролям. Эффект от admin'а — не «расширение» эффекта от viewer'а; они независимые. Inclusion-структуры нет. **Что работает двойственно:** для каждой роли r определить `Φ_r` = эффекты, видимые этой ролью, и доказать `restrict_r ∘ fold = fold ∘ filter_r` (filter и fold коммутируют). Это **sheaf-морфизм между Φ-уровнем и world-уровнем**, не cosheaf.
+
+4. **«Почему именно 5 ролей»** — sheaf не даёт обоснования (его критерий «достаточно богатой / простой» выполняется при любом разумном выборе). Реальное обоснование 5 ролей — эмпирическое (из 13 полевых тестов хватало). Sheaf даёт ответ на другой вопрос: «как формально проверить, что выбор не имеет patological holes».
+
+**Самое ценное в формулировке** — **переформулировка статуса формата**: «целостность — математическое свойство, инварианты — аппроксимация». Это в духе IDF («формат, не фреймворк»). Сейчас audit-report выдаёт 187 findings плоским списком — каждое своей природы. Классификация warnings по природе препятствия (locally-visible / pairwise-inconsistent / globally-unrealizable) — **операционно полезно**, даже без формальной когомологии. Drift-protection-spec уже движется в эту сторону (3 detector'а как layers).
+
+**Cross-связи:**
+
+- §2.8 (Φ schema-versioning) — sheaf над **движущейся** базой (онтология эволюционирует → решётка ролей тоже). Возможно ближе к stack'ам, чем sheaves. Парное направление.
+- §2.10 (federation Φ) — cross-domain composition как sheaf на пересечении.
+- `idf-manifest-v2.1/docs/design/drift-protection-spec.md` — H-классификация как новый layer detector'а.
+
+**Action:** Не делать sheaf-теорию IDF целиком. Зафиксировать как architectural research direction; разделить на:
+- **§2.12a (P1)** — `role.extends: [otherRole]` как formal poset + monotonic linter в `audit-report.mjs` (отдельная P1-task ниже).
+- **§2.12b (P1)** — static cross-role precondition analyzer (8-я ось в `audit-report.mjs`, отдельная P1-task ниже).
+- **§2.12c (deferred)** — полная sheaf-формализация с математиком; design-spec stub в `docs/design/2026-04-26-sheaf-formulation-spec.md`.
+
+**Owner:** `@intent-driven/core/baseRoles` + `audit-report.mjs` + manifest v2.1 (Часть III, Алгебра — раздел «Целостность как когомология»).
+
+**Источник:** External design review 2026-04-26 (второе письмо после §2.8).
+
+### 2.12a Formal `role.extends` poset + monotonic restriction linter (P1)
+
+**Дата:** 2026-04-26
+**Severity:** P1, операционная подзадача §2.12.
+
+**Что сделать.** В onto schema разрешить `role.extends: ["otherRole"]` (массив). Linter в `scripts/audit-report.mjs` (новая ось «role-monotonicity») проверяет: если `roleA.extends` содержит `roleB`, то `visibleFields(roleA) ⊇ visibleFields(roleB)` для каждого entity. Нарушение — warning «role inheritance broken».
+
+**Почему сейчас:** Закрывает 70% value sheaf-формулировки без когомологии. Полиномиальный pass, ловит реальный класс багов (admin случайно теряет visibility поля, которое viewer видит).
+
+**Owner:** `@intent-driven/core/baseRoles.js` + `scripts/audit-report.mjs`.
+
+### 2.12b Static cross-role precondition analyzer (P1)
+
+**Дата:** 2026-04-26
+**Severity:** P1, операционная подзадача §2.12.
+
+**Что сделать.** Новая ось в `audit-report.mjs` («cross-role-precondition»). Для каждого `intent.precondition` (включая dotted-path вида `Order.status === "paid"`) проверить, что все referenced поля доступны **всем ролям из `intent.permittedFor` (или ролям с этим intent в `canExecute`)**. Если роль может execute, но не может read поле в precondition — emit warning «precondition refers to invisible field».
+
+**Почему сейчас:** Ловит ровно тот класс багов, который sheaf-формулировка называет H¹-нарушением, простым cross-reference анализом. Не требует когомологии.
+
+**Owner:** `scripts/audit-report.mjs` + `@intent-driven/core/conditionParser.js` (для парсинга precondition expressions).
+
+### 2.13 Эргономические законы как формальные предсказания над артефактом — операционное
+
+**Дата:** 2026-04-26 (внешний review, седьмое письмо)
+**Категория:** Операционное (не «формализация ядра» как §2.12).
+**Severity:** **Вторичное.** Не на критическом пути M1.x; не блокирует первого production pilot'а. Но **сильнее** трёх предыдущих формализационных кандидатов (термодинамика / Information Bottleneck / variational principle) тем, что **computable from static artifact без production telemetry** — что было общим blocker'ом тех направлений.
+
+**Тезис.** В отличие от §2.12 (sheaf — алгебраический язык для уже-делаемого), §2.13 не reframes существующее, а добавляет **внешнюю науку** с собственными количественными законами:
+
+| Закон / модель | Формула | Применение к IDF |
+|---|---|---|
+| **Fitts** (1954) | `MT = a + b · log₂(D/W + 1)` | Min target size, distance-aware placement |
+| **Hick-Hyman** (1953) | `RT = a + b · log₂(N+1)` | Choice overload в slot'ах с большим N |
+| **Cowan** (2001, обновлённый Miller 7±2) | working memory ≈ 4 chunks | Лимит на одновременные visual groups |
+| **Cognitive Load Theory** (Sweller 1988+) | intrinsic / extraneous / germane | Минимизация extraneous load = минимизация UI noise |
+| **GOMS** (Card-Moran-Newell 1983) | predicted task time из operator-sequence | Task completion time из artifact'а до рендера |
+
+**Что верно (сильные стороны):**
+1. Computable from static artifact — **закрывает gap** §2.13/§2.14/§2.15 (отклонённых формализационных кандидатов), которым требовалась production telemetry / ground truth / measurable cognitive load.
+2. Reference solid — Card/Moran/Newell 1983, CogTool (Bonnie John 2004+), 50+ лет экспериментальной валидации Fitts.
+3. Industry gap real — Vercel v0, Claude artifacts, GitHub Copilot не выдают «expected task completion time» как predict для output. У нас **детерминированный артефакт** — GOMS-анализ реализуем.
+4. Operational extracts (P2-P3) реализуемы **сейчас**, без производственных данных и математика.
+
+**Где натяжки:**
+1. Fitts/Hick — для **motor/choice tasks**, не для всего UI. Reading comprehension (Just&Carpenter), visual search (Treisman) — другие модели. Эргономика — не один аппарат, а несколько.
+2. GOMS prediction accuracy ≈ 20-40% — для **comparing alternatives** и **screening gross violations**, не fine-grained ranking.
+3. Computing GOMS требует task script (последовательность user actions) — у нас есть intent declaration, но реальная sequence зависит от **adapter rendering**. То есть GOMS-прогон — `(intent × adapter × ontology) → time`, не `intent → time`. Реализуемо, но non-trivial.
+4. Working memory 4±1 — applies to **task chunking** и **transitions между screens**, не «items на экране» (catalog с 30 cards user не «удерживает» — он скан'ит).
+
+**Cross-связи:**
+- §2.12 (sheaf) — даёт class of cross-role bugs. §2.13 даёт **другой class**: gross UI violations (too many choices, working memory overload, target size). Дополняют друг друга.
+- §2.14 IB / §2.15 variational (отклонены) — общий blocker «нет ground truth». §2.13 закрывает: эргономика даёт apriori predictive model.
+- `idf-manifest-v2.1` — возможный новый абзац в Часть IV (Четыре читателя): ergonomic prediction как часть pixel-reader contract.
+
+**Action:** Не делать «эргономическую теорию IDF» полностью. Разделить на:
+- **§2.13a (P2)** — Fitts target-size axis в `audit-report.mjs` + `adapter.capabilities` declaration (отдельная подзадача ниже).
+- **§2.13b (P2)** — Hick-Hyman / Miller working-memory axis в `audit-report.mjs` (отдельная подзадача ниже).
+- **§2.13c (deferred research-grade)** — GOMS-prediction для adapter benchmarking — реальный operational вклад в industry, реализуемо после первого production tenant'а с usage logs для validation.
+
+**Owner:** `scripts/audit-report.mjs` + `adapter.capabilities` декларация + manifest v2.1 (Часть IV).
+**Источник:** External design review 2026-04-26 (седьмое письмо после §2.12/§2.13/§2.14/§2.15 — седьмой рассмотрен, четыре приняты в backlog, три отклонены).
+
+### 2.13a Fitts target-size axis в audit-report (P2)
+
+**Дата:** 2026-04-26
+**Severity:** P2, операционная подзадача §2.13.
+
+**Что сделать.** В `adapter.capabilities` (renderer/src/adapters/registry.js) добавить declared constants:
+- `minTargetSize: { width: 44, height: 44 }` (WCAG 2.5.5 baseline для AA)
+- `density: "compact" | "comfortable"` (info для density-aware placement)
+
+В `scripts/audit-report.mjs` — новая ось «target-size»:
+- Для каждого `pattern.structure.apply`, генерирующего clickable element — проверить, что rendered target satisfies `adapter.capabilities.minTargetSize`.
+- Warning «target below WCAG AA» для violations.
+
+**Почему сейчас:** Реализуется без change в crystallize logic. Просто declarative + lint. Закрывает реальный класс a11y-багов.
+
+**Owner:** `@intent-driven/renderer/adapters/registry.js` + `scripts/audit-report.mjs`.
+
+### 2.13b Working-memory axis (Hick-Hyman / Miller / Cowan) в audit-report (P2)
+
+**Дата:** 2026-04-26
+**Severity:** P2, операционная подзадача §2.13.
+
+**Что сделать.** Новая ось «working-memory» в `audit-report.mjs`. Три проверки:
+
+1. **Choice overload (Hick-Hyman):** если slot имеет N items с N > 7 — warning «choice overload, рассмотри faceted-filter-panel или paginate».
+2. **Top-level navigation (Cowan):** если `ROOT_PROJECTIONS` для роли > 4 distinct visual groups — warning «working-memory overload at top level, рассмотри group или hub-absorption».
+3. **Form complexity:** если `archetype: "form"` или `wizard step` имеет > 7 visible fields одновременно — warning «form complexity, рассмотри tabbedForm или wizard split».
+
+**Почему сейчас:** Полиномиальный pass (counting). Не требует GOMS-симуляции, дополняет существующий R8 hub-absorption (который уже снимает «много flat tabs»).
+
+**Owner:** `scripts/audit-report.mjs`.
+
+---
+
+### 2.14 IR-stages — типизированные границы внутри `crystallize_v2` (research)
+
+**Дата:** 2026-04-26
+**Severity:** P2 research, depends on §2.8 closeout. Параллельное §2.12 (sheaf) и §2.13 (ergonomic) направление: формализация уже существующего, не выдуманное расширение.
+
+**Контекст.** Внешний reviewer 2026-04-26 (8-е письмо) предложил пересобрать `crystallize` из «магической функции» в MLIR-style лестницу IR. Зацепка резонирует частично: лестница **де-факто существует** в коде (`assignToSlots*` → `deriveShape`/`absorbHubChildren` → `slots.*` → `applyStructuralPatterns` → adapter codegen), но без типизированных границ между ступенями и без property-based тестов per-level. Witness trail (`artifact.witnesses[]`) уже даёт «аннотацию через уровни», но не верифицируется отдельно от соседей.
+
+**Что предлагается** (light-touch, без MLIR-инфраструктуры):
+
+1. **Назвать существующие стадии явно.** В `crystallize_v2/index.js` extract'нуть фазы 1-3a-3b-3c-3d с возвратом промежуточных артефактов: `semanticArtifact` (intent → slot/anchored), `structuralArtifact` (+ shape + hubAbsorption), `layoutArtifact` (slots уложены, без adapter), `patternedArtifact` (после apply). Сейчас pipeline inline, snapshot per-stage не фиксируется.
+2. **Расширить witness contract.** К существующему `basis: "structural-rule" | "pattern-bank" | "declaration-order" | ...` добавить `stage: "semantic" | "structural" | "layout" | "pattern"`. Аддитивно, breaking ничего.
+3. **Property-tests per stage** (новый `packages/core/src/__tests__/per-stage-properties/`):
+   - **semantic-conservation** — `every intent ∈ output.slots ∪ artifact.anchorRejections` (никакой intent не пропал тихо)
+   - **structural-reachability** — `forall intent: navGraph.distance(root, intent) ≤ K` (любое действие достижимо через ≤N кликов)
+   - **pattern-idempotency** — `apply(apply(slots)) == apply(slots)` (повторное применение не меняет результат)
+   - **reader-equivalence per stage** — semantic-уровень даёт изоморфный information content для 4 reader'ов; layout — точка где материализации расходятся.
+4. **`explainCrystallize()` отдаёт per-stage tree**, не плоский список. Это уже планировалось в §28 v2.1 («Debugging derived UI»); здесь финализируется shape результата.
+5. **MLIR — как референс, не как dependency.** Никакого `tablegen` / `dialect` / `lowering` в коде формата. Внутренний ADR через 6 mo: «нужна ли реальная typed-IR-инфраструктура».
+
+**Что НЕ делается** (натяжки от MLIR-аналогии):
+- Layout IR с Fitts's-Law предикатами — у нас семантические слоты, не геометрия. Геометрия делегирована в адаптеры через `adapter.capabilities`. Ergonomic-предикаты (Fitts/Hick-Hyman/Cowan) живут на адаптерном уровне через §2.13a/b axis'ы, не внутри IR-stages.
+- «4 адаптера = 4 codegen-backend'а одного UI» — неверно. Voice / agent-API / document — другие read-проекции Φ через материализаторы, не lowering targets pixels-IR.
+- Полный typed-dialect framework — over-engineering под текущий объём (≤ 10 авторов формата).
+
+**Польза.**
+- **Diff-able артефакты per-stage** — самый сильный аргумент. Сейчас `derivation-diff.mjs` показывает только final-vs-final. С stages — автор видит, какая ступень провалилась, не «перегенерировал, всё стало другое».
+- **Property-tests заменяют convention-by-invariant.** Сейчас «ни один intent не пропал» — invariant-by-convention, теста нет.
+- **Pattern Bank как rewrite-rules с pre/post-condition'ами на patterned-IR** — композиционность (порядок применения) и falsification-fixtures на промежуточном представлении.
+- **§28 «Debugging derived UI» (v2.1)** — естественно расщепляется на per-stage, witness-`stage` поле даёт structured drill-down вместо flat-списка witnesses.
+- **Drift-protection (manifest v2.1, 3 detector layers)** — Layer 1 conformance-drift на `patternedArtifact`, Layer 3 reader-equivalence на `semanticArtifact`. Detector'ы становятся реализуемы поэтапно, не «всё сразу».
+
+**Зависимости / порядок.**
+- **§2.8 первым.** Φ schema-versioning ставит лестницу на двигающуюся базу — без неё IR-stages работают только на «срезе во времени» одной онтологии. Сделать stages раньше = переделывать после.
+- **manifest v2.1 finalize вторым.** §28 (Debugging derived UI) как глава Части V уже формулирует witness-`basis`; IR-stages добавляет `stage`-поле и пишется как новая глава §29 в Часть III или §28.bis.
+- **Параллель к §2.12 (sheaf) и §2.13 (ergonomic).** Sheaf — горизонтальная композиция (cross-role). Ergonomic — apriori behavioral predictions поверх final artifact'а. IR-stages — вертикальная композиция (внутри одной crystallize-проходки). Не пересекаются, дополняют.
+
+**Зафиксировано:**
+- `docs/design/2026-04-26-ir-stages-spec.md` (~280 LOC, design-spec)
+- PR (этот) — backlog item + spec, stacked поверх #131 (§2.8) → #132 (§2.12) → #133 (§2.13)
+
+**Owner:** `@intent-driven/core/crystallize_v2/*` (extract stages, witness `stage`-поле) + manifest v2.1 (новая глава §29 в Часть III или §28.bis в Часть V) + `idf-spec` (опционально L2/L3 conformance — «artifact MUST/MAY expose per-stage snapshots»).
+
+**Когда закрывать.** После §2.8 closeout, до публикации manifest v2.1. Реализационная стоимость — 3-4 SDK PR'а (extract + witness + property-tests + explainCrystallize tree-shape), без breaking changes.
+
+**Метрика успеха.**
+- `derivation-diff` показывает per-stage delta для любых двух ontology-версий
+- ≥ 4 property-tests прогоняются per-stage в SDK CI (semantic-conservation + structural-reachability + pattern-idempotency + reader-equivalence-semantic)
+- `explainCrystallize()` возвращает tree-shape, не flat-список witnesses
+- Drift-protection Layer 3 reader-equivalence runtime-check реализован поверх `semanticArtifact` (а не пытается это делать на final output)
+
+**Cross-связи:**
+- §2.8 (Φ schema-versioning) — IR-stages работает на срезе, schema-versioning даёт upcasters между срезами; stages × срезы = matrix свойств для проверки
+- §2.12 (sheaf) — IR-stages вертикальная, sheaf горизонтальная; independent
+- §2.13 (ergonomic laws) — IR-stages про инвариантность переходов, ergonomic про behavioral predictions; разные оси
+- `idf-manifest-v2.1/docs/design/debugging-derived-ui-spec.md` — §28 уже содержит witness `basis`, IR-stages добавляет `stage` как ортогональную ось
+- `idf-manifest-v2.1/docs/design/drift-protection-spec.md` — три detector layer'а становятся per-stage detector'ами, реализуются поэтапно
 
 ---
 
@@ -258,6 +796,39 @@ Derivation даёт им канонические имена (`portfolio_list`, 
 **Дата:** 2026-04-20
 **Контекст:** Debugging-derived-ui workstream завершён. Итог: 13 правил деривации (R1, R1b, R2, R3, R3b, R4, R6, R7 v2, R7b, R8, R9, R10, R11 v2) + composeProjections + explainCrystallize + resolveCompositions + near-miss witnesses + CrystallizeInspector (§27 host).
 
+### 2.8-fmt Archetype list — closed enum 7; UX modality живёт в extension layer
+
+**Дата:** 2026-04-25
+**Severity:** Format-rule (architectural). Закреплено через revert-PR'ы.
+
+**Контекст.** PR'ы idf-sdk #304 (introduce AgentConsole) + #351 (wire в ARCHETYPES dict) ввели AgentConsole как **8-й archetype** в `@intent-driven/renderer`. После 9-layer cascade hot-fix'ов на host (filterProjectionsByRole / ROOT_PROJECTIONS / pass-through / V2Shell visibility) — стало понятно, что попадание в archetype enum было концептуально неверным.
+
+**Правило.** `ProjectionRendererV2` ARCHETYPES dict — closed enum 7: `catalog / detail / feed / form / canvas / dashboard / wizard`. Не расширять без manifest-level decision'а.
+
+**Why.** Archetype в IDF format — это структурный shape проекции, declarative structure над данными. Composable across 4 reader'ов (pixels/voice/agent/document) с осмысленным mapping каждый: catalog → плитки в pixels / список «top-N» в voice / `[{id,...}]` в agent / нумерованный список в document.
+
+**Тест:** «Как этот shape проявляется в voice/document/agent?» Если хотя бы один ответ «никак» — это interaction modality / extension, не archetype.
+
+**Контр-пример (AgentConsole).** Чат-стиль UI поверх agent reader — interaction modality, не shape. Spectacle поверх pixels-modality, который слушает agent-API endpoint. В voice/document это уже сама modality, не «структура» внутри проекции — конфлация двух ортогональных осей:
+- shape (archetype) — что показывать
+- modality (reader) — как взаимодействовать
+
+**Где живут новые UX-паттерны.**
+1. **Host-extensions** — opt-in module + `projection.extension: "<id>"` marker. Host (e.g. idf-runtime TenantApp) dispatch'ит на extension перед archetype-dispatch. Demo-modules не inflating archetype list. Реализация: `idf-runtime/web/src/extensions/agent-console-demo/` (PR #57, 2026-04-25).
+2. **Pattern Bank** — поведенческие паттерны над существующими archetype'ами. Stable + candidate каталог, structure.apply contract.
+
+**Реализация revert'а:**
+- `idf-sdk #354` — удаление `packages/renderer/src/archetypes/AgentConsole/` + ARCHETYPES dict entry + changeset minor
+- `idf-runtime #57` — host-extension layer + dispatch перед `ProjectionRendererV2`
+- `idf-studio #80` — invest template: `agent_console.archetype: "canvas"` + `extension: "agent-console-demo"`
+
+**Manifesto v2.1 home.** Короткая глава «Extension surface vs format core» в Часть VII (Границы): закрытое перечисление 7 archetype'ов; canonical extension marker shape (`projection.extension: string`); host-side dispatch contract; demo vs core separation.
+
+**Связано:**
+- `docs/manifesto-v2.md` Часть II (Объекты формата) — archetype enum
+- memory `project_archetype_extension_separation.md`
+- session learning: «архетипы трогаем отдельными сессиями; ≥5 layer'ов hot-fix вокруг рендера = архитектурный smell, не bug-cascade»
+
 **Metrics финальные:**
 - Baseline: U = 24 (21%) при 88.5% authored.
 - После всех правил + ontology audit + R11 v2 activation: **U = 11 (9.5%)** (predicted).
@@ -272,7 +843,32 @@ Derivation даёт им канонические имена (`portfolio_list`, 
 
 *(здесь накапливаются пункты, которые были закрыты; для истории и чтобы видно прогресс. По достижении большого объёма — архивировать в `docs/archive/backlog-YYYY-MM.md`.)*
 
-### ✅ 1.1 `invariant.kind: "expression"` — custom row-level predicate
+### ✅ Cross-role precondition analyzer — operational extract sheaf-формулировки
+
+**Дата:** 2026-04-26. **Контекст:** Sheaf-формулировка целостности (PR #132 stacked, застряла в feature-branch — содержимое не на main, поэтому open §2.12 не существует здесь). Operational extract — статический cross-reference analyzer, ловит класс H¹-нарушений простым полиномиальным pass'ом без когомологии.
+
+**Что сделано:**
+- `scripts/lib/cross-role-precondition.mjs` — модуль с `extractPreconditionFieldRefs` / `rolesThatCanExecute` / `isFieldVisibleToRole` / `auditCrossRolePrecondition`. Поддерживает обе формы precondition: object `{Entity.field: [vals]}` и string-expression.
+- `scripts/audit-report.mjs` — новая axis «crossRolePrecondition» в orchestration; import функции из lib/.
+- `scripts/lib/cross-role-precondition.test.mjs` — 19 unit-тестов (4 helper + 9 integration с synthetic ontologies, включая negative fixtures).
+
+**Алгоритм:**
+```
+∀ intent ∈ ontology.intents:
+  preconditionFields = parse(intent.precondition)
+  ∀ role: intent ∈ role.canExecute:
+    ∀ {entity, field} ∈ preconditionFields:
+      if !isFieldVisibleToRole(role, entity, field):
+        emit warning «role X executes intent, но не видит entity.field в precondition»
+```
+
+**Bypass:** `role.base === "admin"` (row-override), `visibleFields[Entity] = ["*"]`.
+
+**Skip cases:** entity не в ontology, field не существует — другие axes ловят.
+
+**Baseline (2026-04-26):** на текущих 14 доменах — **0 findings** (только automation имеет preconditions, и все референсы visible для exec-ролей). Ось работает на регрессионную защиту: будущие preconditions (compliance / sales / freelance / новый workflow editor) автоматически проверяются.
+
+**Backlog item:** §2.12b sheaf-formulation-spec.md operational P1 task.
 
 **Дата начала:** 2026-04-20. **Дата закрытия:** 2026-04-20.
 **Контекст:** Freelance `Deal.customerId !== Deal.executorId` нельзя было выразить простым kind'ом.

@@ -2,7 +2,7 @@
 
 Живой документ об имплементационном состоянии референсной реализации IDF (прототип + SDK). Формат (`docs/manifesto-v2.md`) определяет аксиомы; этот документ фиксирует, что из формата **реализовано** и **валидировано на практике**.
 
-**Последнее обновление:** 2026-04-20
+**Последнее обновление:** 2026-04-30
 
 ---
 
@@ -26,16 +26,26 @@
 | delivery | 45 | 14 сущностей | 5 ролей, map-primitive, dispatcher m2m, irreversibility в `capture_payment` |
 | freelance | 46 | Task, Response, Deal, Wallet, Transaction, Review, Category | Биржа услуг, multi-owner (customerId + executorId) на Deal, escrow через hold/release, revision loop, комиссия платформы |
 | compliance | 38 | User, Department, Control, JournalEntry, Approval, AttestationCycle, Attestation, Finding, Evidence, Amendment | **13-й полевой тест**, SOX ICFR / «provable UI». 6 ролей, 15 invariants (5 expression-kind), 7 rules (все 4 v1.5 ext), 5 `__irr:high` intents. Первый домен со всеми 5 behavioral patterns signal-classifier'а. Reuse AntD. Закрыл backlog §1.1. |
+| gravitino | 120 | 253 (Catalog, Schema, Table, Column, Topic, Fileset, Tag, Role + ~245 entity-types из OpenAPI) | **14-й полевой тест**, metadata catalog. Первый AdminShell-домен. Импортирован через `@intent-driven/importer-openapi`. AntD. |
+| keycloak | 256 | 186 entities (Realm, Client, User, Group, Role, IdentityProvider, ClientScope, Component, Organization, Workflow + 75 embedded + service types) | **15-й полевой тест** (после Gravitino 14-го), Keycloak Admin Console. **AdminShell layout** (persistent sidebar tree + body region), **scoped DataGrid** (master/customer-app/staging — разные user pool через `node.filter`), Stage 6 **tabbedForm** (Client.detail × 5 tabs × 48 полей), Stage 7 **testConnection wizard step** (IdP create). Импортирован через `@intent-driven/importer-openapi@0.11.0`. **Закрыл 12 SDK gap'ов** (G-K-1/2/3/7/8/9/10/11/14/20/24/25). 5 ролей (admin/realmAdmin/userMgr/viewer/self), 25 createX intents. AntD enterprise. |
+| argocd | 106 | 300 entities (Application, ApplicationSet, Cluster, Project, Repository, Certificate, GPGKey, Account + 157 v1alpha1* K8s CRDs + wrapper types + 2 синтетических: Resource, ApplicationCondition) | **16-й полевой тест** (после Keycloak 15-го), первый **status-driven admin** домен. Импортирован из ArgoCD **Swagger 2.0** (82 paths) через `swagger2openapi` → `importer-openapi@0.11`. 5 ролей (admin/developer/deployer/viewer/auditor). Stage 4: `column.kind="badge"` cell-renderer (new SDK PR idf-sdk#293, `@intent-driven/renderer@0.47`) для syncStatus/healthStatus/connectionStatus с tone colorMap. Stage 5-6: inline-children (K8s `status.resources[]` + `status.conditions[]`) через синтетический FK + `renderAs:"resourceTree"`/`"conditionsTimeline"` dispatchers. Stage 7: tabbedForm × 5 tabs для `Application.spec`. **Host-workaround'ы зафиксированы в backlog §10** (7 gap'ов G-A-1..G-A-7): K8S_CRD_MERGE table, INTENT_RENAME (53 grpc-gateway → canonical verb), SEMANTIC_AUGMENT (плоские поля поверх nested spec, компенсирует Swagger 2→3 тип-потерю). Rich seed: 63 effects (10 apps в разных sync × health states, 20 resources с health propagation, 12 conditions по severity). |
+| automation | 36 | 9 (User, Workflow, NodeType, Node, Connection, Credential, Execution, ExecutionStep, ScheduledRun) | **17-й полевой тест** (после ArgoCD 16-го), visual workflow automation в духе **n8n / Zapier / Make**. AntD enterprise (lineage invest → compliance → keycloak → argocd → automation). 4 роли (editor / executor / viewer / agent), `executor` + `agent` имеют preapproval (active + notExpired credential). 15 invariants (10 referential + 2 transition + 2 expression `no_self_loop_connection` / `credential_owner_match` + 1 cardinality `one_active_schedule_per_workflow`), 2 rules (threshold consecutive failures + schedule next-run). 3 `__irr.high` intents (`delete_workflow` / `delete_credential` / `purge_execution_history`). 4 authored projections (`workflow_canvas` / `execution_replay` / `credential_vault` / `node_palette`) + derived. 39 seed effects (2 workflows × 4-node chains + 4 executions × 5 steps). 9/9 smoke + 879/879 full host suite. **Pattern bank**: 11 candidate'ов из Phase 0 research (`pattern-bank/candidate/automation-research-2026-04-26.json`) — n8n / Zapier / Make / Activepieces / Pipedream / Temporal / Airflow convergent evolution. **0 новых SDK gap'ов** — всё выражается через текущий API. Out of scope MVP: real engine, OAuth, marketplace, live execution overlay (~70% n8n parity по structural). |
+| notion | 59 | 12 (User, Workspace, WorkspaceMember, Page (self-ref), **Block (polymorphic, 15 variants)**, Database, DatabaseView, Property, DatabaseRow, PropertyValue, Comment, PagePermission) | **18-й полевой тест** (после Automation 17-го), block-based KB. 5 ролей (workspaceOwner / editor / commenter / viewer / agent). Стресс-тесты формата: self-ref hierarchy через `Page.parentPageId`, **первый домен с `entity.kind: "polymorphic"`** (Block, 15 вариантов), multi-view database (table / board / gallery / calendar / timeline), permission-inheritance (Page → parent → Workspace), sparse-FK Comment (pageId XOR blockId). Pattern research: 4 эталона (Coda / Obsidian / Roam / Confluence) → 37 кандидатов в `refs/candidates/`. **12 SDK gap'ов в backlog §12** (P0: permission-inheritance + BlockEditor primitive; P1: archetype/kind, voice primary-field, __irr audit; P2: detail routeParams, domain fallback). AntD. |
+| meta | 11 | 10 | Research-домен для AI-экспериментов (`propose_meta_intent`, blind v3 sweep). Не предназначен для production-tenant'а. |
 
-**Итого:** 672 намерения, 11 доменов, один движок кристаллизации.
+**Итого:** **1260 намерений, 17 доменов**, один движок кристаллизации.
 
 Freelance (12-й полевой тест) выявил 40+ конкретных SDK gap'ов в процессе авторинга — см. [`sdk-improvements-backlog.md`](sdk-improvements-backlog.md). Backlog классифицирован P0/P1/P2 и адресован `@intent-driven/core`, `@intent-driven/renderer`, `@intent-driven/adapter-antd`.
 
 Compliance (13-й полевой тест) закрыл backlog §1.1 (`invariant.kind: "expression"` — расширен до `(row, world, viewer, context)` сигнатуры), добавил 5-ю производную материализацию (`materializeAuditLog` над Φ для observer-role) и зафиксировал три открытых design-gap: polymorphic Evidence.attachedTo (sparse-columns в MVP), computed ownerField для Attestation, `role.scope: {kind: "expression"}` support.
 
+Keycloak (15-й полевой тест, 2026-04-23) — первый dogfood-домен полностью на importer-openapi pipeline без ручного авторинга ontology. Закрыл 12 SDK gap'ов в один день (importer dedup/embedded/inferFieldRoles/detectActionEndpoints/detectCollectionPostAsCreate, core preserveMainEntity/detectFK-synthetic/R8-bestParent/formModal-entity-fields, renderer AdminShell-primitive/DataGrid-filter/ActionCell-auto-overlay). **AdminShell** — новый layout-mode для admin-style enterprise UX (Keycloak / Gravitino / Argo / Grafana / любой control-plane): 2-column shell с persistent sidebar tree (instance-aware через R8 hubSections) и body, переключаемым через `onSelect`. Открытые gap'ы: G-K-12 (Wizard через row-CTA edit), G-K-22 (`ontology.features.preferDataGrid` switch), G-K-23 (validation soft-warn). См. финальный gap-каталог `idf/docs/keycloak-gaps.md` (25 gap'ов, 9 ✅ closed via SDK PR, 6 host workarounds, 4 deferred design ask, 6 informational).
+
+ArgoCD (16-й полевой тест, 2026-04-24) — первый **status-driven admin** домен после IAM CRUD (Keycloak) и metadata catalog (Gravitino). Stress-test importer'а на Swagger 2.0 (первый раз — ArgoCD использует gRPC-gateway c definitions[] вместо components.schemas; host конвертирует через `swagger2openapi` перед import'ом) и на **inline-children pattern** (K8s `Application.status.resources[]` / `status.conditions[]` — inline массивы без FK, importer не видит). Закрыл 1 SDK gap (idf-sdk#293 `column.kind="badge"` cell-renderer с colorMap/toneMap — host integration в renderer@0.47). Host-workaround'ы задокументированы в `sdk-improvements-backlog.md §10` как 7 gap'ов G-A-1..G-A-7: K8s CRD naming merge (`v1alpha1X → X`), markEmbedded too aggressive, inline-children primitive (3 подгапа: extractInlineArrays + inline-children renderer + resourceTree/conditionsTimeline dispatchers), deeply-nested spec → `yamlEditor` control-archetype, Swagger 2.0 type-loss на $ref полях, grpc-gateway operationId canonicalization. Ожидаемые SDK PR пакеты закроют host tables (`K8S_CRD_MERGE` + `INTENT_RENAME` + `SEMANTIC_AUGMENT` + `RESOURCE_ENTITY` + `APPLICATION_CONDITION_ENTITY` — все removable). Rich seed показывает все 3 sync × 6 health states для визуальной валидации statusBadge primitive.
+
 ### Тестовое покрытие
 
-- **idf (прототип)**: 799 unit-тестов в 56 файлах (+31 compliance после 13-го теста)
+- **idf (прототип)**: ~801 unit-тест в **67 файлах** (включая gravitino + meta)
 - **@intent-driven/core**: 916 unit-тестов (+21 после PR #96 + #98: expression world/viewer/context + audit materializer)
 - **@intent-driven/renderer**: 175 тестов
 - **@intent-driven/canvas-kit**: 36 тестов
@@ -48,22 +58,85 @@ Compliance (13-й полевой тест) закрыл backlog §1.1 (`invarian
 
 ## 2. SDK monorepo
 
-**Репо:** `~/WebstormProjects/idf-sdk/` (pnpm workspace, tsup build, vitest)
+**Репо:** `~/WebstormProjects/idf-sdk/` (pnpm workspace, tsup build, vitest). **20 пакетов** после Phase 2/3 extraction, scaffold-path ramp-up (2026-04-21), `host-contracts` extraction (2026-04-25) и BlockEditor adapter (2026-04-27+). Дополнительно три пакета вне monorepo используются host'ом: `@intent-driven/effect-sink ^0.2.1`, `@intent-driven/llm-bridge ^0.4.1`, `@intent-driven/llm-subprocess ^0.2.1`.
 
-### Пакеты
+### Ядро и UI
 
 | Пакет | Версия | Лицензия | Назначение |
 |---|---|---|---|
-| `@intent-driven/core` | 0.33.0 | BSL 1.1 | engine, fold, crystallize_v2, invariants (6 kinds incl. **expression** с world/viewer/context), materializers (document / voice / **auditLog**), Pattern Bank, salience declaration-order ladder |
-| `@intent-driven/renderer` | 0.12.0 | BSL 1.1 | ProjectionRendererV2, 7 архетипов, 11 controls, primitives (atoms/containers/chart/map + IrreversibleBadge + PatternPreviewOverlay), 6 parameters, adapter registry |
-| `@intent-driven/adapter-mantine` | 1.1.0+ | BSL 1.1 | Mantine UI-kit (corporate) |
-| `@intent-driven/adapter-shadcn` | 1.1.1+ | BSL 1.1 | shadcn/ui doodle |
-| `@intent-driven/adapter-apple` | 1.1.2+ | BSL 1.1 | Apple visionOS-glass |
-| `@intent-driven/adapter-antd` | 1.2.0+ | BSL 1.1 | AntD enterprise-fintech (button label/children, DateTime withTime, fieldRole price, maxLength/pattern — все patches from freelance field-test закрыты) |
+| `@intent-driven/core` | **0.112.0** | BSL 1.1 | crystallize_v2, fold, invariants (6 kinds incl. **expression** с world/viewer/context), materializers (document / voice / **auditLog**), Pattern Bank (45 stable, ~43 apply + 10 curated candidates), salience declaration-order ladder, **polymorphic entity-kind API** (P0.2), **canonical type-map + auto field-mapping** (P0.4 / §9.1), **tier-routing classifier** (`classifyIntentRole` consultation в joint solver, PR #438 generalize tier routing) |
+| `@intent-driven/renderer` | **0.59.0** | BSL 1.1 | ProjectionRendererV2, 7 архетипов, 11 controls, primitives (atoms/containers/chart/map + IrreversibleBadge + PatternPreviewOverlay + TreeNav + KanbanBoard + SubCollectionSection), **AdapterProvider** (Context + hooks), **ArchetypeForm** (synthesized create/edit), **CoSelectionProvider** + `useCoSelection` / `useCoSelectionEnabled` hooks |
+| `@intent-driven/engine` | **0.4.0** | BSL 1.1 | **Φ-lifecycle extraction** (proposed/confirmed/rejected, fold, ruleEngine hooks, rule.warnAt secondary timers) — выделен из core для headless-хостов |
+| `@intent-driven/host-contracts` | 0.2.0 | MIT | **Контракт shell↔module** (2026-04-25) — `AppModuleManifest` / `ShellContext` / `NavSection` / `RouteConfig` / `CommandConfig` + `validateModuleManifest` / `mergeNavSections` / `HEADER_SLOTS` |
+| `@intent-driven/adapter-mantine` | 1.4.2 | BSL 1.1 | Mantine UI-kit (corporate) + shell.sidebar |
+| `@intent-driven/adapter-shadcn` | 1.4.2 | BSL 1.1 | shadcn/ui doodle + shell.sidebar |
+| `@intent-driven/adapter-apple` | 1.4.2 | BSL 1.1 | Apple visionOS-glass + shell.sidebar |
+| `@intent-driven/adapter-antd` | 1.9.0 | BSL 1.1 | AntD enterprise-fintech. 4 freelance-patch'а закрыты; form-header adapter добавлен (§9.4); накопительные правки 1.4 → 1.9 |
+| `@intent-driven/adapter-antd-blockeditor-tiptap` | 0.3.1 | BSL 1.1 | TipTap-based BlockEditor primitive для AntD (полевая нужда из notion-домена / §12 P0) |
 | `@intent-driven/canvas-kit` | 0.2.0 | BSL 1.1 | SVG/canvas утилиты (9 helpers) |
-| `@intent-driven/cli` | 1.0.32+ | MIT | `npx @intent-driven/cli init <name>` — 5-шаговый LLM-диалог через Claude |
+
+### Scaffold-путь (Этапы 1-3, добавлен 2026-04-21)
+
+Новый путь для соло-фрилансеров, строящих CRUD-платформы: `npx create-idf-app` → importer из существующей схемы → enricher → effect-runner → BFF handlers.
+
+| Пакет | Версия | Лицензия | Назначение |
+|---|---|---|---|
+| `@intent-driven/create-idf-app` | 0.6.0 | MIT | `npx create-idf-app my-app` scaffold-генератор (Этап 1 MVP) |
+| `@intent-driven/importer-postgres` | 0.4.0 | MIT | Postgres `information_schema` → ontology (CRUD + FK-relations + role-inference, Phase A) |
+| `@intent-driven/importer-openapi` | 0.15.0 | MIT | OpenAPI 3.x spec → ontology (`$ref` resolution, operationId override, Phase D); большой накопительный набор fixes 0.3 → 0.15 (Keycloak / ArgoCD field-test'ы) |
+| `@intent-driven/importer-prisma` | 0.4.0 | MIT | `.prisma` → ontology через `@mrleebo/prisma-ast` (Phase E) |
+| `@intent-driven/enricher-claude` | 0.2.1 | MIT | AI-обогащение ontology через subprocess к локальному `claude` CLI (Phase B) |
+| `@intent-driven/effect-runner-http` | 0.3.0 | MIT | generic HTTP CRUD-runner + `useHttpEngine` React hook (Phase C) |
+| `@intent-driven/auth` | 0.2.0 | MIT | JWT + Supabase providers + `useAuth` hook (Phase F) |
+| `@intent-driven/server` | 0.2.0 | MIT | BFF handlers (document / voice / agent) для Vercel-style serverless functions (Phase G) |
+| `@intent-driven/cli` | **1.4.95** | MIT | `idf init` (LLM), `idf import postgres|openapi|prisma`, `idf enrich` |
 
 **Release pipeline:** changesets-bot автоматически создаёт «Version Packages» PR при merge в main; публикация в npm при merge release PR.
+
+### SDK-тесты (реальные, 2026-04-22)
+
+- `core`: 99 test files (~916 assertions)
+- `renderer`: 38 test files (~175 assertions)
+- `engine`: 10 test files
+- `canvas-kit`: 9 test files (36 assertions)
+- `adapter-antd` 2 / `adapter-apple` 1 / `adapter-mantine` 1 / `adapter-shadcn` 1 (34 assertions суммарно)
+- `importer-postgres` 8 / `importer-prisma` 5 / `importer-openapi` 4
+- `enricher-claude` 5, `effect-runner-http` 4, `create-idf-app` 5
+- `server` 3, `auth` 3, `cli` 2
+
+---
+
+## 2a. Scaffold-путь (Этапы 1-3, релиз 2026-04-21)
+
+Новый maturation-slope для соло-фрилансеров / микростудий, строящих CRUD-платформу против существующей базы данных или OpenAPI-контракта. Путь параллелен классическому «author ontology from scratch» и замыкает петлю **«импорт → обогащение → рантайм → материализация»**.
+
+### Этап 1 — MVP (`create-idf-app@0.6.0`)
+
+```bash
+npx create-idf-app my-crm
+```
+
+Scaffold-генератор создаёт структуру проекта, примерную ontology, Vite + React setup, готовый к `npm run dev`.
+
+### Этап 2 — источники онтологии (Phase A–E)
+
+| Источник | Пакет | Что делает |
+|---|---|---|
+| Postgres | `importer-postgres@0.4.0` | `information_schema` → ontology (CRUD intents + FK-relations + role-inference через username column match) |
+| OpenAPI 3.x | `importer-openapi@0.3.0` | `$ref` resolution, `operationId` override для intent-names |
+| Prisma | `importer-prisma@0.4.0` | `.prisma` → ontology через `@mrleebo/prisma-ast` |
+| Claude AI | `enricher-claude@0.2.0` | subprocess к локальному `claude` CLI; cache + suggestions apply (labels/fieldRole/valueLabels/compositions) |
+
+### Этап 3 — рантайм + материализация (Phase C/F/G/I)
+
+| Компонент | Пакет | Что делает |
+|---|---|---|
+| HTTP CRUD-runner | `effect-runner-http@0.3.0` | generic RESTful translator для IDF intents + `useHttpEngine` React hook |
+| Auth | `auth@0.2.0` | JWT / Supabase providers + `useAuth` hook |
+| BFF handlers | `server@0.2.0` | document / voice / agent-API для Vercel-style serverless functions |
+| Native format (Phase I) | `importer-*` → `materializers/*` | замыкает loop: импортированная ontology → document/voice/agent БЕЗ host-кода |
+
+**Workzilla-clone** — первый dogfood-проект scaffold-пути, выявил 6 P0 блокеров (§8.1–8.7) и 6 post-bump баг (§9.1–9.6), все закрыты в idf-sdk PR #177 / #179 (2026-04-21).
 
 ---
 
@@ -107,16 +180,19 @@ Invest использует все четыре в одном домене.
 ### Темпоральный scheduler
 `server/timeEngine.js` с `TimerQueue` (in-memory min-heap по `firesAt`), `hydrateFromWorld` при старте. Два системных intent'а: `schedule_timer(afterMs|atISO, target, revokeOn?)` и `revoke_timer(timerId)`. Таймеры — обычные эффекты `τ=scheduled_timer` в Φ.
 
+**`rule.warnAt`** (2026-04-21, `@intent-driven/engine@0.3.0`) — secondary timer за `warnAt` до основного `firesAt` с тем же `revokeOn`. Закрывает session-backlog §5.2.
+
 Первое применение: `booking.auto_cancel_pending_booking` (5min — актуальное значение в коде).
 
 ### Pattern Bank
-- **20 stable patterns** с формальным trigger/structure/rationale triple. Физическая раскладка в `idf-sdk/packages/core/src/patterns/stable/`:
-  - `detail/` (8): `footer-inline-setter`, `keyboard-property-popover`, `lifecycle-locked-parameters`, `m2m-attach-dialog`, `observer-readonly-escape`, `phase-aware-primary-cta`, `subcollections`, `vote-group`
-  - `catalog/` (4): `discriminator-wizard`, `grid-card-layout`, `hero-create`, `kanban-phase-column-board`
-  - `cross/` (6): `bulk-action-toolbar`, `global-command-palette`, `hierarchy-tree-nav`, `inline-search`, `irreversible-confirm`, `optimistic-replace-with-undo`
-  - `feed/` (2): `antagonist-toggle`, `composer-entry`
-- **3 паттерна с `structure.apply`**: `subcollections`, `grid-card-layout`, `footer-inline-setter`. Остальные 17 — matching-only (witness-of-crystallization без mutate-слотов).
-- **Falsification framework**: каждый паттерн имеет shouldMatch / shouldNotMatch fixtures.
+- **45 stable patterns** (`ls patterns/stable/{detail,catalog,cross,feed}/*.js | grep -v test` на 2026-04-29). Большинство имеют `structure.apply`; matching-only — `global-command-palette`, `keyboard-property-popover`. Физическая раскладка в `idf-sdk/packages/core/src/patterns/stable/`:
+  - `detail/` (19): `anchored-inline-comment-thread` (idf §13.17 demo), `computed-cta-label`, `footer-inline-setter`, `form-yaml-dual-surface`, `generator-preview-matrix`, `keyboard-property-popover`, `lifecycle-gated-destructive`, `lifecycle-locked-parameters`, `m2m-attach-dialog`, `observer-readonly-escape`, `phase-aware-primary-cta`, `rating-aggregate-hero`, `resource-hierarchy-canvas`, `reverse-association-browser`, `review-criterion-breakdown`, `spec-vs-status-panels`, `subcollections`, `timer-countdown-visible`, `vote-group`
+  - `catalog/` (12): `catalog-action-cta` (из §8.1 Workzilla), `catalog-creator-toolbar`, `catalog-default-datagrid`, `catalog-exclude-self-owned`, `discriminator-wizard`, `dual-status-badge-card`, `faceted-filter-panel`, `grid-card-layout`, `hero-create`, `inline-chip-association`, `kanban-phase-column-board`, `paid-visibility-elevation`
+  - `cross/` (11): `bidirectional-canvas-tree-selection` (workflow-editor field-test 2026-04-24), `bulk-action-toolbar`, `diff-preview-before-irreversible`, `global-command-palette`, `global-scope-picker`, `hierarchy-tree-nav`, `inline-search`, `irreversible-confirm`, `optimistic-replace-with-undo`, `reputation-tier-badge`, `undo-toast-window`
+  - `feed/` (3): `antagonist-toggle`, `composer-entry`, `response-cost-before-action`
+- **Tier-routing classifier (2026-04-29, idf-sdk PR #438 + #436)** — `crystallize_v2/jointSolver` консультируется с `classifyIntentRole` для opt-in primary tier promotion (PR #434), затем generalize до tier routing (#438); `catalog-creator-toolbar` дедуплицирован с tier-routing hero (PR #436).
+- **Cross-projection state-sharing (2026-04-24)** — первая категория паттернов, требующих shared runtime state между двумя projections. Реализована через `@intent-driven/renderer` `<CoSelectionProvider>` + `useCoSelection` / `useCoSelectionEnabled` hooks + adapter capability `interaction.externalSelection`. Промоция `bidirectional-canvas-tree-selection` (workflow-editor field-test) закрыла 3 promotion-gate'а: trigger.kind `co-selection-group-entity` (schema-level), renderer primitive contract, adapter capability с graceful fallback.
+- **Falsification framework**: каждый паттерн имеет `.test.js` с shouldMatch / shouldNotMatch fixtures (31 test-файл).
 - **Studio viewer** `/studio/patterns` + prototype `PatternInspector` drawer (toggle `Cmd+Shift+P`).
 - **Derivation X-ray (v1.13, core@0.10.0, renderer@0.6.0)** — снятие «uncanny valley»: каждый дериввированный slot видимо помечен. SDK core: `computeSlotAttribution(intents, ontology, projection) → { slotPath → { patternId, action } }` через deep-diff после каждого `pattern.structure.apply`. SDK renderer: `PatternPreviewOverlay` mode `"xray"` (warm-yellow border + hover trail с requirements ✓/✗ + Open in Graph3D ↗); `ProjectionRendererV2` props `xrayMode` / `slotAttribution` / `xrayDomain` / `onExpandPattern` / `patternWitnesses`; `ArchetypeDetail` оборачивает derived sections. Host: `/api/patterns/explain` отдаёт `slotAttribution`; `/api/studio/domain/:name/graph` содержит pattern-узлы (kind `pattern`, IcosahedronGeometry в Graph3D) + edges `applies-to` / `affects` через `server/studio/patternNodes.js`. PatternInspector — global radio Off/X-ray в верхней секции drawer (mode независим от Apply preview). Studio hash-router `#graph/focus?domain=&pattern=&projection=` — открывает Studio в новой вкладке с подсветкой узла. CLI `scripts/derivation-diff.mjs` для standalone diff'а (`--pattern X` / `--without X` / `--json`). Известное ограничение: invest/portfolio_detail имеет ручные sections — subcollections matched, но attribution пустая (by design).
 
@@ -138,15 +214,44 @@ Invest использует все четыре в одном домене.
 
 ---
 
+## 5a. Φ schema-versioning (закрыт 2026-04-28)
+
+P0-architecture sprint от внешнего design review 2026-04-26. 6 phases shipped в `@intent-driven/core` + `@intent-driven/engine`:
+
+| Phase | Что | Где |
+|---|---|---|
+| 0 | helpers `UNKNOWN_SCHEMA_VERSION`, `getSchemaVersion`, `tagWithSchemaVersion`, `hashOntology` | core@0.107.0 (PR idf-sdk#443) |
+| 1 | engine validator проставляет `effect.context.schemaVersion` при confirm/reject | engine@0.4.0 (PR idf-sdk#445) |
+| 2 | `ontology.evolution[]` append-only лог + helpers (`getEvolutionLog`, `addEvolutionEntry`, `getAncestry`, ...) | core@0.108.0 (PR idf-sdk#447) |
+| 3 | `applyUpcaster` (4 declarative + functional fn) + `pathFromTo` + `upcastEffect/Effects` + `foldWithUpcast` | core@0.109.0 (PR idf-sdk#449) |
+| 4 | Reader gap policy (4 reader'а × 3 gap kinds × 6 actions) + `detectFieldGap` / `resolveGap` / `scanEntityGaps` | core@0.110.0 (PR idf-sdk#451) |
+| 5 | Layer 4 drift detector — `computeCanonicalGapSet`, `compareReaderObservations`, `detectReaderEquivalenceDrift` | core@0.111.0 (PR idf-sdk#453) |
+| 6 | Manifest v2.1 chapter «Эволюция онтологии» (`docs/manifesto-v2.1-ontology-evolution.md`) + L3-evolution conformance class в `idf-spec` | этот PR + idf-spec follow-up |
+
+**Жёсткие архитектурные пункты, зафиксированные в spec'е:**
+1. Фиксированный порядок declarative-шагов (rename → splitDiscriminator → setDefault → enumMap) — нормативен для cross-stack
+2. `fn` upcaster — design-time only, никакого runtime-LLM (иначе смерть детерминизма)
+3. fn-throw → safe fallback на declarative result + `console.warn`
+4. cyrb53 hash + canonicalize JSON — алгоритм нормирован для cross-stack совместимости
+
+**Reader-equivalence (§23 axiom 5)** теперь runtime-проверяемое свойство, а не аксиома. `detectReaderEquivalenceDrift(world, ontology, observations)` сравнивает gap-set'ы 4 reader'ов; дивергенция в пересечении scope = drift event. Не сравнивает rendered output (incomparable shapes), не проверяет equivalence actions (это контракт по policy).
+
+**Backward compat:** legacy эффекты с `UNKNOWN_SCHEMA_VERSION` проходят полную цепочку upcaster'ов от root до target. Онтологии без `evolution[]` работают через обычный `fold` без изменений.
+
+**Open items до production pilot'а:**
+- L3-evolution conformance class в `idf-spec` (отдельный PR, идёт параллельно)
+- Минимум 2 реальных upcast'а в production tenant'е (один declarative, один functional) — milestone первого pilot'а
+- Reader integrations в renderer / voiceMaterializer / documentMaterializer / agent route — follow-up PRs по мере подключения
+
 ## 6. Open items
 
 ### Перенесённые из архивного v1.12
 
-- **Composite / polymorphic entities** — union-типы не выражаются через `entity.kind`
+- ✅ **Composite / polymorphic entities** — declarative API ЗАКРЫТ 2026-04-26 (idf-sdk PR #347): `entity.kind: "polymorphic"` + `discriminator` + `variants[]`; helpers `isPolymorphicEntity` / `getEntityVariants` / `getEffectiveFields` / `getUnionFields` / `validatePolymorphicEntity`. Production-derivation (form-archetype synthesis на discriminator + per-variant, filterWorld awareness, materializer-output) — отдельные sub-projects.
 - **Adapter capability checks at startup** — новый primitive kind без уведомления адаптеров
-- **`@intent-driven/server` extraction (Phase 3)** — после стабилизации scheduler'а
+- ✅ **`@intent-driven/server` extraction (Phase 3)** — ЗАКРЫТ 2026-04-21 как `@intent-driven/server@0.2.0` (BFF handlers document/voice/agent для Vercel-style serverless) и `@intent-driven/engine@0.3.0` (Φ-lifecycle)
 - **Server-rendered PDF / DOCX** поверх documentMaterializer
-- **Pattern Bank: `structure.apply` для оставшихся 17 stable паттернов** — hero-create первый кандидат
+- ✅ **Pattern Bank: `structure.apply` для stable паттернов** — большинство из 45 имеют apply; 2 matching-only (`global-command-palette`, `keyboard-property-popover`) — by design
 - **Role-specific FK convention** — sales/seller_profile не матчится через findSubEntities (seller/targetUser vs userId)
 - **PatternInspector component test** — требует `@testing-library/react` + `jsdom`
 - **Studio PatternBank URL write-back** — domain change не пишет в URL
@@ -157,15 +262,51 @@ Invest использует все четыре в одном домене.
 
 ### Из freelance field-test (2026-04-19, freelance/sdk-backlog PR #44)
 
-Полный классифицированный список (40+ пунктов, P0/P1/P2) — в [`sdk-improvements-backlog.md`](sdk-improvements-backlog.md). Статус P0 (2026-04-20):
+Полный классифицированный список (40+ пунктов, P0/P1/P2) — в [`sdk-improvements-backlog.md`](sdk-improvements-backlog.md). Статус P0:
 
 - ✅ **Invariant handler schema drift** (1.1) — ЗАКРЫТ (`normalize.js` + try/catch)
 - ✅ **`AntdButton` label vs children** (2.1), **`AntdDateTime` без времени** (2.2), **`AntdNumber` fieldRole** (2.3), **`AntdTextInput` maxLength/pattern** (2.4) — ЗАКРЫТЫ в adapter-antd@1.2.0, host workarounds удалены
 - ✅ **`ownershipConditionFor` single-owner** (3.2) — ЗАКРЫТ (`entity.owners` + `intent.permittedFor` + `getOwnerFields` util)
+- ✅ **`PrimaryCTAList` multi-param phase-transitions** (3.1) — ЗАКРЫТ в idf-sdk PR #50 (overlay-form через `wrapByConfirmation`)
+- ✅ **`inferParameters` top-level** (4.1), **`heroCreate` matcher** (4.2), **`footer-inline-setter` агрессивен** (4.3) — ЗАКРЫТЫ в idf-sdk PR #50
 - ⏳ **Domain scoping инвариантов** (1.4) — частично (invariant.where; auto-discriminator deferred)
-- ⏳ **`PrimaryCTAList` не рендерит форму** (3.1) для multi-param phase-transitions
-- ⏳ **`inferParameters` читает только top-level** (4.1), **`heroCreate` matcher читает только `particles.confirmation`** (4.2)
-- ⏳ **`footer-inline-setter` слишком агрессивен** (4.3) — матчит textarea-параметры
+
+### Workzilla-clone dogfood (2026-04-21, idf-sdk PR #177 + #179)
+
+Dogfood-сессия на scaffold-пути выявила и закрыла систематические P0-блоки для «scaffold → production»:
+
+- ✅ **8.1 Action-CTA автогенерация** — новый pattern `catalog-action-cta` (item-slot trailing button) + `detail-phase-aware-cta`
+- ✅ **8.2 Form-archetype synthesis** — `generateCreateProjections` для insert-intent'ов; `ArchetypeForm` рендерит по `intent.parameters`
+- ✅ **8.3 `projection.witnesses[]` strict** — respect author's витнессы + ontology field.role для primitive-selection
+- ✅ **8.4 Inline primitives** — child-resolver на полный primitive-registry (`statistic`/`sparkline`/`chart`/`map`/`countdown`/`badge`)
+- ✅ **8.6 `toneMap` / `toneBind`** — badge принимает map-per-value или client-computed `toneBind`
+- ✅ **8.7 Importer enrich** — больше семантики в heuristic-importer'е; enricher-claude добивает остальное
+- ✅ **9.1 `type: "string"` canonical map** — `inferControlType` прогоняет через `mapOntologyTypeToControl`
+- ✅ **9.2 default `idParam`** — detail без singleton получает `idParam = <entityLower>Id` автоматически
+- ✅ **9.3 `onItemClick` edge-preference** — предпочитает edge, где `to.mainEntity === from.mainEntity`
+- ✅ **9.4 Form-header adapter surface** — `getAdaptedComponent("shell", "formHeader")`, дефолт нейтральный CSS-vars
+- ✅ **9.6 Synthesized projections export** — `artifact.projection` = projectionDef
+
+⏳ **9.5 guard** на bare `projection.name`, **9.7** `inferFieldRole` legacy-role warning, **9.10–9.12** heroCreate multi-param + Badge sx + witness alignSelf (в PR `fix/heroCreate-badge-align-9.10-9.12`, pending merge).
+
+### Tri-source field-research P0 sprint (2026-04-25/26)
+
+Анализ трёх production-стэков (workflow-editor LLM/AI-agent, workflow-editor data-pipeline, Angular-imperative legacy с polymorphic 200+ кубами и 18-fork brand-overlay) выявил convergent evolution и закрыл четыре фундамента в SDK:
+
+- ✅ **`@intent-driven/host-contracts@0.2.0` extraction** (idf-sdk PR #335) — формализация контракта `shell ↔ module` (AppModuleManifest / ShellContext / NavSection / RouteConfig + `validateModuleManifest` / `mergeNavSections` / `HEADER_SLOTS`). Type-only пакет, MIT.
+- ✅ **`entity.kind: "polymorphic"` + `discriminator` + `variants[]`** (idf-sdk PR #347) — declarative API для node-type explosion 70+/200+. Helpers: `isPolymorphicEntity` / `getDiscriminatorField` / `getEntityVariants` / `getEntityVariant` / `listVariantValues` / `getEffectiveFields` / `getUnionFields` / `getVariantSpecificFields` / `validatePolymorphicEntity`. Закрыт давний open item «Composite / polymorphic entities». Production-derivation — отдельные sub-projects.
+- ✅ **Canonical type-map + auto field-mapping FE↔BE** (idf-sdk PR #349, закрытие §9.1) — `CANONICAL_TYPES` (~40), `TYPE_ALIASES` (importer aliases), `normalizeFieldType` / `normalizeFieldDef`, `camelToSnake` / `snakeToCamel` / `inferWireFieldName`, `applyFieldMapping(obj, mapping, "toWire"|"fromWire")`, `buildAutoFieldMapping`.
+- ✅ **4 candidate-паттерна** (idf-sdk PR #338) — `human-in-the-loop-gate`, `composition-as-callable`, `agent-plan-preview-approve`, `lifecycle-gates-on-run`. `CURATED_CANDIDATES.length` 6 → 10. Matching-only; promotion в stable + apply — отдельные sub-projects.
+- ✅ **CI scaffold-smoke OOM fix** (idf-sdk PR #339) — `SKIP_DTS=true` env для `pnpm -r build`.
+
+Полные детали — `sdk-improvements-backlog.md §11`.
+
+### Rolling sync (2026-04-26 docs sweep)
+
+Backlog-items, которые были закрыты ранее (по коду), но оставались помечены open в backlog'е до настоящей синхронизации:
+
+- ✅ **IrreversibleBadge auto-placement** (sdk-improvements §3.3) — `assignToSlotsDetail.js:827` инжектит `{type:"irreversibleBadge", bind:"__irr"}` в header-row для detail-проекций mainEntity с irreversible action. Тесты `assignToSlotsDetail.test.js:208-267` («backlog 3.3»). `ConfirmDialog.jsx:7-16` поддерживает `spec.__irr` (decl) и `item.__irr` (post-confirm) с `reason` + configurable `confirmLabel`. Renderer primitive в `IrreversibleBadge.jsx`.
+- ✅ **Inline-children family** (sdk-improvements §10.4abc, ArgoCD G-A-4) — pipeline полный: `importer-openapi.extractInlineArrays` (idf-sdk #306) + `SubCollectionSection` inline-mode по `inlineSource` path без FK-lookup (#315) + `renderAs` dispatchers `resourceTree` / `conditionsTimeline` (`PRIMITIVES.resourceTree`, named exports `ResourceTree` / `EventTimeline`). ArgoCD host workaround'ы (`Resource` / `ApplicationCondition` синтетические entities) могут быть удалены в follow-up cleanup PR.
 
 ### Cross-cutting инсайты
 
@@ -206,15 +347,19 @@ npm run build        # prod-сборка (периодически падает,
 
 Помимо референсной (React/Node), формат валидируется **тремя параллельными реализациями** на альтернативных стеках. Каждая пишется в изоляции: единственный input — `~/WebstormProjects/idf-spec/`, чтение исходников idf / idf-sdk / чужих реализаций запрещено.
 
-| Репо | Стек | Scope | Состояние |
+| Репо | Стек | Scope | Состояние (2026-04-28) |
 |---|---|---|---|
-| `~/WebstormProjects/idf-go/` | Go 1.22+, `xeipuuv/gojsonschema` | L1 + L2 | conformance на library fixtures, feedback для спеки |
-| `~/WebstormProjects/idf-rust/` | Rust 1.95+, `serde`, `jsonschema` | L1 + L2 | conformance на library + events fixtures |
-| `~/WebstormProjects/idf-swift/` | Swift (Package.swift) | L1 + L2 (в работе) | скелет репо с изоляционной политикой |
+| `~/WebstormProjects/idf-go/` | Go 1.22+, `xeipuuv/gojsonschema` | L1 + L2 + L3 | v0.1.3 + emit-mode CLI; library + events L1+L2+L3 CONFORMANT (16/16 docs) |
+| `~/WebstormProjects/idf-rust/` | Rust 1.95+, `serde`, `jsonschema` | L1 + L2 + L3 | v0.1.1 + emit-mode CLI; oба домена L1+L2+L3 CONFORMANT (16/16 docs) |
+| `~/WebstormProjects/idf-swift/` | Swift 6.2 (Package.swift) | L1 + L2 + L3 | v0.1.1 + emit-mode CLI; oба домена L1+L2+L3 CONFORMANT (16/16 docs) |
 
-Эти реализации — структурный стресс-тест формата: если все четыре стека `fold(Φ)` одинакового фикстура дают одинаковый world, формат decoupled от языка. Расхождение — прямой баг-репорт к спеке.
+Эти реализации — структурный стресс-тест формата: если все четыре стека `fold(Φ)` одинакового фикстура дают одинаковый world, формат decoupled от языка. Расхождение — прямой баг-репорт к спеке. **Document materialization (L3) добавлен синхронно во все три стека 2026-04-21** вместе с нормированием в `idf-spec` v0.2.0.
 
-Манифест §26 называет «второй reference implementation» направлением развития. Фактически уже идут три; §26 следует переформулировать в следующей ревизии манифеста.
+**Cross-stack differential harness (2026-04-28)** — `~/WebstormProjects/idf-spec/scripts/cross-stack-diff.mjs` запускает `conformance --emit <tmp>` во всех трёх стеках и pair-wise semantic-сравнивает выход (рекурсивная сортировка ключей, `_meta` игнорируется). На library + events: 75 файлов × 3 stacks × 2 пары = **225 pair-wise сравнений green, drift = 0** (включая `hash/ontology.json` после §1 ramp-up). CI workflow в `.github/workflows/cross-stack-diff.yml` (idf-spec PR #9) — runtime-блок на каждом push/PR. Закрывает open item «cross-stack conformance harness» из roadmap'а. Это runtime-проверка §1 манифеста v2 (Часть IV: четыре читателя формата) и слабая форма §23 axiom 5 (reader-equivalence) — Layer 3 detector из drift-protection-spec пока остаётся спекой, не runtime check'ом.
+
+**L3-evolution §1 cross-stack ramp-up (2026-04-28)** — нормативный `idf-spec/spec/schemas/hash-function.md` + 14 test-vectors; port `cyrb53` + `hashOntology` + `effect.context.schemaVersion` helpers в idf-go (`schemaversion` package), idf-rust (`schemaversion` module), idf-swift (`SchemaVersion` enum + `verify-vectors` executable target). Все 14 vectors pass byte-в-byte; cross-stack hash convergence на runtime — `library: 1a23f3f820e80b`, `events: 157d1cacf37eaa`. Spec fixtures tagged (idf-spec PR #12) — 63 effects across 11 phi-files конформны §1. **Phase 2 (server-side auto-tagging при fold)** + **Phase 3 (`ontology.evolution[]` + upcaster pipeline §2-§3)** — следующие фазы.
+
+Манифест §26 называет «второй reference implementation» направлением развития. Фактически уже идут три, и они runtime-сравниваются между собой — §26 следует переформулировать в следующей ревизии манифеста.
 
 ---
 
@@ -230,15 +375,170 @@ npm run build        # prod-сборка (периодически падает,
 - `spec/04-algebra/` — fold, crystallize, viewer-scoping
 - `spec/05-materializations/` — pixel / voice / agent API / document
 - `spec/schemas/` — machine-readable JSON Schema
-- `spec/fixtures/` — library (L1+L2), events (L2+) эталонные test vectors
+- `spec/fixtures/` — library (L1+L2), events (L2+), document (L3 partial, добавлен v0.2.0) эталонные test vectors
 
-Scope v0.1: L1 + L2. L3 и L4 резервируются для v0.2+.
+**Версии:** v0.1 — L1+L2. **v0.2.0 (2026-04-21, ветка `feat/spec-v0.2-document`)** — нормирует document materialization (L3 partial): JSON Schema для document-графа, `spec/fixtures/document/` с 16 expected-фикстурами. L4 (voice / agent BFF) резервируется для v0.3+.
 
-Манифест §3 и §22 описывают спеку как «запланированную». Фактически спека в активной разработке — Go/Rust реализации уже проходят conformance против её fixtures.
+Манифест §3 и §22 описывают спеку как «запланированную». Фактически спека в активной разработке — Go/Rust/Swift реализации уже проходят conformance против её fixtures (library + events + document).
 
 ---
 
-## 10. История эволюции
+## 10. Product state — SaaS-путь к первому paying PM
+
+Параллельно format-треку идёт продуктовый: довести IDF до состояния, когда Product Manager без разработчика ведёт production-приложение для своей команды.
+
+**Источник истины:** `docs/superpowers/specs/2026-04-21-pm-autonomy-roadmap-design.md` (Variant D, 6-месячный план), монтльный план — `~/.claude/plans/deep-humming-nova.md`. Cross-cutting backlog — `docs/backlog.md §0`.
+
+### Архитектура (three-plane, live)
+
+```
+studio.idf.dev          (control plane)  multi-tenant; LLM-co-pilot, domain editor, deploy orchestrator
+   │ signed domain.json push
+   ▼
+<slug>.app.idf.dev      (data plane)      single-tenant per domain; SQLite + 4 материализации; magic-link auth
+auth.idf.dev            (identity plane)  multi-tenant; magic-link → JWT (memberships per domainSlug)
+```
+
+Hosting — Fly.io. Unit economics: ~$5 infra/PM, target pricing $49/мес (margin sufficient).
+
+### Целевая персона и MVP-граница
+
+Enterprise PM / BA — читает спеки, пишет user stories, **не пишет JSON вручную**. Visual authoring — primary surface; программист участвует только на custom canvas / external integrations / `invariant.kind:"expression"` / сложные `rule.condition`. Граница формализована через два артефакта:
+
+- `domain.json` (PM-authored, чисто декларативный) — Studio пишет только его
+- `domain.extensions.ts` (dev-authored, опциональный сосед) — named exports для custom canvas / expression predicates / effect builders
+
+**Принципиальное решение M1:** managed SaaS не поддерживает `domain.extensions.ts`. Кому нужен custom — «export and self-host» (M1.6). Extensions sandbox в managed — M2.
+
+Golden-домен для первых demo/beta — Client Onboarding Tracker (5-stage pipeline, 4 entity, 2 роли + agent).
+
+### Milestone progress
+
+| Milestone | Период | Scope | Статус (2026-04-29) |
+|---|---|---|---|
+| M1.1 control / data / identity scaffolding | месяц 0 | три plane'а MVP, magic-link, basic deploy, daily backup cron | ✅ закрыт 2026-04-21 (тэг `M1.1`); tail items pending |
+| M1.2 Studio as control plane | месяц 1 | port 7-state authoring machine из `.worktrees/pm-demo/`, turn-log first-class в Postgres `sessions.turns[]`, rollback to turn N, live 4-channel preview, dry-run validator | в работе |
+| M1.3 Data safety | месяц 2 | change classifier (safe/caution/breaking), rename как first-class op, Φ snapshot/restore UI, audit log viewer, per-field diff между deploy'ами | план |
+| M1.4 Governance & team | месяц 3 | invite UI, role assignment, agent tokens (long-lived JWT с preapproval limits), rejected effects monitor, «explain why» modal, audit ZIP export | план |
+| M1.5 Direct manipulation editors (RISKY) | месяц 4 | role matrix (entities × roles), projection palette (Pattern Bank user-facing toggle), rules builder no-code (drag-drop predicate), Graph3D editing wrapper | degradable: можно сдвинуть в M1.7, оставить LLM-only authoring |
+| M1.6 Handoff + beta launch | месяц 5–6 | export tarball (`my-domain.tar.gz` + `domain.extensions.ts` typed interface), CLI dev-mode, landing + pricing + Stripe trial, beta cohort 3–5 PM | финальная веха M1 |
+
+**M1.1 tail (blocked на user input):**
+- A1 Resend wire-up — нужен API key + DNS verification для `intent-design.tech`
+- A2 Re-deploy runtime с full V2Shell bundle (commit `72703b2` собран, prod пока placeholder)
+- A3 `ANTHROPIC_API_KEY` в control plane — без него SSE authoring session падает
+- A4 cross-plane E2E smoke (signup → login → create project → deploy → V2Shell iframe)
+- A5 verify daily backup cron (`/etc/cron.daily/idf-backup`, rotation 14 дней)
+- A6 auto-nginx/certbot helper в orchestrator (`vps-client.ts::createTenant` через docker-exec/ssh)
+
+### Demo-tenant (`demo.fold.software`)
+
+Общий sandbox под статью; read-only middleware (`DEMO_MODE=1`), mock-LLM (`DEMO_LLM_MOCK=1`), bypass через `X-Demo-Curator-Token`, rate-limit (30/мин per-IP), SSE cap 100. Reset каждые 6 часов через systemd timer (snapshot dump → restore). Runbook — `docs/demo-tenant-deploy.md` (Option A — systemd готов; Option B — Docker TODO).
+
+### Open product decisions (до beta)
+
+- **Product name** — «IDF» не маркетится; кандидаты Folio / Crystallizer / Phi / Fold / Tacit
+- **Studio licensing** — BSL или closed-source? Рекомендация roadmap: commercial SaaS поверх BSL SDK (Sentry/GitLab модель)
+- **LLM cost absorption** — M1 в SaaS price; M2 transactional billing
+- **Freemium vs paid-only** — рекомендация paid-only + 14-day trial
+- **Ownership transfer в M1** — manual через support email; automated в M2
+- **LLM inference хост** — текущий prototype через subprocess к локальному `claude` CLI (см. `feedback_claude_subprocess_over_sdk.md`); для SaaS — server-side Anthropic API с prompt caching. Единственная точка design-time-cloud-LLM в архитектуре; runtime остаётся чистым
+
+### Operational gaps (continuous)
+
+- **S3 off-site backup** — сейчас только local `/var/backups/idf/` на VPS, single point of failure
+- **Sentry** free tier на auth/runtime/studio (3 environments), email alert на unhandled rejection
+- **Security audit** — CSRF, cookie flags (Secure/HttpOnly/SameSite), CORS, rate-limit tuning
+- **PG migrate runner → drizzle migrator** — все 3 плана имеют не-идемпотентный runner, второй прогон упадёт
+- **Resend deliverability metrics** после wire-up (bounce rate, DMARC alignment)
+- **Port allocation race** в studio orchestrator (`allocatePort` без mutex)
+- **Persistent `hostPort` column** в `tenants` (сейчас port reuse из deploys history — хрупко)
+- **`docs/legal/dpa-template.pdf`** + **`docs/ops/backup-recovery.md`** — минимальный processor-controller DPA для beta PM + runbook восстановления
+
+---
+
+## 11. Research state — self-hosting эксперимент, cross-stack, публикация
+
+Помимо построения формата идёт исследовательский трек: **измерение свойств самого формата** на стороне AI-вклада. Главный артефакт — self-hosting fixed-point эксперимент.
+
+### Self-hosting fixed-point experiment
+
+**Постановка.** Meta-домен (witnesses, projections, intents) выгружается в Φ; LLM получает workItems, отвечает intent'ами, эффекты валидируются обычной IDF-машиной (invariants + fold). Цель — измерить четыре гипотезы о AI-вкладе:
+
+| H | Формулировка | Статус (2026-04-29) |
+|---|---|---|
+| H1 readability ≥70% | LLM воспринимает Φ как контекст и формирует валидные intent'ы | ✓ robust across 6 runs (95–100%) |
+| H2 monotonic | invariants держат — нет валидных эффектов, ломающих формат | ✓ robust |
+| H3 self-modification | под наблюдением Φ inconsistency LLM создаёт extension через `propose_meta_intent` | partial: один раз в blind treatment (iter 5), replicability требует ≥3 прогонов |
+| H4 compounding | extension в pool → последующие задачи matching class переключаются на неё | **conditional ✓** 16/17 (treatment) vs 0/17 (control) — causal Δ +94pt |
+
+### Trajectory runs (rev. 2026-04-29)
+
+| Run | Дата | Provider | Mode | Outcome |
+|---|---|---|---|---|
+| 1–3 | 2026-04-26..28 | Opus 4.7, hinted prompts | exploratory | H1+H2 ✓; H3 partial (2× ✗ invalid/dodged, 1× ✓); H4 ✗ vacuous |
+| 4 | 2026-04-28 | Opus 4.7, hinted, dynamic `allowedIntents` | replication of meta-circular compounding | hinted ✓ 3/3 — **retracted** для causal claim'а |
+| 5 | 2026-04-28 | DeepSeek-R1:8B local (Ollama) | variance check, hinted | H1–H4 ✓ behaviourally за $0; **retracted** для causal claim'а — variance check валиден лишь как «8B следует prompt'у так же, как Opus» |
+| blind v2 | 2026-04-28 | Opus, no hints | controlled blind | H1+H2 ✓; H3 partial; H4 ✗ 0/35 |
+| **blind v3 control** | 2026-04-28 | Opus, identical workItems, без extension в pool | causal control | H4 ✗ 0/17 |
+| **blind v3 treatment** | 2026-04-28 | Opus, identical workItems, divergence только iter 5 (Φ inconsistency observation) | causal treatment | **H4 ✓ 16/17 (94%)** — iter 35 — технический CLI subprocess fail, не семантический |
+
+Результаты — `docs/experiments/results/`, blind v3 анализ — `2026-04-28T23-21-05-723Z-blindv3-analysis.md`. Retraction notes на runs 4–5 — top-of-file warnings в их analysis-документах.
+
+### Что доказано после blind v3 honestly
+
+1. **Format readability** (H1) — robust across 6 runs.
+2. **Monotonic invariants** (H2) — robust.
+3. **Self-modification at observation pressure** (H3) — works один раз; replicability needs further runs.
+4. **Conditional H4** — extension в pool'е имеет causal effect 0→16 на task re-use. Это measurable causal effect, не artefact prompt'а.
+5. **Format-level invariant pressure не bites** — postulated mechanism (cardinality `unique_per_reliability`) не сработал: `propose_witness` в control создавал rows на новых `(projectionId, slotPath)` parameters, не на seeded ones. Pressure действует на prompt-level (extension intent + description в pool), не format-level. Отдельный finding для спеки.
+
+### Что blind v3 НЕ показывает
+
+- **Не unconditional emergence.** Без extension в pool (control) — 0 self-mod самопроизвольно.
+- **Не universality по моделям.** Только Opus 4.7. R1:8B variance check был на старых hinted prompts.
+- **Не universality по target classes.** Все 17 opportunity tasks — variant одного класса (`Witness:UUID, reliability=heuristic`); возможен pattern-lock после iter 7.
+- **One run only.** Run-to-run variance unmeasured.
+- **Iter 5 control vs treatment имели разные contexts** — control был trivial filler, treatment — Φ inconsistency с counts. Confound есть; чисто измерить — нужен third arm: iter 5 с identical observation context, но без `propose_meta_intent` capability (требует prompt-level surgery).
+
+### Open research questions
+
+- **Replicability** — ≥3 прогонов с identical setup (~2-3 ч / $30 на Opus каждый)
+- **Universality по моделям** — blind protocol на R1:8B / Llama 3.2:3B / GPT-class
+- **Universality по target classes** — randomize order opportunity и filler iters; рандомные target classes
+- **Third arm** — identical observation context без extension capability
+- **Format-level pressure mechanism** — переформулировать в спеке: invariants не bite в self-hosting режиме, pressure prompt-level
+
+### Publishable thesis (Hook 1, defensible after blind v3)
+
+> IDF format makes AI contribution measurable through invariants and witnesses. When the format extends itself through `propose_meta_intent`, the resulting extension affects subsequent LLM behaviour: 16 of 17 follow-up tasks use the extension when it's in the pool, 0 of 17 when it isn't. This is **causal at the level of the workflow**, not pure emergence — extension must be visible to LLM for use.
+
+Не «meta-circular compounding emerges» (как заявлено в runs 4–5), а «conditional re-use of self-created extension is measurable and causally tied to extension visibility». Слабее прежних claim'ов, но defensible.
+
+### Format validation как отдельная research-форма
+
+Помимо self-hosting эксперимента формат проверяется структурно — три параллельные cross-stack реализации (Go / Rust / Swift, см. §8) и cross-stack-diff harness (225 pair-wise сравнений green, drift = 0). Это **слабая форма §23 axiom 5 (reader-equivalence)** — runtime-проверка, что fold(Φ) одинакового фикстура даёт изоморфный world независимо от языка реализации. Layer 3 detector (`detectReaderEquivalenceDrift`, см. §5a Phase 5) переводит axiom из спекулятивной в runtime-проверяемую — но только для gap-set'ов 4 reader'ов на одном srzeze Φ, не для rendered output.
+
+### Article track (Хабр) — «Фронтенд как формат»
+
+- **Spec:** `docs/superpowers/specs/2026-04-19-habr-article-design.md`
+- **Тезис:** UI — не компоненты и не фреймворк, а артефакт с четырьмя материализациями. LLM участвует в проектировании, не в рантайме
+- **Объём:** 18–22k знаков, инженерный тон
+- **AI-detection constraint** (см. `feedback_habr_ai_detection.md`) — Хабр отклоняет AI-текст; роль Claude — каркас + код + сырьё, prose пишет автор руками. Pre-publish gate: 2+ AI-детектора (gptzero / zerogpt) с порогом < 30% «AI-generated»
+- **Status:** design draft + research evidence (blind v3) — готовы; финальный prose не написан
+- **Связанный артефакт:** demo-tenant `demo.fold.software` (см. §10) под trafic от статьи
+
+### Files / scripts
+
+- `scripts/run-blind-experiment-v3.mjs` — blind protocol (treatment vs control, identical workItems, divergence только iter 5)
+- `scripts/run-blind-experiment.mjs` — blind v2 без hints
+- `scripts/run-self-hosting-experiment.mjs` — original hinted runner (runs 1–4)
+- `scripts/sweep-self-hosting.mjs` — model sweep (per-request provider override, для variance check)
+- `docs/experiments/results/` — все iterations (JSON), reports (.md), analyses (.md), retraction notes top-of-file на runs 4 и 5
+
+---
+
+## 12. История эволюции
 
 Хронология реализации документирована по версиям в `docs/archive/manifesto-v1.3.md` … `manifesto-v1.12.md`.
 

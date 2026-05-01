@@ -1,0 +1,92 @@
+{
+  "id": "graph-scope-dual-toggle",
+  "version": 1,
+  "status": "candidate",
+  "archetype": "canvas",
+  "trigger": {
+    "requires": [
+      {
+        "kind": "entity-field",
+        "entity": "GraphView",
+        "field": "scope",
+        "fieldKind": "enum",
+        "values": [
+          "global",
+          "local"
+        ]
+      },
+      {
+        "kind": "entity-field",
+        "entity": "GraphView",
+        "field": "centerNoteId",
+        "fieldKind": "ref-nullable"
+      },
+      {
+        "kind": "entity-field",
+        "entity": "GraphView",
+        "field": "hops",
+        "fieldKind": "number"
+      }
+    ]
+  },
+  "structure": {
+    "slot": "header",
+    "description": "Canvas with a top-level scope toggle: Global (force-directed over entire graph) ⇄ Local (k-hop neighborhood around current entity). Local mode reads `centerNoteId` from the current detail context; Global ignores it. Hop-count slider visible only in local mode.",
+    "applySource": "function apply(slots, context) {\n  // Auto-synthesized marker-only apply (§13.17 opt-c).\n  // Marks first un-marked item in slots.header with source: \"derived:graph-scope-dual-toggle\".\n  // Idempotent: skip if already marked.\n  const slot = slots?.header;\n  if (!Array.isArray(slot) || slot.length === 0) return slots;\n  const idx = slot.findIndex((x) => x && !x.source);\n  if (idx === -1) return slots;\n  const marker = \"derived:graph-scope-dual-toggle\";\n  if (slot[idx].source === marker) return slots;\n  return {\n    ...slots,\n    header: slot.map((item, i) =>\n      i === idx ? { ...item, source: marker } : item),\n  };\n}",
+    "applyKind": "marker-only-synthesized",
+    "applySynthesizedAt": 1777280149908
+  },
+  "rationale": {
+    "hypothesis": "Global graphs are visually impressive but cognitively useless past ~200 nodes — the layout becomes a hairball. Local graphs are useful for orientation but lose the macro structure. Offering both as one-click peers, with the same filter/color controls applied, lets the user zoom in/out of structure without rebuilding mental context.",
+    "evidence": [
+      {
+        "source": "obsidian",
+        "description": "Graph view has global mode + 'Local Graph' core plugin with hops + linked/unlinked filters; both share filter chips",
+        "reliability": "high"
+      },
+      {
+        "source": "roam-research",
+        "description": "Global graph + page-graph (local) with depth control",
+        "reliability": "high"
+      },
+      {
+        "source": "logseq",
+        "description": "Same dual-mode graph",
+        "reliability": "medium"
+      }
+    ],
+    "counterexample": [
+      {
+        "source": "linear",
+        "description": "No graph view at all — pattern doesn't apply to linear-process products",
+        "reliability": "high"
+      },
+      {
+        "source": "miro",
+        "description": "Single canvas without scope concept — graph is the document, not a derived view",
+        "reliability": "medium"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [
+      {
+        "domain": "notion",
+        "projection": "graph_view",
+        "reason": "If notion adds graph projection over Page.parentPageId + Block.targetPageId, dual-scope fits"
+      }
+    ],
+    "shouldNotMatch": [
+      {
+        "domain": "workflow",
+        "projection": "workflow_canvas",
+        "reason": "Workflow graph is the artifact, not a derived view; scope toggle has no meaning"
+      },
+      {
+        "domain": "invest",
+        "projection": "portfolio_detail",
+        "reason": "No relational graph between assets at user-level"
+      }
+    ]
+  }
+}

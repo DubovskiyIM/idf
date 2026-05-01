@@ -1,0 +1,87 @@
+{
+  "id": "inline-reference-or-create",
+  "version": 1,
+  "status": "candidate",
+  "archetype": "feed",
+  "trigger": {
+    "requires": [
+      {
+        "kind": "intent-creates",
+        "entity": "PageLink|*Link"
+      },
+      {
+        "kind": "intent-confirmation",
+        "value": "enter"
+      },
+      {
+        "kind": "entity-field",
+        "entity": "*Link",
+        "field": "linkKind",
+        "statusValues": [
+          "explicit",
+          "tag"
+        ]
+      }
+    ]
+  },
+  "structure": {
+    "slot": "composer",
+    "description": "Внутри composer-input pattern [[Token]] / #tag парсится в момент enter; если target-entity по title уже существует — создаётся только Link, иначе одной транзакцией создаются и target-entity, и Link. Никакого modal — flow-of-thought не прерывается.",
+    "applySource": "function apply(slots, context) {\n  // Auto-synthesized marker-only apply (§13.17 opt-c).\n  // Marks first un-marked item in slots.composer with source: \"derived:inline-reference-or-create\".\n  // Idempotent: skip if already marked.\n  const slot = slots?.composer;\n  if (!Array.isArray(slot) || slot.length === 0) return slots;\n  const idx = slot.findIndex((x) => x && !x.source);\n  if (idx === -1) return slots;\n  const marker = \"derived:inline-reference-or-create\";\n  if (slot[idx].source === marker) return slots;\n  return {\n    ...slots,\n    composer: slot.map((item, i) =>\n      i === idx ? { ...item, source: marker } : item),\n  };\n}",
+    "applyKind": "marker-only-synthesized",
+    "applySynthesizedAt": 1777280149910
+  },
+  "rationale": {
+    "hypothesis": "Классический реляционный create-link разрывает на два шага (создай страницу → создай связь), что выбивает из режима письма. Auto-create-on-link объединяет их в один confirmation, при этом сохраняя idempotency: повтор [[Same]] не дублирует target.",
+    "evidence": [
+      {
+        "source": "roam-research",
+        "description": "[[New Page]] inside block — page появляется в graph instantly, без диалога",
+        "reliability": "high"
+      },
+      {
+        "source": "obsidian",
+        "description": "Wiki-link на несуществующий файл — клик создаёт файл с таким именем",
+        "reliability": "high"
+      },
+      {
+        "source": "wikipedia",
+        "description": "Red links — конвенция «ссылка предшествует существованию»",
+        "reliability": "high"
+      }
+    ],
+    "counterexample": [
+      {
+        "source": "linear",
+        "description": "Issue-mention требует существующего Issue (по ID), создание inline невозможно",
+        "reliability": "high"
+      },
+      {
+        "source": "salesforce",
+        "description": "Lookup-fields требуют выбора из существующих — доменные ограничения сильнее flow",
+        "reliability": "medium"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [
+      {
+        "domain": "messenger",
+        "projection": "message_composer",
+        "reason": "@mention неизвестного user'а может создавать stub-User (если домен это разрешает)"
+      }
+    ],
+    "shouldNotMatch": [
+      {
+        "domain": "invest",
+        "projection": "asset_select",
+        "reason": "Asset не создаётся пользователем — берётся из external feed, inline-create семантически невалиден"
+      },
+      {
+        "domain": "booking",
+        "projection": "specialist_picker",
+        "reason": "Specialist — managed entity, нельзя создавать ad-hoc через [[name]]"
+      }
+    ]
+  }
+}

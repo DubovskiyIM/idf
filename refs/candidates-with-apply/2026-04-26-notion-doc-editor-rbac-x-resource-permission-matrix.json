@@ -1,0 +1,77 @@
+{
+  "id": "rbac-x-resource-permission-matrix",
+  "version": 1,
+  "status": "candidate",
+  "archetype": "detail",
+  "trigger": {
+    "requires": [
+      {
+        "kind": "has-role",
+        "min": 4
+      },
+      {
+        "kind": "entity-field",
+        "field": "level",
+        "values-include": [
+          "full_access",
+          "can_edit",
+          "can_view"
+        ]
+      },
+      {
+        "kind": "sub-entity-exists",
+        "of": "Permission"
+      }
+    ]
+  },
+  "structure": {
+    "slot": "sections",
+    "description": "Effective access вычисляется как min(workspace-role × resource-permission-level); UI показывает оба измерения отдельно: top — workspace-role badge у member-а, ниже — per-resource override level. Нет single 'role' enum, есть orthogonal axes.",
+    "applySource": "function apply(slots, context) {\n  // Auto-synthesized marker-only apply (§13.17 opt-c).\n  // Marks first un-marked item in slots.sections with source: \"derived:rbac-x-resource-permission-matrix\".\n  // Idempotent: skip if already marked.\n  const slot = slots?.sections;\n  if (!Array.isArray(slot) || slot.length === 0) return slots;\n  const idx = slot.findIndex((x) => x && !x.source);\n  if (idx === -1) return slots;\n  const marker = \"derived:rbac-x-resource-permission-matrix\";\n  if (slot[idx].source === marker) return slots;\n  return {\n    ...slots,\n    sections: slot.map((item, i) =>\n      i === idx ? { ...item, source: marker } : item),\n  };\n}",
+    "applyKind": "marker-only-synthesized",
+    "applySynthesizedAt": 1777280149907
+  },
+  "rationale": {
+    "hypothesis": "Single-role enum (admin/editor/viewer) не масштабируется, когда нужно 'editor workspace-wide, но viewer на одной странице'. Two-tier matrix — стандартный enterprise-RBAC паттерн (Google Drive, GitHub orgs/repos), даёт fine-grained control без role-explosion.",
+    "evidence": [
+      {
+        "source": "notion",
+        "description": "Member role + per-page permission level",
+        "reliability": "high"
+      },
+      {
+        "source": "github",
+        "description": "Org role × repo permission",
+        "reliability": "high"
+      },
+      {
+        "source": "google-drive",
+        "description": "Account-level + per-file sharing",
+        "reliability": "high"
+      }
+    ],
+    "counterexample": [
+      {
+        "source": "lifequest",
+        "description": "Solo-domain, нет co-access — single-role избыточен",
+        "reliability": "high"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [
+      {
+        "domain": "notion",
+        "projection": "page_permissions",
+        "reason": "5 ролей + PagePermission.level 5-вариантов"
+      }
+    ],
+    "shouldNotMatch": [
+      {
+        "domain": "lifequest",
+        "projection": "user_settings",
+        "reason": "Single-user, нет matrix"
+      }
+    ]
+  }
+}

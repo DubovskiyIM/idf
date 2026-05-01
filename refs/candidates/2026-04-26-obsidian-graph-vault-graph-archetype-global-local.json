@@ -1,0 +1,75 @@
+{
+  "id": "graph-archetype-global-local",
+  "version": 1,
+  "status": "candidate",
+  "archetype": "canvas",
+  "trigger": {
+    "requires": [
+      {
+        "kind": "entity-kind",
+        "value": "GraphNode"
+      },
+      {
+        "kind": "entity-kind",
+        "value": "GraphEdge"
+      },
+      {
+        "kind": "intent-effect",
+        "α": "add",
+        "creates": "Tab"
+      }
+    ]
+  },
+  "structure": {
+    "slot": "body",
+    "description": "Force-directed canvas как самостоятельный archetype с двумя проекциями: global (весь vault) и local (per-entity, 1-2 hops от focus-node). Filter chips, color-encoding rules, click-node → open detail."
+  },
+  "rationale": {
+    "hypothesis": "Когда домен имеет explicit relation-граф (WikiLink/Backlink), таблица не показывает топологию — кластеры и orphans невидимы. Graph archetype делает structure first-class. Local-вариант (1-2 hops) — масштабируемая альтернатива global-graph для крупных датасетов.",
+    "evidence": [
+      {
+        "source": "obsidian",
+        "description": "Global graph view + local graph per-note с radius slider",
+        "reliability": "high"
+      },
+      {
+        "source": "logseq",
+        "description": "Аналогичный dual graph (all-pages / page-level)",
+        "reliability": "high"
+      },
+      {
+        "source": "kumu.io",
+        "description": "Network maps с focus-node + neighbours, домейн-agnostic паттерн",
+        "reliability": "medium"
+      }
+    ],
+    "counterexample": [
+      {
+        "source": "delivery",
+        "description": "Order'ы не имеют meaningful relation-графа — graph view был бы шумом",
+        "reliability": "high"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [
+      {
+        "domain": "obsidian",
+        "projection": "global_graph",
+        "reason": "GraphNode + GraphEdge + view_global_graph/view_local_graph intents"
+      }
+    ],
+    "shouldNotMatch": [
+      {
+        "domain": "booking",
+        "projection": "specialist_catalog",
+        "reason": "Specialists не имеют explicit relation-графа"
+      },
+      {
+        "domain": "invest",
+        "projection": "portfolio_dashboard",
+        "reason": "Positions не образуют граф; co-movement матрица — другой archetype"
+      }
+    ]
+  }
+}

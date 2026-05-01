@@ -1,0 +1,86 @@
+{
+  "id": "linkify-unlinked-mention",
+  "version": 1,
+  "status": "candidate",
+  "archetype": "detail",
+  "trigger": {
+    "requires": [
+      {
+        "kind": "entity-field",
+        "entity": "*Link|*Reference",
+        "field": "linkKind|status",
+        "statusValues": [
+          "unlinked"
+        ]
+      },
+      {
+        "kind": "intent-creates",
+        "entity": "*Link"
+      },
+      {
+        "kind": "sub-entity-exists",
+        "parent": "Page|*Doc"
+      }
+    ]
+  },
+  "structure": {
+    "slot": "footer",
+    "description": "Footer-секция «Unlinked References» сканирует mainEntity на plain-text mentions заголовка/алиасов и предлагает promote-to-explicit одним кликом. Каждый кандидат — кликабельная строка, которая трансформирует unlinked-токен в explicit Link, мутируя контент исходного блока.",
+    "applySource": "function apply(slots, context) {\n  // Auto-synthesized marker-only apply (§13.17 opt-c).\n  // Marks first un-marked item in slots.footer with source: \"derived:linkify-unlinked-mention\".\n  // Idempotent: skip if already marked.\n  const slot = slots?.footer;\n  if (!Array.isArray(slot) || slot.length === 0) return slots;\n  const idx = slot.findIndex((x) => x && !x.source);\n  if (idx === -1) return slots;\n  const marker = \"derived:linkify-unlinked-mention\";\n  if (slot[idx].source === marker) return slots;\n  return {\n    ...slots,\n    footer: slot.map((item, i) =>\n      i === idx ? { ...item, source: marker } : item),\n  };\n}",
+    "applyKind": "marker-only-synthesized",
+    "applySynthesizedAt": 1777280149910
+  },
+  "rationale": {
+    "hypothesis": "Граф знаний проигрывает, когда mention существует как plain text (старые заметки, импорт). Surfacing их как «найденные, но непривязанные» делает migration explicit-by-default ленивой и user-driven, без batch-rewrite.",
+    "evidence": [
+      {
+        "source": "roam-research",
+        "description": "Unlinked References footer на каждой странице, 1-click linkify",
+        "reliability": "high"
+      },
+      {
+        "source": "logseq",
+        "description": "Unlinked references panel идентичный механизм",
+        "reliability": "high"
+      },
+      {
+        "source": "obsidian",
+        "description": "Backlinks pane имеет вкладку «Unlinked mentions»",
+        "reliability": "high"
+      }
+    ],
+    "counterexample": [
+      {
+        "source": "notion",
+        "description": "Notion не различает linked/unlinked — mention рендерится как text, без footer-предложения",
+        "reliability": "high"
+      },
+      {
+        "source": "google-docs",
+        "description": "Plain-text mentions не surface'ятся отдельно, граф не первичен",
+        "reliability": "high"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [
+      {
+        "domain": "messenger",
+        "projection": "conversation_detail",
+        "reason": "Если домен моделирует @mention как unlinked-fallback (free-text @bob → bob не подписан), footer может предложить invite/link"
+      }
+    ],
+    "shouldNotMatch": [
+      {
+        "domain": "sales",
+        "projection": "listing_detail",
+        "reason": "Описание listing не имеет plain-text mention'ов других listings — нет графа"
+      },
+      {
+        "domain": "booking",
+        "projection": "service_detail",
+        "reason": "Services не ссылаются друг на друга текстом"
+      }
+    ]
+  }
+}

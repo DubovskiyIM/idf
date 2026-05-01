@@ -1,0 +1,73 @@
+{
+  "id": "contextual-ai-prompt-bar",
+  "version": 1,
+  "status": "candidate",
+  "archetype": "detail",
+  "trigger": {
+    "requires": [
+      {
+        "kind": "entity-field",
+        "entity": "AiTask",
+        "field": "contextBlockId"
+      },
+      {
+        "kind": "intent-creates",
+        "creates": "AiTask"
+      },
+      {
+        "kind": "intent-count",
+        "filter": {
+          "creates": "AiTask"
+        },
+        "min": 3
+      }
+    ]
+  },
+  "structure": {
+    "slot": "overlay",
+    "description": "Trigger (slash /ai или Cmd+J на selection) открывает inline prompt-bar над/под контекстным блоком; submit создаёт AiTask с contextBlockId, result рендерится как persistent block с regenerate/accept/discard CTAs."
+  },
+  "rationale": {
+    "hypothesis": "AI-actions нужны in-place над текущим блоком/выделением, а не в отдельной панели; contextual prompt-bar сохраняет flow и автоматически захватывает context (selected text, current block) без явной передачи.",
+    "evidence": [
+      {
+        "source": "notion",
+        "description": "Cmd+J открывает AI prompt над текущим блоком",
+        "reliability": "high"
+      },
+      {
+        "source": "github-copilot",
+        "description": "Cmd+I inline-chat в editor с file/selection context",
+        "reliability": "high"
+      },
+      {
+        "source": "linear",
+        "description": "AI-suggest в comment composer",
+        "reliability": "medium"
+      }
+    ],
+    "counterexample": [
+      {
+        "source": "chatgpt",
+        "description": "Standalone chat — отдельный canvas, без contextual anchor",
+        "reliability": "high"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [
+      {
+        "domain": "notion",
+        "projection": "page_detail",
+        "reason": "AiTask.contextBlockId + 4 ai_* create-intents"
+      }
+    ],
+    "shouldNotMatch": [
+      {
+        "domain": "invest",
+        "projection": "portfolio_detail",
+        "reason": "Нет AiTask entity и contextual AI-flow"
+      }
+    ]
+  }
+}

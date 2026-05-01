@@ -1,0 +1,70 @@
+{
+  "id": "inline-formula-error-affordance",
+  "version": 1,
+  "status": "candidate",
+  "archetype": null,
+  "trigger": {
+    "requires": [
+      {
+        "kind": "entity-field",
+        "entity": "*",
+        "field": "*",
+        "fieldKind": "expression"
+      },
+      {
+        "kind": "field-role-present",
+        "role": "expression-with-parser"
+      }
+    ]
+  },
+  "structure": {
+    "slot": "overlay",
+    "description": "Поле formula рендерится с inline error-state: на parser-fail подсвечивается невалидный фрагмент красным wavy underline; hover показывает tooltip с конкретным parser-сообщением и position. Error не блокирует ввод — пользователь может продолжить редактирование.",
+    "applySource": "function apply(slots, context) {\n  // Auto-synthesized marker-only apply (§13.17 opt-c).\n  // Marks first un-marked item in slots.overlay with source: \"derived:inline-formula-error-affordance\".\n  // Idempotent: skip if already marked.\n  const slot = slots?.overlay;\n  if (!Array.isArray(slot) || slot.length === 0) return slots;\n  const idx = slot.findIndex((x) => x && !x.source);\n  if (idx === -1) return slots;\n  const marker = \"derived:inline-formula-error-affordance\";\n  if (slot[idx].source === marker) return slots;\n  return {\n    ...slots,\n    overlay: slot.map((item, i) =>\n      i === idx ? { ...item, source: marker } : item),\n  };\n}",
+    "applyKind": "marker-only-synthesized",
+    "applySynthesizedAt": 1777280149910
+  },
+  "rationale": {
+    "hypothesis": "Formula-ошибки сложно описать в общем error-баннере — пользователь не знает, где именно проблема. Inline-подсветка фрагмента + точное parser-сообщение в tooltip — паттерн из IDE (LSP), который должен переноситься в любой no-code expression-editor.",
+    "evidence": [
+      {
+        "source": "coda",
+        "description": "Formula errors с red underline + hover-tooltip parser msg",
+        "reliability": "high"
+      },
+      {
+        "source": "vscode",
+        "description": "LSP-diagnostics inline в editor",
+        "reliability": "high"
+      },
+      {
+        "source": "airtable",
+        "description": "Formula error inline в formula-bar",
+        "reliability": "high"
+      }
+    ],
+    "counterexample": [
+      {
+        "source": "form-validation",
+        "description": "Plain text-input с error под полем — но там нет syntax",
+        "reliability": "medium"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [
+      {
+        "domain": "automation",
+        "projection": "automation_detail",
+        "reason": "Condition formula нуждается в inline-ошибках"
+      }
+    ],
+    "shouldNotMatch": [
+      {
+        "domain": "messenger",
+        "projection": "message_compose",
+        "reason": "Message-content не expression, нет parser'а"
+      }
+    ]
+  }
+}

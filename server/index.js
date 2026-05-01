@@ -16,6 +16,16 @@ app.use(express.json({ limit: "10mb" }));
 
 const workflowsRouter = require("./routes/workflows.js");
 
+// ─── Demo-tenant guards (no-op когда DEMO_MODE !== "1") ───
+// readOnlyGuard блокирует mutating-методы без X-Demo-Curator-Token,
+// rateLimit ограничивает per-IP, sseCap — общее число SSE-подключений.
+const { readOnlyGuard, rateLimit, sseCap, getStats: getDemoStats } = require("./demo-middleware.js");
+app.use("/api/effects", readOnlyGuard, rateLimit);
+app.use("/api/effects/stream", sseCap);
+app.use("/api/meta/llm", readOnlyGuard, rateLimit);
+app.use("/api/meta/llm/runs", sseCap);
+app.get("/api/demo/stats", (_req, res) => res.json(getDemoStats()));
+
 app.use("/api/effects", effectsRouter);
 app.use("/api", artifactsRouter);
 app.use("/api/workflows", workflowsRouter);
@@ -51,6 +61,17 @@ app.use("/api/patterns", makePatternsRouter());
 // LLM enrichment — кристаллизация через Claude API
 const crystallizeRouter = require("./routes/crystallize.js");
 app.use("/api/crystallize", crystallizeRouter);
+
+// LLM bridge для мета-домена (§13.17): synthesize-apply через Claude CLI
+// subprocess. POST /api/meta/llm/synthesize-apply → 202 + runId,
+// GET /api/meta/llm/runs/:runId/stream → SSE прогресс. Эффекты попадают
+// в Φ через тот же effect-pipeline, что и REST/WS.
+const { makeMetaLlmRouter } = require("./routes/meta-llm.js");
+const { ingestEffect: hostIngestEffect } = require("./effect-pipeline.js");
+app.use("/api/meta/llm", makeMetaLlmRouter({
+  ingestEffect: hostIngestEffect,
+  broadcast: effectsRouter.broadcast,
+}));
 
 const { startSync, setBroadcast } = require("./boundary.js");
 const { executeWorkflow, setBroadcast: setExecBroadcast } = require("./executor.js");

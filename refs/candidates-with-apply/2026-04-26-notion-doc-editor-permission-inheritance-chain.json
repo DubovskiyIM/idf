@@ -1,0 +1,74 @@
+{
+  "id": "permission-inheritance-chain",
+  "version": 1,
+  "status": "candidate",
+  "archetype": "detail",
+  "trigger": {
+    "requires": [
+      {
+        "kind": "entity-field",
+        "field": "level",
+        "values-include": "no_access"
+      },
+      {
+        "kind": "entity-field",
+        "field": "inheritedFromPageId"
+      },
+      {
+        "kind": "entity-field",
+        "field": "parentPageId",
+        "self-ref": true
+      }
+    ]
+  },
+  "structure": {
+    "slot": "sections",
+    "description": "Permission-section показывает effective level + provenance (inherited from <ancestor> | explicit on this page); explicit override на любом уровне обрывает наследование вверх. Принципалы группируются по типу (member/group/guest/public).",
+    "applySource": "function apply(slots, context) {\n  // Auto-synthesized marker-only apply (§13.17 opt-c).\n  // Marks first un-marked item in slots.sections with source: \"derived:permission-inheritance-chain\".\n  // Idempotent: skip if already marked.\n  const slot = slots?.sections;\n  if (!Array.isArray(slot) || slot.length === 0) return slots;\n  const idx = slot.findIndex((x) => x && !x.source);\n  if (idx === -1) return slots;\n  const marker = \"derived:permission-inheritance-chain\";\n  if (slot[idx].source === marker) return slots;\n  return {\n    ...slots,\n    sections: slot.map((item, i) =>\n      i === idx ? { ...item, source: marker } : item),\n  };\n}",
+    "applyKind": "marker-only-synthesized",
+    "applySynthesizedAt": 1777280149906
+  },
+  "rationale": {
+    "hypothesis": "Per-resource ACL не масштабируется; pure inheritance даёт unmanageable surprise (унаследованный access невидим). Inheritance-with-override + visible provenance — единственный способ отлаживать 'почему этот человек видит/не видит'.",
+    "evidence": [
+      {
+        "source": "notion",
+        "description": "Share-popup показывает inherited from parent + explicit overrides",
+        "reliability": "high"
+      },
+      {
+        "source": "google-drive",
+        "description": "Folder-inheritance + per-file override + 'people with access' provenance",
+        "reliability": "high"
+      },
+      {
+        "source": "confluence",
+        "description": "Page restrictions inheritance from space → page → child",
+        "reliability": "high"
+      }
+    ],
+    "counterexample": [
+      {
+        "source": "linear",
+        "description": "Workspace-flat permission, нет hierarchy — простая модель достаточна",
+        "reliability": "medium"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [
+      {
+        "domain": "notion",
+        "projection": "page_permissions",
+        "reason": "PagePermission.inheritedFromPageId + Page tree"
+      }
+    ],
+    "shouldNotMatch": [
+      {
+        "domain": "messenger",
+        "projection": "conversation_participants",
+        "reason": "Participation flat, без cascading inheritance"
+      }
+    ]
+  }
+}

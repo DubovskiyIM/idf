@@ -1,0 +1,75 @@
+{
+  "id": "inline-reference-or-create",
+  "version": 1,
+  "status": "candidate",
+  "archetype": null,
+  "trigger": {
+    "requires": [
+      {
+        "kind": "intent-creates",
+        "creates": "WikiLink"
+      },
+      {
+        "kind": "entity-field",
+        "entity": "WikiLink",
+        "field": "isResolved"
+      },
+      {
+        "kind": "intent-confirmation",
+        "value": "enter"
+      }
+    ]
+  },
+  "structure": {
+    "slot": "composer",
+    "description": "Inline-синтаксис ([[ … ]]) внутри редактора: существующий target → ссылка, отсутствующий → lazy-create новой сущности с тем же именем. Один gesture, два разных α: link vs create — выбор по факту разрешения reference."
+  },
+  "rationale": {
+    "hypothesis": "Разделение «найти существующее» и «создать новое» на два разных диалога ломает поток письма. Lazy-creation сливает их в один gesture: пишешь имя — если есть, ссылаешься; если нет, создаёшь. Стоимость промаха близка к нулю (можно ввести любое имя).",
+    "evidence": [
+      {
+        "source": "obsidian",
+        "description": "[[Note Name]] — клик создаёт link или новую заметку",
+        "reliability": "high"
+      },
+      {
+        "source": "notion",
+        "description": "@-mention page: «+ Create New Page» в dropdown суггестов",
+        "reliability": "high"
+      },
+      {
+        "source": "roam-research",
+        "description": "Block-level [[backref]] с lazy creation — концептуальный прародитель",
+        "reliability": "high"
+      }
+    ],
+    "counterexample": [
+      {
+        "source": "github-issue-mentions",
+        "description": "#123 — только existing references, lazy-create issue из mention был бы опасен",
+        "reliability": "high"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [
+      {
+        "domain": "obsidian",
+        "projection": "note_detail",
+        "reason": "WikiLink.isResolved + intent insert_wikilink с creates=WikiLink и lazy fallback"
+      }
+    ],
+    "shouldNotMatch": [
+      {
+        "domain": "invest",
+        "projection": "position_detail",
+        "reason": "Asset references детерминированы — нельзя «создать» новый ticker через mention"
+      },
+      {
+        "domain": "compliance",
+        "projection": "control_detail",
+        "reason": "Lazy creation Control'а из journal entry violates SoD"
+      }
+    ]
+  }
+}

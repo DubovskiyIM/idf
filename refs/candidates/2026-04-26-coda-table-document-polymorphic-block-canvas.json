@@ -1,0 +1,73 @@
+{
+  "id": "polymorphic-block-canvas",
+  "version": 1,
+  "status": "candidate",
+  "archetype": "detail",
+  "trigger": {
+    "requires": [
+      {
+        "kind": "entity-kind",
+        "entity": "Block",
+        "kind_value": "polymorphic"
+      },
+      {
+        "kind": "sub-entity-exists",
+        "parent": "Page",
+        "child": "Block",
+        "ordered": true
+      },
+      {
+        "kind": "intent-creates",
+        "creates": "Block",
+        "withDiscriminator": "kind"
+      }
+    ]
+  },
+  "structure": {
+    "slot": "body",
+    "description": "Detail рендерит ordered list polymorphic-дочерних блоков, где каждый вариант discriminator'а получает свой rendering (текст / таблица / AI / embed). Slash-меню вставки + drag-handle для reorder. Заменяет subcollection-секцию на vertical canvas."
+  },
+  "rationale": {
+    "hypothesis": "Heterogeneous content (текст + таблица + AI + кнопка на одной странице) не укладывается в subcollection — каждая под-сущность должна рендериться по своему variant'у, а не через табличную форму. Vertical-canvas + slash-menu быстрее всех других composer-форм.",
+    "evidence": [
+      {
+        "source": "coda",
+        "description": "Page = vertical stream of blocks разных kind, slash-menu вставки",
+        "reliability": "high"
+      },
+      {
+        "source": "notion",
+        "description": "Same model: page как ordered list polymorphic blocks",
+        "reliability": "high"
+      },
+      {
+        "source": "obsidian",
+        "description": "Markdown-stream с inline embed/canvas",
+        "reliability": "medium"
+      }
+    ],
+    "counterexample": [
+      {
+        "source": "google-docs",
+        "description": "Linear text без дискретных blocks — discriminator не нужен",
+        "reliability": "high"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [
+      {
+        "domain": "workflow",
+        "projection": "workflow_detail",
+        "reason": "Node — polymorphic дочерние с kind, ordered"
+      }
+    ],
+    "shouldNotMatch": [
+      {
+        "domain": "booking",
+        "projection": "specialist_detail",
+        "reason": "Service — плоская child-collection без polymorphism"
+      }
+    ]
+  }
+}

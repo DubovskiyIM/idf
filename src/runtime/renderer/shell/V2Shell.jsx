@@ -1,21 +1,14 @@
 import { useMemo, useState, useCallback, useEffect } from "react";
 import { usePersonalPrefs, prefsToStyle } from "../personal/usePersonalPrefs.js";
-import { ProjectionRendererV2, useProjectionRoute, Breadcrumbs, getAdaptedComponent, ViewSwitcher } from "@intent-driven/renderer";
+import { ProjectionRendererV2, useProjectionRoute, Breadcrumbs, getAdaptedComponent, ViewSwitcher, AdminShell } from "@intent-driven/renderer";
 import { crystallizeV2, generateEditProjections, deriveProjections, isProjectionAvailableForRole } from "@intent-driven/core";
 import BottomTabs from "./BottomTabs.jsx";
+import HeaderBar from "./HeaderBar.jsx";
 import PatternInspector from "./PatternInspector.jsx";
 import CrystallizeInspector from "./CrystallizeInspector.jsx";
 import MaterializationsViewer from "./MaterializationsViewer.jsx";
 import XrayHUD from "./XrayHUD.jsx";
 import { humanizeProjectionId } from "./humanizeProjectionId.js";
-
-const UI_KIT_OPTIONS = [
-  { value: null, label: "авто" },
-  { value: "mantine", label: "Mantine" },
-  { value: "shadcn", label: "Doodle" },
-  { value: "apple", label: "Apple" },
-  { value: "antd", label: "AntD" },
-];
 
 const ROLE_LABELS = {
   customer: "Заказчик", executor: "Исполнитель",
@@ -110,6 +103,111 @@ export default function V2Shell({
     return names;
   }, [allProjections]);
 
+  /**
+   * Entity-aware breadcrumb labels — если projection это detail с idParam,
+   * и в world есть instance под этим id, показываем instance primary-title
+   * вместо projection-level имени. Для метадата-доменов (Gravitino) это
+   * даёт «Metalakes / prod_metalake / Catalogs / hive» вместо
+   * «Metalakes / Metalake / Schemas / Schema».
+   *
+   * Key: `${projectionId}:${idParamValue}` → entity title.
+   * Compute on-demand через lookup в world по projection.mainEntity
+   * и instance.id === idParamValue. Primary-title поле находим через
+   * inferFieldRole (первое поле с role "primary-title" / "title" / "name").
+   *
+   * Fallback: projection.name (base projectionNames map).
+   */
+  const instanceLabels = useMemo(() => {
+    if (!world || !allProjections) return {};
+    const labels = {};
+    for (const [id, proj] of Object.entries(allProjections)) {
+      if (proj.kind !== "detail") continue;
+      const idParam = proj.idParam;
+      const mainEntity = proj.mainEntity;
+      if (!idParam || !mainEntity) continue;
+      // Collection name — camelCase plural (metalakes / catalogs / ...).
+      const collection = mainEntity.charAt(0).toLowerCase() + mainEntity.slice(1) + "s";
+      const items = Array.isArray(world[collection]) ? world[collection] : [];
+      if (items.length === 0) continue;
+      // Primary-title field — ищем в ontology entities
+      const entity = domain.ONTOLOGY?.entities?.[mainEntity];
+      const fields = entity?.fields;
+      let titleField = "name";
+      if (fields && typeof fields === "object" && !Array.isArray(fields)) {
+        for (const [fname, fdef] of Object.entries(fields)) {
+          if (fdef?.role === "primary-title" || fdef?.fieldRole === "primary-title") {
+            titleField = fname; break;
+          }
+        }
+        if (!fields[titleField] && fields.title) titleField = "title";
+        if (!fields[titleField] && fields.label) titleField = "label";
+      }
+      for (const item of items) {
+        const key = `${id}:${item.id}`;
+        const title = item[titleField];
+        if (typeof title === "string" && title) labels[key] = title;
+      }
+    }
+    return labels;
+  }, [world, allProjections, domain.ONTOLOGY]);
+
+  /**
+   * Breadcrumb-specific override of projectionNames. Для каждого crumb'а
+   * в visible path (history + current) берём instance-specific label если
+   * доступен. Fallback на projectionNames map. Эффект: на metalake_detail
+   * с params.metalakeId=m1 — показываем "prod_metalake", а не "Metalake".
+   *
+   * Потенциальный collision: если в path два crumb'а с одним projectionId
+   * (нечасто для hierarchical nav, но возможно в истории back-forward) —
+   * последний override wins. Для текущих Gravitino flows conflict'ов нет.
+   */
+  /**
+   * Dedup consecutive identical crumb'ы (same projectionId + same params).
+   * SDK Breadcrumbs primitive рендерит [...history, current] как есть; на
+   * deep-tree nav (Keycloak Realm hierarchy) можно несколько раз клик'нуть
+   * "наверх" → один и тот же realm_list пишется в history N раз → trail
+   * выглядит «Realms / Realms / Realms / Group / Group». Consecutive
+   * dedup сохраняет back-forward semantics (back на N-1 уровень) и
+   * убирает визуальный мусор.
+   *
+   * G-K-13: SDK PR должен сделать dedup в Breadcrumbs primitive или в
+   * useProjectionRoute (на навигационной стороне).
+   */
+  const dedupedHistory = useMemo(() => {
+    // G-K-13 + G-K-21: deep nav (Group → Organization → Group) даёт
+    // breadcrumb «Группы / Organizations / Группы / Group» даже после
+    // consecutive-dedup. Aggressive: dedup по (projectionId+params) с
+    // СОХРАНЕНИЕМ только ПОСЛЕДНЕГО occurrence — для нелинейного nav
+    // визуальный trail чище, back-семантика страдает (но в AdminShell
+    // back редок — used sidebar). SDK PR должен закрыть для всех flows.
+    const seenIndex = new Map();
+    (history || []).forEach((crumb, i) => {
+      const key = `${crumb.projectionId}:${JSON.stringify(crumb.params || {})}`;
+      seenIndex.set(key, i);
+    });
+    return (history || []).filter((crumb, i) => {
+      const key = `${crumb.projectionId}:${JSON.stringify(crumb.params || {})}`;
+      return seenIndex.get(key) === i; // только последнее occurrence
+    });
+  }, [history]);
+
+  const crumbNames = useMemo(() => {
+    if (!current) return projectionNames;
+    const base = { ...projectionNames };
+    const allCrumbs = [...(history || []), current];
+    for (const crumb of allCrumbs) {
+      if (!crumb?.params) continue;
+      const proj = allProjections[crumb.projectionId];
+      const idParam = proj?.idParam;
+      const idValue = idParam ? crumb.params[idParam] : null;
+      if (!idValue) continue;
+      const key = `${crumb.projectionId}:${idValue}`;
+      const instanceLabel = instanceLabels[key];
+      if (instanceLabel) base[crumb.projectionId] = instanceLabel;
+    }
+    return base;
+  }, [projectionNames, history, current, instanceLabels, allProjections]);
+
   // Viewer context для wrappedExec в ProjectionRendererV2 — подставляется
   // в ctx каждого exec-вызова. Виртуальный viewer: domain-runtime сами
   // решают, что такое «я» (booking — client, planning — participant и т.д.).
@@ -124,6 +222,34 @@ export default function V2Shell({
     if (typeof viewer === "string") return { id: viewer, name: viewer };
     return viewer;
   }, [viewer]);
+
+  /**
+   * Stage 7 (P-K-B): host-side probe для Wizard step.testConnection.
+   * Domain может предоставить `domain.testConnectionHandlers[intentId]` —
+   * async function(values) → Promise<{ok, message?}>. Если handler не
+   * задан — возвращаем graceful error (Wizard покажет "✗ Test not implemented").
+   *
+   * Для Keycloak IdP endpoints probe: домен может реализовать OIDC
+   * discovery / SAML metadata GET. В dogfood — мокируем через timeout.
+   */
+  const handleTestConnection = useCallback(async (intentId, values) => {
+    const handlers = domain.TEST_CONNECTION_HANDLERS || {};
+    const handler = handlers[intentId];
+    if (typeof handler !== "function") {
+      return {
+        ok: false,
+        message: `testConnection "${intentId}" не реализован в домене`,
+      };
+    }
+    try {
+      return await handler(values);
+    } catch (err) {
+      return {
+        ok: false,
+        message: err?.message || "Probe failed",
+      };
+    }
+  }, [domain]);
 
   // Role-switcher + UI-kit («слой») switcher — dev-toolbar для работы
   // с прототипом. Role-switcher показывается, когда домен определяет
@@ -218,66 +344,18 @@ export default function V2Shell({
   const onChangeKit = useCallback((v) => setPref("uiKit", v), [setPref]);
 
   const toolbarBar = (
-    <div style={{
-      display: "flex", alignItems: "center", gap: 16,
-      padding: "6px 14px",
-      background: "var(--idf-card, #f8f9fa)",
-      borderBottom: "1px solid var(--idf-border, #e9ecef)",
-      fontSize: 12, flexWrap: "wrap",
-    }}>
-      {hasRoleSwitch && (
-        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-          <span style={{ color: "var(--idf-text-muted, #868e96)", fontWeight: 500 }}>Роль:</span>
-          <div style={{
-            display: "flex", gap: 2, padding: 2,
-            borderRadius: 6, background: "var(--idf-surface, #e9ecef)",
-          }}>
-            {roleOptions.map(({ role, label }) => (
-              <button
-                key={role}
-                type="button"
-                onClick={() => handleRoleSwitch(role)}
-                style={{
-                  border: "none",
-                  padding: "4px 12px",
-                  borderRadius: 4,
-                  cursor: "pointer",
-                  fontSize: 12,
-                  fontWeight: 500,
-                  background: activeRole === role ? "var(--idf-primary, #228be6)" : "transparent",
-                  color: activeRole === role ? "white" : "var(--idf-text, #495057)",
-                }}
-              >{label}</button>
-            ))}
-          </div>
-        </div>
-      )}
-      <div style={{ display: "flex", alignItems: "center", gap: 8, marginLeft: hasRoleSwitch ? 0 : "auto" }}>
-        <span style={{ color: "var(--idf-text-muted, #868e96)", fontWeight: 500 }}>Слой:</span>
-        <div style={{
-          display: "flex", gap: 2, padding: 2,
-          borderRadius: 6, background: "var(--idf-surface, #e9ecef)",
-        }}>
-          {UI_KIT_OPTIONS.map(({ value, label }) => (
-            <button
-              key={value ?? "auto"}
-              type="button"
-              onClick={() => onChangeKit(value)}
-              style={{
-                border: "none",
-                padding: "4px 10px",
-                borderRadius: 4,
-                cursor: "pointer",
-                fontSize: 12,
-                fontWeight: 500,
-                background: currentKit === value ? "var(--idf-primary, #228be6)" : "transparent",
-                color: currentKit === value ? "white" : "var(--idf-text, #495057)",
-              }}
-            >{label}</button>
-          ))}
-        </div>
-      </div>
-    </div>
+    <HeaderBar
+      viewer={viewer}
+      onLogout={onLogout}
+      activeRole={activeRole}
+      roleOptions={hasRoleSwitch ? roleOptions : []}
+      onSwitchRole={handleRoleSwitch}
+      currentKit={currentKit}
+      onChangeKit={onChangeKit}
+      prefs={prefs}
+      setPref={setPref}
+      resetPrefs={resetPrefs}
+    />
   );
 
   // Deep-link ?inspect=<patternId> — читается один раз при первом mount.
@@ -456,11 +534,11 @@ export default function V2Shell({
         {!isOnRoot && (
           <div style={{ flex: 1 }}>
             <Breadcrumbs
-              history={history}
+              history={dedupedHistory}
               current={current}
               canGoBack={canGoBack}
               onBack={back}
-              projectionNames={projectionNames}
+              projectionNames={crumbNames}
             />
           </div>
         )}
@@ -513,6 +591,7 @@ export default function V2Shell({
             world={worldWithRoute}
             exec={wrappedExec}
             execBatch={wrappedExecBatch}
+            testConnection={handleTestConnection}
             viewer={viewerObj}
             viewerContext={viewerContext}
             routeParams={current.params}
@@ -535,6 +614,123 @@ export default function V2Shell({
 
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const isMobile = typeof window !== "undefined" && window.innerWidth < 768;
+
+  // G-K-14: AdminShell mode (persistent sidebar tree + body) — для admin-style
+  // доменов (Keycloak / Gravitino / Argo / Grafana). Активируется через
+  // domain.SHELL.layout === "persistentSidebar". Tree строится из
+  // ROOT_PROJECTIONS + world-instances + R8 hubSections рекурсивно.
+  const useAdminShell = domain.SHELL?.layout === "persistentSidebar";
+
+  const adminTree = useMemo(() => {
+    if (!useAdminShell) return null;
+    return rootProjections.map(rootId => {
+      const rootArt = artifacts[rootId];
+      const rootProj = allProjections[rootId];
+      const mainEntity = rootArt?.mainEntity || rootProj?.mainEntity;
+      const node = {
+        id: rootId,
+        label: projectionNames[rootId] || rootId,
+        projectionId: rootId,
+      };
+      if (!mainEntity) return node;
+      // Instance-level узлы из world
+      const items = (world && world[mainEntity]) || [];
+      const detailId = `${mainEntity.toLowerCase()}_detail`;
+      const detailArt = artifacts[detailId];
+      const idParam = detailArt?.idParam || allProjections[detailId]?.idParam || `${mainEntity.toLowerCase()}Id`;
+      if (!detailArt || items.length === 0) return node;
+      node.children = items.map(item => {
+        const itemId = item.id || item[idParam] || item.name;
+        const label = item.realm || item.displayName || item.name || item.username || item.alias || itemId;
+        const itemNode = {
+          id: `${detailId}:${itemId}`,
+          label,
+          projectionId: detailId,
+          params: { [idParam]: itemId },
+        };
+        // Sub-children из hubSections (R8). G-K-18 v2: prefix parent ТОЛЬКО
+        // если parent label короткий (≤16 chars). Длинные auto-IDs (типа
+        // realm_1776947407606_ev2y от createRealm без displayName) делают
+        // sidebar нечитаемым (G-K-18 backfire). Без prefix — indent + tree
+        // structure всё равно показывают context.
+        const hub = detailArt.hubSections || [];
+        if (hub.length > 0) {
+          const shortParent = label.length <= 16;
+          itemNode.children = hub.map(sec => {
+            const childLabel = projectionNames[sec.projectionId] || sec.entity;
+            return {
+              id: `${sec.projectionId}:${itemId}`,
+              label: shortParent ? `${label} · ${childLabel}` : childLabel,
+              projectionId: sec.projectionId,
+              params: { [sec.foreignKey]: itemId },
+            };
+          });
+        }
+        return itemNode;
+      });
+      return node;
+    });
+  }, [useAdminShell, rootProjections, artifacts, allProjections, projectionNames, world]);
+
+  const adminCurrentNodeId = useMemo(() => {
+    if (!useAdminShell || !current) return null;
+    // Match: projectionId + первый param-value
+    const projId = current.projectionId;
+    const params = current.params || {};
+    const idValue = Object.values(params)[0];
+    return idValue ? `${projId}:${idValue}` : projId;
+  }, [useAdminShell, current]);
+
+  const handleAdminSelect = useCallback(({ projectionId, params }) => {
+    reset(projectionId, params || {});
+  }, [reset]);
+
+  if (useAdminShell) {
+    return (
+      <div style={{
+        display: "flex", flexDirection: "column", height: "100%", minHeight: 0,
+        fontFamily: "var(--idf-font, -apple-system, system-ui, sans-serif)",
+        fontSize: "var(--idf-font-size, 14px)",
+        ...personalStyle,
+      }}>
+        {toolbarBar}
+        <div style={{ flex: 1, minHeight: 0 }}>
+          <AdminShell
+            tree={adminTree || []}
+            body={mainContent}
+            onSelect={handleAdminSelect}
+            currentNodeId={adminCurrentNodeId}
+            sidebarTitle={domain.SHELL?.sidebarTitle || null}
+            sidebarWidth={domain.SHELL?.sidebarWidth || 260}
+          />
+        </div>
+        {prefs.patternInspector && (
+          <PatternInspector
+            domain={domainId}
+            projectionId={current?.projectionId}
+            onClose={() => setPref("patternInspector", false)}
+            onPreviewChange={handlePreviewChange}
+            onXrayChange={handleXrayChange}
+            initialSelectedPatternId={pinnedPatternId || initialInspectPattern}
+          />
+        )}
+        {prefs.crystallizeInspector && (
+          <CrystallizeInspector
+            domain={domainId}
+            projectionId={current?.projectionId}
+            onClose={() => setPref("crystallizeInspector", false)}
+          />
+        )}
+        {prefs.materializationsViewer && (
+          <MaterializationsViewer
+            domain={domainId}
+            projectionId={current?.projectionId}
+            onClose={() => setPref("materializationsViewer", false)}
+          />
+        )}
+      </div>
+    );
+  }
 
   if (sections) {
     // Mobile + BottomTabs: контент сверху, bottom tabs снизу

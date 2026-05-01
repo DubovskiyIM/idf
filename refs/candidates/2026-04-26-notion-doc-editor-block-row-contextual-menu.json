@@ -1,0 +1,66 @@
+{
+  "id": "block-row-contextual-menu",
+  "version": 1,
+  "status": "candidate",
+  "archetype": "detail",
+  "trigger": {
+    "requires": [
+      {
+        "kind": "entity-kind",
+        "kind-value": "polymorphic"
+      },
+      {
+        "kind": "intent-count",
+        "min": 4,
+        "scope": "per-element-actions"
+      }
+    ]
+  },
+  "structure": {
+    "slot": "body",
+    "description": "Hover слева от элемента (block-row) показывает drag-handle ⋮⋮; click открывает popover с element-scoped intents (Delete/Duplicate/Turn-into/Color/Comment/Copy-link). Specialization row-contextual-actions-menu для polymorphic block-canvas: Turn-into ведёт ко всему set вариантов discriminator'а."
+  },
+  "rationale": {
+    "hypothesis": "В bodied detail с N блоков inline action-buttons создают визуальный шум; полное скрытие в right-click обрывает discoverability. Hover-handle решает trade-off + даёт affordance для drag.",
+    "evidence": [
+      {
+        "source": "notion",
+        "description": "⋮⋮ handle с full menu всех block actions",
+        "reliability": "high"
+      },
+      {
+        "source": "coda",
+        "description": "⊕/⋮ у каждой row в table",
+        "reliability": "high"
+      },
+      {
+        "source": "linear",
+        "description": "Row-hover actions в issue-list",
+        "reliability": "high"
+      }
+    ],
+    "counterexample": [
+      {
+        "source": "google-docs",
+        "description": "Action на selection через top toolbar — нет per-block handle, разрешено потому что block-семантика менее богатая",
+        "reliability": "medium"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [
+      {
+        "domain": "notion",
+        "projection": "page_detail",
+        "reason": "Block — polymorphic, ≥4 actions per block"
+      }
+    ],
+    "shouldNotMatch": [
+      {
+        "domain": "delivery",
+        "projection": "orders_catalog",
+        "reason": "Order действия концентрированы в detail-toolbar, не per-row"
+      }
+    ]
+  }
+}

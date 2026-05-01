@@ -49,7 +49,7 @@ export const INTENTS = {
     ["entry.userId = me.id"],
     [ef("replace", "moodEntry.note")],
     ["note"],
-    "form", { salience: "primary" }),
+    "form"),
 
   delete_entry: intent("Удалить запись", ["entry: MoodEntry"],
     ["entry.userId = me.id"],
@@ -172,7 +172,7 @@ export const INTENTS = {
     ["entry.userId = me.id"],
     [ef("add", "entryTags")],
     [],
-    "click", { salience: "primary" }),
+    "click"),
 
   remove_tag_from_entry: intent("Открепить тег", ["link: EntryTag"],
     ["link.userId = me.id"],

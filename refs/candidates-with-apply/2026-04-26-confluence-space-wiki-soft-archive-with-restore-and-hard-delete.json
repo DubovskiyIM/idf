@@ -1,0 +1,99 @@
+{
+  "id": "soft-archive-with-restore-and-hard-delete",
+  "version": 1,
+  "status": "candidate",
+  "archetype": "detail",
+  "trigger": {
+    "requires": [
+      {
+        "kind": "entity-field",
+        "entity": "mainEntity",
+        "field": "status",
+        "valueIncludes": "archived"
+      },
+      {
+        "kind": "intent-effect",
+        "intent": "archive_*",
+        "α": "remove",
+        "irreversibility": "high"
+      },
+      {
+        "kind": "intent-effect",
+        "intent": "restore_*",
+        "α": "replace",
+        "targetField": "status"
+      },
+      {
+        "kind": "intent-effect",
+        "intent": "delete_*",
+        "α": "remove",
+        "irreversibility": "high"
+      }
+    ]
+  },
+  "structure": {
+    "slot": "primaryCTA",
+    "description": "Когда status='archived' — header переключается в reduced-mode: badge 'Archived', main CTA = restore (без irreversible-confirm), secondary CTA = delete-permanently (с irreversible-confirm + form). Archived-сущности скрыты из стандартного catalog'а, но видны через filter 'Show archived'. Архивирование (status→archived) — irreversible-confirm с явным 'You can restore this later' messaging, в отличие от hard-delete с 'This cannot be undone'.",
+    "applySource": "function apply(slots, context) {\n  // Auto-synthesized marker-only apply (§13.17 opt-c).\n  // Marks first un-marked item in slots.primaryCTA with source: \"derived:soft-archive-with-restore-and-hard-delete\".\n  // Idempotent: skip if already marked.\n  const slot = slots?.primaryCTA;\n  if (!Array.isArray(slot) || slot.length === 0) return slots;\n  const idx = slot.findIndex((x) => x && !x.source);\n  if (idx === -1) return slots;\n  const marker = \"derived:soft-archive-with-restore-and-hard-delete\";\n  if (slot[idx].source === marker) return slots;\n  return {\n    ...slots,\n    primaryCTA: slot.map((item, i) =>\n      i === idx ? { ...item, source: marker } : item),\n  };\n}",
+    "applyKind": "marker-only-synthesized",
+    "applySynthesizedAt": 1777280149899
+  },
+  "rationale": {
+    "hypothesis": "Archive — soft-delete-with-recovery — должен быть отделён от hard-delete и в моделирующем уровне (отдельные intents), и в визуальном (разные tone confirmations, разное messaging, разные CTA). Naive irreversible-confirm pattern не различает 'recoverable' от 'permanent', и пользователь не понимает что архив можно вернуть. Two-step archive→delete снижает страх удаления и одновременно сохраняет защиту от полной потери.",
+    "evidence": [
+      {
+        "source": "confluence",
+        "description": "Archive Page → 'Archived' badge + Restore button; Delete permanently — отдельный intent с form-confirmation",
+        "reliability": "high"
+      },
+      {
+        "source": "linear",
+        "description": "Cancel issue (recoverable) vs Delete (permanent) — два разных action'а с разной seriousness",
+        "reliability": "high"
+      },
+      {
+        "source": "gmail",
+        "description": "Archive (recoverable in All Mail) vs Delete (Trash 30d) vs Permanent — три уровня",
+        "reliability": "high"
+      },
+      {
+        "source": "github",
+        "description": "Archive repo (read-only, restorable) vs Delete (permanent, requires typing name)",
+        "reliability": "high"
+      }
+    ],
+    "counterexample": [
+      {
+        "source": "messenger",
+        "description": "Message delete сразу permanent (или soft + retention), нет concept restore",
+        "reliability": "medium"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [
+      {
+        "domain": "confluence-space-wiki",
+        "projection": "page_detail",
+        "reason": "Page.status включает 'archived' + archive_page (irreversibility=high) + restore_archived_page + delete_page (отдельный)"
+      }
+    ],
+    "shouldNotMatch": [
+      {
+        "domain": "delivery",
+        "projection": "order_detail",
+        "reason": "Order.status имеет cancelled, но нет восстановления + delete пары"
+      },
+      {
+        "domain": "invest",
+        "projection": "transaction_detail",
+        "reason": "Transaction immutable, нет archive concept"
+      },
+      {
+        "domain": "booking",
+        "projection": "booking_detail",
+        "reason": "Cancel booking — terminal, без restore intent"
+      }
+    ]
+  }
+}

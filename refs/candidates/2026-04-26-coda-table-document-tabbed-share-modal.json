@@ -1,0 +1,73 @@
+{
+  "id": "tabbed-share-modal",
+  "version": 1,
+  "status": "candidate",
+  "archetype": null,
+  "trigger": {
+    "requires": [
+      {
+        "kind": "intent-creates",
+        "creates": "DocPermission",
+        "confirmation": "form"
+      },
+      {
+        "kind": "intent-creates",
+        "creates": "PublishConfig",
+        "confirmation": "form"
+      },
+      {
+        "kind": "entity-field",
+        "entity": "Doc",
+        "field": "isPublic",
+        "fieldKind": "boolean"
+      }
+    ]
+  },
+  "structure": {
+    "slot": "overlay",
+    "description": "Share/access modal не плоская форма, а tab-strip из 3 вкладок: People (per-user role), Link (commenter/viewer link toggle), Publish (public-internet вариант). Каждая вкладка — отдельный intent-flow, но они объединены одним entry-point ('Share' button)."
+  },
+  "rationale": {
+    "hypothesis": "Sharing — это 3 разные модели доступа (named-users / link-with-role / public-publish), каждая с разной моделью угроз. Объединение в один экран сбивает; разделение по 3 modal entry-point'ам тоже плохо — пользователь не помнит, где что. Tabbed modal даёт structural separation, но единый mental model 'я делюсь doc'ом'.",
+    "evidence": [
+      {
+        "source": "coda",
+        "description": "Share-modal с tabs People / Link / Publish",
+        "reliability": "high"
+      },
+      {
+        "source": "google-docs",
+        "description": "Share-dialog: 'Get link' + 'Share with people' секции",
+        "reliability": "high"
+      },
+      {
+        "source": "figma",
+        "description": "Share-modal с tabs invitation / link / publish",
+        "reliability": "high"
+      }
+    ],
+    "counterexample": [
+      {
+        "source": "linear",
+        "description": "Issue access — нет publish-flow, табы избыточны",
+        "reliability": "medium"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [
+      {
+        "domain": "notion",
+        "projection": "doc_share_form",
+        "reason": "Тот же шаблон (people / link / public)"
+      }
+    ],
+    "shouldNotMatch": [
+      {
+        "domain": "messenger",
+        "projection": "conversation_detail",
+        "reason": "Conversation share — это invite, не три-режима"
+      }
+    ]
+  }
+}

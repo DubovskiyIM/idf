@@ -29,5 +29,9 @@ CLAUDE.md
 docs/specs/
 docs/superpowers/
 .superpowers.worktrees/
+.worktrees/
 .superpowers/
 .npm-cache/
+
+# Pre-enrich snapshots (scaffold-путь diff-reference, не commit'им)
+src/domains/*/.fixtures/*.pre-enrich.js

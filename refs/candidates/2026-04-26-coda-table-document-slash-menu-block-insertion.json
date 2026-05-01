@@ -1,0 +1,68 @@
+{
+  "id": "slash-menu-block-insertion",
+  "version": 1,
+  "status": "candidate",
+  "archetype": null,
+  "trigger": {
+    "requires": [
+      {
+        "kind": "intent-creates",
+        "creates": "Block",
+        "withDiscriminator": "kind",
+        "minVariants": 6
+      },
+      {
+        "kind": "entity-kind",
+        "entity": "Block",
+        "kind_value": "polymorphic"
+      }
+    ]
+  },
+  "structure": {
+    "slot": "composer",
+    "description": "Внутри vertical-canvas (см. polymorphic-block-canvas) ввод символа `/` открывает inline-popover со списком block kind'ов с fuzzy-search по названию. Enter вставляет блок выбранного kind на текущую позицию каретки. Ускоряет вставку без отрыва от клавиатуры."
+  },
+  "rationale": {
+    "hypothesis": "Toolbar с кнопками всех kind'ов (12+ типов блоков) занимает много места и требует клика → отрыв от клавиатуры. Slash-menu inline доставляет тот же выбор в keyboard-flow. Fuzzy-search находит kind по 2-3 буквам.",
+    "evidence": [
+      {
+        "source": "notion",
+        "description": "Slash-команда — основной способ вставки блоков",
+        "reliability": "high"
+      },
+      {
+        "source": "coda",
+        "description": "Slash-menu для блоков и /ai shortcut для AI-блока",
+        "reliability": "high"
+      },
+      {
+        "source": "linear",
+        "description": "Slash-команды в comment-composer",
+        "reliability": "high"
+      }
+    ],
+    "counterexample": [
+      {
+        "source": "google-docs",
+        "description": "Toolbar — но там нет дискретных blocks",
+        "reliability": "medium"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [
+      {
+        "domain": "workflow",
+        "projection": "workflow_canvas",
+        "reason": "Node insertion может быть через slash в canvas-context"
+      }
+    ],
+    "shouldNotMatch": [
+      {
+        "domain": "booking",
+        "projection": "specialist_detail",
+        "reason": "Service insertion — это не vertical-canvas, форма уместнее"
+      }
+    ]
+  }
+}

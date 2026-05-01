@@ -1,0 +1,100 @@
+{
+  "id": "embedded-block-macro-in-body",
+  "version": 1,
+  "status": "candidate",
+  "archetype": "detail",
+  "trigger": {
+    "requires": [
+      {
+        "kind": "entity-field",
+        "entity": "mainEntity",
+        "field": "body",
+        "shape": "block-tree"
+      },
+      {
+        "kind": "sub-entity-exists",
+        "name": "Macro",
+        "fkTo": "mainEntity",
+        "shape": "block-instance"
+      },
+      {
+        "kind": "entity-field",
+        "entity": "Macro",
+        "field": "kind",
+        "shape": "discriminator"
+      },
+      {
+        "kind": "entity-field",
+        "entity": "Macro",
+        "field": "config",
+        "shape": "kind-specific-json"
+      },
+      {
+        "kind": "intent-creates",
+        "intent": "insert_*",
+        "α": "add",
+        "creates": "Macro"
+      }
+    ]
+  },
+  "structure": {
+    "slot": "body",
+    "description": "Macro-entity рендерится не отдельным subCollection, а inline внутри body на позиции Macro.position. Каждый Macro.kind имеет собственный inline-component (Jira issues table, ToC, Status-badge), сконфигурированный из Macro.config. В edit-режиме появляется hover-toolbar 'Edit / Delete' над блоком; insert intent открывает kind-picker dialog с config-form per выбранному kind.",
+    "applySource": "function apply(slots, context) {\n  // Auto-synthesized marker-only apply (§13.17 opt-c).\n  // Marks first un-marked item in slots.body with source: \"derived:embedded-block-macro-in-body\".\n  // Idempotent: skip if already marked.\n  const slot = slots?.body;\n  if (!Array.isArray(slot) || slot.length === 0) return slots;\n  const idx = slot.findIndex((x) => x && !x.source);\n  if (idx === -1) return slots;\n  const marker = \"derived:embedded-block-macro-in-body\";\n  if (slot[idx].source === marker) return slots;\n  return {\n    ...slots,\n    body: slot.map((item, i) =>\n      i === idx ? { ...item, source: marker } : item),\n  };\n}",
+    "applyKind": "marker-only-synthesized",
+    "applySynthesizedAt": 1777280149898
+  },
+  "rationale": {
+    "hypothesis": "Block-based body — это не plain text, а structured content tree, и embedded compute-блоки (live Jira list, ToC, decision table) должны жить внутри визуального flow страницы, не в боковой панели. Generic sub-collection как plain list оторвёт их от контекста использования и потеряет positional semantics (ToC должен быть где автор его поставил).",
+    "evidence": [
+      {
+        "source": "confluence",
+        "description": "Macros (Jira issue list, ToC, Decisions, Info-panel) — inline блоки в body с hover-edit-toolbar",
+        "reliability": "high"
+      },
+      {
+        "source": "notion",
+        "description": "Database views и embeds — inline блоки с config-popover",
+        "reliability": "high"
+      },
+      {
+        "source": "coda",
+        "description": "Pack tables и controls вложены прямо в doc body, конфигурируются inline",
+        "reliability": "high"
+      }
+    ],
+    "counterexample": [
+      {
+        "source": "messenger",
+        "description": "Message body — plain text + attachments, не block-tree, macros не применимы",
+        "reliability": "high"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [
+      {
+        "domain": "confluence-space-wiki",
+        "projection": "page_detail",
+        "reason": "Page.body block-tree + Macro/JiraIssueEmbed/SmartLink с position и kind"
+      }
+    ],
+    "shouldNotMatch": [
+      {
+        "domain": "sales",
+        "projection": "listing_detail",
+        "reason": "Listing.description — plain text, не block-tree"
+      },
+      {
+        "domain": "booking",
+        "projection": "service_detail",
+        "reason": "Service.description — flat, нет embedded compute-blocks"
+      },
+      {
+        "domain": "lifequest",
+        "projection": "goal_detail",
+        "reason": "Goal не имеет body-как-block-tree"
+      }
+    ]
+  }
+}

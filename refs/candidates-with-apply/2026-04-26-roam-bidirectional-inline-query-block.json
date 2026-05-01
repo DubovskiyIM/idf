@@ -1,0 +1,79 @@
+{
+  "id": "inline-query-block",
+  "version": 1,
+  "status": "candidate",
+  "archetype": "detail",
+  "trigger": {
+    "requires": [
+      {
+        "kind": "entity-kind",
+        "entity": "Query",
+        "field": "dsl"
+      },
+      {
+        "kind": "intent-creates",
+        "creates": "Query"
+      },
+      {
+        "kind": "field-role-present",
+        "entity": "Query",
+        "fieldRole": "blockId"
+      }
+    ]
+  },
+  "structure": {
+    "slot": "body",
+    "description": "Block с особым marker'ом ({{query: ...}}) рендерится как live-результат evaluated DSL-запроса вместо raw-text'а. Результат пересчитывается при изменении графа; редактирование DSL — двойной клик на блок. Query становится first-class частью контента, не отдельной view.",
+    "applySource": "function apply(slots, context) {\n  // Auto-synthesized marker-only apply (§13.17 opt-c).\n  // Marks first un-marked item in slots.body with source: \"derived:inline-query-block\".\n  // Idempotent: skip if already marked.\n  const slot = slots?.body;\n  if (!Array.isArray(slot) || slot.length === 0) return slots;\n  const idx = slot.findIndex((x) => x && !x.source);\n  if (idx === -1) return slots;\n  const marker = \"derived:inline-query-block\";\n  if (slot[idx].source === marker) return slots;\n  return {\n    ...slots,\n    body: slot.map((item, i) =>\n      i === idx ? { ...item, source: marker } : item),\n  };\n}",
+    "applyKind": "marker-only-synthesized",
+    "applySynthesizedAt": 1777280149909
+  },
+  "rationale": {
+    "hypothesis": "Saved-views-как-отдельная-сущность отделяют запрос от контекста, где он осмыслен. Query-как-block embeds живой агрегат в narrative-контекст — таблица с задачами появляется ровно там, где её обсуждают. Это превращает прозу в исполнимый документ.",
+    "evidence": [
+      {
+        "source": "roam-research",
+        "description": "{{[[query]]: {and: [[todo]] [[today]]}}} рендерится как live-список",
+        "reliability": "high"
+      },
+      {
+        "source": "logseq",
+        "description": "advanced-query block с DataScript DSL, live results",
+        "reliability": "high"
+      },
+      {
+        "source": "notion-database-views",
+        "description": "Inline database с filter/sort — embedded live query, similar effect",
+        "reliability": "medium"
+      }
+    ],
+    "counterexample": [
+      {
+        "source": "airtable",
+        "description": "View-как-отдельная-сущность, не embeddable в record",
+        "reliability": "high"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [
+      {
+        "domain": "notion",
+        "projection": "page_detail",
+        "reason": "DatabaseView внутри Page = inline query"
+      }
+    ],
+    "shouldNotMatch": [
+      {
+        "domain": "invest",
+        "projection": "portfolio_overview",
+        "reason": "Aggregations — fixed dashboard widgets, не inline DSL"
+      },
+      {
+        "domain": "sales",
+        "projection": "listings_catalog",
+        "reason": "Search — top-level, не embedded в content"
+      }
+    ]
+  }
+}

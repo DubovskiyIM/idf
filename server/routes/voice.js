@@ -32,7 +32,8 @@ function makeVoiceRouter() {
           : req.accepts(["json", "xml", "text"]) === "xml" ? "ssml"
           : "plain");
     const voice = req.query.voice || process.env.IDF_TTS_VOICE || "alloy";
-    const role = (req.query.as || "owner").toLowerCase();
+    // Role identifier — case-sensitive (ontology может использовать camelCase).
+    const role = req.query.as || "owner";
 
     const ontology = getOntology(domain);
     if (!ontology) {

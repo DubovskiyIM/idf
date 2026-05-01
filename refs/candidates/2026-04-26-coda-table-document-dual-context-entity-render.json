@@ -1,0 +1,78 @@
+{
+  "id": "dual-context-entity-render",
+  "version": 1,
+  "status": "candidate",
+  "archetype": null,
+  "trigger": {
+    "requires": [
+      {
+        "kind": "entity-field",
+        "entity": "*",
+        "field": "blockId|columnId",
+        "optional": true,
+        "exclusive": "OR"
+      },
+      {
+        "kind": "polymorphic-context",
+        "entity": "*"
+      },
+      {
+        "kind": "intent-creates",
+        "creates": "*",
+        "contexts": ">=2"
+      }
+    ]
+  },
+  "structure": {
+    "slot": "body",
+    "description": "Entity (Button) рендерится двойственно: standalone-block в page-canvas (полный card-render с label + action) ИЛИ inline-cell в table-row (compact icon-only render); один add-intent с context-discriminator определяет render-mode."
+  },
+  "rationale": {
+    "hypothesis": "Когда interactive primitive (button) имеет смысл в двух структурно разных контекстах (canvas vs table-cell), создание двух отдельных entity-types фрагментирует ontology и дублирует action-logic; единая Button с context-FK + render-morph по контексту экономит модель и сохраняет behavioral consistency.",
+    "evidence": [
+      {
+        "source": "coda",
+        "description": "Button как block на page и как column-type внутри row — общий action-kind enum",
+        "reliability": "high"
+      },
+      {
+        "source": "notion",
+        "description": "Button blocks vs database property buttons — единая модель",
+        "reliability": "medium"
+      },
+      {
+        "source": "retool",
+        "description": "Button component работает в form/table/page контекстах с одной model",
+        "reliability": "medium"
+      }
+    ],
+    "counterexample": [
+      {
+        "source": "stripe-dashboard",
+        "description": "Action-buttons чисто standalone — нет inline-cell context",
+        "reliability": "high"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [
+      {
+        "domain": "coda-table-document",
+        "projection": "button_detail",
+        "reason": "Button с (blockId, columnId) optional + actionKind discriminator"
+      }
+    ],
+    "shouldNotMatch": [
+      {
+        "domain": "sales",
+        "projection": "listing_detail",
+        "reason": "Listing — single-context entity, нет dual-render"
+      },
+      {
+        "domain": "workflow",
+        "projection": "node_detail",
+        "reason": "Node живёт только в canvas, нет alternate context"
+      }
+    ]
+  }
+}

@@ -1,0 +1,81 @@
+{
+  "id": "partial-publish-subset-config",
+  "version": 1,
+  "status": "candidate",
+  "archetype": "detail",
+  "trigger": {
+    "requires": [
+      {
+        "kind": "intent-creates",
+        "creates": "PublishConfig|Publication"
+      },
+      {
+        "kind": "entity-field",
+        "entity": "PublishConfig*",
+        "field": "publishedPages|publishedSections|allowedPaths",
+        "fieldRole": "subset-array"
+      },
+      {
+        "kind": "intent-effect",
+        "α": "remove",
+        "target": "PublishConfig*",
+        "irreversibility": "high"
+      }
+    ]
+  },
+  "structure": {
+    "slot": "body",
+    "description": "Publish-detail рендерит three-layer config: scope-subset (checkbox-tree всех pages с per-page publish-toggle), audience (isDiscoverable + allowCopy флаги), preview-link (publishedUrl с copy-CTA + 'view as anonymous'); unpublish помечается high-irreversibility.",
+    "applySource": "function apply(slots, context) {\n  // Auto-synthesized marker-only apply (§13.17 opt-c).\n  // Marks first un-marked item in slots.body with source: \"derived:partial-publish-subset-config\".\n  // Idempotent: skip if already marked.\n  const slot = slots?.body;\n  if (!Array.isArray(slot) || slot.length === 0) return slots;\n  const idx = slot.findIndex((x) => x && !x.source);\n  if (idx === -1) return slots;\n  const marker = \"derived:partial-publish-subset-config\";\n  if (slot[idx].source === marker) return slots;\n  return {\n    ...slots,\n    body: slot.map((item, i) =>\n      i === idx ? { ...item, source: marker } : item),\n  };\n}",
+    "applyKind": "marker-only-synthesized",
+    "applySynthesizedAt": 1777280149904
+  },
+  "rationale": {
+    "hypothesis": "Partial publish — фундаментально-полезная capability для doc-tools (отдельная страница как landing, остальное internal); 'all-or-nothing' publish заставляет split документы или leak'ать internal content; subset-config + tree-picker даёт автору точный controll без дублирования.",
+    "evidence": [
+      {
+        "source": "coda",
+        "description": "Publish settings с per-page checkbox + 'discoverable' + 'allow copy'",
+        "reliability": "high"
+      },
+      {
+        "source": "notion",
+        "description": "Page → Share → 'Publish to web' с per-page toggle и nested children controls",
+        "reliability": "high"
+      },
+      {
+        "source": "gitbook",
+        "description": "Selective publishing per-section с public/private status",
+        "reliability": "medium"
+      }
+    ],
+    "counterexample": [
+      {
+        "source": "wordpress-post",
+        "description": "Post — atomic unit publish, нет subset концепции",
+        "reliability": "high"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [
+      {
+        "domain": "coda-table-document",
+        "projection": "publish_config_detail",
+        "reason": "PublishConfig.{publishedPages, isDiscoverable, allowCopy} + unpublish irreversibility=high"
+      }
+    ],
+    "shouldNotMatch": [
+      {
+        "domain": "sales",
+        "projection": "listing_detail",
+        "reason": "Listing.isPublished — boolean, не subset"
+      },
+      {
+        "domain": "messenger",
+        "projection": "conversation_detail",
+        "reason": "Conversation не имеет publish-к-публике concept"
+      }
+    ]
+  }
+}

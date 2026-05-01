@@ -1,0 +1,80 @@
+{
+  "id": "keyboard-indent-self-ref-tree",
+  "version": 1,
+  "status": "candidate",
+  "archetype": "detail",
+  "trigger": {
+    "requires": [
+      {
+        "kind": "entity-field",
+        "entity": "Block",
+        "field": "parentBlockId",
+        "selfRef": true
+      },
+      {
+        "kind": "entity-field",
+        "entity": "Block",
+        "field": "indentLevel"
+      },
+      {
+        "kind": "intent-effect",
+        "intent": "indent_block",
+        "α": "replace",
+        "target": "indentLevel"
+      },
+      {
+        "kind": "intent-effect",
+        "intent": "outdent_block",
+        "α": "replace",
+        "target": "indentLevel"
+      }
+    ]
+  },
+  "structure": {
+    "slot": "body",
+    "description": "Tab/Shift+Tab на focused-row переводят блок на уровень глубже/мельче, синхронно обновляя parentBlockId; visual indent через padding-left, без drag-target UI."
+  },
+  "rationale": {
+    "hypothesis": "Когда self-ref hierarchy создаётся часто (lists, outlines), keyboard-indent в 100× быстрее drag-into-parent и не требует точного попадания мыши.",
+    "evidence": [
+      {
+        "source": "notion",
+        "description": "Tab/Shift+Tab — основной способ построить bulleted/todo tree",
+        "reliability": "high"
+      },
+      {
+        "source": "roam-research",
+        "description": "Outline целиком построен на Tab-indent",
+        "reliability": "high"
+      },
+      {
+        "source": "workflowy",
+        "description": "Tab/Shift+Tab — единственный способ сделать nested item",
+        "reliability": "high"
+      }
+    ],
+    "counterexample": [
+      {
+        "source": "trello",
+        "description": "Card hierarchy — drag-only, без keyboard depth",
+        "reliability": "medium"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [
+      {
+        "domain": "notion",
+        "projection": "page_detail",
+        "reason": "Block.parentBlockId self-ref + indentLevel field + 2 indent intents"
+      }
+    ],
+    "shouldNotMatch": [
+      {
+        "domain": "messenger",
+        "projection": "conversation_detail",
+        "reason": "Message не имеет indentLevel и self-ref hierarchy"
+      }
+    ]
+  }
+}

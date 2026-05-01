@@ -1,0 +1,187 @@
+{
+  "generatedAt": "2026-04-27T07:44:00.930Z",
+  "totalObservations": 200,
+  "empirical": {
+    "catalog": {
+      "toolbar": {
+        "capacity": 5,
+        "allowedRoles": [
+          "navigation"
+        ],
+        "stats": {
+          "projectionCount": 29,
+          "domainCount": 10,
+          "countsP25": 1,
+          "countsP50": 1,
+          "countsP75": 1,
+          "countsP95": 5,
+          "countsMax": 5,
+          "destructiveRatio": 0,
+          "roleHits": {
+            "navigation": 29
+          }
+        }
+      },
+      "overlay": {
+        "capacity": 9,
+        "allowedRoles": [
+          "destructive",
+          "navigation"
+        ],
+        "stats": {
+          "projectionCount": 54,
+          "domainCount": 12,
+          "countsP25": 2,
+          "countsP50": 3,
+          "countsP75": 4,
+          "countsP95": 9,
+          "countsMax": 32,
+          "destructiveRatio": 0.019,
+          "roleHits": {
+            "navigation": 54,
+            "destructive": 4
+          }
+        }
+      },
+      "hero": {
+        "capacity": 2,
+        "allowedRoles": [
+          "navigation"
+        ],
+        "stats": {
+          "projectionCount": 23,
+          "domainCount": 6,
+          "countsP25": 1,
+          "countsP50": 1,
+          "countsP75": 1,
+          "countsP95": 1,
+          "countsMax": 1,
+          "destructiveRatio": 0,
+          "roleHits": {
+            "navigation": 23
+          }
+        }
+      }
+    },
+    "detail": {
+      "toolbar": {
+        "capacity": 3,
+        "allowedRoles": [
+          "navigation"
+        ],
+        "stats": {
+          "projectionCount": 29,
+          "domainCount": 10,
+          "countsP25": 1,
+          "countsP50": 2,
+          "countsP75": 3,
+          "countsP95": 3,
+          "countsMax": 3,
+          "destructiveRatio": 0,
+          "roleHits": {
+            "navigation": 29
+          }
+        }
+      },
+      "overlay": {
+        "capacity": 9,
+        "allowedRoles": [
+          "navigation"
+        ],
+        "stats": {
+          "projectionCount": 30,
+          "domainCount": 10,
+          "countsP25": 2,
+          "countsP50": 3,
+          "countsP75": 4,
+          "countsP95": 9,
+          "countsMax": 30,
+          "destructiveRatio": 0,
+          "roleHits": {
+            "navigation": 30
+          }
+        }
+      },
+      "primaryCTA": {
+        "capacity": 10,
+        "allowedRoles": [
+          "navigation"
+        ],
+        "stats": {
+          "projectionCount": 9,
+          "domainCount": 6,
+          "countsP25": 2,
+          "countsP50": 3,
+          "countsP75": 4,
+          "countsP95": 10,
+          "countsMax": 10,
+          "destructiveRatio": 0,
+          "roleHits": {
+            "navigation": 9
+          }
+        }
+      },
+      "footer": {
+        "capacity": 35,
+        "allowedRoles": [
+          "navigation"
+        ],
+        "stats": {
+          "projectionCount": 14,
+          "domainCount": 7,
+          "countsP25": 2,
+          "countsP50": 4,
+          "countsP75": 7,
+          "countsP95": 35,
+          "countsMax": 35,
+          "destructiveRatio": 0,
+          "roleHits": {
+            "navigation": 14
+          }
+        }
+      }
+    },
+    "feed": {
+      "toolbar": {
+        "capacity": 5,
+        "allowedRoles": [
+          "navigation"
+        ],
+        "stats": {
+          "projectionCount": 6,
+          "domainCount": 3,
+          "countsP25": 4,
+          "countsP50": 4,
+          "countsP75": 4,
+          "countsP95": 5,
+          "countsMax": 5,
+          "destructiveRatio": 0,
+          "roleHits": {
+            "navigation": 6
+          }
+        }
+      },
+      "overlay": {
+        "capacity": 14,
+        "allowedRoles": [
+          "destructive",
+          "navigation"
+        ],
+        "stats": {
+          "projectionCount": 6,
+          "domainCount": 3,
+          "countsP25": 6,
+          "countsP50": 13,
+          "countsP75": 13,
+          "countsP95": 13,
+          "countsMax": 13,
+          "destructiveRatio": 0.017,
+          "roleHits": {
+            "navigation": 6,
+            "destructive": 1
+          }
+        }
+      }
+    }
+  }
+}

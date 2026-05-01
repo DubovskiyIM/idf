@@ -1,0 +1,72 @@
+{
+  "id": "realtime-presence-cursors",
+  "version": 1,
+  "status": "candidate",
+  "archetype": "detail",
+  "trigger": {
+    "requires": [
+      {
+        "kind": "sub-entity-exists",
+        "child": "PresenceCursor",
+        "parent": "Page"
+      },
+      {
+        "kind": "entity-field",
+        "entity": "PresenceCursor",
+        "field": "lastSeenAt"
+      },
+      {
+        "kind": "entity-field",
+        "entity": "PresenceCursor",
+        "field": "color"
+      }
+    ]
+  },
+  "structure": {
+    "slot": "header",
+    "description": "Header показывает avatar-stack текущих viewer'ов; в body отрисовывается inline-cursor с цветом и именем для каждой active presence (TTL по lastSeenAt)."
+  },
+  "rationale": {
+    "hypothesis": "Multi-user editing требует awareness кто-где-сейчас, чтобы избежать conflict-edits и enable serendipitous collaboration; avatar-stack даёт глобальную presence, inline-cursor — локальную.",
+    "evidence": [
+      {
+        "source": "notion",
+        "description": "Avatar-stack в header + colored cursor в body",
+        "reliability": "high"
+      },
+      {
+        "source": "google-docs",
+        "description": "Same: avatar pills сверху + colored carets",
+        "reliability": "high"
+      },
+      {
+        "source": "figma",
+        "description": "Live cursors с именем — defining feature",
+        "reliability": "high"
+      }
+    ],
+    "counterexample": [
+      {
+        "source": "wordpress-edit",
+        "description": "Single-user assumption, presence только через lock-warning",
+        "reliability": "medium"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [
+      {
+        "domain": "notion",
+        "projection": "page_detail",
+        "reason": "PresenceCursor entity с pageId + lastSeenAt + color"
+      }
+    ],
+    "shouldNotMatch": [
+      {
+        "domain": "invest",
+        "projection": "portfolio_detail",
+        "reason": "Нет realtime-presence model'и"
+      }
+    ]
+  }
+}

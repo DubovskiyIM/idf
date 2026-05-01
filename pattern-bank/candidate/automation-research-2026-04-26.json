@@ -1,0 +1,492 @@
+{
+  "researchedAt": "2026-04-26",
+  "sources": ["n8n", "zapier", "make", "activepieces", "pipedream", "temporal", "airflow"],
+  "patterns": [
+    {
+      "id": "node-palette-categorized-drag-to-canvas",
+      "archetype": "canvas",
+      "sourceProducts": ["n8n", "zapier", "make", "activepieces"],
+      "trigger": {
+        "description": "Projection is canvas archetype where mainEntity (Workflow/Scenario/Flow/DAG) holds child Nodes referring to a typed Catalog (NodeType/Piece/App/Module) of >50 variants; the catalog is browsed during composition rather than as an independent CRUD list."
+      },
+      "structure": {
+        "description": "Persistent or invokable side-rail palette: brand-coloured icon tiles grouped by category (AI, Communication, Data, Triggers/Actions split) + always-visible search-by-name field at top. Tiles carry a drag-affordance; drop on canvas instantiates a Node row at cursor coordinates with default config and immediately opens the side-attached config drawer. Recently-used / popular row pinned at top of palette. + button on a connection or empty canvas opens the same palette as a focused popover."
+      },
+      "rationale": {
+        "hypothesis": "When the catalog of node-types crosses ~50 entries, users cannot remember what is available; categorisation + search reduce recall load to recognition. The drag-affordance is what visually distinguishes 'a thing you can place' from 'a thing you can read about', which is why generic CRUD list rows never adopt it. Brand-colour icons let the eye scan ~20 nodes/second by silhouette.",
+        "evidence": [
+          "n8n integrations catalog lists 1604 nodes across 13+ categories (AI/Analytics/Communication/Data/Marketing/Sales/etc.) with brand-coloured SVG icons, sortable by popularity, partner-verified filter, expandable subcategory menus.",
+          "Zapier app directory groups 6000+ apps and surfaces 'most popular' chips at the top of trigger/action pickers; the picker is invoked from a + button between linear steps.",
+          "Make.com module picker is launched from a + half-circle on a connection line and lists modules grouped by app with search-by-app-name as primary affordance.",
+          "Activepieces piece picker drawer slides in from a step + button; pieces are grouped by category with search at top and default to 'recent + popular' chips."
+        ],
+        "counterexamples": [
+          "Generic CRUD foreign-key picker (e.g. select Category for a Listing) shows a flat list / cascader with no drag affordance — instantiation happens via form submit, not drag-drop.",
+          "Compliance Control catalog has ~30 items and no canvas: users browse it as a DataGrid, never drag a row to materialise an instance.",
+          "Booking Specialist catalog is a featured-list — selecting a Specialist creates a Booking via form, not by dragging onto a spatial surface.",
+          "Argocd Application catalog uses a standard data-grid + 'Create' toolbar; no drag affordance because there is no geometric workflow surface to drop onto."
+        ]
+      },
+      "falsification": {
+        "shouldMatch": [
+          "automation domain workflow_canvas projection (mainEntity Workflow with Nodes of typed NodeType catalog of 100+ entries)",
+          "DAW (Ableton/Logic) sample-browser — drag clip-types onto track timeline",
+          "Figma component library panel — drag components onto frame canvas",
+          "Unreal Engine Blueprint editor — drag function nodes from palette onto graph",
+          "Node-RED flow editor — categorised node palette + drag onto wiring canvas",
+          "BPMN modeller (Camunda/Bizagi) — drag tasks/events from shape palette onto process diagram"
+        ],
+        "shouldNotMatch": [
+          "messenger conversation list (no canvas, no node-type catalog)",
+          "compliance attestation cycle workspace (linear ceremony, no spatial composition)",
+          "freelance task feed (catalog of tasks, but tasks are content not type-instances)",
+          "invest portfolio dashboard (read-mostly, no instance-creation by drag)",
+          "keycloak realm CRUD (admin forms, no canvas surface)",
+          "delivery dispatcher map (canvas exists but Couriers are not picked from a palette of types)"
+        ]
+      }
+    },
+    {
+      "id": "side-attached-node-config-drawer",
+      "archetype": "canvas",
+      "sourceProducts": ["n8n", "make", "activepieces", "pipedream"],
+      "trigger": {
+        "description": "Canvas archetype where each Node instance has a heavyweight per-type form (10-50 fields, conditional sections, dynamic schema fetched from upstream). Selecting a node must keep canvas + adjacent nodes visible because configuration depends on graph context."
+      },
+      "structure": {
+        "description": "Click-on-node opens a right-side drawer (40-50% viewport width) anchored to the canvas. Drawer header carries node icon + editable display-name + close 'X'. Body has tabs (Parameters / Settings / Notes) and a footer-pinned 'Test step' / 'Run once' button. Drawer overlays canvas without unmounting it — node positions and colours stay visible on the left so user can reference upstream output while editing. Esc or click-outside dismisses; unsaved-changes prompt prevents data loss. Modal dialog is explicitly avoided because it would obscure context."
+      },
+      "rationale": {
+        "hypothesis": "Node configuration is graph-relative (mappings reference upstream step output, branch conditions reference predecessor's data). A modal severs that visual context. A drawer preserves it while still offering enough horizontal space for a complex form. The footer 'Test' button creates a tight 'edit → run → see-output' loop that is impossible with a modal-on-modal pattern.",
+        "evidence": [
+          "n8n: clicking any node opens the node parameter panel as a side overlay with Parameters/Settings/Docs tabs; the canvas remains rendered behind it and node colours (executed/dirty) stay visible.",
+          "Make.com: clicking a module bubble opens a configuration sheet docked to the right with mapping picker that references upstream bundle structure visible from the bubble at left.",
+          "Activepieces: step click opens a right-side properties drawer with 'Generate Sample Data' / 'Test Step' button pinned at the bottom.",
+          "Pipedream: step expansion opens an inline-but-anchored config panel with the rest of the workflow steps still scrollable above and below."
+        ],
+        "counterexamples": [
+          "Generic CRUD edit form opens as a full-page route or centred modal — there is no graph context worth preserving.",
+          "Compliance JournalEntry edit uses a full-page form because no spatial neighbours influence the field set.",
+          "Sales Listing edit happens in a centred modal — surrounding listings provide no useful context for the edit.",
+          "Booking Service form is opened as a route, not a drawer — no upstream/downstream relationship to keep visible."
+        ]
+      },
+      "falsification": {
+        "shouldMatch": [
+          "automation node_config drawer when WorkflowNode is clicked on workflow_canvas",
+          "Figma right-panel inspector (shape selected, properties on side, canvas still visible)",
+          "BPMN editor right-side properties panel for selected task",
+          "Node-RED edit-node sidebar with Done/Cancel and live wiring still visible",
+          "After Effects effect-controls panel on selected layer (timeline still visible)",
+          "Unreal Blueprint details panel for selected node"
+        ],
+        "shouldNotMatch": [
+          "compliance attestation form (full-page wizard, no graph context)",
+          "freelance Task creation form (full-page or modal, no canvas)",
+          "messenger contact-info dialog (modal — no spatial neighbours influence the data)",
+          "invest position edit (modal — sibling positions are not semantically related to the edit)",
+          "keycloak Realm settings tabbedForm (whole-page, no canvas behind)",
+          "argocd Application yaml-editor (full-screen pane, no graph context that drives config)"
+        ]
+      }
+    },
+    {
+      "id": "node-pinned-sample-data-for-partial-replay",
+      "archetype": "canvas",
+      "sourceProducts": ["n8n", "zapier", "activepieces", "pipedream"],
+      "trigger": {
+        "description": "Canvas/linear-flow archetype where a Node's downstream config (field mappings, conditions) depends on the actual shape of upstream output, AND running upstream is expensive/non-idempotent (paid API call, sends email, mutates DB)."
+      },
+      "structure": {
+        "description": "Each Node carries a 'sample data' slot — last successful output captured during a test run. UI affordance: 'Test step' button on the node records its output; a pin icon appears, and the data is shown collapsed under the node. Subsequent edits to downstream nodes use the pinned sample as if upstream just ran, without actually executing upstream again. Clear-pin and re-fetch actions are explicit. Mapping picker in downstream node draws from the pinned sample, showing concrete values not just field names."
+      },
+      "rationale": {
+        "hypothesis": "Workflow authors iterate on field-mapping tens of times per upstream call. Without pinning, every iteration re-runs an idempotency-violating trigger (e.g. 'on new Stripe charge') or pays for a third-party API call. Pinning makes the iteration loop free and deterministic. This is fundamentally different from a CRUD form where 'previous values' come from the row being edited, not from a sibling step's output.",
+        "evidence": [
+          "n8n: 'Pin data' on a node freezes its output so partial-execution downstream uses the pinned bundle; the pin icon is a first-class node affordance and pinned nodes get a yellow accent.",
+          "Zapier: 'Test trigger' captures a sample event; downstream action steps' field pickers show concrete values from that sample, not just placeholder schema.",
+          "Activepieces: 'Generate Sample Data' button per step records the output; downstream steps' dynamic dropdowns are populated from cached sample.",
+          "Pipedream: $checkpoint mechanism + step.exports persist last execution data so reloading the editor still shows mappable concrete values per step."
+        ],
+        "counterexamples": [
+          "Generic CRUD edit forms have no concept of 'pinning' — the row IS the data, not a captured sample of an upstream operation.",
+          "Compliance JournalEntry doesn't pin upstream data — there is no upstream step whose output drives its fields.",
+          "Booking flow doesn't pin Specialist availability — it always re-queries; no expensive idempotency concern.",
+          "Sales Bid form has no upstream step whose output it references — sample-data pinning would have nothing to pin."
+        ]
+      },
+      "falsification": {
+        "shouldMatch": [
+          "automation WorkflowNode with capturedOutput field and 'Test step' intent",
+          "Postman request collection where each request can pin its last response and downstream requests reference it via {{prev.body.x}}",
+          "ETL tools (dbt Cloud) where each model preview is cached and downstream models reference upstream sample rows",
+          "Jupyter notebook where a cell's output is held until re-run, and later cells reference variables it produced",
+          "Power Automate flow with 'Test → use sample data' for downstream dynamic content picker",
+          "Retool query editor where each query's last result is cached and downstream components bind to {{query1.data}}"
+        ],
+        "shouldNotMatch": [
+          "messenger Message detail (no upstream step concept)",
+          "invest Position edit (no upstream pinned step output drives the form)",
+          "compliance Attestation (full ceremony re-runs as a unit; no per-step pinning)",
+          "keycloak User edit (single-entity CRUD, no pipeline)",
+          "delivery Order detail (status flows are temporal, not editor-iteration)",
+          "freelance Deal hold/release (linear lifecycle, not author-iteration)"
+        ]
+      }
+    },
+    {
+      "id": "live-execution-coloring-on-canvas",
+      "archetype": "canvas",
+      "sourceProducts": ["n8n", "make", "airflow", "temporal"],
+      "trigger": {
+        "description": "Canvas archetype where Workflow has a long-running Execution composed of NodeRuns that progress through queued → running → success/failed/skipped states, AND the user wants to monitor progress (not just see final result)."
+      },
+      "structure": {
+        "description": "When an Execution is active, each Node on the canvas is tinted by NodeRun status: grey (queued), blue/animated (running), green (success), red (failed), amber (warning/retrying), light-grey (skipped). Edge between nodes pulses or flashes when a bundle/payload traverses. A small badge on each node shows item count or duration. A Stop button is offered at the workflow level. Selecting a coloured node deep-links to its NodeRun input/output. Live updates arrive over WebSocket / SSE, not polling."
+      },
+      "rationale": {
+        "hypothesis": "A workflow's correctness is spatially encoded — failure happens AT a node, not in a row of a table. Mapping run-state onto the same coordinates as the editor lets the user combine 'where the bug is' (geometry) with 'what state it is in' (colour) in one glance. A separate text log forces mental remapping between log line N and node X. This is why pure-status text tables fail above ~5 nodes.",
+        "evidence": [
+          "n8n: during execution, nodes pulse blue while running, turn green/red on completion; an edge animation shows bundles flowing; a stop-icon appears at workflow level.",
+          "Make.com: scenario run-once highlights modules with circular animation as bundles pass through, shows operation count badges per module, and tints failed modules red.",
+          "Airflow Graph View tints task boxes with run state colours (success green, failed red, queued mint, running lime, up_for_retry yellow) — the legend at top is canonical UI furniture.",
+          "Temporal Web UI Compact/Timeline tab visually groups activities and tints them by status, with running activities highlighted distinctly from completed ones."
+        ],
+        "counterexamples": [
+          "CRUD list status column shows row state in a Tag — but rows are not spatially related, so the same approach gives no diagnostic value beyond the cell.",
+          "Compliance attestation list shows status tags but not on a graph; correctness is per-row, not per-edge.",
+          "Sales bid feed has status pills but no graph topology.",
+          "Booking list has confirmed/pending tags — status is cell-local, not edge-local."
+        ]
+      },
+      "falsification": {
+        "shouldMatch": [
+          "automation workflow_canvas with active Execution and NodeRuns of varying status",
+          "GitHub Actions visualizer (jobs as boxes coloured by status, edges showing dependencies)",
+          "GitLab CI pipeline graph view",
+          "AWS Step Functions execution visualization with state colouring",
+          "Argo Workflows DAG view with per-step status colour",
+          "Dagster run timeline coloured by op status"
+        ],
+        "shouldNotMatch": [
+          "messenger message-list (no parallel statefull steps, no graph)",
+          "compliance attestation cycle status grid (rows, not graph)",
+          "invest portfolio (read-only, no run lifecycle)",
+          "freelance Deal pipeline (linear states, no parallel branches needing colouring)",
+          "keycloak User list with enabled/disabled badge (cell-local)",
+          "argocd Application list with sync/health badge (per-row, not per-edge)"
+        ]
+      }
+    },
+    {
+      "id": "step-inspector-with-input-output-bundle-diff",
+      "archetype": "detail",
+      "sourceProducts": ["n8n", "make", "pipedream", "temporal"],
+      "trigger": {
+        "description": "Canvas/Linear-flow archetype where each NodeRun has structured input (bundle) and structured output (bundle), AND debugging consists of comparing what came in vs what went out for a specific step within an execution."
+      },
+      "structure": {
+        "description": "From canvas, click on a coloured Node-during/after-execution opens a NodeRun detail panel split horizontally: left = INPUT (JSON tree, items count, scrollable), right = OUTPUT (JSON tree, items count, error stack if failed). Tabs above split: 'JSON' / 'Table' / 'Schema'. Footer carries 'Re-run this step' (with current pinned input) and 'Copy as cURL' / 'Open execution' shortcuts. Hover on a field highlights where it is referenced downstream. For multi-bundle steps, a paginator scrolls through individual bundles."
+      },
+      "rationale": {
+        "hypothesis": "Workflow bugs are nearly always 'output didn't match what next step expected'. The canonical question is 'what did THIS step receive vs emit?' — a side-by-side diff makes that diff-shaped question diff-shaped to answer. Showing only one side (logs) requires the user to mentally reconstruct the other; showing only output makes input shape opaque.",
+        "evidence": [
+          "n8n NodeRun panel shows Input + Output as adjacent tabs with JSON/Table/Schema views and item-count badges; failed nodes show error message inline above output.",
+          "Make.com module operations icon opens an inspector showing input bundle and output bundle per cycle, broken down by individual bundle (operation).",
+          "Pipedream observability: per-step logs include input event payload + output exports + duration + error trace, shown in a collapsible step block.",
+          "Temporal Activity inspection (Pending Activities tab + Activity click) shows input payload, output payload, attempt count, and last failure reason side by side."
+        ],
+        "counterexamples": [
+          "Generic CRUD detail view shows the row's current state — there's no 'before mutation' state stored per row to diff against.",
+          "Compliance JournalEntry detail shows current values; amendments are tracked but not as 'input vs output of a transformation step'.",
+          "Sales Listing detail has no concept of input bundle.",
+          "Booking detail shows confirmed slot but not 'what data flowed in to produce it'."
+        ]
+      },
+      "falsification": {
+        "shouldMatch": [
+          "automation NodeRun detail (inputBundle + outputBundle on entity)",
+          "GitHub Actions step log viewer with inputs and outputs sections",
+          "Postman runner per-request response panel with request-body / response-body split",
+          "AWS Step Functions task-state input/output viewer in execution detail",
+          "Dagster op-execution detail with inputs/outputs panes",
+          "Cypress test runner step inspector showing before/after DOM state"
+        ],
+        "shouldNotMatch": [
+          "messenger Message detail (no pipeline transformation to inspect)",
+          "compliance Approval detail (single-document state, no input→output transform)",
+          "freelance Response detail (single-record content, not a pipeline step)",
+          "invest Transaction detail (atomic event, not a transformation with bundles)",
+          "keycloak User detail (entity state, no per-step input/output)",
+          "delivery Order detail (status timeline, not pipeline transformation)"
+        ]
+      }
+    },
+    {
+      "id": "cross-step-output-reference-mapper",
+      "archetype": "form",
+      "sourceProducts": ["n8n", "zapier", "make", "activepieces", "pipedream"],
+      "trigger": {
+        "description": "Form on a Node where one or more parameters must reference data produced by an upstream Node in the same Workflow (e.g. 'Send email to {{$json.email}} from previous step'). Plain text input is too error-prone; explicit picker is required."
+      },
+      "structure": {
+        "description": "Field accepts mixed plain-text + variable references. A small chip-icon (chain link / lightning) opens a popover tree of upstream-step outputs derived from pinned sample data: each step expandable to its emitted fields, leaf click inserts a token (e.g. {{$node['Slack'].json.channel}}). Token is rendered as a coloured pill inline with literal text; click pill to remove or remap. Right rail of popover previews concrete value of selected leaf using the pinned sample. Drag-from-output to input field is also supported."
+      },
+      "rationale": {
+        "hypothesis": "Free-text variable references compile silently and break at runtime; a picker grounded in actual sample data turns runtime-typos into compile-time impossibilities. The popover tree is the only UI that scales to upstream-output schemas of 100+ leaves while staying within the input field's spatial budget. This pattern is absent from CRUD forms because their fields don't reference other rows' data.",
+        "evidence": [
+          "n8n parameter expression editor: a 'fx' button per field opens an expression panel showing left-pane 'Variable Selector' tree of all upstream nodes' outputs with concrete values from pinned data, click-to-insert token.",
+          "Zapier action-step field picker: dropdown lists all previous steps' output fields with sample value preview; selecting inserts a [step-name → field] pill.",
+          "Make.com mapping panel: clicking inside any input field opens a tree of all upstream modules' output items with sample-bundle values shown live.",
+          "Activepieces dynamic dropdown: clicking a step field shows a tree of preceding steps' captured outputs with values; click inserts a token.",
+          "Pipedream: in props/code steps, autocomplete of `steps.x.$return_value.y` is grounded in last execution's exports."
+        ],
+        "counterexamples": [
+          "Generic CRUD edit form (e.g. invest Position) — fields are scalar and not derived from sibling rows; there is nothing to pick.",
+          "Compliance Approval form references a single JournalEntry by id, not arbitrary fields of arbitrary upstream entities.",
+          "Sales Bid form references one Listing; no multi-step output graph to walk.",
+          "Booking form has no concept of 'previous step output' — the trigger and slot are direct inputs."
+        ]
+      },
+      "falsification": {
+        "shouldMatch": [
+          "automation NodeForm where fields can reference {{steps.X.output.Y}} of upstream nodes",
+          "Notion formula editor referencing other-page properties via @mention picker",
+          "Airtable formula field with field-picker autocomplete grounded in column types",
+          "Retool component property binding picker (drag from query → property)",
+          "Excel/Google Sheets cell formula with name-box / range-picker assistance",
+          "Webflow CMS dynamic-binding picker for collection-list children"
+        ],
+        "shouldNotMatch": [
+          "messenger Message form (single text field, no upstream-step graph to reference)",
+          "compliance Amendment form (free text + entry-id, no per-field data graph)",
+          "freelance Response composer (free-text + price, no upstream pipeline)",
+          "invest Goal form (scalar fields only)",
+          "keycloak Role form (string fields, no graph to walk)",
+          "delivery Order form (customer picks items, no 'upstream step' concept)"
+        ]
+      }
+    },
+    {
+      "id": "centralized-credential-vault-with-picker",
+      "archetype": null,
+      "sourceProducts": ["n8n", "zapier", "make", "activepieces", "pipedream"],
+      "trigger": {
+        "description": "Domain has Credentials as first-class entity referenced by many Workflows AND many Nodes within them; auth-flow (OAuth redirect, API-key paste, service-account upload) must happen out-of-band from workflow edit; one credential must be reusable across N workflows."
+      },
+      "structure": {
+        "description": "Two surfaces: (a) Global '/credentials' route — catalog of created credentials with provider chip, last-used, owner, edit/delete actions; (b) On a Node's config drawer, a credential field renders as a typed picker (filtered by provider type the node requires) with 'Connect new <Provider>' as last item — selecting it opens an out-of-band modal/window that runs OAuth flow or API-key paste, returns to the picker on success. New credential is selected automatically. Credential never lives inside the Workflow JSON — only its id is referenced. Test-connection button is on the credential, not on the node."
+      },
+      "rationale": {
+        "hypothesis": "Embedding credentials in workflow definitions is a security anti-pattern (export leaks secrets) and a UX dead-end (sharing a workflow shares secrets). Lifting credentials into a tenant-scoped vault separates the question 'what do I do' (workflow) from 'with whose authority' (credential). Per-node OAuth flow has to live in a top-level modal because OAuth redirects break iframes/drawers. Picker-with-create-as-last-item is the convergent shape because it puts the most common case (reuse) first.",
+        "evidence": [
+          "n8n separates 'Credentials' as a top-level menu item; node config has a credential dropdown filtered by node's required type with 'Create New' option that opens a modal carrying OAuth redirect or API-key form.",
+          "Zapier 'My Apps' is a global vault; per-action step shows 'Choose account' dropdown filtered by app, with '+ Connect a new account' opening a popup OAuth window.",
+          "Make.com 'Connections' is a global tab; per-module 'Connection' field is a typed dropdown with 'Add' button that opens an OAuth/API-key dialog.",
+          "Activepieces 'App Connections' top-level page; per-step the auth field is a picker filtered by piece with '+ Connect new' modal.",
+          "Pipedream global Accounts page; per-step app-connection picker with 'Connect <App>' triggering OAuth in a new window."
+        ],
+        "counterexamples": [
+          "Generic CRUD: an entity's foreign-key field doesn't 'create new' via OAuth — it points to existing rows or opens the standard create form, no out-of-band auth.",
+          "Compliance: a JournalEntry references a Department by id; Department creation is admin-only and never an inline OAuth modal.",
+          "Sales: Listing.categoryId picker has no auth layer.",
+          "Booking: Service.specialistId is a plain reference, no credential semantics."
+        ]
+      },
+      "falsification": {
+        "shouldMatch": [
+          "automation domain with Credential entity and Node.credentialId field",
+          "Hashicorp Boundary credential library + per-target credential brokering",
+          "Vercel project env-var vault + per-deployment binding",
+          "Supabase project Auth Providers config (separate from app code, referenced by service)",
+          "GitHub Actions Secrets store + ${{ secrets.X }} reference in workflows",
+          "Postman environments + variable references in requests"
+        ],
+        "shouldNotMatch": [
+          "messenger contact-list (no credential semantics)",
+          "compliance Department list (org structure, not auth provider)",
+          "freelance Wallet (financial entity, not OAuth credential)",
+          "invest Watchlist (a saved view, not a per-provider auth)",
+          "delivery Address book (geo entities, no auth flow)",
+          "argocd Cluster credential — IS a credential pattern, but bundled inside the Cluster entity rather than referenced via shared vault picker (acceptable shouldNotMatch for the 'shared picker' shape)"
+        ]
+      }
+    },
+    {
+      "id": "run-history-grid-with-rerun-and-clear",
+      "archetype": "catalog",
+      "sourceProducts": ["airflow", "temporal", "n8n", "make"],
+      "trigger": {
+        "description": "Workflow has many historical Executions across (date × workflow) or (date × step), AND triage requires viewing patterns of failure across runs (e.g. 'this step has been failing for 3 days') AND ability to re-run a specific past execution."
+      },
+      "structure": {
+        "description": "Matrix grid view: rows = Workflow (or step), columns = recent runs in time order (newest left or right). Cell = small coloured square per status (green/red/amber/grey). Hover cell = tooltip with start time, duration, attempt count. Click cell = jump to that execution detail. Row toolbar has 'Trigger run' / 'Clear failed' / 'Backfill range'. Column header carries scheduled-run timestamp. A column-range selector enables bulk re-run of failed cells in a date window."
+      },
+      "rationale": {
+        "hypothesis": "A list of executions sorted by time hides the 'every Tuesday at 3am this fails' pattern; a grid surfaces it because temporal periodicity becomes a column-pattern. Re-running individual cells (not whole workflows) is required because partial backfills are the dominant remediation pattern in scheduled-orchestration domains. Generic CRUD lists never need this because rows aren't generated by a periodic schedule.",
+        "evidence": [
+          "Airflow Grid View: rows are tasks, columns are DAG runs in time order, cell colour-coded by status, hover for details, click to drill in. 'Clear' action on cell with cascade options (Past/Future/Upstream/Downstream/Recursive/Failed).",
+          "Temporal Web UI workflow list with per-row recent-runs sparkline + bulk-re-run via search-attribute filter.",
+          "n8n Executions page: filterable list per workflow with status, started, duration; 'Retry' and 'Stop' actions per execution; group-by-status filter.",
+          "Make.com History tab per scenario: chronological list with status pills and per-row 'Run again' / 'Inspect bundles' actions."
+        ],
+        "counterexamples": [
+          "Generic CRUD list: rows are user-created entities, not schedule-generated runs; periodicity isn't a column.",
+          "Compliance attestation list IS time-bound but cycles are quarterly not daily — grid would have 4 columns/year, not enough density.",
+          "Sales order list has time but no scheduled cadence; re-run-cell makes no sense.",
+          "Freelance Deal list has lifecycle states but no scheduled re-execution semantics."
+        ]
+      },
+      "falsification": {
+        "shouldMatch": [
+          "automation Execution grid by Workflow × scheduled-run-time",
+          "GitHub Actions workflow runs view with status grid",
+          "Dagster asset materialisation matrix (asset × tick)",
+          "dbt Cloud job runs grid with green/red status cells",
+          "Cron-job dashboard (e.g. cron-job.org / healthchecks.io) showing recent ticks as coloured bar",
+          "Kubernetes CronJob recent-runs strip in K8s dashboard"
+        ],
+        "shouldNotMatch": [
+          "messenger conversation list (no scheduled execution cadence)",
+          "compliance Approval list (event-driven, no schedule grid)",
+          "sales Order list (event-driven)",
+          "freelance Task feed (user-posted, no schedule)",
+          "invest Position list (state-snapshot, no run cadence)",
+          "keycloak User list (entity catalogue, no scheduled execution)"
+        ]
+      }
+    },
+    {
+      "id": "manual-trigger-with-parameterized-input-dialog",
+      "archetype": "form",
+      "sourceProducts": ["airflow", "temporal", "n8n", "make"],
+      "trigger": {
+        "description": "Workflow normally runs by trigger/schedule but admin/dev needs to invoke it ad-hoc with a one-off payload (e.g. backfill 2024-01-15, replay user-id 42, simulate webhook) WITHOUT modifying the workflow definition or schedule."
+      },
+      "structure": {
+        "description": "Workflow toolbar has 'Run' / 'Trigger' button. Click opens a focused modal with: (a) a JSON / form input for run-config (pre-filled with last-used values or schema defaults), (b) optional 'logical date' or 'simulate-event-at' field, (c) note field for run-comment, (d) 'Run' / 'Run & view' actions. Submission creates an Execution with `triggerType=manual`, run-config persisted on the Execution and visible in its detail. For Airflow-style: also a 'Backfill range' tab in the same modal for date-range expansion."
+      },
+      "rationale": {
+        "hypothesis": "Production workflows have triggers that are inappropriate for testing (cron, webhook, queue). A manual-trigger surface with payload is the only way to exercise a workflow on real infra with synthetic input without polluting the schedule. The dialog format is convergent because: payload is small, the action is rare-but-explicit (modal not drawer), and the result must be observable (so 'Run & view' is the standard secondary action).",
+        "evidence": [
+          "Airflow 'Trigger DAG' button opens a dialog with optional JSON conf blob; backfill via DAG Details with date range, reprocess behaviour, max-active-runs, advanced config.",
+          "Temporal: 'Start workflow' UI / CLI with workflow-id + input payload; signals via dedicated 'Send signal' modal taking signal-name + payload.",
+          "n8n 'Execute workflow' button; for triggers like Webhook the test-URL panel offers a manual-invoke surface and prefilled sample body.",
+          "Make.com 'Run once' button on scenario; 'Run scenario from here' on a specific module with optional input bundle override."
+        ],
+        "counterexamples": [
+          "Generic CRUD entity list: 'New' button opens a create-form, but the resulting entity is not an execution with a payload — it's an entity itself.",
+          "Compliance Attestation: 'Submit' is a state-transition on a single document, not a payloaded execution.",
+          "Sales Listing 'Publish': single-record state change, no payload-input dialog.",
+          "Booking 'Confirm': a transition, not a parameterised execution."
+        ]
+      },
+      "falsification": {
+        "shouldMatch": [
+          "automation Workflow.run intent with run-config payload form",
+          "GitHub Actions 'workflow_dispatch' UI with input fields",
+          "AWS Step Functions 'Start execution' modal with JSON input",
+          "Dagster 'Launchpad' run-config editor",
+          "Render/Vercel 'Trigger deploy' dialog with branch + skip-cache options",
+          "Kubernetes 'Create Job from CronJob' UI with override params"
+        ],
+        "shouldNotMatch": [
+          "messenger 'Send message' (entity creation, not parameterised job execution)",
+          "compliance approve_je intent (state transition)",
+          "freelance confirm_deal intent (state transition)",
+          "sales place_bid intent (entity creation)",
+          "invest add_to_watchlist (entity creation)",
+          "keycloak update_realm (config edit, not parameterised run)"
+        ]
+      }
+    },
+    {
+      "id": "error-branch-attached-to-node",
+      "archetype": "canvas",
+      "sourceProducts": ["make", "n8n", "airflow", "temporal"],
+      "trigger": {
+        "description": "Canvas archetype where a Node may fail, AND the workflow needs to take alternative path (notify, log, retry-with-fallback, dead-letter) on failure rather than aborting the entire execution."
+      },
+      "structure": {
+        "description": "Each Node exposes two output sockets: success (default, drawn from right edge) and error (drawn from bottom or distinct colour, e.g. red dashed). Right-click on node → 'Add error handler' creates a child branch from the error socket. Error branch nodes execute only when the parent fails; the success branch is skipped. Per-node settings include 'On error: stop / continue / route' choice. The canvas thereby encodes flow-of-success and flow-of-failure as different visual lanes rather than burying error handling in config."
+      },
+      "rationale": {
+        "hypothesis": "Errors are first-class control flow in workflow automation, not exceptions. Forcing the user to express 'on failure, do X' in a settings tab buries the topology — users miss it during review. Drawing error-paths as distinct edges on the canvas surfaces failure-policy at the same fidelity as success-policy. Generic CRUD apps never need this because there's no flow whose alternative branch is 'on-error'.",
+        "evidence": [
+          "Make.com 'Error handlers': right-click module → Add error handler creates a separate branch (Resume / Commit / Rollback / Break / Ignore directives) drawn off the module.",
+          "n8n: per-node 'Continue on Fail' toggle + dedicated Error Trigger node enabling a dedicated error-handler workflow; connections show success/error paths.",
+          "Airflow trigger rules ('all_success', 'one_failed', 'all_failed') let downstream tasks be wired specifically as error handlers; the Graph View shows the dependency including error branches.",
+          "Temporal workflows model error handling via try/catch around Activity invocations and dedicated 'compensation' activities — the Web UI distinguishes failed attempts (red) from successful retries (green) on the activity timeline, making the failure-recovery branch visible in execution history."
+        ],
+        "counterexamples": [
+          "Generic CRUD form: validation error stays inline on the field; no separate flow branch is drawn.",
+          "Compliance JournalEntry rejection is a state, not a separate branch in a graph.",
+          "Sales bid auto-reject is a status, not an error-edge on canvas.",
+          "Booking cancellation is a transition, not a downstream-on-error branch."
+        ]
+      },
+      "falsification": {
+        "shouldMatch": [
+          "automation WorkflowNode with errorEdge → fallback Node",
+          "AWS Step Functions Catch / Retry blocks visualised as separate transitions on the state graph",
+          "Argo Workflows onExit / onError step",
+          "Dagster op failure_hook / asset retry policy with separate downstream",
+          "Camunda BPMN error boundary event attached to a task",
+          "Node-RED catch node listening to upstream failure"
+        ],
+        "shouldNotMatch": [
+          "messenger send-failure toast (inline notification, no graph branch)",
+          "compliance Finding workflow (linear remediation, no error-edge from a task)",
+          "freelance Dispute (a state in the Deal lifecycle, not a graph error-edge)",
+          "invest order-rejection toast (no graph)",
+          "delivery courier-decline → reassign (handled by rule engine, not a node-level error edge on a canvas)",
+          "keycloak password-reset-failure (form-level error, no graph branch)"
+        ]
+      }
+    },
+    {
+      "id": "template-marketplace-with-fork",
+      "archetype": "catalog",
+      "sourceProducts": ["n8n", "zapier", "make", "activepieces"],
+      "trigger": {
+        "description": "Domain has Workflow as the buildable artefact AND there exists a community of authors publishing reusable workflows AND new users get faster time-to-first-success by starting from a template than from blank canvas."
+      },
+      "structure": {
+        "description": "Distinct '/templates' route (separate from '/workflows'): grid of cards each with title, integrations-used chips (small brand icons), short description, author, install-count. Filters by category, used-integration, popularity. Card click opens a preview page with read-only canvas render (or screenshot), description, and 'Use this template' / 'Fork' button. Forking creates a new editable Workflow in user's namespace pre-wired but with credentials nulled (forcing user to bind their own). Some platforms allow publishing-back ('Share as template')."
+      },
+      "rationale": {
+        "hypothesis": "The blank canvas is intimidating; templates surface the long-tail of common patterns and inflate platform value via network effect. Credentials are nulled on fork because the original author's tokens are private — this is a hard constraint that distinguishes 'template' from 'project copy'. Generic CRUD domains rarely have public templates because user-data is opinionated per-tenant.",
+        "evidence": [
+          "n8n Templates marketplace lists 9447 community workflows filterable by category (AI/Sales/IT Ops/Marketing/etc.) and integration (Google Sheets/OpenAI/Slack/Notion/...), with one-click 'Use template' that imports into your workspace.",
+          "Zapier Zap Templates feature: 'pre-built Zaps for common patterns', click 'Use this Zap' to copy into account with empty connection slots.",
+          "Make.com Templates page with category-filtered scenarios; 'Create scenario from template' clones with empty connection slots.",
+          "Activepieces Templates section: pre-built flows with import button that creates a new flow with placeholder connections."
+        ],
+        "counterexamples": [
+          "Compliance domain: no template marketplace because attestation cycles are strictly tenant-private and regulatory.",
+          "Booking domain: each Specialist's services are too domain-specific for a public template.",
+          "Sales (avito-style): listings are content, not reusable templates.",
+          "Invest portfolio: no shareable templates because portfolios are personal financial state."
+        ]
+      },
+      "falsification": {
+        "shouldMatch": [
+          "automation Workflow with templates marketplace and fork-with-empty-credentials",
+          "Notion templates gallery (category filters, preview, duplicate-to-workspace)",
+          "Figma Community files with 'Open a copy' (fork)",
+          "Vercel templates (one-click deploy to user's account)",
+          "Hashnode / Ghost theme marketplace with fork-to-blog",
+          "Replit templates ('Use Template' creates a fork)"
+        ],
+        "shouldNotMatch": [
+          "messenger conversation list (no public templates of conversations)",
+          "compliance attestation cycle (private, tenant-bound, no marketplace)",
+          "freelance Task feed (live opportunities, not reusable templates)",
+          "invest Portfolio (personal state, not shareable template)",
+          "delivery Order (transient operational entity)",
+          "keycloak Realm (admin config, not author-shared template)"
+        ]
+      }
+    }
+  ]
+}

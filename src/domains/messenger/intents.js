@@ -24,7 +24,7 @@ export const INTENTS = {
   send_voice_message: intent("Голосовое сообщение", ["message: Message"], [], [ef("add", "messages")], ["recording_duration"], "customCapture", { creates: "Message" }),
   schedule_message: intent("Запланировать сообщение", ["message: Message"], [], [ef("add", "messages", "account", { ttl: null })], ["content", "scheduled_time"], "form", { creates: "Message" }),
   bulk_delete_messages: intent("Массовое удаление", ["message: Message[]"], ["message.senderId = me.id"], [ef("replace", "message.deletedFor")], ["selected_count"], "click", { extended: true, irreversibility: "medium" }),
-  search_messages: intent("Поиск по сообщениям", [], [], [], ["query", "results"], "form", { control: "inlineSearch", parameters: [{ name: "query", type: "text", required: false, placeholder: "Поиск в сообщениях…" }] }),
+  search_messages: intent("Поиск по сообщениям", ["message: Message", "conversation: Conversation", "contact: Contact", "user: User"], [], [], ["query", "results"], "form", { control: "inlineSearch", parameters: [{ name: "query", type: "text", required: false, placeholder: "Поиск в сообщениях…" }] }),
   message_info: intent("Информация о сообщении", ["message: Message"], [], [], ["read_by", "delivered_to", "created_at"], "click"),
   copy_message: intent("Копировать текст", ["message: Message"], [], [], ["message.content"], "click"),
   select_messages: intent("Выделить сообщения", ["message: Message[]"], [], [], ["selected_count"], "click"),
@@ -74,7 +74,7 @@ export const INTENTS = {
   revoke_invite_link: intent("Отозвать ссылку", ["inviteLink: InviteLink"], ["inviteLink.createdBy = me.id"], [ef("remove", "invitelinks")], ["invite_url"], "click", { irreversibility: "medium" }),
 
   // ===== ПРОФИЛЬ (10) =====
-  update_profile: intent("Обновить профиль", ["user: User"], ["user.id = me.id"], [ef("replace", "user.name"), ef("replace", "user.avatar")], ["user.name", "user.avatar"], "form", { phase: "investigation", salience: "primary" }),
+  update_profile: intent("Обновить профиль", ["user: User"], ["user.id = me.id"], [ef("replace", "user.name"), ef("replace", "user.avatar")], ["user.name", "user.avatar"], "form", { phase: "investigation" }),
   set_status_message: intent("Статус-сообщение", ["user: User"], ["user.id = me.id"], [ef("replace", "user.statusMessage")], ["user.statusMessage"], "form", { parameters: [{ name: "statusMessage", type: "text", required: false, placeholder: "Что у вас нового?" }] }),
   set_avatar: intent("Установить аватар", ["user: User"], ["user.id = me.id"], [ef("replace", "user.avatar")], ["user.name"], "file"),
   delete_avatar: intent("Удалить аватар", ["user: User"], ["user.id = me.id"], [ef("replace", "user.avatar", "account", { value: "" })], [], "click"),

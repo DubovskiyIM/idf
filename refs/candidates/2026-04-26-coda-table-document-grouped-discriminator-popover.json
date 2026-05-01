@@ -1,0 +1,68 @@
+{
+  "id": "grouped-discriminator-popover",
+  "version": 1,
+  "status": "candidate",
+  "archetype": null,
+  "trigger": {
+    "requires": [
+      {
+        "kind": "entity-field",
+        "entity": "*",
+        "field": "kind",
+        "fieldKind": "select",
+        "minVariants": 6
+      },
+      {
+        "kind": "field-role-present",
+        "role": "discriminator-with-categories"
+      }
+    ]
+  },
+  "structure": {
+    "slot": "primaryCTA",
+    "description": "Discriminator с большим количеством вариантов (≥6) рендерится не как flat select, а как grouped popover: варианты группируются по семантическим категориям (basic / lookup / formula / button / AI). Каждая группа — отдельный section с заголовком."
+  },
+  "rationale": {
+    "hypothesis": "Flat dropdown с 12+ опций превращает выбор в сканирование. Группировка по семантическим категориям превращает O(n) поиск в O(log n) через категорию-фильтр. Группы должны быть устойчивы (не ad-hoc).",
+    "evidence": [
+      {
+        "source": "coda",
+        "description": "Column-type picker — popover с группами basic/lookup/formula/button/AI",
+        "reliability": "high"
+      },
+      {
+        "source": "notion",
+        "description": "Property type picker сгруппирован по basic / advanced / AI",
+        "reliability": "high"
+      },
+      {
+        "source": "airtable",
+        "description": "Field type popover с категориями",
+        "reliability": "medium"
+      }
+    ],
+    "counterexample": [
+      {
+        "source": "github-issue",
+        "description": "Label picker без группировки — но flat lookup уместен для произвольных тегов",
+        "reliability": "medium"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [
+      {
+        "domain": "workflow",
+        "projection": "node_detail",
+        "reason": "Node.kind ≥6 вариантов, можно группировать"
+      }
+    ],
+    "shouldNotMatch": [
+      {
+        "domain": "lifequest",
+        "projection": "habit_detail",
+        "reason": "Habit kind ≤4 вариантов — группировка избыточна"
+      }
+    ]
+  }
+}

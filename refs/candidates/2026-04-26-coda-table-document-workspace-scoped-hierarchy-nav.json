@@ -1,0 +1,78 @@
+{
+  "id": "workspace-scoped-hierarchy-nav",
+  "version": 1,
+  "status": "candidate",
+  "archetype": null,
+  "trigger": {
+    "requires": [
+      {
+        "kind": "entity-kind",
+        "entity": "Workspace",
+        "scope": "container"
+      },
+      {
+        "kind": "sub-entity-exists",
+        "parent": "Workspace",
+        "child": "Folder",
+        "selfRef": true
+      },
+      {
+        "kind": "intent-creates",
+        "creates": "Workspace",
+        "minCount": 1
+      }
+    ]
+  },
+  "structure": {
+    "slot": "header",
+    "description": "Превращает root-сущность с self-ref дочерним деревом и множественными инстансами в боковую навигацию: переключатель root-инстансов вверху + дерево дочерних элементов под ним. Активный root фильтрует все остальные projection."
+  },
+  "rationale": {
+    "hypothesis": "Когда у пользователя есть несколько изолированных рабочих пространств с собственной иерархией, плоский список workspace + отдельный page tree разрывает контекст. Композиция switcher + scoped tree сохраняет 'где я' в одном UI-элементе.",
+    "evidence": [
+      {
+        "source": "coda",
+        "description": "Workspace switcher вверху сайдбара, под ним дерево Doc/Folder только текущего workspace",
+        "reliability": "high"
+      },
+      {
+        "source": "notion",
+        "description": "Workspace dropdown + sidebar tree фильтруется по выбранному workspace",
+        "reliability": "high"
+      },
+      {
+        "source": "linear",
+        "description": "Team switcher вверху + view-tree команды снизу",
+        "reliability": "medium"
+      }
+    ],
+    "counterexample": [
+      {
+        "source": "github",
+        "description": "Repo switcher отдельно от code tree — но иерархия repo плоская, не self-ref",
+        "reliability": "medium"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [
+      {
+        "domain": "messenger",
+        "projection": "conversation_list",
+        "reason": "User → Conversation, можно представить как scope"
+      }
+    ],
+    "shouldNotMatch": [
+      {
+        "domain": "invest",
+        "projection": "portfolio_detail",
+        "reason": "Portfolio не self-ref и нет multi-instance switching"
+      },
+      {
+        "domain": "delivery",
+        "projection": "order_list",
+        "reason": "Order — плоская сущность без иерархии"
+      }
+    ]
+  }
+}

@@ -1,0 +1,85 @@
+{
+  "id": "stacked-pane-workspace",
+  "version": 1,
+  "status": "candidate",
+  "archetype": "detail",
+  "trigger": {
+    "requires": [
+      {
+        "kind": "session",
+        "entity": "*Pane|Sidebar*"
+      },
+      {
+        "kind": "entity-field",
+        "entity": "*Pane",
+        "field": "targetKind",
+        "statusValues": [
+          "page",
+          "block",
+          "*"
+        ]
+      },
+      {
+        "kind": "entity-field",
+        "entity": "*Pane",
+        "field": "order",
+        "fieldRole": "order"
+      },
+      {
+        "kind": "intent-creates",
+        "entity": "*Pane"
+      }
+    ]
+  },
+  "structure": {
+    "slot": "sections",
+    "description": "Боковая колонка ведёт себя как стек открытых проекций: каждый элемент Pane — это projection-instance с targetKind discriminator (page|block|graph), order определяет порядок сверху вниз. Open-in-sidebar добавляет элемент, close — снимает. Главный workspace при этом не меняет фокус."
+  },
+  "rationale": {
+    "hypothesis": "Линейная навигация (open replaces) теряет рабочий контекст при cross-referencing. Stacked-pane workspace позволяет держать N референсных проекций рядом с активной без потери основного фокуса. Это дешевле tabs (которые требуют переключения) и богаче tooltip'а.",
+    "evidence": [
+      {
+        "source": "roam-research",
+        "description": "Right sidebar — стек панелей, shift-click добавляет, drag-reorders",
+        "reliability": "high"
+      },
+      {
+        "source": "logseq",
+        "description": "Right sidebar identical с drag-reorder",
+        "reliability": "high"
+      },
+      {
+        "source": "obsidian",
+        "description": "Pane-stack через split-view, отличается structure но идея та же",
+        "reliability": "medium"
+      }
+    ],
+    "counterexample": [
+      {
+        "source": "linear",
+        "description": "Detail-view modal-style — один открытый item, без cross-referencing UI",
+        "reliability": "high"
+      },
+      {
+        "source": "gmail",
+        "description": "Конверсация занимает full-pane; preview-pane не stack'ится",
+        "reliability": "high"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [],
+    "shouldNotMatch": [
+      {
+        "domain": "booking",
+        "projection": "calendar_view",
+        "reason": "Booking flow линеен, нет нужды держать N references открытыми параллельно"
+      },
+      {
+        "domain": "delivery",
+        "projection": "order_tracker",
+        "reason": "Order — single-focus task-flow, stacked-pane избыточен"
+      }
+    ]
+  }
+}

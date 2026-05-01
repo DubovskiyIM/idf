@@ -1,0 +1,344 @@
+{
+  "runId": "run-2026-04-28T20-10-25-468Z",
+  "N": 20,
+  "turns": [
+    {
+      "kind": "missing-witness",
+      "target": "Projection:meta:domain_detail:slot_1",
+      "priority": "P0"
+    },
+    {
+      "kind": "missing-witness",
+      "target": "Projection:meta:domain_detail:slot_2",
+      "priority": "P0"
+    },
+    {
+      "kind": "missing-witness",
+      "target": "Projection:meta:domain_detail:slot_3",
+      "priority": "P0"
+    },
+    {
+      "kind": "missing-witness",
+      "target": "Projection:meta:domain_detail:slot_4",
+      "priority": "P0"
+    },
+    {
+      "kind": "meta-modification",
+      "target": "Witness.reliability:heuristic→authorial",
+      "priority": "P0",
+      "context": {
+        "gap": "Witness curator's review workflow needs an intent that takes an existing Witness id and replaces its reliability from heuristic to authorial. The 3 available intents cannot express this: propose_witness only creates new Witness rows (alpha=create), not transitions; propose_intent_salience targets Intent.salience (wrong entity); propose_meta_intent creates a new Intent (different cardinality, not a Witness mutation).",
+        "requiredShape": "A new meta-intent: alpha=replace, target='Witness.reliability', taking witnessId + new reliability value as params. This is the intent you need to create.",
+        "observedReliabilityGap": "Many witnesses in Φ have reliability=heuristic. After curator review they become authorial. But Φ has no event for this transition — manual edits happen out-of-band. This is the gap."
+      }
+    },
+    {
+      "kind": "missing-witness",
+      "target": "Projection:meta:domain_detail:slot_6",
+      "priority": "P0"
+    },
+    {
+      "kind": "missing-witness",
+      "target": "Projection:meta:domain_detail:slot_7",
+      "priority": "P0"
+    },
+    {
+      "kind": "missing-witness",
+      "target": "Projection:meta:domain_detail:slot_8",
+      "priority": "P0"
+    },
+    {
+      "kind": "missing-witness",
+      "target": "Projection:meta:domain_detail:slot_9",
+      "priority": "P0"
+    },
+    {
+      "kind": "missing-witness",
+      "target": "Projection:meta:domain_detail:slot_10",
+      "priority": "P0"
+    },
+    {
+      "kind": "missing-witness",
+      "target": "Projection:meta:domain_detail:slot_11",
+      "priority": "P0"
+    },
+    {
+      "kind": "missing-witness",
+      "target": "Projection:meta:domain_detail:slot_12",
+      "priority": "P0"
+    },
+    {
+      "kind": "missing-witness",
+      "target": "Projection:meta:domain_detail:slot_13",
+      "priority": "P0"
+    },
+    {
+      "kind": "missing-salience",
+      "target": "Intent:meta:add_backlog_item",
+      "priority": "P1"
+    },
+    {
+      "kind": "missing-witness",
+      "target": "Projection:meta:domain_detail:slot_15",
+      "priority": "P0"
+    },
+    {
+      "kind": "missing-witness",
+      "target": "Projection:meta:domain_detail:slot_16",
+      "priority": "P0"
+    },
+    {
+      "kind": "missing-witness",
+      "target": "Projection:meta:domain_detail:slot_17",
+      "priority": "P0"
+    },
+    {
+      "kind": "missing-witness",
+      "target": "Projection:meta:domain_detail:slot_18",
+      "priority": "P0"
+    },
+    {
+      "kind": "missing-witness",
+      "target": "Projection:meta:domain_detail:slot_19",
+      "priority": "P0"
+    },
+    {
+      "kind": "missing-witness",
+      "target": "Projection:meta:domain_detail:slot_20",
+      "priority": "P0"
+    }
+  ],
+  "log": [
+    {
+      "iterationN": 1,
+      "outcome": "confirmed",
+      "proposedIntent": "propose_witness",
+      "durationMs": 7486,
+      "witnessCoverageBefore": 0,
+      "witnessCoverageAfter": 0.01
+    },
+    {
+      "iterationN": 2,
+      "outcome": "confirmed",
+      "proposedIntent": "propose_witness",
+      "durationMs": 8315,
+      "witnessCoverageBefore": 0.01,
+      "witnessCoverageAfter": 0.02
+    },
+    {
+      "iterationN": 3,
+      "outcome": "confirmed",
+      "proposedIntent": "propose_witness",
+      "durationMs": 9934,
+      "witnessCoverageBefore": 0.02,
+      "witnessCoverageAfter": 0.03
+    },
+    {
+      "iterationN": 4,
+      "outcome": "confirmed",
+      "proposedIntent": "propose_witness",
+      "durationMs": 7971,
+      "witnessCoverageBefore": 0.03,
+      "witnessCoverageAfter": 0.04
+    },
+    {
+      "iterationN": 5,
+      "outcome": "confirmed",
+      "proposedIntent": "propose_meta_intent",
+      "durationMs": 8353,
+      "witnessCoverageBefore": 0.04,
+      "witnessCoverageAfter": 0.04
+    },
+    {
+      "iterationN": 6,
+      "outcome": "confirmed",
+      "proposedIntent": "propose_witness",
+      "durationMs": 8423,
+      "witnessCoverageBefore": 0.04,
+      "witnessCoverageAfter": 0.05
+    },
+    {
+      "iterationN": 7,
+      "outcome": "confirmed",
+      "proposedIntent": "propose_witness",
+      "durationMs": 9416,
+      "witnessCoverageBefore": 0.05,
+      "witnessCoverageAfter": 0.06
+    },
+    {
+      "iterationN": 8,
+      "outcome": "confirmed",
+      "proposedIntent": "propose_witness",
+      "durationMs": 7434,
+      "witnessCoverageBefore": 0.06,
+      "witnessCoverageAfter": 0.07
+    },
+    {
+      "iterationN": 9,
+      "outcome": "confirmed",
+      "proposedIntent": "propose_witness",
+      "durationMs": 9070,
+      "witnessCoverageBefore": 0.07,
+      "witnessCoverageAfter": 0.08
+    },
+    {
+      "iterationN": 10,
+      "outcome": "confirmed",
+      "proposedIntent": "propose_witness",
+      "durationMs": 8830,
+      "witnessCoverageBefore": 0.08,
+      "witnessCoverageAfter": 0.09
+    },
+    {
+      "iterationN": 11,
+      "outcome": "confirmed",
+      "proposedIntent": "propose_witness",
+      "durationMs": 12551,
+      "witnessCoverageBefore": 0.09,
+      "witnessCoverageAfter": 0.1
+    },
+    {
+      "iterationN": 12,
+      "outcome": "confirmed",
+      "proposedIntent": "propose_witness",
+      "durationMs": 9281,
+      "witnessCoverageBefore": 0.1,
+      "witnessCoverageAfter": 0.11
+    },
+    {
+      "iterationN": 13,
+      "outcome": "confirmed",
+      "proposedIntent": "propose_witness",
+      "durationMs": 7744,
+      "witnessCoverageBefore": 0.11,
+      "witnessCoverageAfter": 0.12
+    },
+    {
+      "iterationN": 14,
+      "outcome": "confirmed",
+      "proposedIntent": "propose_intent_salience",
+      "durationMs": 7339,
+      "witnessCoverageBefore": 0.12,
+      "witnessCoverageAfter": 0.12
+    },
+    {
+      "iterationN": 15,
+      "outcome": "confirmed",
+      "proposedIntent": "propose_witness",
+      "durationMs": 8740,
+      "witnessCoverageBefore": 0.12,
+      "witnessCoverageAfter": 0.13
+    },
+    {
+      "iterationN": 16,
+      "outcome": "confirmed",
+      "proposedIntent": "propose_witness",
+      "durationMs": 7373,
+      "witnessCoverageBefore": 0.13,
+      "witnessCoverageAfter": 0.14
+    },
+    {
+      "iterationN": 17,
+      "outcome": "confirmed",
+      "proposedIntent": "propose_witness",
+      "durationMs": 9018,
+      "witnessCoverageBefore": 0.14,
+      "witnessCoverageAfter": 0.15
+    },
+    {
+      "iterationN": 18,
+      "outcome": "confirmed",
+      "proposedIntent": "propose_witness",
+      "durationMs": 8180,
+      "witnessCoverageBefore": 0.15,
+      "witnessCoverageAfter": 0.16
+    },
+    {
+      "iterationN": 19,
+      "outcome": "confirmed",
+      "proposedIntent": "propose_witness",
+      "durationMs": 8867,
+      "witnessCoverageBefore": 0.16,
+      "witnessCoverageAfter": 0.17
+    },
+    {
+      "iterationN": 20,
+      "outcome": "confirmed",
+      "proposedIntent": "propose_witness",
+      "durationMs": 6848,
+      "witnessCoverageBefore": 0.17,
+      "witnessCoverageAfter": 0.18
+    }
+  ],
+  "metrics": {
+    "iterationCount": 20,
+    "confirmationRate": 1,
+    "witnessCoverageCurve": [
+      0.01,
+      0.02,
+      0.03,
+      0.04,
+      0.04,
+      0.05,
+      0.06,
+      0.07,
+      0.08,
+      0.09,
+      0.1,
+      0.11,
+      0.12,
+      0.12,
+      0.13,
+      0.14,
+      0.15,
+      0.16,
+      0.17,
+      0.18
+    ],
+    "monotonicViolations": 0,
+    "numSelfMods": 1,
+    "compoundingObserved": false,
+    "meanDurationMs": 8558.65,
+    "rejectionCodeBreakdown": {}
+  },
+  "report": {
+    "metrics": {
+      "iterationCount": 20,
+      "confirmationRate": 1,
+      "witnessCoverageCurve": [
+        0.01,
+        0.02,
+        0.03,
+        0.04,
+        0.04,
+        0.05,
+        0.06,
+        0.07,
+        0.08,
+        0.09,
+        0.1,
+        0.11,
+        0.12,
+        0.12,
+        0.13,
+        0.14,
+        0.15,
+        0.16,
+        0.17,
+        0.18
+      ],
+      "monotonicViolations": 0,
+      "numSelfMods": 1,
+      "compoundingObserved": false,
+      "meanDurationMs": 8558.65,
+      "rejectionCodeBreakdown": {}
+    },
+    "hypotheses": {
+      "H1": true,
+      "H2": true,
+      "H3": true,
+      "H4": false
+    },
+    "outcome": "partial-B"
+  }
+}

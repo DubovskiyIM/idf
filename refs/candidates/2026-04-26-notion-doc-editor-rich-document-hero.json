@@ -1,0 +1,82 @@
+{
+  "id": "rich-document-hero",
+  "version": 1,
+  "status": "candidate",
+  "archetype": "detail",
+  "trigger": {
+    "requires": [
+      {
+        "kind": "entity-field",
+        "entity": "Page",
+        "field": "coverImage"
+      },
+      {
+        "kind": "entity-field",
+        "entity": "Page",
+        "field": "icon"
+      },
+      {
+        "kind": "entity-field",
+        "entity": "Page",
+        "field": "title"
+      },
+      {
+        "kind": "entity-field",
+        "entity": "Page",
+        "field": "description"
+      },
+      {
+        "kind": "intent-confirmation",
+        "intent": "rename_page",
+        "confirmation": "enter"
+      }
+    ]
+  },
+  "structure": {
+    "slot": "hero",
+    "description": "Hero stack: collapsible cover-image (full-bleed) → emoji/icon picker → h1 title (inline-edit) → description (inline-edit). Все 4 поля редактируются прямо в hero, без модалки и без 'Edit' toggle."
+  },
+  "rationale": {
+    "hypothesis": "Document-style entity'и (page, project, doc) выигрывают от editorial-hero вместо form-header: рендер == edit mode, низкая ceremony для ad-hoc updates. Cover/icon/title/description — четыре slots для visual identity без taxonomy.",
+    "evidence": [
+      {
+        "source": "notion",
+        "description": "Page hero: cover + icon + title + description, всё inline-editable",
+        "reliability": "high"
+      },
+      {
+        "source": "linear",
+        "description": "Project page с icon + name + description в hero",
+        "reliability": "medium"
+      },
+      {
+        "source": "github",
+        "description": "Repo header с avatar + name + description (но не inline-editable)",
+        "reliability": "medium"
+      }
+    ],
+    "counterexample": [
+      {
+        "source": "jira",
+        "description": "Issue header — fixed form-style title без cover/icon",
+        "reliability": "medium"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [
+      {
+        "domain": "notion",
+        "projection": "page_detail",
+        "reason": "Page имеет cover + icon + title + description + inline rename"
+      }
+    ],
+    "shouldNotMatch": [
+      {
+        "domain": "invest",
+        "projection": "position_detail",
+        "reason": "Position не имеет cover/icon, header — данные а не идентичность"
+      }
+    ]
+  }
+}

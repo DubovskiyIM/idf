@@ -1,0 +1,604 @@
+{
+  "runId": "blindv3-treatment-2026-04-28T23-21-05-723Z",
+  "mode": "treatment",
+  "N": 40,
+  "provider": "default",
+  "heuristicSeedPool": 20,
+  "metrics": {
+    "iterationCount": 40,
+    "confirmationRate": 0.975,
+    "witnessCoverageCurve": [
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    "monotonicViolations": 0,
+    "numSelfMods": 1,
+    "compoundingObserved": false,
+    "meanDurationMs": 17252.5,
+    "rejectionCodeBreakdown": {}
+  },
+  "hypothesisGrid": {
+    "H1": true,
+    "H2": true,
+    "H3": true,
+    "H4": false
+  },
+  "outcomeByMetric": "partial-B",
+  "h4Strict": 16,
+  "h4UnderPressure": 16,
+  "opportunityIters": 17,
+  "opportunityRejections": 0,
+  "opportunityFallbackToWitness": 0,
+  "fallbackRejections": 0,
+  "newIntentIdsCreated": [
+    "promote_witness_to_authorial"
+  ],
+  "intentBreakdown": {
+    "propose_witness": 21,
+    "propose_meta_intent": 1,
+    "promote_witness_to_authorial": 16,
+    "propose_intent_salience": 1,
+    "(subprocess_error)": 1
+  },
+  "workItemTargets": [
+    {
+      "iter": 1,
+      "kind": "missing-witness",
+      "target": "Projection:meta:domain_detail:slot_1"
+    },
+    {
+      "iter": 2,
+      "kind": "missing-witness",
+      "target": "Projection:meta:domain_detail:slot_2"
+    },
+    {
+      "iter": 3,
+      "kind": "missing-witness",
+      "target": "Projection:meta:domain_detail:slot_3"
+    },
+    {
+      "iter": 4,
+      "kind": "missing-witness",
+      "target": "Projection:meta:domain_detail:slot_4"
+    },
+    {
+      "iter": 5,
+      "kind": "meta-modification",
+      "target": "Φ:Witness reliability distribution"
+    },
+    {
+      "iter": 6,
+      "kind": "missing-witness",
+      "target": "Projection:meta:domain_detail:slot_6"
+    },
+    {
+      "iter": 7,
+      "kind": "missing-witness",
+      "target": "Witness:23db33f9-e240-4ce7-b2e1-36c7b81b0fec"
+    },
+    {
+      "iter": 8,
+      "kind": "missing-witness",
+      "target": "Projection:meta:domain_detail:slot_8"
+    },
+    {
+      "iter": 9,
+      "kind": "missing-witness",
+      "target": "Witness:c63a705c-1a6e-46f3-ad16-8c0a898cf44a"
+    },
+    {
+      "iter": 10,
+      "kind": "missing-witness",
+      "target": "Projection:meta:domain_detail:slot_10"
+    },
+    {
+      "iter": 11,
+      "kind": "missing-witness",
+      "target": "Witness:f7cfc0f4-d2e3-47d7-b511-6a84a83236c8"
+    },
+    {
+      "iter": 12,
+      "kind": "missing-witness",
+      "target": "Projection:meta:domain_detail:slot_12"
+    },
+    {
+      "iter": 13,
+      "kind": "missing-witness",
+      "target": "Witness:ef388c98-1133-4996-a7fb-fcd0b6d01c1f"
+    },
+    {
+      "iter": 14,
+      "kind": "missing-salience",
+      "target": "Intent:meta:add_backlog_item"
+    },
+    {
+      "iter": 15,
+      "kind": "missing-witness",
+      "target": "Witness:3692849c-7d25-4362-bd81-f2039e579b2a"
+    },
+    {
+      "iter": 16,
+      "kind": "missing-witness",
+      "target": "Projection:meta:domain_detail:slot_16"
+    },
+    {
+      "iter": 17,
+      "kind": "missing-witness",
+      "target": "Witness:acb99871-fc6c-4b8d-8a75-3ef103bd59cb"
+    },
+    {
+      "iter": 18,
+      "kind": "missing-witness",
+      "target": "Projection:meta:domain_detail:slot_18"
+    },
+    {
+      "iter": 19,
+      "kind": "missing-witness",
+      "target": "Witness:a019b103-914b-4e1b-bbca-e53c6284c662"
+    },
+    {
+      "iter": 20,
+      "kind": "missing-witness",
+      "target": "Projection:meta:domain_detail:slot_20"
+    },
+    {
+      "iter": 21,
+      "kind": "missing-witness",
+      "target": "Witness:37e3f067-df92-4326-bec8-1f13320e4569"
+    },
+    {
+      "iter": 22,
+      "kind": "missing-witness",
+      "target": "Projection:meta:domain_detail:slot_22"
+    },
+    {
+      "iter": 23,
+      "kind": "missing-witness",
+      "target": "Witness:8ab6d755-c370-4321-af74-8bd3190ae763"
+    },
+    {
+      "iter": 24,
+      "kind": "missing-witness",
+      "target": "Projection:meta:domain_detail:slot_24"
+    },
+    {
+      "iter": 25,
+      "kind": "missing-witness",
+      "target": "Witness:88b7a9d8-0488-4382-ad40-a36ac026f44c"
+    },
+    {
+      "iter": 26,
+      "kind": "missing-witness",
+      "target": "Projection:meta:domain_detail:slot_26"
+    },
+    {
+      "iter": 27,
+      "kind": "missing-witness",
+      "target": "Witness:30aa0955-9113-4bff-960f-94b860d673d1"
+    },
+    {
+      "iter": 28,
+      "kind": "missing-witness",
+      "target": "Projection:meta:domain_detail:slot_28"
+    },
+    {
+      "iter": 29,
+      "kind": "missing-witness",
+      "target": "Witness:5aada7e6-79ab-4b69-86be-ff2d45b91f52"
+    },
+    {
+      "iter": 30,
+      "kind": "missing-witness",
+      "target": "Projection:meta:domain_detail:slot_30"
+    },
+    {
+      "iter": 31,
+      "kind": "missing-witness",
+      "target": "Witness:080357d7-7165-448f-b074-48dbbf248a7d"
+    },
+    {
+      "iter": 32,
+      "kind": "missing-witness",
+      "target": "Projection:meta:domain_detail:slot_32"
+    },
+    {
+      "iter": 33,
+      "kind": "missing-witness",
+      "target": "Witness:fe3c030c-ff1e-4430-a63c-d7f5da9612f9"
+    },
+    {
+      "iter": 34,
+      "kind": "missing-witness",
+      "target": "Projection:meta:domain_detail:slot_34"
+    },
+    {
+      "iter": 35,
+      "kind": "missing-witness",
+      "target": "Witness:aaa08c52-278b-47d2-b6c1-e0871304571f"
+    },
+    {
+      "iter": 36,
+      "kind": "missing-witness",
+      "target": "Projection:meta:domain_detail:slot_36"
+    },
+    {
+      "iter": 37,
+      "kind": "missing-witness",
+      "target": "Witness:c1f8f0c0-6ddb-4fc1-837c-5b2f3d72f328"
+    },
+    {
+      "iter": 38,
+      "kind": "missing-witness",
+      "target": "Projection:meta:domain_detail:slot_38"
+    },
+    {
+      "iter": 39,
+      "kind": "missing-witness",
+      "target": "Witness:94e21588-5fbc-44b6-b8a2-fe85f3762a1d"
+    },
+    {
+      "iter": 40,
+      "kind": "missing-witness",
+      "target": "Projection:meta:domain_detail:slot_40"
+    }
+  ],
+  "log": [
+    {
+      "iterationN": 1,
+      "outcome": "confirmed",
+      "proposedIntent": "propose_witness",
+      "durationMs": 7733,
+      "workItemKind": "missing-witness",
+      "workItemTarget": "Projection:meta:domain_detail:slot_1"
+    },
+    {
+      "iterationN": 2,
+      "outcome": "confirmed",
+      "proposedIntent": "propose_witness",
+      "durationMs": 9335,
+      "workItemKind": "missing-witness",
+      "workItemTarget": "Projection:meta:domain_detail:slot_2"
+    },
+    {
+      "iterationN": 3,
+      "outcome": "confirmed",
+      "proposedIntent": "propose_witness",
+      "durationMs": 8837,
+      "workItemKind": "missing-witness",
+      "workItemTarget": "Projection:meta:domain_detail:slot_3"
+    },
+    {
+      "iterationN": 4,
+      "outcome": "confirmed",
+      "proposedIntent": "propose_witness",
+      "durationMs": 9312,
+      "workItemKind": "missing-witness",
+      "workItemTarget": "Projection:meta:domain_detail:slot_4"
+    },
+    {
+      "iterationN": 5,
+      "outcome": "confirmed",
+      "proposedIntent": "propose_meta_intent",
+      "durationMs": 8329,
+      "workItemKind": "meta-modification",
+      "workItemTarget": "Φ:Witness reliability distribution"
+    },
+    {
+      "iterationN": 6,
+      "outcome": "confirmed",
+      "proposedIntent": "propose_witness",
+      "durationMs": 14029,
+      "workItemKind": "missing-witness",
+      "workItemTarget": "Projection:meta:domain_detail:slot_6"
+    },
+    {
+      "iterationN": 7,
+      "outcome": "confirmed",
+      "proposedIntent": "promote_witness_to_authorial",
+      "durationMs": 9710,
+      "workItemKind": "missing-witness",
+      "workItemTarget": "Witness:23db33f9-e240-4ce7-b2e1-36c7b81b0fec"
+    },
+    {
+      "iterationN": 8,
+      "outcome": "confirmed",
+      "proposedIntent": "propose_witness",
+      "durationMs": 8999,
+      "workItemKind": "missing-witness",
+      "workItemTarget": "Projection:meta:domain_detail:slot_8"
+    },
+    {
+      "iterationN": 9,
+      "outcome": "confirmed",
+      "proposedIntent": "promote_witness_to_authorial",
+      "durationMs": 7404,
+      "workItemKind": "missing-witness",
+      "workItemTarget": "Witness:c63a705c-1a6e-46f3-ad16-8c0a898cf44a"
+    },
+    {
+      "iterationN": 10,
+      "outcome": "confirmed",
+      "proposedIntent": "propose_witness",
+      "durationMs": 10178,
+      "workItemKind": "missing-witness",
+      "workItemTarget": "Projection:meta:domain_detail:slot_10"
+    },
+    {
+      "iterationN": 11,
+      "outcome": "confirmed",
+      "proposedIntent": "promote_witness_to_authorial",
+      "durationMs": 7066,
+      "workItemKind": "missing-witness",
+      "workItemTarget": "Witness:f7cfc0f4-d2e3-47d7-b511-6a84a83236c8"
+    },
+    {
+      "iterationN": 12,
+      "outcome": "confirmed",
+      "proposedIntent": "propose_witness",
+      "durationMs": 19397,
+      "workItemKind": "missing-witness",
+      "workItemTarget": "Projection:meta:domain_detail:slot_12"
+    },
+    {
+      "iterationN": 13,
+      "outcome": "confirmed",
+      "proposedIntent": "promote_witness_to_authorial",
+      "durationMs": 8510,
+      "workItemKind": "missing-witness",
+      "workItemTarget": "Witness:ef388c98-1133-4996-a7fb-fcd0b6d01c1f"
+    },
+    {
+      "iterationN": 14,
+      "outcome": "confirmed",
+      "proposedIntent": "propose_intent_salience",
+      "durationMs": 7862,
+      "workItemKind": "missing-salience",
+      "workItemTarget": "Intent:meta:add_backlog_item"
+    },
+    {
+      "iterationN": 15,
+      "outcome": "confirmed",
+      "proposedIntent": "promote_witness_to_authorial",
+      "durationMs": 7092,
+      "workItemKind": "missing-witness",
+      "workItemTarget": "Witness:3692849c-7d25-4362-bd81-f2039e579b2a"
+    },
+    {
+      "iterationN": 16,
+      "outcome": "confirmed",
+      "proposedIntent": "propose_witness",
+      "durationMs": 9562,
+      "workItemKind": "missing-witness",
+      "workItemTarget": "Projection:meta:domain_detail:slot_16"
+    },
+    {
+      "iterationN": 17,
+      "outcome": "confirmed",
+      "proposedIntent": "promote_witness_to_authorial",
+      "durationMs": 7267,
+      "workItemKind": "missing-witness",
+      "workItemTarget": "Witness:acb99871-fc6c-4b8d-8a75-3ef103bd59cb"
+    },
+    {
+      "iterationN": 18,
+      "outcome": "confirmed",
+      "proposedIntent": "propose_witness",
+      "durationMs": 7359,
+      "workItemKind": "missing-witness",
+      "workItemTarget": "Projection:meta:domain_detail:slot_18"
+    },
+    {
+      "iterationN": 19,
+      "outcome": "confirmed",
+      "proposedIntent": "promote_witness_to_authorial",
+      "durationMs": 9093,
+      "workItemKind": "missing-witness",
+      "workItemTarget": "Witness:a019b103-914b-4e1b-bbca-e53c6284c662"
+    },
+    {
+      "iterationN": 20,
+      "outcome": "confirmed",
+      "proposedIntent": "propose_witness",
+      "durationMs": 9314,
+      "workItemKind": "missing-witness",
+      "workItemTarget": "Projection:meta:domain_detail:slot_20"
+    },
+    {
+      "iterationN": 21,
+      "outcome": "confirmed",
+      "proposedIntent": "promote_witness_to_authorial",
+      "durationMs": 7262,
+      "workItemKind": "missing-witness",
+      "workItemTarget": "Witness:37e3f067-df92-4326-bec8-1f13320e4569"
+    },
+    {
+      "iterationN": 22,
+      "outcome": "confirmed",
+      "proposedIntent": "propose_witness",
+      "durationMs": 7860,
+      "workItemKind": "missing-witness",
+      "workItemTarget": "Projection:meta:domain_detail:slot_22"
+    },
+    {
+      "iterationN": 23,
+      "outcome": "confirmed",
+      "proposedIntent": "promote_witness_to_authorial",
+      "durationMs": 7784,
+      "workItemKind": "missing-witness",
+      "workItemTarget": "Witness:8ab6d755-c370-4321-af74-8bd3190ae763"
+    },
+    {
+      "iterationN": 24,
+      "outcome": "confirmed",
+      "proposedIntent": "propose_witness",
+      "durationMs": 7922,
+      "workItemKind": "missing-witness",
+      "workItemTarget": "Projection:meta:domain_detail:slot_24"
+    },
+    {
+      "iterationN": 25,
+      "outcome": "confirmed",
+      "proposedIntent": "promote_witness_to_authorial",
+      "durationMs": 7453,
+      "workItemKind": "missing-witness",
+      "workItemTarget": "Witness:88b7a9d8-0488-4382-ad40-a36ac026f44c"
+    },
+    {
+      "iterationN": 26,
+      "outcome": "confirmed",
+      "proposedIntent": "propose_witness",
+      "durationMs": 8189,
+      "workItemKind": "missing-witness",
+      "workItemTarget": "Projection:meta:domain_detail:slot_26"
+    },
+    {
+      "iterationN": 27,
+      "outcome": "confirmed",
+      "proposedIntent": "promote_witness_to_authorial",
+      "durationMs": 6793,
+      "workItemKind": "missing-witness",
+      "workItemTarget": "Witness:30aa0955-9113-4bff-960f-94b860d673d1"
+    },
+    {
+      "iterationN": 28,
+      "outcome": "confirmed",
+      "proposedIntent": "propose_witness",
+      "durationMs": 9698,
+      "workItemKind": "missing-witness",
+      "workItemTarget": "Projection:meta:domain_detail:slot_28"
+    },
+    {
+      "iterationN": 29,
+      "outcome": "confirmed",
+      "proposedIntent": "promote_witness_to_authorial",
+      "durationMs": 7864,
+      "workItemKind": "missing-witness",
+      "workItemTarget": "Witness:5aada7e6-79ab-4b69-86be-ff2d45b91f52"
+    },
+    {
+      "iterationN": 30,
+      "outcome": "confirmed",
+      "proposedIntent": "propose_witness",
+      "durationMs": 7858,
+      "workItemKind": "missing-witness",
+      "workItemTarget": "Projection:meta:domain_detail:slot_30"
+    },
+    {
+      "iterationN": 31,
+      "outcome": "confirmed",
+      "proposedIntent": "promote_witness_to_authorial",
+      "durationMs": 8619,
+      "workItemKind": "missing-witness",
+      "workItemTarget": "Witness:080357d7-7165-448f-b074-48dbbf248a7d"
+    },
+    {
+      "iterationN": 32,
+      "outcome": "confirmed",
+      "proposedIntent": "propose_witness",
+      "durationMs": 7091,
+      "workItemKind": "missing-witness",
+      "workItemTarget": "Projection:meta:domain_detail:slot_32"
+    },
+    {
+      "iterationN": 33,
+      "outcome": "confirmed",
+      "proposedIntent": "promote_witness_to_authorial",
+      "durationMs": 8554,
+      "workItemKind": "missing-witness",
+      "workItemTarget": "Witness:fe3c030c-ff1e-4430-a63c-d7f5da9612f9"
+    },
+    {
+      "iterationN": 34,
+      "outcome": "confirmed",
+      "proposedIntent": "propose_witness",
+      "durationMs": 7307,
+      "workItemKind": "missing-witness",
+      "workItemTarget": "Projection:meta:domain_detail:slot_34"
+    },
+    {
+      "iterationN": 35,
+      "outcome": "subprocess_error",
+      "durationMs": 230090,
+      "workItemKind": "missing-witness",
+      "workItemTarget": "Witness:aaa08c52-278b-47d2-b6c1-e0871304571f"
+    },
+    {
+      "iterationN": 36,
+      "outcome": "confirmed",
+      "proposedIntent": "propose_witness",
+      "durationMs": 8002,
+      "workItemKind": "missing-witness",
+      "workItemTarget": "Projection:meta:domain_detail:slot_36"
+    },
+    {
+      "iterationN": 37,
+      "outcome": "confirmed",
+      "proposedIntent": "promote_witness_to_authorial",
+      "durationMs": 119227,
+      "workItemKind": "missing-witness",
+      "workItemTarget": "Witness:c1f8f0c0-6ddb-4fc1-837c-5b2f3d72f328"
+    },
+    {
+      "iterationN": 38,
+      "outcome": "confirmed",
+      "proposedIntent": "propose_witness",
+      "durationMs": 7351,
+      "workItemKind": "missing-witness",
+      "workItemTarget": "Projection:meta:domain_detail:slot_38"
+    },
+    {
+      "iterationN": 39,
+      "outcome": "confirmed",
+      "proposedIntent": "promote_witness_to_authorial",
+      "durationMs": 17154,
+      "workItemKind": "missing-witness",
+      "workItemTarget": "Witness:94e21588-5fbc-44b6-b8a2-fe85f3762a1d"
+    },
+    {
+      "iterationN": 40,
+      "outcome": "confirmed",
+      "proposedIntent": "propose_witness",
+      "durationMs": 11634,
+      "workItemKind": "missing-witness",
+      "workItemTarget": "Projection:meta:domain_detail:slot_40"
+    }
+  ]
+}
