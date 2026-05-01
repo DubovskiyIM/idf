@@ -45,7 +45,7 @@
 
 | Строка | Entity | Их fields в UI | Наши fields | Статус | Заметки |
 |---|---|---|---|---|---|
-| B1 | **Metalake** | name, creator, owner, properties, comment, audit, in-use toggle | name, comment, properties, audit | 🟡 | Нет: in-use toggle, owner display inline |
+| B1 | **Metalake** | name, creator, owner, properties, comment, audit, in-use toggle | + owner column в metalake_list (seed-driven); SetOwner — пока только для catalog (U5), для metalake — следующая итерация | 🟡 catalog-level ✅ U5 · metalake-level + in-use toggle ⏳ |
 | B2 | **Catalog** | name, type, provider, comment, properties + **provider-specific config** (500+ props через EntityPropertiesFormItem) | + CreateCatalogDialog с dynamic form (6 providers across 4 types: hive/iceberg/jdbc-postgresql/kafka/hadoop/model-registry) | ✅ U3 minimum · 🟡 остальные 5+ providers и edit-flow в U3.5 |
 | B3 | **Schema** | name, comment, properties, audit + tabs (tables/filesets/models/functions/tags/policies/properties) | + SchemaDetailPane (Tables/Filesets/Models/Properties в зависимости от catalog.type) | ✅ U4 minimum · 🟡 functions/tags/policies tabs (U6, U2.5b) |
 | B4 | **Table** | columns, partitioning, distribution, sortOrder, indexes, properties + tabs (Columns / Partitioning / Associated Filesets / Tags / Policies / Properties) | + TableDetailPane (Columns/Partitioning/Properties tabs) | ✅ U4 minimum · 🟡 distribution/sortOrder/indexes/associatedFilesets/tags/policies (U6, U2.5b) |
@@ -71,7 +71,7 @@
 | Строка | Action | Где у них | У нас | Статус |
 |---|---|---|---|---|
 | C1 | Create / Edit / Delete для всех 12+ сущностей | Modal dialogs | ✅ form-архетип | ✅ |
-| C2 | Set Owner | `SetOwnerDialog` (User/Group cascader) | ❌ | ❌ Нет cross-entity owner-assignment intent |
+| C2 | Set Owner | `SetOwnerDialog` (User/Group cascader) | <SetOwnerDialog/> с tabs Users/Groups + search; UI-state в CatalogExplorer.ownerOverrides (catalog-level) | ✅ U5 catalog · metalake/schema/table — U5.5 |
 | C3 | Toggle In-Use (metalake/catalog) | Switch | ❌ | ❌ |
 | C4 | Test Connection (catalog) | Кнопка перед save | ❌ | ❌ Side-effect intent с external check |
 | C5 | Grant Role to User/Group | Через user/group row-action | ✅ row-action | ✅ |
@@ -102,7 +102,7 @@
 | D11 | Toast notifications | `StyledToast` | adapter | 🟡 |
 | D12 | Iconify + custom SVG (40KB icon set) | `Icons.js` | adapter icons | 🟡 |
 | D13 | Search bar (client-side filter) | AntD `Input.Search` | catalog-archetype filterBar | ✅ |
-| D14 | Owner avatar inline | + click → `SetOwnerDialog` | ❌ | ❌ |
+| D14 | Owner avatar inline | + click → `SetOwnerDialog` | Owner cell с avatar-letter chip + ✎ edit (CatalogsTable) | ✅ U5 |
 | D15 | Tree expand/collapse persist | Redux store | ❌ | ❌ Pattern для bank |
 
 ---
@@ -138,3 +138,4 @@
 - **2026-05-01 (Sprint U3)** — `<CreateCatalogDialog/>` (modal с cascade Type→Provider→dynamic fields) + кнопка «+ Create Catalog» в `<CatalogsTable/>`. PROVIDER_SCHEMA — 6 representative providers (hive/lakehouse-iceberg/jdbc-postgresql/kafka/hadoop/model-registry) covering 4 type-categories. Optimistic add в `CatalogExplorer.createdCatalogs` (без backend exec — реальный intent `createCatalog` в U3.5). Закрыто (minimum): B2.
 - **2026-05-01 (Sprint U4)** — `<Tabs/>` (host) + `<SchemaDetailPane/>` (tabs Tables/Filesets/Models/Properties в зависимости от catalog.type) + `<TableDetailPane/>` (tabs Columns/Partitioning/Properties). CatalogExplorer переключает right-pane на detail при клике schema/table в tree. Multi-level breadcrumb: Metalakes › metalake › catalog › schema › table. Tags/Policies tabs внутри detail — U2.5b; functions/distribution/sortOrder/indexes — U6. Закрыто (minimum): B3, B4, D2.
 - **2026-05-01 (Sprint U2.6)** — top-nav grouping: 6 flat root projections (metalake/user/group/role/tag/policy _list) → 3 hubs (metalake_list / access_hub / compliance_hub). Новые canvas-projections + `<HubGrid/>` (generic tile-grid с link-tiles на inner projections). Inner projections доступны через direct URL и tile-click. Закрыто: A6, A7.
+- **2026-05-01 (Sprint U5)** — `<SetOwnerDialog/>` (modal cascader с tabs Users/Groups + search) + Owner колонка в `<CatalogsTable/>` (avatar-letter + ✎ edit / + Set Owner placeholder). Seed: owner на 3 metalakes + 3 prod catalogs. UI-state в `CatalogExplorer.ownerOverrides` (optimistic, без backend exec — реальный intent `setMetalakeOwner` / `setCatalogOwner` в U5b). Закрыто (catalog-level): C2, D14; B1 catalog-side. Metalake/schema/table set-owner — U5.5.
