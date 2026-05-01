@@ -53,6 +53,10 @@ export function getSeedEffects() {
     { id: "m_prod",    name: "prod_lake",    comment: "Production metadata lake — регулируемые данные", properties: { env: "prod", "compliance.tier": "tier-1", "owner.team": "data-platform", "region": "eu-central-1" }, owner: "alice@acme", inUse: true,  audit: audit("alice@acme", 120) },
     { id: "m_staging", name: "staging_lake", comment: "Pre-prod staging для валидации schemas", properties: { env: "staging", "auto-promotion": "true", "retention.days": "30" }, owner: "bob@acme", inUse: true,  audit: audit("bob@acme", 80) },
     { id: "m_dev",     name: "dev_lake",     comment: "Development sandbox для экспериментов", properties: { env: "dev", "owner.team": "engineering" }, owner: "engineering", inUse: false, audit: audit("charlie@acme", 45) },
+    // U-seed-rich (2026-05-01): расширение под visually-rich demo.
+    { id: "m_analytics", name: "analytics_lake", comment: "Аналитический lakehouse — Iceberg + Paimon", properties: { env: "prod", "compliance.tier": "tier-2", "team": "analytics", "region": "eu-central-1" }, owner: "diane@acme",   inUse: true,  audit: audit("diane@acme",   95) },
+    { id: "m_ml",        name: "ml_lake",        comment: "ML feature store — модели + datasets",      properties: { env: "prod", "team": "ml-platform", "region": "us-east-1" },                                       owner: "charlie@acme", inUse: true,  audit: audit("charlie@acme", 70) },
+    { id: "m_archive",   name: "archive_lake",   comment: "Cold archive — compliance retention 7Y",    properties: { env: "archive", "compliance.tier": "tier-1", "retention.years": "7" },                              owner: "alice@acme",   inUse: false, audit: audit("alice@acme",   220) },
   ];
   METALAKES.forEach(m => ef("metalakes", m));
 
@@ -70,6 +74,18 @@ export function getSeedEffects() {
     // Dev
     { id: "c_fs_dev",       name: "s3_sandbox",       type: "fileset",    provider: "hadoop",           comment: "Dev sandbox для ad-hoc datasets",              properties: { "location": "s3://dev-sandbox" }, enabled: true,  metalakeId: "m_dev", audit: audit("bob@acme", 25) },
     { id: "c_kafka_dev",    name: "dev_kafka",        type: "messaging",  provider: "kafka",            comment: "Dev Kafka для локальных экспериментов",        properties: { "bootstrap.servers": "dev-kafka:9092" }, enabled: false, metalakeId: "m_dev", audit: audit("charlie@acme", 20) },
+    // U-seed-rich (2026-05-01): аналитический + ML + archive lakehouse катологи.
+    // analytics_lake — Paimon / MySQL OLTP / Doris MPP
+    { id: "c_paimon_an",   name: "paimon_lakehouse",   type: "relational", provider: "lakehouse-paimon",  comment: "Paimon lakehouse для аналитики",            properties: { "warehouse": "s3://an-paimon", "metastore": "filesystem" },     tags: ["Internal"],          policies: [],              owner: "diane@acme",   enabled: true,  metalakeId: "m_analytics", audit: audit("diane@acme",   80) },
+    { id: "c_mysql_an",    name: "mysql_oltp",         type: "relational", provider: "jdbc-mysql",        comment: "MySQL OLTP — operational reads",            properties: { "jdbc.url": "jdbc:mysql://prod-mysql:3306/app", "jdbc.user": "readonly" }, tags: ["External"],   policies: [],              owner: "diane@acme",   enabled: true,  metalakeId: "m_analytics", audit: audit("diane@acme",   60) },
+    { id: "c_doris_an",    name: "doris_olap",         type: "relational", provider: "jdbc-doris",        comment: "Apache Doris MPP для real-time queries",   properties: { "jdbc.url": "jdbc:mysql://doris-fe:9030/", "jdbc.user": "analyst" }, tags: ["Beta"],            policies: [],              owner: "diane@acme",   enabled: true,  metalakeId: "m_analytics", audit: audit("diane@acme",   25) },
+    // ml_lake — Iceberg features / fileset artifacts / model-registry / kafka events
+    { id: "c_iceberg_ml",  name: "iceberg_features",   type: "relational", provider: "lakehouse-iceberg", comment: "Feature store на Iceberg",                  properties: { "uri": "https://iceberg-rest.ml" },                              tags: ["PII"],               policies: ["pii-mask"],    owner: "charlie@acme", enabled: true,  metalakeId: "m_ml",        audit: audit("charlie@acme", 50) },
+    { id: "c_fs_ml",       name: "ml_artifacts",       type: "fileset",    provider: "hadoop",            comment: "Артефакты моделей + training data",         properties: { "location": "s3://ml-artifacts" },                                tags: [],                    policies: [],              owner: "charlie@acme", enabled: true,  metalakeId: "m_ml",        audit: audit("charlie@acme", 75) },
+    { id: "c_model_ml",    name: "model_registry_v2",  type: "model",      provider: "model-registry",    comment: "Production MLflow — gated promotion",        properties: { "registry.uri": "https://mlflow.prod" },                          tags: [],                    policies: [],              owner: "charlie@acme", enabled: true,  metalakeId: "m_ml",        audit: audit("charlie@acme", 45) },
+    { id: "c_kafka_ml",    name: "ml_events",          type: "messaging",  provider: "kafka",             comment: "ML events — predictions + feedback",         properties: { "bootstrap.servers": "kafka-ml:9092" },                           tags: [],                    policies: [],              owner: "charlie@acme", enabled: true,  metalakeId: "m_ml",        audit: audit("charlie@acme", 30) },
+    // archive_lake — холодный fileset
+    { id: "c_archive_fs",  name: "compliance_archive", type: "fileset",    provider: "hadoop",            comment: "S3 Glacier — 7Y compliance retention",      properties: { "location": "s3://compliance-archive", "storage.class": "GLACIER" }, tags: ["Financial", "GDPR"], policies: ["retention-7y"], owner: "alice@acme",   enabled: false, metalakeId: "m_archive",   audit: audit("alice@acme",   200) },
   ];
   CATALOGS.forEach(c => ef("catalogs", c));
 
@@ -95,6 +111,22 @@ export function getSeedEffects() {
     { id: "s_dev_events",  name: "events",      comment: "Dev event streams",                     properties: {},                                     catalogId: "c_kafka_dev",    audit: audit("charlie@acme", 12) },
     // s3_sandbox
     { id: "s_dev_sandbox", name: "sandbox",     comment: "Personal dev sandboxes",                properties: {},                                     catalogId: "c_fs_dev",       audit: audit("charlie@acme", 10) },
+    // U-seed-rich (2026-05-01): схемы под analytics / ml / archive metalakes.
+    // paimon_lakehouse — gold/silver layers
+    { id: "s_an_dwh",       name: "dwh",           comment: "Data warehouse — gold layer",                  properties: { "layer": "gold" },     catalogId: "c_paimon_an",   audit: audit("diane@acme",   70) },
+    { id: "s_an_silver",    name: "silver",        comment: "Cleaned events — silver layer",                properties: { "layer": "silver" },   catalogId: "c_paimon_an",   audit: audit("diane@acme",   60) },
+    // mysql_oltp
+    { id: "s_an_app",       name: "app_db",        comment: "Application OLTP database",                    properties: { "readonly": "true" },  catalogId: "c_mysql_an",    audit: audit("diane@acme",   45) },
+    // doris_olap
+    { id: "s_an_realtime",  name: "realtime",      comment: "Real-time queries dashboard backing",          properties: {},                       catalogId: "c_doris_an",    audit: audit("diane@acme",   20) },
+    // iceberg_features (ml)
+    { id: "s_ml_features",  name: "features",      comment: "Feature views — User/Item/Context",            properties: { "registry": "feast" }, catalogId: "c_iceberg_ml",  audit: audit("charlie@acme", 45) },
+    { id: "s_ml_training",  name: "training",      comment: "Training datasets snapshot",                   properties: {},                       catalogId: "c_iceberg_ml",  audit: audit("charlie@acme", 35) },
+    // ml_artifacts
+    { id: "s_ml_artifacts", name: "artifacts",     comment: "Trained model binaries + training metadata",   properties: {},                       catalogId: "c_fs_ml",       audit: audit("charlie@acme", 50) },
+    // archive
+    { id: "s_archive_fin",  name: "finance_2019",  comment: "Финансовая отчётность 2019 (SOX retention)",   properties: { "year": "2019" },       catalogId: "c_archive_fs",  audit: audit("alice@acme",   200) },
+    { id: "s_archive_pii",  name: "pii_2020",      comment: "GDPR-deletion deferred (legal hold)",          properties: { "legal.hold": "true" }, catalogId: "c_archive_fs",  audit: audit("alice@acme",   180) },
   ];
   SCHEMAS.forEach(s => ef("schemas", s));
 
@@ -214,6 +246,224 @@ export function getSeedEffects() {
     { id: "t_clicks_2026",   name: "clicks_2026",   comment: "Clickstream 2026 — Iceberg partitioned by event_date", properties: { "partition-by": "date(event_ts)" },                    columns: COL_CLICKS,        schemaId: "s_clicks",     audit: audit("alice@acme", 45) },
     { id: "t_inventory_live",name: "inventory_live",comment: "Live inventory (Iceberg streaming)", properties: { "streaming": "true" },                                                   columns: COL_INVENTORY,     schemaId: "s_inventory",  audit: audit("diane@acme", 40) },
     { id: "t_crm_contacts",  name: "contacts",      comment: "CRM contacts (readonly mirror)",    properties: { "mirror-of": "crm.contacts" },                                             columns: COL_CRM,           schemaId: "s_crm",        audit: audit("bob@acme",   30) },
+    // U-seed-rich (2026-05-01): таблицы с разнообразием nested struct/array/map
+    // под новые analytics/ml/archive схемы.
+    // paimon dwh — fact-revenue с struct breakdown + array per region
+    { id: "t_n_revenue", name: "fact_revenue_daily", schemaId: "s_an_dwh",
+      comment: "Daily revenue fact — gold layer (channel × day)",
+      columns: [
+        { name: "day",                 type: "date",                                                                                                            nullable: false, comment: "Day key" },
+        { name: "channel",             type: "varchar(64)",                                                                                                     nullable: false },
+        { name: "revenue_breakdown",   type: "struct<gross:decimal(18,2), net:decimal(18,2), refunds:decimal(18,2), fees:decimal(18,2)>",                       nullable: false, comment: "Revenue split" },
+        { name: "regions",             type: "array<struct<code:varchar(8), gross:decimal(18,2)>>",                                                             nullable: true,  comment: "Per-region split" },
+      ],
+      partitioning: [{ strategy: "month", column: "day" }],
+      distribution: null,
+      sortOrders: [{ expression: "day", direction: "ASC", nullOrder: "FIRST" }],
+      indexes: [],
+      properties: { format: "PARQUET" },
+      tags: ["Financial"], policies: ["retention-365d"], owner: "diane@acme",
+      audit: audit("diane@acme", 65) },
+    // paimon silver — events_clean (4-level nested struct)
+    { id: "t_n_events", name: "events_clean", schemaId: "s_an_silver",
+      comment: "Cleaned events — silver layer",
+      columns: [
+        { name: "event_id", type: "varchar(36)", nullable: false },
+        { name: "user_id",  type: "bigint",      nullable: false },
+        { name: "event_ts", type: "timestamp",   nullable: false },
+        { name: "payload",  type: "map<varchar(64), varchar(255)>",                                                              nullable: true, comment: "Event payload (denorm)" },
+        { name: "device",   type: "struct<os:varchar(32), version:varchar(16), screen:struct<w:int, h:int>>",                    nullable: true, comment: "Nested device info" },
+      ],
+      partitioning: [{ strategy: "day", column: "event_ts" }],
+      distribution: { strategy: "HASH", number: 16, expressions: [["user_id"]] },
+      sortOrders: [{ expression: "event_ts", direction: "DESC" }],
+      indexes: [{ name: "pk_event", type: "PRIMARY_KEY", fieldNames: [["event_id"]] }],
+      properties: { format: "PARQUET", "auto-compaction": "true" },
+      tags: ["Internal"], policies: [], owner: "diane@acme", enabled: true,
+      audit: audit("diane@acme", 50) },
+    // mysql app_db — users c struct profile (PII)
+    { id: "t_n_users", name: "users", schemaId: "s_an_app",
+      comment: "Application users — auth + profile",
+      columns: [
+        { name: "id",            type: "bigint",       nullable: false, autoIncrement: true },
+        { name: "email",         type: "varchar(255)", nullable: false },
+        { name: "password_hash", type: "varchar(72)",  nullable: false },
+        { name: "profile",       type: "struct<first_name:varchar(64), last_name:varchar(64), birth:date, address:struct<country:varchar(2), city:varchar(64), zip:varchar(16)>>", nullable: true, comment: "User profile" },
+      ],
+      indexes: [
+        { name: "pk_users",  type: "PRIMARY_KEY", fieldNames: [["id"]] },
+        { name: "idx_email", type: "UNIQUE",      fieldNames: [["email"]] },
+      ],
+      properties: { engine: "InnoDB" },
+      tags: ["PII"], policies: ["pii-mask", "retention-365d"], owner: "alice@acme",
+      audit: audit("alice@acme", 30) },
+    // mysql app_db — orders c array<struct> line items
+    { id: "t_n_orders", name: "orders", schemaId: "s_an_app",
+      comment: "OLTP orders — array<struct> line items",
+      columns: [
+        { name: "id",      type: "bigint",        nullable: false, autoIncrement: true },
+        { name: "user_id", type: "bigint",        nullable: false },
+        { name: "amount",  type: "decimal(10,2)", nullable: false },
+        { name: "items",   type: "array<struct<sku:varchar(32), qty:int, price:decimal(10,2)>>", nullable: false },
+      ],
+      indexes: [{ name: "pk_orders", type: "PRIMARY_KEY", fieldNames: [["id"]] }],
+      properties: {},
+      audit: audit("bob@acme", 25) },
+    // doris realtime — dashboard metrics с map<>
+    { id: "t_n_dashboard", name: "dashboard_metrics", schemaId: "s_an_realtime",
+      comment: "Real-time metrics для dashboard backing",
+      columns: [
+        { name: "metric_name", type: "varchar(64)", nullable: false },
+        { name: "metric_ts",   type: "timestamp",   nullable: false },
+        { name: "value",       type: "double",      nullable: false },
+        { name: "dimensions",  type: "map<varchar(32), varchar(128)>", nullable: true },
+      ],
+      partitioning: [{ strategy: "day", column: "metric_ts" }],
+      distribution: { strategy: "HASH", number: 8, expressions: [["metric_name"]] },
+      properties: {},
+      audit: audit("diane@acme", 18) },
+    // iceberg features — user_features c map<varchar,double> + struct engagement
+    { id: "t_n_user_features", name: "user_features", schemaId: "s_ml_features",
+      comment: "Per-user feature vector + engagement struct",
+      columns: [
+        { name: "user_id",    type: "bigint",                    nullable: false },
+        { name: "ts",         type: "timestamp",                 nullable: false },
+        { name: "features",   type: "map<varchar(64), double>",  nullable: false, comment: "Feature vector" },
+        { name: "engagement", type: "struct<sessions_30d:int, purchases_30d:int, avg_value:decimal(10,2)>", nullable: true },
+      ],
+      partitioning: [{ strategy: "day", column: "ts" }],
+      properties: {},
+      tags: ["PII"], policies: ["pii-mask"], owner: "charlie@acme",
+      audit: audit("charlie@acme", 40) },
+    // iceberg features — item_features (768-dim embedding array)
+    { id: "t_n_item_features", name: "item_features", schemaId: "s_ml_features",
+      comment: "Per-item embedding + metadata struct",
+      columns: [
+        { name: "item_id",   type: "bigint",        nullable: false },
+        { name: "ts",        type: "timestamp",     nullable: false },
+        { name: "embedding", type: "array<double>", nullable: false, comment: "768-dim embedding" },
+        { name: "metadata",  type: "struct<category:varchar(32), price:decimal(10,2), brand:varchar(64)>", nullable: true },
+      ],
+      partitioning: [{ strategy: "day", column: "ts" }],
+      properties: {},
+      audit: audit("charlie@acme", 35) },
+    // iceberg training — training_set_v3
+    { id: "t_n_train_set", name: "training_set_v3", schemaId: "s_ml_training",
+      comment: "Training set v3 — concatenated user/item features",
+      columns: [
+        { name: "label",         type: "int",                            nullable: false },
+        { name: "user_features", type: "array<double>",                  nullable: false },
+        { name: "item_features", type: "array<double>",                  nullable: false },
+        { name: "context",       type: "map<varchar(32), varchar(64)>",  nullable: true },
+      ],
+      properties: {},
+      audit: audit("charlie@acme", 28) },
+    // archive — general ledger 2019 (frozen)
+    { id: "t_n_fin_2019", name: "general_ledger_2019", schemaId: "s_archive_fin",
+      comment: "Financial ledger 2019 — SOX 7Y retention",
+      columns: [
+        { name: "txn_id",   type: "varchar(36)",   nullable: false },
+        { name: "txn_date", type: "date",          nullable: false },
+        { name: "account",  type: "varchar(64)",   nullable: false },
+        { name: "amount",   type: "decimal(18,2)", nullable: false },
+        { name: "currency", type: "varchar(3)",    nullable: false },
+      ],
+      properties: { "frozen": "true" },
+      tags: ["Financial"], policies: ["retention-7y"], owner: "alice@acme", enabled: false,
+      audit: audit("alice@acme", 200) },
+    // paimon dwh — fact_sessions с массивами событий
+    { id: "t_n_sessions", name: "fact_user_sessions", schemaId: "s_an_dwh",
+      comment: "User sessions с array<struct> события + map context",
+      columns: [
+        { name: "session_id",  type: "varchar(36)",  nullable: false },
+        { name: "user_id",     type: "bigint",       nullable: false },
+        { name: "started_at",  type: "timestamp",    nullable: false },
+        { name: "ended_at",    type: "timestamp",    nullable: true },
+        { name: "events",      type: "array<struct<kind:varchar(32), at:timestamp, meta:map<varchar(32), varchar(128)>>>", nullable: false, comment: "Session event stream" },
+        { name: "session_ctx", type: "struct<utm_source:varchar(64), utm_medium:varchar(64), referrer:varchar(255)>",       nullable: true },
+      ],
+      partitioning: [{ strategy: "day", column: "started_at" }],
+      properties: { format: "PARQUET" },
+      tags: ["Internal"], policies: [], owner: "diane@acme",
+      audit: audit("diane@acme", 30) },
+    // mysql app_db — payments
+    { id: "t_n_payments", name: "payments", schemaId: "s_an_app",
+      comment: "Payment transactions — operational",
+      columns: [
+        { name: "id",          type: "bigint",        nullable: false, autoIncrement: true },
+        { name: "order_id",    type: "bigint",        nullable: false },
+        { name: "amount",      type: "decimal(12,2)", nullable: false },
+        { name: "currency",    type: "char(3)",       nullable: false },
+        { name: "status",      type: "varchar(16)",   nullable: false },
+        { name: "provider_meta", type: "map<varchar(64), varchar(255)>", nullable: true, comment: "Provider response metadata" },
+      ],
+      indexes: [
+        { name: "pk_payments",     type: "PRIMARY_KEY", fieldNames: [["id"]] },
+        { name: "idx_payment_order", type: "BTREE",       fieldNames: [["order_id"]] },
+      ],
+      properties: { engine: "InnoDB" },
+      tags: ["Financial"], policies: ["retention-365d"], owner: "diane@acme",
+      audit: audit("diane@acme", 22) },
+    // doris realtime — alerts
+    { id: "t_n_alerts", name: "alert_events", schemaId: "s_an_realtime",
+      comment: "Real-time alert events — pivot для dashboard",
+      columns: [
+        { name: "alert_id", type: "varchar(36)", nullable: false },
+        { name: "raised_at", type: "timestamp",  nullable: false },
+        { name: "severity",  type: "varchar(16)", nullable: false },
+        { name: "labels",    type: "map<varchar(32), varchar(128)>", nullable: true },
+      ],
+      partitioning: [{ strategy: "day", column: "raised_at" }],
+      properties: {},
+      tags: ["Beta"], policies: [],
+      audit: audit("diane@acme", 12) },
+    // archive finance — invoices 2019 (frozen)
+    { id: "t_n_invoices_2019", name: "invoices_2019", schemaId: "s_archive_fin",
+      comment: "Outstanding invoices 2019 — frozen",
+      columns: [
+        { name: "invoice_id", type: "varchar(36)",   nullable: false },
+        { name: "issued_at",  type: "date",          nullable: false },
+        { name: "amount",     type: "decimal(18,2)", nullable: false },
+        { name: "vendor",     type: "varchar(255)",  nullable: false },
+      ],
+      properties: { "frozen": "true" },
+      tags: ["Financial"], policies: ["retention-7y"], owner: "alice@acme", enabled: false,
+      audit: audit("alice@acme", 195) },
+    // archive PII — users frozen snapshot
+    { id: "t_n_users_2020", name: "users_snapshot_2020", schemaId: "s_archive_pii",
+      comment: "GDPR legal hold — frozen users snapshot",
+      columns: [
+        { name: "user_id",      type: "bigint",       nullable: false },
+        { name: "email_hashed", type: "varchar(64)",  nullable: false, comment: "SHA-256 hash" },
+        { name: "country",      type: "char(2)",      nullable: true },
+        { name: "registered_at", type: "timestamp",   nullable: false },
+      ],
+      properties: { "legal.hold": "true" },
+      tags: ["PII", "GDPR"], policies: ["pii-mask"], owner: "alice@acme", enabled: false,
+      audit: audit("alice@acme", 180) },
+    // ml_features — context_features
+    { id: "t_n_context_features", name: "context_features", schemaId: "s_ml_features",
+      comment: "Контекстные features — daypart / device / geo",
+      columns: [
+        { name: "ts",         type: "timestamp",                       nullable: false },
+        { name: "session_id", type: "varchar(36)",                     nullable: false },
+        { name: "features",   type: "map<varchar(64), double>",         nullable: false },
+        { name: "device",     type: "struct<os:varchar(32), browser:varchar(32)>", nullable: true },
+      ],
+      partitioning: [{ strategy: "hour", column: "ts" }],
+      properties: {},
+      audit: audit("charlie@acme", 20) },
+    // ml_training — eval_set
+    { id: "t_n_eval_set", name: "eval_set_v3", schemaId: "s_ml_training",
+      comment: "Hold-out set для evaluation",
+      columns: [
+        { name: "label",          type: "int",                           nullable: false },
+        { name: "user_features",  type: "array<double>",                 nullable: false },
+        { name: "item_features",  type: "array<double>",                 nullable: false },
+        { name: "predicted_score", type: "double",                       nullable: true },
+      ],
+      properties: {},
+      audit: audit("charlie@acme", 25) },
   ];
   TABLES.forEach(t => ef("tables", t));
 
@@ -223,6 +473,11 @@ export function getSeedEffects() {
     { id: "fs_events_raw",  name: "events_raw",  type: "EXTERNAL", storageLocation: "s3://prod-landing/events",       comment: "External event feeds",       properties: {}, schemaId: "s_external",    audit: audit("alice@acme", 85) },
     { id: "fs_dev_scratch", name: "scratch",     type: "MANAGED",  storageLocation: "s3://dev-sandbox/scratch",       comment: "Dev scratch space",            properties: {}, schemaId: "s_dev_sandbox", audit: audit("charlie@acme", 8) },
     { id: "fs_dev_imports", name: "imports",     type: "EXTERNAL", storageLocation: "s3://dev-sandbox/imports",       comment: "Dev external imports",         properties: {}, schemaId: "s_dev_sandbox", audit: audit("charlie@acme", 5) },
+    // U-seed-rich (2026-05-01): ML artefacts + training data + GDPR legal hold
+    { id: "fs_ml_artifacts", name: "model_artifacts", type: "EXTERNAL", storageLocation: "s3://ml-artifacts/models",         comment: "Trained model binaries",                                  properties: { "format": "pickle/onnx" },                                                          schemaId: "s_ml_artifacts", audit: audit("charlie@acme", 50) },
+    { id: "fs_ml_training",  name: "training_data",   type: "EXTERNAL", storageLocation: "s3://ml-artifacts/training",       comment: "Snapshot training datasets",                              properties: {},                                                                                    schemaId: "s_ml_artifacts", audit: audit("charlie@acme", 45) },
+    { id: "fs_archive_pii",  name: "pii_legal_hold",  type: "EXTERNAL", storageLocation: "s3://compliance-archive/pii_2020", comment: "GDPR legal hold — DO NOT DELETE",                         properties: { "legal.hold": "true", "delete.deferred.until": "2030-01-01" },                       schemaId: "s_archive_pii",  audit: audit("alice@acme",   180) },
+    { id: "fs_archive_fin",  name: "finance_2019",    type: "EXTERNAL", storageLocation: "s3://compliance-archive/finance_2019", comment: "SOX financial archive 2019",                         properties: { "frozen": "true", "storage.class": "GLACIER" },                                       schemaId: "s_archive_fin",  audit: audit("alice@acme",   200) },
   ];
   FILESETS.forEach(fs => ef("filesets", fs));
 
@@ -238,6 +493,16 @@ export function getSeedEffects() {
     // fs_dev_scratch — dev sandbox
     { id: "ff5", filesetId: "fs_dev_scratch", path: "experiments/notebook_alpha.ipynb",   size: 145_220,     modifiedAt: "2026-04-28T10:40:00Z" },
     { id: "ff6", filesetId: "fs_dev_scratch", path: "experiments/output_v3.csv",          size: 2_109_544,   modifiedAt: "2026-04-29T16:02:11Z" },
+    // U-seed-rich (2026-05-01): артефакты моделей / training data / archive PII
+    { id: "ff7",  filesetId: "fs_ml_artifacts", path: "price_optimizer/v7.onnx",        size: 12_948_201,        modifiedAt: "2026-04-25T11:20:00Z" },
+    { id: "ff8",  filesetId: "fs_ml_artifacts", path: "churn_predictor/v3.pkl",         size: 3_220_504,         modifiedAt: "2026-04-20T09:15:00Z" },
+    { id: "ff9",  filesetId: "fs_ml_artifacts", path: "fraud_detector/v12.onnx",        size: 88_445_120,        modifiedAt: "2026-04-29T18:00:00Z" },
+    { id: "ff10", filesetId: "fs_ml_training",  path: "v3/train.parquet",               size: 1_204_551_200,     modifiedAt: "2026-04-15T14:00:00Z" },
+    { id: "ff11", filesetId: "fs_ml_training",  path: "v3/validation.parquet",          size: 250_120_500,       modifiedAt: "2026-04-15T14:01:00Z" },
+    { id: "ff12", filesetId: "fs_ml_training",  path: "v3/test.parquet",                size: 125_550_310,       modifiedAt: "2026-04-15T14:02:00Z" },
+    { id: "ff13", filesetId: "fs_archive_pii",  path: "users_2020-q1.parquet.encrypted", size: 8_900_000_000,    modifiedAt: "2020-04-01T00:00:00Z" },
+    { id: "ff14", filesetId: "fs_archive_fin",  path: "ledger_2019.parquet",             size: 5_204_330_120,    modifiedAt: "2020-01-15T00:00:00Z" },
+    { id: "ff15", filesetId: "fs_archive_fin",  path: "invoices_2019.parquet",           size: 1_804_220_000,    modifiedAt: "2020-01-15T00:01:00Z" },
   ];
   FILESET_FILES.forEach(f => ef("fileset_files", f));
 
@@ -254,6 +519,13 @@ export function getSeedEffects() {
     { id: "fn_pii_mask",       name: "pii_mask",           comment: "Format-preserving masking для PII columns",
       functionBody: "CREATE FUNCTION pii_mask(s STRING) RETURNS STRING AS 'com.acme.PiiMask' USING JAR 's3://udfs/pii.jar'",
       properties: { language: "Java", deterministic: "true", "format-preserving": "true" }, schemaId: "s_sales", audit: audit("alice@acme", 50) },
+    // U-seed-rich (2026-05-01): SQL inline + Java UDF для analytics-схем.
+    { id: "fn_email_normalize", name: "email_normalize",  comment: "Lowercase + trim для email-полей",
+      functionBody: "CREATE FUNCTION email_normalize(s STRING) RETURNS STRING AS 'TRIM(LOWER(s))'",
+      properties: { language: "SQL", deterministic: "true" }, schemaId: "s_an_app", audit: audit("alice@acme", 25) },
+    { id: "fn_geo_distance",    name: "geo_distance_km",  comment: "Haversine distance — Java UDF",
+      functionBody: "CREATE FUNCTION geo_distance_km(lat1 DOUBLE, lon1 DOUBLE, lat2 DOUBLE, lon2 DOUBLE) RETURNS DOUBLE AS 'com.acme.GeoDistance' USING JAR 's3://udfs/geo.jar'",
+      properties: { language: "Java", deterministic: "true" }, schemaId: "s_an_dwh", audit: audit("diane@acme", 40) },
   ];
   FUNCTIONS.forEach(f => ef("functions", f));
 
@@ -264,6 +536,9 @@ export function getSeedEffects() {
     { id: "top_orders",      name: "orders",       comment: "Order events (prod kafka)",   properties: { "partitions": 24, "retention.ms": "604800000" }, catalogId: "c_kafka_dev",  audit: audit("charlie@acme", 18) },
     { id: "top_inventory",   name: "inventory",    comment: "Inventory change events",     properties: { "partitions": 12 },                               catalogId: "c_kafka_dev",  audit: audit("charlie@acme", 15) },
     { id: "top_audit",       name: "audit_log",    comment: "Application audit log stream",properties: { "partitions": 6, "cleanup.policy": "compact" }, catalogId: "c_kafka_dev",  audit: audit("charlie@acme", 10) },
+    // U-seed-rich (2026-05-01): ML-prediction stream + user feedback stream
+    { id: "tp_predictions", name: "ml_predictions", comment: "Model predictions stream",                       properties: { "retention.ms": "604800000", "partitions": "24", "cleanup.policy": "delete" }, catalogId: "c_kafka_ml", audit: audit("charlie@acme", 30) },
+    { id: "tp_feedback",    name: "user_feedback",  comment: "User feedback events для retraining",            properties: { "retention.ms": "2592000000", "partitions": "12" },                              catalogId: "c_kafka_ml", audit: audit("charlie@acme", 28) },
   ];
   TOPICS.forEach(t => ef("topics", t));
 
@@ -273,6 +548,9 @@ export function getSeedEffects() {
     { id: "mdl_churn",        name: "churn_predictor",    comment: "Customer churn propensity (deep)",  latestVersion: 3,  properties: { "framework": "pytorch" },      schemaId: "s_ml_models", audit: audit("charlie@acme", 40) },
     { id: "mdl_fraud",        name: "fraud_detector",     comment: "Real-time fraud detection",         latestVersion: 12, properties: { "framework": "onnx" },         schemaId: "s_ml_models", audit: audit("diane@acme",   35) },
     { id: "mdl_recommender",  name: "product_recsys",     comment: "Collaborative filter recommender",  latestVersion: 2,  properties: { "framework": "tensorflow" },   schemaId: "s_ml_exp",    audit: audit("charlie@acme", 14) },
+    // U-seed-rich (2026-05-01): production ML модели в ml_features namespace
+    { id: "mdl_recommender_v2", name: "user_item_recommender", comment: "Two-tower рекомендер",                latestVersion: 5, properties: { "framework": "tensorflow", "team": "ml-prod" }, schemaId: "s_ml_features", audit: audit("charlie@acme", 60) },
+    { id: "mdl_search_rank",    name: "search_ranker",         comment: "Learning-to-rank для search",         latestVersion: 4, properties: { "framework": "lightgbm" },                     schemaId: "s_ml_features", audit: audit("charlie@acme", 50) },
   ];
   MODELS.forEach(m => ef("models", m));
 
@@ -293,6 +571,16 @@ export function getSeedEffects() {
     // product_recsys (latest=v2)
     { id: "mv_recsys_v1", version: 1, modelObject: "mlflow://models/recsys/1", aliases: [],              properties: { framework: "tensorflow" }, modelId: "mdl_recommender", audit: audit("charlie@acme", 90) },
     { id: "mv_recsys_v2", version: 2, modelObject: "mlflow://models/recsys/2", aliases: ["production"],  properties: { framework: "tensorflow", "ndcg@10": "0.62" }, modelId: "mdl_recommender", audit: audit("charlie@acme", 25) },
+    // U-seed-rich (2026-05-01): user_item_recommender (latest=5) + search_ranker (latest=4)
+    { id: "mv_recsys_v3", version: 3, modelObject: "mlflow://models/recsys/3", aliases: ["staging"],                 properties: { "ndcg@10": "0.65" }, modelId: "mdl_recommender_v2", audit: audit("charlie@acme", 30) },
+    { id: "mv_recsys_v4", version: 4, modelObject: "mlflow://models/recsys/4", aliases: ["candidate"],               properties: { "ndcg@10": "0.68" }, modelId: "mdl_recommender_v2", audit: audit("charlie@acme", 14) },
+    { id: "mv_recsys_v5", version: 5, modelObject: "mlflow://models/recsys/5", aliases: ["production", "champion"],  properties: { "ndcg@10": "0.71" }, modelId: "mdl_recommender_v2", audit: audit("charlie@acme", 5) },
+    { id: "mv_search_v1", version: 1, modelObject: "mlflow://models/search/1", aliases: [],                          properties: { "mrr": "0.32" },     modelId: "mdl_search_rank",    audit: audit("charlie@acme", 80) },
+    { id: "mv_search_v2", version: 2, modelObject: "mlflow://models/search/2", aliases: ["staging"],                 properties: { "mrr": "0.36" },     modelId: "mdl_search_rank",    audit: audit("charlie@acme", 60) },
+    { id: "mv_search_v3", version: 3, modelObject: "mlflow://models/search/3", aliases: ["candidate"],               properties: { "mrr": "0.39" },     modelId: "mdl_search_rank",    audit: audit("charlie@acme", 30) },
+    { id: "mv_search_v4", version: 4, modelObject: "mlflow://models/search/4", aliases: ["production"],              properties: { "mrr": "0.41" },     modelId: "mdl_search_rank",    audit: audit("charlie@acme", 8) },
+    // Дополнительная shadow-версия для recsys (canary/shadow demo)
+    { id: "mv_recsys_shadow", version: 6, modelObject: "mlflow://models/recsys/6", aliases: ["shadow"],               properties: { "ndcg@10": "0.73", "shadow.traffic": "5%" }, modelId: "mdl_recommender_v2", audit: audit("charlie@acme", 2) },
   ];
   MODEL_VERSIONS.forEach(v => ef("model_versions", v));
 
@@ -304,6 +592,12 @@ export function getSeedEffects() {
     { id: "u_diane",   name: "diane@acme",   roles: ["finance_analyst"],            audit: audit("system", 180) },
     { id: "u_eve",     name: "eve@acme",     roles: ["analyst"],                    audit: audit("system", 90) },
     { id: "u_frank",   name: "frank@acme",   roles: ["data_viewer"],                audit: audit("system", 60) },
+    // U-seed-rich (2026-05-01): расширение для groups/roles demo
+    { id: "u_grace",   name: "grace@acme",   roles: ["mlops"],                       audit: audit("alice@acme", 60) },
+    { id: "u_henry",   name: "henry@acme",   roles: ["finance_analyst"],             audit: audit("alice@acme", 50) },
+    { id: "u_iris",    name: "iris@acme",    roles: ["analyst"],                     audit: audit("alice@acme", 30) },
+    { id: "u_jack",    name: "jack@acme",    roles: ["external_partner"],            audit: audit("alice@acme", 15) },
+    { id: "u_kate",    name: "kate@acme",    roles: ["security_admin"],              audit: audit("alice@acme", 200) },
   ];
   USERS.forEach(u => ef("users", u));
 
@@ -316,6 +610,9 @@ export function getSeedEffects() {
     { id: "g_platform",    name: "platform",    members: ["alice@acme", "bob@acme", "charlie@acme"], roles: ["admin", "data_engineer"], audit: audit("system", 300) },
     { id: "g_finance",     name: "finance",     members: ["diane@acme"],                       roles: ["finance_analyst", "data_viewer"], audit: audit("system", 200) },
     { id: "g_ml",          name: "ml",          members: ["charlie@acme"],                     roles: ["data_engineer", "mlops"],         audit: audit("system", 180) },
+    // U-seed-rich (2026-05-01): security + data-platform groups
+    { id: "g_data_platform", name: "data-platform", members: ["alice@acme", "frank@acme"], roles: ["admin", "data_engineer"], audit: audit("alice@acme", 80) },
+    { id: "g_security",      name: "security",      members: ["alice@acme", "kate@acme"],   roles: ["security_admin"],         audit: audit("alice@acme", 100) },
   ];
   GROUPS.forEach(g => ef("groups", g));
 
@@ -342,6 +639,18 @@ export function getSeedEffects() {
     { id: "r_mlops",           name: "mlops",            securableObjects: [
       { type: "catalog", name: "ml_registry",     privileges: ["select", "modify", "create", "delete"] },
     ], properties: {}, audit: audit("system", 120) },
+    // U-seed-rich (2026-05-01): ML engineer / security admin / external partner
+    { id: "r_ml_engineer",     name: "ml_engineer",      securableObjects: [
+      { type: "schema",  name: "ml_features",          privileges: ["USE_SCHEMA", "SELECT_TABLE", "MODIFY_TABLE"] },
+      { type: "fileset", name: "model_artifacts",      privileges: ["READ_FILESET", "WRITE_FILESET"] },
+      { type: "model",   name: "*",                    privileges: ["USE_MODEL", "REGISTER_VERSION"] },
+    ], owner: "charlie@acme", properties: { "team": "ml" }, audit: audit("charlie@acme", 50) },
+    { id: "r_security_admin",  name: "security_admin",   securableObjects: [
+      { type: "metalake", name: "*",                   privileges: ["USE_METALAKE", "CREATE_CATALOG", "MANAGE_GRANTS"] },
+    ], owner: "alice@acme", properties: {}, audit: audit("alice@acme", 90) },
+    { id: "r_external_partner", name: "external_partner", securableObjects: [
+      { type: "schema",  name: "external",             privileges: ["USE_SCHEMA", "SELECT_TABLE"] },
+    ], owner: "alice@acme", properties: {}, audit: audit("alice@acme", 30) },
   ];
   ROLES.forEach(r => ef("roles", r));
 
@@ -352,6 +661,10 @@ export function getSeedEffects() {
     { id: "tag_gdpr",       name: "GDPR",       comment: "Subject to GDPR article 30 record",               properties: { "region": "eu" },                                  inherited: true,  audit: audit("alice@acme",   70) },
     { id: "tag_internal",   name: "Internal",   comment: "Internal use only — не share с вендорами",        properties: {},                                                  inherited: false, audit: audit("alice@acme",   50) },
     { id: "tag_deprecated", name: "Deprecated", comment: "Планируется к удалению — не строить новые зависимости", properties: {},                                           inherited: false, audit: audit("bob@acme",     20) },
+    // U-seed-rich (2026-05-01): External / Compliance / Beta — для рассыпного demo.
+    { id: "tag_external",   name: "External",   comment: "Данные от внешних провайдеров",                       properties: { "review.required": "true" },                  inherited: false, color: "#0891b2", audit: audit("alice@acme", 60) },
+    { id: "tag_compliance", name: "Compliance", comment: "Подлежит compliance-review",                          properties: { "review.cycle.days": "90" },                  inherited: true,  color: "#FFAB00", audit: audit("alice@acme", 80) },
+    { id: "tag_beta",       name: "Beta",       comment: "Beta — не для прод-decisioning",                      properties: {},                                              inherited: false, color: "#7c3aed", audit: audit("alice@acme", 25) },
   ];
   TAGS.forEach(t => ef("tags", t));
 
@@ -364,6 +677,10 @@ export function getSeedEffects() {
     { id: "pol_finance_acl", name: "finance-restricted",   policyType: "access_control", enabled: true,  inherited: false, comment: "Finance schemas — только finance group", content: { allow: ["finance", "admin"], deny: ["*"] },                                                                        audit: audit("diane@acme", 85) },
     { id: "pol_quality",     name: "quality-checks",       policyType: "quality",        enabled: true,  inherited: true,  comment: "Automated data quality checks — freshness + completeness", content: { freshness_hours: 24, completeness_threshold: 0.95 },                                  audit: audit("bob@acme",   40) },
     { id: "pol_disabled",    name: "legacy-masking",       policyType: "data_masking",   enabled: false, inherited: false, comment: "Disabled — superseded by pii-mask v2",  content: {},                                                                                                                  audit: audit("bob@acme",   200) },
+    // U-seed-rich (2026-05-01): retention 7y / quality / external ACL
+    { id: "pol_retention_7y", name: "retention-7y",     policyType: "data_lifecycle", enabled: true,  inherited: false, comment: "SOX 7-year retention",                  content: { days: 2555, action: "archive" },                                                            audit: audit("alice@acme", 200) },
+    { id: "pol_quality_v2",   name: "quality-checks",   policyType: "data_quality",   enabled: true,  inherited: false, comment: "Freshness + completeness + uniqueness", content: { checks: ["freshness", "completeness", "uniqueness"], threshold: 0.99 },                       audit: audit("diane@acme", 40) },
+    { id: "pol_external_acl", name: "external-readonly", policyType: "access_control", enabled: true, inherited: false, comment: "External partners — read-only",         content: { effect: "ALLOW", roles: ["external_partner"], actions: ["SELECT_TABLE"] },                    audit: audit("alice@acme", 30) },
   ];
   POLICIES.forEach(p => ef("policies", p));
 
@@ -379,6 +696,13 @@ export function getSeedEffects() {
     { id: "jt_airflow_dq", name: "data_quality_checks", description: "Airflow DAG — freshness + completeness checks по prod tables",
       config: { kind: "airflow", dagId: "data_quality_v3", schedule: "0 */6 * * *" },
       audit: audit("alice@acme", 30) },
+    // U-seed-rich (2026-05-01): Iceberg compaction + ML retraining шаблоны
+    { id: "jt_iceberg_compact", name: "iceberg-compact", description: "Iceberg compaction — merge small files",
+      config: { kind: "spark", entrypoint: "s3://jobs/iceberg-compact.py", driver: { cores: 2, memory: "4g" }, executor: { cores: 2, memory: "4g", instances: 4 } },
+      audit: audit("diane@acme", 50) },
+    { id: "jt_ml_train",        name: "ml-train-recsys", description: "Retrain recsys model — daily",
+      config: { kind: "spark", entrypoint: "s3://jobs/ml/train.py", driver: { cores: 4, memory: "16g" } },
+      audit: audit("charlie@acme", 30) },
   ];
   JOB_TEMPLATES.forEach(t => ef("job_templates", t));
 
@@ -410,6 +734,30 @@ export function getSeedEffects() {
     { id: "j_006", jobId: "spark-etl-2026-05-01-1200", templateId: "jt_spark_etl",
       status: "queued", startTime: null, endTime: null,
       details: { queuedReason: "waiting for cluster capacity" } },
+    // U-seed-rich (2026-05-01): mix success / running / failed / queued по новым templates.
+    { id: "j_007", jobId: "iceberg-compact-2026-04-30", templateId: "jt_iceberg_compact",
+      status: "success", startTime: new Date(now - 2 * ONE_DAY).toISOString(),
+      endTime: new Date(now - 2 * ONE_DAY + 22 * 60_000).toISOString(),
+      details: { compactedFiles: 11_502, savedSpace: "2.3 GB" } },
+    { id: "j_008", jobId: "iceberg-compact-2026-05-01", templateId: "jt_iceberg_compact",
+      status: "running", startTime: new Date(now - 8 * 60_000).toISOString(),
+      endTime: null,
+      details: { currentTable: "events_clean", processed: 4_220, total: 12_500 } },
+    { id: "j_009", jobId: "ml-train-recsys-2026-04-29", templateId: "jt_ml_train",
+      status: "success", startTime: new Date(now - 3 * ONE_DAY).toISOString(),
+      endTime: new Date(now - 3 * ONE_DAY + 4 * ONE_HOUR).toISOString(),
+      details: { ndcg10: "0.71", ndcg50: "0.83", trainingExamples: 18_500_000 } },
+    { id: "j_010", jobId: "ml-train-recsys-2026-04-30", templateId: "jt_ml_train",
+      status: "failed", startTime: new Date(now - 26 * ONE_HOUR).toISOString(),
+      endTime: new Date(now - 24 * ONE_HOUR).toISOString(),
+      details: { error: "GPU OOM в epoch 12 (batch_size=512)", epoch: 12, attemptsLeft: 2 } },
+    { id: "j_011", jobId: "data-quality-2026-04-30", templateId: "jt_airflow_dq",
+      status: "success", startTime: new Date(now - 14 * ONE_HOUR).toISOString(),
+      endTime: new Date(now - 13 * ONE_HOUR - 18 * 60_000).toISOString(),
+      details: { passedChecks: 142, failedChecks: 3, freshness: "OK", completeness: "98.7%" } },
+    { id: "j_012", jobId: "metastore-backup-2026-05-01", templateId: "jt_shell_backup",
+      status: "queued", startTime: null, endTime: null,
+      details: { queuedReason: "ожидание ночного окна (02:00 UTC)" } },
   ];
   JOBS.forEach(j => ef("jobs", j));
 
