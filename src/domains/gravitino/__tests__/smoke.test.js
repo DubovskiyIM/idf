@@ -95,20 +95,30 @@ describe("gravitino domain — Stage 1 baseline", () => {
     }
   });
 
-  it("metalake_list: canvas-projection (host MetalakesHub) — U5.5", () => {
+  it("metalake_list: SDK-rendered catalog — U-derive Phase 3.5", () => {
     const proj = PROJECTIONS.metalake_list;
-    expect(proj.kind).toBe("canvas");
-    expect(proj.body).toBeDefined();
-    expect(proj.body.canvasId).toBe("metalake_list");
+    expect(proj.kind).toBe("catalog");
     expect(proj.mainEntity).toBe("Metalake");
-    // Old SDK dataGrid bodyOverride удалён в пользу host-rendered компонента.
-    expect(proj.bodyOverride).toBeUndefined();
+    expect(proj.onItemClick?.to).toBe("metalake_workspace");
+    expect(proj.onItemClick?.params?.metalakeId).toBe("item.id");
   });
 
-  it("metalake_list: имеет subtitle/description", () => {
+  it("metalake_list: имеет description", () => {
     const proj = PROJECTIONS.metalake_list;
     expect(typeof proj.description).toBe("string");
     expect(proj.description.length).toBeGreaterThan(20);
+  });
+
+  it("metalake_list: derived UI — owner/tags/policies/_actions auto-fired", () => {
+    const arts = crystallizeV2(INTENTS, PROJECTIONS, ONTOLOGY, DOMAIN_ID);
+    const body = arts.metalake_list?.slots?.body;
+    expect(body?.type).toBe("dataGrid");
+    const keys = body.columns.map(c => c.key);
+    expect(keys).toContain("name");
+    expect(keys).toContain("owner");
+    expect(keys).toContain("tags");
+    expect(keys).toContain("policies");
+    expect(keys).toContain("_actions");
   });
 
   it("metalake_workspace: canvas-projection с canvasId='metalake_workspace'", () => {
