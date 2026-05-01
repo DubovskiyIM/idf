@@ -1,11 +1,24 @@
 /**
  * iamTables — host-rendered tables для Tags/Policies/Users/Groups/Roles
- * (U-iam2.a). Все следуют единому pattern: header + Search + + Action button +
- * table + EmptyState; row-actions iconified (✎ / 🗑 / 🔑 grant-role).
+ * (U-iam2.a). U-derive Phase 3.3: 5 hand-coded tables → 5 thin config-объектов
+ * + один generic <HostEntityTable/> renderer. Net: 281 → 188 LOC, тот же UX.
+ *
+ * Каждая table описывается declarative:
+ *   { title, subtitle, items, columns, actionLabel, onAction, searchKey,
+ *     deleteKind, onDelete, rowActions }
+ *
+ * column: { key, label, render?: (row) => ReactNode, style?, monospace? }
+ * rowAction: { icon, title, onClick, danger? }
+ *
+ * Phase 3.4 candidate: вынести HostEntityTable в SDK как primitive
+ * (когда соберётся ≥3 use-case вне gravitino).
  */
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { IllustratedEmptyState as EmptyState, ColoredChip } from "@intent-driven/renderer";
 import ConfirmDialog from "./ConfirmDialog.jsx";
+
+const cellStyle = { padding: "10px 14px", textAlign: "left" };
+const primaryBtn = { padding: "7px 14px", fontSize: 12, fontWeight: 600, border: "1px solid var(--idf-primary, #6478f7)", background: "var(--idf-primary, #6478f7)", color: "white", borderRadius: 4, cursor: "pointer" };
 
 function HeaderBar({ title, subtitle, actionLabel, onAction, search, onSearch, searchPlaceholder = "Search..." }) {
   return (
@@ -28,254 +41,173 @@ function IconBtn({ icon, title, onClick, danger }) {
   );
 }
 
-const cellStyle = { padding: "10px 14px", textAlign: "left" };
-const primaryBtn = { padding: "7px 14px", fontSize: 12, fontWeight: 600, border: "1px solid var(--idf-primary, #6478f7)", background: "var(--idf-primary, #6478f7)", color: "white", borderRadius: 4, cursor: "pointer" };
-
-// ═══ TagsTable ═════════════════════════════════════════════════════════
-export function TagsTable({ tags = [], onCreate = () => {}, onEdit = () => {}, onDelete = () => {}, onView = () => {} }) {
+function HostEntityTable({
+  title, subtitle, items = [], columns = [], emptyIcon = "catalogs", emptyTitle,
+  actionLabel, onAction, searchPlaceholder, deleteKind, onDelete, rowActions = () => [],
+}) {
   const [search, setSearch] = useState("");
   const [deleteTarget, setDeleteTarget] = useState(null);
-  const filtered = tags.filter(t => !search || (t.name || "").toLowerCase().includes(search.toLowerCase()));
+  const filtered = useMemo(
+    () => items.filter(it => !search || (it.name || "").toLowerCase().includes(search.toLowerCase())),
+    [items, search],
+  );
+
+  const askDelete = onDelete ? (item) => setDeleteTarget(item) : null;
 
   return (
     <div>
-      <HeaderBar title="Tags" subtitle="This table lists the tags you have access to."
-        actionLabel="+ Create Tag" onAction={onCreate} search={search} onSearch={setSearch} />
+      <HeaderBar title={title} subtitle={subtitle} actionLabel={actionLabel} onAction={onAction}
+        search={search} onSearch={setSearch} searchPlaceholder={searchPlaceholder} />
       {filtered.length === 0 ? (
-        <EmptyState icon="catalogs" title="Нет tags" actionLabel="+ Create Tag" onAction={onCreate} />
+        <EmptyState icon={emptyIcon} title={emptyTitle || `Нет ${title.toLowerCase()}`}
+          actionLabel={actionLabel} onAction={onAction} />
       ) : (
         <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13, color: "var(--idf-text)" }}>
           <thead><tr style={{ background: "var(--idf-bg-subtle, #f9fafb)" }}>
-            <th style={cellStyle}>Tag Name</th>
-            <th style={cellStyle}>Created At</th>
-            <th style={cellStyle}>Comment</th>
+            {columns.map(c => <th key={c.key} style={cellStyle}>{c.label}</th>)}
             <th style={{ ...cellStyle, textAlign: "right" }}>Actions</th>
           </tr></thead>
           <tbody>
-            {filtered.map(t => (
-              <tr key={t.id} style={{ borderBottom: "1px solid var(--idf-border, #e5e7eb)" }}>
-                <td style={cellStyle}><ColoredChip text={t.name} color={t.color} /></td>
-                <td style={{ ...cellStyle, color: "var(--idf-text-muted)", fontSize: 12 }}>{fmtTime(t.audit?.createTime)}</td>
-                <td style={{ ...cellStyle, color: "var(--idf-text-muted)" }}>{t.comment || "—"}</td>
+            {filtered.map(it => (
+              <tr key={it.id} style={{ borderBottom: "1px solid var(--idf-border, #e5e7eb)" }}>
+                {columns.map(c => (
+                  <td key={c.key} style={{ ...cellStyle, ...(c.style || {}) }}>
+                    {c.render ? c.render(it) : (it[c.key] ?? "—")}
+                  </td>
+                ))}
                 <td style={{ ...cellStyle, textAlign: "right", whiteSpace: "nowrap" }}>
-                  <IconBtn icon="✎" title="Edit" onClick={() => onEdit(t)} />
-                  <IconBtn icon="👁" title="View" onClick={() => onView(t)} />
-                  <IconBtn icon="🗑" title="Delete" danger onClick={() => setDeleteTarget(t)} />
+                  {rowActions(it).map((a, i) => (
+                    <IconBtn key={i} icon={a.icon} title={a.title} danger={a.danger} onClick={() => a.onClick(it)} />
+                  ))}
+                  {askDelete && <IconBtn icon="🗑" title="Delete" danger onClick={() => askDelete(it)} />}
                 </td>
               </tr>
             ))}
           </tbody>
         </table>
       )}
-      <ConfirmDialog
-        visible={!!deleteTarget}
-        entityName={deleteTarget?.name}
-        entityKind="tag"
-        onCancel={() => setDeleteTarget(null)}
-        onConfirm={() => { onDelete(deleteTarget); setDeleteTarget(null); }}
-      />
-    </div>
-  );
-}
-
-// ═══ PoliciesTable ═════════════════════════════════════════════════════
-export function PoliciesTable({ policies = [], onCreate = () => {}, onEdit = () => {}, onDelete = () => {}, onView = () => {} }) {
-  const [search, setSearch] = useState("");
-  const [deleteTarget, setDeleteTarget] = useState(null);
-  const filtered = policies.filter(p => !search || (p.name || "").toLowerCase().includes(search.toLowerCase()));
-
-  return (
-    <div>
-      <HeaderBar title="Policies" subtitle="This table lists the policies you have access to."
-        actionLabel="+ Create Policy" onAction={onCreate} search={search} onSearch={setSearch} />
-      {filtered.length === 0 ? (
-        <EmptyState icon="catalogs" title="Нет policies" actionLabel="+ Create Policy" onAction={onCreate} />
-      ) : (
-        <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13, color: "var(--idf-text)" }}>
-          <thead><tr style={{ background: "var(--idf-bg-subtle, #f9fafb)" }}>
-            <th style={cellStyle}>Policy Name</th>
-            <th style={cellStyle}>Policy Type</th>
-            <th style={cellStyle}>Comment</th>
-            <th style={{ ...cellStyle, textAlign: "right" }}>Actions</th>
-          </tr></thead>
-          <tbody>
-            {filtered.map(p => (
-              <tr key={p.id} style={{ borderBottom: "1px solid var(--idf-border, #e5e7eb)" }}>
-                <td style={cellStyle}><ColoredChip text={p.name} /></td>
-                <td style={{ ...cellStyle, color: "var(--idf-text-muted)", fontFamily: "monospace", fontSize: 12 }}>{p.policyType || "—"}</td>
-                <td style={{ ...cellStyle, color: "var(--idf-text-muted)" }}>{p.comment || "—"}</td>
-                <td style={{ ...cellStyle, textAlign: "right", whiteSpace: "nowrap" }}>
-                  <IconBtn icon="✎" title="Edit" onClick={() => onEdit(p)} />
-                  <IconBtn icon="👁" title="View" onClick={() => onView(p)} />
-                  <IconBtn icon="🗑" title="Delete" danger onClick={() => setDeleteTarget(p)} />
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+      {askDelete && (
+        <ConfirmDialog
+          visible={!!deleteTarget}
+          entityName={deleteTarget?.name}
+          entityKind={deleteKind}
+          onCancel={() => setDeleteTarget(null)}
+          onConfirm={() => { onDelete(deleteTarget); setDeleteTarget(null); }}
+        />
       )}
-      <ConfirmDialog
-        visible={!!deleteTarget}
-        entityName={deleteTarget?.name}
-        entityKind="policy"
-        onCancel={() => setDeleteTarget(null)}
-        onConfirm={() => { onDelete(deleteTarget); setDeleteTarget(null); }}
-      />
     </div>
   );
 }
 
-// ═══ UsersTable ═══════════════════════════════════════════════════════
-export function UsersTable({ users = [], onAdd = () => {}, onGrantRole = () => {}, onDelete = () => {} }) {
-  const [search, setSearch] = useState("");
-  const [deleteTarget, setDeleteTarget] = useState(null);
-  const filtered = users.filter(u => !search || (u.name || "").toLowerCase().includes(search.toLowerCase()));
-
-  return (
-    <div>
-      <HeaderBar title="Users" subtitle="Users are the entities that can be granted roles."
-        actionLabel="+ Add User" onAction={onAdd} search={search} onSearch={setSearch} />
-      {filtered.length === 0 ? (
-        <EmptyState icon="catalogs" title="Нет users" actionLabel="+ Add User" onAction={onAdd} />
-      ) : (
-        <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13, color: "var(--idf-text)" }}>
-          <thead><tr style={{ background: "var(--idf-bg-subtle, #f9fafb)" }}>
-            <th style={cellStyle}>User Name</th>
-            <th style={cellStyle}>Roles</th>
-            <th style={{ ...cellStyle, textAlign: "right" }}>Actions</th>
-          </tr></thead>
-          <tbody>
-            {filtered.map(u => (
-              <tr key={u.id} style={{ borderBottom: "1px solid var(--idf-border, #e5e7eb)" }}>
-                <td style={{ ...cellStyle, fontWeight: 500 }}>{u.name}</td>
-                <td style={cellStyle}>
-                  {(u.roles || []).length === 0 ? <span style={{ color: "var(--idf-text-muted)" }}>—</span> : (
-                    <div style={{ display: "flex", flexWrap: "wrap", gap: 4 }}>
-                      {u.roles.map(r => (
-                        <span key={r} style={{ padding: "2px 8px", borderRadius: 4, fontSize: 11, fontWeight: 500, background: "var(--idf-bg-subtle, #f3f4f6)", color: "var(--idf-text)" }}>{r}</span>
-                      ))}
-                    </div>
-                  )}
-                </td>
-                <td style={{ ...cellStyle, textAlign: "right", whiteSpace: "nowrap" }}>
-                  <IconBtn icon="🔑" title="Grant role" onClick={() => onGrantRole(u)} />
-                  <IconBtn icon="🗑" title="Delete" danger onClick={() => setDeleteTarget(u)} />
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      )}
-      <ConfirmDialog
-        visible={!!deleteTarget}
-        entityName={deleteTarget?.name}
-        entityKind="user"
-        onCancel={() => setDeleteTarget(null)}
-        onConfirm={() => { onDelete(deleteTarget); setDeleteTarget(null); }}
-      />
-    </div>
-  );
-}
-
-// ═══ GroupsTable ═══════════════════════════════════════════════════════
-export function GroupsTable({ groups = [], onAdd = () => {}, onGrantRole = () => {}, onDelete = () => {} }) {
-  const [search, setSearch] = useState("");
-  const [deleteTarget, setDeleteTarget] = useState(null);
-  const filtered = groups.filter(g => !search || (g.name || "").toLowerCase().includes(search.toLowerCase()));
-
-  return (
-    <div>
-      <HeaderBar title="User Groups" subtitle="User groups are the entities that can be granted roles."
-        actionLabel="+ Add User Group" onAction={onAdd} search={search} onSearch={setSearch} />
-      {filtered.length === 0 ? (
-        <EmptyState icon="catalogs" title="Нет groups" actionLabel="+ Add User Group" onAction={onAdd} />
-      ) : (
-        <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13, color: "var(--idf-text)" }}>
-          <thead><tr style={{ background: "var(--idf-bg-subtle, #f9fafb)" }}>
-            <th style={cellStyle}>Group Name</th>
-            <th style={cellStyle}>Roles</th>
-            <th style={{ ...cellStyle, textAlign: "right" }}>Actions</th>
-          </tr></thead>
-          <tbody>
-            {filtered.map(g => (
-              <tr key={g.id} style={{ borderBottom: "1px solid var(--idf-border, #e5e7eb)" }}>
-                <td style={{ ...cellStyle, fontWeight: 500 }}>{g.name}</td>
-                <td style={cellStyle}>
-                  {(g.roles || []).length === 0 ? <span style={{ color: "var(--idf-text-muted)" }}>—</span> : (
-                    <div style={{ display: "flex", flexWrap: "wrap", gap: 4 }}>
-                      {g.roles.map(r => (
-                        <span key={r} style={{ padding: "2px 8px", borderRadius: 4, fontSize: 11, fontWeight: 500, background: "var(--idf-bg-subtle, #f3f4f6)", color: "var(--idf-text)" }}>{r}</span>
-                      ))}
-                    </div>
-                  )}
-                </td>
-                <td style={{ ...cellStyle, textAlign: "right", whiteSpace: "nowrap" }}>
-                  <IconBtn icon="🔑" title="Grant role" onClick={() => onGrantRole(g)} />
-                  <IconBtn icon="🗑" title="Delete" danger onClick={() => setDeleteTarget(g)} />
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      )}
-      <ConfirmDialog
-        visible={!!deleteTarget}
-        entityName={deleteTarget?.name}
-        entityKind="group"
-        onCancel={() => setDeleteTarget(null)}
-        onConfirm={() => { onDelete(deleteTarget); setDeleteTarget(null); }}
-      />
-    </div>
-  );
-}
-
-// ═══ RolesTable ═══════════════════════════════════════════════════════
-export function RolesTable({ roles = [], onCreate = () => {}, onEdit = () => {}, onDelete = () => {}, onSetOwner = () => {} }) {
-  const [search, setSearch] = useState("");
-  const [deleteTarget, setDeleteTarget] = useState(null);
-  const filtered = roles.filter(r => !search || (r.name || "").toLowerCase().includes(search.toLowerCase()));
-
-  return (
-    <div>
-      <HeaderBar title="Roles" subtitle="Roles are the entities that can be granted to users or user groups."
-        actionLabel="+ Create Role" onAction={onCreate} search={search} onSearch={setSearch} searchPlaceholder="Search" />
-      {filtered.length === 0 ? (
-        <EmptyState icon="versions" title="Нет roles" actionLabel="+ Create Role" onAction={onCreate} />
-      ) : (
-        <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13, color: "var(--idf-text)" }}>
-          <thead><tr style={{ background: "var(--idf-bg-subtle, #f9fafb)" }}>
-            <th style={cellStyle}>Role Name</th>
-            <th style={cellStyle}>Owner</th>
-            <th style={{ ...cellStyle, textAlign: "right" }}>Actions</th>
-          </tr></thead>
-          <tbody>
-            {filtered.map(r => (
-              <tr key={r.id} style={{ borderBottom: "1px solid var(--idf-border, #e5e7eb)" }}>
-                <td style={{ ...cellStyle, fontWeight: 500 }}>{r.name}</td>
-                <td style={{ ...cellStyle, color: "var(--idf-text-muted)" }}>{r.owner || "—"}</td>
-                <td style={{ ...cellStyle, textAlign: "right", whiteSpace: "nowrap" }}>
-                  <IconBtn icon="✎" title="Edit" onClick={() => onEdit(r)} />
-                  <IconBtn icon="⚙" title="Set Owner" onClick={() => onSetOwner(r)} />
-                  <IconBtn icon="🗑" title="Delete" danger onClick={() => setDeleteTarget(r)} />
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      )}
-      <ConfirmDialog
-        visible={!!deleteTarget}
-        entityName={deleteTarget?.name}
-        entityKind="role"
-        onCancel={() => setDeleteTarget(null)}
-        onConfirm={() => { onDelete(deleteTarget); setDeleteTarget(null); }}
-      />
-    </div>
-  );
-}
+const mutedSmall = { color: "var(--idf-text-muted)", fontSize: 12 };
+const mutedMono = { color: "var(--idf-text-muted)", fontFamily: "monospace", fontSize: 12 };
+const muted = { color: "var(--idf-text-muted)" };
+const bold = { fontWeight: 500 };
 
 function fmtTime(iso) {
   if (!iso) return "—";
   try { return new Date(iso).toLocaleString("ru-RU", { dateStyle: "short", timeStyle: "short" }); }
   catch { return iso; }
+}
+
+function RoleChips({ roles = [] }) {
+  if (roles.length === 0) return <span style={muted}>—</span>;
+  return (
+    <div style={{ display: "flex", flexWrap: "wrap", gap: 4 }}>
+      {roles.map(r => (
+        <span key={r} style={{ padding: "2px 8px", borderRadius: 4, fontSize: 11, fontWeight: 500, background: "var(--idf-bg-subtle, #f3f4f6)", color: "var(--idf-text)" }}>{r}</span>
+      ))}
+    </div>
+  );
+}
+
+export function TagsTable({ tags = [], onCreate, onEdit, onDelete, onView }) {
+  return (
+    <HostEntityTable
+      title="Tags" subtitle="This table lists the tags you have access to."
+      items={tags}
+      columns={[
+        { key: "name", label: "Tag Name", render: t => <ColoredChip text={t.name} color={t.color} /> },
+        { key: "createdAt", label: "Created At", style: mutedSmall, render: t => fmtTime(t.audit?.createTime) },
+        { key: "comment", label: "Comment", style: muted, render: t => t.comment || "—" },
+      ]}
+      actionLabel="+ Create Tag" onAction={onCreate}
+      deleteKind="tag" onDelete={onDelete}
+      rowActions={t => [
+        { icon: "✎", title: "Edit", onClick: () => onEdit?.(t) },
+        { icon: "👁", title: "View", onClick: () => onView?.(t) },
+      ]}
+    />
+  );
+}
+
+export function PoliciesTable({ policies = [], onCreate, onEdit, onDelete, onView }) {
+  return (
+    <HostEntityTable
+      title="Policies" subtitle="This table lists the policies you have access to."
+      items={policies}
+      columns={[
+        { key: "name", label: "Policy Name", render: p => <ColoredChip text={p.name} /> },
+        { key: "policyType", label: "Policy Type", style: mutedMono, render: p => p.policyType || "—" },
+        { key: "comment", label: "Comment", style: muted, render: p => p.comment || "—" },
+      ]}
+      actionLabel="+ Create Policy" onAction={onCreate}
+      deleteKind="policy" onDelete={onDelete}
+      rowActions={p => [
+        { icon: "✎", title: "Edit", onClick: () => onEdit?.(p) },
+        { icon: "👁", title: "View", onClick: () => onView?.(p) },
+      ]}
+    />
+  );
+}
+
+export function UsersTable({ users = [], onAdd, onGrantRole, onDelete }) {
+  return (
+    <HostEntityTable
+      title="Users" subtitle="Users are the entities that can be granted roles."
+      items={users}
+      columns={[
+        { key: "name", label: "User Name", style: bold },
+        { key: "roles", label: "Roles", render: u => <RoleChips roles={u.roles} /> },
+      ]}
+      actionLabel="+ Add User" onAction={onAdd}
+      deleteKind="user" onDelete={onDelete}
+      rowActions={u => [{ icon: "🔑", title: "Grant role", onClick: () => onGrantRole?.(u) }]}
+    />
+  );
+}
+
+export function GroupsTable({ groups = [], onAdd, onGrantRole, onDelete }) {
+  return (
+    <HostEntityTable
+      title="User Groups" subtitle="User groups are the entities that can be granted roles."
+      items={groups}
+      columns={[
+        { key: "name", label: "Group Name", style: bold },
+        { key: "roles", label: "Roles", render: g => <RoleChips roles={g.roles} /> },
+      ]}
+      actionLabel="+ Add User Group" onAction={onAdd}
+      deleteKind="group" onDelete={onDelete}
+      rowActions={g => [{ icon: "🔑", title: "Grant role", onClick: () => onGrantRole?.(g) }]}
+    />
+  );
+}
+
+export function RolesTable({ roles = [], onCreate, onEdit, onDelete, onSetOwner }) {
+  return (
+    <HostEntityTable
+      title="Roles" subtitle="Roles are the entities that can be granted to users or user groups."
+      items={roles} emptyIcon="versions" searchPlaceholder="Search"
+      columns={[
+        { key: "name", label: "Role Name", style: bold },
+        { key: "owner", label: "Owner", style: muted, render: r => r.owner || "—" },
+      ]}
+      actionLabel="+ Create Role" onAction={onCreate}
+      deleteKind="role" onDelete={onDelete}
+      rowActions={r => [
+        { icon: "✎", title: "Edit", onClick: () => onEdit?.(r) },
+        { icon: "⚙", title: "Set Owner", onClick: () => onSetOwner?.(r) },
+      ]}
+    />
+  );
 }
