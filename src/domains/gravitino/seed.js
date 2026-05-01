@@ -236,10 +236,12 @@ export function getSeedEffects() {
   FUNCTIONS.forEach(f => ef("functions", f));
 
   // ═══ Topics (Kafka) ═════════════════════════════════════════════════════
+  // Топики живут напрямую под messaging-каталогом (Kafka model: catalog → topic),
+  // без промежуточного schema. Прицеплены к c_kafka_dev (где раньше был s_dev_events).
   const TOPICS = [
-    { id: "top_orders",      name: "orders",       comment: "Order events (prod kafka)",   properties: { "partitions": 24, "retention.ms": "604800000" }, schemaId: "s_dev_events",  audit: audit("charlie@acme", 18) },
-    { id: "top_inventory",   name: "inventory",    comment: "Inventory change events",     properties: { "partitions": 12 },                               schemaId: "s_dev_events",  audit: audit("charlie@acme", 15) },
-    { id: "top_audit",       name: "audit_log",    comment: "Application audit log stream",properties: { "partitions": 6, "cleanup.policy": "compact" }, schemaId: "s_dev_events",  audit: audit("charlie@acme", 10) },
+    { id: "top_orders",      name: "orders",       comment: "Order events (prod kafka)",   properties: { "partitions": 24, "retention.ms": "604800000" }, catalogId: "c_kafka_dev",  audit: audit("charlie@acme", 18) },
+    { id: "top_inventory",   name: "inventory",    comment: "Inventory change events",     properties: { "partitions": 12 },                               catalogId: "c_kafka_dev",  audit: audit("charlie@acme", 15) },
+    { id: "top_audit",       name: "audit_log",    comment: "Application audit log stream",properties: { "partitions": 6, "cleanup.policy": "compact" }, catalogId: "c_kafka_dev",  audit: audit("charlie@acme", 10) },
   ];
   TOPICS.forEach(t => ef("topics", t));
 
