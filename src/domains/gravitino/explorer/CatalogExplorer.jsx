@@ -78,8 +78,15 @@ export default function CatalogExplorer({ world = {}, routeParams, ctx }) {
       }}>
         <CatalogTree
           catalogs={allCatalogs}
+          world={world}
           metalakeId={metalakeId}
-          onSelect={setSelectedCatalog}
+          onSelect={(node) => {
+            // U2.3 минимально: только catalog меняет правую панель;
+            // schema/table/etc. selection — backlog (U2.4 detail-pane swap).
+            if (node && allCatalogs.some(c => c.id === node.id)) {
+              setSelectedCatalog(node);
+            }
+          }}
         />
         <div style={{
           padding: 16, overflow: "auto",

@@ -1,12 +1,15 @@
 /**
- * CatalogTree — левая панель split-pane catalog-explorer (U2.1).
+ * CatalogTree — расширенная версия (U2.3): nested children до
+ * schema / table / fileset / topic / model уровней.
  *
  * Tabs (Relational / Messaging / Fileset / Model) фильтруют catalogs по
- * `catalog.type`. Search input фильтрует видимые catalogs по подстроке name.
- * Клик по catalog узлу вызывает onSelect(catalog).
+ * `catalog.type`. Каждый catalog узел expandable → schemas (для relational/
+ * fileset/model) или topics напрямую (для messaging). Каждый schema
+ * expandable → tables / filesets / models (в зависимости от parent catalog
+ * type). Click по любому узлу вызывает onSelect(entityObject).
  *
- * Sub-tree (schemas внутри catalog) пока не рендерим — в U2.3 после
- * lazy-loading children.
+ * Search фильтрует по подстроке name на catalog-level (как в U2.1);
+ * deep-search через все уровни — backlog (U2.4).
  */
 import { useMemo, useState } from "react";
 
@@ -17,9 +20,53 @@ const TABS = [
   { key: "model",      label: "Model" },
 ];
 
-export default function CatalogTree({ catalogs = [], metalakeId, onSelect = () => {} }) {
+// Какие children показывать у catalog в зависимости от type catalog'а.
+function getCatalogChildren(catalog, world) {
+  if (catalog.type === "messaging") {
+    // messaging — topics напрямую под catalog
+    return {
+      kind: "topic",
+      items: (world.topics || []).filter(t => t.catalogId === catalog.id),
+    };
+  }
+  return {
+    kind: "schema",
+    items: (world.schemas || []).filter(s => s.catalogId === catalog.id),
+  };
+}
+
+function getSchemaChildren(schema, catalog, world) {
+  switch (catalog.type) {
+    case "relational":
+      return { kind: "table", items: (world.tables || []).filter(t => t.schemaId === schema.id) };
+    case "fileset":
+      return { kind: "fileset", items: (world.filesets || []).filter(f => f.schemaId === schema.id) };
+    case "model":
+      return { kind: "model", items: (world.models || []).filter(m => m.schemaId === schema.id) };
+    default:
+      return { kind: null, items: [] };
+  }
+}
+
+const KIND_ICON = {
+  schema: "📂",
+  table: "🗒",
+  fileset: "📁",
+  topic: "📡",
+  model: "🤖",
+};
+
+export default function CatalogTree({ catalogs = [], world = {}, metalakeId, onSelect = () => {} }) {
   const [activeTab, setActiveTab] = useState("relational");
   const [search, setSearch] = useState("");
+  const [expanded, setExpanded] = useState(() => new Set());
+
+  const toggle = (nodeId) => setExpanded(prev => {
+    const next = new Set(prev);
+    if (next.has(nodeId)) next.delete(nodeId);
+    else next.add(nodeId);
+    return next;
+  });
 
   const filtered = useMemo(() => {
     const byScope = catalogs.filter(c => c.metalakeId === metalakeId && c.type === activeTab);
@@ -35,9 +82,7 @@ export default function CatalogTree({ catalogs = [], metalakeId, onSelect = () =
       background: "var(--idf-card, #fafafa)",
       minWidth: 0,
     }}>
-      <div role="tablist" style={{
-        display: "flex", borderBottom: "1px solid var(--idf-border, #e5e7eb)",
-      }}>
+      <div role="tablist" style={{ display: "flex", borderBottom: "1px solid var(--idf-border, #e5e7eb)" }}>
         {TABS.map(tab => {
           const active = tab.key === activeTab;
           return (
@@ -49,13 +94,11 @@ export default function CatalogTree({ catalogs = [], metalakeId, onSelect = () =
               aria-label={tab.label}
               onClick={() => setActiveTab(tab.key)}
               style={{
-                flex: 1, padding: "8px 4px", fontSize: 12,
-                background: "transparent",
+                flex: 1, padding: "8px 4px", fontSize: 12, background: "transparent",
                 border: "none",
                 borderBottom: active ? "2px solid var(--idf-primary, #6478f7)" : "2px solid transparent",
                 color: active ? "var(--idf-primary, #6478f7)" : "var(--idf-text-muted, #868e96)",
-                fontWeight: active ? 600 : 400,
-                cursor: "pointer",
+                fontWeight: active ? 600 : 400, cursor: "pointer",
               }}
             >{tab.label}</button>
           );
@@ -69,10 +112,8 @@ export default function CatalogTree({ catalogs = [], metalakeId, onSelect = () =
           placeholder="Search..."
           style={{
             width: "100%", padding: "6px 8px", fontSize: 12,
-            border: "1px solid var(--idf-border, #e5e7eb)",
-            borderRadius: 4,
-            background: "var(--idf-surface, #fff)",
-            color: "var(--idf-text)",
+            border: "1px solid var(--idf-border, #e5e7eb)", borderRadius: 4,
+            background: "var(--idf-surface, #fff)", color: "var(--idf-text)",
             boxSizing: "border-box",
           }}
         />
@@ -83,30 +124,141 @@ export default function CatalogTree({ catalogs = [], metalakeId, onSelect = () =
             Нет каталогов
           </li>
         ) : filtered.map(cat => (
-          <li key={cat.id}>
-            <button
-              type="button"
-              onClick={() => onSelect(cat)}
-              style={{
-                display: "flex", alignItems: "center", gap: 8,
-                width: "100%", padding: "6px 12px",
-                background: "transparent",
-                border: "none", borderRadius: 4,
-                fontSize: 13, color: "var(--idf-text)",
-                cursor: "pointer", textAlign: "left",
-              }}
-            >
-              <span style={{ fontSize: 11, color: "var(--idf-text-muted)" }}>▸</span>
-              <span style={{ flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                {cat.name}
-              </span>
-              <span style={{ fontSize: 10, color: "var(--idf-text-muted)" }}>
-                {cat.provider}
-              </span>
-            </button>
-          </li>
+          <CatalogNode
+            key={cat.id}
+            catalog={cat}
+            world={world}
+            depth={0}
+            expanded={expanded}
+            toggle={toggle}
+            onSelect={onSelect}
+          />
         ))}
       </ul>
+    </div>
+  );
+}
+
+function CatalogNode({ catalog, world, depth, expanded, toggle, onSelect }) {
+  const nodeId = `catalog:${catalog.id}`;
+  const isOpen = expanded.has(nodeId);
+  const { kind, items: children } = getCatalogChildren(catalog, world);
+  const hasChildren = children.length > 0;
+
+  return (
+    <li>
+      <Row
+        nodeId={nodeId}
+        depth={depth}
+        hasChildren={hasChildren}
+        isOpen={isOpen}
+        toggle={toggle}
+        label={catalog.name}
+        rightLabel={catalog.provider}
+        onClick={() => onSelect(catalog)}
+      />
+      {isOpen && hasChildren && (
+        <ul style={{ listStyle: "none", margin: 0, padding: 0 }}>
+          {kind === "topic"
+            ? children.map(t => (
+                <LeafNode key={t.id} item={t} kind="topic" depth={depth + 1} onSelect={onSelect} />
+              ))
+            : children.map(schema => (
+                <SchemaNode
+                  key={schema.id}
+                  schema={schema}
+                  catalog={catalog}
+                  world={world}
+                  depth={depth + 1}
+                  expanded={expanded}
+                  toggle={toggle}
+                  onSelect={onSelect}
+                />
+              ))}
+        </ul>
+      )}
+    </li>
+  );
+}
+
+function SchemaNode({ schema, catalog, world, depth, expanded, toggle, onSelect }) {
+  const nodeId = `schema:${schema.id}`;
+  const isOpen = expanded.has(nodeId);
+  const { kind, items: children } = getSchemaChildren(schema, catalog, world);
+  const hasChildren = children.length > 0;
+  return (
+    <li>
+      <Row
+        nodeId={nodeId}
+        depth={depth}
+        hasChildren={hasChildren}
+        isOpen={isOpen}
+        toggle={toggle}
+        icon={KIND_ICON.schema}
+        label={schema.name}
+        onClick={() => onSelect(schema)}
+      />
+      {isOpen && hasChildren && (
+        <ul style={{ listStyle: "none", margin: 0, padding: 0 }}>
+          {children.map(item => (
+            <LeafNode key={item.id} item={item} kind={kind} depth={depth + 1} onSelect={onSelect} />
+          ))}
+        </ul>
+      )}
+    </li>
+  );
+}
+
+function LeafNode({ item, kind, depth, onSelect }) {
+  return (
+    <li>
+      <Row
+        nodeId={`${kind}:${item.id}`}
+        depth={depth}
+        hasChildren={false}
+        icon={KIND_ICON[kind]}
+        label={item.name}
+        onClick={() => onSelect(item)}
+      />
+    </li>
+  );
+}
+
+function Row({ nodeId, depth, hasChildren, isOpen, toggle, icon, label, rightLabel, onClick }) {
+  return (
+    <div style={{ display: "flex", alignItems: "center", paddingLeft: depth * 14 }}>
+      {hasChildren ? (
+        <button
+          type="button"
+          aria-label={`expand-${nodeId}`}
+          onClick={(e) => { e.stopPropagation(); toggle(nodeId); }}
+          style={{
+            width: 18, height: 18, padding: 0, border: "none", background: "transparent",
+            cursor: "pointer", color: "var(--idf-text-muted)", fontSize: 11,
+          }}
+        >{isOpen ? "▾" : "▸"}</button>
+      ) : (
+        <span style={{ width: 18, display: "inline-block" }} />
+      )}
+      <button
+        type="button"
+        onClick={onClick}
+        style={{
+          display: "flex", alignItems: "center", gap: 6,
+          flex: 1, padding: "4px 8px",
+          background: "transparent", border: "none", borderRadius: 4,
+          fontSize: 13, color: "var(--idf-text)",
+          cursor: "pointer", textAlign: "left",
+        }}
+      >
+        {icon && <span style={{ fontSize: 11 }}>{icon}</span>}
+        <span style={{ flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+          {label}
+        </span>
+        {rightLabel && (
+          <span style={{ fontSize: 10, color: "var(--idf-text-muted)" }}>{rightLabel}</span>
+        )}
+      </button>
     </div>
   );
 }
