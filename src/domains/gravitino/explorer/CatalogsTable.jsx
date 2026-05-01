@@ -19,6 +19,7 @@ export default function CatalogsTable({
   onAssociate = () => {},
   onCreate = () => {},
   onSetOwner = () => {},
+  onToggleEnabled = () => {},
 }) {
   const [popover, setPopover] = useState(null); // { catalogId, type: "tags"|"policies" }
 
@@ -52,6 +53,7 @@ export default function CatalogsTable({
           <th style={cellStyle}>Provider</th>
           <th style={cellStyle}>Type</th>
           <th style={cellStyle}>Owner</th>
+          <th style={cellStyle}>In Use</th>
           <th style={cellStyle}>Comment</th>
           <th style={cellStyle}>Tags</th>
           <th style={cellStyle}>Policies</th>
@@ -101,6 +103,20 @@ export default function CatalogsTable({
                   }}
                 >+ Set Owner</button>
               )}
+            </td>
+            <td style={cellStyle}>
+              <button
+                type="button"
+                onClick={() => onToggleEnabled(cat.id, cat.enabled === false)}
+                aria-label={cat.enabled !== false ? "In Use" : "Disabled"}
+                style={{
+                  padding: "3px 10px", fontSize: 11, fontWeight: 600, borderRadius: 12,
+                  border: cat.enabled !== false ? "1px solid #71DD37" : "1px solid var(--idf-border, #e5e7eb)",
+                  background: cat.enabled !== false ? "rgba(113,221,55,0.18)" : "transparent",
+                  color: cat.enabled !== false ? "#71DD37" : "var(--idf-text-muted)",
+                  cursor: "pointer",
+                }}
+              >{cat.enabled !== false ? "✓ In Use" : "× Disabled"}</button>
             </td>
             <td style={{ ...cellStyle, color: "var(--idf-text-muted)" }}>{cat.comment || "—"}</td>
             <td style={{ ...cellStyle, position: "relative" }}>
