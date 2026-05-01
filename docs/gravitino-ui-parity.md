@@ -73,7 +73,7 @@
 | C1 | Create / Edit / Delete для всех 12+ сущностей | Modal dialogs | ✅ form-архетип | ✅ |
 | C2 | Set Owner | `SetOwnerDialog` (User/Group cascader) | <SetOwnerDialog/> с tabs Users/Groups + search; UI-state в CatalogExplorer.ownerOverrides (catalog-level) | ✅ U5 catalog · metalake/schema/table — U5.5 |
 | C3 | Toggle In-Use (metalake/catalog) | Switch | ❌ | ❌ |
-| C4 | Test Connection (catalog) | Кнопка перед save | ❌ | ❌ Side-effect intent с external check |
+| C4 | Test Connection (catalog) | Кнопка перед save | Test Connection кнопка в CreateCatalogDialog (mock async — heuristic isPlausibleUri); реальный probe — U6.5 backend | ✅ U-polish-2 (mock) |
 | C5 | Grant Role to User/Group | Через user/group row-action | ✅ row-action | ✅ |
 | C6 | Revoke Role | Через user/group row-action | ✅ | ✅ |
 | C7 | Assign Tag to metadata object | Popover на entity-row | AssociatePopover в CatalogsTable (UI-state, exec в U2.5b) | ✅ U2.5 catalog |
@@ -98,12 +98,12 @@
 | D7 | Dark theme | next-themes + AntD ConfigProvider | per-domain antdThemeConfig + darkAlgorithm + CSS-vars override (gravitino-only) | ✅ U1 |
 | D8 | Brand primary `#6478f7` | Tailwind + AntD theme | colorPrimary `#6478f7` через ConfigProvider | ✅ U1 |
 | D9 | Loading skeletons | Custom `Loading` | adapter capability | 🟡 |
-| D10 | Empty-state иллюстрации | Брендовые | дефолт AntD | 🟡 |
+| D10 | Empty-state иллюстрации | Брендовые | <EmptyState/> с inline-SVG (4 kinds: catalogs/files/versions/jobs); применён в CatalogsTable/FilesetDetailPane/ModelDetailPane | ✅ U-polish-2 |
 | D11 | Toast notifications | `StyledToast` | adapter | 🟡 |
 | D12 | Iconify + custom SVG (40KB icon set) | `Icons.js` | adapter icons | 🟡 |
 | D13 | Search bar (client-side filter) | AntD `Input.Search` | catalog-archetype filterBar | ✅ |
 | D14 | Owner avatar inline | + click → `SetOwnerDialog` | Owner cell с avatar-letter chip + ✎ edit (CatalogsTable) | ✅ U5 |
-| D15 | Tree expand/collapse persist | Redux store | ❌ | ❌ Pattern для bank |
+| D15 | Tree expand/collapse persist | Redux store | localStorage `gravitino-tree-expanded` JSON-array of node IDs | ✅ U-polish-2 |
 
 ---
 
@@ -141,3 +141,4 @@
 - **2026-05-01 (Sprint U5)** — `<SetOwnerDialog/>` (modal cascader с tabs Users/Groups + search) + Owner колонка в `<CatalogsTable/>` (avatar-letter + ✎ edit / + Set Owner placeholder). Seed: owner на 3 metalakes + 3 prod catalogs. UI-state в `CatalogExplorer.ownerOverrides` (optimistic, без backend exec — реальный intent `setMetalakeOwner` / `setCatalogOwner` в U5b). Закрыто (catalog-level): C2, D14; B1 catalog-side. Metalake/schema/table set-owner — U5.5.
 - **2026-05-01 (Sprint U6.1)** — Model versions UI: seed 10 ModelVersion записей под 4 models (price_optimizer 4 versions, churn 2, fraud 2, recsys 2; aliases production/staging/candidate/champion/shadow). `<ModelDetailPane/>` (tabs Versions/Properties; header с latest-badge; Versions-таблица: Version / Model Object (URI mono) / Aliases (chips) / Properties (compact JSON)). `<LinkVersionDialog/>` (modal: version (default = max+1) / modelObject required / aliases comma-separated). CatalogExplorer wire: click model в tree → ModelDetailPane; Link Version → optimistic add в `linkedVersions` state (паттерн как U2.5 assignments + U3 createdCatalogs + U5 ownerOverrides). Закрыто: B8, B9, C9 (link). Unlink/edit version — U6.2.
 - **2026-05-01 (Sprint U6.2)** — leaf detail panes для Fileset / Function / Topic + seed extensions (3 functions под s_marketing/s_finance/s_sales: revenue_split / currency_normalize / pii_mask; 6 fileset_files под fs_vendor_raw / fs_dev_scratch). `<FilesetDetailPane/>` (tabs Files/Properties с path/size/modified + human-readable size formatting KB/MB/GB). `<FunctionDetailPane/>` (read-only body в `<pre>` + properties). `<TopicDetailPane/>` (header + Properties с kafka-tokens retention.ms / partitions / cleanup.policy). `<CatalogTree/>` расширен: getSchemaChildren возвращает массив групп — функции под relational schema показываются alongside tables (icon 𝑓). `<CatalogExplorer/>` wire: click fileset/function/topic в tree → respective pane (паттерн как U4 table/U6.1 model). Breadcrumb extracted в отдельный файл (`<Breadcrumb/>`) для соблюдения <300 LOC лимита. Закрыто: B6 (mock files), B10 (read-only function), C10 (mock browse); B7 enhanced.
+- **2026-05-01 (Sprint U-polish-2)** — `<EmptyState/>` (inline-SVG для 4 kinds: catalogs/files/versions/jobs + optional action button) — применён в CatalogsTable/FilesetDetailPane/ModelDetailPane. CatalogTree expanded state persist через localStorage (D15). CreateCatalogDialog Test Connection кнопка (mock async ~500ms + isPlausibleUri heuristic — C4 mock; реальный probe в U6.5). Закрыто: D10, D15, C4 (mock).
