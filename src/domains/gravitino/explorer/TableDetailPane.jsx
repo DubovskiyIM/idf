@@ -23,6 +23,7 @@ export default function TableDetailPane({
   world = {},
   onSetOwner = () => {},
   onAssociate = () => {},
+  onEdit = () => {},
 }) {
   const tabs = [
     { key: "columns", label: "Columns", show: true },
@@ -39,7 +40,7 @@ export default function TableDetailPane({
 
   return (
     <div style={{ display: "flex", flexDirection: "column", height: "100%" }}>
-      <Header table={table} onSetOwner={() => onSetOwner(table.id)} />
+      <Header table={table} onSetOwner={() => onSetOwner(table.id)} onEdit={onEdit} />
       <div style={{ flex: 1, minHeight: 0 }}>
         <Tabs tabs={tabs} active={active} onChange={setActive}>
           {active === "columns"      && <ColumnsTab columns={table.columns} />}
@@ -62,7 +63,7 @@ export default function TableDetailPane({
   );
 }
 
-function Header({ table, onSetOwner }) {
+function Header({ table, onSetOwner, onEdit }) {
   return (
     <div style={{
       padding: "14px 16px",
@@ -74,6 +75,8 @@ function Header({ table, onSetOwner }) {
         <div style={{ fontSize: 18, fontWeight: 600, color: "var(--idf-text)" }}>{table.name}</div>
         {table.comment && <div style={{ fontSize: 12, color: "var(--idf-text-muted)", marginTop: 2 }}>{table.comment}</div>}
       </div>
+      <button type="button" onClick={onEdit} title="Edit table" aria-label="Edit table"
+        style={{ background: "transparent", border: "none", cursor: "pointer", color: "var(--idf-text-muted)", fontSize: 13, padding: "4px 8px" }}>✎ Edit</button>
       <OwnerBlock owner={table.owner} onSetOwner={onSetOwner} />
     </div>
   );
