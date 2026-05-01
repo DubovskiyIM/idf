@@ -9,18 +9,17 @@ import { useMemo, useState } from "react";
 import Breadcrumb from "./Breadcrumb.jsx";
 import CatalogTree from "./CatalogTree.jsx";
 import CatalogsTable from "./CatalogsTable.jsx";
-import ConfirmDialog from "./ConfirmDialog.jsx";
-import CreateCatalogDialog from "./CreateCatalogDialog.jsx";
+import ContextNav from "./ContextNav.jsx";
+import ExplorerDialogs from "./ExplorerDialogs.jsx";
 import FilesetDetailPane from "./FilesetDetailPane.jsx";
 import FunctionDetailPane from "./FunctionDetailPane.jsx";
-import LinkVersionDialog from "./LinkVersionDialog.jsx";
 import ModelDetailPane from "./ModelDetailPane.jsx";
-import OwnerDialogs from "./OwnerDialogs.jsx";
 import SchemaDetailPane from "./SchemaDetailPane.jsx";
 import TableDetailPane from "./TableDetailPane.jsx";
 import { ToastProvider, useToast } from "./Toast.jsx";
 import TopicDetailPane from "./TopicDetailPane.jsx";
 import { useEntityOverrides } from "./useEntityOverrides.js";
+import { useModelVersionOverrides } from "./useModelVersionOverrides.js";
 import { makeTreeSelectHandler } from "./useTreeSelection.js";
 
 export default function CatalogExplorer(props) {
@@ -49,9 +48,10 @@ function CatalogExplorerInner({ world = {}, routeParams, ctx }) {
   const [selectedFileset, setSelectedFileset] = useState(null);
   const [selectedFunction, setSelectedFunction] = useState(null);
   const [selectedTopic, setSelectedTopic] = useState(null);
-  // U6.1: optimistic ModelVersion-add (без backend exec — реальный intent linkModelVersion в U6.5).
+  // U6.1 + U-detail-polish: optimistic ModelVersion link / unlink / aliases-edit
+  // (backend exec в U6.5 — здесь только client-state через хук).
   const [linkingForModel, setLinkingForModel] = useState(null);
-  const [linkedVersions, setLinkedVersions] = useState([]);
+  const versionOv = useModelVersionOverrides();
   // U2.5: optimistic UI-state для tags/policies assignments per catalog.
   const [assignments, setAssignments] = useState({});
 
@@ -139,15 +139,15 @@ function CatalogExplorerInner({ world = {}, routeParams, ctx }) {
     ? Math.max(
         0,
         ...((world.model_versions || []).filter(v => v.modelId === linkingForModel).map(v => v.version || 0)),
-        ...linkedVersions.filter(v => v.modelId === linkingForModel).map(v => v.version || 0),
+        ...versionOv.linkedVersions.filter(v => v.modelId === linkingForModel).map(v => v.version || 0),
       ) + 1
     : 1;
 
   const handleLinkVersion = ({ version, modelObject, aliases }) => {
-    setLinkedVersions(prev => [...prev, {
+    versionOv.link({
       id: `mv_new_${Date.now()}`, modelId: linkingForModel,
       version, modelObject, aliases, properties: {},
-    }]);
+    });
     setLinkingForModel(null);
   };
 
@@ -185,19 +185,15 @@ function CatalogExplorerInner({ world = {}, routeParams, ctx }) {
     if (selectedFunction) return <FunctionDetailPane function={selectedFunction} />;
     if (selectedTopic)    return <TopicDetailPane topic={selectedTopic} />;
     if (selectedFileset)  return <FilesetDetailPane fileset={selectedFileset} world={world} />;
-    if (selectedModel) {
-      const mergedWorld = {
-        ...world,
-        model_versions: [...(world.model_versions || []), ...linkedVersions],
-      };
-      return (
-        <ModelDetailPane
-          model={selectedModel}
-          world={mergedWorld}
-          onLinkVersion={() => setLinkingForModel(selectedModel.id)}
-        />
-      );
-    }
+    if (selectedModel) return (
+      <ModelDetailPane
+        model={selectedModel}
+        world={{ ...world, model_versions: versionOv.applyTo(world.model_versions || []) }}
+        onLinkVersion={() => setLinkingForModel(selectedModel.id)}
+        onUnlinkVersion={(id) => { versionOv.unlink(id); toast(`Version unlinked`, "warning"); }}
+        onEditAliases={(id, aliases) => { versionOv.editAliases(id, aliases); toast(`Aliases обновлены`, "success"); }}
+      />
+    );
     const assocFor = (kind, ov) => (id, type, names) => {
       ov.setAssoc(id, type, names);
       toast(`${kind} ${type === "tags" ? "tag" : "policy"} обновлён`, "success");
@@ -228,11 +224,17 @@ function CatalogExplorerInner({ world = {}, routeParams, ctx }) {
     );
   };
 
+  // Navigate из ContextNav: window.location в соответствующий root.
+  const handleContextNav = (target) => {
+    if (typeof window !== "undefined") window.location.href = `/gravitino/${target}`;
+  };
+
   return (
     <div style={{
       display: "flex", flexDirection: "column", height: "100%", minHeight: 0,
       background: "var(--idf-surface, #f8fafc)",
     }}>
+      <ContextNav active="catalogs" onNavigate={handleContextNav} />
       <Breadcrumb
         metalake={metalake}
         catalog={selectedCatalog}
@@ -257,43 +259,31 @@ function CatalogExplorerInner({ world = {}, routeParams, ctx }) {
           {renderRightPane()}
         </div>
       </div>
-      <CreateCatalogDialog
-        visible={creating}
-        onClose={() => setCreating(false)}
-        onSubmit={handleCreate}
-      />
-      <OwnerDialogs users={world.users || []} groups={world.groups || []} items={[
-        {
-          id: ownerDialogTarget,
-          owner: ownerDialogTarget && (ownerOverrides[ownerDialogTarget] ?? myCatalogsAll.find(c => c.id === ownerDialogTarget)?.owner),
-          onClose: () => setOwnerDialogTarget(null),
-          onSubmit: handleSetOwner,
-        },
-        {
-          id: schemaOwnerDialogTarget,
-          owner: schemaOwnerDialogTarget && (schemaOv.ownerOverrides[schemaOwnerDialogTarget] ?? (world.schemas || []).find(s => s.id === schemaOwnerDialogTarget)?.owner),
-          onClose: () => setSchemaOwnerDialogTarget(null),
-          onSubmit: ({ name }) => { schemaOv.setOwner(schemaOwnerDialogTarget, name); toast(`Schema owner назначен: ${name}`, "success"); setSchemaOwnerDialogTarget(null); },
-        },
-        {
-          id: tableOwnerDialogTarget,
-          owner: tableOwnerDialogTarget && (tableOv.ownerOverrides[tableOwnerDialogTarget] ?? (world.tables || []).find(t => t.id === tableOwnerDialogTarget)?.owner),
-          onClose: () => setTableOwnerDialogTarget(null),
-          onSubmit: ({ name }) => { tableOv.setOwner(tableOwnerDialogTarget, name); toast(`Table owner назначен: ${name}`, "success"); setTableOwnerDialogTarget(null); },
-        },
-      ]} />
-      <LinkVersionDialog
-        visible={!!linkingForModel}
+      <ExplorerDialogs
+        world={world}
+        creating={creating}
+        onCloseCreate={() => setCreating(false)}
+        onSubmitCreate={handleCreate}
+        ownerDialogTarget={ownerDialogTarget}
+        ownerOverrides={ownerOverrides}
+        myCatalogsAll={myCatalogsAll}
+        onCloseOwnerDialog={() => setOwnerDialogTarget(null)}
+        onSubmitOwner={handleSetOwner}
+        schemaOwnerDialogTarget={schemaOwnerDialogTarget}
+        schemaOv={schemaOv}
+        onCloseSchemaOwner={() => setSchemaOwnerDialogTarget(null)}
+        onSubmitSchemaOwner={({ name }) => { schemaOv.setOwner(schemaOwnerDialogTarget, name); toast(`Schema owner назначен: ${name}`, "success"); setSchemaOwnerDialogTarget(null); }}
+        tableOwnerDialogTarget={tableOwnerDialogTarget}
+        tableOv={tableOv}
+        onCloseTableOwner={() => setTableOwnerDialogTarget(null)}
+        onSubmitTableOwner={({ name }) => { tableOv.setOwner(tableOwnerDialogTarget, name); toast(`Table owner назначен: ${name}`, "success"); setTableOwnerDialogTarget(null); }}
+        linkingForModel={linkingForModel}
         suggestedVersion={suggestedVersion}
-        onClose={() => setLinkingForModel(null)}
-        onSubmit={handleLinkVersion}
-      />
-      <ConfirmDialog
-        visible={!!deleteTarget}
-        entityName={deleteTarget?.name}
-        entityKind="catalog"
-        onCancel={() => setDeleteTarget(null)}
-        onConfirm={handleConfirmDelete}
+        onCloseLinkVersion={() => setLinkingForModel(null)}
+        onSubmitLinkVersion={handleLinkVersion}
+        deleteTarget={deleteTarget}
+        onCancelDelete={() => setDeleteTarget(null)}
+        onConfirmDelete={handleConfirmDelete}
       />
     </div>
   );

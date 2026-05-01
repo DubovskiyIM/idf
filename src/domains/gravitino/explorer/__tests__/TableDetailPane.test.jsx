@@ -117,4 +117,37 @@ describe("TableDetailPane", () => {
     fireEvent.click(screen.getByRole("button", { name: /edit owner/i }));
     expect(onSetOwner).toHaveBeenCalledWith("t1");
   });
+
+  it("nested struct column → expandable, click ▸ показывает inner fields", () => {
+    const table = {
+      id: "t1", name: "events",
+      columns: [
+        { name: "id", type: "bigint", nullable: false },
+        { name: "metadata", type: "struct<source:string, version:int>", nullable: true, comment: "meta" },
+      ],
+      properties: {},
+    };
+    render(<TableDetailPane table={table} world={{}} onAssociate={vi.fn()} onSetOwner={vi.fn()} />);
+    expect(screen.getByText(/struct</)).toBeTruthy();
+    expect(screen.queryByText("source")).toBeNull();
+    const expandBtn = screen.getByRole("button", { name: /expand-metadata/i });
+    fireEvent.click(expandBtn);
+    expect(screen.getByText("source")).toBeTruthy();
+    expect(screen.getByText("version")).toBeTruthy();
+  });
+
+  it("array column показывает array<...> + expand → element type", () => {
+    const table = {
+      id: "t1", name: "events",
+      columns: [
+        { name: "tags", type: "array<string>", nullable: true },
+      ],
+      properties: {},
+    };
+    render(<TableDetailPane table={table} world={{}} onAssociate={vi.fn()} onSetOwner={vi.fn()} />);
+    expect(screen.getByText(/array<string>|array<.../)).toBeTruthy();
+    const expandBtn = screen.getByRole("button", { name: /expand-tags/i });
+    fireEvent.click(expandBtn);
+    expect(screen.getByText(/element|item/i)).toBeTruthy();
+  });
 });
