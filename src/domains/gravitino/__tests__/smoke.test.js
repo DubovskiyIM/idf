@@ -258,8 +258,8 @@ describe("gravitino domain — Stage 1 baseline", () => {
     // entity-tag-policy-columns
     expect(keys).toContain("tags");
     expect(keys).toContain("policies");
-    expect(body.columns.find(c => c.key === "tags")?.kind).toBe("chipAssociation");
-    expect(body.columns.find(c => c.key === "policies")?.kind).toBe("chipAssociation");
+    expect(body.columns.find(c => c.key === "tags")?.kind).toBe("chipList");
+    expect(body.columns.find(c => c.key === "policies")?.kind).toBe("chipList");
     // entity-row-actions
     expect(keys).toContain("_actions");
     expect(body.columns.find(c => c.key === "_actions")?.kind).toBe("actions");
