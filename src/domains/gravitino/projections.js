@@ -304,20 +304,22 @@ export const PROJECTIONS = {
   },
 
   // ═══ Tag ═══════════════════════════════════════════════════════════════════
-  tag_list: catalog("Tag", "Tags",
-    ["name", "comment", "inherited"]),
-  // tag_detail — host-rendered (U-tag-policy-objects).
-  // Canvas <TagDetailCanvas/> рендерит MetadataObjectsPane (reverse-lookup
-  // entities ассоциированных с этим тегом).
-  tag_detail: {
-    name: "Tag",
-    kind: "canvas",
-    mainEntity: "Tag",
-    entities: ["Tag"],
-    idParam: "tagId",
-    witnesses: ["name"],
-    body: { kind: "canvas", canvasId: "tag_detail" },
+  // tag_list — auto-derive (Phase 3.2). Override onItemClick — tag_detail
+  // identified by name (Gravitino convention для metadata-object lookup'а
+  // в metadata-objects-reverse-lookup pattern).
+  tag_list: {
+    ...catalog("Tag", "Tags", ["name", "comment", "inherited"], { onItemClick: false }),
+    onItemClick: { action: "navigate", to: "tag_detail", params: { tagName: "item.name" } },
   },
+  // tag_detail — derived (U-derive Phase 3.6). TagDetailCanvas удалён.
+  // SDK detail с subCollection источника derived:metadata-objects-by-tag —
+  // pattern metadata-objects-reverse-lookup (cross layer, @intent-driven/core
+  // 0.113+) сканирует world.{catalogs|schemas|tables|filesets|topics|models}
+  // и populate'ит items entities ассоциированных с этим тегом.
+  tag_detail: detail("Tag", "Tag",
+    ["name", "comment", "audit"],
+    [{ source: "derived:metadata-objects-by-tag", title: "Metadata Objects" }],
+    "tagName"),
 
   // ═══ Policy ════════════════════════════════════════════════════════════════
   // После idf-sdk#227 flattenSchema — importer сливает PolicyBase +

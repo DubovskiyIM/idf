@@ -58,9 +58,9 @@ function Inner({ world = {}, exec = () => {}, viewer }) {
           onCreate={() => setCreateTagOpen(true)}
           onEdit={(t) => setEditTagTarget(t)}
           onView={(t) => {
-            // Navigate в tag_detail canvas (TagDetailCanvas → MetadataObjectsPane).
+            // U-derive Phase 3.6: tag_detail derived projection — lookup by tagName.
             if (typeof window !== "undefined") {
-              window.location.href = `/gravitino/tag_detail?tagId=${encodeURIComponent(t.id)}`;
+              window.location.href = `/gravitino/tag_detail?tagName=${encodeURIComponent(t.name)}`;
             }
           }}
           onDelete={onDelete("Tag")}

@@ -146,13 +146,20 @@ describe("gravitino domain — Stage 1 baseline", () => {
     expect(proj.body.canvasId).toBe("compliance_hub");
   });
 
-  it("tag_detail: canvas-projection с canvasId='tag_detail' (U-tag-policy-objects)", () => {
+  it("tag_detail: SDK detail с derived metadata-objects subCollection — U-derive Phase 3.6", () => {
     const proj = PROJECTIONS.tag_detail;
     expect(proj).toBeDefined();
-    expect(proj.kind).toBe("canvas");
-    expect(proj.body.canvasId).toBe("tag_detail");
-    expect(proj.idParam).toBe("tagId");
+    expect(proj.kind).toBe("detail");
+    expect(proj.idParam).toBe("tagName");
     expect(proj.mainEntity).toBe("Tag");
+    expect(proj.subCollections?.[0]?.source).toBe("derived:metadata-objects-by-tag");
+  });
+
+  it("tag_detail: derived UI — pattern populates subCollection items для tag", () => {
+    const arts = crystallizeV2(INTENTS, PROJECTIONS, ONTOLOGY, DOMAIN_ID);
+    const tag = arts.tag_detail;
+    expect(tag).toBeDefined();
+    expect(tag.archetype).toBe("detail");
   });
 
   it("ROOT_PROJECTIONS: 4 hubs (metalake_list / jobs_hub / access_hub / compliance_hub)", () => {

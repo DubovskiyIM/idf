@@ -110,10 +110,6 @@ registerCanvas("group_detail", GroupDetailCanvas);
 import PolicyDetailCanvas from "./domains/gravitino/explorer/PolicyDetailCanvas.jsx";
 registerCanvas("policy_detail", PolicyDetailCanvas);
 
-// Gravitino tag_detail (U-tag-policy-objects — Metadata Objects reverse-lookup)
-import TagDetailCanvas from "./domains/gravitino/explorer/TagDetailCanvas.jsx";
-registerCanvas("tag_detail", TagDetailCanvas);
-
 // Домены с переключением адаптера
 const DOMAIN_ADAPTERS = {
   lifequest: appleAdapter,
