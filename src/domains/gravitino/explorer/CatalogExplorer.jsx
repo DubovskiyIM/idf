@@ -18,7 +18,6 @@ import { useState } from "react";
 import Breadcrumb from "./Breadcrumb.jsx";
 import CatalogTree from "./CatalogTree.jsx";
 import CatalogsTable from "./CatalogsTable.jsx";
-import ContextNav from "./ContextNav.jsx";
 import ExplorerDialogs from "./ExplorerDialogs.jsx";
 import FilesetDetailPane from "./FilesetDetailPane.jsx";
 import FunctionDetailPane from "./FunctionDetailPane.jsx";
@@ -139,17 +138,14 @@ function CatalogExplorerInner({ world = {}, routeParams, ctx, exec = () => {}, v
     );
   };
 
-  // Navigate из ContextNav: window.location в соответствующий root.
-  const handleContextNav = (target) => {
-    if (typeof window !== "undefined") window.location.href = `/gravitino/${target}`;
-  };
-
   return (
     <div style={{
       display: "flex", flexDirection: "column", height: "100%", minHeight: 0,
       background: "var(--idf-surface, #f8fafc)",
     }}>
-      <ContextNav active="catalogs" onNavigate={handleContextNav} />
+      {/* ContextNav (U-context-nav) удалён — V2Shell уже рендерит outer top-nav
+          (Metalakes / Jobs / Access / Data Compliance), inner strip создавал
+          дубль навигации. */}
       <Breadcrumb
         metalake={metalake} catalog={selectedCatalog} schema={selectedSchema}
         table={selectedTable} model={selectedModel} fileset={selectedFileset}
