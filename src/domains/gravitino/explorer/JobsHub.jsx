@@ -41,11 +41,8 @@ export default function JobsHub({ world = {}, exec = () => {}, viewer }) {
   const onCancel = (jobId) => {
     const j = jobs.find(x => x.id === jobId);
     if (!j) { setDrawerJobId(null); return; }
-    exec({
-      intent: "cancelJob",
-      params: { metalake: metalakeName, jobId: j.jobId },
-      context: { entity: j },
-    });
+    // U-fix-exec-signature: exec(intentId, flatCtx).
+    exec("cancelJob", { entity: j, metalake: metalakeName, jobId: j.jobId });
     setDrawerJobId(null);
   };
 
@@ -71,19 +68,16 @@ export default function JobsHub({ world = {}, exec = () => {}, viewer }) {
         onClose={() => setRunJobOpen(false)}
         onRegisterTemplate={() => { setRunJobOpen(false); setRegisterOpen(true); }}
         onSubmit={({ templateId, templateName, config }) => {
-          exec({
-            intent: "runJob",
-            params: { metalake: metalakeName },
-            context: {
-              templateId,
-              templateName,
-              jobId: `${templateName}-${new Date().toISOString().slice(0, 16).replace(/[:T-]/g, "")}`,
-              status: "queued",
-              startTime: new Date().toISOString(),
-              endTime: null,
-              config,
-              details: { triggeredBy: viewer?.name || "UI" },
-            },
+          exec("runJob", {
+            templateId,
+            templateName,
+            metalake: metalakeName,
+            jobId: `${templateName}-${new Date().toISOString().slice(0, 16).replace(/[:T-]/g, "")}`,
+            status: "queued",
+            startTime: new Date().toISOString(),
+            endTime: null,
+            config,
+            details: { triggeredBy: viewer?.name || "UI" },
           });
           setRunJobOpen(false);
         }}
@@ -92,13 +86,10 @@ export default function JobsHub({ world = {}, exec = () => {}, viewer }) {
         visible={registerOpen}
         onClose={() => setRegisterOpen(false)}
         onSubmit={(tpl) => {
-          exec({
-            intent: "registerJobTemplate",
-            params: { metalake: metalakeName },
-            context: {
-              ...tpl,
-              audit: { creator: viewer?.name || "ui", createTime: new Date().toISOString() },
-            },
+          exec("registerJobTemplate", {
+            ...tpl,
+            metalake: metalakeName,
+            audit: { creator: viewer?.name || "ui", createTime: new Date().toISOString() },
           });
           setRegisterOpen(false);
         }}

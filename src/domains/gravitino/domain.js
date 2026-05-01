@@ -19,6 +19,14 @@
  *
  * Targets — pluralized lower snake_case (как world keys: metalakes,
  * catalogs, schemas, tables, users, groups, roles, model_versions, jobs).
+ *
+ * U-fix-exec-signature (CRITICAL, 2026-05-01): SDK exec(intentId, ctx) —
+ * 2 args, не 1. Все hubs передают flat ctx (entity + overrides + params).
+ * Handlers здесь явно destructure нужное и через pickOverrides() сбрасывают
+ * raw param-keys (metalake / catalog / schema / table / ...) — иначе они
+ * попадают в context эффекта и загрязняют entity payload через fold.
+ * grantRoleToUser/Group — entity передаётся как userEntity / groupEntity
+ * (избегаем collision с param user/group).
  */
 import { v4 as uuid } from "uuid";
 
@@ -59,6 +67,32 @@ const NESTED_INTENTS = new Set([
 ]);
 
 /**
+ * PARAM_KEYS — raw URL-path параметры Gravitino REST API. Передаются hub'ами
+ * в ctx (потому что engine не разделяет params и context — всё flat). Из
+ * overrides для alter* их нужно убирать, чтобы не загрязнять entity payload.
+ */
+const PARAM_KEYS = new Set([
+  "metalake", "catalog", "schema", "table", "model", "version", "name",
+  "user", "group", "tag", "policy", "role",
+  "metadataObjectType", "metadataObjectFullName",
+  "jobId", "templateId", "fileset", "versionId",
+]);
+
+/**
+ * pickOverrides — возвращает только authorial overrides (например inUse,
+ * enabled, properties), исключая entity-special-keys и URL-path params.
+ */
+function pickOverrides(ctx) {
+  const out = {};
+  for (const [k, v] of Object.entries(ctx)) {
+    if (k === "entity" || k === "entityType" || k === "userEntity" || k === "groupEntity" || k === "version") continue;
+    if (PARAM_KEYS.has(k)) continue;
+    out[k] = v;
+  }
+  return out;
+}
+
+/**
  * Helper: создаёт эффект с pluralized lowercase target (точное соответствие
  * world-keys из seed.js). α:"add" с тем же entity.id — overwrite семантика.
  */
@@ -82,13 +116,13 @@ export function buildEffects(intentId, ctx = {}) {
   if (!NESTED_INTENTS.has(intentId)) return null; // → generic handler
 
   if (intentId === "setOwner") {
-    // ctx: { entity, entityType (collection key), newOwnerName }
+    // ctx: { entity, entityType (collection key), newOwnerName, ...params }
     if (!ctx.entity || !ctx.entityType) return null;
     return [makeEffect(ctx.entityType, "add", intentId, { ...ctx.entity, owner: ctx.newOwnerName })];
   }
 
   if (intentId === "associateTags") {
-    // ctx: { entity, entityType, tags: [names] }
+    // ctx: { entity, entityType, tags: [names], ...params }
     if (!ctx.entity || !ctx.entityType) return null;
     return [makeEffect(ctx.entityType, "add", intentId, { ...ctx.entity, tags: ctx.tags || [] })];
   }
@@ -98,41 +132,42 @@ export function buildEffects(intentId, ctx = {}) {
   }
 
   if (intentId === "grantRoleToUser") {
-    // ctx: { user, roles: [names] } — replace User.roles целиком (set-семантика).
-    if (!ctx.user) return null;
-    return [makeEffect("users", "add", intentId, { ...ctx.user, roles: ctx.roles || [] })];
+    // ctx: { userEntity, roles: [names], ...params } — replace User.roles целиком.
+    // U-fix-exec-signature: было ctx.user (full entity), теперь userEntity —
+    // collision с raw param `user` (имя пользователя из URL-path).
+    const u = ctx.userEntity;
+    if (!u) return null;
+    return [makeEffect("users", "add", intentId, { ...u, roles: ctx.roles || [] })];
   }
   if (intentId === "grantRoleToGroup") {
-    if (!ctx.group) return null;
-    return [makeEffect("groups", "add", intentId, { ...ctx.group, roles: ctx.roles || [] })];
+    const g = ctx.groupEntity;
+    if (!g) return null;
+    return [makeEffect("groups", "add", intentId, { ...g, roles: ctx.roles || [] })];
   }
 
   // alterMetalake / alterCatalog / alterSchema / alterTable — generic
-  // overwrite c merged overrides (например {inUse: true} / {enabled: false}).
-  // ctx: { entity, ...overrides }.
+  // overwrite c merged authorial overrides (inUse / enabled / properties).
+  // ctx: { entity, ...overrides, ...rawParams }. pickOverrides() выкидывает
+  // raw params (metalake / catalog / schema / table) — иначе они засоряют payload.
   if (intentId === "alterMetalake") {
     if (!ctx.entity) return null;
-    const { entity, ...overrides } = ctx;
-    return [makeEffect("metalakes", "add", intentId, { ...entity, ...overrides })];
+    return [makeEffect("metalakes", "add", intentId, { ...ctx.entity, ...pickOverrides(ctx) })];
   }
   if (intentId === "alterCatalog") {
     if (!ctx.entity) return null;
-    const { entity, ...overrides } = ctx;
-    return [makeEffect("catalogs", "add", intentId, { ...entity, ...overrides })];
+    return [makeEffect("catalogs", "add", intentId, { ...ctx.entity, ...pickOverrides(ctx) })];
   }
   if (intentId === "alterSchema") {
     if (!ctx.entity) return null;
-    const { entity, ...overrides } = ctx;
-    return [makeEffect("schemas", "add", intentId, { ...entity, ...overrides })];
+    return [makeEffect("schemas", "add", intentId, { ...ctx.entity, ...pickOverrides(ctx) })];
   }
   if (intentId === "alterTable") {
     if (!ctx.entity) return null;
-    const { entity, ...overrides } = ctx;
-    return [makeEffect("tables", "add", intentId, { ...entity, ...overrides })];
+    return [makeEffect("tables", "add", intentId, { ...ctx.entity, ...pickOverrides(ctx) })];
   }
 
   if (intentId === "linkModelVersion") {
-    // ctx: { version: {...} } — добавляем новую ModelVersion (true add).
+    // ctx: { version: {...}, ...params } — добавляем новую ModelVersion.
     if (!ctx.version) return null;
     const v = ctx.version;
     const id = v.id || `mv_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`;

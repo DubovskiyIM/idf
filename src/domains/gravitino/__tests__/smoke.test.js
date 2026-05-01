@@ -218,8 +218,10 @@ describe("gravitino domain — Stage 1 baseline", () => {
   });
 
   it("buildEffects: grantRoleToUser → add User c merged roles", async () => {
+    // U-fix-exec-signature: entity передаётся как userEntity (collision с
+    // raw param `user` — username из URL-path).
     const { buildEffects } = await import("../domain.js");
-    const eff = buildEffects("grantRoleToUser", { user: { id: "u1", name: "alice" }, roles: ["admin", "viewer"] });
+    const eff = buildEffects("grantRoleToUser", { userEntity: { id: "u1", name: "alice" }, roles: ["admin", "viewer"] });
     expect(eff[0].target).toBe("users");
     expect(eff[0].context.roles).toEqual(["admin", "viewer"]);
     expect(eff[0].context.id).toBe("u1");

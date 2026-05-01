@@ -142,15 +142,12 @@ function CatalogExplorerInner({ world = {}, routeParams, ctx, exec = () => {}, v
           const paramKey = { tables: "table", filesets: "fileset", models: "model" }[kind];
           const intentId = intentByKind[kind];
           if (!intentId || !paramKey) return;
-          exec({
-            intent: intentId,
-            params: {
-              metalake: metalake?.name,
-              catalog: selectedCatalog?.name,
-              schema: selectedSchema?.name,
-              [paramKey]: item.name,
-            },
-            context: {},
+          // U-fix-exec-signature: exec(intentId, flatCtx).
+          exec(intentId, {
+            metalake: metalake?.name,
+            catalog: selectedCatalog?.name,
+            schema: selectedSchema?.name,
+            [paramKey]: item.name,
           });
           toast(`${kind} «${item.name}» удалён`, "error");
         }}
@@ -233,20 +230,19 @@ function CatalogExplorerInner({ world = {}, routeParams, ctx, exec = () => {}, v
         editTableTarget={editTableTarget}
         onCloseEditTable={() => setEditTableTarget(null)}
         onSubmitEditTable={(payload) => {
-          // alterTable — generic SDK handler делает full-payload replace by id
-          // (preserved partitioning / distribution / sortOrders / properties pass-through из initial).
-          exec({
-            intent: "alterTable",
-            params: {
-              metalake: metalake?.name,
-              catalog: selectedCatalog?.name,
-              schema: selectedSchema?.name,
-              table: payload.name,
-            },
-            context: {
-              ...payload,
-              audit: payload.audit || { creator: viewer?.name || "ui", createTime: new Date().toISOString() },
-            },
+          // alterTable — gravitino/domain.js делает full-payload replace by id
+          // через α:'add' (preserved partitioning / distribution / sortOrders /
+          // properties pass-through из initial). entity = editTableTarget,
+          // pickOverrides() применит остальные authorial поля; raw URL params
+          // (metalake / catalog / schema / table) отбрасываются.
+          exec("alterTable", {
+            entity: editTableTarget,
+            ...payload,
+            audit: payload.audit || { creator: viewer?.name || "ui", createTime: new Date().toISOString() },
+            metalake: metalake?.name,
+            catalog: selectedCatalog?.name,
+            schema: selectedSchema?.name,
+            table: payload.name,
           });
           toast(`Table «${payload.name}» обновлена`, "success");
           setEditTableTarget(null);

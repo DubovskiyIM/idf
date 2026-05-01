@@ -50,11 +50,8 @@ function Inner({ world = {}, exec = () => {}, viewer }) {
     const intentId = { User: "removeUser", Group: "removeGroup", Role: "deleteRole" }[kind];
     const paramKey = { User: "user", Group: "group", Role: "role" }[kind];
     if (!intentId || !paramKey) return;
-    exec({
-      intent: intentId,
-      params: { metalake: metalakeName, [paramKey]: entity.name },
-      context: {},
-    });
+    // U-fix-exec-signature: exec(intentId, flatCtx).
+    exec(intentId, { metalake: metalakeName, [paramKey]: entity.name });
     toast(`${kind} «${entity.name}» удалён`, "error");
   };
 
@@ -63,13 +60,17 @@ function Inner({ world = {}, exec = () => {}, viewer }) {
     const isUser = grantTarget.kind === "user";
     const intentId = isUser ? "grantRoleToUser" : "grantRoleToGroup";
     const subjectKey = isUser ? "user" : "group";
+    const entityKey = isUser ? "userEntity" : "groupEntity";
     const collection = isUser ? (world.users || []) : (world.groups || []);
     const subject = collection.find(s => s.id === grantTarget.id);
     if (!subject) { setGrantTarget(null); return; }
-    exec({
-      intent: intentId,
-      params: { metalake: metalakeName, [subjectKey]: subject.name },
-      context: { [subjectKey]: subject, roles: rolesList },
+    // U-fix-exec-signature: collision между param `user`/`group` (raw name)
+    // и full entity → entity передаётся как userEntity / groupEntity.
+    exec(intentId, {
+      [entityKey]: subject,
+      roles: rolesList,
+      metalake: metalakeName,
+      [subjectKey]: subject.name,
     });
     toast(`Roles обновлены для ${grantTarget.kind} ${grantTarget.name}`, "success");
     setGrantTarget(null);
@@ -77,10 +78,9 @@ function Inner({ world = {}, exec = () => {}, viewer }) {
 
   const handleRoleSetOwner = ({ name }) => {
     if (!roleOwnerTarget) return;
-    exec({
-      intent: "setOwner",
-      params: { metalake: metalakeName, metadataObjectType: "role", metadataObjectFullName: roleOwnerTarget.name },
-      context: { entity: roleOwnerTarget, entityType: "roles", newOwnerName: name },
+    exec("setOwner", {
+      entity: roleOwnerTarget, entityType: "roles", newOwnerName: name,
+      metalake: metalakeName, metadataObjectType: "role", metadataObjectFullName: roleOwnerTarget.name,
     });
     toast(`Owner role «${roleOwnerTarget.name}» назначен: ${name}`, "success");
     setRoleOwnerTarget(null);
@@ -124,14 +124,11 @@ function Inner({ world = {}, exec = () => {}, viewer }) {
         onClose={() => { setCreateRoleOpen(false); setEditRoleTarget(null); }}
         onSubmit={(payload) => {
           const isEdit = !!editRoleTarget;
-          exec({
-            intent: "createRole",
-            params: { metalake: metalakeName },
-            context: {
-              ...payload,
-              owner: payload.owner || viewer?.name || "ui",
-              audit: payload.audit || { creator: viewer?.name || "ui", createTime: new Date().toISOString() },
-            },
+          exec("createRole", {
+            ...payload,
+            metalake: metalakeName,
+            owner: payload.owner || viewer?.name || "ui",
+            audit: payload.audit || { creator: viewer?.name || "ui", createTime: new Date().toISOString() },
           });
           toast(isEdit ? `Role «${payload.name}» обновлён` : `Role «${payload.name}» создан`, "success");
           setCreateRoleOpen(false); setEditRoleTarget(null);
@@ -159,10 +156,10 @@ function Inner({ world = {}, exec = () => {}, viewer }) {
         onClose={() => setAddOpen(null)}
         onSubmit={({ name }) => {
           const intentId = addOpen === "group" ? "addGroup" : "addUser";
-          exec({
-            intent: intentId,
-            params: { metalake: metalakeName },
-            context: { name, roles: [], audit: { creator: viewer?.name || "ui", createTime: new Date().toISOString() } },
+          exec(intentId, {
+            name, roles: [],
+            metalake: metalakeName,
+            audit: { creator: viewer?.name || "ui", createTime: new Date().toISOString() },
           });
           toast(`${addOpen === "group" ? "Group" : "User"} «${name}» добавлен`, "success");
           setAddOpen(null);
