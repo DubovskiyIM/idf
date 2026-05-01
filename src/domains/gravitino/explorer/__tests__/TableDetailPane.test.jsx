@@ -48,4 +48,73 @@ describe("TableDetailPane", () => {
     render(<TableDetailPane table={{ id: "t2", name: "empty_table" }} />);
     expect(screen.getByText(/нет колонок|no columns/i)).toBeTruthy();
   });
+
+  it("Distribution tab показывает strategy + number", () => {
+    const table = {
+      id: "t1", name: "fact_orders",
+      distribution: { strategy: "HASH", number: 8, expressions: [["customer_id"]] },
+      columns: [], properties: {},
+    };
+    render(<TableDetailPane table={table} world={{}} onAssociate={vi.fn()} onSetOwner={vi.fn()} />);
+    fireEvent.click(screen.getByRole("tab", { name: /distribution/i }));
+    expect(screen.getByText(/HASH/)).toBeTruthy();
+    expect(screen.getByText(/8/)).toBeTruthy();
+  });
+
+  it("SortOrder tab показывает expression + direction", () => {
+    const table = {
+      id: "t1", name: "fact_orders",
+      sortOrders: [{ expression: "order_ts", direction: "DESC", nullOrder: "FIRST" }],
+      columns: [], properties: {},
+    };
+    render(<TableDetailPane table={table} world={{}} onAssociate={vi.fn()} onSetOwner={vi.fn()} />);
+    fireEvent.click(screen.getByRole("tab", { name: /sort order/i }));
+    expect(screen.getByText("order_ts")).toBeTruthy();
+    expect(screen.getByText(/DESC/)).toBeTruthy();
+  });
+
+  it("Indexes tab — таблица индексов с type", () => {
+    const table = {
+      id: "t1", name: "fact_orders",
+      indexes: [{ name: "pk_orders", type: "PRIMARY_KEY", fieldNames: [["order_id"]] }],
+      columns: [], properties: {},
+    };
+    render(<TableDetailPane table={table} world={{}} onAssociate={vi.fn()} onSetOwner={vi.fn()} />);
+    fireEvent.click(screen.getByRole("tab", { name: /indexes/i }));
+    expect(screen.getByText("pk_orders")).toBeTruthy();
+    expect(screen.getByText(/PRIMARY_KEY/)).toBeTruthy();
+  });
+
+  it("Tags tab — chip + Associate", () => {
+    const table = { id: "t1", name: "fact_orders", tags: ["PII"], policies: [], columns: [], properties: {} };
+    render(<TableDetailPane
+      table={table}
+      world={{ tags: [{ id: "t1", name: "PII" }, { id: "t2", name: "GDPR" }] }}
+      onAssociate={vi.fn()}
+      onSetOwner={vi.fn()}
+    />);
+    fireEvent.click(screen.getByRole("tab", { name: /^tags$/i }));
+    expect(screen.getByText("PII")).toBeTruthy();
+    expect(screen.getByRole("button", { name: /associate tag/i })).toBeTruthy();
+  });
+
+  it("Policies tab — chip-list", () => {
+    const table = { id: "t1", name: "fact_orders", tags: [], policies: ["pii-mask"], columns: [], properties: {} };
+    render(<TableDetailPane
+      table={table}
+      world={{ policies: [{ id: "p1", name: "pii-mask" }] }}
+      onAssociate={vi.fn()}
+      onSetOwner={vi.fn()}
+    />);
+    fireEvent.click(screen.getByRole("tab", { name: /policies/i }));
+    expect(screen.getByText("pii-mask")).toBeTruthy();
+  });
+
+  it("Set Owner кнопка в header вызывает onSetOwner(tableId)", () => {
+    const onSetOwner = vi.fn();
+    const table = { id: "t1", name: "fact_orders", owner: "alice@acme", columns: [], properties: {} };
+    render(<TableDetailPane table={table} world={{}} onAssociate={vi.fn()} onSetOwner={onSetOwner} />);
+    fireEvent.click(screen.getByRole("button", { name: /edit owner/i }));
+    expect(onSetOwner).toHaveBeenCalledWith("t1");
+  });
 });
