@@ -53,10 +53,13 @@ export default function MetalakesHub({ world = {}, ctx, navigate, exec = () => {
   const onToggleInUse = (id, next) => {
     const m = baseMetalakes.find(x => x.id === id);
     if (!m) return;
+    // U-fix-toggle-tabs: enableMetalake/disableMetalake не существуют в
+    // imported.js — engine отвергал, toggle был silent. Используем
+    // alterMetalake (PUT с full body) + inUse override в context.
     exec({
-      intent: next ? "enableMetalake" : "disableMetalake",
+      intent: "alterMetalake",
       params: { name: m.name },
-      context: { entity: m },
+      context: { entity: m, inUse: next },
     });
     showToast(`Metalake ${next ? "включён" : "приостановлен"}`, next ? "success" : "warning");
   };
