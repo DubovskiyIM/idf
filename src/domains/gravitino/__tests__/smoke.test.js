@@ -240,4 +240,51 @@ describe("gravitino domain — Stage 1 baseline", () => {
     const { buildEffects } = await import("../domain.js");
     expect(buildEffects("createTag", { name: "x" })).toBeNull();
   });
+
+  // U-derive Phase 3.2: ontology enrichment + features.preferDataGrid
+  // unlock'ает Phase 2 patterns (entity-tag-policy-columns / entity-owner-column /
+  // entity-row-actions) на catalog/schema/table/fileset/topic/model listings —
+  // без author-coded columns в projections.js.
+  it("derived UI: catalog_list получает auto-добавленные columns из patterns", () => {
+    const arts = crystallizeV2(INTENTS, PROJECTIONS, ONTOLOGY, DOMAIN_ID);
+    const body = arts.catalog_list?.slots?.body;
+    expect(body?.type).toBe("dataGrid");
+    const keys = body.columns.map(c => c.key);
+    // catalog-default-datagrid: name/type/provider/comment + ontology fields
+    expect(keys).toContain("name");
+    // entity-owner-column
+    expect(keys).toContain("owner");
+    expect(body.columns.find(c => c.key === "owner")?.kind).toBe("ownerAvatar");
+    // entity-tag-policy-columns
+    expect(keys).toContain("tags");
+    expect(keys).toContain("policies");
+    expect(body.columns.find(c => c.key === "tags")?.kind).toBe("chipAssociation");
+    expect(body.columns.find(c => c.key === "policies")?.kind).toBe("chipAssociation");
+    // entity-row-actions
+    expect(keys).toContain("_actions");
+    expect(body.columns.find(c => c.key === "_actions")?.kind).toBe("actions");
+  });
+
+  it("derived UI: schema/table/fileset/topic/model listings — same auto-derive shape", () => {
+    const arts = crystallizeV2(INTENTS, PROJECTIONS, ONTOLOGY, DOMAIN_ID);
+    for (const name of ["schema_list", "table_list", "fileset_list", "topic_list", "model_list"]) {
+      const body = arts[name]?.slots?.body;
+      expect(body?.type, `${name} body type`).toBe("dataGrid");
+      const keys = body.columns.map(c => c.key);
+      expect(keys, `${name} owner`).toContain("owner");
+      expect(keys, `${name} tags`).toContain("tags");
+      expect(keys, `${name} policies`).toContain("policies");
+      expect(keys, `${name} _actions`).toContain("_actions");
+    }
+  });
+
+  it("derived UI: tag_list и policy_list получают _actions (modifier intents)", () => {
+    const arts = crystallizeV2(INTENTS, PROJECTIONS, ONTOLOGY, DOMAIN_ID);
+    const tagBody = arts.tag_list?.slots?.body;
+    expect(tagBody?.type).toBe("dataGrid");
+    expect(tagBody.columns.find(c => c.key === "_actions")?.kind).toBe("actions");
+    const polBody = arts.policy_list?.slots?.body;
+    expect(polBody?.type).toBe("dataGrid");
+    expect(polBody.columns.find(c => c.key === "_actions")?.kind).toBe("actions");
+  });
 });
