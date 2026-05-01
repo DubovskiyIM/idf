@@ -1,9 +1,13 @@
 /**
- * CreateRoleDialog — modal для создания role (U-iam2.b + U-iam-polish).
+ * CreateRoleDialog — modal для создания / редактирования role (U-iam2.b + U-edit-flows).
  * Multi-securable-object editor: массив accordion'ов с
  *   Type / Full Name / Allow Privileges multi-select.
  * + Add Securable Object button добавляет новый accordion;
  * minus-кнопка на каждом (кроме случая single accordion) — удаляет.
+ *
+ * U-edit-flows: prop `initial` (Role entity) включает edit-mode — pre-fill
+ * securableObjects (имя/тип/privileges normalized из object|string),
+ * title «Edit Role», submit label «Save», preserves id + owner + audit.
  */
 import { useEffect, useState } from "react";
 import { Modal, Field, Footer, PropsEditor } from "./CreateTagDialog.jsx";
@@ -19,20 +23,32 @@ const PRIV_BY_TYPE = {
 
 const blankObj = () => ({ type: "schema", fullName: "", privileges: [] });
 
-export default function CreateRoleDialog({ visible, onClose = () => {}, onSubmit = () => {} }) {
+export default function CreateRoleDialog({ visible, initial, onClose = () => {}, onSubmit = () => {} }) {
   const [name, setName] = useState("");
   const [objects, setObjects] = useState([blankObj()]);
   const [openPickerIdx, setOpenPickerIdx] = useState(-1);
   const [props, setProps] = useState([{ key: "", value: "" }]);
 
   useEffect(() => {
-    if (!visible) {
+    if (visible && initial) {
+      setName(initial.name || "");
+      const objs = (initial.securableObjects || []).map(so => ({
+        type: so.type || "schema",
+        fullName: so.name || "",
+        privileges: (so.privileges || []).map(p => typeof p === "string" ? p : p?.name).filter(Boolean),
+      }));
+      setObjects(objs.length > 0 ? objs : [blankObj()]);
+      setOpenPickerIdx(-1);
+      const ps = Object.entries(initial.properties || {}).map(([k, v]) => ({ key: k, value: String(v) }));
+      setProps(ps.length > 0 ? ps : [{ key: "", value: "" }]);
+    } else if (!visible) {
       setName(""); setObjects([blankObj()]); setOpenPickerIdx(-1); setProps([{ key: "", value: "" }]);
     }
-  }, [visible]);
+  }, [visible, initial]);
 
   if (!visible) return null;
 
+  const isEdit = !!initial;
   const addObject = () => setObjects(prev => [...prev, blankObj()]);
   const removeObject = (i) => setObjects(prev => {
     const next = prev.filter((_, idx) => idx !== i);
@@ -45,6 +61,9 @@ export default function CreateRoleDialog({ visible, onClose = () => {}, onSubmit
     if (!isValid) return;
     const cleanProps = Object.fromEntries(props.filter(p => p.key.trim()).map(p => [p.key.trim(), p.value]));
     onSubmit({
+      ...(initial?.id && { id: initial.id }),
+      ...(initial?.owner && { owner: initial.owner }),
+      ...(initial?.audit && { audit: initial.audit }),
       name: name.trim(),
       securableObjects: objects.map(o => ({
         type: o.type,
@@ -56,7 +75,11 @@ export default function CreateRoleDialog({ visible, onClose = () => {}, onSubmit
   };
 
   return (
-    <Modal title="Create Role" subtitle="Create a new role" onClose={onClose}>
+    <Modal
+      title={isEdit ? "Edit Role" : "Create Role"}
+      subtitle={isEdit ? `Edit role «${initial.name}»` : "Create a new role"}
+      onClose={onClose}
+    >
       <Field label="Role Name" required>
         <input type="text" value={name} onChange={e => setName(e.target.value)} aria-label="Role Name" placeholder="data_engineer" style={inputStyle} />
       </Field>
@@ -76,7 +99,7 @@ export default function CreateRoleDialog({ visible, onClose = () => {}, onSubmit
         style={{ padding: "6px 12px", fontSize: 12, border: "1px dashed var(--idf-border)", borderRadius: 4, background: "transparent", cursor: "pointer", color: "var(--idf-text-muted)", marginBottom: 12 }}
       >+ Add Securable Object</button>
       <PropsEditor props={props} onChange={setProps} />
-      <Footer onClose={onClose} onSubmit={submit} disabled={!isValid} />
+      <Footer onClose={onClose} onSubmit={submit} disabled={!isValid} submitLabel={isEdit ? "Save" : "Submit"} />
     </Modal>
   );
 }

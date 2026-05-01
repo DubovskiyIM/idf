@@ -39,4 +39,23 @@ describe("CreateTagDialog", () => {
     const after = screen.getAllByPlaceholderText(/^key$/i).length;
     expect(after).toBe(before + 1);
   });
+
+  it("initial prop pre-fills поля + title=Edit Tag + submit label=Save", () => {
+    const initial = { id: "t1", name: "ALPHA", comment: "alpha tag", color: "#dc2626", properties: { env: "prod" } };
+    render(<CreateTagDialog visible={true} initial={initial} onClose={vi.fn()} onSubmit={vi.fn()} />);
+    expect(screen.getByRole("heading", { name: /edit tag/i })).toBeTruthy();
+    const nameInput = screen.getByPlaceholderText(/must start/i);
+    expect(nameInput.value).toBe("ALPHA");
+    expect(screen.getByRole("button", { name: /save/i })).toBeTruthy();
+  });
+
+  it("submit с initial preserves id и audit", () => {
+    const onSubmit = vi.fn();
+    const initial = { id: "t1", name: "ALPHA", color: "#dc2626", audit: { creator: "alice" } };
+    render(<CreateTagDialog visible={true} initial={initial} onClose={vi.fn()} onSubmit={onSubmit} />);
+    fireEvent.click(screen.getByRole("button", { name: /save/i }));
+    expect(onSubmit).toHaveBeenCalledWith(expect.objectContaining({
+      id: "t1", name: "ALPHA", audit: { creator: "alice" },
+    }));
+  });
 });

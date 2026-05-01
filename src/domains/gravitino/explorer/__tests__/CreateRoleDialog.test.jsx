@@ -54,6 +54,31 @@ describe("CreateRoleDialog", () => {
     expect(afterRemove).toBe(beforeRemove - 1);
   });
 
+  it("initial prop pre-fills role с securableObjects", () => {
+    const initial = { id: "r1", name: "data_engineer", securableObjects: [
+      { type: "schema", name: "sales", privileges: ["USE_SCHEMA", "SELECT_TABLE"] },
+    ]};
+    render(<CreateRoleDialog visible={true} initial={initial} onClose={vi.fn()} onSubmit={vi.fn()} />);
+    expect(screen.getByRole("heading", { name: /edit role/i })).toBeTruthy();
+    expect(screen.getByLabelText(/role name/i).value).toBe("data_engineer");
+    // Submit label = Save
+    expect(screen.getByRole("button", { name: /save/i })).toBeTruthy();
+    // Full Name pre-filled = sales
+    expect(screen.getByLabelText(/full name/i).value).toBe("sales");
+  });
+
+  it("submit с initial preserves id и owner", () => {
+    const onSubmit = vi.fn();
+    const initial = { id: "r1", name: "data_engineer", owner: "alice", securableObjects: [
+      { type: "schema", name: "sales", privileges: ["USE_SCHEMA"] },
+    ]};
+    render(<CreateRoleDialog visible={true} initial={initial} onClose={vi.fn()} onSubmit={onSubmit} />);
+    fireEvent.click(screen.getByRole("button", { name: /save/i }));
+    expect(onSubmit).toHaveBeenCalledWith(expect.objectContaining({
+      id: "r1", name: "data_engineer", owner: "alice",
+    }));
+  });
+
   it("submit с 2 securable objects отдаёт payload с обоими", () => {
     const onSubmit = vi.fn();
     render(<CreateRoleDialog visible={true} onClose={vi.fn()} onSubmit={onSubmit} />);

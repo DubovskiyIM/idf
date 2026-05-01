@@ -1,7 +1,11 @@
 /**
- * CreateTagDialog — modal для создания tag (U-iam2.b).
+ * CreateTagDialog — modal для создания / редактирования tag (U-iam2.b + U-edit-flows).
  * Поля: Name (req, regex hint) / Comment / Color (color-input + hex + refresh) /
  * Properties (Key/Value pairs).
+ *
+ * U-edit-flows: prop `initial` (Tag entity) переключает в edit-mode —
+ * pre-fill всех полей, title «Edit Tag», submit label «Save», submit
+ * preserves id + audit для overwrite by id через тот же createTag intent.
  */
 import { useEffect, useState } from "react";
 
@@ -9,26 +13,43 @@ const NAME_HINT = "Must start with a letter, digit, or underscore, can include a
 const PALETTE = ["#0369a1", "#16a34a", "#dc2626", "#d97706", "#7c3aed", "#0891b2", "#db2777", "#525252"];
 const randomColor = () => PALETTE[Math.floor(Math.random() * PALETTE.length)];
 
-export default function CreateTagDialog({ visible, onClose = () => {}, onSubmit = () => {} }) {
+export default function CreateTagDialog({ visible, initial, onClose = () => {}, onSubmit = () => {} }) {
   const [name, setName] = useState("");
   const [comment, setComment] = useState("");
   const [color, setColor] = useState("#0369a1");
   const [props, setProps] = useState([{ key: "", value: "" }]);
 
   useEffect(() => {
-    if (!visible) { setName(""); setComment(""); setColor("#0369a1"); setProps([{ key: "", value: "" }]); }
-  }, [visible]);
+    if (visible && initial) {
+      setName(initial.name || "");
+      setComment(initial.comment || "");
+      setColor(initial.color || "#0369a1");
+      const ps = Object.entries(initial.properties || {}).map(([k, v]) => ({ key: k, value: String(v) }));
+      setProps(ps.length > 0 ? ps : [{ key: "", value: "" }]);
+    } else if (!visible) {
+      setName(""); setComment(""); setColor("#0369a1"); setProps([{ key: "", value: "" }]);
+    }
+  }, [visible, initial]);
   if (!visible) return null;
 
+  const isEdit = !!initial;
   const isValid = name.trim().length > 0;
   const submit = () => {
     if (!isValid) return;
     const cleanProps = Object.fromEntries(props.filter(p => p.key.trim()).map(p => [p.key.trim(), p.value]));
-    onSubmit({ name: name.trim(), comment: comment.trim(), color, properties: cleanProps });
+    onSubmit({
+      ...(initial?.id && { id: initial.id }),
+      ...(initial?.audit && { audit: initial.audit }),
+      name: name.trim(), comment: comment.trim(), color, properties: cleanProps,
+    });
   };
 
   return (
-    <Modal title="Create Tag" subtitle="Create a new tag" onClose={onClose}>
+    <Modal
+      title={isEdit ? "Edit Tag" : "Create Tag"}
+      subtitle={isEdit ? `Edit tag «${initial.name}»` : "Create a new tag"}
+      onClose={onClose}
+    >
       <Field label="Tag Name" required>
         <input type="text" value={name} onChange={e => setName(e.target.value)}
           placeholder={NAME_HINT} style={inputStyle} />
@@ -48,7 +69,7 @@ export default function CreateTagDialog({ visible, onClose = () => {}, onSubmit 
         </div>
       </Field>
       <PropsEditor props={props} onChange={setProps} />
-      <Footer onClose={onClose} onSubmit={submit} disabled={!isValid} />
+      <Footer onClose={onClose} onSubmit={submit} disabled={!isValid} submitLabel={isEdit ? "Save" : "Submit"} />
     </Modal>
   );
 }

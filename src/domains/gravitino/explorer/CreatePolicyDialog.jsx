@@ -1,7 +1,10 @@
 /**
- * CreatePolicyDialog — modal для создания policy (U-iam2.b).
+ * CreatePolicyDialog — modal для создания / редактирования policy (U-iam2.b + U-edit-flows).
  * Поля: Name / Enabled toggle / Policy Type / Supported Object Types multi /
  * Rule(s) Name+Content / Comment / Properties.
+ *
+ * U-edit-flows: prop `initial` (Policy entity) включает edit-mode — pre-fill,
+ * title «Edit Policy», submit label «Save», preserves id + audit для overwrite.
  */
 import { useEffect, useState } from "react";
 import { Modal, Field, Footer, PropsEditor } from "./CreateTagDialog.jsx";
@@ -10,7 +13,7 @@ const NAME_HINT = "Must start with a letter, digit, or underscore, can include a
 const POLICY_TYPES = ["custom", "data_masking", "data_lifecycle", "access_control", "data_quality"];
 const OBJECT_TYPES = ["catalog", "schema", "table", "fileset", "topic", "model", "column"];
 
-export default function CreatePolicyDialog({ visible, onClose = () => {}, onSubmit = () => {} }) {
+export default function CreatePolicyDialog({ visible, initial, onClose = () => {}, onSubmit = () => {} }) {
   const [name, setName] = useState("");
   const [enabled, setEnabled] = useState(true);
   const [policyType, setPolicyType] = useState("custom");
@@ -20,15 +23,34 @@ export default function CreatePolicyDialog({ visible, onClose = () => {}, onSubm
   const [props, setProps] = useState([{ key: "", value: "" }]);
 
   useEffect(() => {
-    if (!visible) { setName(""); setEnabled(true); setPolicyType("custom"); setSupportedTypes([]); setRules([{ name: "", content: "" }]); setComment(""); setProps([{ key: "", value: "" }]); }
-  }, [visible]);
+    if (visible && initial) {
+      setName(initial.name || "");
+      setEnabled(initial.enabled !== false);
+      setPolicyType(initial.policyType || "custom");
+      setSupportedTypes(initial.supportedObjectTypes || []);
+      const rls = (initial.rules || []).map(r => ({
+        name: r.name || "",
+        content: typeof r.content === "string" ? r.content : JSON.stringify(r.content || ""),
+      }));
+      setRules(rls.length > 0 ? rls : [{ name: "", content: "" }]);
+      setComment(initial.comment || "");
+      const ps = Object.entries(initial.properties || {}).map(([k, v]) => ({ key: k, value: String(v) }));
+      setProps(ps.length > 0 ? ps : [{ key: "", value: "" }]);
+    } else if (!visible) {
+      setName(""); setEnabled(true); setPolicyType("custom"); setSupportedTypes([]);
+      setRules([{ name: "", content: "" }]); setComment(""); setProps([{ key: "", value: "" }]);
+    }
+  }, [visible, initial]);
   if (!visible) return null;
 
+  const isEdit = !!initial;
   const isValid = name.trim() && supportedTypes.length > 0;
   const submit = () => {
     if (!isValid) return;
     const cleanProps = Object.fromEntries(props.filter(p => p.key.trim()).map(p => [p.key.trim(), p.value]));
     onSubmit({
+      ...(initial?.id && { id: initial.id }),
+      ...(initial?.audit && { audit: initial.audit }),
       name: name.trim(), enabled, policyType,
       supportedObjectTypes: supportedTypes,
       rules: rules.filter(r => r.name.trim()).map(r => ({ name: r.name.trim(), content: r.content })),
@@ -41,7 +63,11 @@ export default function CreatePolicyDialog({ visible, onClose = () => {}, onSubm
   const removeRule = (i) => setRules(rules.filter((_, ix) => ix !== i));
 
   return (
-    <Modal title="Create Policy" subtitle="Create a new policy" onClose={onClose}>
+    <Modal
+      title={isEdit ? "Edit Policy" : "Create Policy"}
+      subtitle={isEdit ? `Edit policy «${initial.name}»` : "Create a new policy"}
+      onClose={onClose}
+    >
       <Field label="Policy Name" required>
         <input type="text" value={name} onChange={e => setName(e.target.value)} placeholder={NAME_HINT} style={inputStyle} />
       </Field>
@@ -81,7 +107,7 @@ export default function CreatePolicyDialog({ visible, onClose = () => {}, onSubm
         <textarea value={comment} onChange={e => setComment(e.target.value)} style={{ ...inputStyle, minHeight: 60 }} />
       </Field>
       <PropsEditor props={props} onChange={setProps} />
-      <Footer onClose={onClose} onSubmit={submit} disabled={!isValid} />
+      <Footer onClose={onClose} onSubmit={submit} disabled={!isValid} submitLabel={isEdit ? "Save" : "Submit"} />
     </Modal>
   );
 }
