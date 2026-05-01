@@ -30,6 +30,37 @@ function enrichFieldsWithPrimitives(entities) {
     enriched[name] = entity;
   }
 
+  // U-derive Phase 3.2: surface tags/policies/owner virtual fields на
+  // metadata-objects (Catalog/Schema/Table/Fileset/Topic/Model/Metalake).
+  // World data уже содержит эти поля (см. seed.js), но imported ontology
+  // их не декларирует — Gravitino REST API ассоциирует через separate
+  // endpoints. Декларация здесь анлочит patterns auto-fire:
+  //   - entity-tag-policy-columns → chipAssociation columns в catalog dataGrid
+  //   - entity-owner-column → ownerAvatar column + setOwner editIntent
+  // Author-override через bodyOverride.columns.{tags|policies|owner} остаётся.
+  const ASSOCIATION_BEARERS = [
+    "Metalake", "Catalog", "Schema", "Table", "Fileset", "Topic", "Model",
+  ];
+  for (const entityName of ASSOCIATION_BEARERS) {
+    const ent = enriched[entityName];
+    if (!ent) continue;
+    enriched[entityName] = {
+      ...ent,
+      fields: {
+        ...ent.fields,
+        ...(ent.fields.tags ? {} : {
+          tags: { type: "array", role: "tag-list", primitive: "chipList", label: "Tags" },
+        }),
+        ...(ent.fields.policies ? {} : {
+          policies: { type: "array", role: "policy-list", primitive: "chipList", label: "Policies" },
+        }),
+        ...(ent.fields.owner ? {} : {
+          owner: { type: "string", role: "owner", label: "Owner" },
+        }),
+      },
+    };
+  }
+
   // Stage 3: Table.columns → schemaEditor
   if (enriched.Table?.fields?.columns) {
     enriched.Table = {
@@ -140,5 +171,13 @@ export const ONTOLOGY = {
   entities: enrichFieldsWithPrimitives(imported.entities),
   roles: imported.roles || { owner: { base: "owner" } },
   invariants: imported.invariants || [],
-  features: imported.features || {},
+  features: {
+    ...(imported.features || {}),
+    // U-derive Phase 3.2: catalog-default-datagrid pattern по умолчанию
+    // skip'ает projections с itemIntents (onItemClick → list rendering).
+    // preferDataGrid:true заставляет всегда переходить на dataGrid → unlock'ает
+    // Phase 2 patterns (entity-tag-policy-columns, entity-owner-column,
+    // entity-row-actions) на gravitino catalog/schema/table/* listings.
+    preferDataGrid: true,
+  },
 };
