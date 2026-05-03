@@ -3,7 +3,7 @@
  * Multi-select roles. Pre-populated с currentRoles.
  */
 import { useEffect, useState } from "react";
-import { Modal, Footer } from "./CreateTagDialog.jsx";
+import { Modal, Footer } from "./dialogPrimitives.jsx";
 
 export default function GrantRoleDialog({ visible, target, availableRoles = [], currentRoles = [], onClose = () => {}, onSubmit = () => {} }) {
   const [selected, setSelected] = useState(new Set(currentRoles));

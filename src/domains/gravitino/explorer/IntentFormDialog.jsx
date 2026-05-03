@@ -12,11 +12,11 @@
  *   - SDK KeyValueEditor для type === "json" с object value (renderer 0.66+) —
  *     gravitino properties / Tag/Catalog/Schema/Table/...
  *
- * Reuses Modal/Field/Footer из CreateTagDialog (общая host-form инфраструктура).
+ * Reuses Modal/Field/Footer из dialogPrimitives.jsx.
  */
 import { useEffect, useState } from "react";
 import { ColorPicker, KeyValueEditor } from "@intent-driven/renderer";
-import { Modal, Field, Footer } from "./CreateTagDialog.jsx";
+import { Modal, Field, Footer } from "./dialogPrimitives.jsx";
 
 const PATH_PARAMS = new Set(["metalake", "metalakeId", "catalog", "catalogId", "schema", "schemaId", "table", "fileset", "topic", "model", "user", "group", "role", "tag", "policy"]);
 // Server-set / synthetic / not-form-suitable

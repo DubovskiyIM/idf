@@ -8,7 +8,7 @@
  * в этом MVP — pass-through из initial).
  */
 import { useEffect, useState } from "react";
-import { Modal, Field, Footer } from "./CreateTagDialog.jsx";
+import { Modal, Field, Footer } from "./dialogPrimitives.jsx";
 import Tabs from "./Tabs.jsx";
 
 const DATA_TYPES = ["String", "Integer", "Bigint", "Boolean", "Decimal(10,2)", "Decimal(18,2)", "Varchar(100)", "Varchar(255)", "Timestamp", "Date", "Double", "Float", "JSON"];
