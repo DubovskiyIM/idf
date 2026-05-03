@@ -167,6 +167,28 @@ describe("selectRelevantInvariants — pure filtering", () => {
     const result = selectRelevantInvariants(intent, ONTOLOGY);
     expect(result.map(i => i.name)).toContain("response_references_task");
   });
+
+  it("transition: НЕ relevant если replace на другой field той же entity", () => {
+    // Intent делает replace на Deal.paidAt, не на Deal.status — transition
+    // invariant на field=status НЕ должен сработать.
+    const ontologyWithPaidAt = {
+      ...ONTOLOGY,
+      entities: { ...ONTOLOGY.entities, Deal: { fields: { paidAt: { type: "datetime" } } } },
+    };
+    const intent = {
+      particles: { effects: [{ alpha: "replace", target: "Deal.paidAt" }] },
+    };
+    const result = selectRelevantInvariants(intent, ontologyWithPaidAt);
+    expect(result.map(i => i.name)).not.toContain("deal_status_transition");
+  });
+
+  it("transition: relevant ровно для replace на entity.field инварианта", () => {
+    const intent = {
+      particles: { effects: [{ alpha: "replace", target: "Deal.status" }] },
+    };
+    const result = selectRelevantInvariants(intent, ONTOLOGY);
+    expect(result.map(i => i.name)).toContain("deal_status_transition");
+  });
 });
 
 describe("normalizeForAgent — output shape", () => {

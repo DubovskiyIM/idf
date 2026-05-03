@@ -54,6 +54,26 @@ function collectTargetEntities(intent, ontology) {
   return entities;
 }
 
+/**
+ * Возвращает Set из "Entity.field" пар, на которые intent делает replace.
+ * Используется transition-invariant'ом (он relevant только если меняем
+ * именно тот field, который под whitelist'ом).
+ */
+function collectReplacedFields(intent, ontology) {
+  const out = new Set();
+  const effects = intent?.particles?.effects || [];
+  for (const eff of effects) {
+    const alpha = normalizeAlpha(eff.α || eff.alpha);
+    if (alpha !== "replace") continue;
+    const target = eff.target;
+    if (typeof target !== "string" || !target.includes(".")) continue;
+    const [head, field] = target.split(".");
+    const entityName = resolveEntityName(head, ontology);
+    if (entityName && field) out.add(`${entityName}.${field}`);
+  }
+  return out;
+}
+
 function resolveEntityName(name, ontology) {
   if (!name || !ontology?.entities) return null;
   if (ontology.entities[name]) return name;
@@ -78,7 +98,7 @@ function collectAlphas(intent) {
   return alphas;
 }
 
-function isRelevant(inv, alphas, entities) {
+function isRelevant(inv, alphas, entities, replacedFields) {
   const kind = inv.kind;
 
   if (kind === "role-capability") return false;
@@ -90,8 +110,9 @@ function isRelevant(inv, alphas, entities) {
   }
 
   if (kind === "transition") {
-    if (!alphas.has("replace")) return false;
-    return entities.has(inv.entity);
+    // transition relevant только если intent делает replace ровно на
+    // entity.field инварианта (не на другой field той же entity).
+    return replacedFields.has(`${inv.entity}.${inv.field}`);
   }
 
   if (kind === "cardinality") {
@@ -175,15 +196,23 @@ function selectRelevantInvariants(intent, ontology) {
 
   const alphas = collectAlphas(intent);
   const entities = collectTargetEntities(intent, ontology);
+  const replacedFields = collectReplacedFields(intent, ontology);
   if (entities.size === 0 || alphas.size === 0) return [];
 
   return invariants
-    .filter(inv => isRelevant(inv, alphas, entities))
+    .filter(inv => isRelevant(inv, alphas, entities, replacedFields))
     .map(normalizeForAgent);
 }
 
 module.exports = {
   selectRelevantInvariants,
   // экспорт internals для unit-тестов
-  _internals: { resolveEntityName, collectAlphas, collectTargetEntities, isRelevant, summarize },
+  _internals: {
+    resolveEntityName,
+    collectAlphas,
+    collectTargetEntities,
+    collectReplacedFields,
+    isRelevant,
+    summarize,
+  },
 };
