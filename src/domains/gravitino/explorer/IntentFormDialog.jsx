@@ -1,39 +1,41 @@
 /**
  * IntentFormDialog — generic host-form для intent.parameters (importer-openapi 0.16+
- * extract'ит body schema fields в parameters). Заменяет custom Create/Edit Dialog'и
- * для случаев когда форма — простой набор text/select полей.
+ * extract'ит body schema fields в parameters). Заменяет custom Create/Edit Dialog'и.
  *
  * Конвертирует gravitino intent.parameters (object) → form fields:
  *   - skip path-only params (`metalake`/`metalakeId` etc.) — passed via contextParams
- *   - skip aliasOf duplicates (`metalakeId` aliasOf metalake)
- *   - text input для type:"string" (textarea если param.name === "comment")
+ *   - skip aliasOf duplicates
+ *   - text input для type:"string" (textarea если comment/description)
  *   - select для param.values (enum)
  *   - checkbox для type:"boolean"
- *   - skip type:"json"/"array" (custom UI required — author keeps custom dialog)
- *
- * Для интентов с json/array полями (createTag color, properties etc.) — host
- * остаётся с кастомным dialog. SDK FormModal с form-overlay derivation —
- * future work (нужен export FormModal + colorPicker/keyValueEditor primitives).
+ *   - SDK ColorPicker для name === "color" или type === "color" (renderer 0.66+)
+ *   - SDK KeyValueEditor для type === "json" с object value (renderer 0.66+) —
+ *     gravitino properties / Tag/Catalog/Schema/Table/...
  *
  * Reuses Modal/Field/Footer из CreateTagDialog (общая host-form инфраструктура).
  */
 import { useEffect, useState } from "react";
+import { ColorPicker, KeyValueEditor } from "@intent-driven/renderer";
 import { Modal, Field, Footer } from "./CreateTagDialog.jsx";
 
 const PATH_PARAMS = new Set(["metalake", "metalakeId", "catalog", "catalogId", "schema", "schemaId", "table", "fileset", "topic", "model", "user", "group", "role", "tag", "policy"]);
-const SKIP_TYPES = new Set(["json", "array", "object"]);
-
+// Server-set / synthetic / not-form-suitable
+const SKIP_PARAMS = new Set(["audit", "inherited", "objectId", "securableObjects", "content"]);
+// Types we render via custom widgets — others stay text/select/checkbox
 const inputStyle = { display: "block", width: "100%", padding: "6px 8px", fontSize: 13, border: "1px solid var(--idf-border, #e5e7eb)", borderRadius: 4, background: "var(--idf-surface, #fff)", color: "var(--idf-text)", boxSizing: "border-box" };
 
 function buildFormFields(intent) {
   if (!intent?.parameters) return [];
   return Object.entries(intent.parameters)
-    .filter(([name, def]) => !PATH_PARAMS.has(name) && !def.aliasOf && !SKIP_TYPES.has(def.type))
+    .filter(([name, def]) => !PATH_PARAMS.has(name) && !SKIP_PARAMS.has(name) && !def.aliasOf)
     .map(([name, def]) => ({ name, ...def }));
 }
 
 function fieldDefault(field, initial) {
   if (initial && initial[field.name] !== undefined) return initial[field.name];
+  if (field.name === "color") return "#6478f7";
+  if (field.type === "json" || field.type === "object") return {};
+  if (field.type === "array") return [];
   if (field.type === "boolean") return false;
   if (field.type === "number") return "";
   return "";
@@ -70,7 +72,7 @@ export default function IntentFormDialog({
   const computedTitle = title || (isEdit ? `Edit ${intentId}` : `Create ${intentId}`);
 
   return (
-    <Modal title={computedTitle} subtitle={intent.description} onClose={onClose} width={460}>
+    <Modal title={computedTitle} subtitle={intent.description} onClose={onClose} width={520}>
       {fields.map(f => (
         <Field key={f.name} label={fieldLabel(f.name)} required={f.required}>
           {renderField(f, values[f.name], (v) => setValues(prev => ({ ...prev, [f.name]: v })))}
@@ -86,6 +88,12 @@ function fieldLabel(name) {
 }
 
 function renderField(f, value, onChange) {
+  if (f.name === "color" || f.type === "color") {
+    return <ColorPicker value={value || "#6478f7"} onChange={onChange} />;
+  }
+  if (f.type === "json" || f.type === "object") {
+    return <KeyValueEditor value={value || {}} onChange={onChange} />;
+  }
   if (f.values?.length) {
     return (
       <select value={value} onChange={e => onChange(e.target.value)} style={inputStyle}>

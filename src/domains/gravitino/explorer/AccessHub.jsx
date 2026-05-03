@@ -20,7 +20,9 @@ import { useState } from "react";
 import TwoPaneLayout from "./TwoPaneLayout.jsx";
 import { UsersTable, GroupsTable, RolesTable } from "./iamTables.jsx";
 import { ToastProvider, useToast } from "./Toast.jsx";
-import CreateRoleDialog from "./CreateRoleDialog.jsx";
+// CreateRoleDialog заменён на IntentFormDialog (Phase 3.13). securableObjects
+// pre-fill для edit-mode не поддерживается — multi-securable matrix UX
+// потенциально вернётся через SDK permissionMatrix-as-input primitive.
 import GrantRoleDialog from "./GrantRoleDialog.jsx";
 import SetOwnerDialog from "./SetOwnerDialog.jsx";
 import IntentFormDialog from "./IntentFormDialog.jsx";
@@ -119,18 +121,21 @@ function Inner({ world = {}, exec = () => {}, viewer }) {
         />
       )}
 
-      <CreateRoleDialog
+      <IntentFormDialog
         visible={createRoleOpen || !!editRoleTarget}
+        intentId="createRole"
+        intents={INTENTS}
         initial={editRoleTarget}
+        title={editRoleTarget ? "Edit Role" : "Create Role"}
+        contextParams={{
+          metalake: metalakeName,
+          owner: viewer?.name || "ui",
+          audit: { creator: viewer?.name || "ui", createTime: new Date().toISOString() },
+        }}
         onClose={() => { setCreateRoleOpen(false); setEditRoleTarget(null); }}
         onSubmit={(payload) => {
           const isEdit = !!editRoleTarget;
-          exec("createRole", {
-            ...payload,
-            metalake: metalakeName,
-            owner: payload.owner || viewer?.name || "ui",
-            audit: payload.audit || { creator: viewer?.name || "ui", createTime: new Date().toISOString() },
-          });
+          exec("createRole", payload);
           toast(isEdit ? `Role «${payload.name}» обновлён` : `Role «${payload.name}» создан`, "success");
           setCreateRoleOpen(false); setEditRoleTarget(null);
         }}
