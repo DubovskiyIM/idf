@@ -9,6 +9,7 @@
 
 const { parseConditions } = require("./conditionParser.cjs");
 const { inferParameters } = require("./inferParameters.cjs");
+const { selectRelevantInvariants } = require("./selectInvariants.cjs");
 
 function normalizeEffectTemplate(eff, creates) {
   const template = {
@@ -31,6 +32,7 @@ function buildIntentSchema(intentId, intent, ontology, roleName, relations) {
   const parameters = inferParameters(intent, ontology);
   const conditions = parseConditions(particles.conditions || []);
   const effects = (particles.effects || []).map(e => normalizeEffectTemplate(e, intent.creates));
+  const invariants = selectRelevantInvariants(intent, ontology);
 
   const defaultRelations = {
     sequentialIn: [],
@@ -47,6 +49,7 @@ function buildIntentSchema(intentId, intent, ontology, roleName, relations) {
     parameters,
     conditions,
     effects,
+    invariants,
     creates: typeof intent.creates === "string" ? intent.creates : null,
     antagonist: intent.antagonist || null,
     irreversibility: intent.irreversibility || null,
