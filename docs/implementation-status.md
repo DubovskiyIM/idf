@@ -26,7 +26,7 @@
 | delivery | 45 | 14 сущностей | 5 ролей, map-primitive, dispatcher m2m, irreversibility в `capture_payment` |
 | freelance | 46 | Task, Response, Deal, Wallet, Transaction, Review, Category | Биржа услуг, multi-owner (customerId + executorId) на Deal, escrow через hold/release, revision loop, комиссия платформы |
 | compliance | 38 | User, Department, Control, JournalEntry, Approval, AttestationCycle, Attestation, Finding, Evidence, Amendment | **13-й полевой тест**, SOX ICFR / «provable UI». 6 ролей, 15 invariants (5 expression-kind), 7 rules (все 4 v1.5 ext), 5 `__irr:high` intents. Первый домен со всеми 5 behavioral patterns signal-classifier'а. Reuse AntD. Закрыл backlog §1.1. |
-| gravitino | 120 | 253 (Catalog, Schema, Table, Column, Topic, Fileset, Tag, Role + ~245 entity-types из OpenAPI) | **14-й полевой тест**, metadata catalog. Первый AdminShell-домен. Импортирован через `@intent-driven/importer-openapi`. AntD. **U-derive Phase 3 (2026-05-01)** — host-кода урезано на ~1469 LOC за 9 PR'ов: 9 listings + 3 detail projections дериввированы из ontology+intents, 6 canvas-проекций (Metalakes/Tag/Policy/Role detail) дропнуты в пользу SDK detail с patterns + primitives. |
+| gravitino | 120 | 253 (Catalog, Schema, Table, Column, Topic, Fileset, Tag, Role + ~245 entity-types из OpenAPI) | **14-й полевой тест**, metadata catalog. Первый AdminShell-домен. Импортирован через `@intent-driven/importer-openapi`. AntD. **U-derive Phase 3 (2026-05-01 → 2026-05-03)** — host-кода урезано на ~2000 LOC за 14 host PR'ов + 6 SDK PR'ов: 9 listings + 4 detail projections дериввированы из ontology+intents (Metalakes/Tag/Policy/Role/Group), 6 canvas-проекций дропнуты, 4 Create*Dialog заменены на generic IntentFormDialog поверх SDK FormModal (с importer-openapi body-params + SDK ColorPicker/KeyValueEditor primitives). См. sprint changelog ниже. |
 | keycloak | 256 | 186 entities (Realm, Client, User, Group, Role, IdentityProvider, ClientScope, Component, Organization, Workflow + 75 embedded + service types) | **15-й полевой тест** (после Gravitino 14-го), Keycloak Admin Console. **AdminShell layout** (persistent sidebar tree + body region), **scoped DataGrid** (master/customer-app/staging — разные user pool через `node.filter`), Stage 6 **tabbedForm** (Client.detail × 5 tabs × 48 полей), Stage 7 **testConnection wizard step** (IdP create). Импортирован через `@intent-driven/importer-openapi@0.11.0`. **Закрыл 12 SDK gap'ов** (G-K-1/2/3/7/8/9/10/11/14/20/24/25). 5 ролей (admin/realmAdmin/userMgr/viewer/self), 25 createX intents. AntD enterprise. |
 | argocd | 106 | 300 entities (Application, ApplicationSet, Cluster, Project, Repository, Certificate, GPGKey, Account + 157 v1alpha1* K8s CRDs + wrapper types + 2 синтетических: Resource, ApplicationCondition) | **16-й полевой тест** (после Keycloak 15-го), первый **status-driven admin** домен. Импортирован из ArgoCD **Swagger 2.0** (82 paths) через `swagger2openapi` → `importer-openapi@0.11`. 5 ролей (admin/developer/deployer/viewer/auditor). Stage 4: `column.kind="badge"` cell-renderer (new SDK PR idf-sdk#293, `@intent-driven/renderer@0.47`) для syncStatus/healthStatus/connectionStatus с tone colorMap. Stage 5-6: inline-children (K8s `status.resources[]` + `status.conditions[]`) через синтетический FK + `renderAs:"resourceTree"`/`"conditionsTimeline"` dispatchers. Stage 7: tabbedForm × 5 tabs для `Application.spec`. **Host-workaround'ы зафиксированы в backlog §10** (7 gap'ов G-A-1..G-A-7): K8S_CRD_MERGE table, INTENT_RENAME (53 grpc-gateway → canonical verb), SEMANTIC_AUGMENT (плоские поля поверх nested spec, компенсирует Swagger 2→3 тип-потерю). Rich seed: 63 effects (10 apps в разных sync × health states, 20 resources с health propagation, 12 conditions по severity). |
 | automation | 36 | 9 (User, Workflow, NodeType, Node, Connection, Credential, Execution, ExecutionStep, ScheduledRun) | **17-й полевой тест** (после ArgoCD 16-го), visual workflow automation в духе **n8n / Zapier / Make**. AntD enterprise (lineage invest → compliance → keycloak → argocd → automation). 4 роли (editor / executor / viewer / agent), `executor` + `agent` имеют preapproval (active + notExpired credential). 15 invariants (10 referential + 2 transition + 2 expression `no_self_loop_connection` / `credential_owner_match` + 1 cardinality `one_active_schedule_per_workflow`), 2 rules (threshold consecutive failures + schedule next-run). 3 `__irr.high` intents (`delete_workflow` / `delete_credential` / `purge_execution_history`). 4 authored projections (`workflow_canvas` / `execution_replay` / `credential_vault` / `node_palette`) + derived. 39 seed effects (2 workflows × 4-node chains + 4 executions × 5 steps). 9/9 smoke + 879/879 full host suite. **Pattern bank**: 11 candidate'ов из Phase 0 research (`pattern-bank/candidate/automation-research-2026-04-26.json`) — n8n / Zapier / Make / Activepieces / Pipedream / Temporal / Airflow convergent evolution. **0 новых SDK gap'ов** — всё выражается через текущий API. Out of scope MVP: real engine, OAuth, marketplace, live execution overlay (~70% n8n parity по structural). |
@@ -301,31 +301,45 @@ Dogfood-сессия на scaffold-пути выявила и закрыла с�
 
 Полные детали — `sdk-improvements-backlog.md §11`.
 
-### U-derive Phase 3 sprint (2026-05-01) — gravitino host refactor
+### U-derive Phase 3 sprint (2026-05-01 → 2026-05-03) — gravitino host refactor
 
-Кампания «interface дериввируется» поверх gravitino — 9 PR'ов, **−1469 LOC host** + 9 listings + 3 detail projections auto-derived через patterns. Демонстрирует, что для CRUD-ish admin-доменов можно убрать почти весь bespoke React-код через ontology enrichment + pattern apply'ы + SDK primitives.
+Кампания «interface дериввируется» поверх gravitino — **14 host PR'ов + 5 SDK PR'ов**, чистый дроп ~**−2000 LOC host**, 9 listings + 4 detail projections auto-derived через patterns + form-derive pipeline (importer-openapi body params → SDK FormModal с ColorPicker/KeyValueEditor → IntentFormDialog host-helper).
 
 | Phase | PR | Net LOC | Изменение |
 |---|---|---|---|
 | 3.1 | host #238 | −272 | Drop SDK primitive duplicates (EmptyState/AssociatePopover/ChipColored — extract'ed в SDK Phase 1, renderer 0.62) |
 | 3.2 | host #239 | +86 | Patterns auto-fire через ontology enrichment: tags/policies/owner virtual fields на 7 metadata-objects + `features.preferDataGrid: true` |
 | 3.3 | host #240 | −68 | Generic HostEntityTable (5 hand-coded tables → 1 declarative renderer) |
-| 3.4 SDK | sdk #469 + #471 | — | chipList + ownerAvatar cell kinds + interactivity (renderer 0.63 → 0.64, core 0.114) |
-| 3.5 | host #242 | −372 | MetalakesHub canvas → SDK-rendered catalog projection (drop MetalakesHub.jsx + MetalakesTable.jsx) |
-| 3.6+3.7 | host #244 | −470 | Tag/Policy DetailCanvas + Pane → SDK derived detail с `metadata-objects-reverse-lookup` pattern (drop 4 файла; rich rule-summary chips заменены на propertyPopover) |
-| 3.8 | host #245 | −178 | Role detail → SDK derived detail с permissionMatrix primitive (drop RoleDetailCanvas + RoleDetailPane) |
-| 3.9 | host #246 | −195 | Dead-code cleanup (HubGrid + ContextNav после Phase 3.x) |
+| 3.4 SDK | sdk #469 + #471 + #473 | — | chipList + ownerAvatar cell kinds + interactivity (associate/detach/edit) — renderer 0.63 → 0.65, core 0.114 |
+| 3.5 | host #242 | −372 | MetalakesHub canvas → SDK-rendered catalog projection |
+| 3.6+3.7 | host #244 | −470 | Tag/Policy DetailCanvas + Pane → SDK derived detail с `metadata-objects-reverse-lookup` pattern |
+| 3.8 | host #245 | −178 | Role detail → SDK derived detail с permissionMatrix primitive |
+| 3.9 | host #246 | −195 | Dead-code cleanup (HubGrid + ContextNav) |
+| 3.10 | host #248 | −205 | GroupDetailCanvas + GroupDetailPane → SDK derived detail (Members tab убран — Group ontology без members field) |
+| 3.11 | host #249 + sdk #475 | — | importer-openapi 0.16 — extract request body schema fields в intent.parameters (re-import gravitino imported.js) |
+| 3.12 | host #250 | +24 | Generic IntentFormDialog host-helper + drop AddUserGroupDialog |
+| 3.13 | host #251 + sdk #477 | −300 | renderer 0.66: ColorPicker + KeyValueEditor + FormModal export. Drop CreatePolicyDialog + CreateRoleDialog → IntentFormDialog |
+| 3.14 | host #252 | −69 | Extract dialogPrimitives.jsx, drop CreateTagDialog.jsx |
 
-**SDK новое (PR #467 + #469 + #471):**
+**SDK новое (PR #467 + #469 + #471 + #473 + #475 + #477):**
 - 4 stable pattern bank entries: `entity-row-actions`, `entity-tag-policy-columns`, `entity-owner-column` (catalog), `metadata-objects-reverse-lookup` (cross). Total stable patterns 45 → 49.
-- 2 новых cell kinds в DataGrid: `chipList` (array-of-strings → inline ColoredChip's), `ownerAvatar` (string → AvatarChip), оба с интерактивностью (associate / edit-owner click).
+- 2 новых cell kinds в DataGrid: `chipList` (array-of-strings → inline ColoredChip's c associate `+` + per-chip detach `×`), `ownerAvatar` (string → AvatarChip с edit click).
+- 3 form primitives: `FormModal` экспортирован, `ColorPicker`, `KeyValueEditor`. FormModal auto-detect render для `param.type === "color" | "keyValue" | "object"`.
+- importer-openapi body params extraction (POST/PUT/PATCH operation requestBody schema fields → intent.parameters с marker `bodyParam: true`).
 
 **Что осталось host-side в gravitino:**
-- AccessHub + ComplianceHub + iamTables (~500 LOC) — 2-pane navigation hubs с CRUD dialogs. Drop требует SDK form-overlay derivation из intent.parameters.
-- CatalogExplorer + CatalogTree + CatalogsTable + детали schema/table/fileset/topic/model/function — metalake_workspace canvas с tree-explorer, узко-доменный.
-- Various Create*/Edit* Dialog компоненты — bridges к exec.
-- GroupDetailCanvas + GroupDetailPane — Members tab требует chipList per-chip detach (Phase 3.x candidate).
-- JobsHub + JobDetailDrawer — отдельная job-management area.
+- AccessHub + ComplianceHub + TwoPaneLayout + iamTables (~500 LOC) — 2-pane navigation hubs. Drop требует архитектурного подхода для grouped top-nav без canvas wrapper.
+- CatalogExplorer + CatalogTree + CatalogsTable + DetailPaneCommon + детали schema/table/fileset/topic/model/function — metalake_workspace canvas с tree-explorer, узко-доменный.
+- GrantRoleDialog (multi-select roles), SetOwnerDialog (cascader user/group), RunJobDialog (template select + config preview), RegisterJobTemplateDialog (shell config), LinkVersionDialog, EditTableDialog, CreateCatalogDialog (provider-specific schema) — нестандартный UX, не conv'ит в IntentFormDialog без SDK расширений (multi-select primitive, cascader primitive, nested-object editor).
+- JobsHub + JobDetailDrawer + JobStatusBadge — job-management area.
+- IntentFormDialog (63 LOC, host-side adapter) — мост к SDK FormModal; долгосрочно SDK сам будет рендерить через `ctx.openOverlay` без явного host-wrapper'а.
+
+**U-derive playbook (применимо к другим adminshell-доменам — Keycloak, ArgoCD, Notion):**
+1. Ontology enrichment: virtual fields tags/policies/owner на metadata-objects + `features.preferDataGrid: true` → patterns (Phase 2) auto-fire на listings.
+2. Drop host duplicates SDK primitives (extract если не extract'ed).
+3. Convert canvas projections → derived detail с patterns (`metadata-objects-reverse-lookup` для tag/policy-style, `permissionMatrix` для role-style).
+4. importer-openapi 0.16+ extract body params → IntentFormDialog для CRUD-form'ов.
+5. Dead-code cleanup orphan helpers.
 
 ### Rolling sync (2026-04-26 docs sweep)
 
