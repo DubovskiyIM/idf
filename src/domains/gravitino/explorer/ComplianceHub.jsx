@@ -16,8 +16,8 @@ import { useState } from "react";
 import TwoPaneLayout from "./TwoPaneLayout.jsx";
 import { TagsTable, PoliciesTable } from "./iamTables.jsx";
 import { ToastProvider, useToast } from "./Toast.jsx";
-import CreateTagDialog from "./CreateTagDialog.jsx";
-import CreatePolicyDialog from "./CreatePolicyDialog.jsx";
+import IntentFormDialog from "./IntentFormDialog.jsx";
+import { INTENTS } from "../intents.js";
 
 const SECTIONS = [
   { key: "tags",     label: "Tags" },
@@ -81,32 +81,32 @@ function Inner({ world = {}, exec = () => {}, viewer }) {
         />
       )}
 
-      <CreateTagDialog
+      <IntentFormDialog
         visible={createTagOpen || !!editTagTarget}
+        intentId="createTag"
+        intents={INTENTS}
         initial={editTagTarget}
+        title={editTagTarget ? "Edit Tag" : "Create Tag"}
+        contextParams={{ metalake: metalakeName, audit: { creator: viewer?.name || "ui", createTime: new Date().toISOString() } }}
         onClose={() => { setCreateTagOpen(false); setEditTagTarget(null); }}
         onSubmit={(payload) => {
           const isEdit = !!editTagTarget;
-          exec("createTag", {
-            ...payload,
-            metalake: metalakeName,
-            audit: payload.audit || { creator: viewer?.name || "ui", createTime: new Date().toISOString() },
-          });
+          exec("createTag", payload);
           toast(isEdit ? `Tag «${payload.name}» обновлён` : `Tag «${payload.name}» создан`, "success");
           setCreateTagOpen(false); setEditTagTarget(null);
         }}
       />
-      <CreatePolicyDialog
+      <IntentFormDialog
         visible={createPolicyOpen || !!editPolicyTarget}
+        intentId="createPolicy"
+        intents={INTENTS}
         initial={editPolicyTarget}
+        title={editPolicyTarget ? "Edit Policy" : "Create Policy"}
+        contextParams={{ metalake: metalakeName, audit: { creator: viewer?.name || "ui", createTime: new Date().toISOString() } }}
         onClose={() => { setCreatePolicyOpen(false); setEditPolicyTarget(null); }}
         onSubmit={(payload) => {
           const isEdit = !!editPolicyTarget;
-          exec("createPolicy", {
-            ...payload,
-            metalake: metalakeName,
-            audit: payload.audit || { creator: viewer?.name || "ui", createTime: new Date().toISOString() },
-          });
+          exec("createPolicy", payload);
           toast(isEdit ? `Policy «${payload.name}» обновлена` : `Policy «${payload.name}» создана`, "success");
           setCreatePolicyOpen(false); setEditPolicyTarget(null);
         }}
