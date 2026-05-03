@@ -23,7 +23,8 @@ import { ToastProvider, useToast } from "./Toast.jsx";
 import CreateRoleDialog from "./CreateRoleDialog.jsx";
 import GrantRoleDialog from "./GrantRoleDialog.jsx";
 import SetOwnerDialog from "./SetOwnerDialog.jsx";
-import AddUserGroupDialog from "./AddUserGroupDialog.jsx";
+import IntentFormDialog from "./IntentFormDialog.jsx";
+import { INTENTS } from "../intents.js";
 
 const SECTIONS = [
   { key: "users",  label: "Users" },
@@ -150,18 +151,20 @@ function Inner({ world = {}, exec = () => {}, viewer }) {
         onClose={() => setRoleOwnerTarget(null)}
         onSubmit={handleRoleSetOwner}
       />
-      <AddUserGroupDialog
+      <IntentFormDialog
         visible={addOpen !== null}
-        kind={addOpen}
+        intentId={addOpen === "group" ? "addGroup" : "addUser"}
+        intents={INTENTS}
+        title={addOpen === "group" ? "Add User Group" : "Add User"}
+        contextParams={{
+          metalake: metalakeName, roles: [],
+          audit: { creator: viewer?.name || "ui", createTime: new Date().toISOString() },
+        }}
         onClose={() => setAddOpen(null)}
-        onSubmit={({ name }) => {
+        onSubmit={(payload) => {
           const intentId = addOpen === "group" ? "addGroup" : "addUser";
-          exec(intentId, {
-            name, roles: [],
-            metalake: metalakeName,
-            audit: { creator: viewer?.name || "ui", createTime: new Date().toISOString() },
-          });
-          toast(`${addOpen === "group" ? "Group" : "User"} «${name}» добавлен`, "success");
+          exec(intentId, payload);
+          toast(`${addOpen === "group" ? "Group" : "User"} «${payload.name}» добавлен`, "success");
           setAddOpen(null);
         }}
       />
