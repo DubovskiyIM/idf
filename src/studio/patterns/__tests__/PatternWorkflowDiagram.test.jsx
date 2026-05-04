@@ -5,40 +5,34 @@ import PatternWorkflowDiagram from "../PatternWorkflowDiagram.jsx";
 
 afterEach(cleanup);
 
-describe("PatternWorkflowDiagram", () => {
-  it("рисует все 5 стадий (candidate / pending / approved / shipped / rejected)", () => {
-    const { container } = render(<PatternWorkflowDiagram />);
-    const labels = container.querySelectorAll("text");
-    const texts = Array.from(labels).map((t) => t.textContent);
-    expect(texts).toEqual(expect.arrayContaining([
-      "Candidate", "Pending", "Approved", "Shipped", "Rejected",
-    ]));
+describe("PatternWorkflowDiagram (compact chips)", () => {
+  it("рендерит все 5 chips: Candidate / Pending / Approved / Shipped / Rejected", () => {
+    render(<PatternWorkflowDiagram />);
+    for (const label of ["Candidate", "Pending", "Approved", "Shipped", "Rejected"]) {
+      expect(screen.getByText(label)).toBeTruthy();
+    }
   });
 
-  it("currentStage='shipped' использует green fill для shipped box", () => {
+  it("currentStage='shipped' — Shipped chip с green fill", () => {
+    render(<PatternWorkflowDiagram currentStage="shipped" />);
+    const chip = screen.getByText("Shipped").closest("span");
+    expect(chip.style.background).toMatch(/rgb\(16,\s*185,\s*129\)|#10b981/);
+  });
+
+  it("currentStage='rejected' — Rejected chip с красным fill", () => {
+    render(<PatternWorkflowDiagram currentStage="rejected" />);
+    const chip = screen.getByText("Rejected").closest("span");
+    expect(chip.style.background).toMatch(/rgb\(248,\s*113,\s*113\)|#f87171/);
+  });
+
+  it("Shipped chip когда active — показывает ⚠ irreversibility marker", () => {
     const { container } = render(<PatternWorkflowDiagram currentStage="shipped" />);
-    const shippedRect = Array.from(container.querySelectorAll("g")).find((g) => {
-      const t = g.querySelector("text");
-      return t && t.textContent === "Shipped";
-    })?.querySelector("rect");
-    expect(shippedRect.getAttribute("fill")).toBe("#10b981");
+    expect(container.textContent).toContain("⚠");
   });
 
-  it("currentStage='rejected' активирует rejected branch", () => {
-    const { container } = render(<PatternWorkflowDiagram currentStage="rejected" />);
-    const rejectedG = Array.from(container.querySelectorAll("g")).find((g) => {
-      const t = g.querySelector("text");
-      return t && t.textContent === "Rejected";
-    });
-    const rect = rejectedG.querySelector("rect");
-    expect(rect.getAttribute("fill")).toBe("#7f1d1d");
-  });
-
-  it("compact mode не рисует caption-text", () => {
-    const { container } = render(<PatternWorkflowDiagram compact />);
-    const captions = Array.from(container.querySelectorAll("text"))
-      .map((t) => t.textContent)
-      .filter((t) => t.includes("intent: request_pattern_promotion"));
-    expect(captions).toHaveLength(0);
+  it("Без currentStage — все chips muted (background не accent)", () => {
+    render(<PatternWorkflowDiagram />);
+    const chip = screen.getByText("Candidate").closest("span");
+    expect(chip.style.background).toMatch(/rgb\(15,\s*23,\s*42\)|#0f172a/);
   });
 });

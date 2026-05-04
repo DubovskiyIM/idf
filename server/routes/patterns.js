@@ -33,6 +33,11 @@ const {
   deriveProjections,
 } = require("@intent-driven/core");
 const { writePatternPreference } = require("../patternPreferenceWriter.js");
+const {
+  loadCandidatesFromRefs,
+  getRefCandidates,
+  serializeRefCandidate,
+} = require("../loadCandidatesFromRefs.cjs");
 
 // Кэш загруженных доменов: { [domainName]: { ontology, intents, projections } | null }
 const DOMAIN_CACHE = new Map();
@@ -145,14 +150,28 @@ function makePatternsRouter() {
 
   router.get("/catalog", (_req, res) => {
     // Registry — singleton-default; loadStablePatterns идемпотентен
-    // (registerPattern проверяет getPattern перед вставкой).
+    // (registerPattern проверяет getPattern перед вставкой). Кандидаты из
+    // refs/candidates/ — отдельный side-channel (registry строго валидирует
+    // trigger.kind, а pattern-researcher выкатывает новые kind'ы; куратор
+    // их триажит в /studio?view=curator).
     const registry = getDefaultRegistry();
     try {
       loadStablePatterns(registry);
+      loadCandidatesFromRefs();
     } catch (err) {
       return res.status(500).json({ error: "pattern_bank_load_failed", reason: err.message });
     }
     const { stable, candidate, anti } = collectByStatus(registry);
+    // Дополняем candidate'ами из refs/candidates/ (с защитой от дубликатов).
+    const knownIds = new Set([
+      ...stable.map((p) => p.id),
+      ...candidate.map((p) => p.id),
+      ...anti.map((p) => p.id),
+    ]);
+    for (const ref of getRefCandidates()) {
+      if (knownIds.has(ref.id)) continue;
+      candidate.push(serializeRefCandidate(ref));
+    }
     res.json({ stable, candidate, anti });
   });
 
@@ -165,6 +184,7 @@ function makePatternsRouter() {
     const registry = getDefaultRegistry();
     try {
       loadStablePatterns(registry);
+      loadCandidatesFromRefs();
     } catch (err) {
       return res.status(500).json({ error: "pattern_bank_load_failed", reason: err.message });
     }
