@@ -164,7 +164,7 @@ function makeAgentRouter(broadcast) {
       return res.status(503).json({
         error: "ontology_unavailable",
         domain,
-        message: `Ontology для ${domain} не зарегистрирована. Клиент должен POST /api/typemap?domain=${domain}.`
+        message: `Ontology for '${domain}' is not registered. Client must POST /api/typemap?domain=${domain}.`
       });
     }
 
@@ -199,7 +199,7 @@ function makeAgentRouter(broadcast) {
     if (!ontology) {
       return res.status(503).json({
         error: "ontology_unavailable",
-        message: "Ontology для booking не зарегистрирована."
+        message: `Ontology for '${req.params.domain}' is not registered.`
       });
     }
     const viewer = getViewer(req);
@@ -263,7 +263,7 @@ function makeAgentRouter(broadcast) {
       return res.status(404).json({
         error: "domain_not_supported",
         domain,
-        message: `Нет effect builder для ${domain}`
+        message: `No effect builder for domain '${domain}'`
       });
     }
 
@@ -276,7 +276,7 @@ function makeAgentRouter(broadcast) {
         intentId,
         domain,
         role: ROLE,
-        message: `Интент ${intentId} не доступен для роли ${ROLE} в домене ${domain}`
+        message: `Intent '${intentId}' is not callable by role '${ROLE}' in domain '${domain}'`
       });
     }
 
@@ -321,7 +321,7 @@ function makeAgentRouter(broadcast) {
         reason: preapproval.reason,
         failedCheck: preapproval.failedCheck,
         details: preapproval.details,
-        message: `Агент не имеет preapproval для ${intentId}: ${preapproval.reason}`,
+        message: `Agent has no preapproval to call '${intentId}': ${preapproval.reason}`,
       });
     }
 
