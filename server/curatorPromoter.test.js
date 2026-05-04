@@ -1,0 +1,125 @@
+import { describe, it, expect, beforeEach } from "vitest";
+import { mkdtempSync, rmSync, readFileSync, writeFileSync, existsSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
+import { createRequire } from "node:module";
+
+const require = createRequire(import.meta.url);
+const {
+  renderCandidateModule,
+  renderChangeset,
+  patchCuratedJs,
+  slugify,
+} = require("./curatorPromoter.cjs");
+
+describe("curatorPromoter · pure helpers", () => {
+  describe("slugify", () => {
+    it("kebab-case + truncate", () => {
+      expect(slugify("Pattern-X with weird _stuff!")).toBe("pattern-x-with-weird-stuff");
+    });
+    it("trims leading/trailing dashes", () => {
+      expect(slugify("--abc--")).toBe("abc");
+    });
+  });
+
+  describe("renderCandidateModule", () => {
+    it("эмиттит export default JSON, удаляет refSource", () => {
+      const out = renderCandidateModule({
+        id: "x",
+        archetype: "detail",
+        refSource: "host-only.json",
+        trigger: { requires: [] },
+      });
+      expect(out).toMatch(/export default/);
+      expect(out).toMatch(/"id": "x"/);
+      expect(out).toMatch(/"archetype": "detail"/);
+      expect(out).not.toMatch(/refSource/);
+    });
+    it("комментарий с timestamp в header", () => {
+      const out = renderCandidateModule({ id: "y" });
+      expect(out).toMatch(/promoted from refs\/candidates\//);
+      expect(out).toMatch(/curator workspace at \d{4}-/);
+    });
+  });
+
+  describe("renderChangeset", () => {
+    it("YAML-frontmatter с patch для @intent-driven/core", () => {
+      const out = renderChangeset({ id: "z" }, "Custom summary");
+      expect(out).toMatch(/^---\n"@intent-driven\/core": patch\n---\n/);
+      expect(out).toMatch(/Custom summary/);
+    });
+    it("без summary — fallback к 'Promote candidate ...'", () => {
+      const out = renderChangeset({ id: "z" }, null);
+      expect(out).toMatch(/Promote candidate `z`/);
+    });
+  });
+
+  describe("patchCuratedJs", () => {
+    let tmp;
+    let curatedPath;
+
+    beforeEach(() => {
+      tmp = mkdtempSync(join(tmpdir(), "curated-"));
+      curatedPath = join(tmp, "curated.js");
+      writeFileSync(
+        curatedPath,
+        `import existing from "./detail/existing.js";
+import otherThing from "./catalog/other.js";
+
+const CURATED_CANDIDATES = [
+  existing,
+  otherThing,
+];
+
+export { CURATED_CANDIDATES };
+`,
+        "utf8",
+      );
+    });
+
+    it("вставляет import + entry в массив", () => {
+      const result = patchCuratedJs(curatedPath, "detail", "new-pattern-id");
+      expect(result.changed).toBe(true);
+      const src = readFileSync(curatedPath, "utf8");
+      expect(src).toMatch(/import new_pattern_id from "\.\/detail\/new-pattern-id\.js";/);
+      expect(src).toMatch(/new_pattern_id,/);
+      // Sanity — старые импорты не сломались
+      expect(src).toMatch(/existing,/);
+      expect(src).toMatch(/otherThing,/);
+    });
+
+    it("idempotent — повторный вызов skip'ит", () => {
+      patchCuratedJs(curatedPath, "detail", "p");
+      const second = patchCuratedJs(curatedPath, "detail", "p");
+      expect(second.changed).toBe(false);
+      expect(second.reason).toBe("already-imported");
+    });
+
+    it("id с дефисами → moduleVar c подчёркиваниями", () => {
+      patchCuratedJs(curatedPath, "feed", "multi-word-pattern");
+      const src = readFileSync(curatedPath, "utf8");
+      expect(src).toMatch(/import multi_word_pattern from/);
+      expect(src).toMatch(/multi_word_pattern,/);
+    });
+  });
+});
+
+describe("promoteToSdkPr · disabled-state guards", () => {
+  it("без CURATOR_PR_ENABLED → ok=false, error=disabled", async () => {
+    delete process.env.CURATOR_PR_ENABLED;
+    const { promoteToSdkPr } = require("./curatorPromoter.cjs");
+    const r = await promoteToSdkPr({ patternId: "any" });
+    expect(r.ok).toBe(false);
+    expect(r.error).toBe("disabled");
+  });
+
+  it("с CURATOR_PR_ENABLED=1 но без IDF_SDK_PATH → ok=false, error=sdk-path-missing", async () => {
+    process.env.CURATOR_PR_ENABLED = "1";
+    delete process.env.IDF_SDK_PATH;
+    const { promoteToSdkPr } = require("./curatorPromoter.cjs");
+    const r = await promoteToSdkPr({ patternId: "any" });
+    expect(r.ok).toBe(false);
+    expect(r.error).toBe("sdk-path-missing");
+    delete process.env.CURATOR_PR_ENABLED;
+  });
+});

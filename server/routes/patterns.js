@@ -33,6 +33,13 @@ const {
   deriveProjections,
 } = require("@intent-driven/core");
 const { writePatternPreference } = require("../patternPreferenceWriter.js");
+const {
+  loadCandidatesFromRefs,
+  getRefCandidates,
+  serializeRefCandidate,
+} = require("../loadCandidatesFromRefs.cjs");
+const { evaluateGenericRequires } = require("../genericTriggerEvaluator.cjs");
+const { promoteToSdkPr } = require("../curatorPromoter.cjs");
 
 // Кэш загруженных доменов: { [domainName]: { ontology, intents, projections } | null }
 const DOMAIN_CACHE = new Map();
@@ -145,14 +152,28 @@ function makePatternsRouter() {
 
   router.get("/catalog", (_req, res) => {
     // Registry — singleton-default; loadStablePatterns идемпотентен
-    // (registerPattern проверяет getPattern перед вставкой).
+    // (registerPattern проверяет getPattern перед вставкой). Кандидаты из
+    // refs/candidates/ — отдельный side-channel (registry строго валидирует
+    // trigger.kind, а pattern-researcher выкатывает новые kind'ы; куратор
+    // их триажит в /studio?view=curator).
     const registry = getDefaultRegistry();
     try {
       loadStablePatterns(registry);
+      loadCandidatesFromRefs();
     } catch (err) {
       return res.status(500).json({ error: "pattern_bank_load_failed", reason: err.message });
     }
     const { stable, candidate, anti } = collectByStatus(registry);
+    // Дополняем candidate'ами из refs/candidates/ (с защитой от дубликатов).
+    const knownIds = new Set([
+      ...stable.map((p) => p.id),
+      ...candidate.map((p) => p.id),
+      ...anti.map((p) => p.id),
+    ]);
+    for (const ref of getRefCandidates()) {
+      if (knownIds.has(ref.id)) continue;
+      candidate.push(serializeRefCandidate(ref));
+    }
     res.json({ stable, candidate, anti });
   });
 
@@ -165,12 +186,61 @@ function makePatternsRouter() {
     const registry = getDefaultRegistry();
     try {
       loadStablePatterns(registry);
+      loadCandidatesFromRefs();
     } catch (err) {
       return res.status(500).json({ error: "pattern_bank_load_failed", reason: err.message });
     }
 
     const pattern = registry.getPattern(id);
     if (!pattern) {
+      // Fallback на side-channel: ref-кандидаты не попадают в registry
+      // (registerPattern строго валидирует trigger.kind), но у них есть
+      // requires[] и static falsification fixtures. Запускаем generic
+      // evaluator (server/genericTriggerEvaluator.cjs) — best-effort
+      // matching по kind'у; для placeholder'ов или unknown kind'ов
+      // возвращаем actual=null (live-undecidable).
+      const refPattern = getRefCandidates().find((p) => p.id === id);
+      if (refPattern) {
+        const runRefCase = async (entry, expected) => {
+          const domain = await loadDomain(entry.domain);
+          if (!domain) {
+            return { ...entry, expected, actual: null, error: "domain-not-loaded" };
+          }
+          const projection = domain.projections?.[entry.projection];
+          if (!projection) {
+            return { ...entry, expected, actual: null, error: "projection-not-found" };
+          }
+          const projIntents = filterIntentsForProjection(domain.intents, projection);
+          const result = evaluateGenericRequires(refPattern.trigger, {
+            intents: projIntents,
+            ontology: domain.ontology,
+            projection: { ...projection, id: entry.projection },
+          });
+          return {
+            ...entry,
+            expected,
+            actual: result.matched, // true | false | null
+            perRequire: result.perRequire,
+            error: result.matched === null ? "live-undecidable" : null,
+          };
+        };
+        const shouldMatch = await Promise.all(
+          (refPattern.falsification?.shouldMatch || []).map((e) => runRefCase(e, true)),
+        );
+        const shouldNotMatch = await Promise.all(
+          (refPattern.falsification?.shouldNotMatch || []).map((e) => runRefCase(e, false)),
+        );
+        const regressions = [...shouldMatch, ...shouldNotMatch].filter(
+          (r) => r.actual !== null && r.actual !== r.expected,
+        );
+        return res.json({
+          id,
+          shouldMatch,
+          shouldNotMatch,
+          regressions,
+          note: "ref-candidate: generic evaluator best-effort (no trigger.match function)",
+        });
+      }
       return res.status(404).json({ error: "pattern_not_found", id });
     }
 
@@ -333,6 +403,143 @@ function makePatternsRouter() {
     }
     const projections = Object.keys(domain.projections || {});
     res.json({ domain: domainName, projections });
+  });
+
+  /**
+   * GET /heatmap — таблица actual для каждого ref-кандидата на каждой
+   * host-projection. Куратор видит "этот pattern уже подходит к 5
+   * проекциям host'а" → одна кнопка → bulk-promote. Cache в памяти
+   * на process lifetime (refresh: ?force=1).
+   *
+   * Output: {
+   *   domains: ["argocd", "automation", ...],
+   *   projections: [{ domain, projection, mainEntity }, ...],
+   *   patterns: [{
+   *     id, archetype, refSource,
+   *     matches: { "argocd/foo": "true"|"false"|"null", ... },
+   *     stats: { match: N, miss: M, undecidable: K }
+   *   }],
+   * }
+   *
+   * Stable patterns пропускаются (для них уже есть proper falsification).
+   * Domain.kind=meta тоже пропускаются (self-referential).
+   */
+  let _heatmapCache = null;
+  router.get("/heatmap", async (req, res) => {
+    if (_heatmapCache && req.query.force !== "1") {
+      return res.json({ ...(_heatmapCache), cached: true });
+    }
+    try {
+      loadCandidatesFromRefs();
+    } catch (err) {
+      return res.status(500).json({ error: "load_failed", reason: err.message });
+    }
+    const refs = getRefCandidates();
+    const domainsRoot = path.join(__dirname, "..", "..", "src", "domains");
+    let domainNames = [];
+    try {
+      domainNames = require("node:fs")
+        .readdirSync(domainsRoot)
+        .filter((d) => d !== "meta")
+        .sort();
+    } catch (err) {
+      return res.status(500).json({ error: "domains_scan_failed", reason: err.message });
+    }
+    // Загружаем все домены параллельно (с кэшем — повторный вызов дёшев).
+    const domains = await Promise.all(domainNames.map(loadDomain));
+    const projectionList = [];
+    for (let i = 0; i < domainNames.length; i++) {
+      const d = domains[i];
+      if (!d) continue;
+      for (const [projId, proj] of Object.entries(d.projections || {})) {
+        projectionList.push({
+          key: `${domainNames[i]}/${projId}`,
+          domain: domainNames[i],
+          projection: projId,
+          mainEntity: proj.mainEntity || null,
+          _proj: proj,
+          _intents: filterIntentsForProjection(d.intents, proj),
+          _ontology: d.ontology,
+        });
+      }
+    }
+    const patterns = refs.map((p) => {
+      const matches = {};
+      const stats = { match: 0, miss: 0, undecidable: 0 };
+      for (const pj of projectionList) {
+        const r = evaluateGenericRequires(p.trigger, {
+          intents: pj._intents,
+          ontology: pj._ontology,
+          projection: { ...pj._proj, id: pj.projection },
+        });
+        const v = r.matched === true ? "true" : r.matched === false ? "false" : "null";
+        matches[pj.key] = v;
+        if (v === "true") stats.match++;
+        else if (v === "false") stats.miss++;
+        else stats.undecidable++;
+      }
+      return {
+        id: p.id,
+        archetype: p.archetype || null,
+        refSource: p.refSource || null,
+        matches,
+        stats,
+      };
+    });
+    const result = {
+      domains: domainNames,
+      projections: projectionList.map(({ key, domain, projection, mainEntity }) => ({
+        key,
+        domain,
+        projection,
+        mainEntity,
+      })),
+      patterns,
+      generatedAt: Date.now(),
+    };
+    _heatmapCache = result;
+    res.json({ ...result, cached: false });
+  });
+
+  /**
+   * POST /promote-and-pr — куратор тыкает кнопку → server делает PR в idf-sdk.
+   *
+   * Body: { patternId, summary?, branch? }
+   *
+   * Steps (в server/curatorPromoter.cjs):
+   *   1. Read refs/candidates/<refSource> JSON.
+   *   2. Generate candidate/<archetype>/<id>.js (export default JSON).
+   *   3. Patch curated.js: import + entry в CURATED_CANDIDATES.
+   *   4. Write .changeset/curator-<slug>.md (patch для @intent-driven/core).
+   *   5. git checkout main; reset --hard origin/main; checkout -b feat/...
+   *   6. git add / commit / push.
+   *   7. gh pr create --base main.
+   *   8. Return {prUrl, branch, log}.
+   *
+   * Required env: CURATOR_PR_ENABLED=1, IDF_SDK_PATH, gh authenticated.
+   */
+  router.post("/promote-and-pr", async (req, res) => {
+    const { patternId, summary, branch } = req.body || {};
+    if (!patternId) {
+      return res.status(400).json({ error: "missing_patternId" });
+    }
+    // Make sure refs are loaded.
+    try {
+      loadCandidatesFromRefs();
+    } catch (err) {
+      return res.status(500).json({ error: "load_failed", reason: err.message });
+    }
+    const result = await promoteToSdkPr({ patternId, summary, branch });
+    if (!result.ok) {
+      const status =
+        result.error === "disabled" ? 403 :
+        result.error === "ref-not-found" ? 404 :
+        result.error === "collision" ? 409 :
+        result.error === "sdk-path-missing" || result.error === "curated-js-missing" ? 503 :
+        500;
+      return res.status(status).json(result);
+    }
+    return res.json(result);
   });
 
   /**

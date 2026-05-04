@@ -56,6 +56,8 @@ export default function PatternList({ patterns, selected, onSelect }) {
         display: "flex",
         flexDirection: "column",
         overflow: "hidden",
+        flex: 1,
+        minHeight: 0,
       }}
     >
       <div
