@@ -79,7 +79,8 @@ export const INTENTS = {
 
   // ─── Agent-intents ───
   agent_propose_rebalance: {
-    name: "Агент: ребаланс",
+    name: "Agent: propose rebalance",
+    description: "Robo-advisor proposes a portfolio rebalance with a confidence score and rationale.",
     parameters: [
       { name: "portfolioId", type: "entityRef", entity: "Portfolio", required: true },
       { name: "confidence", type: "number", required: true },
@@ -88,7 +89,8 @@ export const INTENTS = {
     particles: { effects: [{ α: "add", target: "recommendations", σ: "account" }] },
   },
   agent_flag_anomaly: {
-    name: "Агент: аномалия",
+    name: "Agent: flag anomaly",
+    description: "Robo-advisor raises a portfolio-level alert with severity.",
     parameters: [
       { name: "severity", type: "select", required: true },
       { name: "message", type: "text", required: true },
@@ -96,7 +98,8 @@ export const INTENTS = {
     particles: { effects: [{ α: "add", target: "alerts", σ: "account" }] },
   },
   agent_fetch_market_signal: {
-    name: "Сигнал рынка",
+    name: "Agent: fetch market signal",
+    description: "Robo-advisor records a market signal (price / volume / news) for an asset.",
     parameters: [
       { name: "assetId", type: "entityRef", entity: "Asset", required: true },
       { name: "kind", type: "select", required: true },
@@ -106,7 +109,8 @@ export const INTENTS = {
     particles: { effects: [{ α: "add", target: "marketSignals", σ: "global" }] },
   },
   agent_execute_preapproved_order: {
-    name: "Агент: сделка (preapproved)",
+    name: "Agent: execute preapproved order",
+    description: "Robo-advisor executes a market order. Subject to AgentPreapproval guard (active / notExpired / maxOrderAmount / allowedAssetTypes / dailyLimit / dailySum).",
     parameters: [
       { name: "portfolioId", type: "entityRef", entity: "Portfolio", required: true },
       { name: "assetId", type: "entityRef", entity: "Asset", required: true },
@@ -119,14 +123,16 @@ export const INTENTS = {
     particles: { effects: [{ α: "add", target: "transactions", σ: "account" }] },
   },
   agent_recompute_risk_score: {
-    name: "Агент: пересчёт риска",
+    name: "Agent: recompute risk score",
+    description: "Robo-advisor recomputes the risk profile for a portfolio (or all portfolios if portfolioId omitted).",
     parameters: [
       { name: "portfolioId", type: "entityRef", entity: "Portfolio", required: false },
     ],
     particles: { effects: [{ α: "replace", target: "riskProfiles", σ: "account" }] },
   },
   agent_generate_report: {
-    name: "Агент: отчёт",
+    name: "Agent: generate report",
+    description: "Robo-advisor generates a portfolio-level performance / risk report as a recommendation.",
     parameters: [
       { name: "portfolioId", type: "entityRef", entity: "Portfolio", required: false },
       { name: "reportType", type: "select", required: false },
