@@ -405,6 +405,102 @@ function makePatternsRouter() {
   });
 
   /**
+   * GET /heatmap — таблица actual для каждого ref-кандидата на каждой
+   * host-projection. Куратор видит "этот pattern уже подходит к 5
+   * проекциям host'а" → одна кнопка → bulk-promote. Cache в памяти
+   * на process lifetime (refresh: ?force=1).
+   *
+   * Output: {
+   *   domains: ["argocd", "automation", ...],
+   *   projections: [{ domain, projection, mainEntity }, ...],
+   *   patterns: [{
+   *     id, archetype, refSource,
+   *     matches: { "argocd/foo": "true"|"false"|"null", ... },
+   *     stats: { match: N, miss: M, undecidable: K }
+   *   }],
+   * }
+   *
+   * Stable patterns пропускаются (для них уже есть proper falsification).
+   * Domain.kind=meta тоже пропускаются (self-referential).
+   */
+  let _heatmapCache = null;
+  router.get("/heatmap", async (req, res) => {
+    if (_heatmapCache && req.query.force !== "1") {
+      return res.json({ ...(_heatmapCache), cached: true });
+    }
+    try {
+      loadCandidatesFromRefs();
+    } catch (err) {
+      return res.status(500).json({ error: "load_failed", reason: err.message });
+    }
+    const refs = getRefCandidates();
+    const domainsRoot = path.join(__dirname, "..", "..", "src", "domains");
+    let domainNames = [];
+    try {
+      domainNames = require("node:fs")
+        .readdirSync(domainsRoot)
+        .filter((d) => d !== "meta")
+        .sort();
+    } catch (err) {
+      return res.status(500).json({ error: "domains_scan_failed", reason: err.message });
+    }
+    // Загружаем все домены параллельно (с кэшем — повторный вызов дёшев).
+    const domains = await Promise.all(domainNames.map(loadDomain));
+    const projectionList = [];
+    for (let i = 0; i < domainNames.length; i++) {
+      const d = domains[i];
+      if (!d) continue;
+      for (const [projId, proj] of Object.entries(d.projections || {})) {
+        projectionList.push({
+          key: `${domainNames[i]}/${projId}`,
+          domain: domainNames[i],
+          projection: projId,
+          mainEntity: proj.mainEntity || null,
+          _proj: proj,
+          _intents: filterIntentsForProjection(d.intents, proj),
+          _ontology: d.ontology,
+        });
+      }
+    }
+    const patterns = refs.map((p) => {
+      const matches = {};
+      const stats = { match: 0, miss: 0, undecidable: 0 };
+      for (const pj of projectionList) {
+        const r = evaluateGenericRequires(p.trigger, {
+          intents: pj._intents,
+          ontology: pj._ontology,
+          projection: { ...pj._proj, id: pj.projection },
+        });
+        const v = r.matched === true ? "true" : r.matched === false ? "false" : "null";
+        matches[pj.key] = v;
+        if (v === "true") stats.match++;
+        else if (v === "false") stats.miss++;
+        else stats.undecidable++;
+      }
+      return {
+        id: p.id,
+        archetype: p.archetype || null,
+        refSource: p.refSource || null,
+        matches,
+        stats,
+      };
+    });
+    const result = {
+      domains: domainNames,
+      projections: projectionList.map(({ key, domain, projection, mainEntity }) => ({
+        key,
+        domain,
+        projection,
+        mainEntity,
+      })),
+      patterns,
+      generatedAt: Date.now(),
+    };
+    _heatmapCache = result;
+    res.json({ ...result, cached: false });
+  });
+
+  /**
    * POST /preference — author-decision writer (§3.4, §16).
    *
    * Body: { domain, projection, patternId, action }
