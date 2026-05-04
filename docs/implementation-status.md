@@ -386,6 +386,10 @@ npm run meta-compile -- --offline               # рендер docs/sdk-improvem
 
 **Offline meta-cli** (`scripts/meta-cli.mjs`, 2026-05-04) — daily-use клиент для dogfood'инга формата на собственной разработке. Загружает `INTENTS` из `src/domains/meta/intents.js`, валидирует параметры против заявленной schema, интерполирует `{{params.X}} / {{auto}} / {{viewer.id}} / {{now}}` в `particles.effects` и пишет confirmed-effects напрямую в `server/idf.db` (тот же файл, который читает `meta-compile.mjs --offline`). Минует HTTP/JWT — это сознательное упрощение для CLI; строгий путь с invariant-checks остаётся `POST /api/agent/meta/exec/<id>` через server. Покрыт 8 vitest'ами в `scripts/meta-cli.test.mjs` (list/schema/exec на временной БД, validation edge-cases, dry-run, replace-c-id-из-params).
 
+**Online режим meta-cli** (2026-05-04) — флаг `--online` переключает `exec` на `POST /api/agent/meta/exec/<id>` с `Authorization: Bearer <JWT>`. Аутентификация — через `--token=<JWT>` или ENV `IDF_TOKEN`; base-URL — `--server=` или `IDF_SERVER` (default `http://localhost:3001`). В отличие от offline, online проходит обычный agent-pipeline сервера: `validateParams` + `checkOwnership` + `checkPreapproval` + `invariants` (rollback через `cascadeReject`). 6 vitest'ов с mock'ом `globalThis.fetch`: правильный URL/headers/body, отсутствие token → exit 4, 403 `intent_not_allowed` → exit 3, 400 `parameter_validation` с печатью issues, ENV-источники IDF_TOKEN/IDF_SERVER, проверка agent-роли в ontology.
+
+**Meta agent role** (2026-05-04) — добавлена `roles.agent` в `src/domains/meta/ontology.js` для активации `/api/agent/meta/*`. Subset propose-only: `add_backlog_item`, `propose_witness`, `propose_intent_salience`, `request_pattern_promotion`. State-transitions (approve/ship/close/schedule/reject) и `propose_meta_intent` сознательно остаются за `formatAuthor` (admin) — иначе irreversibility-guard и human-review теряют смысл. Counts в `__tests__/baseline.test.js` и `__tests__/studio.test.js` обновлены на 5 ролей.
+
 ---
 
 ## 8. Cross-stack реализации

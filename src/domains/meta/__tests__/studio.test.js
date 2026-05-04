@@ -22,7 +22,7 @@ describe("meta studio shell", () => {
 
   it("counts онтологии непустые (для SummaryCard)", () => {
     expect(Object.keys(ONTOLOGY.entities).length).toBeGreaterThanOrEqual(9);
-    expect(Object.keys(ONTOLOGY.roles).length).toBe(4);
+    expect(Object.keys(ONTOLOGY.roles).length).toBe(5);
     expect(Object.keys(INTENTS).length).toBeGreaterThanOrEqual(4);
     expect((ONTOLOGY.invariants || []).length).toBeGreaterThanOrEqual(8);
   });

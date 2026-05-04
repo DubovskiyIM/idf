@@ -29,20 +29,36 @@ import Database from "better-sqlite3";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const REPO_ROOT = join(__dirname, "..");
-const DEFAULT_DB = process.env.IDF_DB_PATH || join(REPO_ROOT, "server", "idf.db");
+// ENV-источники резолвим лениво, чтобы тесты могли менять process.env уже
+// после import'а модуля.
+const defaultDb = () => process.env.IDF_DB_PATH || join(REPO_ROOT, "server", "idf.db");
+const defaultServer = () => process.env.IDF_SERVER || "http://localhost:3001";
 
-const SYSTEM_FLAGS = new Set(["user", "db", "dry-run", "help"]);
+const SYSTEM_FLAGS = new Set([
+  "user", "db", "dry-run", "help",
+  "online", "token", "server",
+]);
 
-const HELP = `meta-cli — offline CLI для мета-домена IDF.
+const HELP = `meta-cli — клиент мета-домена IDF (offline + online).
 
 Команды:
   list                       Список доступных intents.
   schema <intentId>          Параметры конкретного intent'а.
   exec <intentId> [flags]    Выполнить, --param=value.
 
+Режимы exec:
+  offline (default)          Прямая запись confirmed-effects в server/idf.db.
+                             Минует invariant-checks. role = formatAuthor (admin).
+  --online                   POST /api/agent/meta/exec/<id> с Bearer JWT.
+                             Проходит validateParams + ownership + preapproval +
+                             invariants. role = agent (см. meta ontology).
+
 Системные флаги:
   --user=<id>                viewer.id для интерполяции (default: cli).
   --db=<path>                путь к idf.db (default: server/idf.db).
+  --token=<JWT>              JWT для --online (или ENV IDF_TOKEN).
+  --server=<url>             base URL для --online (default: ENV IDF_SERVER или
+                             http://localhost:3001).
   --dry-run                  не писать, распечатать сгенерированные эффекты.
   --help                     эта справка.
 
@@ -224,7 +240,40 @@ function commandSchema(intents, intentId) {
   console.log("");
 }
 
-function commandExec(intents, intentId, params, flags) {
+async function execOnline(intentId, params, flags) {
+  const token = flags.token || process.env.IDF_TOKEN;
+  if (!token) {
+    console.error("✗ --online: требуется --token=<JWT> или ENV IDF_TOKEN");
+    process.exit(4);
+  }
+  const serverUrl = flags.server || defaultServer();
+  const url = `${serverUrl.replace(/\/+$/, "")}/api/agent/meta/exec/${intentId}`;
+  const res = await fetch(url, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify(params),
+  });
+  let data = {};
+  try { data = await res.json(); } catch { /* empty body */ }
+  if (!res.ok) {
+    console.error(`✗ ${res.status} ${data.error || "error"}: ${data.message || data.reason || ""}`);
+    if (Array.isArray(data.issues)) {
+      for (const i of data.issues) console.error("  - " + JSON.stringify(i));
+    }
+    process.exit(3);
+  }
+  console.log(`✓ ${data.status || "ok"} ${data.id || ""}`);
+  for (const e of (data.effects || [])) console.log(`  ${e.alpha}  ${e.target}`);
+  if (data.createdEntity) {
+    console.log(`  createdEntity: ${JSON.stringify(data.createdEntity)}`);
+  }
+  return data;
+}
+
+async function commandExec(intents, intentId, params, flags) {
   const intent = intents[intentId];
   if (!intent) throw new Error(`intent не найден: ${intentId}`);
   const issues = validateParams(intent, params);
@@ -233,6 +282,9 @@ function commandExec(intents, intentId, params, flags) {
     for (const m of issues) console.error("  - " + m);
     process.exit(2);
   }
+  if (flags.online) {
+    return execOnline(intentId, params, flags);
+  }
   const viewer = { id: flags.user || "cli" };
   const rows = buildEffectRows(intent, intentId, params, viewer);
   if (flags["dry-run"]) {
@@ -240,7 +292,7 @@ function commandExec(intents, intentId, params, flags) {
     console.log(JSON.stringify(rows, null, 2));
     return rows;
   }
-  const dbPath = flags.db || DEFAULT_DB;
+  const dbPath = flags.db || defaultDb();
   const db = new Database(dbPath);
   ensureSchema(db);
   insertEffects(db, rows);
@@ -266,7 +318,7 @@ export async function run(argv) {
       return commandSchema(intents, positional[0]);
     case "exec":
       if (!positional[0]) throw new Error("exec: укажите <intentId>");
-      return commandExec(intents, positional[0], params, flags);
+      return await commandExec(intents, positional[0], params, flags);
     default:
       throw new Error(`неизвестная команда: ${command}`);
   }
