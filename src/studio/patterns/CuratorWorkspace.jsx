@@ -9,6 +9,7 @@ import PatternStructureDiagram from "./PatternStructureDiagram.jsx";
 import PromotionPanel from "./PromotionPanel.jsx";
 import PromotionRequestForm from "./PromotionRequestForm.jsx";
 import HeatmapView from "./HeatmapView.jsx";
+import PromoteToPrButton from "./PromoteToPrButton.jsx";
 
 // Pattern Curator workspace v2 — редизайн после первого UX-фидбека.
 //
@@ -253,6 +254,9 @@ function PatternBody({ pattern, tab, promotions, onChange }) {
   if (tab === "promotions") {
     return (
       <div style={{ padding: 16, overflowY: "auto" }}>
+        {pattern.status === "candidate" && pattern.refSource && (
+          <PromoteToPrButton pattern={pattern} />
+        )}
         {pattern.status === "candidate" && !showRequestForm && (
           <button
             onClick={() => setShowRequestForm(true)}
@@ -269,7 +273,7 @@ function PatternBody({ pattern, tab, promotions, onChange }) {
               marginBottom: 12,
             }}
           >
-            + Request promotion → stable
+            + Request promotion (in-host workflow)
           </button>
         )}
         {showRequestForm && (
