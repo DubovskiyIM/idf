@@ -3,44 +3,58 @@
  * meta-compile — soft-authoring compiler для meta-домена (§13.0 решение «б»).
  *
  * НЕ READER формата (4 reader'а §1 манифеста timeless), а **writer-of-source**:
- * читает мета-Φ через server's foldWorld, эмиттит idempotent patch'и в .md/.json/.cjs
- * между стабильными маркерами `<!-- meta-compile: <id> -->`.
+ * читает мета-Φ через server's foldWorld, эмиттит idempotent patch'и в файлы.
  *
- * Compile target'ы:
- *   - `docs/sdk-improvements-backlog.md` блок `backlog-inbox` ← BacklogItem'ы
+ * Compile target'ы (два типа):
+ *   single-file (с маркерами `<!-- meta-compile: <id> -->`):
+ *     - `docs/sdk-improvements-backlog.md` ← BacklogItem'ы
+ *     - `pattern-bank/PROMOTIONS.md` ← PatternPromotion
+ *   multi-file (один файл per Φ-row):
+ *     - `<idf-sdk>/.changeset/<slug>-<short>.md` ← Changeset
+ *       Path к idf-sdk берётся из ENV IDF_SDK_PATH
+ *       (default ~/WebstormProjects/idf-sdk).
  *
  * Runtime:
- *   - Без сервера: `node scripts/meta-compile.mjs --offline` читает Φ
- *     прямо из server/idf.db через better-sqlite3 + foldWorld stub.
- *   - С сервером: `node scripts/meta-compile.mjs` GET /api/effects → fold локально.
+ *   - `--offline` читает Φ из server/idf.db через better-sqlite3.
+ *   - online (default) — GET /api/effects, fallback на offline на failure.
  *
- * Idempotency: если содержимое между маркерами совпадает — файл не трогается.
- * Безопасно перезапускать: каждый compile вычисляет полный snapshot из Φ.
- *
- * После compile эмиттит `α:replace` на BacklogItem.compiledAt — это даёт
- * trail когда patch применился. Без сервера эта запись пропускается.
+ * Idempotency: single-file сравнивает содержимое между маркерами; multi-file
+ * сравнивает каждый файл по hash. Безопасно перезапускать.
  */
 
-import { readFile, writeFile } from "node:fs/promises";
+import { readFile, writeFile, mkdir } from "node:fs/promises";
 import { existsSync } from "node:fs";
 import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
+import { homedir } from "node:os";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const REPO_ROOT = join(__dirname, "..");
+const SDK_ROOT =
+  process.env.IDF_SDK_PATH || join(homedir(), "WebstormProjects", "idf-sdk");
 
 const TARGETS = [
   {
     id: "backlog-inbox",
+    kind: "single-file",
     file: join(REPO_ROOT, "docs", "sdk-improvements-backlog.md"),
     fold: "backlogItems",
     render: "renderBacklogItems",
   },
   {
     id: "pattern-promotions",
+    kind: "single-file",
     file: join(REPO_ROOT, "pattern-bank", "PROMOTIONS.md"),
     fold: "patternPromotions",
     render: "renderPatternPromotions",
+  },
+  {
+    id: "changesets",
+    kind: "multi-file",
+    dir: join(SDK_ROOT, ".changeset"),
+    fold: "changesets",
+    render: "renderChangeset",
+    fileName: (it) => `${(it.slug || "changeset").slice(0, 60)}-${(it.id || "").slice(0, 8)}.md`,
   },
 ];
 const MARKER_CLOSE = "<!-- /meta-compile -->";
@@ -62,7 +76,8 @@ async function readPhiOnline() {
 
 async function readPhiOffline() {
   const Database = (await import("better-sqlite3")).default;
-  const db = new Database(join(REPO_ROOT, "server", "idf.db"), { readonly: true });
+  const dbPath = process.env.IDF_DB_PATH || join(REPO_ROOT, "server", "idf.db");
+  const db = new Database(dbPath, { readonly: true });
   const rows = db
     .prepare("SELECT * FROM effects WHERE status = 'confirmed' ORDER BY created_at ASC")
     .all();
@@ -235,10 +250,74 @@ function renderPatternPromotions(items) {
   return lines.join("\n");
 }
 
-const RENDERERS = { renderBacklogItems, renderPatternPromotions };
+// ─────────────────────────────────────────────────────────────────
+// Changesets fold + render (Level 2.2 — idf-sdk/.changeset/<slug>.md)
+// ─────────────────────────────────────────────────────────────────
+
+function foldChangesets(effects) {
+  const items = {};
+  for (const ef of effects) {
+    const t = (ef.target || "").toLowerCase();
+    if (!t.startsWith("changeset")) continue;
+    const ctx = typeof ef.context === "string" ? JSON.parse(ef.context) : ef.context;
+    const id = ctx?.id || ef.id;
+    switch (ef.alpha) {
+      case "add":
+      case "create":
+        items[id] = { ...(items[id] || {}), ...ctx };
+        break;
+      case "replace":
+        if (items[id]) items[id] = { ...items[id], ...ctx };
+        break;
+      case "remove":
+        delete items[id];
+        break;
+    }
+  }
+  return Object.values(items);
+}
+
+/**
+ * Рендер одной Changeset-записи в формат, который понимает changesets-bot:
+ *
+ *   ---
+ *   "@intent-driven/core": patch
+ *   "@intent-driven/renderer": patch
+ *   ---
+ *
+ *   Текст summary.
+ *
+ * `packages` хранится как JSON-строка ([{name, bump}]). Невалидный JSON —
+ * fallback на patch для @intent-driven/core (минимально-полезный).
+ */
+function renderChangeset(item) {
+  let pkgs;
+  try {
+    pkgs = JSON.parse(item.packages || "[]");
+  } catch {
+    pkgs = [];
+  }
+  if (!Array.isArray(pkgs) || pkgs.length === 0) {
+    pkgs = [{ name: "@intent-driven/core", bump: "patch" }];
+  }
+  const lines = ["---"];
+  for (const p of pkgs) {
+    if (!p || !p.name) continue;
+    const bump = ["patch", "minor", "major"].includes(p.bump) ? p.bump : "patch";
+    lines.push(`"${p.name}": ${bump}`);
+  }
+  lines.push("---");
+  lines.push("");
+  lines.push((item.summary || "").trim() || "(no summary)");
+  lines.push("");
+  return lines.join("\n");
+}
+
+const RENDERERS = { renderBacklogItems, renderPatternPromotions, renderChangeset };
 const FOLDERS = {
   backlogItems: foldBacklogItems,
   patternPromotions: foldPatternPromotions,
+  changesets: foldChangesets,
 };
 
 // ─────────────────────────────────────────────────────────────────
@@ -265,6 +344,38 @@ async function applyPatch(filePath, openMarker, closeMarker, newBlock) {
   return { changed: true, bytesBefore: src.length, bytesAfter: next.length };
 }
 
+/**
+ * Multi-file target: один файл per Φ-row. Итерируем items, рендерим каждый
+ * через render(item), пишем под filePath = dir/fileName(item). Idempotency:
+ * сравниваем существующее содержимое с новым; пропускаем без изменений.
+ */
+async function applyMultiFile(target, items) {
+  const stats = { written: 0, skipped: 0, total: items.length };
+  if (items.length === 0) return stats;
+  if (!existsSync(target.dir)) {
+    if (DRY_RUN) return { ...stats, dryRun: true };
+    await mkdir(target.dir, { recursive: true });
+  }
+  for (const item of items) {
+    const fileName = target.fileName(item);
+    const filePath = join(target.dir, fileName);
+    const next = RENDERERS[target.render](item);
+    let prev = "";
+    try { prev = await readFile(filePath, "utf8"); } catch { /* not exists */ }
+    if (next === prev) {
+      stats.skipped++;
+      continue;
+    }
+    if (DRY_RUN) {
+      stats.written++;
+      continue;
+    }
+    await writeFile(filePath, next, "utf8");
+    stats.written++;
+  }
+  return stats;
+}
+
 // ─────────────────────────────────────────────────────────────────
 // main
 // ─────────────────────────────────────────────────────────────────
@@ -283,11 +394,21 @@ async function main() {
   }
 
   for (const target of TARGETS) {
+    const items = FOLDERS[target.fold](effects);
+    if (target.kind === "multi-file") {
+      const stats = await applyMultiFile(target, items);
+      const verb = stats.dryRun ? "would write" : "wrote";
+      console.log(
+        `meta-compile: ${target.id} ${verb} ${stats.written}/${stats.total} ` +
+        `files (${stats.skipped} unchanged) → ${target.dir}`,
+      );
+      continue;
+    }
+    // single-file (default)
     if (!existsSync(target.file)) {
       console.warn(`meta-compile: skip ${target.id} (file missing: ${target.file})`);
       continue;
     }
-    const items = FOLDERS[target.fold](effects);
     const block = RENDERERS[target.render](items);
     const openMarker = `<!-- meta-compile: ${target.id} -->`;
     const result = await applyPatch(target.file, openMarker, MARKER_CLOSE, block);
@@ -303,7 +424,22 @@ async function main() {
   }
 }
 
-main().catch((err) => {
-  console.error(err);
-  process.exit(1);
-});
+// Тесты импортируют чистые функции напрямую; CLI-вход только в main-flag.
+const isMain = import.meta.url === `file://${process.argv[1]}`;
+if (isMain) {
+  main().catch((err) => {
+    console.error(err);
+    process.exit(1);
+  });
+}
+
+export {
+  foldBacklogItems,
+  foldPatternPromotions,
+  foldChangesets,
+  renderBacklogItems,
+  renderPatternPromotions,
+  renderChangeset,
+  applyMultiFile,
+  TARGETS,
+};
