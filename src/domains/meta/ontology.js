@@ -405,6 +405,54 @@ export const ONTOLOGY = {
         compiledAt: { type: "datetime", label: "Запатчено в файл" },
       },
     },
+
+    // ── Level 2.2 changesets для idf-sdk monorepo ─────────────
+    // Φ-events Changeset эмиттит compiler в idf-sdk/.changeset/<slug>.md —
+    // один файл на запись, без shared markers (changesets-bot читает каждый
+    // .changeset как отдельный input). Path к idf-sdk берётся из ENV
+    // IDF_SDK_PATH (default ~/WebstormProjects/idf-sdk). Замыкает release
+    // pipeline: pattern researcher / pattern promotion → request_changeset
+    // → compile → файл в idf-sdk → changesets-bot bump'ает npm-версии.
+    Changeset: {
+      ownerField: "createdByUserId",
+      fields: {
+        id: { type: "text", fieldRole: "id" },
+        slug: {
+          type: "text",
+          required: true,
+          fieldRole: "primary",
+          label: "Slug (kebab-case, для имени файла)",
+        },
+        summary: {
+          type: "textarea",
+          required: true,
+          label: "Описание изменения (release notes)",
+        },
+        packages: {
+          type: "textarea",
+          required: true,
+          label: 'JSON: [{"name":"@intent-driven/core","bump":"patch"}, …]',
+        },
+        relatedPromotionId: {
+          type: "entityRef",
+          entity: "PatternPromotion",
+          label: "Связанная промоция (опц)",
+        },
+        status: {
+          type: "select",
+          options: ["pending", "written", "merged"],
+          required: true,
+          valueLabels: {
+            pending: "Ждёт compile",
+            written: "Файл создан",
+            merged: "Релиз выпущен",
+          },
+        },
+        createdByUserId: { type: "entityRef", entity: "User", label: "Автор" },
+        createdAt: { type: "datetime", fieldRole: "createdAt" },
+        compiledAt: { type: "datetime", label: "Файл создан" },
+      },
+    },
   },
 
   roles: {
@@ -421,6 +469,7 @@ export const ONTOLOGY = {
         Capability: ["*"],
         BacklogItem: ["*"],
         PatternPromotion: ["*"],
+        Changeset: ["*"],
       },
       canExecute: [
         "add_backlog_item",
@@ -435,6 +484,8 @@ export const ONTOLOGY = {
         "propose_witness",
         "propose_intent_salience",
         "propose_meta_intent",
+        // Level 2.2 — changeset → idf-sdk/.changeset/*.md.
+        "request_changeset",
       ],
     },
 
@@ -493,7 +544,11 @@ export const ONTOLOGY = {
         Witness: ["*"],
         BacklogItem: ["*"],
         PatternPromotion: ["*"],
+        Changeset: ["read"],
       },
+      // request_changeset сознательно не expose'нут агенту — release pipeline
+      // (npm-version bumps, public release notes) требует human review.
+      // Доступ через formatAuthor (meta-cli без --online).
       canExecute: [
         "add_backlog_item",
         "propose_witness",

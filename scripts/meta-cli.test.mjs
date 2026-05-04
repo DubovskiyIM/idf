@@ -36,13 +36,14 @@ afterEach(() => {
 });
 
 describe("meta-cli", () => {
-  it("list — печатает все 11 intents мета-домена", async () => {
+  it("list — печатает все 12 intents мета-домена", async () => {
     await run(["list"]);
     const out = logs.out.join("\n");
-    expect(out).toMatch(/Meta intents \(11\)/);
+    expect(out).toMatch(/Meta intents \(12\)/);
     expect(out).toMatch(/add_backlog_item/);
     expect(out).toMatch(/propose_witness/);
     expect(out).toMatch(/ship_pattern_promotion/);
+    expect(out).toMatch(/request_changeset/);
   });
 
   it("schema add_backlog_item — выводит параметры с required-флагами", async () => {
@@ -320,6 +321,7 @@ describe("meta-cli online", () => {
       "propose_intent_salience",
       "request_pattern_promotion",
     ]);
+    expect(agent.canExecute).not.toContain("request_changeset");
     // Не должны быть доступны state-transitions и meta-circular self-mod.
     for (const forbidden of [
       "approve_pattern_promotion",
