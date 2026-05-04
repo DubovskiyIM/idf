@@ -95,7 +95,7 @@ app.post("/api/typemap", (req, res) => {
     registerFullOntology(domain, req.body);
   }
   const roleCount = Object.keys(req.body?.roles || {}).length;
-  console.log(`  [typemap] Обновлён: ${Object.keys(map).length} типов${domain ? `, ontology[${domain}]: ${registeredEntities} сущностей, ${roleCount} ролей` : ""}`);
+  console.log(`  [typemap] updated: ${Object.keys(map).length} types${domain ? `, ontology[${domain}]: ${registeredEntities} entities, ${roleCount} roles` : ""}`);
   res.json({ ok: true, types: Object.keys(map).length, entities: registeredEntities, roles: roleCount });
 });
 
@@ -113,7 +113,7 @@ app.post("/api/intents", (req, res) => {
     });
   }
   const count = registerIntents(intents, domain);
-  console.log(`  [intents] Зарегистрирован domain=${domain}: ${count} намерений`);
+  console.log(`  [intents] registered domain=${domain}: ${count} intents`);
   res.json({ ok: true, domain, registered: count });
 });
 
@@ -159,13 +159,13 @@ const { setupWebSocket } = require("./ws.js");
 setupWebSocket(server);
 
 server.listen(PORT, () => {
-  console.log(`IDF сервер запущен: http://localhost:${PORT}`);
+  console.log(`IDF server listening: http://localhost:${PORT}`);
   console.log(`  WebSocket: ws://localhost:${PORT}/ws`);
-  console.log(`  POST /api/auth/register  — регистрация`);
-  console.log(`  POST /api/auth/login     — вход`);
-  console.log(`  GET  /api/auth/users     — все пользователи`);
-  console.log(`  POST /api/effects        — создать эффект`);
-  console.log(`  GET  /api/effects/stream — SSE-стрим`);
+  console.log(`  POST /api/auth/register  — register user`);
+  console.log(`  POST /api/auth/login     — log in`);
+  console.log(`  GET  /api/auth/users     — list users`);
+  console.log(`  POST /api/effects        — submit effect`);
+  console.log(`  GET  /api/effects/stream — SSE stream`);
 });
 
 // ─── Темпоральный scheduler v2 (§4 спеки, Task 10 plan) ───
@@ -178,7 +178,7 @@ server.listen(PORT, () => {
   global.__timerQueue = new TimerQueue();
   try {
     hydrateFromWorld(global.__timerQueue, foldWorld());
-    console.log(`  [timer] hydrated ${global.__timerQueue.size()} active timer(s) из Φ`);
+    console.log(`  [timer] hydrated ${global.__timerQueue.size()} active timer(s) from Φ`);
   } catch (e) {
     console.error("  [timer] hydrate error:", e);
   }
@@ -276,7 +276,7 @@ server.listen(PORT, () => {
             migrated++;
           }
         }
-        if (migrated > 0) console.log(`  [cron-migration] перенесено ${migrated} cron-rule(s) на timeEngine`);
+        if (migrated > 0) console.log(`  [cron-migration] migrated ${migrated} cron-rule(s) to timeEngine`);
       } catch (e) {
         console.error("  [cron-migration] error:", e);
       }
