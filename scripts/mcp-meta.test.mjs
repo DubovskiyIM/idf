@@ -83,10 +83,12 @@ describe("mcp-meta · handlers", () => {
       "meta_propose_witness",
       "meta_request_pattern_promotion",
     ]);
-    // None of state-transition intents:
+    // None of state-transition intents and не expose'нут request_changeset
+    // (он остаётся за formatAuthor — release pipeline требует human review).
     expect(names).not.toContain("meta_approve_pattern_promotion");
     expect(names).not.toContain("meta_ship_pattern_promotion");
     expect(names).not.toContain("meta_propose_meta_intent");
+    expect(names).not.toContain("meta_request_changeset");
   });
 
   it("tools/call meta_add_backlog_item — пишет confirmed effect в IDF_DB_PATH", async () => {

@@ -439,4 +439,58 @@ export const INTENTS = {
       ],
     },
   },
+
+  // ── Level 2.2 changesets для idf-sdk ─────────────────────────
+  // Φ-events Changeset compiler пишет в idf-sdk/.changeset/<slug>-<id>.md.
+  // Замыкает release pipeline без ручного edit'а .changeset.
+  request_changeset: {
+    α: "create",
+    name: "Запросить changeset",
+    target: "Changeset",
+    confirmation: "form",
+    parameters: [
+      {
+        name: "slug",
+        type: "text",
+        required: true,
+        label: "Slug (kebab-case, для имени файла)",
+      },
+      {
+        name: "summary",
+        type: "textarea",
+        required: true,
+        label: "Описание (release notes)",
+      },
+      {
+        name: "packages",
+        type: "textarea",
+        required: true,
+        label: 'JSON: [{"name":"@intent-driven/core","bump":"patch"}, …]',
+      },
+      {
+        name: "relatedPromotionId",
+        type: "entityRef",
+        entity: "PatternPromotion",
+        label: "Связанная промоция",
+      },
+    ],
+    particles: {
+      effects: [
+        {
+          α: "create",
+          target: "Changeset",
+          fields: {
+            id: "{{auto}}",
+            slug: "{{params.slug}}",
+            summary: "{{params.summary}}",
+            packages: "{{params.packages}}",
+            relatedPromotionId: "{{params.relatedPromotionId}}",
+            status: "pending",
+            createdByUserId: "{{viewer.id}}",
+            createdAt: "{{now}}",
+          },
+        },
+      ],
+    },
+  },
 };

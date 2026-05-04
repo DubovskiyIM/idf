@@ -25,8 +25,9 @@ import {
 } from "../domain.js";
 
 describe("meta baseline", () => {
-  it("ontology: 10 сущностей, 5 ролей, 12 invariants, 0 rules", () => {
-    expect(Object.keys(ONTOLOGY.entities).length).toBe(10);
+  it("ontology: 11 сущностей, 5 ролей, 12 invariants, 0 rules", () => {
+    // 10 + Changeset (Level 2.2 — compile target idf-sdk/.changeset/*.md).
+    expect(Object.keys(ONTOLOGY.entities).length).toBe(11);
     // 4 host-роли (formatAuthor, domainAuthor, patternCurator, integrator) +
     // agent (propose-only subset для /api/agent/meta/exec).
     expect(Object.keys(ONTOLOGY.roles).length).toBe(5);
@@ -37,6 +38,7 @@ describe("meta baseline", () => {
     expect(ONTOLOGY.rules.length).toBe(0);
     expect(ONTOLOGY.entities.BacklogItem).toBeDefined();
     expect(ONTOLOGY.entities.PatternPromotion).toBeDefined();
+    expect(ONTOLOGY.entities.Changeset).toBeDefined();
     const lifecycle = ONTOLOGY.invariants.find((i) => i.name === "backlog_lifecycle");
     expect(lifecycle?.kind).toBe("transition");
     const promoLifecycle = ONTOLOGY.invariants.find((i) => i.name === "promotion_lifecycle");
@@ -68,10 +70,12 @@ describe("meta baseline", () => {
     }
   });
 
-  it("intents: 11 write-side (4 backlog + 4 pattern promotion + 3 experiment)", () => {
-    expect(Object.keys(INTENTS).length).toBe(11);
+  it("intents: 12 write-side (4 backlog + 4 pattern promotion + 3 experiment + 1 changeset)", () => {
+    expect(Object.keys(INTENTS).length).toBe(12);
     expect(INTENTS.add_backlog_item.α).toBe("create");
     expect(INTENTS.request_pattern_promotion.α).toBe("create");
+    expect(INTENTS.request_changeset.α).toBe("create");
+    expect(INTENTS.request_changeset.target).toBe("Changeset");
     expect(INTENTS.ship_pattern_promotion.context.__irr.point).toBe("high");
     expect(INTENTS.close_backlog_item.precondition).toEqual({
       "BacklogItem.status": ["open", "scheduled"],
