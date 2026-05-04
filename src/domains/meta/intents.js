@@ -174,6 +174,14 @@ export const INTENTS = {
         type: "textarea",
         label: "shouldMatch / shouldNotMatch",
       },
+      {
+        // Curator-задача: когда несколько pattern'ов матчатся одного и того
+        // же archetypeScope, weight определяет, кого Signal Classifier
+        // выберет первым. Default 50 — neutral. Higher = stronger preference.
+        name: "weight",
+        type: "number",
+        label: "Weight (0-100, default 50)",
+      },
     ],
     particles: {
       effects: [
@@ -186,6 +194,7 @@ export const INTENTS = {
             targetArchetype: "{{params.targetArchetype}}",
             rationale: "{{params.rationale}}",
             falsificationFixtures: "{{params.falsificationFixtures}}",
+            weight: "{{params.weight}}",
             status: "pending",
             requestedByUserId: "{{viewer.id}}",
             requestedAt: "{{now}}",
