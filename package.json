@@ -33,6 +33,7 @@
     "meta-snapshot": "node scripts/build-meta-snapshot.mjs",
     "meta-compile": "node scripts/meta-compile.mjs",
     "meta": "node scripts/meta-cli.mjs",
+    "meta-mcp": "node scripts/mcp-meta.mjs",
     "test": "vitest run --config vitest.config.js",
     "test:watch": "vitest --config vitest.config.js",
     "conformance": "node scripts/conformance-runner.mjs",
