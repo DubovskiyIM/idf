@@ -38,6 +38,7 @@ const {
   getRefCandidates,
   serializeRefCandidate,
 } = require("../loadCandidatesFromRefs.cjs");
+const { evaluateGenericRequires } = require("../genericTriggerEvaluator.cjs");
 
 // Кэш загруженных доменов: { [domainName]: { ontology, intents, projections } | null }
 const DOMAIN_CACHE = new Map();
@@ -193,27 +194,50 @@ function makePatternsRouter() {
     if (!pattern) {
       // Fallback на side-channel: ref-кандидаты не попадают в registry
       // (registerPattern строго валидирует trigger.kind), но у них есть
-      // static falsification fixtures из JSON. Live-run не запускаем —
-      // нет trigger.match-функции и kind может быть unknown — отдаём
-      // только preview без regressions.
+      // requires[] и static falsification fixtures. Запускаем generic
+      // evaluator (server/genericTriggerEvaluator.cjs) — best-effort
+      // matching по kind'у; для placeholder'ов или unknown kind'ов
+      // возвращаем actual=null (live-undecidable).
       const refPattern = getRefCandidates().find((p) => p.id === id);
       if (refPattern) {
+        const runRefCase = async (entry, expected) => {
+          const domain = await loadDomain(entry.domain);
+          if (!domain) {
+            return { ...entry, expected, actual: null, error: "domain-not-loaded" };
+          }
+          const projection = domain.projections?.[entry.projection];
+          if (!projection) {
+            return { ...entry, expected, actual: null, error: "projection-not-found" };
+          }
+          const projIntents = filterIntentsForProjection(domain.intents, projection);
+          const result = evaluateGenericRequires(refPattern.trigger, {
+            intents: projIntents,
+            ontology: domain.ontology,
+            projection: { ...projection, id: entry.projection },
+          });
+          return {
+            ...entry,
+            expected,
+            actual: result.matched, // true | false | null
+            perRequire: result.perRequire,
+            error: result.matched === null ? "live-undecidable" : null,
+          };
+        };
+        const shouldMatch = await Promise.all(
+          (refPattern.falsification?.shouldMatch || []).map((e) => runRefCase(e, true)),
+        );
+        const shouldNotMatch = await Promise.all(
+          (refPattern.falsification?.shouldNotMatch || []).map((e) => runRefCase(e, false)),
+        );
+        const regressions = [...shouldMatch, ...shouldNotMatch].filter(
+          (r) => r.actual !== null && r.actual !== r.expected,
+        );
         return res.json({
           id,
-          shouldMatch: (refPattern.falsification?.shouldMatch || []).map((e) => ({
-            ...e,
-            expected: true,
-            actual: null,
-            error: "ref-candidate-no-live-run",
-          })),
-          shouldNotMatch: (refPattern.falsification?.shouldNotMatch || []).map((e) => ({
-            ...e,
-            expected: false,
-            actual: null,
-            error: "ref-candidate-no-live-run",
-          })),
-          regressions: [],
-          note: "ref-candidate: static fixtures preview only (no live trigger.match yet)",
+          shouldMatch,
+          shouldNotMatch,
+          regressions,
+          note: "ref-candidate: generic evaluator best-effort (no trigger.match function)",
         });
       }
       return res.status(404).json({ error: "pattern_not_found", id });
