@@ -476,6 +476,31 @@ export const ONTOLOGY = {
       },
       canExecute: [],
     },
+
+    // Open-vocabulary base "agent" (§5). Hardcoded в /api/agent/:domain/* как
+    // ROLE="agent". Subset propose-only intents — то, что безопасно дать
+    // автономному клиенту без human-in-the-loop. State-transitions
+    // (approve/ship/close/schedule/reject) и meta-circular self-modification
+    // остаются за formatAuthor (admin) — иначе irreversibility-guard и
+    // human-review теряют смысл.
+    agent: {
+      base: "agent",
+      visibleFields: {
+        Domain: ["*"],
+        Intent: ["*"],
+        Projection: ["*"],
+        Pattern: ["*"],
+        Witness: ["*"],
+        BacklogItem: ["*"],
+        PatternPromotion: ["*"],
+      },
+      canExecute: [
+        "add_backlog_item",
+        "propose_witness",
+        "propose_intent_salience",
+        "request_pattern_promotion",
+      ],
+    },
   },
 
   invariants: [

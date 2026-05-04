@@ -25,9 +25,11 @@ import {
 } from "../domain.js";
 
 describe("meta baseline", () => {
-  it("ontology: 10 сущностей, 4 роли, 12 invariants, 0 rules", () => {
+  it("ontology: 10 сущностей, 5 ролей, 12 invariants, 0 rules", () => {
     expect(Object.keys(ONTOLOGY.entities).length).toBe(10);
-    expect(Object.keys(ONTOLOGY.roles).length).toBe(4);
+    // 4 host-роли (formatAuthor, domainAuthor, patternCurator, integrator) +
+    // agent (propose-only subset для /api/agent/meta/exec).
+    expect(Object.keys(ONTOLOGY.roles).length).toBe(5);
     // 9 baseline + 3 self-hosting fixed-point experiment invariants
     // (witness_unique_per_slot_basis, intent_alpha_in_canonical_set,
     // witness_unique_per_slot_reliability — H4 structural pressure).
