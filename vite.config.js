@@ -32,10 +32,23 @@ function spaFallback() {
   };
 }
 
+// basicSsl даёт self-signed HTTPS на :5173. Это ломает плоский HTTP
+// доступ через ssh -R / reverse-proxy / curl без -k. Включается только
+// по ENV VITE_HTTPS=1 — по умолчанию dev на чистом HTTP.
+const ENABLE_SSL = process.env.VITE_HTTPS === "1";
+
 export default defineConfig({
-  plugins: [react(), basicSsl(), tailwindcss(), spaFallback()],
+  plugins: [
+    react(),
+    ...(ENABLE_SSL ? [basicSsl()] : []),
+    tailwindcss(),
+    spaFallback(),
+  ],
   server: {
     host: '0.0.0.0',
+    // Vite v5+ блокирует чужие Host headers (DNS rebinding guard). Для
+    // ssh -R / cloud tunnel доступа разрешаем все hosts — это dev only.
+    allowedHosts: true,
     proxy: {
       '/api': {
         target: process.env.PROXY_TARGET || 'http://localhost:3001',

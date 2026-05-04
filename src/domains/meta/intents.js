@@ -48,7 +48,7 @@ export const INTENTS = {
       effects: [
         {
           α: "create",
-          target: "BacklogItem",
+          target: "BacklogItems",
           fields: {
             id: "{{auto}}",
             section: "{{params.section}}",
