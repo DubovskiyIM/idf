@@ -456,7 +456,10 @@ export default function CuratorWorkspace() {
         </div>
       ) : (
         <div style={{ flex: 1, display: "grid", gridTemplateColumns: "300px 1fr", minHeight: 0 }}>
-          <div style={{ borderRight: "1px solid #1e293b", overflow: "hidden" }}>
+          {/* PatternList сам делает border-right + flex-column + inner scroll;
+              ему нужна явная height:100%, иначе flex-children в grid-cell не
+              растягиваются и внутренний overflowY:auto не активируется. */}
+          <div style={{ height: "100%", minHeight: 0, display: "flex" }}>
             <PatternList
               patterns={patterns}
               selected={selected}
