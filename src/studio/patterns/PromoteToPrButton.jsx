@@ -8,11 +8,19 @@ import React, { useState } from "react";
 // Server gating: CURATOR_PR_ENABLED=1 + IDF_SDK_PATH + gh auth.
 // При 403/503 показываем причину прямо в UI — куратор не угадывает env.
 
+const VALID_ARCHETYPES = ["catalog", "detail", "feed", "cross"];
+
 export default function PromoteToPrButton({ pattern, onPrCreated }) {
   const [busy, setBusy] = useState(false);
   const [result, setResult] = useState(null);
   const [error, setError] = useState(null);
   const [showLog, setShowLog] = useState(false);
+  // Если pattern.archetype отсутствует или не из whitelist — куратор должен
+  // явно выбрать. Pre-fill значение из pattern.archetype если оно валидное.
+  const initialArchetype = VALID_ARCHETYPES.includes(pattern.archetype)
+    ? pattern.archetype
+    : "";
+  const [archetype, setArchetype] = useState(initialArchetype);
 
   const summary =
     pattern.rationale?.hypothesis ||
@@ -21,6 +29,10 @@ export default function PromoteToPrButton({ pattern, onPrCreated }) {
 
   async function go() {
     if (busy) return;
+    if (!archetype) {
+      setError({ error: "archetype-missing", message: "Выбери archetype перед промоцией" });
+      return;
+    }
     setBusy(true);
     setError(null);
     setResult(null);
@@ -28,7 +40,7 @@ export default function PromoteToPrButton({ pattern, onPrCreated }) {
       const r = await fetch("/api/patterns/promote-and-pr", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ patternId: pattern.id, summary }),
+        body: JSON.stringify({ patternId: pattern.id, summary, archetype }),
       });
       const data = await r.json();
       if (!r.ok || !data.ok) {
@@ -48,27 +60,55 @@ export default function PromoteToPrButton({ pattern, onPrCreated }) {
     <div style={{ marginBottom: 12 }}>
       {!result && !error && (
         <div>
-          <button
-            onClick={go}
-            disabled={busy}
-            style={{
-              background: busy ? "#1e293b" : "#10b981",
-              border: "none",
-              color: "#020617",
-              padding: "8px 14px",
-              borderRadius: 4,
-              fontSize: 12,
-              fontWeight: 600,
-              cursor: busy ? "wait" : "pointer",
-              fontFamily: "inherit",
-              marginRight: 8,
-            }}
-          >
-            {busy ? "Делаю PR…" : "↑ Promote → SDK PR"}
-          </button>
-          <span style={{ fontSize: 11, color: "#64748b" }}>
+          <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
+            <button
+              onClick={go}
+              disabled={busy || !archetype}
+              style={{
+                background: busy || !archetype ? "#1e293b" : "#10b981",
+                border: "none",
+                color: busy || !archetype ? "#64748b" : "#020617",
+                padding: "8px 14px",
+                borderRadius: 4,
+                fontSize: 12,
+                fontWeight: 600,
+                cursor: busy || !archetype ? "not-allowed" : "pointer",
+                fontFamily: "inherit",
+              }}
+            >
+              {busy ? "Делаю PR…" : "↑ Promote → SDK PR"}
+            </button>
+            <label style={{ fontSize: 11, color: "#94a3b8", display: "inline-flex", alignItems: "center", gap: 4 }}>
+              archetype:
+              <select
+                value={archetype}
+                onChange={(e) => setArchetype(e.target.value)}
+                style={{
+                  background: "#0f172a",
+                  color: archetype ? "#e2e8f0" : "#fbbf24",
+                  border: `1px solid ${archetype ? "#334155" : "#fbbf24"}`,
+                  borderRadius: 4,
+                  padding: "4px 8px",
+                  fontSize: 11,
+                  fontFamily: "inherit",
+                }}
+              >
+                <option value="">— выбери —</option>
+                {VALID_ARCHETYPES.map((a) => (
+                  <option key={a} value={a}>{a}</option>
+                ))}
+              </select>
+            </label>
+            {!archetype && (
+              <span style={{ fontSize: 11, color: "#fbbf24" }}>
+                pattern.archetype отсутствует — выбери вручную
+              </span>
+            )}
+          </div>
+          <div style={{ fontSize: 11, color: "#64748b", marginTop: 6 }}>
             git push в idf-sdk + gh pr create. Полностью автоматически.
-          </span>
+            Файл попадёт в <code>candidate/{archetype || "<archetype>"}/{pattern.id}.js</code>.
+          </div>
         </div>
       )}
 

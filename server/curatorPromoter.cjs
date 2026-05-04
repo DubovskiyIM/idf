@@ -190,12 +190,23 @@ async function promoteToSdkPr(input) {
   if (!pattern) {
     return { ok: false, error: "ref-not-found", message: `pattern '${patternId}' not in refs/candidates`, log };
   }
-  const archetype = pattern.archetype || "candidate";
-  if (!["catalog", "detail", "feed", "cross"].includes(archetype)) {
+  // archetype приоритет: явный override из request body > pattern.archetype.
+  // Если ни там ни там — error: куратор должен явно выбрать (UI показывает select).
+  const archetype = input.archetype || pattern.archetype;
+  const VALID_ARCHETYPES = ["catalog", "detail", "feed", "cross"];
+  if (!archetype) {
+    return {
+      ok: false,
+      error: "archetype-missing",
+      message: "pattern.archetype не задан и не передан в request — выбери archetype в UI",
+      log,
+    };
+  }
+  if (!VALID_ARCHETYPES.includes(archetype)) {
     return {
       ok: false,
       error: "unsupported-archetype",
-      message: `archetype '${archetype}' не маппится на candidate/<archetype>/`,
+      message: `archetype '${archetype}' не поддерживается (допустимы: ${VALID_ARCHETYPES.join(", ")})`,
       log,
     };
   }
