@@ -8,6 +8,7 @@ import PatternWorkflowDiagram from "./PatternWorkflowDiagram.jsx";
 import PatternStructureDiagram from "./PatternStructureDiagram.jsx";
 import PromotionPanel from "./PromotionPanel.jsx";
 import PromotionRequestForm from "./PromotionRequestForm.jsx";
+import HeatmapView from "./HeatmapView.jsx";
 
 // Pattern Curator workspace v2 — редизайн после первого UX-фидбека.
 //
@@ -116,6 +117,12 @@ function TopBar({ stats, mode, onMode, onReload, loading }) {
               {inboxCount}
             </span>
           )}
+        </button>
+        <button
+          onClick={() => onMode("heatmap")}
+          style={modeBtn(mode === "heatmap")}
+        >
+          Heatmap
         </button>
       </div>
       <button
@@ -452,6 +459,16 @@ export default function CuratorWorkspace() {
             promotions={promotions}
             onChange={reloadAll}
             onPick={pickFromPromotion}
+          />
+        </div>
+      ) : mode === "heatmap" ? (
+        <div style={{ flex: 1, minHeight: 0 }}>
+          <HeatmapView
+            onPickPattern={(id) => {
+              setSelected(id);
+              setMode("patterns");
+              setTab("structure");
+            }}
           />
         </div>
       ) : (
