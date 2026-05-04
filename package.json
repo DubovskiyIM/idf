@@ -46,6 +46,7 @@
     "crystallize-llm": "node scripts/crystallize-llm.mjs",
     "sales-demo": "node scripts/sales-walkthrough.mjs",
     "dev:studio": "concurrently -n server,vite \"npm run server\" \"vite --host 0.0.0.0\"",
+    "dev:curator": "CURATOR_PR_ENABLED=1 IDF_SDK_PATH=$HOME/WebstormProjects/idf-sdk concurrently -n server,vite \"npm run server\" \"vite --host 0.0.0.0\"",
     "demo:init": "node scripts/demo-env.mjs --fresh --out ./.demo",
     "demo:start": "npm run demo:init && concurrently -n server,vite,calendar \"npm run server\" \"npm run dev\" \"npm run calendar\""
   },
