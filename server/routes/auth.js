@@ -8,7 +8,7 @@ router.post("/register", (req, res) => {
   try {
     const { email, password, name } = req.body;
     const result = register(email, password, name);
-    console.log(`  [auth] Регистрация: ${result.user.name} (${result.user.email})`);
+    console.log(`  [auth] register: ${result.user.name} (${result.user.email})`);
     res.status(201).json(result);
   } catch (e) {
     res.status(400).json({ error: e.message });
@@ -19,7 +19,7 @@ router.post("/login", (req, res) => {
   try {
     const { email, password } = req.body;
     const result = login(email, password);
-    console.log(`  [auth] Вход: ${result.user.name}`);
+    console.log(`  [auth] login: ${result.user.name}`);
     res.json(result);
   } catch (e) {
     res.status(401).json({ error: e.message });
