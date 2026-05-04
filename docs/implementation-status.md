@@ -379,7 +379,12 @@ npm run market-data  # :3006 price-tick feed (опц.)
 npm test             # vitest (716 тестов в прототипе, ~1342 суммарно с SDK)
 npm run agent-smoke  # 75-шаговый integration
 npm run build        # prod-сборка (периодически падает, см. §6)
+npm run meta -- list                            # offline CLI мета-домена (2026-05-04)
+npm run meta -- exec add_backlog_item --section=P1 --title=… --description=…
+npm run meta-compile -- --offline               # рендер docs/sdk-improvements-backlog.md из Φ
 ```
+
+**Offline meta-cli** (`scripts/meta-cli.mjs`, 2026-05-04) — daily-use клиент для dogfood'инга формата на собственной разработке. Загружает `INTENTS` из `src/domains/meta/intents.js`, валидирует параметры против заявленной schema, интерполирует `{{params.X}} / {{auto}} / {{viewer.id}} / {{now}}` в `particles.effects` и пишет confirmed-effects напрямую в `server/idf.db` (тот же файл, который читает `meta-compile.mjs --offline`). Минует HTTP/JWT — это сознательное упрощение для CLI; строгий путь с invariant-checks остаётся `POST /api/agent/meta/exec/<id>` через server. Покрыт 8 vitest'ами в `scripts/meta-cli.test.mjs` (list/schema/exec на временной БД, validation edge-cases, dry-run, replace-c-id-из-params).
 
 ---
 
