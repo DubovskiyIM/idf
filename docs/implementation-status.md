@@ -390,6 +390,29 @@ npm run meta-compile -- --offline               # рендер docs/sdk-improvem
 
 **Meta agent role** (2026-05-04) — добавлена `roles.agent` в `src/domains/meta/ontology.js` для активации `/api/agent/meta/*`. Subset propose-only: `add_backlog_item`, `propose_witness`, `propose_intent_salience`, `request_pattern_promotion`. State-transitions (approve/ship/close/schedule/reject) и `propose_meta_intent` сознательно остаются за `formatAuthor` (admin) — иначе irreversibility-guard и human-review теряют смысл. Counts в `__tests__/baseline.test.js` и `__tests__/studio.test.js` обновлены на 5 ролей.
 
+**MCP-сервер мета-домена** (`scripts/mcp-meta.mjs`, 2026-05-04) — vanilla JSON-RPC 2.0 stdio-сервер (spec 2024-11-05), без зависимости от `@modelcontextprotocol/sdk`. Exposes 4 propose-only intent'а как MCP tools (`meta_add_backlog_item`, `meta_propose_witness`, `meta_propose_intent_salience`, `meta_request_pattern_promotion`); список совпадает с `roles.agent.canExecute`. `request_changeset` сознательно не expose'нут — release pipeline (npm-version bumps, public release notes) требует human review, доступ через `formatAuthor` (meta-cli без `--online`). `inputSchema` каждой tool генерируется из `INTENTS[id].parameters` (`select.options` → JSON-Schema `enum`, `required`-флаг → `required[]`, `__irr` точка попадает в `description`). Режимы через `IDF_MCP_MODE`: `offline` (default, через `meta-cli.run()`) или `online` (POST через fetch, `IDF_TOKEN`/`IDF_SERVER`). 14 vitest'ов покрывают `tools/list` / `tools/call` (включая `isError` для not-allowed и unknown), `dispatch` (JSON-RPC notifications, error -32601), online-mode с mock'ом fetch. `npm run meta-mcp` как entrypoint.
+
+**Changeset entity + compile target** (2026-05-04) — Level 2.2 расширение. Новая сущность `Changeset` в meta ontology (slug / summary / packages JSON / relatedPromotionId / status `pending|written|merged`) и intent `request_changeset` (доступен только `formatAuthor` — release pipeline требует human review, поэтому agent и MCP не получают). `meta-compile.mjs` получил второй тип target'а — **multi-file**: один файл per Φ-row. Для `changesets` пишет в `<IDF_SDK_PATH>/.changeset/<slug>-<short-id>.md` (default `~/WebstormProjects/idf-sdk/.changeset/`). Файл — стандартный changesets-bot format с YAML frontmatter (`"@intent-driven/core": patch` + summary). Idempotency через прямое content-сравнение существующего файла; повторный compile без изменений → `0 written / N skipped`. `IDF_DB_PATH` теперь учитывается и в offline-режиме compile (раньше hardcoded path). Замыкает release pipeline: pattern researcher → request_pattern_promotion → approve → request_changeset → compile → файл в idf-sdk/.changeset → release-bot bump'ает npm-версии. 12 vitest'ов в `scripts/meta-compile.test.mjs` (foldChangesets create/replace/remove, renderChangeset с YAML+invalid JSON+empty summary, applyMultiFile create/idempotent/diff/dry-run, TARGETS structure). Counts ontology — 11 entities (BacklogItem + PatternPromotion + Changeset).
+
+**Регистрация MCP в Claude Code / Desktop**:
+
+```json
+{
+  "mcpServers": {
+    "idf-meta": {
+      "command": "node",
+      "args": ["/абс-путь-к-репо/scripts/mcp-meta.mjs"],
+      "env": {
+        "IDF_DB_PATH": "/абс-путь-к-репо/server/idf.db",
+        "IDF_MCP_MODE": "offline"
+      }
+    }
+  }
+}
+```
+
+Файл — `~/.claude/mcp.json` (Claude Code) или `~/Library/Application Support/Claude/claude_desktop_config.json` (Claude Desktop, macOS). Для online-режима замени `IDF_MCP_MODE` на `"online"` и добавь `IDF_TOKEN`/`IDF_SERVER`.
+
 ---
 
 ## 8. Cross-stack реализации
