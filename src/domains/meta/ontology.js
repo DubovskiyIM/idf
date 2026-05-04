@@ -346,6 +346,13 @@ export const ONTOLOGY = {
           },
         },
         sdkPrUrl: { type: "url", label: "SDK PR" },
+        weight: {
+          type: "number",
+          label: "Curator weight (0-100)",
+          // Tie-breaker, когда несколько pattern'ов матчатся одного archetype.
+          // Куратор задаёт relative-предпочтение; Signal Classifier
+          // (scripts/salience-fit-weights) учитывает при scoring'e.
+        },
         requestedByUserId: { type: "entityRef", entity: "User" },
         requestedAt: { type: "datetime", fieldRole: "createdAt" },
         decidedAt: { type: "datetime", label: "Решение принято" },

@@ -7,6 +7,7 @@ import NewDomainModal from "./NewDomainModal.jsx";
 import ProgressOverlay from "./ProgressOverlay.jsx";
 import PrototypeReadyCTA from "./PrototypeReadyCTA.jsx";
 import PatternsView from "./patterns/PatternsView.jsx";
+import CuratorWorkspace from "./patterns/CuratorWorkspace.jsx";
 import OntologyView from "./OntologyView.jsx";
 import IntegrityView from "./IntegrityView.jsx";
 import AlgebraView from "./AlgebraView.jsx";
@@ -98,6 +99,7 @@ function TabStrip({ view, setView, domainName, onTogglePhi, phiOpen, onToggleCha
         {domainOnly("integrity", "Целостность")}
         {domainOnly("spec", "IDF")}
         <button onClick={() => setView("patterns")} style={tabStyle(view === "patterns")}>Паттерны</button>
+        <button onClick={() => setView("curator")} style={tabStyle(view === "curator")}>Куратор</button>
       </div>
       <div style={{ flex: 1 }} />
       {domainName && (
@@ -150,7 +152,7 @@ function initialViewFromUrl() {
   if (typeof window === "undefined") return "graph";
   try {
     const v = new URLSearchParams(window.location.search).get("view");
-    return ["graph", "prototype", "ontology", "algebra", "integrity", "patterns", "spec"].includes(v) ? v : "graph";
+    return ["graph", "prototype", "ontology", "algebra", "integrity", "patterns", "spec", "curator"].includes(v) ? v : "graph";
   } catch { return "graph"; }
 }
 
@@ -477,6 +479,7 @@ export default function App() {
           : view === "algebra" ? <AlgebraView domainId={domain} />
           : view === "integrity" ? <IntegrityView domainId={domain} onFixWithClaude={readonly ? undefined : onFixIntegrityIssue} />
           : view === "spec" ? <SpecEditor domainId={domain} />
+          : view === "curator" ? <CuratorWorkspace />
           : <PatternsView />}
         {/* Drawers (Chat, Φ) рендерятся в общем контейнере — доступны во всех табах */}
         {domain && (
