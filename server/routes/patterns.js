@@ -191,6 +191,31 @@ function makePatternsRouter() {
 
     const pattern = registry.getPattern(id);
     if (!pattern) {
+      // Fallback на side-channel: ref-кандидаты не попадают в registry
+      // (registerPattern строго валидирует trigger.kind), но у них есть
+      // static falsification fixtures из JSON. Live-run не запускаем —
+      // нет trigger.match-функции и kind может быть unknown — отдаём
+      // только preview без regressions.
+      const refPattern = getRefCandidates().find((p) => p.id === id);
+      if (refPattern) {
+        return res.json({
+          id,
+          shouldMatch: (refPattern.falsification?.shouldMatch || []).map((e) => ({
+            ...e,
+            expected: true,
+            actual: null,
+            error: "ref-candidate-no-live-run",
+          })),
+          shouldNotMatch: (refPattern.falsification?.shouldNotMatch || []).map((e) => ({
+            ...e,
+            expected: false,
+            actual: null,
+            error: "ref-candidate-no-live-run",
+          })),
+          regressions: [],
+          note: "ref-candidate: static fixtures preview only (no live trigger.match yet)",
+        });
+      }
       return res.status(404).json({ error: "pattern_not_found", id });
     }
 
