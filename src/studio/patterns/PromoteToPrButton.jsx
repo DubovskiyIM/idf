@@ -58,8 +58,11 @@ export default function PromoteToPrButton({ pattern, onPrCreated }) {
 
   return (
     <div style={{ marginBottom: 12 }}>
-      {!result && !error && (
-        <div>
+      {/* Form всегда видна — даже после error/success куратор может изменить
+          archetype и нажать снова. Для повторных попыток без сброса state'а
+          retry-кнопка в error block очищает только error/result. */}
+      {!result && (
+        <div style={{ marginBottom: error ? 8 : 0 }}>
           <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
             <button
               onClick={go}
@@ -82,7 +85,13 @@ export default function PromoteToPrButton({ pattern, onPrCreated }) {
               archetype:
               <select
                 value={archetype}
-                onChange={(e) => setArchetype(e.target.value)}
+                onChange={(e) => {
+                  setArchetype(e.target.value);
+                  // Очищаем archetype-missing ошибку как только куратор выбрал
+                  if (e.target.value && error?.error === "archetype-missing") {
+                    setError(null);
+                  }
+                }}
                 style={{
                   background: "#0f172a",
                   color: archetype ? "#e2e8f0" : "#fbbf24",
@@ -135,11 +144,17 @@ export default function PromoteToPrButton({ pattern, onPrCreated }) {
             </a>
           )}
           <div style={{ marginTop: 6 }}>
-            <button
-              onClick={() => setShowLog(!showLog)}
-              style={logBtn}
-            >
+            <button onClick={() => setShowLog(!showLog)} style={logBtn}>
               {showLog ? "Hide log" : "Show log"}
+            </button>
+            <button
+              onClick={() => {
+                setResult(null);
+                setError(null);
+              }}
+              style={{ ...logBtn, marginLeft: 6 }}
+            >
+              Promote ещё
             </button>
           </div>
           {showLog && <LogView log={result.log} />}
@@ -158,10 +173,16 @@ export default function PromoteToPrButton({ pattern, onPrCreated }) {
           <div style={{ color: "#fecaca", fontSize: 12, fontWeight: 600, marginBottom: 4 }}>
             ✗ {error.error || "error"}: {error.message || ""}
           </div>
+          {error.error === "archetype-missing" && (
+            <div style={{ fontSize: 11, color: "#fca5a5" }}>
+              Выбери archetype в селекторе выше — кнопка станет активной.
+            </div>
+          )}
           {error.error === "disabled" && (
             <div style={{ fontSize: 11, color: "#fca5a5", lineHeight: 1.5 }}>
               На сервере не задан <code>CURATOR_PR_ENABLED=1</code>. Запусти server
-              c флагом: <code>CURATOR_PR_ENABLED=1 IDF_SDK_PATH=/абс/путь/к/idf-sdk npm run server</code>.
+              как <code>npm run dev:curator</code> (env уже встроены) или с флагами:
+              {" "}<code>CURATOR_PR_ENABLED=1 IDF_SDK_PATH=/абс/путь/к/idf-sdk npm run server</code>.
             </div>
           )}
           {error.error === "sdk-path-missing" && (
@@ -185,13 +206,10 @@ export default function PromoteToPrButton({ pattern, onPrCreated }) {
             </div>
           )}
           <button
-            onClick={() => {
-              setError(null);
-              setResult(null);
-            }}
-            style={{ ...logBtn, marginTop: 6, marginLeft: 6 }}
+            onClick={() => setError(null)}
+            style={{ ...logBtn, marginTop: 6 }}
           >
-            Retry
+            Скрыть ошибку
           </button>
         </div>
       )}
