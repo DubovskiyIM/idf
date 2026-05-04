@@ -36,7 +36,7 @@ try {
     const exists = db.prepare("SELECT id FROM effects WHERE id = ?").get(effectId);
     if (!exists) {
       emitUserRegisterEffect(u.id, u.name, u.email, u.avatar, u.created_at);
-      console.log(`  [auth] Миграция: _user_register для ${u.name} (${u.email})`);
+      console.log(`  [auth] migrate: _user_register for ${u.name} (${u.email})`);
     }
   }
 } catch {
