@@ -39,6 +39,7 @@ const {
   serializeRefCandidate,
 } = require("../loadCandidatesFromRefs.cjs");
 const { evaluateGenericRequires } = require("../genericTriggerEvaluator.cjs");
+const { promoteToSdkPr } = require("../curatorPromoter.cjs");
 
 // Кэш загруженных доменов: { [domainName]: { ontology, intents, projections } | null }
 const DOMAIN_CACHE = new Map();
@@ -498,6 +499,47 @@ function makePatternsRouter() {
     };
     _heatmapCache = result;
     res.json({ ...result, cached: false });
+  });
+
+  /**
+   * POST /promote-and-pr — куратор тыкает кнопку → server делает PR в idf-sdk.
+   *
+   * Body: { patternId, summary?, branch? }
+   *
+   * Steps (в server/curatorPromoter.cjs):
+   *   1. Read refs/candidates/<refSource> JSON.
+   *   2. Generate candidate/<archetype>/<id>.js (export default JSON).
+   *   3. Patch curated.js: import + entry в CURATED_CANDIDATES.
+   *   4. Write .changeset/curator-<slug>.md (patch для @intent-driven/core).
+   *   5. git checkout main; reset --hard origin/main; checkout -b feat/...
+   *   6. git add / commit / push.
+   *   7. gh pr create --base main.
+   *   8. Return {prUrl, branch, log}.
+   *
+   * Required env: CURATOR_PR_ENABLED=1, IDF_SDK_PATH, gh authenticated.
+   */
+  router.post("/promote-and-pr", async (req, res) => {
+    const { patternId, summary, branch } = req.body || {};
+    if (!patternId) {
+      return res.status(400).json({ error: "missing_patternId" });
+    }
+    // Make sure refs are loaded.
+    try {
+      loadCandidatesFromRefs();
+    } catch (err) {
+      return res.status(500).json({ error: "load_failed", reason: err.message });
+    }
+    const result = await promoteToSdkPr({ patternId, summary, branch });
+    if (!result.ok) {
+      const status =
+        result.error === "disabled" ? 403 :
+        result.error === "ref-not-found" ? 404 :
+        result.error === "collision" ? 409 :
+        result.error === "sdk-path-missing" || result.error === "curated-js-missing" ? 503 :
+        500;
+      return res.status(status).json(result);
+    }
+    return res.json(result);
   });
 
   /**
