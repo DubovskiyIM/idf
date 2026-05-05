@@ -219,7 +219,7 @@ function PatternHeader({ pattern, promotions, tab, setTab, onPickPattern }) {
           </span>
         )}
         {pattern.status === "candidate" && (
-          <SimilarStableHint patternId={pattern.id} onPick={onPickPattern} />
+          <SimilarStableHint pattern={pattern} onOpen={onPickPattern} />
         )}
         <div style={{ flex: 1 }} />
         <PatternWorkflowDiagram currentStage={stage} />
