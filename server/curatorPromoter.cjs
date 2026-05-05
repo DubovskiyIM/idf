@@ -30,8 +30,9 @@ const { execFile } = require("node:child_process");
 const { promisify } = require("node:util");
 const { readFileSync, existsSync, mkdirSync, writeFileSync } = require("node:fs");
 const path = require("node:path");
-const { randomBytes } = require("node:crypto");
+const { randomBytes, randomUUID } = require("node:crypto");
 const { getRefCandidates } = require("./loadCandidatesFromRefs.cjs");
+const db = require("./db.js");
 
 const execFileP = promisify(execFile);
 
@@ -287,6 +288,49 @@ async function promoteToSdkPr(input) {
       log,
     );
     const prUrl = (prRes.stdout || "").trim().split("\n").pop();
+
+    // 8. Запись PatternPromotion в Φ → lifecycle chip и Inbox обновятся.
+    // Создаём один effect с status=shipped + sdkPrUrl: после reload UI
+    // увидит persisted state (PR URL, ветка, archetype) и не покажет
+    // "сделай PR" второй раз. Если запись провалилась — это не критично,
+    // PR уже создан; логируем warning и возвращаем ok.
+    try {
+      const promotionId = randomUUID();
+      const now = Date.now();
+      const ctx = {
+        id: promotionId,
+        candidateId: patternId,
+        targetArchetype: archetype,
+        rationale: summary,
+        status: "shipped",
+        sdkPrUrl: prUrl,
+        sdkBranch: branch,
+        weight: 50,
+        requestedByUserId: "patternCurator",
+        requestedAt: now,
+        decidedAt: now,
+      };
+      db.prepare(`
+        INSERT INTO effects (id, intent_id, alpha, target, value, scope, status,
+                             ttl, context, created_at, resolved_at)
+        VALUES (?, ?, ?, ?, ?, ?, ?, NULL, ?, ?, ?)
+      `).run(
+        randomUUID(),
+        "ship_pattern_promotion",
+        "create",
+        "PatternPromotion",
+        JSON.stringify(ctx),
+        "account",
+        "confirmed",
+        JSON.stringify(ctx),
+        now,
+        now,
+      );
+      log.push(`recorded PatternPromotion(${promotionId}) status=shipped sdkPrUrl=${prUrl}`);
+    } catch (e) {
+      log.push(`warning: PatternPromotion record failed: ${e.message}`);
+    }
+
     return { ok: true, prUrl, branch, log };
   } catch (e) {
     return {

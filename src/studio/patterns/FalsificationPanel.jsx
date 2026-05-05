@@ -25,14 +25,61 @@ const REQ_COLORS = {
   unknown: { bg: "#1e293b", border: "#fbbf24", text: "#fde68a", icon: "?" },
 };
 
+// localStorage cache: per-pattern falsification result. Reload-safe — куратор
+// видит последний run без повторного клика. Stale-marker по `cachedAt` (UI
+// показывает "был N мин назад", куратор решает Re-run).
+const STORAGE_PREFIX = "idf:curator:falsification:";
+
+function readCache(patternId) {
+  try {
+    const raw = localStorage.getItem(STORAGE_PREFIX + patternId);
+    if (!raw) return null;
+    return JSON.parse(raw);
+  } catch {
+    return null;
+  }
+}
+
+function writeCache(patternId, payload) {
+  try {
+    localStorage.setItem(STORAGE_PREFIX + patternId, JSON.stringify(payload));
+  } catch {
+    /* quota / private mode — игнорируем */
+  }
+}
+
+function fmtAgo(ms) {
+  if (!ms) return null;
+  const diff = Date.now() - ms;
+  const min = Math.floor(diff / 60000);
+  if (min < 1) return "только что";
+  if (min < 60) return `${min} мин назад`;
+  const hr = Math.floor(min / 60);
+  if (hr < 24) return `${hr} ч назад`;
+  return `${Math.floor(hr / 24)} дн назад`;
+}
+
 export default function FalsificationPanel({ patternId }) {
   const [result, setResult] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [cachedAt, setCachedAt] = useState(null);
 
   useEffect(() => {
-    setResult(null);
     setError(null);
+    if (!patternId) {
+      setResult(null);
+      setCachedAt(null);
+      return;
+    }
+    const cached = readCache(patternId);
+    if (cached) {
+      setResult(cached.result);
+      setCachedAt(cached.cachedAt);
+    } else {
+      setResult(null);
+      setCachedAt(null);
+    }
   }, [patternId]);
 
   async function run() {
@@ -42,6 +89,9 @@ export default function FalsificationPanel({ patternId }) {
     try {
       const r = await runFalsification(patternId);
       setResult(r);
+      const now = Date.now();
+      setCachedAt(now);
+      writeCache(patternId, { result: r, cachedAt: now });
     } catch (e) {
       setError(e.message);
     } finally {
@@ -74,6 +124,14 @@ export default function FalsificationPanel({ patternId }) {
         </button>
         {result?.note && (
           <span style={{ fontSize: 11, color: "#64748b" }}>{result.note}</span>
+        )}
+        {cachedAt && (
+          <span
+            style={{ fontSize: 10, color: "#475569", fontFamily: "ui-monospace, monospace" }}
+            title={new Date(cachedAt).toISOString()}
+          >
+            кэш · {fmtAgo(cachedAt)}
+          </span>
         )}
       </div>
 
