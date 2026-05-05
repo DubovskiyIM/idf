@@ -139,6 +139,33 @@ export { CURATED_CANDIDATES };
   });
 });
 
+describe("promoteBatchToSdkPr · guards", () => {
+  it("пустой patternIds → empty-batch", async () => {
+    const { promoteBatchToSdkPr } = require("./curatorPromoter.cjs");
+    const r = await promoteBatchToSdkPr({ patternIds: [] });
+    expect(r.ok).toBe(false);
+    expect(r.error).toBe("empty-batch");
+  });
+
+  it("без CURATOR_PR_ENABLED → disabled", async () => {
+    delete process.env.CURATOR_PR_ENABLED;
+    const { promoteBatchToSdkPr } = require("./curatorPromoter.cjs");
+    const r = await promoteBatchToSdkPr({ patternIds: ["p1"] });
+    expect(r.ok).toBe(false);
+    expect(r.error).toBe("disabled");
+  });
+
+  it("CURATOR_PR_ENABLED=1 без IDF_SDK_PATH → sdk-path-missing", async () => {
+    process.env.CURATOR_PR_ENABLED = "1";
+    delete process.env.IDF_SDK_PATH;
+    const { promoteBatchToSdkPr } = require("./curatorPromoter.cjs");
+    const r = await promoteBatchToSdkPr({ patternIds: ["p1"] });
+    expect(r.ok).toBe(false);
+    expect(r.error).toBe("sdk-path-missing");
+    delete process.env.CURATOR_PR_ENABLED;
+  });
+});
+
 describe("promoteToSdkPr · disabled-state guards", () => {
   it("без CURATOR_PR_ENABLED → ok=false, error=disabled", async () => {
     delete process.env.CURATOR_PR_ENABLED;

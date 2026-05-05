@@ -483,6 +483,7 @@ export default function CuratorWorkspace() {
               setMode("patterns");
               setTab("structure");
             }}
+            onBulkChange={reloadAll}
           />
         </div>
       ) : (
