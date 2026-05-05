@@ -1,0 +1,61 @@
+{
+  "id": "dual-surface-cross-cutting-log",
+  "version": 1,
+  "status": "candidate",
+  "archetype": null,
+  "trigger": {
+    "requires": [
+      {
+        "kind": "sub-entity-exists",
+        "entity": "AuditLogEntry|EventLog"
+      },
+      {
+        "kind": "entity-field",
+        "entity": "AuditLogEntry",
+        "field": "resourcePath|resourceId"
+      }
+    ]
+  },
+  "structure": {
+    "slot": "sections",
+    "description": "Audit-log surface'ится двумя способами одновременно: (1) global как queryable system-table/feed, (2) per-resource как Activity tab отфильтрованный по resource. Один dataset, две точки входа без дублирования."
+  },
+  "rationale": {
+    "hypothesis": "Одни и те же события нужны двум аудиториям с разными вопросами: «что произошло у меня?» (per-resource) и «что произошло везде?» (security-officer). Force one surface — наказывает другую сторону.",
+    "evidence": [
+      {
+        "source": "databricks-unity-catalog",
+        "description": "Audit log — system table query AND per-resource activity tab",
+        "reliability": "high"
+      },
+      {
+        "source": "github-audit-log",
+        "description": "Org-wide audit log + per-repo Insights/Network/Activity",
+        "reliability": "high"
+      }
+    ],
+    "counterexample": [
+      {
+        "source": "linear-activity",
+        "description": "Только per-issue activity, нет global — для small-team OK",
+        "reliability": "medium"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [
+      {
+        "domain": "compliance",
+        "projection": "audit_dual_surface",
+        "reason": "Global + per-resource concurrent"
+      }
+    ],
+    "shouldNotMatch": [
+      {
+        "domain": "lifequest",
+        "projection": "goal_detail",
+        "reason": "Personal app, нет global audit-need"
+      }
+    ]
+  }
+}

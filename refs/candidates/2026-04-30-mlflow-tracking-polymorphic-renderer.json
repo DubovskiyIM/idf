@@ -1,0 +1,74 @@
+{
+  "id": "polymorphic-renderer",
+  "version": 1,
+  "status": "candidate",
+  "archetype": "detail",
+  "trigger": {
+    "requires": [
+      {
+        "kind": "entity-field",
+        "nameAny": [
+          "rendererKind",
+          "mimeType"
+        ]
+      }
+    ]
+  },
+  "structure": {
+    "slot": "body",
+    "description": "Detail каталога-файлов делегирует body-slot в renderer-registry, выбирающий компонент по rendererKind/mimeType (image/json/table/text/markdown/binary). Fallback: download-link."
+  },
+  "rationale": {
+    "hypothesis": "Когда сущность хранит heterogeneous content (artifact viewer, attachment), single hardcoded preview невозможен; renderer-by-kind — единственный способ дать type-specific UX без N разных detail-projection'ов.",
+    "evidence": [
+      {
+        "source": "mlflow",
+        "description": "Artifact tree → image / JSON / prediction-trace / eval-table renderers",
+        "reliability": "high"
+      },
+      {
+        "source": "github-blob",
+        "description": "Code/markdown/image/binary — рендерер по mimeType",
+        "reliability": "high"
+      },
+      {
+        "source": "slack-attachments",
+        "description": "Image/video/file/code — type-specific rendering",
+        "reliability": "high"
+      }
+    ],
+    "counterexample": [
+      {
+        "source": "booking",
+        "description": "Booking-detail — homogeneous, polymorphism не нужен",
+        "reliability": "high"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [
+      {
+        "domain": "messenger",
+        "projection": "attachment-detail",
+        "reason": "Attachment имеет mimeType, нужен renderer-registry"
+      },
+      {
+        "domain": "delivery",
+        "projection": "menu-item-detail",
+        "reason": "Если MenuItem имеет media с mimeType — применимо"
+      }
+    ],
+    "shouldNotMatch": [
+      {
+        "domain": "planning",
+        "projection": "poll-detail",
+        "reason": "Poll homogeneous, нет rendererKind"
+      },
+      {
+        "domain": "invest",
+        "projection": "position-detail",
+        "reason": "Position structured, не polymorphic"
+      }
+    ]
+  }
+}

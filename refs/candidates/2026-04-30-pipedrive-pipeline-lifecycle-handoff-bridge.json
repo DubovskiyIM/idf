@@ -1,0 +1,77 @@
+{
+  "id": "lifecycle-handoff-bridge",
+  "version": 1,
+  "status": "candidate",
+  "archetype": "detail",
+  "trigger": {
+    "requires": [
+      {
+        "kind": "intent-creates",
+        "creates": "*",
+        "withForeignKeyTo": "sourceEntity"
+      },
+      {
+        "kind": "entity-field",
+        "name": "status",
+        "values": [
+          "won",
+          "completed",
+          "approved",
+          "shipped"
+        ]
+      }
+    ]
+  },
+  "structure": {
+    "slot": "primaryCTA",
+    "description": "На detail source-entity (Deal) при status=terminal-success появляется primary CTA 'Create <next-stage entity> from this' (Project from Won Deal). Переход — explicit intent, не automation: пользователь принимает handoff."
+  },
+  "rationale": {
+    "hypothesis": "Жизненные циклы пересекают границы доменов (продажа → проект, заказ → доставка). Без явного bridge'а данные дублируются вручную; с bridge'ом передача FK-связей и контекста становится одним кликом. CTA должен появляться только при terminal-success, чтобы не путать с ранними конверсиями.",
+    "evidence": [
+      {
+        "source": "pipedrive",
+        "description": "Projects appear as post-sale handoff: 'Create project from won deal' — primary lifecycle bridge",
+        "reliability": "high"
+      },
+      {
+        "source": "hubspot",
+        "description": "Service Hub ticket from closed-won deal",
+        "reliability": "high"
+      }
+    ],
+    "counterexample": [
+      {
+        "source": "linear",
+        "description": "Issue → Project не имеет lifecycle bridge — связь параллельная, не последовательная",
+        "reliability": "medium"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [
+      {
+        "domain": "delivery",
+        "projection": "orders",
+        "reason": "Order completed → создать Review/Invoice"
+      },
+      {
+        "domain": "booking",
+        "projection": "bookings",
+        "reason": "Booking completed → Follow-up appointment"
+      }
+    ],
+    "shouldNotMatch": [
+      {
+        "domain": "reflect",
+        "projection": "moods",
+        "reason": "MoodEntry не имеет terminal status и handoff"
+      },
+      {
+        "domain": "messenger",
+        "projection": "conversations",
+        "reason": "Conversation continuous, нет terminal point"
+      }
+    ]
+  }
+}

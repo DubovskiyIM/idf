@@ -1,0 +1,72 @@
+{
+  "id": "unified-activity-timeline",
+  "version": 1,
+  "status": "candidate",
+  "archetype": "detail",
+  "trigger": {
+    "requires": [
+      {
+        "kind": "sub-entity-exists",
+        "minDistinctTypes": 3,
+        "withTimestamp": true
+      },
+      {
+        "kind": "intent-creates",
+        "anyOfKinds": [
+          "Task",
+          "Event",
+          "CallLog",
+          "EmailMessage",
+          "ChatterPost"
+        ]
+      }
+    ]
+  },
+  "structure": {
+    "slot": "sections",
+    "description": "Гетерогенные child-сущности с временной осью сливаются в единую chronological timeline-секцию с типовыми иконками вместо отдельных related-list'ов на каждый тип."
+  },
+  "rationale": {
+    "hypothesis": "Когда вокруг записи крутится несколько типов событий (звонки, письма, встречи, заметки), пользователю важна хронология взаимодействия, а не разделение по типу. Объединённый timeline даёт narrative thread, фрагментированные блоки — нет.",
+    "evidence": [
+      {
+        "source": "salesforce-sales-cloud",
+        "description": "Activity timeline объединяет Tasks/Events/Calls/Emails/Notes на любом record",
+        "reliability": "high"
+      },
+      {
+        "source": "hubspot-crm",
+        "description": "Activities feed на contact/deal сливает все touchpoints",
+        "reliability": "high"
+      },
+      {
+        "source": "intercom-conversations",
+        "description": "Customer timeline объединяет messages, notes, automation events",
+        "reliability": "medium"
+      }
+    ],
+    "counterexample": [
+      {
+        "source": "github-issue",
+        "description": "Comments и commit-references идут одним типом — расщеплять не на что",
+        "reliability": "high"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [
+      {
+        "domain": "booking",
+        "projection": "specialist-detail",
+        "reason": "Booking + Review + Message — три типа активностей с timestamp"
+      }
+    ],
+    "shouldNotMatch": [
+      {
+        "domain": "invest",
+        "projection": "portfolio-detail",
+        "reason": "Position'ы — это состояние, не события"
+      }
+    ]
+  }
+}

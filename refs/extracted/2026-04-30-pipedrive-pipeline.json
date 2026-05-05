@@ -1,0 +1,682 @@
+{
+  "source": "pipedrive-sales-crm",
+  "entities": [
+    {
+      "name": "Deal",
+      "fields": [
+        "title",
+        "amount",
+        "currency",
+        "stage",
+        "pipelineId",
+        "personId",
+        "organizationId",
+        "ownerId",
+        "expectedCloseDate",
+        "probability",
+        "status",
+        "source",
+        "lostReason",
+        "daysInStage",
+        "nextActivityAt",
+        "lastActivityAt",
+        "rotState",
+        "customFields"
+      ],
+      "statusValues": [
+        "open",
+        "won",
+        "lost",
+        "deleted"
+      ],
+      "foreignKey": "pipelineId→Pipeline"
+    },
+    {
+      "name": "Pipeline",
+      "fields": [
+        "name",
+        "stages",
+        "isDefault",
+        "visibleTo"
+      ]
+    },
+    {
+      "name": "Stage",
+      "fields": [
+        "name",
+        "order",
+        "probability",
+        "rottenDays",
+        "pipelineId"
+      ],
+      "foreignKey": "pipelineId→Pipeline"
+    },
+    {
+      "name": "Lead",
+      "fields": [
+        "title",
+        "value",
+        "currency",
+        "personId",
+        "organizationId",
+        "source",
+        "labels",
+        "ownerId",
+        "status",
+        "createdAt"
+      ],
+      "statusValues": [
+        "new",
+        "in_progress",
+        "qualified",
+        "converted",
+        "archived"
+      ]
+    },
+    {
+      "name": "Person",
+      "fields": [
+        "name",
+        "emails",
+        "phones",
+        "organizationId",
+        "ownerId",
+        "labels",
+        "enrichedFrom",
+        "customFields"
+      ],
+      "foreignKey": "organizationId→Organization"
+    },
+    {
+      "name": "Organization",
+      "fields": [
+        "name",
+        "domain",
+        "address",
+        "industry",
+        "size",
+        "ownerId",
+        "labels",
+        "enrichedFrom",
+        "customFields"
+      ]
+    },
+    {
+      "name": "Activity",
+      "fields": [
+        "subject",
+        "type",
+        "dueDate",
+        "dueTime",
+        "duration",
+        "dealId",
+        "personId",
+        "organizationId",
+        "leadId",
+        "ownerId",
+        "note",
+        "status"
+      ],
+      "statusValues": [
+        "scheduled",
+        "overdue",
+        "done",
+        "cancelled"
+      ],
+      "foreignKey": "dealId→Deal"
+    },
+    {
+      "name": "Note",
+      "fields": [
+        "content",
+        "dealId",
+        "personId",
+        "organizationId",
+        "authorId",
+        "createdAt"
+      ],
+      "foreignKey": "dealId→Deal"
+    },
+    {
+      "name": "EmailMessage",
+      "fields": [
+        "subject",
+        "body",
+        "from",
+        "to",
+        "cc",
+        "bcc",
+        "dealId",
+        "personId",
+        "templateId",
+        "trackingOpens",
+        "trackingClicks",
+        "linkedVia",
+        "sentAt"
+      ],
+      "foreignKey": "dealId→Deal"
+    },
+    {
+      "name": "EmailTemplate",
+      "fields": [
+        "name",
+        "subject",
+        "body",
+        "mergeFields",
+        "ownerId"
+      ]
+    },
+    {
+      "name": "Product",
+      "fields": [
+        "name",
+        "code",
+        "unit",
+        "price",
+        "currency",
+        "tax",
+        "active",
+        "category"
+      ]
+    },
+    {
+      "name": "DealProduct",
+      "fields": [
+        "dealId",
+        "productId",
+        "quantity",
+        "unitPrice",
+        "discount",
+        "tax",
+        "subtotal"
+      ],
+      "foreignKey": "dealId→Deal"
+    },
+    {
+      "name": "File",
+      "fields": [
+        "name",
+        "size",
+        "mimeType",
+        "dealId",
+        "personId",
+        "organizationId",
+        "uploadedBy",
+        "uploadedAt"
+      ],
+      "foreignKey": "dealId→Deal"
+    },
+    {
+      "name": "SmartDoc",
+      "fields": [
+        "name",
+        "templateId",
+        "dealId",
+        "mergedFields",
+        "shareLink",
+        "viewCount",
+        "signatureStatus",
+        "createdAt"
+      ],
+      "statusValues": [
+        "draft",
+        "shared",
+        "viewed",
+        "signed",
+        "declined"
+      ],
+      "foreignKey": "dealId→Deal"
+    },
+    {
+      "name": "DocumentTemplate",
+      "fields": [
+        "name",
+        "body",
+        "mergeFields",
+        "category"
+      ]
+    },
+    {
+      "name": "Project",
+      "fields": [
+        "name",
+        "dealId",
+        "phases",
+        "ownerId",
+        "status",
+        "startDate",
+        "dueDate"
+      ],
+      "statusValues": [
+        "active",
+        "on_hold",
+        "completed",
+        "cancelled"
+      ],
+      "foreignKey": "dealId→Deal"
+    },
+    {
+      "name": "ProjectTask",
+      "fields": [
+        "title",
+        "phase",
+        "assigneeId",
+        "dueDate",
+        "status",
+        "projectId"
+      ],
+      "statusValues": [
+        "todo",
+        "in_progress",
+        "done"
+      ],
+      "foreignKey": "projectId→Project"
+    },
+    {
+      "name": "Workflow",
+      "fields": [
+        "name",
+        "trigger",
+        "conditions",
+        "actions",
+        "active",
+        "ownerId"
+      ]
+    },
+    {
+      "name": "Goal",
+      "fields": [
+        "scope",
+        "ownerId",
+        "teamId",
+        "metric",
+        "target",
+        "interval",
+        "currentValue",
+        "progressPct"
+      ],
+      "statusValues": [
+        "on_track",
+        "at_risk",
+        "missed",
+        "achieved"
+      ]
+    },
+    {
+      "name": "Insight",
+      "fields": [
+        "name",
+        "type",
+        "filters",
+        "groupBy",
+        "metric",
+        "ownerId"
+      ]
+    },
+    {
+      "name": "Campaign",
+      "fields": [
+        "name",
+        "audienceFilter",
+        "templateId",
+        "scheduledAt",
+        "status",
+        "openRate",
+        "clickRate"
+      ],
+      "statusValues": [
+        "draft",
+        "scheduled",
+        "sent",
+        "paused"
+      ]
+    },
+    {
+      "name": "WebForm",
+      "fields": [
+        "name",
+        "fields",
+        "createsEntity",
+        "embedCode",
+        "submissionsCount"
+      ]
+    },
+    {
+      "name": "User",
+      "fields": [
+        "name",
+        "email",
+        "role",
+        "teamId",
+        "visibilityGroup",
+        "active"
+      ]
+    },
+    {
+      "name": "Team",
+      "fields": [
+        "name",
+        "managerId",
+        "memberIds"
+      ]
+    }
+  ],
+  "intents": [
+    {
+      "id": "create_lead",
+      "α": "add",
+      "creates": "Lead",
+      "confirmation": "form"
+    },
+    {
+      "id": "convert_lead_to_deal",
+      "α": "add",
+      "creates": "Deal",
+      "confirmation": "form",
+      "irreversibility": "high"
+    },
+    {
+      "id": "archive_lead",
+      "α": "remove",
+      "target": "leads",
+      "confirmation": "click",
+      "irreversibility": "high"
+    },
+    {
+      "id": "create_deal",
+      "α": "add",
+      "creates": "Deal",
+      "confirmation": "form"
+    },
+    {
+      "id": "advance_pipeline_stage",
+      "α": "replace",
+      "target": "deal.stage",
+      "confirmation": "click"
+    },
+    {
+      "id": "move_deal_between_pipelines",
+      "α": "replace",
+      "target": "deal.pipelineId",
+      "confirmation": "form"
+    },
+    {
+      "id": "mark_deal_won",
+      "α": "replace",
+      "target": "deal.status",
+      "confirmation": "form",
+      "irreversibility": "high"
+    },
+    {
+      "id": "mark_deal_lost",
+      "α": "replace",
+      "target": "deal.status",
+      "confirmation": "form",
+      "irreversibility": "high"
+    },
+    {
+      "id": "reopen_deal",
+      "α": "replace",
+      "target": "deal.status",
+      "confirmation": "click"
+    },
+    {
+      "id": "delete_deal",
+      "α": "remove",
+      "target": "deals",
+      "confirmation": "form",
+      "irreversibility": "high"
+    },
+    {
+      "id": "edit_deal_amount",
+      "α": "replace",
+      "target": "deal.amount",
+      "confirmation": "enter"
+    },
+    {
+      "id": "change_deal_owner",
+      "α": "replace",
+      "target": "deal.ownerId",
+      "confirmation": "click"
+    },
+    {
+      "id": "change_close_date",
+      "α": "replace",
+      "target": "deal.expectedCloseDate",
+      "confirmation": "click"
+    },
+    {
+      "id": "link_person_to_deal",
+      "α": "replace",
+      "target": "deal.personId",
+      "confirmation": "click"
+    },
+    {
+      "id": "link_organization_to_deal",
+      "α": "replace",
+      "target": "deal.organizationId",
+      "confirmation": "click"
+    },
+    {
+      "id": "schedule_activity",
+      "α": "add",
+      "creates": "Activity",
+      "confirmation": "form"
+    },
+    {
+      "id": "complete_activity",
+      "α": "replace",
+      "target": "activity.status",
+      "confirmation": "click"
+    },
+    {
+      "id": "reschedule_activity",
+      "α": "replace",
+      "target": "activity.dueDate",
+      "confirmation": "click"
+    },
+    {
+      "id": "log_call",
+      "α": "add",
+      "creates": "Activity",
+      "confirmation": "form"
+    },
+    {
+      "id": "log_meeting",
+      "α": "add",
+      "creates": "Activity",
+      "confirmation": "form"
+    },
+    {
+      "id": "add_note",
+      "α": "add",
+      "creates": "Note",
+      "confirmation": "enter"
+    },
+    {
+      "id": "send_template_email",
+      "α": "add",
+      "creates": "EmailMessage",
+      "confirmation": "form"
+    },
+    {
+      "id": "smart_bcc_log_email",
+      "α": "add",
+      "creates": "EmailMessage",
+      "confirmation": "click"
+    },
+    {
+      "id": "create_email_template",
+      "α": "add",
+      "creates": "EmailTemplate",
+      "confirmation": "form"
+    },
+    {
+      "id": "create_person",
+      "α": "add",
+      "creates": "Person",
+      "confirmation": "form"
+    },
+    {
+      "id": "create_organization",
+      "α": "add",
+      "creates": "Organization",
+      "confirmation": "form"
+    },
+    {
+      "id": "enrich_contact",
+      "α": "replace",
+      "target": "person.enrichedFrom",
+      "confirmation": "click"
+    },
+    {
+      "id": "merge_duplicates",
+      "α": "remove",
+      "target": "persons",
+      "confirmation": "form",
+      "irreversibility": "high"
+    },
+    {
+      "id": "attach_product",
+      "α": "add",
+      "creates": "DealProduct",
+      "confirmation": "form"
+    },
+    {
+      "id": "remove_product_from_deal",
+      "α": "remove",
+      "target": "dealProducts",
+      "confirmation": "click"
+    },
+    {
+      "id": "upload_file",
+      "α": "add",
+      "creates": "File",
+      "confirmation": "form"
+    },
+    {
+      "id": "generate_smart_doc",
+      "α": "add",
+      "creates": "SmartDoc",
+      "confirmation": "form"
+    },
+    {
+      "id": "request_e_signature",
+      "α": "replace",
+      "target": "smartDoc.signatureStatus",
+      "confirmation": "form"
+    },
+    {
+      "id": "share_doc_link",
+      "α": "replace",
+      "target": "smartDoc.shareLink",
+      "confirmation": "click"
+    },
+    {
+      "id": "create_project_from_won_deal",
+      "α": "add",
+      "creates": "Project",
+      "confirmation": "form"
+    },
+    {
+      "id": "advance_project_task",
+      "α": "replace",
+      "target": "projectTask.status",
+      "confirmation": "click"
+    },
+    {
+      "id": "create_workflow",
+      "α": "add",
+      "creates": "Workflow",
+      "confirmation": "form"
+    },
+    {
+      "id": "toggle_workflow",
+      "α": "replace",
+      "target": "workflow.active",
+      "confirmation": "click"
+    },
+    {
+      "id": "run_automation",
+      "α": "add",
+      "creates": "Activity",
+      "confirmation": "click"
+    },
+    {
+      "id": "set_goal",
+      "α": "add",
+      "creates": "Goal",
+      "confirmation": "form"
+    },
+    {
+      "id": "save_insight_view",
+      "α": "add",
+      "creates": "Insight",
+      "confirmation": "form"
+    },
+    {
+      "id": "schedule_campaign",
+      "α": "replace",
+      "target": "campaign.scheduledAt",
+      "confirmation": "form"
+    },
+    {
+      "id": "send_campaign",
+      "α": "replace",
+      "target": "campaign.status",
+      "confirmation": "form",
+      "irreversibility": "high"
+    },
+    {
+      "id": "publish_web_form",
+      "α": "add",
+      "creates": "WebForm",
+      "confirmation": "form"
+    },
+    {
+      "id": "switch_pipeline_view",
+      "α": "replace",
+      "target": "viewer.activePipelineId",
+      "confirmation": "click"
+    },
+    {
+      "id": "filter_activities",
+      "α": "replace",
+      "target": "viewer.activitiesFilter",
+      "confirmation": "click"
+    }
+  ],
+  "roles": [
+    "owner",
+    "viewer",
+    "agent",
+    "observer",
+    "admin"
+  ],
+  "observations": [
+    "Pipeline kanban — startup screen, not a tab; columns = stages, cards = deals with title + amount + days-in-stage + activity icons",
+    "Drag-drop between stage columns is the primary mechanism for advancing deals (replace deal.stage)",
+    "Color-coded rot indicator on every card: green/yellow/red/purple derived from nextActivityAt + lastActivityAt + stage.rottenDays",
+    "Activity-based selling = coercive constraint: a deal without scheduled next-activity is rendered red — UI invariant pushing 'always have a next step'",
+    "Stage column footers show aggregate row: total amount, weighted (probability-adjusted) amount, deal count",
+    "Multiple pipelines (New Business / Renewals / Service) — pipeline is a scoping selector at the top of the kanban",
+    "Leads Inbox is a separate surface from pipeline — pre-qualified records held back so the deal kanban stays clean",
+    "Convert Lead → Deal is a dedicated transition action that carries person + organization links forward",
+    "Deal detail is hero (title/amount/stage/close-date/owner) + tabbed sidebar (Notes/Activities/Email/Files/Calls/Documents/Products)",
+    "'Schedule next activity' is a persistent CTA on every deal — one-click typed activity creation (Call/Meeting/Email/Task/Lunch/Custom)",
+    "Activities timeline is a centralized cross-deal list, filterable by user/type/status, with calendar two-way sync overlay",
+    "Smart Bcc — emailing a magic address auto-creates EmailMessage linked by recipient match (auto-link via email pattern)",
+    "Email tracking surfaces opens + link clicks as inline metadata on EmailMessage rows",
+    "Insights = configurable dashboard: forecast, stage-to-stage funnel conversion, deal duration, activity counts per rep",
+    "Goals are visible everywhere with real-time progress bars — scope = personal/team/company",
+    "Workflow Automation = trigger (deal.stage changed / deal.status=won) → action template (schedule activity, create project, send email)",
+    "AI Sales Assistant surfaces recommendations as inline cards: 'Deal X has no activity for 7 days — schedule one' (one-click accept)",
+    "Smart Docs generated from templates merge deal fields → PDF + embedded e-signature with view-tracking shareable links",
+    "Projects appear as a post-sale handoff: 'Create project from won deal' is the primary lifecycle bridge",
+    "Visibility groups gate deal access at row level: own / team / everyone — admin-configurable permission sets",
+    "Mobile pipeline view = swipeable stage columns; quick-log activities and voice notes attach to deals",
+    "Caller-ID integration recognizes incoming calls against Person.phones and offers quick-log Activity",
+    "LeadFinder / Smart Contact Data enriches Person and Organization from public sources — enrichment is a replace on enrichedFrom",
+    "Dashboard answers 'what to do next', not 'what happened' — Activities Inbox (overdue / today) is the morning surface for sales reps"
+  ]
+}

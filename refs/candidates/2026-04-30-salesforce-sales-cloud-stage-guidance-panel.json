@@ -1,0 +1,66 @@
+{
+  "id": "stage-guidance-panel",
+  "version": 1,
+  "status": "candidate",
+  "archetype": "detail",
+  "trigger": {
+    "requires": [
+      {
+        "kind": "entity-field",
+        "field": "status",
+        "selectMin": 3
+      },
+      {
+        "kind": "intent-effect",
+        "α": "replace",
+        "targetSuffix": ".status"
+      },
+      {
+        "kind": "field-role-present",
+        "role": "stage-guidance"
+      }
+    ]
+  },
+  "structure": {
+    "slot": "header",
+    "description": "Над detail рендерится горизонтальный stepper текущей стадии плюс per-stage guidance-панель: какие поля нужно заполнить и что делать на этом шаге."
+  },
+  "rationale": {
+    "hypothesis": "Когда переход стадии — это процесс с обязательной работой (key fields + checklist), голый stepper не объясняет 'что от меня требуется сейчас'. Inline-guidance заменяет тренинг и уменьшает stalled deals.",
+    "evidence": [
+      {
+        "source": "salesforce-sales-cloud",
+        "description": "Lightning Path: stepper + Key Fields + 'Guidance for Success' панель на каждой стадии Opportunity/Lead",
+        "reliability": "high"
+      },
+      {
+        "source": "hubspot-deals",
+        "description": "Аналогичный 'Deal Stage Properties' с required-fields на каждой стадии",
+        "reliability": "high"
+      }
+    ],
+    "counterexample": [
+      {
+        "source": "linear-issue-status",
+        "description": "Простые статус-переходы (Todo → In Progress → Done) без бизнес-checklist'ов — stepper достаточен",
+        "reliability": "high"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [
+      {
+        "domain": "sales",
+        "projection": "listing-detail",
+        "reason": "listing.status имеет несколько стадий с разными требованиями"
+      }
+    ],
+    "shouldNotMatch": [
+      {
+        "domain": "messenger",
+        "projection": "conversation-detail",
+        "reason": "У сообщений нет стадийной модели"
+      }
+    ]
+  }
+}

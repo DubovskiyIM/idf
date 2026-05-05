@@ -1,0 +1,65 @@
+{
+  "id": "cascade-impact-preview-confirm",
+  "version": 1,
+  "status": "candidate",
+  "archetype": null,
+  "trigger": {
+    "requires": [
+      {
+        "kind": "intent-confirmation",
+        "confirmation": "form"
+      },
+      {
+        "kind": "intent-effect",
+        "α": "remove",
+        "irreversibility": "high"
+      },
+      {
+        "kind": "sub-entity-exists",
+        "withFKToTarget": true
+      }
+    ]
+  },
+  "structure": {
+    "slot": "overlay",
+    "description": "Расширение irreversible-confirm: при cascade-delete форма содержит (1) explicit list импактируемых children с counters, (2) type-to-confirm input с именем target'а. Не просто checkbox «I understand»."
+  },
+  "rationale": {
+    "hypothesis": "Universal irreversible-confirm недостаточен, когда delete рекурсивен: пользователь интуитивно недооценивает blast-radius. Показ конкретных n schemas / m tables создаёт correct expectation; type-to-confirm — high-friction для destructive cascade.",
+    "evidence": [
+      {
+        "source": "databricks-unity-catalog",
+        "description": "Drop with cascade dialog: type-to-confirm + lists impacted children",
+        "reliability": "high"
+      },
+      {
+        "source": "github-delete-repo",
+        "description": "Type repo-name + cascade list (issues/wiki) перед delete",
+        "reliability": "high"
+      }
+    ],
+    "counterexample": [
+      {
+        "source": "macos-trash",
+        "description": "No type-to-confirm — потому что reversible (Trash)",
+        "reliability": "high"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [
+      {
+        "domain": "gravitino",
+        "projection": "drop_catalog",
+        "reason": "Каскад на schemas/tables"
+      }
+    ],
+    "shouldNotMatch": [
+      {
+        "domain": "messenger",
+        "projection": "delete_message",
+        "reason": "Single-entity remove, no cascade"
+      }
+    ]
+  }
+}

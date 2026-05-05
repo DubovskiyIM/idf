@@ -1,0 +1,65 @@
+{
+  "id": "policy-with-resource-filter",
+  "version": 1,
+  "status": "candidate",
+  "archetype": "detail",
+  "trigger": {
+    "requires": [
+      {
+        "kind": "intent-creates",
+        "value": "Policy"
+      },
+      {
+        "kind": "entity-field",
+        "onPolicy": [
+          "resourceFilter",
+          "actorFilter"
+        ],
+        "minMatched": 1,
+        "rationale": "policy carries resource-level predicate, not flat role check"
+      }
+    ]
+  },
+  "structure": {
+    "slot": "sections",
+    "description": "Policy form composes (actorFilter, resourceFilter, permission-set). Resource filter is a predicate over entity attributes (domain=X AND tag=Y AND platform=Z). Policy preview shows N matching entities live."
+  },
+  "rationale": {
+    "hypothesis": "Flat role-based access (admin/editor/reader) cannot express 'editors of finance domain only'. Conditional resource filters scale governance without proliferating roles.",
+    "evidence": [
+      {
+        "source": "DataHub",
+        "description": "Policies with resourceFilter + actorFilter + permission list",
+        "reliability": "high"
+      },
+      {
+        "source": "AWS IAM",
+        "description": "Policies with Resource and Condition predicates",
+        "reliability": "high"
+      }
+    ],
+    "counterexample": [
+      {
+        "source": "Small team",
+        "description": "With 5 users and 1 resource type, flat roles suffice",
+        "reliability": "high"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [
+      {
+        "domain": "workflow",
+        "projection": "policy-detail",
+        "reason": "Permissions filtered by tag/owner/env"
+      }
+    ],
+    "shouldNotMatch": [
+      {
+        "domain": "lifequest",
+        "projection": "goal-detail",
+        "reason": "Personal app — no policies"
+      }
+    ]
+  }
+}

@@ -1,0 +1,65 @@
+{
+  "id": "visual-flow-canvas",
+  "version": 1,
+  "status": "candidate",
+  "archetype": "canvas",
+  "trigger": {
+    "requires": [
+      {
+        "kind": "Flow"
+      },
+      {
+        "kind": "entity-field",
+        "fieldRole": "elements",
+        "graphLike": true
+      }
+    ]
+  },
+  "structure": {
+    "slot": "body",
+    "description": "Flow editor — node-graph canvas: elements (decision / loop / action / screen / get / create / update / delete / subflow) как nodes, control-flow как edges. Inspector справа для selected node."
+  },
+  "rationale": {
+    "hypothesis": "Когда логика — это branching workflow с loop'ами и параллельными ветвями, code/yaml не передаёт топологию. Visual-canvas делает ветвление и ошибки видимыми.",
+    "evidence": [
+      {
+        "source": "salesforce-sales-cloud",
+        "description": "Flow Builder: visual canvas с elements nodes + connectors",
+        "reliability": "high"
+      },
+      {
+        "source": "n8n",
+        "description": "Workflow editor с node graph",
+        "reliability": "high"
+      },
+      {
+        "source": "zapier-multi-step-zaps",
+        "description": "Vertical step-flow visual editor",
+        "reliability": "medium"
+      }
+    ],
+    "counterexample": [
+      {
+        "source": "github-actions-yaml",
+        "description": "Workflow задаётся YAML — текстовая редакция доминирует, visual factor optional",
+        "reliability": "high"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [
+      {
+        "domain": "workflow",
+        "projection": "workflow-canvas",
+        "reason": "По названию — каноничный fit"
+      }
+    ],
+    "shouldNotMatch": [
+      {
+        "domain": "messenger",
+        "projection": "message-detail",
+        "reason": "Не граф"
+      }
+    ]
+  }
+}

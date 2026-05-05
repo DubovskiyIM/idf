@@ -1,0 +1,65 @@
+{
+  "id": "pinned-announcement-strip",
+  "version": 1,
+  "status": "candidate",
+  "archetype": "detail",
+  "trigger": {
+    "requires": [
+      {
+        "kind": "intent-effect",
+        "α": "replace",
+        "target": "post.pinnedTo"
+      },
+      {
+        "kind": "entity-field",
+        "value": "postType",
+        "containsValues": [
+          "announcement",
+          "deprecation_notice"
+        ]
+      }
+    ]
+  },
+  "structure": {
+    "slot": "header",
+    "description": "Pinned posts surface as a dismissible strip at the top of an entity detail page (or home). Author, body, and post-type icon visible; deprecation-notice variant has elevated tone. Embedded blog as platform-team broadcast channel."
+  },
+  "rationale": {
+    "hypothesis": "Operational changes (deprecation, schema break, planned downtime) need in-context broadcast — tied to the entity, seen by anyone who lands there. Out-of-band channels (email, Slack) miss anyone who searches later.",
+    "evidence": [
+      {
+        "source": "DataHub",
+        "description": "Pinned Posts on dataset and home pages — announcements and deprecation notices",
+        "reliability": "high"
+      },
+      {
+        "source": "GitHub",
+        "description": "Pinned issues on repo home",
+        "reliability": "high"
+      }
+    ],
+    "counterexample": [
+      {
+        "source": "Personal entity",
+        "description": "No platform-team broadcast surface needed",
+        "reliability": "high"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [
+      {
+        "domain": "workflow",
+        "projection": "workflow-detail",
+        "reason": "Author posts deprecation notice on workflow"
+      }
+    ],
+    "shouldNotMatch": [
+      {
+        "domain": "messenger",
+        "projection": "message-detail",
+        "reason": "Messages are themselves the broadcast"
+      }
+    ]
+  }
+}

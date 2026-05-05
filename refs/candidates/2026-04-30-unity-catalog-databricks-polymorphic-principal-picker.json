@@ -1,0 +1,57 @@
+{
+  "id": "polymorphic-principal-picker",
+  "version": 1,
+  "status": "candidate",
+  "archetype": null,
+  "trigger": {
+    "requires": [
+      {
+        "kind": "entity-field",
+        "field": "principalType|subjectKind",
+        "selectValuesMin": 2
+      }
+    ]
+  },
+  "structure": {
+    "slot": "composer",
+    "description": "В формах присвоения roles/grants/assignments принципал picker — единый combobox, где user'ы / groups / service-principals выводятся в одном typeahead с inline icon-discriminator. Без переключателя tab'ом."
+  },
+  "rationale": {
+    "hypothesis": "Принципал — abstraction, и заставлять автора решить заранее «человек или сервис» ломает flow assignment. Smart-search по всем категориям + visual differentiation решает это без cognitive switching.",
+    "evidence": [
+      {
+        "source": "databricks-unity-catalog",
+        "description": "Service principals и groups в одном picker с users",
+        "reliability": "high"
+      },
+      {
+        "source": "github-team-invite",
+        "description": "User/team unified search в invite-flow",
+        "reliability": "high"
+      }
+    ],
+    "counterexample": [
+      {
+        "source": "slack-channel-invite",
+        "description": "User/channel-bot — разделены по tab, потому что bot-flow нелинеен",
+        "reliability": "medium"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [
+      {
+        "domain": "keycloak",
+        "projection": "role_assignment",
+        "reason": "User/Group/Service-account picker"
+      }
+    ],
+    "shouldNotMatch": [
+      {
+        "domain": "messenger",
+        "projection": "dm_open",
+        "reason": "Только users, picker монотипный"
+      }
+    ]
+  }
+}

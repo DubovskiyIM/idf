@@ -1,0 +1,78 @@
+{
+  "id": "cross-parent-activity-timeline",
+  "version": 1,
+  "status": "candidate",
+  "archetype": "feed",
+  "trigger": {
+    "requires": [
+      {
+        "kind": "sub-entity-exists",
+        "withForeignKeys": [
+          ">=2"
+        ]
+      },
+      {
+        "kind": "field-role-present",
+        "role": "date",
+        "semantic": "due-date|created-at"
+      }
+    ]
+  },
+  "structure": {
+    "slot": "body",
+    "description": "Sub-entity (Activity), у которой FK на 2+ родителя (Deal, Person, Org), получает свою отдельную cross-parent проекцию: единый timeline filterable по owner/type/status, независимо от detail каждого parent'а."
+  },
+  "rationale": {
+    "hypothesis": "Когда sub-entity связана с несколькими parents, она де-факто становится first-class объектом для пользователя ('что у меня сегодня?'), а не приложением к одному. Centralized timeline даёт ortogonal cut на детали parent'ов.",
+    "evidence": [
+      {
+        "source": "pipedrive",
+        "description": "Activities timeline — централизованный cross-deal список, filterable по user/type/status",
+        "reliability": "high"
+      },
+      {
+        "source": "hubspot",
+        "description": "Tasks view с filtering по owner across deals/contacts",
+        "reliability": "high"
+      },
+      {
+        "source": "linear",
+        "description": "My Issues — cross-project view",
+        "reliability": "high"
+      }
+    ],
+    "counterexample": [
+      {
+        "source": "trello",
+        "description": "Card существует только в одной list — не нужна cross-parent проекция",
+        "reliability": "high"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [
+      {
+        "domain": "lifequest",
+        "projection": "today",
+        "reason": "Task с FK на Goal+Habit — cross-parent timeline"
+      },
+      {
+        "domain": "workflow",
+        "projection": "executions",
+        "reason": "Execution связана с Workflow + Trigger"
+      }
+    ],
+    "shouldNotMatch": [
+      {
+        "domain": "invest",
+        "projection": "positions",
+        "reason": "Position принадлежит одному Portfolio"
+      },
+      {
+        "domain": "reflect",
+        "projection": "moods",
+        "reason": "MoodEntry — flat, нет multiple parents"
+      }
+    ]
+  }
+}

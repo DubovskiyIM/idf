@@ -1,0 +1,80 @@
+{
+  "id": "lineage-graph",
+  "version": 1,
+  "status": "candidate",
+  "archetype": "detail",
+  "trigger": {
+    "requires": [
+      {
+        "kind": "entity-field",
+        "withRoleAny": [
+          "sourceRunId",
+          "sourceArtifactPath",
+          "sourceUri",
+          "lineage"
+        ]
+      },
+      {
+        "kind": "field-role-present",
+        "role": "provenance"
+      }
+    ]
+  },
+  "structure": {
+    "slot": "header",
+    "description": "Detail получает lineage-strip в header'е: горизонтальная цепочка clickable chips (Run ↔ ModelVersion ↔ Dataset), показывающая bidirectional FK-граф сущности и ближайших соседей. Click на chip — навигация на соседний detail."
+  },
+  "rationale": {
+    "hypothesis": "Когда сущность участвует в transitive provenance-цепочке (input → process → output → derived), пользователь хочет навигировать назад/вперёд по цепочке без mental-modelling FK-схемы. Chips в header — компактнее графа и не требуют canvas-архетипа.",
+    "evidence": [
+      {
+        "source": "mlflow",
+        "description": "Run ↔ ModelVersion ↔ Dataset граф chips на detail-страницах",
+        "reliability": "high"
+      },
+      {
+        "source": "datahub-lineage",
+        "description": "Upstream/downstream graph для dataset'ов",
+        "reliability": "high"
+      },
+      {
+        "source": "git-blame-prev-next",
+        "description": "Prev/next chips для commit-цепочки",
+        "reliability": "medium"
+      }
+    ],
+    "counterexample": [
+      {
+        "source": "messenger",
+        "description": "Message имеет parent (reply-to), но цепочка короткая — chip-strip избыточен",
+        "reliability": "medium"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [
+      {
+        "domain": "workflow",
+        "projection": "execution-detail",
+        "reason": "Execution имеет input-Dataset/output-Dataset/parent-Workflow — multi-hop lineage"
+      },
+      {
+        "domain": "delivery",
+        "projection": "order-detail",
+        "reason": "Order ← Cart ← Customer ← Region — provenance chain"
+      }
+    ],
+    "shouldNotMatch": [
+      {
+        "domain": "lifequest",
+        "projection": "habit-detail",
+        "reason": "Habit standalone, нет provenance-цепочки"
+      },
+      {
+        "domain": "planning",
+        "projection": "poll-detail",
+        "reason": "Poll-граф плоский, не chain"
+      }
+    ]
+  }
+}

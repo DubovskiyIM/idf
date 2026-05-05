@@ -1,0 +1,79 @@
+{
+  "id": "pivot-key-value-columns",
+  "version": 1,
+  "status": "candidate",
+  "archetype": "catalog",
+  "trigger": {
+    "requires": [
+      {
+        "kind": "sub-entity-exists",
+        "fields": [
+          "key",
+          "value"
+        ],
+        "foreignKeyTo": "mainEntity"
+      },
+      {
+        "kind": "entity-kind",
+        "child": "key-value-pivot"
+      }
+    ]
+  },
+  "structure": {
+    "slot": "toolbar",
+    "description": "Когда mainEntity имеет child-entity со схемой {parentId, key, value}, catalog получает column-picker в toolbar: пользователь выбирает конкретные key'и из child-набора, и они материализуются как сортируемые колонки в таблице (pivot из EAV в wide-form)."
+  },
+  "rationale": {
+    "hypothesis": "EAV-структура (params/metrics/tags) дает unbounded ширину; жёстко запихнуть всё в карточку нельзя, но пользователь хочет видеть конкретные key'и как колонки для сравнения. Column-picker — это не презентационная фича, а проекция wide-form формы поверх long-form данных.",
+    "evidence": [
+      {
+        "source": "mlflow",
+        "description": "Runs table: 'Columns' dropdown → выбираешь params.lr, metrics.accuracy → они становятся sortable columns",
+        "reliability": "high"
+      },
+      {
+        "source": "google-sheets-pivot",
+        "description": "Pivot table — каноничная wide-form проекция",
+        "reliability": "high"
+      },
+      {
+        "source": "datadog-tags",
+        "description": "Tag-keys как колонки в host-list",
+        "reliability": "medium"
+      }
+    ],
+    "counterexample": [
+      {
+        "source": "messenger",
+        "description": "Message не имеет EAV-структуры; column-picker бессмысленен",
+        "reliability": "high"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [
+      {
+        "domain": "invest",
+        "projection": "position-list",
+        "reason": "Если Position имеет child PositionMetric{key,value} (sharpe/alpha/beta), pivot применим"
+      },
+      {
+        "domain": "workflow",
+        "projection": "execution-list",
+        "reason": "Execution имеет child-tags {key,value} — pivot в колонки"
+      }
+    ],
+    "shouldNotMatch": [
+      {
+        "domain": "booking",
+        "projection": "specialist-list",
+        "reason": "Specialist fields fixed, нет EAV-child"
+      },
+      {
+        "domain": "delivery",
+        "projection": "order-list",
+        "reason": "Order структурирован, не EAV"
+      }
+    ]
+  }
+}

@@ -1,0 +1,61 @@
+{
+  "id": "boolean-filter-builder",
+  "version": 1,
+  "status": "candidate",
+  "archetype": "catalog",
+  "trigger": {
+    "requires": [
+      {
+        "kind": "intent-effect",
+        "α": "replace",
+        "targetSuffix": ".filters"
+      },
+      {
+        "kind": "entity-field",
+        "filterableFieldsMin": 5
+      }
+    ]
+  },
+  "structure": {
+    "slot": "toolbar",
+    "description": "Filter UI поддерживает explicit boolean grouping: rows с conditions, нумерация, ниже — выражение типа '1 AND (2 OR 3)'. Возвращается к простому AND-режиму при single-condition."
+  },
+  "rationale": {
+    "hypothesis": "Pure-AND filter UI ломается на запросах типа 'closed_won OR closed_lost AND amount>1M'. Numbered-conditions + free-form логика отделяет условия от их соединения и читается как SQL.",
+    "evidence": [
+      {
+        "source": "salesforce-sales-cloud",
+        "description": "List view filter logic: '1 AND (2 OR 3)' под пронумерованными условиями",
+        "reliability": "high"
+      },
+      {
+        "source": "airtable-filter-groups",
+        "description": "Nested filter groups с AND/OR toggles",
+        "reliability": "high"
+      }
+    ],
+    "counterexample": [
+      {
+        "source": "gmail-search",
+        "description": "Search-string DSL — другой подход (текстовый, не visual builder)",
+        "reliability": "high"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [
+      {
+        "domain": "invest",
+        "projection": "asset-catalog",
+        "reason": "Сложные финансовые фильтры (sector AND (mcap>X OR pe<Y))"
+      }
+    ],
+    "shouldNotMatch": [
+      {
+        "domain": "messenger",
+        "projection": "conversation-catalog",
+        "reason": "Один-два фильтра достаточно"
+      }
+    ]
+  }
+}

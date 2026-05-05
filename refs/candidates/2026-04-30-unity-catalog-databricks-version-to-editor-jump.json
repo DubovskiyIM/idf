@@ -1,0 +1,60 @@
+{
+  "id": "version-to-editor-jump",
+  "version": 1,
+  "status": "candidate",
+  "archetype": "detail",
+  "trigger": {
+    "requires": [
+      {
+        "kind": "sub-entity-exists",
+        "entity": "withVersion+timestamp"
+      },
+      {
+        "kind": "intent-creates",
+        "creates": "Query|Notebook"
+      }
+    ]
+  },
+  "structure": {
+    "slot": "sections",
+    "description": "Каждая row history-timeline имеет inline-CTA «Query at version N» / «Open snapshot», открывающую editor pre-populated с версии. Не отдельная команда, не form — link directly из контекста."
+  },
+  "rationale": {
+    "hypothesis": "Time-travel — это flow «вижу строку → хочу инспектировать». Любой intermediate step (form, copy id) ломает thinking. Inline-CTA минимизирует path до 1 click и сохраняет контекст версии в editor.",
+    "evidence": [
+      {
+        "source": "databricks-unity-catalog",
+        "description": "Time-travel via History tab → 'Query at version N' opens SQL editor pre-populated",
+        "reliability": "high"
+      },
+      {
+        "source": "github-blame-permalink",
+        "description": "View at this commit — direct jump",
+        "reliability": "high"
+      }
+    ],
+    "counterexample": [
+      {
+        "source": "wikipedia-history",
+        "description": "View revision — read-only, нет editor-jump",
+        "reliability": "medium"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [
+      {
+        "domain": "gravitino",
+        "projection": "table_history",
+        "reason": "Iceberg snapshot → query-at-snapshot CTA"
+      }
+    ],
+    "shouldNotMatch": [
+      {
+        "domain": "messenger",
+        "projection": "message_history",
+        "reason": "Нет editor для message-version"
+      }
+    ]
+  }
+}

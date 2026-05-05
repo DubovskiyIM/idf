@@ -1,0 +1,58 @@
+{
+  "id": "composite-health-badge",
+  "version": 1,
+  "status": "candidate",
+  "archetype": "detail",
+  "trigger": {
+    "requires": [
+      {
+        "kind": "entity-field",
+        "fieldRole": "healthStatus",
+        "computedFrom": ">=2",
+        "rationale": "single badge aggregates ≥2 underlying signals (deprecation + incident + freshness)"
+      }
+    ]
+  },
+  "structure": {
+    "slot": "hero",
+    "description": "Single hero badge derived from multiple aspect-states. Badge color/icon resolved from worst-of (deprecated > incident > stale > healthy). Click expands to itemized breakdown of contributing signals."
+  },
+  "rationale": {
+    "hypothesis": "Listing N independent badges scatters attention. Aggregating into a composite indicator gives instant 'is this thing OK to use' answer; click reveals why.",
+    "evidence": [
+      {
+        "source": "DataHub",
+        "description": "Health badge aggregates deprecation + incident + freshness",
+        "reliability": "high"
+      },
+      {
+        "source": "PagerDuty",
+        "description": "Service status rolled up from N checks",
+        "reliability": "high"
+      }
+    ],
+    "counterexample": [
+      {
+        "source": "Single signal",
+        "description": "If only one health dimension exists, no aggregation needed",
+        "reliability": "high"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [
+      {
+        "domain": "delivery",
+        "projection": "order-detail",
+        "reason": "payment + courier + restaurant signals → composite"
+      }
+    ],
+    "shouldNotMatch": [
+      {
+        "domain": "reflect",
+        "projection": "mood-detail",
+        "reason": "No multi-aspect health"
+      }
+    ]
+  }
+}

@@ -1,0 +1,61 @@
+{
+  "id": "composite-conversion-form",
+  "version": 1,
+  "status": "candidate",
+  "archetype": "detail",
+  "trigger": {
+    "requires": [
+      {
+        "kind": "intent-effect",
+        "α": "replace",
+        "targetSuffix": ".status"
+      },
+      {
+        "kind": "intent-creates",
+        "multipleEntitiesInSingleIntent": true
+      }
+    ]
+  },
+  "structure": {
+    "slot": "primaryCTA",
+    "description": "Composite-intent (status-transition + создание ≥2 связанных сущностей) разворачивается в один multi-section form, а не как цепочка отдельных шагов."
+  },
+  "rationale": {
+    "hypothesis": "Когда смена статуса семантически создаёт другие сущности (Lead → Account+Contact+Opportunity), три последовательных формы добавляют ошибки и потерю данных. Один связанный form сохраняет cross-field валидацию.",
+    "evidence": [
+      {
+        "source": "salesforce-sales-cloud",
+        "description": "Lead Conversion Wizard: одна форма создаёт Account + Contact + Opportunity и меняет lead.status",
+        "reliability": "high"
+      },
+      {
+        "source": "hubspot-deal-creation",
+        "description": "Convert contact to deal — единая форма с inline-creation associated company",
+        "reliability": "medium"
+      }
+    ],
+    "counterexample": [
+      {
+        "source": "stripe-payment-intent",
+        "description": "Payment-confirmation — атомарная операция, не композитная",
+        "reliability": "high"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [
+      {
+        "domain": "delivery",
+        "projection": "order-detail",
+        "reason": "Принятие заказа курьером может одновременно создавать Delivery + Route"
+      }
+    ],
+    "shouldNotMatch": [
+      {
+        "domain": "messenger",
+        "projection": "message-detail",
+        "reason": "У message нет композитных переходов"
+      }
+    ]
+  }
+}

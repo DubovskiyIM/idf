@@ -1,0 +1,57 @@
+{
+  "id": "sibling-pill-row",
+  "version": 1,
+  "status": "candidate",
+  "archetype": "detail",
+  "trigger": {
+    "requires": [
+      {
+        "kind": "intent-creates",
+        "value": "LineageEdge",
+        "edgeType": "sibling"
+      },
+      {
+        "kind": "entity-field",
+        "fieldRole": "siblings",
+        "cardinality": "0..N"
+      }
+    ]
+  },
+  "structure": {
+    "slot": "hero",
+    "description": "Horizontal pill row directly under hero showing same-logical-entity instances across platforms (e.g. dbt model, Snowflake table, Looker view of the same 'orders'). Click switches detail focus while preserving conceptual identity."
+  },
+  "rationale": {
+    "hypothesis": "When an abstract concept is materialized in multiple systems, users need to switch viewing-platform without losing 'which thing am I looking at'. Sibling pills make cross-platform identity navigable in one click.",
+    "evidence": [
+      {
+        "source": "DataHub",
+        "description": "Siblings pill row on dataset hero linking dbt + warehouse + BI manifestations",
+        "reliability": "high"
+      }
+    ],
+    "counterexample": [
+      {
+        "source": "Single-platform entity",
+        "description": "If entity exists in only one system, sibling row is empty — pattern degrades to no-op",
+        "reliability": "high"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [
+      {
+        "domain": "invest",
+        "projection": "asset-detail",
+        "reason": "Same asset traded on multiple exchanges — sibling pills"
+      }
+    ],
+    "shouldNotMatch": [
+      {
+        "domain": "reflect",
+        "projection": "mood-detail",
+        "reason": "No cross-system manifestation"
+      }
+    ]
+  }
+}

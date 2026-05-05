@@ -1,0 +1,92 @@
+{
+  "id": "approval-workflow",
+  "version": 1,
+  "status": "candidate",
+  "archetype": "detail",
+  "trigger": {
+    "requires": [
+      {
+        "kind": "entity-field",
+        "names": [
+          "requester",
+          "approver",
+          "comment"
+        ]
+      },
+      {
+        "kind": "entity-field",
+        "name": "status",
+        "values": [
+          "pending",
+          "approved",
+          "rejected"
+        ]
+      },
+      {
+        "kind": "intent-effect",
+        "target": "*.status",
+        "values": [
+          "approved",
+          "rejected"
+        ]
+      }
+    ]
+  },
+  "structure": {
+    "slot": "primaryCTA",
+    "description": "Approval-сущность открывается detail'ом с двойным primaryCTA: для approver — 'Approve / Reject' с обязательным comment-полем; для requester — 'Cancel'. Status-history рендерится как timeline в hero-блоке."
+  },
+  "rationale": {
+    "hypothesis": "Approval flow — отдельная сущность, а не state самого target'a, потому что (а) фиксирует requester/approver/comment как audit-witness, (б) гейтит transition в parent-сущности через invariant. UI должен делать requester/approver visible и не сводить approve к single-click — comment обязателен.",
+    "evidence": [
+      {
+        "source": "mlflow",
+        "description": "StageTransitionRequest с requester/approver/comment, отдельный от ModelVersion",
+        "reliability": "high"
+      },
+      {
+        "source": "github-pr-review",
+        "description": "PR review — отдельная сущность с comment, гейтит merge",
+        "reliability": "high"
+      },
+      {
+        "source": "argocd-sync-approval",
+        "description": "Manual sync approval с audit-trail",
+        "reliability": "high"
+      }
+    ],
+    "counterexample": [
+      {
+        "source": "booking-confirmation",
+        "description": "Specialist подтверждает booking single-click — нет separate approval-entity",
+        "reliability": "high"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [
+      {
+        "domain": "workflow",
+        "projection": "approval-step-detail",
+        "reason": "Manual approval-нода с requester/approver/comment"
+      },
+      {
+        "domain": "compliance",
+        "projection": "policy-exception-detail",
+        "reason": "Compliance-exception requests с approver"
+      }
+    ],
+    "shouldNotMatch": [
+      {
+        "domain": "messenger",
+        "projection": "message-detail",
+        "reason": "Нет approval-entity, нет approver field"
+      },
+      {
+        "domain": "lifequest",
+        "projection": "habit-detail",
+        "reason": "Habit — личный, без approval-flow"
+      }
+    ]
+  }
+}

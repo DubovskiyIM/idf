@@ -1,0 +1,79 @@
+{
+  "id": "user-defined-property-meta-layer",
+  "version": 1,
+  "status": "candidate",
+  "archetype": "catalog",
+  "trigger": {
+    "requires": [
+      {
+        "kind": "entity-field",
+        "field": "objectType",
+        "describesEntity": true
+      },
+      {
+        "kind": "entity-field",
+        "field": "isCustom"
+      },
+      {
+        "kind": "intent-creates",
+        "creates": "Property"
+      },
+      {
+        "kind": "field-role-present",
+        "role": "groupId"
+      }
+    ]
+  },
+  "structure": {
+    "slot": "body",
+    "description": "Settings catalog типа Property рендерится не как обычный grid, а как admin-конфигуратор: фильтр по objectType, группировка по PropertyGroup, drag-reorder внутри группы, badge isCustom/standard, type-aware editor (text/number/dropdown/calculation/score). Изменение property сразу влияет на форму родительской entity."
+  },
+  "rationale": {
+    "hypothesis": "Когда сама схема данных — пользовательский конфиг (custom fields), нужен отдельный mental space 'настройка полей' с группировкой и порядком, отдельным от 'данных по полям'. Смешивать с обычным CRUD-каталогом — ломать модель: пользователь думает 'я настраиваю что есть', а не 'я создаю запись данных'.",
+    "evidence": [
+      {
+        "source": "hubspot-crm",
+        "description": "Properties система с standard+custom, PropertyGroup, calculation/score subtypes",
+        "reliability": "high"
+      },
+      {
+        "source": "salesforce-field-setup",
+        "description": "Object Manager с полями, grouping в page-layouts",
+        "reliability": "high"
+      },
+      {
+        "source": "airtable-field-config",
+        "description": "Field-config sidebar отдельно от данных таблицы",
+        "reliability": "high"
+      }
+    ],
+    "counterexample": [
+      {
+        "source": "google-sheets",
+        "description": "Колонки = обычные данные, нет meta-layer 'настройка колонок' — но Sheets без типизации",
+        "reliability": "medium"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [
+      {
+        "domain": "workflow",
+        "projection": "workflow_template_catalog",
+        "reason": "Если есть user-defined node-types — meta-layer над workflow"
+      }
+    ],
+    "shouldNotMatch": [
+      {
+        "domain": "messenger",
+        "projection": "message_feed",
+        "reason": "Сообщения — фиксированная схема, нет custom-fields"
+      },
+      {
+        "domain": "invest",
+        "projection": "asset_catalog",
+        "reason": "Asset-схема жёсткая, нет user-defined полей"
+      }
+    ]
+  }
+}

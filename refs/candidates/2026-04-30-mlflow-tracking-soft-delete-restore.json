@@ -1,0 +1,85 @@
+{
+  "id": "soft-delete-restore",
+  "version": 1,
+  "status": "candidate",
+  "archetype": "catalog",
+  "trigger": {
+    "requires": [
+      {
+        "kind": "entity-field",
+        "name": "lifecycleStage",
+        "values": [
+          "active",
+          "deleted"
+        ]
+      },
+      {
+        "kind": "intent-effect",
+        "target": "*.lifecycleStage"
+      },
+      {
+        "kind": "intent-count",
+        "α": "remove",
+        "irreversibility": "high",
+        "min": 1
+      }
+    ]
+  },
+  "structure": {
+    "slot": "toolbar",
+    "description": "Catalog получает segmented-toggle 'Active | Deleted' в toolbar; в ветке Deleted primary-CTA каждой карточки — Restore (replace lifecycleStage), а delete получает high-irreversibility tone только в active-ветке."
+  },
+  "rationale": {
+    "hypothesis": "Soft-delete — это не remove, а смена жизненного цикла; UI должен явно разделять active/trash views и предлагать симметричную restore-операцию, иначе пользователь теряет видимость удалённых записей и не доверяет 'безопасности' delete.",
+    "evidence": [
+      {
+        "source": "mlflow",
+        "description": "Experiments / Runs имеют active/deleted фильтр и restore intent",
+        "reliability": "high"
+      },
+      {
+        "source": "gmail",
+        "description": "Trash как отдельный view с 'Move to Inbox' восстановлением",
+        "reliability": "high"
+      },
+      {
+        "source": "notion",
+        "description": "Trash + Restore вместо immediate hard-delete",
+        "reliability": "high"
+      }
+    ],
+    "counterexample": [
+      {
+        "source": "delivery",
+        "description": "Order не имеет soft-delete — completed/cancelled — терминальные состояния, не lifecycleStage",
+        "reliability": "high"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [
+      {
+        "domain": "lifequest",
+        "projection": "goal-list",
+        "reason": "Goals часто архивируются с возможностью восстановления — чистый soft-delete кейс"
+      },
+      {
+        "domain": "workflow",
+        "projection": "workflow-list",
+        "reason": "Workflow определения архивируются, не удаляются"
+      }
+    ],
+    "shouldNotMatch": [
+      {
+        "domain": "messenger",
+        "projection": "conversation-list",
+        "reason": "Conversation удаляется hard, без lifecycleStage"
+      },
+      {
+        "domain": "sales",
+        "projection": "bid-list",
+        "reason": "Bid финализируется (accepted/rejected), не архивируется"
+      }
+    ]
+  }
+}

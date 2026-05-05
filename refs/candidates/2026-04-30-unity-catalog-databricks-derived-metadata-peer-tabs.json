@@ -1,0 +1,56 @@
+{
+  "id": "derived-metadata-peer-tabs",
+  "version": 1,
+  "status": "candidate",
+  "archetype": "detail",
+  "trigger": {
+    "requires": [
+      {
+        "kind": "sub-entity-exists",
+        "entity": "QualityAssertion|TableInsight|*Insight"
+      }
+    ]
+  },
+  "structure": {
+    "slot": "sections",
+    "description": "Tabs derived/passive метаданных (Quality, Insights, Usage) живут в том же tab strip, что и structural metadata (Overview/Permissions). Не выделены в sub-page или footer — равноправные первоклассные грани объекта."
+  },
+  "rationale": {
+    "hypothesis": "Derived signals (passing tests, query frequency) важны для решений, как и declared metadata. Прятать их в sub-page подразумевает second-class status — а в современном data-mesh это часто primary signal.",
+    "evidence": [
+      {
+        "source": "databricks-unity-catalog",
+        "description": "Quality and Insights tabs alongside structural metadata",
+        "reliability": "high"
+      },
+      {
+        "source": "datadog-service-detail",
+        "description": "SLO / Apdex tabs наравне с config",
+        "reliability": "high"
+      }
+    ],
+    "counterexample": [
+      {
+        "source": "github-repo",
+        "description": "Insights — отдельный top-level link, не peer to code",
+        "reliability": "medium"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [
+      {
+        "domain": "gravitino",
+        "projection": "table_detail",
+        "reason": "Quality + popularity рядом с schema"
+      }
+    ],
+    "shouldNotMatch": [
+      {
+        "domain": "messenger",
+        "projection": "conversation_detail",
+        "reason": "Conversation не имеет derived-quality measure"
+      }
+    ]
+  }
+}

@@ -1,0 +1,81 @@
+{
+  "id": "cross-aggregate-today-screen",
+  "version": 1,
+  "status": "candidate",
+  "archetype": "dashboard",
+  "trigger": {
+    "requires": [
+      {
+        "kind": "field-role-present",
+        "role": "dueDate",
+        "minEntities": 2
+      },
+      {
+        "kind": "field-role-present",
+        "role": "owner",
+        "shared": true
+      },
+      {
+        "kind": "has-role",
+        "value": "owner"
+      }
+    ]
+  },
+  "structure": {
+    "slot": "body",
+    "description": "Dashboard 'Today' для viewer = owner агрегирует across нескольких entity-types по дате: tasks due today, meetings scheduled today, recent activities на owned-сущностях. Не per-entity список, а cross-aggregate timeline отсортированный по time-of-day. Mobile-first compact layout с swipe-to-complete actions."
+  },
+  "rationale": {
+    "hypothesis": "Когда у пользователя дневная работа размазана по нескольким entity-типам (tasks + meetings + activities), per-entity tab требует 3 переключения чтобы увидеть 'что сегодня'. Cross-aggregate Today-view даёт single dispatch surface, упорядоченный по времени, с inline actions без navigation.",
+    "evidence": [
+      {
+        "source": "hubspot-crm-mobile",
+        "description": "Today screen объединяет tasks + meetings + activity feed",
+        "reliability": "high"
+      },
+      {
+        "source": "things-3",
+        "description": "Today view агрегирует projects/areas/inbox по дате",
+        "reliability": "high"
+      },
+      {
+        "source": "google-calendar-schedule",
+        "description": "Schedule view как агрегатор events + tasks",
+        "reliability": "high"
+      }
+    ],
+    "counterexample": [
+      {
+        "source": "github-mobile",
+        "description": "Issues и PRs — отдельные tabs, нет 'today' агрегатора потому что нет dueDate-семантики",
+        "reliability": "medium"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [
+      {
+        "domain": "lifequest",
+        "projection": "today_dashboard",
+        "reason": "Habit + Task + Goal milestones по дате — естественный today-view"
+      },
+      {
+        "domain": "booking",
+        "projection": "specialist_today",
+        "reason": "Specialist's bookings + tasks для дня"
+      }
+    ],
+    "shouldNotMatch": [
+      {
+        "domain": "invest",
+        "projection": "portfolio_dashboard",
+        "reason": "Нет per-day actionable items, dashboard про метрики"
+      },
+      {
+        "domain": "messenger",
+        "projection": "conversation_catalog",
+        "reason": "Messages — chronological feed по своей природе, не нужен today-aggregator"
+      }
+    ]
+  }
+}

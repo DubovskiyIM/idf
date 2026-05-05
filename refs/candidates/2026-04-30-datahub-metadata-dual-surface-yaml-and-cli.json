@@ -1,0 +1,68 @@
+{
+  "id": "dual-surface-yaml-and-cli",
+  "version": 1,
+  "status": "candidate",
+  "archetype": "detail",
+  "trigger": {
+    "requires": [
+      {
+        "kind": "entity-field",
+        "value": "yamlConfig",
+        "fieldRole": "configBody"
+      },
+      {
+        "kind": "intent-effect",
+        "α": "replace",
+        "target": "*.yamlConfig",
+        "confirmation": "form"
+      }
+    ]
+  },
+  "structure": {
+    "slot": "sections",
+    "description": "Configuration entity exposes both UI YAML editor and copy-as-CLI snippet against same model. UI form for ad-hoc edits; CLI string for CI/IaC. Both materialize to identical config record."
+  },
+  "rationale": {
+    "hypothesis": "Config-as-data needs two reader audiences: humans who tweak occasionally (UI) and automation that reproduces (CLI/file). One surface alienates the other; offering both with shared model preserves single source of truth.",
+    "evidence": [
+      {
+        "source": "DataHub",
+        "description": "Ingestion recipe — YAML editor in UI + CLI command for CI",
+        "reliability": "high"
+      },
+      {
+        "source": "Vercel",
+        "description": "Project settings UI + vercel.json",
+        "reliability": "high"
+      },
+      {
+        "source": "GitHub Actions",
+        "description": "Workflow file editable in UI + .yml in repo",
+        "reliability": "high"
+      }
+    ],
+    "counterexample": [
+      {
+        "source": "Pure-UI config",
+        "description": "If users never automate, dual surface is overhead",
+        "reliability": "medium"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [
+      {
+        "domain": "workflow",
+        "projection": "workflow-config",
+        "reason": "Workflow definition editable as YAML or via UI"
+      }
+    ],
+    "shouldNotMatch": [
+      {
+        "domain": "reflect",
+        "projection": "mood-detail",
+        "reason": "No config concept"
+      }
+    ]
+  }
+}

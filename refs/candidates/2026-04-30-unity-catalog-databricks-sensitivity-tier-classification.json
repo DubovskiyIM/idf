@@ -1,0 +1,61 @@
+{
+  "id": "sensitivity-tier-classification",
+  "version": 1,
+  "status": "candidate",
+  "archetype": null,
+  "trigger": {
+    "requires": [
+      {
+        "kind": "sub-entity-exists",
+        "entity": "ClassificationLabel|SensitivityLabel"
+      },
+      {
+        "kind": "entity-field",
+        "field": "sensitivity|tier",
+        "selectValuesMin": 3
+      }
+    ]
+  },
+  "structure": {
+    "slot": "header",
+    "description": "Classification labels рендерятся отдельно от обычных тегов, цветом по sensitivity-tier (PII=red, financial=amber, public=grey). Их применение триггерит side-effect (auto-mask), что визуально подчёркивается через icon."
+  },
+  "rationale": {
+    "hypothesis": "Labels с side-effect (политики, mask) — это не тег, а декларация intent. Визуальное смешение с произвольными user-tags ослабляет «осторожность» при applying. Цветовая стратификация по риску — ergonomic anchor.",
+    "evidence": [
+      {
+        "source": "databricks-unity-catalog",
+        "description": "Classification labels distinct from tags, sensitivity tier coloring drives masking",
+        "reliability": "high"
+      },
+      {
+        "source": "microsoft-purview-mip",
+        "description": "Sensitivity labels с risk-tier цветами и enforced policy",
+        "reliability": "high"
+      }
+    ],
+    "counterexample": [
+      {
+        "source": "github-issue-labels",
+        "description": "Labels — все равноправные, никакой sensitivity-семантики",
+        "reliability": "high"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [
+      {
+        "domain": "compliance",
+        "projection": "data_inventory",
+        "reason": "PII/PCI labels с tier"
+      }
+    ],
+    "shouldNotMatch": [
+      {
+        "domain": "messenger",
+        "projection": "conversation",
+        "reason": "Conversation tags не имеют sensitivity-tier"
+      }
+    ]
+  }
+}

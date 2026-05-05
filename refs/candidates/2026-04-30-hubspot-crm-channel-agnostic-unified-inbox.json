@@ -1,0 +1,81 @@
+{
+  "id": "channel-agnostic-unified-inbox",
+  "version": 1,
+  "status": "candidate",
+  "archetype": "catalog",
+  "trigger": {
+    "requires": [
+      {
+        "kind": "entity-field",
+        "field": "channel",
+        "values": ">=3"
+      },
+      {
+        "kind": "field-role-present",
+        "roles": [
+          "assignedTo",
+          "status",
+          "subject"
+        ],
+        "anyOf": true
+      },
+      {
+        "kind": "intent-effect",
+        "α": "replace",
+        "target": "*.assignedToUserId"
+      }
+    ]
+  },
+  "structure": {
+    "slot": "body",
+    "description": "Catalog Conversation-сущности рендерится как inbox: левый split-pane = list с channel-icon префиксом, status-badge, snippet превью; правый = выбранный thread с inline-reply composer. Filter-toolbar с channel-multi-select, assignee-filter, status. Один surface для email/chat/whatsapp/messenger/form — channel становится атрибутом, не отдельным app."
+  },
+  "rationale": {
+    "hypothesis": "Когда команда отвечает на сообщения из множества каналов, переключение между app-per-channel создаёт пропуски и дубли работы. Унификация в Conversation entity с channel как полем даёт single queue с консистентным assignment/SLA/reply-flow. Разница каналов — visual cue (icon), не workflow.",
+    "evidence": [
+      {
+        "source": "hubspot-crm",
+        "description": "Inbox унифицирует email + chat + Messenger + WhatsApp + form в один Conversation",
+        "reliability": "high"
+      },
+      {
+        "source": "intercom-inbox",
+        "description": "Multi-channel inbox с одним assignment-flow",
+        "reliability": "high"
+      },
+      {
+        "source": "front-app",
+        "description": "Email + SMS + WhatsApp + Twitter в одной shared inbox",
+        "reliability": "high"
+      }
+    ],
+    "counterexample": [
+      {
+        "source": "slack",
+        "description": "Slack — single channel (chat), а email и DM разделены принципиально, унификация ломает ожидания",
+        "reliability": "medium"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [
+      {
+        "domain": "messenger",
+        "projection": "conversation_catalog",
+        "reason": "Если Conversation поддерживает channels — inbox-вариант"
+      }
+    ],
+    "shouldNotMatch": [
+      {
+        "domain": "planning",
+        "projection": "poll_catalog",
+        "reason": "Poll — single-channel by definition"
+      },
+      {
+        "domain": "delivery",
+        "projection": "order_catalog",
+        "reason": "Order — не communication, kanban важнее"
+      }
+    ]
+  }
+}

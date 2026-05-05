@@ -1,0 +1,81 @@
+{
+  "id": "dynamic-vs-static-membership",
+  "version": 1,
+  "status": "candidate",
+  "archetype": "detail",
+  "trigger": {
+    "requires": [
+      {
+        "kind": "entity-field",
+        "field": "type",
+        "values": [
+          "dynamic",
+          "static"
+        ],
+        "anyOf": true
+      },
+      {
+        "kind": "entity-field",
+        "field": "criteria",
+        "optional": true
+      },
+      {
+        "kind": "intent-effect",
+        "α": "replace",
+        "target": "*.lastRecomputedAt"
+      }
+    ]
+  },
+  "structure": {
+    "slot": "primaryCTA",
+    "description": "Detail collection-сущности гейтит UI по type: dynamic-режим показывает criteria-builder + 'recompute' CTA + lastRecomputedAt-витнес; static-режим показывает 'add member' / 'remove member' CTA + список как mutable. Один тип сущности, два разных surface'а, выбираемых полем type."
+  },
+  "rationale": {
+    "hypothesis": "Коллекции часто имеют два mental model: 'правило членства' (audience by criteria) и 'ручной список' (curated set). Если сделать единый UI — ни один режим не работает: criteria-builder в static бесполезен, manual-add в dynamic ломает invariant. Гейтинг surface'а по discriminator устраняет напряжение.",
+    "evidence": [
+      {
+        "source": "hubspot-crm",
+        "description": "Lists с типом dynamic (criteria + recompute) vs static (manual membership)",
+        "reliability": "high"
+      },
+      {
+        "source": "spotify-playlist",
+        "description": "Smart playlist (rule-based) vs Regular playlist (drag-drop add) — разные UI",
+        "reliability": "high"
+      },
+      {
+        "source": "apple-music-smart-playlist",
+        "description": "Smart Playlist editor с rule-builder vs Playlist с track-list",
+        "reliability": "high"
+      }
+    ],
+    "counterexample": [
+      {
+        "source": "twitter-list",
+        "description": "Twitter Lists — только manual, dynamic нет, поэтому паттерн не нужен",
+        "reliability": "medium"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [
+      {
+        "domain": "messenger",
+        "projection": "channel_detail",
+        "reason": "Канал может быть public (rule: все matching пользователи) vs private (invite-only list)"
+      }
+    ],
+    "shouldNotMatch": [
+      {
+        "domain": "planning",
+        "projection": "poll_detail",
+        "reason": "Poll — нет dual-режима членства"
+      },
+      {
+        "domain": "invest",
+        "projection": "portfolio_detail",
+        "reason": "Портфель — всегда manual curation, нет criteria-mode"
+      }
+    ]
+  }
+}

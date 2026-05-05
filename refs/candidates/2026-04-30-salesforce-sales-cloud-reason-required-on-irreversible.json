@@ -1,0 +1,64 @@
+{
+  "id": "reason-required-on-irreversible",
+  "version": 1,
+  "status": "candidate",
+  "archetype": null,
+  "trigger": {
+    "requires": [
+      {
+        "kind": "intent-confirmation",
+        "value": "form"
+      },
+      {
+        "kind": "intent-effect",
+        "irreversibility": "high"
+      },
+      {
+        "kind": "entity-field",
+        "fieldRole": "reason-picklist"
+      }
+    ]
+  },
+  "structure": {
+    "slot": "overlay",
+    "description": "Когда irreversible-intent имеет confirmation=form, форма обязательно содержит reason-picklist (loss reason, close reason, abort reason) с required-валидацией. Pure 'Are you sure?' dialog заменяется на reason-form."
+  },
+  "rationale": {
+    "hypothesis": "Irreversible-actions без reason-capture теряют orgknowledge — почему deal lost, почему case escalated. Required-reason на irreversible шаге превращает каждый negative outcome в обучающий datapoint.",
+    "evidence": [
+      {
+        "source": "salesforce-sales-cloud",
+        "description": "Mark Lost = form с required loss-reason picklist; Close Case с close-reason",
+        "reliability": "high"
+      },
+      {
+        "source": "stripe-refund",
+        "description": "Refund form требует reason для downstream-аналитики",
+        "reliability": "high"
+      }
+    ],
+    "counterexample": [
+      {
+        "source": "github-close-issue",
+        "description": "Close issue без reason — историю даёт comments",
+        "reliability": "medium"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [
+      {
+        "domain": "delivery",
+        "projection": "order-detail",
+        "reason": "cancel_order должен записать reason для ML-обучения"
+      }
+    ],
+    "shouldNotMatch": [
+      {
+        "domain": "lifequest",
+        "projection": "goal-detail",
+        "reason": "Personal goals — reason необязателен, friction-вреден"
+      }
+    ]
+  }
+}

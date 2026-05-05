@@ -1,0 +1,65 @@
+{
+  "id": "workspace-switcher",
+  "version": 1,
+  "status": "candidate",
+  "archetype": null,
+  "trigger": {
+    "requires": [
+      {
+        "kind": "entity-count",
+        "minDistinctEntities": 12
+      },
+      {
+        "kind": "has-role",
+        "minRoles": 3
+      }
+    ]
+  },
+  "structure": {
+    "slot": "header",
+    "description": "Когда домен большой и role'ы видят разные subset'ы entity/intent, app-launcher (grid 3×N) переключает workspace: subset табов + utility-bar + дефолтная projection. URL отражает workspace."
+  },
+  "rationale": {
+    "hypothesis": "Один большой nav для всего домена перегружает любую конкретную роль. Workspace-switcher делает scope явным: Sales/Service/Marketing вместо 50 навигационных элементов.",
+    "evidence": [
+      {
+        "source": "salesforce-sales-cloud",
+        "description": "App Launcher: Sales / Service / Marketing apps с разным набором tabs и utility bar",
+        "reliability": "high"
+      },
+      {
+        "source": "google-workspace-switcher",
+        "description": "9-dot grid между Gmail/Drive/Calendar/Docs",
+        "reliability": "high"
+      },
+      {
+        "source": "microsoft-365-app-switcher",
+        "description": "Outlook ↔ Teams ↔ SharePoint",
+        "reliability": "high"
+      }
+    ],
+    "counterexample": [
+      {
+        "source": "linear",
+        "description": "Single-purpose product — workspace-switcher избыточен",
+        "reliability": "high"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [
+      {
+        "domain": "meta",
+        "projection": "app-shell",
+        "reason": "Meta-домен по природе аггрегирует множество concerns"
+      }
+    ],
+    "shouldNotMatch": [
+      {
+        "domain": "reflect",
+        "projection": "mood-entry-detail",
+        "reason": "Один use-case, переключать нечего"
+      }
+    ]
+  }
+}

@@ -1,0 +1,829 @@
+{
+  "source": "salesforce-sales-cloud-dashboard",
+  "entities": [
+    {
+      "name": "Account",
+      "fields": [
+        "name",
+        "owner",
+        "industry",
+        "type",
+        "annualRevenue",
+        "numberOfEmployees",
+        "rating",
+        "ownership",
+        "phone",
+        "website",
+        "billingAddress",
+        "parentAccount"
+      ],
+      "statusValues": [],
+      "foreignKey": "parentAccount→Account"
+    },
+    {
+      "name": "Contact",
+      "fields": [
+        "firstName",
+        "lastName",
+        "title",
+        "email",
+        "phone",
+        "mobilePhone",
+        "mailingAddress",
+        "reportsTo",
+        "leadSource"
+      ],
+      "foreignKey": "accountId→Account"
+    },
+    {
+      "name": "Lead",
+      "fields": [
+        "firstName",
+        "lastName",
+        "company",
+        "title",
+        "email",
+        "phone",
+        "status",
+        "rating",
+        "leadSource",
+        "industry",
+        "annualRevenue",
+        "owner"
+      ],
+      "statusValues": [
+        "open_not_contacted",
+        "working",
+        "qualified",
+        "unqualified"
+      ]
+    },
+    {
+      "name": "Opportunity",
+      "fields": [
+        "name",
+        "stage",
+        "amount",
+        "closeDate",
+        "probability",
+        "forecastCategory",
+        "type",
+        "leadSource",
+        "owner",
+        "nextStep"
+      ],
+      "statusValues": [
+        "prospecting",
+        "qualification",
+        "needs_analysis",
+        "proposal",
+        "negotiation",
+        "closed_won",
+        "closed_lost"
+      ],
+      "foreignKey": "accountId→Account"
+    },
+    {
+      "name": "OpportunityProduct",
+      "fields": [
+        "product",
+        "quantity",
+        "unitPrice",
+        "totalPrice",
+        "discount",
+        "priceBookEntry"
+      ],
+      "foreignKey": "opportunityId→Opportunity"
+    },
+    {
+      "name": "OpportunityStageHistory",
+      "fields": [
+        "fromStage",
+        "toStage",
+        "changedBy",
+        "changedAt",
+        "amount",
+        "probability"
+      ],
+      "foreignKey": "opportunityId→Opportunity"
+    },
+    {
+      "name": "Case",
+      "fields": [
+        "caseNumber",
+        "subject",
+        "description",
+        "status",
+        "priority",
+        "severity",
+        "origin",
+        "owner",
+        "slaDueDate"
+      ],
+      "statusValues": [
+        "new",
+        "working",
+        "escalated",
+        "closed"
+      ],
+      "foreignKey": "accountId→Account"
+    },
+    {
+      "name": "Task",
+      "fields": [
+        "subject",
+        "status",
+        "priority",
+        "dueDate",
+        "assignedTo",
+        "relatedTo",
+        "description"
+      ],
+      "statusValues": [
+        "not_started",
+        "in_progress",
+        "completed",
+        "deferred"
+      ],
+      "foreignKey": "whatId→Account|Opportunity|Case"
+    },
+    {
+      "name": "Event",
+      "fields": [
+        "subject",
+        "startDateTime",
+        "endDateTime",
+        "location",
+        "attendees",
+        "description",
+        "relatedTo"
+      ],
+      "foreignKey": "whatId→Account|Opportunity|Case"
+    },
+    {
+      "name": "CallLog",
+      "fields": [
+        "subject",
+        "callDateTime",
+        "duration",
+        "callType",
+        "outcome",
+        "notes",
+        "relatedTo"
+      ],
+      "foreignKey": "whoId→Contact|Lead"
+    },
+    {
+      "name": "EmailMessage",
+      "fields": [
+        "subject",
+        "fromAddress",
+        "toAddress",
+        "ccAddress",
+        "body",
+        "sentAt",
+        "status",
+        "relatedTo"
+      ],
+      "statusValues": [
+        "draft",
+        "sent",
+        "received",
+        "failed"
+      ],
+      "foreignKey": "whoId→Contact|Lead"
+    },
+    {
+      "name": "ChatterPost",
+      "fields": [
+        "body",
+        "author",
+        "createdAt",
+        "mentions",
+        "likes",
+        "attachments"
+      ],
+      "foreignKey": "parentId→Account|Opportunity|Case"
+    },
+    {
+      "name": "Quote",
+      "fields": [
+        "quoteNumber",
+        "name",
+        "status",
+        "expirationDate",
+        "totalAmount",
+        "discount",
+        "tax",
+        "isLocked"
+      ],
+      "statusValues": [
+        "draft",
+        "in_review",
+        "approved",
+        "presented",
+        "accepted",
+        "rejected"
+      ],
+      "foreignKey": "opportunityId→Opportunity"
+    },
+    {
+      "name": "Order",
+      "fields": [
+        "orderNumber",
+        "status",
+        "orderStartDate",
+        "totalAmount",
+        "billingAddress",
+        "shippingAddress"
+      ],
+      "statusValues": [
+        "draft",
+        "activated"
+      ],
+      "foreignKey": "accountId→Account"
+    },
+    {
+      "name": "Product",
+      "fields": [
+        "name",
+        "productCode",
+        "description",
+        "family",
+        "isActive"
+      ]
+    },
+    {
+      "name": "PriceBookEntry",
+      "fields": [
+        "unitPrice",
+        "currency",
+        "isActive"
+      ],
+      "foreignKey": "productId→Product"
+    },
+    {
+      "name": "Campaign",
+      "fields": [
+        "name",
+        "type",
+        "status",
+        "startDate",
+        "endDate",
+        "budget",
+        "expectedRevenue",
+        "owner"
+      ],
+      "statusValues": [
+        "planned",
+        "in_progress",
+        "completed",
+        "aborted"
+      ]
+    },
+    {
+      "name": "CampaignMember",
+      "fields": [
+        "status",
+        "hasResponded"
+      ],
+      "foreignKey": "campaignId→Campaign"
+    },
+    {
+      "name": "Forecast",
+      "fields": [
+        "owner",
+        "period",
+        "quota",
+        "pipeline",
+        "bestCase",
+        "commit",
+        "closed",
+        "submittedAt"
+      ],
+      "foreignKey": "ownerId→User"
+    },
+    {
+      "name": "Report",
+      "fields": [
+        "name",
+        "folder",
+        "reportType",
+        "columns",
+        "groupings",
+        "filters",
+        "chartType"
+      ]
+    },
+    {
+      "name": "Dashboard",
+      "fields": [
+        "name",
+        "folder",
+        "components",
+        "filters",
+        "refreshSchedule"
+      ]
+    },
+    {
+      "name": "DashboardComponent",
+      "fields": [
+        "title",
+        "visualization",
+        "metric"
+      ],
+      "foreignKey": "dashboardId→Dashboard,reportId→Report"
+    },
+    {
+      "name": "Flow",
+      "fields": [
+        "name",
+        "type",
+        "trigger",
+        "status",
+        "elements",
+        "version"
+      ],
+      "statusValues": [
+        "draft",
+        "active",
+        "obsolete"
+      ]
+    },
+    {
+      "name": "ApprovalRequest",
+      "fields": [
+        "status",
+        "submittedBy",
+        "approver",
+        "comments",
+        "submittedAt"
+      ],
+      "statusValues": [
+        "pending",
+        "approved",
+        "rejected",
+        "recalled"
+      ],
+      "foreignKey": "recordId→Quote|Opportunity"
+    },
+    {
+      "name": "User",
+      "fields": [
+        "name",
+        "email",
+        "profile",
+        "role",
+        "permissionSets",
+        "manager",
+        "isActive"
+      ],
+      "foreignKey": "managerId→User"
+    },
+    {
+      "name": "Profile",
+      "fields": [
+        "name",
+        "objectPermissions",
+        "fieldLevelSecurity",
+        "userLicense"
+      ]
+    },
+    {
+      "name": "PermissionSet",
+      "fields": [
+        "name",
+        "objectPermissions",
+        "fieldLevelSecurity",
+        "isStackable"
+      ]
+    },
+    {
+      "name": "SharingRule",
+      "fields": [
+        "name",
+        "criteria",
+        "sharedWith",
+        "accessLevel",
+        "ruleType"
+      ]
+    },
+    {
+      "name": "ListView",
+      "fields": [
+        "name",
+        "objectType",
+        "filters",
+        "columns",
+        "scope",
+        "isShared"
+      ]
+    }
+  ],
+  "intents": [
+    {
+      "id": "create_lead",
+      "α": "add",
+      "creates": "Lead",
+      "confirmation": "form"
+    },
+    {
+      "id": "convert_lead",
+      "α": "replace",
+      "target": "lead.status",
+      "creates": "Account|Contact|Opportunity",
+      "confirmation": "form"
+    },
+    {
+      "id": "disqualify_lead",
+      "α": "replace",
+      "target": "lead.status",
+      "confirmation": "click"
+    },
+    {
+      "id": "create_account",
+      "α": "add",
+      "creates": "Account",
+      "confirmation": "form"
+    },
+    {
+      "id": "transfer_account",
+      "α": "replace",
+      "target": "account.owner",
+      "confirmation": "form"
+    },
+    {
+      "id": "add_contact",
+      "α": "add",
+      "creates": "Contact",
+      "confirmation": "form"
+    },
+    {
+      "id": "create_opportunity",
+      "α": "add",
+      "creates": "Opportunity",
+      "confirmation": "form"
+    },
+    {
+      "id": "advance_stage",
+      "α": "replace",
+      "target": "opportunity.stage",
+      "confirmation": "click"
+    },
+    {
+      "id": "mark_stage_complete",
+      "α": "replace",
+      "target": "opportunity.stage",
+      "confirmation": "click"
+    },
+    {
+      "id": "mark_won",
+      "α": "replace",
+      "target": "opportunity.stage",
+      "confirmation": "click",
+      "irreversibility": "high"
+    },
+    {
+      "id": "mark_lost",
+      "α": "replace",
+      "target": "opportunity.stage",
+      "confirmation": "form",
+      "irreversibility": "high"
+    },
+    {
+      "id": "edit_amount",
+      "α": "replace",
+      "target": "opportunity.amount",
+      "confirmation": "enter"
+    },
+    {
+      "id": "edit_close_date",
+      "α": "replace",
+      "target": "opportunity.closeDate",
+      "confirmation": "click"
+    },
+    {
+      "id": "set_forecast_category",
+      "α": "replace",
+      "target": "opportunity.forecastCategory",
+      "confirmation": "click"
+    },
+    {
+      "id": "add_opportunity_product",
+      "α": "add",
+      "creates": "OpportunityProduct",
+      "confirmation": "form"
+    },
+    {
+      "id": "add_contact_role",
+      "α": "add",
+      "creates": "ContactRole",
+      "confirmation": "form"
+    },
+    {
+      "id": "log_call",
+      "α": "add",
+      "creates": "CallLog",
+      "confirmation": "form"
+    },
+    {
+      "id": "log_email",
+      "α": "add",
+      "creates": "EmailMessage",
+      "confirmation": "form"
+    },
+    {
+      "id": "send_email",
+      "α": "add",
+      "creates": "EmailMessage",
+      "confirmation": "form"
+    },
+    {
+      "id": "schedule_event",
+      "α": "add",
+      "creates": "Event",
+      "confirmation": "form"
+    },
+    {
+      "id": "create_task",
+      "α": "add",
+      "creates": "Task",
+      "confirmation": "form"
+    },
+    {
+      "id": "complete_task",
+      "α": "replace",
+      "target": "task.status",
+      "confirmation": "click"
+    },
+    {
+      "id": "post_chatter",
+      "α": "add",
+      "creates": "ChatterPost",
+      "confirmation": "enter"
+    },
+    {
+      "id": "comment_chatter",
+      "α": "add",
+      "creates": "ChatterComment",
+      "confirmation": "enter"
+    },
+    {
+      "id": "like_chatter",
+      "α": "add",
+      "creates": "ChatterLike",
+      "confirmation": "click"
+    },
+    {
+      "id": "create_case",
+      "α": "add",
+      "creates": "Case",
+      "confirmation": "form"
+    },
+    {
+      "id": "escalate_case",
+      "α": "replace",
+      "target": "case.status",
+      "confirmation": "click"
+    },
+    {
+      "id": "close_case",
+      "α": "replace",
+      "target": "case.status",
+      "confirmation": "form",
+      "irreversibility": "high"
+    },
+    {
+      "id": "assign_owner",
+      "α": "replace",
+      "target": "record.owner",
+      "confirmation": "form"
+    },
+    {
+      "id": "share_record_manually",
+      "α": "add",
+      "creates": "ManualShare",
+      "confirmation": "form"
+    },
+    {
+      "id": "build_quote",
+      "α": "add",
+      "creates": "Quote",
+      "confirmation": "form"
+    },
+    {
+      "id": "lock_quote",
+      "α": "replace",
+      "target": "quote.isLocked",
+      "confirmation": "click",
+      "irreversibility": "high"
+    },
+    {
+      "id": "generate_pdf",
+      "α": "add",
+      "creates": "QuoteDocument",
+      "confirmation": "click"
+    },
+    {
+      "id": "submit_for_approval",
+      "α": "add",
+      "creates": "ApprovalRequest",
+      "confirmation": "form"
+    },
+    {
+      "id": "approve_record",
+      "α": "replace",
+      "target": "approvalRequest.status",
+      "confirmation": "form"
+    },
+    {
+      "id": "reject_record",
+      "α": "replace",
+      "target": "approvalRequest.status",
+      "confirmation": "form",
+      "irreversibility": "high"
+    },
+    {
+      "id": "recall_approval",
+      "α": "replace",
+      "target": "approvalRequest.status",
+      "confirmation": "click"
+    },
+    {
+      "id": "create_order",
+      "α": "add",
+      "creates": "Order",
+      "confirmation": "form"
+    },
+    {
+      "id": "activate_order",
+      "α": "replace",
+      "target": "order.status",
+      "confirmation": "click",
+      "irreversibility": "high"
+    },
+    {
+      "id": "add_to_campaign",
+      "α": "add",
+      "creates": "CampaignMember",
+      "confirmation": "click"
+    },
+    {
+      "id": "save_list_view",
+      "α": "add",
+      "creates": "ListView",
+      "confirmation": "form"
+    },
+    {
+      "id": "apply_filter",
+      "α": "replace",
+      "target": "listView.filters",
+      "confirmation": "form"
+    },
+    {
+      "id": "switch_to_kanban",
+      "α": "replace",
+      "target": "listView.scope",
+      "confirmation": "click"
+    },
+    {
+      "id": "drag_to_stage",
+      "α": "replace",
+      "target": "opportunity.stage",
+      "confirmation": "click"
+    },
+    {
+      "id": "mass_change_owner",
+      "α": "replace",
+      "target": "records.owner",
+      "confirmation": "form"
+    },
+    {
+      "id": "mass_delete",
+      "α": "remove",
+      "target": "records",
+      "confirmation": "form",
+      "irreversibility": "high"
+    },
+    {
+      "id": "inline_edit_field",
+      "α": "replace",
+      "target": "record.field",
+      "confirmation": "enter"
+    },
+    {
+      "id": "submit_forecast",
+      "α": "replace",
+      "target": "forecast.submittedAt",
+      "confirmation": "click",
+      "irreversibility": "high"
+    },
+    {
+      "id": "override_forecast",
+      "α": "replace",
+      "target": "forecast.commit",
+      "confirmation": "enter"
+    },
+    {
+      "id": "run_report",
+      "α": "replace",
+      "target": "report.results",
+      "confirmation": "click"
+    },
+    {
+      "id": "subscribe_dashboard",
+      "α": "add",
+      "creates": "DashboardSubscription",
+      "confirmation": "form"
+    },
+    {
+      "id": "refresh_dashboard",
+      "α": "replace",
+      "target": "dashboard.lastRefresh",
+      "confirmation": "click"
+    },
+    {
+      "id": "run_flow",
+      "α": "add",
+      "creates": "FlowExecution",
+      "confirmation": "form"
+    },
+    {
+      "id": "activate_flow",
+      "α": "replace",
+      "target": "flow.status",
+      "confirmation": "click",
+      "irreversibility": "high"
+    },
+    {
+      "id": "configure_picklist",
+      "α": "replace",
+      "target": "field.picklistValues",
+      "confirmation": "form"
+    },
+    {
+      "id": "install_appexchange_package",
+      "α": "add",
+      "creates": "InstalledPackage",
+      "confirmation": "form",
+      "irreversibility": "high"
+    },
+    {
+      "id": "create_custom_object",
+      "α": "add",
+      "creates": "CustomObject",
+      "confirmation": "form"
+    },
+    {
+      "id": "delete_record",
+      "α": "remove",
+      "target": "records",
+      "confirmation": "form",
+      "irreversibility": "high"
+    }
+  ],
+  "roles": [
+    "owner",
+    "viewer",
+    "agent",
+    "observer",
+    "admin"
+  ],
+  "observations": [
+    "Lightning Path component renders stages as horizontal stepper with 'Mark Stage Complete' CTA and per-stage guidance panel (Key Fields + Guidance for Success)",
+    "Activity timeline as universal cross-object panel — Tasks, Events, Calls, Emails, Logged Notes merged chronologically with type icons",
+    "Account detail organized as tabbed shell: Details / Activity / Chatter / News / Related — each tab is a distinct projection over same record",
+    "Highlights panel pinned at top of record detail with key business fields (AnnualRevenue, NumberOfEmployees, Industry, account team)",
+    "Related lists below detail render child collections (Contacts, Opportunities, Cases, Quotes) with quick-create buttons",
+    "Lead Conversion is a first-class composite intent producing Account + Contact + Opportunity in single form, not a generic status change",
+    "Kanban view auto-derived from picklist fields (stage, status) — drag between columns advances stage",
+    "Split view renders list pane left + selected detail right within same screen",
+    "Inline edit on list views — pencil icon on hover, save/cancel bar appears at row level",
+    "Mass actions toolbar appears when rows are selected (change owner, change status, send email, add to campaign, delete)",
+    "Forecast hierarchy renders as expandable tree (rep → manager → VP) with rollup totals per category bucket (Pipeline / Best Case / Commit / Closed)",
+    "Forecast manager override editable inline; submit locks the forecast period",
+    "Approval flow surfaces as banner on record with Approve / Reject / Reassign actions for current approver",
+    "Chatter feed embedded as tab on every record — post, @mention, comment, like, attach files",
+    "Per-user saved list views with shareable scope (private / role / org)",
+    "Filter logic supports AND/OR with explicit grouping syntax (e.g., '1 AND (2 OR 3)')",
+    "Object permissions exposed as multi-axis matrix: Profile (base) + Permission Sets (additive stacks) + Sharing Rules (criteria-based) + Role hierarchy (manager sees report's records)",
+    "Field-level security hides fields entirely from layouts/reports/API per profile",
+    "Dashboard components are references to underlying Reports — refreshing dashboard re-runs all reports",
+    "Report Builder uses drag-drop columns with grouping rows, summary functions (sum/avg/count), and chart on the same canvas",
+    "Cross-object reports traverse relationships (Account → Opportunities → Products) declaratively",
+    "Flow Builder renders as visual canvas with elements (decision, loop, action, screen, get/create/update/delete records, subflow)",
+    "Einstein scoring badges render inline on Lead/Opportunity rows (Hot/Warm/Cold; predicted-to-close %)",
+    "Auto-sync from Gmail/Outlook surfaces Activities without manual logging — captured emails/events appear in timeline",
+    "Person Account is a dual-mode entity (B2C) — Account and Contact merged into single record while preserving both APIs",
+    "Custom objects (__c suffix) and custom fields are first-class — admin UI generates layouts, list views, and tabs automatically",
+    "Utility bar at bottom of app shell hosts global tools (Phone dialer, Recent Items, Notes) persistent across navigation",
+    "Lookup vs master-detail vs junction relationships have distinct cascade semantics — master-detail propagates delete and ownership",
+    "Stage history is auto-tracked audit trail (from/to stage, who, when, amount/probability snapshot)",
+    "Mobile cards re-layout same record with abbreviated highlights + voice-search + offline edit queue",
+    "Today screen on mobile aggregates meetings + tasks + suggested follow-ups as composite dashboard",
+    "Quote lock is irreversible business state — locked quote cannot be edited, only cloned",
+    "Order activation transitions Draft → Activated and is irreversible",
+    "Mark Lost requires reason form (loss reason picklist) — irreversible deal closure",
+    "App Launcher grid switches subset of objects + tabs + utility bar (Sales / Service / Marketing apps)"
+  ]
+}

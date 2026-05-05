@@ -1,0 +1,66 @@
+{
+  "id": "traffic-light-state-badge",
+  "version": 1,
+  "status": "candidate",
+  "archetype": "detail",
+  "trigger": {
+    "requires": [
+      {
+        "kind": "entity-field",
+        "field": "state|status",
+        "selectValuesIncluding": [
+          "pending",
+          "ready",
+          "failed"
+        ]
+      }
+    ]
+  },
+  "structure": {
+    "slot": "hero",
+    "description": "Lifecycle-state с категориями pending/ready/failed/updating рендерится как traffic-light dot-badge (yellow/green/red/blue) рядом с именем. Без opening detail и без CTA — статус-индикатор для at-a-glance health."
+  },
+  "rationale": {
+    "hypothesis": "Не каждое status-поле требует phase-aware-CTA — для passively-monitored resources (deployments, endpoints) пользователь хочет lightweight signal: «работает или нет». Traffic-light использует культурный shortcut и не отъедает CTA-слот.",
+    "evidence": [
+      {
+        "source": "databricks-unity-catalog",
+        "description": "Serving endpoint state shown с traffic-light badge на model detail",
+        "reliability": "high"
+      },
+      {
+        "source": "kubernetes-pod-status",
+        "description": "Running/Pending/CrashLoopBackOff цветной dot",
+        "reliability": "high"
+      },
+      {
+        "source": "vercel-deployment-status",
+        "description": "Ready/Building/Error dot-badge",
+        "reliability": "high"
+      }
+    ],
+    "counterexample": [
+      {
+        "source": "trello-card-status",
+        "description": "List-position — implicit status, без traffic-light",
+        "reliability": "medium"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [
+      {
+        "domain": "argocd",
+        "projection": "application_detail",
+        "reason": "Sync/Health status badge"
+      }
+    ],
+    "shouldNotMatch": [
+      {
+        "domain": "planning",
+        "projection": "poll_detail",
+        "reason": "Poll status open/closed — бинарный, traffic-light overkill"
+      }
+    ]
+  }
+}

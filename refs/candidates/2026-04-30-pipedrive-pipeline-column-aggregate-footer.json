@@ -1,0 +1,79 @@
+{
+  "id": "column-aggregate-footer",
+  "version": 1,
+  "status": "candidate",
+  "archetype": "catalog",
+  "trigger": {
+    "requires": [
+      {
+        "kind": "entity-field",
+        "name": "status",
+        "enumSize": [
+          3,
+          8
+        ]
+      },
+      {
+        "kind": "field-role-present",
+        "role": "money"
+      },
+      {
+        "kind": "field-role-present",
+        "role": "percentage",
+        "optional": true
+      }
+    ]
+  },
+  "structure": {
+    "slot": "footer",
+    "description": "Под каждой kanban-колонкой — aggregate-row: count, sum(money), и weighted sum (money * percentage / 100) если есть probability-like поле."
+  },
+  "rationale": {
+    "hypothesis": "Kanban показывает распределение, но не объём; sales/operations ждут от каждой стадии конкретный financial weight. Aggregate-footer делает forecast явным без отдельного Insights-таба.",
+    "evidence": [
+      {
+        "source": "pipedrive",
+        "description": "Stage column footers — total amount, weighted (probability-adjusted) amount, deal count",
+        "reliability": "high"
+      },
+      {
+        "source": "hubspot-deals",
+        "description": "Pipeline column totals",
+        "reliability": "high"
+      }
+    ],
+    "counterexample": [
+      {
+        "source": "trello",
+        "description": "Generic Trello board без money не нуждается в footer",
+        "reliability": "high"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [
+      {
+        "domain": "delivery",
+        "projection": "orders",
+        "reason": "Order.amount + Order.status → выручка по стадии"
+      },
+      {
+        "domain": "sales",
+        "projection": "listings",
+        "reason": "Listing.price + Listing.status — totals по статусу"
+      }
+    ],
+    "shouldNotMatch": [
+      {
+        "domain": "lifequest",
+        "projection": "tasks",
+        "reason": "Task не имеет money — aggregate был бы пустым"
+      },
+      {
+        "domain": "messenger",
+        "projection": "conversations",
+        "reason": "Нет числовой меры"
+      }
+    ]
+  }
+}

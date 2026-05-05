@@ -1,0 +1,75 @@
+{
+  "id": "external-reference-witness",
+  "version": 1,
+  "status": "candidate",
+  "archetype": "detail",
+  "trigger": {
+    "requires": [
+      {
+        "kind": "entity-field",
+        "withRoleAny": [
+          "gitCommit",
+          "externalUrl",
+          "sourceUri"
+        ]
+      }
+    ]
+  },
+  "structure": {
+    "slot": "header",
+    "description": "Поле с ролью external-reference (commit hash, source URL, dataset URI) рендерится в header detail'а как hyperlink-chip с external-icon, ведущий на external-системную страницу. Не plain text."
+  },
+  "rationale": {
+    "hypothesis": "External-reference — не атрибут, а witness reproducibility / provenance: пользователь должен мочь jump'нуть в исходную систему за полным контекстом. Plain-text потеряет 80% ценности; hyperlink-chip удешевляет verification до одного клика.",
+    "evidence": [
+      {
+        "source": "mlflow",
+        "description": "gitCommit на Run detail — hyperlink в Git-провайдер",
+        "reliability": "high"
+      },
+      {
+        "source": "argocd-app",
+        "description": "Source repo URL + revision как clickable",
+        "reliability": "high"
+      },
+      {
+        "source": "sentry-issue",
+        "description": "Commit + release как linkable provenance",
+        "reliability": "high"
+      }
+    ],
+    "counterexample": [
+      {
+        "source": "lifequest-goal",
+        "description": "Goal не имеет external-reference, паттерн неприменим",
+        "reliability": "high"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [
+      {
+        "domain": "workflow",
+        "projection": "execution-detail",
+        "reason": "Execution.gitCommit / sourceUrl — provenance hyperlink"
+      },
+      {
+        "domain": "compliance",
+        "projection": "policy-detail",
+        "reason": "Policy.sourceDocUri — external link"
+      }
+    ],
+    "shouldNotMatch": [
+      {
+        "domain": "messenger",
+        "projection": "message-detail",
+        "reason": "Нет external-reference role'и на полях"
+      },
+      {
+        "domain": "planning",
+        "projection": "poll-detail",
+        "reason": "Poll — self-contained, без external провенанса"
+      }
+    ]
+  }
+}

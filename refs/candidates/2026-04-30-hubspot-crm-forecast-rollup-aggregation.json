@@ -1,0 +1,88 @@
+{
+  "id": "forecast-rollup-aggregation",
+  "version": 1,
+  "status": "candidate",
+  "archetype": "dashboard",
+  "trigger": {
+    "requires": [
+      {
+        "kind": "entity-field",
+        "field": "forecastCategory",
+        "values": [
+          "best_case",
+          "commit",
+          "most_likely",
+          "closed"
+        ]
+      },
+      {
+        "kind": "field-role-present",
+        "roles": [
+          "amount",
+          "owner",
+          "closeDate"
+        ]
+      },
+      {
+        "kind": "has-role",
+        "values": [
+          "owner",
+          "manager"
+        ],
+        "hierarchical": true
+      }
+    ]
+  },
+  "structure": {
+    "slot": "body",
+    "description": "Dashboard агрегирует child-entity (Deal) по forecastCategory с суммами per-category, фильтром по периоду (this month/quarter), drill-down по owner с manager rollup. Manager видит свою команду, super-admin видит всех. Категории — упорядоченные buckets с цветовой шкалой confidence."
+  },
+  "rationale": {
+    "hypothesis": "Когда нужно agregate выручку с уровнем уверенности и hierarchical rollup, sum'ировать просто по status недостаточно: нужен явный confidence-измерение (commit ≠ best_case). Forecast-категория как orthogonal поле к stage даёт second-axis для агрегации. Manager-rollup делает hierarchical aggregation видимой как часть UI, не вычисление снаружи.",
+    "evidence": [
+      {
+        "source": "hubspot-crm",
+        "description": "Forecast по deal-categories с manager rollup",
+        "reliability": "high"
+      },
+      {
+        "source": "salesforce-forecast",
+        "description": "Forecasting tab с категориями Pipeline/Best Case/Commit/Closed",
+        "reliability": "high"
+      },
+      {
+        "source": "clari-forecast",
+        "description": "Specialized forecasting UI с rollup chains",
+        "reliability": "high"
+      }
+    ],
+    "counterexample": [
+      {
+        "source": "linear-roadmap",
+        "description": "Roadmap aggregate'ит progress но не money с confidence-категориями",
+        "reliability": "medium"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [
+      {
+        "domain": "delivery",
+        "projection": "revenue_forecast",
+        "reason": "Если Order имеет confirmed/probable buckets и manager hierarchy"
+      }
+    ],
+    "shouldNotMatch": [
+      {
+        "domain": "planning",
+        "projection": "poll_dashboard",
+        "reason": "Голосование не имеет confidence-rollup"
+      },
+      {
+        "domain": "messenger",
+        "projection": "conversation_dashboard",
+        "reason": "Сообщения не агрегируются в money-buckets"
+      }
+    ]
+  }
+}

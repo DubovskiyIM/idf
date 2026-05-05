@@ -1,0 +1,81 @@
+{
+  "id": "template-merge-document",
+  "version": 1,
+  "status": "candidate",
+  "archetype": "detail",
+  "trigger": {
+    "requires": [
+      {
+        "kind": "entity-field",
+        "name": "mergeFields"
+      },
+      {
+        "kind": "intent-creates",
+        "creates": "*",
+        "withFK": "templateId"
+      },
+      {
+        "kind": "entity-field",
+        "name": "shareLink|signatureStatus",
+        "optional": true
+      }
+    ]
+  },
+  "structure": {
+    "slot": "sections",
+    "description": "Generate-from-template flow: pick template → preview merged document с pre-filled полями из текущей сущности → confirm → создать generated entity (SmartDoc) с shareLink. Опциональное продолжение — request-signature."
+  },
+  "rationale": {
+    "hypothesis": "Template merge превращает повторяющийся copy-paste в детерминированный flow. Mergefields в template — declarative contract: какие поля parent-сущности (Deal) подставить. Сгенерированный документ становится first-class entity со своими intents (share, sign, track views).",
+    "evidence": [
+      {
+        "source": "pipedrive",
+        "description": "Smart Docs из templates merge deal fields → PDF + e-signature с view-tracking",
+        "reliability": "high"
+      },
+      {
+        "source": "docusign",
+        "description": "Template + merge fields + signature flow",
+        "reliability": "high"
+      },
+      {
+        "source": "pandadoc",
+        "description": "Merge from CRM context",
+        "reliability": "high"
+      }
+    ],
+    "counterexample": [
+      {
+        "source": "notion-templates",
+        "description": "Generic template без typed merge fields — не triggers этот pattern, это просто duplicate",
+        "reliability": "medium"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [
+      {
+        "domain": "booking",
+        "projection": "booking-detail",
+        "reason": "Booking → invoice template с merge"
+      },
+      {
+        "domain": "delivery",
+        "projection": "order-detail",
+        "reason": "Order → receipt template"
+      }
+    ],
+    "shouldNotMatch": [
+      {
+        "domain": "reflect",
+        "projection": "moods",
+        "reason": "Нет template с merge fields"
+      },
+      {
+        "domain": "messenger",
+        "projection": "messages",
+        "reason": "Message — не merged документ"
+      }
+    ]
+  }
+}

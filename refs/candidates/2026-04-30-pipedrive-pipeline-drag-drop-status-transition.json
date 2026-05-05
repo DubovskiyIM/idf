@@ -1,0 +1,76 @@
+{
+  "id": "drag-drop-status-transition",
+  "version": 1,
+  "status": "candidate",
+  "archetype": "catalog",
+  "trigger": {
+    "requires": [
+      {
+        "kind": "intent-effect",
+        "α": "replace",
+        "target": "*.status",
+        "confirmation": "click"
+      },
+      {
+        "kind": "entity-field",
+        "name": "status",
+        "enumSize": [
+          3,
+          8
+        ]
+      }
+    ]
+  },
+  "structure": {
+    "slot": "body",
+    "description": "Поверх status-column-kanban: drag карточки из одной колонки в другую запускает intent advance/transition без открытия формы."
+  },
+  "rationale": {
+    "hypothesis": "Drag-drop делает гесту обратимой и физически очевидной: пользователь видит результат до отпускания. Click-confirmation (а не form) подходит, потому что transition — атомарная замена одного поля.",
+    "evidence": [
+      {
+        "source": "pipedrive",
+        "description": "Drag-drop между stage columns — primary mechanism для advance_pipeline_stage",
+        "reliability": "high"
+      },
+      {
+        "source": "trello",
+        "description": "Drag card между lists меняет card.list",
+        "reliability": "high"
+      }
+    ],
+    "counterexample": [
+      {
+        "source": "salesforce-classic",
+        "description": "List-view с inline-edit dropdown работает быстрее на large datasets — drag не масштабируется на 1000+ записей в колонке",
+        "reliability": "medium"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [
+      {
+        "domain": "lifequest",
+        "projection": "tasks",
+        "reason": "Task.status (todo/in_progress/done) — каноничный kanban"
+      },
+      {
+        "domain": "delivery",
+        "projection": "orders",
+        "reason": "Order.status поддерживает drag-advance"
+      }
+    ],
+    "shouldNotMatch": [
+      {
+        "domain": "sales",
+        "projection": "bids",
+        "reason": "Bid не имеет линейного status — accept/reject — terminal, drag не нужен"
+      },
+      {
+        "domain": "reflect",
+        "projection": "moods",
+        "reason": "MoodEntry — readonly хроника, перемещение бессмысленно"
+      }
+    ]
+  }
+}

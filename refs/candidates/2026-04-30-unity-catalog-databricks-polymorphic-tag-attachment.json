@@ -1,0 +1,62 @@
+{
+  "id": "polymorphic-tag-attachment",
+  "version": 1,
+  "status": "candidate",
+  "archetype": null,
+  "trigger": {
+    "requires": [
+      {
+        "kind": "sub-entity-exists",
+        "entity": "Tag|withFieldsKeyValue"
+      },
+      {
+        "kind": "entity-field",
+        "entity": "Tag",
+        "field": "appliedTo|target",
+        "polymorphic": true
+      }
+    ]
+  },
+  "structure": {
+    "slot": "header",
+    "description": "Tag-чипы (key:value) рендерятся в одинаковом chip-cluster компоненте на схеме / таблице / колонке. Picker при добавлении тоже общий, без свитча по target-type."
+  },
+  "rationale": {
+    "hypothesis": "Тег-как-аспект должен прикрепляться униформно — это его суть. Свой UI per target-type фрагментирует ментальную модель и ломает governance-workflow «найти всё с тегом X».",
+    "evidence": [
+      {
+        "source": "databricks-unity-catalog",
+        "description": "Tags chip cluster, attachable schema/table/column polymorphically",
+        "reliability": "high"
+      },
+      {
+        "source": "datadog-tags-everywhere",
+        "description": "Same tag picker для host/service/log",
+        "reliability": "high"
+      }
+    ],
+    "counterexample": [
+      {
+        "source": "gmail-labels",
+        "description": "Labels prikrepляются только к message — нет polymorphism",
+        "reliability": "medium"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [
+      {
+        "domain": "gravitino",
+        "projection": "tag_attachment",
+        "reason": "Catalog/Schema/Table получают одинаковый tag-picker"
+      }
+    ],
+    "shouldNotMatch": [
+      {
+        "domain": "lifequest",
+        "projection": "goal_detail",
+        "reason": "Goal-tag привязаны только к Goal"
+      }
+    ]
+  }
+}

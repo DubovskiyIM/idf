@@ -1,0 +1,66 @@
+{
+  "id": "inherited-permission-rows",
+  "version": 1,
+  "status": "candidate",
+  "archetype": "detail",
+  "trigger": {
+    "requires": [
+      {
+        "kind": "sub-entity-exists",
+        "entity": "Grant"
+      },
+      {
+        "kind": "entity-kind",
+        "kind_value": "internal",
+        "withFKChain": "≥2"
+      }
+    ]
+  },
+  "structure": {
+    "slot": "sections",
+    "description": "На permissions-tab дочерней сущности отображаются grants родителя/прародителя как dimmed/badged-as-inherited rows вперемешку с локальными. Не отдельная sub-section, а единый list с источником-меткой."
+  },
+  "rationale": {
+    "hypothesis": "Effective permission = direct + inherited; пользователь хочет ответ «может ли user X», а не «где задано». Скрытие inherited grants заставляет вручную ходить по родителям и собирать модель.",
+    "evidence": [
+      {
+        "source": "databricks-unity-catalog",
+        "description": "Catalog-level grants shown as inherited rows on schema/table permission tabs",
+        "reliability": "high"
+      },
+      {
+        "source": "google-drive-shared-via",
+        "description": "Inherited from parent folder badge на permission row",
+        "reliability": "high"
+      },
+      {
+        "source": "azure-rbac-effective-permissions",
+        "description": "Inherited assignments в Effective view",
+        "reliability": "high"
+      }
+    ],
+    "counterexample": [
+      {
+        "source": "github-repo-collaborators",
+        "description": "Org-inherited скрыто за отдельным toggle — не unified",
+        "reliability": "medium"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [
+      {
+        "domain": "keycloak",
+        "projection": "user_effective_roles",
+        "reason": "Inherited через group composition"
+      }
+    ],
+    "shouldNotMatch": [
+      {
+        "domain": "messenger",
+        "projection": "conversation_permissions",
+        "reason": "Нет иерархии-контейнера для inheritance"
+      }
+    ]
+  }
+}

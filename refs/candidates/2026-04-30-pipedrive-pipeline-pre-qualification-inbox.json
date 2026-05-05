@@ -1,0 +1,81 @@
+{
+  "id": "pre-qualification-inbox",
+  "version": 1,
+  "status": "candidate",
+  "archetype": "feed",
+  "trigger": {
+    "requires": [
+      {
+        "kind": "intent-creates",
+        "fromEntity": "*",
+        "toEntity": "*",
+        "name": "convert*|qualify*|promote*"
+      },
+      {
+        "kind": "entity-field",
+        "name": "status",
+        "enumSize": [
+          3,
+          6
+        ]
+      }
+    ]
+  },
+  "structure": {
+    "slot": "body",
+    "description": "Source-entity (Lead) живёт в отдельной inbox-проекции, не в catalog'е target-entity (Deal). Convert-intent — primary CTA в detail source-entity, переносит FK-связи (person, organization) в target."
+  },
+  "rationale": {
+    "hypothesis": "Если все 'возможно-интересно' и 'точно работаем' свалить в один catalog, главная воронка зашумлена. Отдельный inbox = семантический буфер: данные ещё не валидированы, не должны влиять на forecasts/aggregates главного pipeline.",
+    "evidence": [
+      {
+        "source": "pipedrive",
+        "description": "Leads Inbox — отдельная surface от pipeline; pre-qualified records held back",
+        "reliability": "high"
+      },
+      {
+        "source": "hubspot",
+        "description": "Lead vs Contact vs Deal — три отдельных pipeline",
+        "reliability": "high"
+      },
+      {
+        "source": "intercom",
+        "description": "Inbox для unassigned conversations отдельно от main",
+        "reliability": "high"
+      }
+    ],
+    "counterexample": [
+      {
+        "source": "trello",
+        "description": "В личном Trello списки equal — нет 'staging' семантики",
+        "reliability": "medium"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [
+      {
+        "domain": "delivery",
+        "projection": "incoming-orders",
+        "reason": "Order до acceptance — отдельный inbox"
+      },
+      {
+        "domain": "workflow",
+        "projection": "draft-workflows",
+        "reason": "Draft до publish"
+      }
+    ],
+    "shouldNotMatch": [
+      {
+        "domain": "lifequest",
+        "projection": "tasks",
+        "reason": "Task сразу в pipeline, нет staging"
+      },
+      {
+        "domain": "messenger",
+        "projection": "conversations",
+        "reason": "Нет qualification step"
+      }
+    ]
+  }
+}

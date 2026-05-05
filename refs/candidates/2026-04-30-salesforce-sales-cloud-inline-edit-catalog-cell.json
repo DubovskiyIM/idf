@@ -1,0 +1,66 @@
+{
+  "id": "inline-edit-catalog-cell",
+  "version": 1,
+  "status": "candidate",
+  "archetype": "catalog",
+  "trigger": {
+    "requires": [
+      {
+        "kind": "intent-confirmation",
+        "value": "enter"
+      },
+      {
+        "kind": "intent-effect",
+        "α": "replace",
+        "scope": "single-field"
+      }
+    ]
+  },
+  "structure": {
+    "slot": "body",
+    "description": "Поля entity, помеченные `inline: true` или совпадающие с одним replace-intent'ом, редактируются прямо в строке catalog'а: pencil на hover, save/cancel bar в нижней части строки."
+  },
+  "rationale": {
+    "hypothesis": "Открывать detail-форму ради смены одного поля (amount, owner, dueDate) — overkill при массовых правках. Inline-edit сжимает loop с 5 кликов до 2.",
+    "evidence": [
+      {
+        "source": "salesforce-sales-cloud",
+        "description": "Inline edit на list views — pencil на hover, batch save bar",
+        "reliability": "high"
+      },
+      {
+        "source": "airtable",
+        "description": "Главный режим работы — inline-edit ячейки",
+        "reliability": "high"
+      },
+      {
+        "source": "google-sheets",
+        "description": "Канонический inline edit",
+        "reliability": "high"
+      }
+    ],
+    "counterexample": [
+      {
+        "source": "github-issue-list",
+        "description": "Issue list — read-only сканирование, edit через detail-форму",
+        "reliability": "medium"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [
+      {
+        "domain": "invest",
+        "projection": "position-catalog",
+        "reason": "position.targetWeight — single-field replace, частая правка"
+      }
+    ],
+    "shouldNotMatch": [
+      {
+        "domain": "messenger",
+        "projection": "message-catalog",
+        "reason": "Сообщения immutable, intent edit отсутствует"
+      }
+    ]
+  }
+}

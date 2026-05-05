@@ -1,0 +1,91 @@
+{
+  "id": "stateful-enrollment-auto-suspend",
+  "version": 1,
+  "status": "candidate",
+  "archetype": "detail",
+  "trigger": {
+    "requires": [
+      {
+        "kind": "entity-kind",
+        "value": "assignment"
+      },
+      {
+        "kind": "entity-field",
+        "field": "currentStep"
+      },
+      {
+        "kind": "entity-field",
+        "field": "status",
+        "values": [
+          "active",
+          "paused",
+          "finished",
+          "errored"
+        ],
+        "anyOf": true
+      },
+      {
+        "kind": "intent-effect",
+        "α": "replace",
+        "target": "*.status"
+      }
+    ]
+  },
+  "structure": {
+    "slot": "header",
+    "description": "Detail enrollment-сущности (assignment между template-сущностью и target-сущностью) рендерит status-badge + currentStep/totalSteps progress + 'pause/resume' toggle + reason-почему-pause если auto-paused. Подчёркивает stateful-природу (не fire-and-forget): шаги исполняются по расписанию, могут останавливаться по событию (reply, conversion)."
+  },
+  "rationale": {
+    "hypothesis": "Когда template применяется к target во времени (sequence/cadence/campaign), это длящееся 'enrollment' состояние, а не одноразовое событие. UI должен это сделать видимым: где сейчас в последовательности, почему остановилось, можно ли возобновить. Без этого пользователь думает что 'послал sequence' = одноразово, и не понимает почему перестало работать.",
+    "evidence": [
+      {
+        "source": "hubspot-crm",
+        "description": "Sequences с auto-pause on reply, SequenceEnrollment виден на Contact с currentStep",
+        "reliability": "high"
+      },
+      {
+        "source": "outreach-sequence",
+        "description": "Аналогично, sequence enrollments с status и step-counter",
+        "reliability": "high"
+      },
+      {
+        "source": "github-actions-workflow-run",
+        "description": "Workflow run с current step и pause/resume — похожий stateful UI",
+        "reliability": "medium"
+      }
+    ],
+    "counterexample": [
+      {
+        "source": "mailchimp-campaign",
+        "description": "One-shot campaign send — нет per-recipient enrollment state, паттерн не подходит",
+        "reliability": "high"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [
+      {
+        "domain": "workflow",
+        "projection": "execution_detail",
+        "reason": "Execution — enrollment workflow в context, currentNode = currentStep"
+      },
+      {
+        "domain": "lifequest",
+        "projection": "habit_enrollment_detail",
+        "reason": "Если Habit имеет track per user с current-streak и pause"
+      }
+    ],
+    "shouldNotMatch": [
+      {
+        "domain": "planning",
+        "projection": "vote_detail",
+        "reason": "Vote — atomic, не stateful enrollment"
+      },
+      {
+        "domain": "sales",
+        "projection": "bid_detail",
+        "reason": "Bid — single event, не stepped sequence"
+      }
+    ]
+  }
+}

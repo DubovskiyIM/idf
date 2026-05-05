@@ -1,0 +1,68 @@
+{
+  "id": "drag-drop-report-builder",
+  "version": 1,
+  "status": "candidate",
+  "archetype": "canvas",
+  "trigger": {
+    "requires": [
+      {
+        "kind": "Report"
+      },
+      {
+        "kind": "entity-field",
+        "fieldRoles": [
+          "columns",
+          "groupings",
+          "filters"
+        ]
+      }
+    ]
+  },
+  "structure": {
+    "slot": "body",
+    "description": "Report editor — single-canvas с drag-drop из field-panel: columns (по горизонтали) + groupings (по вертикали) + summary functions + chart на той же поверхности. Live preview данных."
+  },
+  "rationale": {
+    "hypothesis": "Multi-screen wizard для отчётов отрывает author'а от визуального результата. Single-canvas с live preview даёт мгновенный feedback и поощряет exploration.",
+    "evidence": [
+      {
+        "source": "salesforce-sales-cloud",
+        "description": "Report Builder: drag-drop columns + groupings + summary + chart на одном canvas",
+        "reliability": "high"
+      },
+      {
+        "source": "tableau-desktop",
+        "description": "Shelves (rows/columns/marks) — drag-drop поля",
+        "reliability": "high"
+      },
+      {
+        "source": "looker-explore",
+        "description": "Field picker + dimensions + measures + filters в одном UI",
+        "reliability": "high"
+      }
+    ],
+    "counterexample": [
+      {
+        "source": "metabase-question-wizard",
+        "description": "Step-by-step wizard для query — другой подход (для не-аналитиков)",
+        "reliability": "medium"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [
+      {
+        "domain": "invest",
+        "projection": "report-builder",
+        "reason": "Кастомные финансовые отчёты с группировкой по сектору/региону"
+      }
+    ],
+    "shouldNotMatch": [
+      {
+        "domain": "lifequest",
+        "projection": "habit-detail",
+        "reason": "Не canvas"
+      }
+    ]
+  }
+}

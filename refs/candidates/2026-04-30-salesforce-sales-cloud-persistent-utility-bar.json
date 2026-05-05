@@ -1,0 +1,64 @@
+{
+  "id": "persistent-utility-bar",
+  "version": 1,
+  "status": "candidate",
+  "archetype": null,
+  "trigger": {
+    "requires": [
+      {
+        "kind": "intent-count",
+        "minGlobalIntents": 3
+      },
+      {
+        "kind": "field-role-present",
+        "anyOf": [
+          "call-action",
+          "recent-items",
+          "quick-note"
+        ]
+      }
+    ]
+  },
+  "structure": {
+    "slot": "footer",
+    "description": "App-shell получает persistent utility-bar внизу: phone dialer / recent items / quick notes. Виджеты разворачиваются как popover'ы поверх, не ломая текущий route."
+  },
+  "rationale": {
+    "hypothesis": "Глобальные tools (звонок, заметка, recent records) нужны из любого места. Прятать их в навигации = потеря контекста при switching. Pinned utility-bar делает их O(1)-доступными.",
+    "evidence": [
+      {
+        "source": "salesforce-sales-cloud",
+        "description": "Utility Bar внизу: Phone / Recent / Notes / History",
+        "reliability": "high"
+      },
+      {
+        "source": "intercom-messenger-bubble",
+        "description": "Persistent bottom-right launcher",
+        "reliability": "high"
+      }
+    ],
+    "counterexample": [
+      {
+        "source": "github-app",
+        "description": "Нет global tools — top nav достаточен",
+        "reliability": "high"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [
+      {
+        "domain": "delivery",
+        "projection": "dispatcher-shell",
+        "reason": "Phone dialer + recent orders + quick note — типовые tools"
+      }
+    ],
+    "shouldNotMatch": [
+      {
+        "domain": "reflect",
+        "projection": "mood-entry-detail",
+        "reason": "Reflect — focused single-task UI"
+      }
+    ]
+  }
+}

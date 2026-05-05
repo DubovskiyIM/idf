@@ -1,0 +1,83 @@
+{
+  "id": "three-column-360-detail-shell",
+  "version": 1,
+  "status": "candidate",
+  "archetype": "detail",
+  "trigger": {
+    "requires": [
+      {
+        "kind": "field-role-present",
+        "roles": [
+          "identity",
+          "avatar"
+        ],
+        "anyOf": true
+      },
+      {
+        "kind": "sub-entity-exists",
+        "minDistinctChildren": 2
+      },
+      {
+        "kind": "intent-count",
+        "creates-child": ">=3"
+      }
+    ]
+  },
+  "structure": {
+    "slot": "sections",
+    "description": "Detail раскладывается тремя вертикальными колонками: identity sidebar слева (avatar, ключевые поля, owner), activity/main center (таймлайн или primary feed), associations sidebar справа (related entities, deals, tickets). Center шире 50%, sidebars фиксированные. На narrow viewport — сворачивается в табы."
+  },
+  "rationale": {
+    "hypothesis": "У 'central record' сущностей (контакт, клиент, сделка) три семантически разных кластера информации: КТО это, ЧТО происходит, С ЧЕМ связан. Три колонки дают одновременную видимость без скроллинга и без табов, ускоряя триаж.",
+    "evidence": [
+      {
+        "source": "hubspot-crm",
+        "description": "Contact 360-view: identity left + timeline center + associations right",
+        "reliability": "high"
+      },
+      {
+        "source": "intercom-conversation",
+        "description": "User panel left + conversation thread center + tickets/notes right",
+        "reliability": "high"
+      },
+      {
+        "source": "linear-issue",
+        "description": "Issue body center + meta sidebar right (без identity left, но похоже)",
+        "reliability": "medium"
+      }
+    ],
+    "counterexample": [
+      {
+        "source": "github-issue",
+        "description": "Issue — central body + single right sidebar, без identity-колонки, потому что author просто metadata",
+        "reliability": "high"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [
+      {
+        "domain": "messenger",
+        "projection": "conversation_detail",
+        "reason": "Participant left + messages center + shared media right"
+      },
+      {
+        "domain": "booking",
+        "projection": "specialist_detail",
+        "reason": "Specialist identity + bookings timeline + services"
+      }
+    ],
+    "shouldNotMatch": [
+      {
+        "domain": "planning",
+        "projection": "poll_detail",
+        "reason": "Опрос — single-purpose, нет identity-кластера"
+      },
+      {
+        "domain": "invest",
+        "projection": "asset_detail",
+        "reason": "Asset — данные о цене, не 'about a someone/something with associates'"
+      }
+    ]
+  }
+}

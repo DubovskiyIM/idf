@@ -1,0 +1,75 @@
+{
+  "id": "grouped-property-section",
+  "version": 1,
+  "status": "candidate",
+  "archetype": "detail",
+  "trigger": {
+    "requires": [
+      {
+        "kind": "entity-kind",
+        "value": "internal"
+      },
+      {
+        "kind": "field-role-present",
+        "role": "groupId",
+        "onMetaEntity": "Property"
+      },
+      {
+        "kind": "intent-count",
+        "perFieldReplace": ">=10"
+      }
+    ]
+  },
+  "structure": {
+    "slot": "sections",
+    "description": "Properties detail-сущности группируются по PropertyGroup в свёртываемые секции (Contact info / Email info / Conversion / Recent activity / Buying role / Custom). Inside группы — поля как inline-editable rows. Порядок групп управляется displayOrder. Скрытые группы collapse'нуты по умолчанию, видимые — раскрыты."
+  },
+  "rationale": {
+    "hypothesis": "Когда у entity 50+ полей, плоский список нечитаем. Группировка по семантическим кластерам (контактные / маркетинговые / sales) делает navigatable, а collapse состояние per-user сохраняет фокус на актуальных группах. PropertyGroup на meta-уровне (а не hardcoded layout) даёт админу контроль без code change.",
+    "evidence": [
+      {
+        "source": "hubspot-crm",
+        "description": "About this contact / Email information / Conversion / Recent activity / Buying role groups",
+        "reliability": "high"
+      },
+      {
+        "source": "salesforce-page-layout",
+        "description": "Page Layout с разделами (Section), редактируется в setup",
+        "reliability": "high"
+      },
+      {
+        "source": "notion-database-properties",
+        "description": "Properties в side-panel с группировкой visible/hidden",
+        "reliability": "medium"
+      }
+    ],
+    "counterexample": [
+      {
+        "source": "linear-issue-properties",
+        "description": "Linear имеет ~10 полей в side panel, группировка не нужна",
+        "reliability": "high"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [
+      {
+        "domain": "compliance",
+        "projection": "control_detail",
+        "reason": "Compliance controls — много полей с естественной группировкой (technical / process / evidence)"
+      }
+    ],
+    "shouldNotMatch": [
+      {
+        "domain": "messenger",
+        "projection": "message_detail",
+        "reason": "Сообщение — мало полей, группировка избыточна"
+      },
+      {
+        "domain": "planning",
+        "projection": "vote_detail",
+        "reason": "Vote — 2-3 поля"
+      }
+    ]
+  }
+}

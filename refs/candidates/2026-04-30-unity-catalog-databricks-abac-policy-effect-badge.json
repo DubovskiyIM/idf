@@ -1,0 +1,56 @@
+{
+  "id": "abac-policy-effect-badge",
+  "version": 1,
+  "status": "candidate",
+  "archetype": "detail",
+  "trigger": {
+    "requires": [
+      {
+        "kind": "sub-entity-exists",
+        "entity": "ABACPolicy|TagBasedPolicy"
+      },
+      {
+        "kind": "entity-field",
+        "entity": "ABACPolicy",
+        "field": "matchTags|action"
+      }
+    ]
+  },
+  "structure": {
+    "slot": "header",
+    "description": "На permissions-tab объекта, попавшего под tag-driven ABAC policy, показывается derived-badge «Filtered by policy: <name>» с link к policy-defn. Effect не дублируется как отдельный grant — он явный, но read-only."
+  },
+  "rationale": {
+    "hypothesis": "ABAC policies — действуют косвенно по тегам; без surfacing эффекта пользователь не понимает, почему его query вернул меньше rows. Derived-badge на конкретном объекте делает effect explainable, не разрывая ментальную модель «что вижу — то и есть».",
+    "evidence": [
+      {
+        "source": "databricks-unity-catalog",
+        "description": "ABAC policy effect propagates to permission tab as derived row-filter badge",
+        "reliability": "high"
+      }
+    ],
+    "counterexample": [
+      {
+        "source": "aws-iam-attached-policies",
+        "description": "Policy attached, но не tag-derived; surface — direct list",
+        "reliability": "medium"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [
+      {
+        "domain": "compliance",
+        "projection": "table_governance",
+        "reason": "Show derived ABAC effect"
+      }
+    ],
+    "shouldNotMatch": [
+      {
+        "domain": "messenger",
+        "projection": "conversation_detail",
+        "reason": "Нет ABAC"
+      }
+    ]
+  }
+}

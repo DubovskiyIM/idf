@@ -1,0 +1,84 @@
+{
+  "id": "forward-looking-activity-inbox",
+  "version": 1,
+  "status": "candidate",
+  "archetype": "feed",
+  "trigger": {
+    "requires": [
+      {
+        "kind": "entity-field",
+        "name": "dueDate"
+      },
+      {
+        "kind": "entity-field",
+        "name": "status",
+        "values": [
+          "scheduled",
+          "overdue",
+          "done"
+        ]
+      },
+      {
+        "kind": "field-role-present",
+        "role": "owner"
+      }
+    ]
+  },
+  "structure": {
+    "slot": "body",
+    "description": "Главная утренняя проекция группирует activities по timeline-bucket'ам: Overdue (highlighted, требуют действия) → Today → Tomorrow → This Week. Не 'что было', а 'что делать'."
+  },
+  "rationale": {
+    "hypothesis": "Дашборд должен отвечать 'что делать сейчас', а не 'какие были события'. Past read-only, future — actionable. Bucket-grouping вместо chronological list уменьшает cognitive load до 'этот → следующий'.",
+    "evidence": [
+      {
+        "source": "pipedrive",
+        "description": "Activities Inbox (overdue / today) — morning surface для sales reps; dashboard отвечает 'what to do next'",
+        "reliability": "high"
+      },
+      {
+        "source": "todoist",
+        "description": "Today/Upcoming buckets",
+        "reliability": "high"
+      },
+      {
+        "source": "linear",
+        "description": "Inbox с overdue highlighted",
+        "reliability": "high"
+      }
+    ],
+    "counterexample": [
+      {
+        "source": "google-calendar",
+        "description": "Calendar показывает chronologically, не bucket'ами — для recurring/long meetings структура важнее срочности",
+        "reliability": "medium"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [
+      {
+        "domain": "lifequest",
+        "projection": "today",
+        "reason": "Habit/Task с dueDate — каноничный today-inbox"
+      },
+      {
+        "domain": "delivery",
+        "projection": "courier-tasks",
+        "reason": "Order с deliveryBy timestamp — overdue/now/upcoming"
+      }
+    ],
+    "shouldNotMatch": [
+      {
+        "domain": "messenger",
+        "projection": "conversations",
+        "reason": "Conversation не имеет dueDate, время — read-only метаданные"
+      },
+      {
+        "domain": "invest",
+        "projection": "positions",
+        "reason": "Position не actionable per-day"
+      }
+    ]
+  }
+}

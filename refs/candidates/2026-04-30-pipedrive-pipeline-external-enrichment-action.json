@@ -1,0 +1,76 @@
+{
+  "id": "external-enrichment-action",
+  "version": 1,
+  "status": "candidate",
+  "archetype": "detail",
+  "trigger": {
+    "requires": [
+      {
+        "kind": "entity-field",
+        "name": "enrichedFrom|enrichmentSource"
+      },
+      {
+        "kind": "intent-effect",
+        "α": "replace",
+        "target": "*.enrichedFrom"
+      }
+    ]
+  },
+  "structure": {
+    "slot": "sections",
+    "description": "Detail-секция 'Enrich' показывает diff-preview данных из external source (LeadFinder/Clearbit-like) с per-field accept/reject. После применения enrichedFrom хранит provenance (source name + timestamp)."
+  },
+  "rationale": {
+    "hypothesis": "Enrichment — это replace, но с особенностью: данные приходят извне, и пользователь должен явно одобрить их перед записью в Φ. Диффрентный preview блокирует силент-перезаписи и сохраняет audit trail (enrichedFrom как provenance witness).",
+    "evidence": [
+      {
+        "source": "pipedrive",
+        "description": "LeadFinder / Smart Contact Data обогащает Person и Organization из публичных источников",
+        "reliability": "high"
+      },
+      {
+        "source": "clearbit",
+        "description": "Enrichment как explicit field-by-field merge",
+        "reliability": "high"
+      },
+      {
+        "source": "hubspot",
+        "description": "Auto-enrichment с provenance",
+        "reliability": "medium"
+      }
+    ],
+    "counterexample": [
+      {
+        "source": "salesforce",
+        "description": "Auto-enrichment без preview критиковался за silent overwrites",
+        "reliability": "medium"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [
+      {
+        "domain": "invest",
+        "projection": "asset-detail",
+        "reason": "Asset metadata enrichment from market-data"
+      },
+      {
+        "domain": "delivery",
+        "projection": "addresses",
+        "reason": "Address enrichment from geocoder"
+      }
+    ],
+    "shouldNotMatch": [
+      {
+        "domain": "lifequest",
+        "projection": "habits",
+        "reason": "Habit — личная сущность, нет external source"
+      },
+      {
+        "domain": "messenger",
+        "projection": "messages",
+        "reason": "Message immutable, не enrichable"
+      }
+    ]
+  }
+}

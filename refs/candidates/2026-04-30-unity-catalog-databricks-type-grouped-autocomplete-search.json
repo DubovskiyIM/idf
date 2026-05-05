@@ -1,0 +1,62 @@
+{
+  "id": "type-grouped-autocomplete-search",
+  "version": 1,
+  "status": "candidate",
+  "archetype": null,
+  "trigger": {
+    "requires": [
+      {
+        "kind": "intent-effect",
+        "witness": "query+results",
+        "scopeAcrossEntities": "≥3"
+      }
+    ]
+  },
+  "structure": {
+    "slot": "header",
+    "description": "Global search с typeahead, где результаты группируются по entity-type (Catalogs / Schemas / Tables / Columns) с counters и section-headers. Не plain mixed list."
+  },
+  "rationale": {
+    "hypothesis": "Когда поиск охватывает несколько entity-типов с разной семантикой match'а, пользователь нередко знает thin slice ('я ищу таблицу'). Grouping ускоряет визуальный фильтр и даёт affordance keyboard-nav скакать секциями.",
+    "evidence": [
+      {
+        "source": "databricks-unity-catalog",
+        "description": "Search bar global + type-grouped autocomplete",
+        "reliability": "high"
+      },
+      {
+        "source": "github-global-search",
+        "description": "Repos / Issues / People группами в jump-to",
+        "reliability": "high"
+      },
+      {
+        "source": "linear-cmdk",
+        "description": "Group by entity-type в command palette",
+        "reliability": "high"
+      }
+    ],
+    "counterexample": [
+      {
+        "source": "google-search",
+        "description": "Web — flat ranking лучше chunked, потому что cross-type разделение неуместно",
+        "reliability": "high"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [
+      {
+        "domain": "gravitino",
+        "projection": "global_search",
+        "reason": "Catalog/Schema/Table/Column"
+      }
+    ],
+    "shouldNotMatch": [
+      {
+        "domain": "messenger",
+        "projection": "search",
+        "reason": "Только messages — единая категория"
+      }
+    ]
+  }
+}

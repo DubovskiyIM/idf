@@ -1,0 +1,68 @@
+{
+  "id": "kanban-from-status-picklist",
+  "version": 1,
+  "status": "candidate",
+  "archetype": "catalog",
+  "trigger": {
+    "requires": [
+      {
+        "kind": "entity-field",
+        "field": "status",
+        "selectMin": 3
+      },
+      {
+        "kind": "intent-effect",
+        "α": "replace",
+        "targetSuffix": ".status",
+        "confirmation": "click"
+      }
+    ]
+  },
+  "structure": {
+    "slot": "body",
+    "description": "Catalog получает kanban-альтернативу: колонки соответствуют значениям status-picklist'а, drag карточки между колонками = replace .status (один клик-эквивалент). Переключатель list/kanban в toolbar."
+  },
+  "rationale": {
+    "hypothesis": "Когда главный intent над коллекцией — продвижение по pipeline'у, kanban делает 'где сколько' и 'что застряло' видимым без отчётов. List-view скрывает workflow.",
+    "evidence": [
+      {
+        "source": "salesforce-sales-cloud",
+        "description": "Auto-derived kanban из любого picklist'а; drag-to-stage",
+        "reliability": "high"
+      },
+      {
+        "source": "linear-cycle-board",
+        "description": "Issues kanban по status — drag меняет state",
+        "reliability": "high"
+      },
+      {
+        "source": "trello",
+        "description": "Канонический kanban — но колонки автор задаёт вручную, не из enum-поля",
+        "reliability": "high"
+      }
+    ],
+    "counterexample": [
+      {
+        "source": "gmail-inbox",
+        "description": "Email со многими статусами не делается kanban — read/archive не workflow-стадии",
+        "reliability": "high"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [
+      {
+        "domain": "workflow",
+        "projection": "execution-catalog",
+        "reason": "execution.status имеет несколько стадий и intent advance"
+      }
+    ],
+    "shouldNotMatch": [
+      {
+        "domain": "invest",
+        "projection": "asset-catalog",
+        "reason": "У asset нет workflow-status'а"
+      }
+    ]
+  }
+}

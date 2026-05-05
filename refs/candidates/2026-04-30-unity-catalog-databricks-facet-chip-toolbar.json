@@ -1,0 +1,66 @@
+{
+  "id": "facet-chip-toolbar",
+  "version": 1,
+  "status": "candidate",
+  "archetype": "catalog",
+  "trigger": {
+    "requires": [
+      {
+        "kind": "entity-field",
+        "fields": [
+          "tags",
+          "owner",
+          "type|status"
+        ],
+        "minFacets": 3
+      }
+    ]
+  },
+  "structure": {
+    "slot": "toolbar",
+    "description": "Над списком/деревом — горизонтальная toolbar с inline filter-chips (Tag, Owner, Type, Sensitivity). Каждый chip — popover-multiselect; активные значения отображаются в самом chip как dot-counter."
+  },
+  "rationale": {
+    "hypothesis": "Sidebar-фильтры съедают screen-real-estate; modal-фильтры скрывают активное состояние. Inline chip-toolbar делает active filters visible at-a-glance и доступными в ≤2 клика.",
+    "evidence": [
+      {
+        "source": "databricks-unity-catalog",
+        "description": "Filter chips toolbar (tag, owner, type) над tree",
+        "reliability": "high"
+      },
+      {
+        "source": "linear-issues-toolbar",
+        "description": "Inline chips для priority/assignee/label",
+        "reliability": "high"
+      },
+      {
+        "source": "github-issues-filters",
+        "description": "Pill toolbar с author/label/state",
+        "reliability": "high"
+      }
+    ],
+    "counterexample": [
+      {
+        "source": "amazon-product-search",
+        "description": "Sidebar facets — потому что десятки осей, chip-bar переполняется",
+        "reliability": "high"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [
+      {
+        "domain": "gravitino",
+        "projection": "asset_browse",
+        "reason": "Tag/Owner/Type — типичные оси"
+      }
+    ],
+    "shouldNotMatch": [
+      {
+        "domain": "messenger",
+        "projection": "conversations",
+        "reason": "Conversation list имеет 1 ось (unread/all), chips избыточны"
+      }
+    ]
+  }
+}

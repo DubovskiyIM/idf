@@ -1,0 +1,71 @@
+{
+  "id": "tabbed-detail-by-concern",
+  "version": 1,
+  "status": "candidate",
+  "archetype": "detail",
+  "trigger": {
+    "requires": [
+      {
+        "kind": "sub-entity-exists",
+        "min": 4
+      }
+    ]
+  },
+  "structure": {
+    "slot": "sections",
+    "description": "Detail с ≥4 sub-collection'ами рендерит sections как именованные tabs (Overview / Subcoll-1 / Subcoll-2 / ...) вместо вертикальной простыни — снижает scroll-cost и даёт URL-якорь на конкретную грань."
+  },
+  "rationale": {
+    "hypothesis": "Linear stacking sections работает до 3-4 субколлекций; дальше пользователь теряет ориентацию и scroll-cost становится дороже tab-switch. Tabs дают именование концерна и deep-link.",
+    "evidence": [
+      {
+        "source": "mlflow",
+        "description": "Run Detail: Overview/Parameters/Metrics/Artifacts/Tags/Source/Notes — 7 tabs",
+        "reliability": "high"
+      },
+      {
+        "source": "github-pr",
+        "description": "Conversation/Commits/Checks/Files — 4 tabs на PR detail",
+        "reliability": "high"
+      },
+      {
+        "source": "linear-issue",
+        "description": "Activity/Subissues/Attachments tabs при росте concerns",
+        "reliability": "medium"
+      }
+    ],
+    "counterexample": [
+      {
+        "source": "twitter-tweet-detail",
+        "description": "1-2 sections (replies, quotes) — стек, не tabs",
+        "reliability": "high"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [
+      {
+        "domain": "workflow",
+        "projection": "execution-detail",
+        "reason": "Logs/Inputs/Outputs/Steps/Errors — 5 концернов под одним runId"
+      },
+      {
+        "domain": "delivery",
+        "projection": "order-detail",
+        "reason": "Items/Status-history/Courier/Payments/Notes — естественные tabs"
+      }
+    ],
+    "shouldNotMatch": [
+      {
+        "domain": "planning",
+        "projection": "poll-detail",
+        "reason": "Poll имеет только TimeOptions+Votes — 2 субколлекции, tabs избыточны"
+      },
+      {
+        "domain": "messenger",
+        "projection": "message-detail",
+        "reason": "Message — single concern, нет 4+ sub-collections"
+      }
+    ]
+  }
+}

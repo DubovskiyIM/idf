@@ -1,0 +1,72 @@
+{
+  "id": "principal-privilege-matrix",
+  "version": 1,
+  "status": "candidate",
+  "archetype": "detail",
+  "trigger": {
+    "requires": [
+      {
+        "kind": "sub-entity-exists",
+        "entity": "Grant"
+      },
+      {
+        "kind": "entity-field",
+        "entity": "Grant",
+        "field": "privilege",
+        "selectValuesMin": 5
+      },
+      {
+        "kind": "entity-field",
+        "entity": "Grant",
+        "field": "principal"
+      }
+    ]
+  },
+  "structure": {
+    "slot": "sections",
+    "description": "Permissions tab показывает principal × privilege как matrix (rows=principals, columns=privileges, cells=on/off/inherited), не как list of grant-rows. Обе оси browsable и filterable."
+  },
+  "rationale": {
+    "hypothesis": "Grants — это многомерная reality: «кто может что» — двумерный вопрос. List of (principal, privilege)-rows вынуждает scanning, а matrix даёт visual O(1) lookup и compaction (один row на principal).",
+    "evidence": [
+      {
+        "source": "databricks-unity-catalog",
+        "description": "Permissions tab as principal × privilege grid",
+        "reliability": "high"
+      },
+      {
+        "source": "aws-iam-policy-simulator",
+        "description": "Action × Resource grid рендеринг разрешений",
+        "reliability": "medium"
+      },
+      {
+        "source": "github-repo-roles",
+        "description": "Permission level matrix per role",
+        "reliability": "high"
+      }
+    ],
+    "counterexample": [
+      {
+        "source": "linux-chmod-ls",
+        "description": "rwxrwxrwx string — компактнее matrix для 3-актора шаблона",
+        "reliability": "medium"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [
+      {
+        "domain": "keycloak",
+        "projection": "client_permissions",
+        "reason": "User × Role grid"
+      }
+    ],
+    "shouldNotMatch": [
+      {
+        "domain": "messenger",
+        "projection": "conversation_detail",
+        "reason": "Permissions сводятся к 1-2 ролям, matrix overkill"
+      }
+    ]
+  }
+}

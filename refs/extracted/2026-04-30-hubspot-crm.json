@@ -1,0 +1,763 @@
+{
+  "source": "hubspot-crm-unified-platform",
+  "entities": [
+    {
+      "name": "Contact",
+      "fields": [
+        "firstName",
+        "lastName",
+        "email",
+        "phone",
+        "jobTitle",
+        "avatar",
+        "lifecycleStage",
+        "leadStatus",
+        "ownerId",
+        "companyId",
+        "score",
+        "createdAt"
+      ],
+      "statusValues": [
+        "subscriber",
+        "lead",
+        "marketing_qualified_lead",
+        "sales_qualified_lead",
+        "opportunity",
+        "customer",
+        "evangelist",
+        "other"
+      ],
+      "foreignKey": "companyId→Company"
+    },
+    {
+      "name": "Company",
+      "fields": [
+        "name",
+        "domain",
+        "industry",
+        "size",
+        "ownerId",
+        "lifecycleStage",
+        "annualRevenue"
+      ]
+    },
+    {
+      "name": "Deal",
+      "fields": [
+        "name",
+        "amount",
+        "closeDate",
+        "stage",
+        "pipelineId",
+        "ownerId",
+        "probability",
+        "daysInStage",
+        "forecastCategory"
+      ],
+      "statusValues": [
+        "appointment_scheduled",
+        "qualified_to_buy",
+        "presentation_scheduled",
+        "decision_maker_bought_in",
+        "contract_sent",
+        "closed_won",
+        "closed_lost"
+      ],
+      "foreignKey": "pipelineId→Pipeline"
+    },
+    {
+      "name": "Pipeline",
+      "fields": [
+        "name",
+        "type",
+        "stages",
+        "objectKind"
+      ]
+    },
+    {
+      "name": "Ticket",
+      "fields": [
+        "subject",
+        "description",
+        "status",
+        "priority",
+        "ownerId",
+        "pipelineId",
+        "slaTarget"
+      ],
+      "statusValues": [
+        "new",
+        "open",
+        "waiting_on_contact",
+        "waiting_on_us",
+        "closed"
+      ],
+      "foreignKey": "pipelineId→Pipeline"
+    },
+    {
+      "name": "Activity",
+      "fields": [
+        "type",
+        "subject",
+        "body",
+        "outcome",
+        "occurredAt",
+        "ownerId",
+        "associatedObjects"
+      ],
+      "statusValues": [
+        "email",
+        "call",
+        "meeting",
+        "note",
+        "task"
+      ]
+    },
+    {
+      "name": "Task",
+      "fields": [
+        "title",
+        "dueDate",
+        "status",
+        "type",
+        "ownerId",
+        "associatedContactId"
+      ],
+      "statusValues": [
+        "not_started",
+        "in_progress",
+        "completed",
+        "deferred"
+      ]
+    },
+    {
+      "name": "Association",
+      "fields": [
+        "fromObjectType",
+        "fromId",
+        "toObjectType",
+        "toId",
+        "associationType"
+      ]
+    },
+    {
+      "name": "Property",
+      "fields": [
+        "name",
+        "label",
+        "type",
+        "objectType",
+        "groupId",
+        "isCustom",
+        "options",
+        "calculationFormula",
+        "scoreRules"
+      ],
+      "statusValues": [
+        "text",
+        "number",
+        "date",
+        "dropdown",
+        "checkbox",
+        "calculation",
+        "score"
+      ]
+    },
+    {
+      "name": "PropertyGroup",
+      "fields": [
+        "name",
+        "objectType",
+        "displayOrder"
+      ]
+    },
+    {
+      "name": "ContactList",
+      "fields": [
+        "name",
+        "type",
+        "criteria",
+        "memberCount",
+        "lastRecomputedAt"
+      ],
+      "statusValues": [
+        "dynamic",
+        "static"
+      ]
+    },
+    {
+      "name": "Workflow",
+      "fields": [
+        "name",
+        "trigger",
+        "branches",
+        "actions",
+        "reEnrollmentRules",
+        "isActive",
+        "objectType"
+      ]
+    },
+    {
+      "name": "Sequence",
+      "fields": [
+        "name",
+        "steps",
+        "enrolCriteria",
+        "autoPauseOnReply",
+        "ownerId"
+      ]
+    },
+    {
+      "name": "SequenceEnrollment",
+      "fields": [
+        "sequenceId",
+        "contactId",
+        "currentStep",
+        "status",
+        "enrolledAt"
+      ],
+      "statusValues": [
+        "active",
+        "paused",
+        "finished",
+        "errored"
+      ],
+      "foreignKey": "sequenceId→Sequence"
+    },
+    {
+      "name": "EmailTemplate",
+      "fields": [
+        "name",
+        "subject",
+        "body",
+        "ownerId",
+        "performance"
+      ]
+    },
+    {
+      "name": "Snippet",
+      "fields": [
+        "shortcut",
+        "body"
+      ]
+    },
+    {
+      "name": "Document",
+      "fields": [
+        "name",
+        "fileUrl",
+        "viewTracking",
+        "ownerId"
+      ]
+    },
+    {
+      "name": "MeetingLink",
+      "fields": [
+        "slug",
+        "ownerIds",
+        "type",
+        "duration",
+        "availability"
+      ],
+      "statusValues": [
+        "personal",
+        "team_round_robin",
+        "group"
+      ]
+    },
+    {
+      "name": "Playbook",
+      "fields": [
+        "name",
+        "questions",
+        "associatedObject"
+      ]
+    },
+    {
+      "name": "MarketingEmail",
+      "fields": [
+        "name",
+        "subject",
+        "body",
+        "abVariant",
+        "sendAt",
+        "performance"
+      ],
+      "statusValues": [
+        "draft",
+        "scheduled",
+        "sent",
+        "archived"
+      ]
+    },
+    {
+      "name": "Form",
+      "fields": [
+        "name",
+        "fields",
+        "embedCode",
+        "submissions",
+        "redirectUrl"
+      ]
+    },
+    {
+      "name": "Campaign",
+      "fields": [
+        "name",
+        "goal",
+        "startDate",
+        "endDate",
+        "assets",
+        "attribution"
+      ]
+    },
+    {
+      "name": "LandingPage",
+      "fields": [
+        "name",
+        "url",
+        "template",
+        "publishedAt",
+        "views"
+      ]
+    },
+    {
+      "name": "Ad",
+      "fields": [
+        "network",
+        "campaignId",
+        "creative",
+        "spend",
+        "attribution"
+      ],
+      "statusValues": [
+        "facebook",
+        "google",
+        "linkedin"
+      ],
+      "foreignKey": "campaignId→Campaign"
+    },
+    {
+      "name": "Conversation",
+      "fields": [
+        "channel",
+        "subject",
+        "messages",
+        "assignedToUserId",
+        "assignedToTeamId",
+        "status"
+      ],
+      "statusValues": [
+        "email",
+        "chat",
+        "messenger",
+        "whatsapp",
+        "form"
+      ]
+    },
+    {
+      "name": "Product",
+      "fields": [
+        "name",
+        "sku",
+        "price",
+        "billingFrequency"
+      ]
+    },
+    {
+      "name": "Quote",
+      "fields": [
+        "name",
+        "dealId",
+        "lineItems",
+        "totalAmount",
+        "status",
+        "expiresAt"
+      ],
+      "statusValues": [
+        "draft",
+        "sent",
+        "accepted",
+        "declined",
+        "expired"
+      ],
+      "foreignKey": "dealId→Deal"
+    },
+    {
+      "name": "Dashboard",
+      "fields": [
+        "name",
+        "widgets",
+        "ownerId",
+        "sharedWith"
+      ]
+    },
+    {
+      "name": "Report",
+      "fields": [
+        "name",
+        "type",
+        "objectType",
+        "filters",
+        "metrics",
+        "visualization"
+      ]
+    },
+    {
+      "name": "KnowledgeArticle",
+      "fields": [
+        "title",
+        "body",
+        "category",
+        "rating",
+        "viewCount",
+        "status"
+      ],
+      "statusValues": [
+        "draft",
+        "published",
+        "archived"
+      ]
+    },
+    {
+      "name": "FeedbackSurvey",
+      "fields": [
+        "name",
+        "type",
+        "questions",
+        "responses"
+      ],
+      "statusValues": [
+        "nps",
+        "csat",
+        "ces"
+      ]
+    },
+    {
+      "name": "User",
+      "fields": [
+        "name",
+        "email",
+        "role",
+        "teamId",
+        "permissionSet"
+      ],
+      "statusValues": [
+        "super_admin",
+        "admin",
+        "standard"
+      ]
+    },
+    {
+      "name": "Team",
+      "fields": [
+        "name",
+        "memberIds"
+      ]
+    }
+  ],
+  "intents": [
+    {
+      "id": "create_contact",
+      "α": "add",
+      "creates": "Contact",
+      "confirmation": "form"
+    },
+    {
+      "id": "associate_company",
+      "α": "add",
+      "creates": "Association",
+      "confirmation": "click"
+    },
+    {
+      "id": "set_lifecycle_stage",
+      "α": "replace",
+      "target": "contact.lifecycleStage",
+      "confirmation": "click"
+    },
+    {
+      "id": "score_lead",
+      "α": "replace",
+      "target": "contact.score",
+      "confirmation": "click"
+    },
+    {
+      "id": "create_deal",
+      "α": "add",
+      "creates": "Deal",
+      "confirmation": "form"
+    },
+    {
+      "id": "advance_pipeline_stage",
+      "α": "replace",
+      "target": "deal.stage",
+      "confirmation": "click"
+    },
+    {
+      "id": "set_forecast_category",
+      "α": "replace",
+      "target": "deal.forecastCategory",
+      "confirmation": "click"
+    },
+    {
+      "id": "create_ticket",
+      "α": "add",
+      "creates": "Ticket",
+      "confirmation": "form"
+    },
+    {
+      "id": "escalate_ticket",
+      "α": "replace",
+      "target": "ticket.priority",
+      "confirmation": "click"
+    },
+    {
+      "id": "close_ticket",
+      "α": "replace",
+      "target": "ticket.status",
+      "confirmation": "click"
+    },
+    {
+      "id": "log_call",
+      "α": "add",
+      "creates": "Activity",
+      "confirmation": "form"
+    },
+    {
+      "id": "send_one_to_one_email",
+      "α": "add",
+      "creates": "Activity",
+      "confirmation": "form"
+    },
+    {
+      "id": "create_note",
+      "α": "add",
+      "creates": "Activity",
+      "confirmation": "enter"
+    },
+    {
+      "id": "create_task",
+      "α": "add",
+      "creates": "Task",
+      "confirmation": "form"
+    },
+    {
+      "id": "complete_task",
+      "α": "replace",
+      "target": "task.status",
+      "confirmation": "click"
+    },
+    {
+      "id": "schedule_meeting",
+      "α": "add",
+      "creates": "Activity",
+      "confirmation": "form"
+    },
+    {
+      "id": "enrol_in_sequence",
+      "α": "add",
+      "creates": "SequenceEnrollment",
+      "confirmation": "form"
+    },
+    {
+      "id": "pause_sequence_enrollment",
+      "α": "replace",
+      "target": "sequenceEnrollment.status",
+      "confirmation": "click"
+    },
+    {
+      "id": "create_meeting_link",
+      "α": "add",
+      "creates": "MeetingLink",
+      "confirmation": "form"
+    },
+    {
+      "id": "accept_meeting",
+      "α": "add",
+      "creates": "Activity",
+      "confirmation": "click"
+    },
+    {
+      "id": "insert_template",
+      "α": "replace",
+      "target": "activity.body",
+      "confirmation": "click"
+    },
+    {
+      "id": "share_document",
+      "α": "add",
+      "creates": "Activity",
+      "confirmation": "click"
+    },
+    {
+      "id": "create_workflow",
+      "α": "add",
+      "creates": "Workflow",
+      "confirmation": "form"
+    },
+    {
+      "id": "trigger_workflow_test",
+      "α": "replace",
+      "target": "workflow.testRun",
+      "confirmation": "click"
+    },
+    {
+      "id": "activate_workflow",
+      "α": "replace",
+      "target": "workflow.isActive",
+      "confirmation": "click"
+    },
+    {
+      "id": "create_form",
+      "α": "add",
+      "creates": "Form",
+      "confirmation": "form"
+    },
+    {
+      "id": "embed_form",
+      "α": "replace",
+      "target": "form.embedCode",
+      "confirmation": "click"
+    },
+    {
+      "id": "create_list",
+      "α": "add",
+      "creates": "ContactList",
+      "confirmation": "form"
+    },
+    {
+      "id": "recompute_list",
+      "α": "replace",
+      "target": "contactList.lastRecomputedAt",
+      "confirmation": "click"
+    },
+    {
+      "id": "send_marketing_email",
+      "α": "replace",
+      "target": "marketingEmail.status",
+      "confirmation": "form"
+    },
+    {
+      "id": "run_ab_test",
+      "α": "add",
+      "creates": "MarketingEmail",
+      "confirmation": "form"
+    },
+    {
+      "id": "create_campaign",
+      "α": "add",
+      "creates": "Campaign",
+      "confirmation": "form"
+    },
+    {
+      "id": "view_attribution_report",
+      "α": "replace",
+      "target": "report.activeView",
+      "confirmation": "click"
+    },
+    {
+      "id": "create_dashboard_widget",
+      "α": "add",
+      "creates": "Report",
+      "confirmation": "form"
+    },
+    {
+      "id": "assign_conversation",
+      "α": "replace",
+      "target": "conversation.assignedToUserId",
+      "confirmation": "click"
+    },
+    {
+      "id": "reply_conversation",
+      "α": "add",
+      "creates": "Activity",
+      "confirmation": "enter"
+    },
+    {
+      "id": "close_conversation",
+      "α": "replace",
+      "target": "conversation.status",
+      "confirmation": "click"
+    },
+    {
+      "id": "create_quote",
+      "α": "add",
+      "creates": "Quote",
+      "confirmation": "form"
+    },
+    {
+      "id": "send_quote",
+      "α": "replace",
+      "target": "quote.status",
+      "confirmation": "click"
+    },
+    {
+      "id": "create_property",
+      "α": "add",
+      "creates": "Property",
+      "confirmation": "form"
+    },
+    {
+      "id": "publish_knowledge_article",
+      "α": "replace",
+      "target": "knowledgeArticle.status",
+      "confirmation": "click"
+    },
+    {
+      "id": "filter_activity_timeline",
+      "α": "replace",
+      "target": "contact.activityFilter",
+      "confirmation": "click"
+    },
+    {
+      "id": "delete_contact",
+      "α": "remove",
+      "target": "entities",
+      "irreversibility": "high",
+      "confirmation": "form"
+    },
+    {
+      "id": "archive_deal",
+      "α": "remove",
+      "target": "entities",
+      "irreversibility": "high",
+      "confirmation": "click"
+    },
+    {
+      "id": "delete_workflow",
+      "α": "remove",
+      "target": "entities",
+      "irreversibility": "high",
+      "confirmation": "form"
+    }
+  ],
+  "roles": [
+    "owner",
+    "viewer",
+    "agent",
+    "observer",
+    "admin"
+  ],
+  "observations": [
+    "Universal Activity timeline — same composer (Note/Email/Call/Task/Meeting) reused across Contact, Company, Deal, Ticket detail views",
+    "Contact 360-view as three-column shell: identity sidebar (left) + activity timeline (center) + associations sidebar (right)",
+    "Polymorphic Activity entity with discriminator (email/call/meeting/note/task) rather than separate tables — single API surface",
+    "Deal pipeline as kanban board with drag-drop fired automation hooks (stage change → workflow trigger)",
+    "Multiple pipelines per object (Deal: New Business / Renewals / Upsell; Ticket: Support / Bug) — Pipeline as first-class configurable entity",
+    "Lifecycle stage as universal funnel state on Contact AND Company, advanced by workflow with manual override",
+    "Lists with dynamic vs static dual mode — criteria-based recompute vs manual membership",
+    "Workflow editor as visual graph: trigger → branches (if/then, value-compare, random) → actions (email, set property, enrol sequence, webhook, AI)",
+    "Sequences (cadences) auto-pause on contact reply — stateful enrollment per contact, not stateless template",
+    "Property system as meta-layer: standard + custom properties, grouped, with calculation and score subtypes (formulas + rules)",
+    "Inbox as unified channel-agnostic view — email + chat + Messenger + WhatsApp + form submissions as one Conversation entity",
+    "Associations as explicit many-to-many entity (Contact↔Company↔Deal↔Ticket) rather than embedded foreign keys",
+    "Composer slash-commands for inserting Templates / Snippets inline during email/note authoring",
+    "Properties section on detail view organized by PropertyGroup (Contact / Email / Conversion / Recent activity / Buying role / Custom)",
+    "Forecast as deal-aggregation with manager rollup — categories Best Case / Commit / Most Likely / Closed",
+    "Free CRM baseline + paid Hubs as capability layers — same entities, expanded intents per Hub",
+    "Mobile Today screen as cross-aggregate dashboard: tasks + meetings + recent activity unified",
+    "Breeze AI actions (summarize note, generate email, predict score) embedded as workflow actions and inline composer assists",
+    "Customer Portal — auth-gated subset of Tickets + Knowledge Base for external Customer role (read-mostly with submit)",
+    "SLA configuration attached to Pipeline (not Ticket) — pipeline-level policy applied per ticket"
+  ]
+}

@@ -1,0 +1,61 @@
+{
+  "id": "agent-readable-description",
+  "version": 1,
+  "status": "candidate",
+  "archetype": "detail",
+  "trigger": {
+    "requires": [
+      {
+        "kind": "entity-kind",
+        "entity": "AITool|Tool|Agent"
+      },
+      {
+        "kind": "entity-field",
+        "field": "description",
+        "consumer": "llm"
+      }
+    ]
+  },
+  "structure": {
+    "slot": "header",
+    "description": "Description-поле AI-Tool / Agent-resource'а имеет distinct visual treatment (multiline editor, monospace, character-count, schema-hint), отличающийся от обычного comment. Подчёркивает: «это читает машина, формулировка влияет на behavior»."
+  },
+  "rationale": {
+    "hypothesis": "Description, который агент использует для tool-selection — load-bearing artifact, не cosmetic. Тот же UI, что у comment, скрывает важность и приводит к hand-wavy текстам. Distinct treatment повышает care.",
+    "evidence": [
+      {
+        "source": "databricks-unity-catalog",
+        "description": "AI Tool detail emphasizes LLM-readable description distinct from Function comment",
+        "reliability": "high"
+      },
+      {
+        "source": "openai-gpt-actions",
+        "description": "Tool description editor с lint-hints для LLM-clarity",
+        "reliability": "high"
+      }
+    ],
+    "counterexample": [
+      {
+        "source": "github-readme",
+        "description": "README — human-readable, без LLM-specific treatment",
+        "reliability": "medium"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [
+      {
+        "domain": "gravitino",
+        "projection": "ai_tool_detail",
+        "reason": "Tool registration с emphasized description"
+      }
+    ],
+    "shouldNotMatch": [
+      {
+        "domain": "lifequest",
+        "projection": "goal_detail",
+        "reason": "Goal description — для человека"
+      }
+    ]
+  }
+}

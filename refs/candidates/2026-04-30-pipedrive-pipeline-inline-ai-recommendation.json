@@ -1,0 +1,77 @@
+{
+  "id": "inline-ai-recommendation",
+  "version": 1,
+  "status": "candidate",
+  "archetype": "catalog",
+  "trigger": {
+    "requires": [
+      {
+        "kind": "field-role-present",
+        "role": "date",
+        "semantic": "last-activity|next-activity|due-date"
+      },
+      {
+        "kind": "intent-creates",
+        "name": "schedule_*|complete_*",
+        "confirmation": "click"
+      }
+    ]
+  },
+  "structure": {
+    "slot": "overlay",
+    "description": "Карточки/строки с derived staleness получают inline-card 'Здесь нет активности 7 дней — запланируй' с one-click accept, который автоматически вызывает соответствующий schedule-intent с предзаполненными параметрами."
+  },
+  "rationale": {
+    "hypothesis": "Detection (есть проблема) и prescription (что сделать) — разные когнитивные шаги. Превращение detection в one-click action убирает 'я знаю что просрочено, но что делать'. Recommendation формулируется в терминах existing intent — никаких ad-hoc действий.",
+    "evidence": [
+      {
+        "source": "pipedrive",
+        "description": "AI Sales Assistant: 'Deal X has no activity for 7 days — schedule one' (one-click accept)",
+        "reliability": "high"
+      },
+      {
+        "source": "linear",
+        "description": "Issue suggestions: 'This issue has no assignee' с быстрым assign",
+        "reliability": "medium"
+      },
+      {
+        "source": "github",
+        "description": "Dependabot pull request как inline-recommendation",
+        "reliability": "high"
+      }
+    ],
+    "counterexample": [
+      {
+        "source": "notion",
+        "description": "AI assistant generic не привязан к интентам, recommendations часто bullshit",
+        "reliability": "medium"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [
+      {
+        "domain": "lifequest",
+        "projection": "habits",
+        "reason": "Habit overdue → 'Mark today done' inline card"
+      },
+      {
+        "domain": "delivery",
+        "projection": "orders",
+        "reason": "Order stalled → 'Reassign courier'"
+      }
+    ],
+    "shouldNotMatch": [
+      {
+        "domain": "reflect",
+        "projection": "moods",
+        "reason": "MoodEntry append-only, нечего рекомендовать на конкретной строке"
+      },
+      {
+        "domain": "invest",
+        "projection": "assets",
+        "reason": "Recommendation требует side-effect intent, asset — справочник"
+      }
+    ]
+  }
+}

@@ -1,0 +1,60 @@
+{
+  "id": "status-transition-audit-log",
+  "version": 1,
+  "status": "candidate",
+  "archetype": "detail",
+  "trigger": {
+    "requires": [
+      {
+        "kind": "*StageHistory|*StatusHistory"
+      },
+      {
+        "kind": "intent-effect",
+        "α": "replace",
+        "targetSuffix": ".status|.stage"
+      }
+    ]
+  },
+  "structure": {
+    "slot": "sections",
+    "description": "Каждый replace-intent на .status/.stage автоматически материализует audit-row (from/to, who, when + snapshot ключевых полей). Секция 'History' рендерит timeline transitions, не вычисляется в каждой проекции."
+  },
+  "rationale": {
+    "hypothesis": "Когда статус-переходы влияют на бизнес-метрики (forecast, sla, payouts), 'кто и когда передвинул' критично для аудита и ML-обучения. Авто-tracking без явного intent'а гарантирует full coverage.",
+    "evidence": [
+      {
+        "source": "salesforce-sales-cloud",
+        "description": "OpportunityStageHistory автоматически записывается на каждом stage-change со snapshot'ом amount/probability",
+        "reliability": "high"
+      },
+      {
+        "source": "jira-issue-history",
+        "description": "Status-changelog авто-генерируется и виден в issue panel",
+        "reliability": "high"
+      }
+    ],
+    "counterexample": [
+      {
+        "source": "trello-card",
+        "description": "Нет аудита переходов между списками без add-on'а",
+        "reliability": "medium"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [
+      {
+        "domain": "delivery",
+        "projection": "order-detail",
+        "reason": "OrderStatusHistory — value для диспутов и SLA"
+      }
+    ],
+    "shouldNotMatch": [
+      {
+        "domain": "messenger",
+        "projection": "message-detail",
+        "reason": "Сообщения immutable, нет state-transitions"
+      }
+    ]
+  }
+}

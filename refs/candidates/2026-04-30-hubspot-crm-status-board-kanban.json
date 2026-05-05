@@ -1,0 +1,82 @@
+{
+  "id": "status-board-kanban",
+  "version": 1,
+  "status": "candidate",
+  "archetype": "catalog",
+  "trigger": {
+    "requires": [
+      {
+        "kind": "entity-field",
+        "field": "status",
+        "values": ">=4",
+        "ordered": true
+      },
+      {
+        "kind": "intent-effect",
+        "α": "replace",
+        "target": "*.status"
+      },
+      {
+        "kind": "field-role-present",
+        "role": "owner"
+      }
+    ]
+  },
+  "structure": {
+    "slot": "body",
+    "description": "Catalog рендерится как горизонтальные колонки по status-значениям с drag-and-drop между ними как UI для replace .status. Колонки = упорядоченные status-значения (pipeline stages). Карточки группируются по owner или сортируются по daysInStage. Drag = trigger replace-intent."
+  },
+  "rationale": {
+    "hypothesis": "Когда статус — упорядоченная последовательность (pipeline / funnel), список с drag-drop между колонками превращает progress в spatial action: 'move forward' = двинуть карту вправо. Это даёт одновременно overview распределения и manipulator. Лучше чем dropdown-в-строке потому что viewer видит распределение по этапам.",
+    "evidence": [
+      {
+        "source": "hubspot-crm",
+        "description": "Deal pipeline как kanban с drag между stages, drop триггерит workflow",
+        "reliability": "high"
+      },
+      {
+        "source": "trello",
+        "description": "Канонический kanban с drag-drop между колонками",
+        "reliability": "high"
+      },
+      {
+        "source": "linear-board",
+        "description": "Issues по status colonnes с drag для смены статуса",
+        "reliability": "high"
+      }
+    ],
+    "counterexample": [
+      {
+        "source": "gmail-inbox",
+        "description": "У писем есть 'статус' (read/unread/archive), но kanban был бы абсурден — список по time важнее",
+        "reliability": "high"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [
+      {
+        "domain": "delivery",
+        "projection": "order_catalog",
+        "reason": "Order.status (new→accepted→cooking→delivering→done) — упорядоченный pipeline"
+      },
+      {
+        "domain": "workflow",
+        "projection": "execution_catalog",
+        "reason": "Execution.status может быть pipeline-like"
+      }
+    ],
+    "shouldNotMatch": [
+      {
+        "domain": "invest",
+        "projection": "position_catalog",
+        "reason": "У позиции нет упорядоченного status-pipeline"
+      },
+      {
+        "domain": "messenger",
+        "projection": "message_feed",
+        "reason": "Сообщения — не state-machine, kanban неприменим"
+      }
+    ]
+  }
+}
