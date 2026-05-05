@@ -544,6 +544,54 @@ function makePatternsRouter() {
   });
 
   /**
+   * POST /mark-shipped — recovery-route для промоушенов, чей PR смержен,
+   * но shipped-effect не записан в Φ (старая версия server'а, рестарт в
+   * середине auto-promote, ручной merge без curator workspace).
+   *
+   * Body: { patternId, sdkPrUrl, archetype, rationale? }
+   * → пишет один effect ship_pattern_promotion + status=shipped в Φ.
+   *
+   * Без gating'а: это просто запись в локальный server/idf.db, без git
+   * операций. CURATOR_PR_ENABLED не требуется.
+   */
+  router.post("/mark-shipped", (req, res) => {
+    const { patternId, sdkPrUrl, archetype, sdkBranch, rationale } = req.body || {};
+    if (!patternId || !sdkPrUrl) {
+      return res.status(400).json({ error: "missing_params", message: "patternId и sdkPrUrl обязательны" });
+    }
+    try {
+      const { randomUUID } = require("node:crypto");
+      const dbMod = require("../db.js");
+      const now = Date.now();
+      const promotionId = randomUUID();
+      const ctx = {
+        id: promotionId,
+        candidateId: patternId,
+        targetArchetype: archetype || null,
+        rationale: rationale || `Mark-shipped recovery: PR ${sdkPrUrl}`,
+        status: "shipped",
+        sdkPrUrl,
+        sdkBranch: sdkBranch || null,
+        weight: 50,
+        requestedByUserId: "patternCurator",
+        requestedAt: now,
+        decidedAt: now,
+      };
+      dbMod.prepare(`
+        INSERT INTO effects (id, intent_id, alpha, target, value, scope, status,
+                             ttl, context, created_at, resolved_at)
+        VALUES (?, ?, ?, ?, ?, ?, ?, NULL, ?, ?, ?)
+      `).run(
+        randomUUID(), "ship_pattern_promotion", "create", "PatternPromotion",
+        JSON.stringify(ctx), "account", "confirmed", JSON.stringify(ctx), now, now,
+      );
+      return res.json({ ok: true, promotionId });
+    } catch (e) {
+      return res.status(500).json({ error: "db_failed", message: e.message });
+    }
+  });
+
+  /**
    * POST /preference — author-decision writer (§3.4, §16).
    *
    * Body: { domain, projection, patternId, action }

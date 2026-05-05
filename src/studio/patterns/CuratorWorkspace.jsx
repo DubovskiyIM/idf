@@ -10,6 +10,7 @@ import PromotionPanel from "./PromotionPanel.jsx";
 import PromotionRequestForm from "./PromotionRequestForm.jsx";
 import HeatmapView from "./HeatmapView.jsx";
 import PromoteToPrButton from "./PromoteToPrButton.jsx";
+import MarkShippedRecovery from "./MarkShippedRecovery.jsx";
 
 // Pattern Curator workspace v2 — редизайн после первого UX-фидбека.
 //
@@ -262,6 +263,9 @@ function PatternBody({ pattern, tab, promotions, onChange }) {
       <div style={{ padding: 16, overflowY: "auto" }}>
         {pattern.refSource && (
           <PromoteToPrButton pattern={pattern} existingPromotion={shipped} onPrCreated={onChange} />
+        )}
+        {!shipped && pattern.refSource && (
+          <MarkShippedRecovery pattern={pattern} onRecorded={onChange} />
         )}
         {pattern.status === "candidate" && !showRequestForm && (
           <button
