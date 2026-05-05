@@ -130,6 +130,51 @@ function patchCuratedJs(curatedPath, archetype, id) {
   return { changed: true };
 }
 
+/**
+ * Аналог patchCuratedJs для anti/index.js (ANTI_PATTERNS array). Та же
+ * стратегия: import после последней import-line + push в массив.
+ */
+function patchAntiIndex(antiIndexPath, archetype, id) {
+  const moduleVar = id.replace(/[^a-zA-Z0-9]/g, "_");
+  const importLine = `import ${moduleVar} from "./${archetype}/${id}.js";`;
+  let src = readFileSync(antiIndexPath, "utf8");
+  if (src.includes(importLine)) return { changed: false, reason: "already-imported" };
+
+  // Insert import — если import'ов нет (scaffold), вставляем перед export.
+  const importRe = /^import\s+.+;$/gm;
+  let lastMatchEnd = -1;
+  let m;
+  while ((m = importRe.exec(src)) !== null) lastMatchEnd = m.index + m[0].length;
+  if (lastMatchEnd === -1) {
+    // anti/index.js scaffold не имеет imports — вставляем перед `export const ANTI_PATTERNS`
+    const exportIdx = src.indexOf("export const ANTI_PATTERNS");
+    if (exportIdx === -1) return { changed: false, reason: "no-anchor" };
+    src = src.slice(0, exportIdx) + importLine + "\n\n" + src.slice(exportIdx);
+  } else {
+    src = src.slice(0, lastMatchEnd) + "\n" + importLine + src.slice(lastMatchEnd);
+  }
+
+  const arrRe = /export\s+const\s+ANTI_PATTERNS\s*=\s*\[/;
+  const arrMatch = src.match(arrRe);
+  if (!arrMatch) return { changed: false, reason: "no-array-anchor" };
+  const startIdx = arrMatch.index + arrMatch[0].length;
+  let depth = 1;
+  let endIdx = -1;
+  for (let i = startIdx; i < src.length; i++) {
+    if (src[i] === "[") depth++;
+    else if (src[i] === "]") {
+      depth--;
+      if (depth === 0) { endIdx = i; break; }
+    }
+  }
+  if (endIdx === -1) return { changed: false, reason: "unbalanced-brackets" };
+  const arrayBody = src.slice(startIdx, endIdx).replace(/,\s*$/, "");
+  const sep = arrayBody.trim().length > 0 && !arrayBody.trimEnd().endsWith(",") ? "," : "";
+  src = src.slice(0, startIdx) + `${arrayBody}${sep}\n  ${moduleVar},\n` + src.slice(endIdx);
+  writeFileSync(antiIndexPath, src, "utf8");
+  return { changed: true };
+}
+
 function renderChangeset(pattern, summary) {
   const head = `---\n"@intent-driven/core": patch\n---\n\n`;
   const body = (summary || `Promote candidate \`${pattern.id}\` from idf refs into curated bank.`).trim();
@@ -167,12 +212,44 @@ async function ghExec(cwd, args, log) {
 }
 
 /**
- * @param {Object} input — { patternId, summary?, branch? }
+ * Гарантирует существование anti/index.js в idf-sdk; создаёт минимальный
+ * scaffold если нет. Это позволяет первый anti-promote быть self-contained
+ * (не нужен manual SDK-PR с инфраструктурой). registry автоматически
+ * обнаруживает паттерны через index.js export ANTI_PATTERNS массивом.
+ */
+function ensureAntiIndex(antiRoot) {
+  const indexJs = path.join(antiRoot, "index.js");
+  if (existsSync(indexJs)) return { existed: true, path: indexJs };
+  if (!existsSync(antiRoot)) mkdirSync(antiRoot, { recursive: true });
+  const scaffold = `/**
+ * Anti-pattern bank. Паттерны из реальных продуктов, которые куратор
+ * явно пометил «так не делать» — чтобы Signal Classifier давал negative
+ * score, а не игнорировал. Файлы добавляются через Curator workspace
+ * (POST /api/patterns/promote-and-pr с kind="anti").
+ *
+ * Формат: \`export default { id, status: "anti", archetype, trigger,
+ * structure, rationale (включая counterexample), falsification }\`.
+ */
+export const ANTI_PATTERNS = [];
+
+export function getAntiPatterns() {
+  return ANTI_PATTERNS.slice();
+}
+`;
+  writeFileSync(indexJs, scaffold, "utf8");
+  return { existed: false, path: indexJs };
+}
+
+/**
+ * @param {Object} input — { patternId, summary?, branch?, kind? }
+ *   kind: "stable" (default) → candidate/curated.js bank
+ *         "anti"             → anti/<archetype>/<id>.js bank
  * @returns {Promise<{ok: true, prUrl, branch, log} | {ok: false, error, message, log}>}
  */
 async function promoteToSdkPr(input) {
   const log = [];
   const { patternId } = input;
+  const kind = input.kind === "anti" ? "anti" : "stable";
 
   if (process.env.CURATOR_PR_ENABLED !== "1") {
     return { ok: false, error: "disabled", message: "CURATOR_PR_ENABLED=1 не выставлен", log };
@@ -212,7 +289,11 @@ async function promoteToSdkPr(input) {
     };
   }
 
-  const sdkCandidateDir = path.join(sdkPath, "packages", "core", "src", "patterns", "candidate", archetype);
+  // Bank-paths per kind.
+  const bankRoot = kind === "anti"
+    ? path.join(sdkPath, "packages", "core", "src", "patterns", "anti")
+    : path.join(sdkPath, "packages", "core", "src", "patterns", "candidate");
+  const sdkCandidateDir = path.join(bankRoot, archetype);
   const sdkPatternFile = path.join(sdkCandidateDir, `${patternId}.js`);
   if (existsSync(sdkPatternFile)) {
     return {
@@ -222,12 +303,17 @@ async function promoteToSdkPr(input) {
       log,
     };
   }
-  const curatedJs = path.join(sdkPath, "packages", "core", "src", "patterns", "candidate", "curated.js");
-  if (!existsSync(curatedJs)) {
-    return { ok: false, error: "curated-js-missing", message: `${curatedJs} not found`, log };
+  // Stable: patch curated.js (он обязан быть). Anti: patch anti/index.js
+  // (создадим scaffold если первый раз).
+  const indexJs = kind === "anti"
+    ? path.join(bankRoot, "index.js")
+    : path.join(bankRoot, "curated.js");
+  if (kind === "stable" && !existsSync(indexJs)) {
+    return { ok: false, error: "curated-js-missing", message: `${indexJs} not found`, log };
   }
 
-  const branch = input.branch || `feat/curator-promote-${slugify(patternId)}-${shortId()}`;
+  const branchPrefix = kind === "anti" ? "feat/curator-anti" : "feat/curator-promote";
+  const branch = input.branch || `${branchPrefix}-${slugify(patternId)}-${shortId()}`;
   const summary = input.summary || `Promote candidate \`${patternId}\` (${archetype}) from idf refs.`;
 
   try {
@@ -237,19 +323,32 @@ async function promoteToSdkPr(input) {
     await gitExec(sdkPath, ["reset", "--hard", "origin/main"], log);
     await gitExec(sdkPath, ["checkout", "-b", branch], log);
 
-    // 2. Запись pattern .js файла
+    // 2. Запись pattern .js файла. Anti: status=anti override.
     if (!existsSync(sdkCandidateDir)) {
       mkdirSync(sdkCandidateDir, { recursive: true });
       log.push(`mkdir ${sdkCandidateDir}`);
     }
-    writeFileSync(sdkPatternFile, renderCandidateModule(pattern), "utf8");
-    log.push(`wrote ${sdkPatternFile} (${renderCandidateModule(pattern).length} bytes)`);
+    const patternForBank = kind === "anti"
+      ? { ...pattern, status: "anti" }
+      : pattern;
+    writeFileSync(sdkPatternFile, renderCandidateModule(patternForBank), "utf8");
+    log.push(`wrote ${sdkPatternFile} (kind=${kind})`);
 
-    // 3. Patch curated.js
-    const patch = patchCuratedJs(curatedJs, archetype, patternId);
-    log.push(`patchCuratedJs: ${JSON.stringify(patch)}`);
-    if (!patch.changed && patch.reason !== "already-imported") {
-      throw new Error(`curated.js patch failed: ${patch.reason}`);
+    // 3. Patch index.js (curated.js для stable, anti/index.js для anti).
+    if (kind === "anti") {
+      const ensured = ensureAntiIndex(bankRoot);
+      log.push(`ensureAntiIndex: ${JSON.stringify(ensured)}`);
+      const patch = patchAntiIndex(indexJs, archetype, patternId);
+      log.push(`patchAntiIndex: ${JSON.stringify(patch)}`);
+      if (!patch.changed && patch.reason !== "already-imported") {
+        throw new Error(`anti/index.js patch failed: ${patch.reason}`);
+      }
+    } else {
+      const patch = patchCuratedJs(indexJs, archetype, patternId);
+      log.push(`patchCuratedJs: ${JSON.stringify(patch)}`);
+      if (!patch.changed && patch.reason !== "already-imported") {
+        throw new Error(`curated.js patch failed: ${patch.reason}`);
+      }
     }
 
     // 4. .changeset
@@ -259,32 +358,39 @@ async function promoteToSdkPr(input) {
     writeFileSync(changesetFile, renderChangeset(pattern, summary), "utf8");
     log.push(`wrote ${changesetFile}`);
 
-    // 5. Commit
+    // 5. Commit + PR title — kind-specific семантика.
+    const verb = kind === "anti" ? "mark-anti" : "promote";
+    const commitMsg = `feat(patterns): ${verb} ${patternId} (curator workspace)`;
     await gitExec(sdkPath, ["add", "-A"], log);
-    await gitExec(sdkPath, ["commit", "-m", `feat(patterns): promote ${patternId} (curator workspace)`], log);
+    await gitExec(sdkPath, ["commit", "-m", commitMsg], log);
 
     // 6. Push
     await gitExec(sdkPath, ["push", "-u", "origin", branch], log);
 
     // 7. PR
+    const bankNote = kind === "anti"
+      ? "Pattern попадает в **anti-bank** — Signal Classifier даст negative score, паттерн помечен как 'так не делать'. Counterexample-evidence в rationale объясняет почему."
+      : "Pattern попадает в candidate-bank (matching-only). Promotion в stable + apply — ручной шаг после merge.";
     const body = [
       "## Summary",
       "",
       summary,
       "",
-      "Promoted via Curator workspace from idf `refs/candidates/`.",
+      `Promoted via Curator workspace from idf \`refs/candidates/\` (kind=**${kind}**).`,
       "",
       `- pattern id: \`${patternId}\``,
       `- archetype: \`${archetype}\``,
+      `- bank: \`${kind}\``,
       pattern.refSource ? `- ref source: \`${pattern.refSource}\`` : "",
       "",
-      "Pattern попадает в candidate-bank (matching-only). Promotion в stable + apply — ручной шаг после merge.",
+      bankNote,
     ]
       .filter(Boolean)
       .join("\n");
+    const prTitle = `feat(patterns): ${verb} ${patternId}`;
     const prRes = await ghExec(
       sdkPath,
-      ["pr", "create", "--base", "main", "--title", `feat(patterns): promote ${patternId}`, "--body", body],
+      ["pr", "create", "--base", "main", "--title", prTitle, "--body", body],
       log,
     );
     const prUrl = (prRes.stdout || "").trim().split("\n").pop();
@@ -301,6 +407,7 @@ async function promoteToSdkPr(input) {
         id: promotionId,
         candidateId: patternId,
         targetArchetype: archetype,
+        targetBank: kind, // "stable" | "anti"
         rationale: summary,
         status: "shipped",
         sdkPrUrl: prUrl,
@@ -348,5 +455,6 @@ module.exports = {
   renderCandidateModule,
   renderChangeset,
   patchCuratedJs,
+  patchAntiIndex,
   slugify,
 };

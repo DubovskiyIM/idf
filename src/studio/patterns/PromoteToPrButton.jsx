@@ -44,11 +44,20 @@ export default function PromoteToPrButton({ pattern, existingPromotion, onPrCrea
     pattern.structure?.description ||
     `Promote candidate \`${pattern.id}\` from idf refs.`;
 
-  async function go() {
+  async function go(kind = "stable") {
     if (busy) return;
     if (!archetype) {
       setError({ error: "archetype-missing", message: "Выбери archetype перед промоцией" });
       return;
+    }
+    if (kind === "anti") {
+      const ok = window.confirm(
+        `Точно отметить '${pattern.id}' как ANTI-pattern?\n\n` +
+          `Сделается PR в idf-sdk который добавит pattern в anti-bank: ` +
+          `Signal Classifier даст negative score, паттерн помечен как 'так не делать'.\n\n` +
+          `Counterexample-evidence из rationale объяснит почему.`,
+      );
+      if (!ok) return;
     }
     setBusy(true);
     setError(null);
@@ -57,13 +66,13 @@ export default function PromoteToPrButton({ pattern, existingPromotion, onPrCrea
       const r = await fetch("/api/patterns/promote-and-pr", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ patternId: pattern.id, summary, archetype }),
+        body: JSON.stringify({ patternId: pattern.id, summary, archetype, kind }),
       });
       const data = await r.json();
       if (!r.ok || !data.ok) {
         setError({ status: r.status, ...data });
       } else {
-        setResult(data);
+        setResult({ ...data, kind });
         onPrCreated?.(data);
       }
     } catch (e) {
@@ -82,7 +91,7 @@ export default function PromoteToPrButton({ pattern, existingPromotion, onPrCrea
         <div style={{ marginBottom: error ? 8 : 0 }}>
           <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
             <button
-              onClick={go}
+              onClick={() => go("stable")}
               disabled={busy || !archetype}
               style={{
                 background: busy || !archetype ? "#1e293b" : "#10b981",
@@ -95,8 +104,27 @@ export default function PromoteToPrButton({ pattern, existingPromotion, onPrCrea
                 cursor: busy || !archetype ? "not-allowed" : "pointer",
                 fontFamily: "inherit",
               }}
+              title="PR в idf-sdk: pattern → candidate-bank"
             >
-              {busy ? "Делаю PR…" : "↑ Promote → SDK PR"}
+              {busy ? "Делаю PR…" : "↑ Promote → Stable"}
+            </button>
+            <button
+              onClick={() => go("anti")}
+              disabled={busy || !archetype}
+              style={{
+                background: busy || !archetype ? "#1e293b" : "#7f1d1d",
+                border: "none",
+                color: busy || !archetype ? "#64748b" : "#fecaca",
+                padding: "8px 14px",
+                borderRadius: 4,
+                fontSize: 12,
+                fontWeight: 600,
+                cursor: busy || !archetype ? "not-allowed" : "pointer",
+                fontFamily: "inherit",
+              }}
+              title="PR в idf-sdk: pattern → anti-bank (negative score в Signal Classifier)"
+            >
+              ↓ Mark Anti
             </button>
             <label style={{ fontSize: 11, color: "#94a3b8", display: "inline-flex", alignItems: "center", gap: 4 }}>
               archetype:
@@ -149,6 +177,9 @@ export default function PromoteToPrButton({ pattern, existingPromotion, onPrCrea
         >
           <div style={{ color: "#86efac", fontSize: 12, fontWeight: 600, marginBottom: 4 }}>
             {result.persisted ? "✓ PR уже создан" : "✓ PR создан"} в ветке <code>{result.branch}</code>
+            {result.kind === "anti" && (
+              <span style={{ color: "#fca5a5", marginLeft: 6 }}>· kind=anti</span>
+            )}
           </div>
           {result.prUrl && (
             <a
