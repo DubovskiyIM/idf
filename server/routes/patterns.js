@@ -519,9 +519,12 @@ function makePatternsRouter() {
    * Required env: CURATOR_PR_ENABLED=1, IDF_SDK_PATH, gh authenticated.
    */
   router.post("/promote-and-pr", async (req, res) => {
-    const { patternId, summary, branch, archetype } = req.body || {};
+    const { patternId, summary, branch, archetype, kind } = req.body || {};
     if (!patternId) {
       return res.status(400).json({ error: "missing_patternId" });
+    }
+    if (kind && kind !== "stable" && kind !== "anti") {
+      return res.status(400).json({ error: "bad_kind", message: `kind must be 'stable' or 'anti', got '${kind}'` });
     }
     // Make sure refs are loaded.
     try {
@@ -529,7 +532,7 @@ function makePatternsRouter() {
     } catch (err) {
       return res.status(500).json({ error: "load_failed", reason: err.message });
     }
-    const result = await promoteToSdkPr({ patternId, summary, branch, archetype });
+    const result = await promoteToSdkPr({ patternId, summary, branch, archetype, kind });
     if (!result.ok) {
       const status =
         result.error === "disabled" ? 403 :

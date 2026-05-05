@@ -102,6 +102,41 @@ export { CURATED_CANDIDATES };
       expect(src).toMatch(/multi_word_pattern,/);
     });
   });
+
+  describe("patchAntiIndex (anti-bank scaffold)", () => {
+    let tmp;
+    let antiPath;
+    let patchAntiIndex;
+
+    beforeEach(() => {
+      tmp = mkdtempSync(join(tmpdir(), "anti-"));
+      antiPath = join(tmp, "index.js");
+      writeFileSync(
+        antiPath,
+        `/**\n * Anti scaffold.\n */\nexport const ANTI_PATTERNS = [];\n\nexport function getAntiPatterns() {\n  return ANTI_PATTERNS.slice();\n}\n`,
+        "utf8",
+      );
+      patchAntiIndex = require("./curatorPromoter.cjs").patchAntiIndex;
+    });
+
+    it("первый patch на пустой scaffold добавляет import + entry в массив", () => {
+      const result = patchAntiIndex(antiPath, "detail", "modal-on-modal");
+      expect(result.changed).toBe(true);
+      const src = readFileSync(antiPath, "utf8");
+      expect(src).toMatch(/import modal_on_modal from "\.\/detail\/modal-on-modal\.js";/);
+      expect(src).toMatch(/modal_on_modal,/);
+      // ANTI_PATTERNS массив не сломан
+      expect(src).toMatch(/export const ANTI_PATTERNS = \[/);
+      expect(src).toMatch(/getAntiPatterns/);
+    });
+
+    it("idempotent — повторный patch skip'ит", () => {
+      patchAntiIndex(antiPath, "detail", "x");
+      const second = patchAntiIndex(antiPath, "detail", "x");
+      expect(second.changed).toBe(false);
+      expect(second.reason).toBe("already-imported");
+    });
+  });
 });
 
 describe("promoteToSdkPr · disabled-state guards", () => {
