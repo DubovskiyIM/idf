@@ -39,7 +39,7 @@ const {
   serializeRefCandidate,
 } = require("../loadCandidatesFromRefs.cjs");
 const { evaluateGenericRequires } = require("../genericTriggerEvaluator.cjs");
-const { promoteToSdkPr } = require("../curatorPromoter.cjs");
+const { promoteToSdkPr, promoteBatchToSdkPr } = require("../curatorPromoter.cjs");
 
 // Кэш загруженных доменов: { [domainName]: { ontology, intents, projections } | null }
 const DOMAIN_CACHE = new Map();
@@ -539,6 +539,38 @@ function makePatternsRouter() {
         result.error === "ref-not-found" ? 404 :
         result.error === "collision" ? 409 :
         result.error === "archetype-missing" || result.error === "unsupported-archetype" ? 400 :
+        result.error === "sdk-path-missing" || result.error === "curated-js-missing" ? 503 :
+        500;
+      return res.status(status).json(result);
+    }
+    return res.json(result);
+  });
+
+  /**
+   * POST /promote-and-pr-bulk — куратор select'ит N паттернов в Heatmap,
+   * server делает один PR с N file-writes + N entries в curated/anti index.
+   *
+   * Body: { patternIds: string[], archetype?: string,
+   *         archetypeOverrides?: { [id]: string },
+   *         kind?: "stable"|"anti", summary?: string, branch?: string }
+   * → { ok, prUrl, branch, log, perPattern }
+   */
+  router.post("/promote-and-pr-bulk", async (req, res) => {
+    const body = req.body || {};
+    if (!Array.isArray(body.patternIds) || body.patternIds.length === 0) {
+      return res.status(400).json({ error: "missing_patternIds" });
+    }
+    if (body.kind && body.kind !== "stable" && body.kind !== "anti") {
+      return res.status(400).json({ error: "bad_kind" });
+    }
+    try { loadCandidatesFromRefs(); } catch (err) {
+      return res.status(500).json({ error: "load_failed", reason: err.message });
+    }
+    const result = await promoteBatchToSdkPr(body);
+    if (!result.ok) {
+      const status =
+        result.error === "disabled" ? 403 :
+        result.error === "empty-batch" || result.error === "nothing-to-do" || result.error === "all-skipped" ? 400 :
         result.error === "sdk-path-missing" || result.error === "curated-js-missing" ? 503 :
         500;
       return res.status(status).json(result);

@@ -449,8 +449,217 @@ async function promoteToSdkPr(input) {
   }
 }
 
+/**
+ * Bulk-вариант: куратор select'ит N паттернов в Heatmap, server делает
+ * **один PR** с N file-writes + N entries в curated/anti index + один
+ * changeset. Это лучше чем N отдельных PR'ов: меньше нагрузка на CI,
+ * проще review (один diff), atomic — либо все promoted, либо rollback.
+ *
+ * Per-pattern архетип берётся из самого pattern.archetype, либо из
+ * input.archetypeOverrides[id], либо input.archetype (fallback). Если
+ * для какого-то pattern archetype не определён — он skip'ается с
+ * error в perPattern, остальные продолжают.
+ *
+ * @param {Object} input — {
+ *   patternIds: string[],
+ *   archetype?: string,                       — fallback для всех
+ *   archetypeOverrides?: { [patternId]: string },
+ *   kind?: "stable" | "anti",
+ *   summary?: string,
+ *   branch?: string,
+ * }
+ * @returns {Promise<{ok: true, prUrl, branch, log, perPattern: Array<{id, ok, archetype?, error?}>}
+ *   | {ok: false, error, message, log, perPattern}>}
+ */
+async function promoteBatchToSdkPr(input) {
+  const log = [];
+  const perPattern = [];
+  const ids = Array.isArray(input.patternIds) ? input.patternIds : [];
+  if (ids.length === 0) {
+    return { ok: false, error: "empty-batch", message: "patternIds пуст", log, perPattern };
+  }
+  const kind = input.kind === "anti" ? "anti" : "stable";
+
+  if (process.env.CURATOR_PR_ENABLED !== "1") {
+    return { ok: false, error: "disabled", message: "CURATOR_PR_ENABLED=1 не выставлен", log, perPattern };
+  }
+  const sdkPath = process.env.IDF_SDK_PATH;
+  if (!sdkPath || !existsSync(sdkPath)) {
+    return {
+      ok: false,
+      error: "sdk-path-missing",
+      message: `IDF_SDK_PATH не задан или не существует: ${sdkPath || "(empty)"}`,
+      log, perPattern,
+    };
+  }
+
+  const VALID_ARCHETYPES = ["catalog", "detail", "feed", "cross"];
+  const refs = getRefCandidates();
+  const overrides = input.archetypeOverrides || {};
+  // Resolved patterns с архетипом + skip для невалидных
+  const planned = [];
+  for (const id of ids) {
+    const pattern = refs.find((p) => p.id === id);
+    if (!pattern) {
+      perPattern.push({ id, ok: false, error: "ref-not-found" });
+      continue;
+    }
+    const archetype = overrides[id] || pattern.archetype || input.archetype;
+    if (!archetype || !VALID_ARCHETYPES.includes(archetype)) {
+      perPattern.push({ id, ok: false, error: "archetype-missing-or-invalid", archetype });
+      continue;
+    }
+    planned.push({ id, pattern, archetype });
+  }
+  if (planned.length === 0) {
+    return {
+      ok: false,
+      error: "nothing-to-do",
+      message: "Все patterns отсеяны валидацией (см. perPattern)",
+      log, perPattern,
+    };
+  }
+
+  const bankRoot = kind === "anti"
+    ? path.join(sdkPath, "packages", "core", "src", "patterns", "anti")
+    : path.join(sdkPath, "packages", "core", "src", "patterns", "candidate");
+  const indexJs = kind === "anti"
+    ? path.join(bankRoot, "index.js")
+    : path.join(bankRoot, "curated.js");
+  if (kind === "stable" && !existsSync(indexJs)) {
+    return { ok: false, error: "curated-js-missing", message: `${indexJs} not found`, log, perPattern };
+  }
+
+  const branchPrefix = kind === "anti" ? "feat/curator-anti-batch" : "feat/curator-promote-batch";
+  const branch = input.branch || `${branchPrefix}-${shortId()}`;
+  const summary = input.summary || `Bulk ${kind === "anti" ? "mark-anti" : "promote"}: ${planned.length} patterns from idf refs.`;
+
+  try {
+    await gitExec(sdkPath, ["fetch", "origin", "main"], log);
+    await gitExec(sdkPath, ["checkout", "main"], log);
+    await gitExec(sdkPath, ["reset", "--hard", "origin/main"], log);
+    await gitExec(sdkPath, ["checkout", "-b", branch], log);
+
+    if (kind === "anti") {
+      const ensured = ensureAntiIndex(bankRoot);
+      log.push(`ensureAntiIndex: ${JSON.stringify(ensured)}`);
+    }
+
+    for (const item of planned) {
+      const { id, pattern, archetype } = item;
+      const dir = path.join(bankRoot, archetype);
+      const file = path.join(dir, `${id}.js`);
+      if (existsSync(file)) {
+        perPattern.push({ id, ok: false, error: "collision", archetype });
+        continue;
+      }
+      if (!existsSync(dir)) mkdirSync(dir, { recursive: true });
+      const patternForBank = kind === "anti" ? { ...pattern, status: "anti" } : pattern;
+      writeFileSync(file, renderCandidateModule(patternForBank), "utf8");
+      const patch = kind === "anti"
+        ? patchAntiIndex(indexJs, archetype, id)
+        : patchCuratedJs(indexJs, archetype, id);
+      if (!patch.changed && patch.reason !== "already-imported") {
+        perPattern.push({ id, ok: false, error: `index-patch-failed: ${patch.reason}`, archetype });
+        continue;
+      }
+      perPattern.push({ id, ok: true, archetype });
+      log.push(`+ ${id} (${archetype})`);
+    }
+    const successIds = perPattern.filter((p) => p.ok).map((p) => p.id);
+    if (successIds.length === 0) {
+      // Откатить ветку, не делать пустой PR
+      await gitExec(sdkPath, ["checkout", "main"], log);
+      await gitExec(sdkPath, ["branch", "-D", branch], log);
+      return { ok: false, error: "all-skipped", message: "Все паттерны отсеялись (collision/invalid).", log, perPattern };
+    }
+
+    // Один changeset на всю партию
+    const changesetDir = path.join(sdkPath, ".changeset");
+    if (!existsSync(changesetDir)) mkdirSync(changesetDir, { recursive: true });
+    const changesetFile = path.join(changesetDir, `curator-batch-${shortId()}.md`);
+    const cs = `---\n"@intent-driven/core": patch\n---\n\n${summary}\n\nPatterns: ${successIds.map((s) => `\`${s}\``).join(", ")}\n`;
+    writeFileSync(changesetFile, cs, "utf8");
+    log.push(`wrote ${changesetFile}`);
+
+    const verb = kind === "anti" ? "mark-anti batch" : "promote batch";
+    const commitMsg = `feat(patterns): ${verb} (${successIds.length} patterns, curator workspace)`;
+    await gitExec(sdkPath, ["add", "-A"], log);
+    await gitExec(sdkPath, ["commit", "-m", commitMsg], log);
+    await gitExec(sdkPath, ["push", "-u", "origin", branch], log);
+
+    const bankNote = kind === "anti"
+      ? "Patterns попадают в **anti-bank** — Signal Classifier даст negative score."
+      : "Patterns попадают в **candidate-bank** (matching-only). Promotion в stable + apply — ручной шаг.";
+    const body = [
+      "## Bulk Curator Promotion",
+      "",
+      summary,
+      "",
+      `Bank: \`${kind}\` · ${successIds.length} patterns`,
+      "",
+      "### Patterns",
+      ...successIds.map((id) => `- \`${id}\``),
+      "",
+      bankNote,
+    ].join("\n");
+    const prTitle = `feat(patterns): ${verb} (${successIds.length} from curator)`;
+    const prRes = await ghExec(
+      sdkPath,
+      ["pr", "create", "--base", "main", "--title", prTitle, "--body", body],
+      log,
+    );
+    const prUrl = (prRes.stdout || "").trim().split("\n").pop();
+
+    // Запись N PatternPromotion'ов в Φ — каждый pattern получает свою запись.
+    try {
+      const now = Date.now();
+      const stmt = db.prepare(`
+        INSERT INTO effects (id, intent_id, alpha, target, value, scope, status,
+                             ttl, context, created_at, resolved_at)
+        VALUES (?, ?, ?, ?, ?, ?, ?, NULL, ?, ?, ?)
+      `);
+      for (const item of perPattern.filter((p) => p.ok)) {
+        const promotionId = randomUUID();
+        const ctx = {
+          id: promotionId,
+          candidateId: item.id,
+          targetArchetype: item.archetype,
+          targetBank: kind,
+          rationale: summary,
+          status: "shipped",
+          sdkPrUrl: prUrl,
+          sdkBranch: branch,
+          weight: 50,
+          requestedByUserId: "patternCurator",
+          requestedAt: now,
+          decidedAt: now,
+        };
+        stmt.run(
+          randomUUID(), "ship_pattern_promotion", "create", "PatternPromotion",
+          JSON.stringify(ctx), "account", "confirmed", JSON.stringify(ctx), now, now,
+        );
+      }
+      log.push(`recorded ${successIds.length} PatternPromotion(s)`);
+    } catch (e) {
+      log.push(`warning: PatternPromotion bulk record failed: ${e.message}`);
+    }
+
+    return { ok: true, prUrl, branch, log, perPattern };
+  } catch (e) {
+    return {
+      ok: false,
+      error: "git-failed",
+      message: e.message,
+      log,
+      perPattern,
+    };
+  }
+}
+
 module.exports = {
   promoteToSdkPr,
+  promoteBatchToSdkPr,
   // Экспорт для тестов
   renderCandidateModule,
   renderChangeset,
