@@ -1,0 +1,79 @@
+{
+  "id": "trigger-action-rule-builder",
+  "version": 1,
+  "status": "candidate",
+  "archetype": "detail",
+  "trigger": {
+    "requires": [
+      {
+        "kind": "entity-field",
+        "name": "trigger"
+      },
+      {
+        "kind": "entity-field",
+        "name": "actions"
+      },
+      {
+        "kind": "entity-field",
+        "name": "active"
+      }
+    ]
+  },
+  "structure": {
+    "slot": "body",
+    "description": "Detail-проекция Workflow собирается как WHEN (trigger picker по entity+field+α) → IF (condition rows) → THEN (action template list). Toggle active — primary CTA. Каждый action — wrapper над существующим intent с pre-filled params."
+  },
+  "rationale": {
+    "hypothesis": "Workflow — мета-сущность над intent-системой. Builder не должен изобретать новый язык: trigger ссылается на existing intents (deal.stage replaced), actions — на existing intents (schedule_activity, send_template_email). Это делает rules grokkable и rigorously bounded.",
+    "evidence": [
+      {
+        "source": "pipedrive",
+        "description": "Workflow Automation: trigger (deal.stage changed) → action template (schedule activity, create project, send email)",
+        "reliability": "high"
+      },
+      {
+        "source": "zapier",
+        "description": "Trigger → Action композиция как primary UI",
+        "reliability": "high"
+      },
+      {
+        "source": "n8n",
+        "description": "Visual rule builder с typed triggers/actions",
+        "reliability": "high"
+      }
+    ],
+    "counterexample": [
+      {
+        "source": "ifttt",
+        "description": "Single-trigger single-action упрощено — не работает для multi-step",
+        "reliability": "medium"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [
+      {
+        "domain": "workflow",
+        "projection": "workflows",
+        "reason": "Каноничный домен"
+      },
+      {
+        "domain": "lifequest",
+        "projection": "automations",
+        "reason": "Habit-based automation"
+      }
+    ],
+    "shouldNotMatch": [
+      {
+        "domain": "messenger",
+        "projection": "conversations",
+        "reason": "Conversation не trigger-action entity"
+      },
+      {
+        "domain": "invest",
+        "projection": "positions",
+        "reason": "Position не workflow definition"
+      }
+    ]
+  }
+}

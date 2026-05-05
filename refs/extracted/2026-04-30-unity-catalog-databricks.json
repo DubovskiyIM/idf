@@ -1,0 +1,791 @@
+{
+  "source": "databricks-unity-catalog",
+  "entities": [
+    {
+      "name": "Metastore",
+      "fields": [
+        "name",
+        "region",
+        "storageRoot",
+        "owner",
+        "deltaSharingScope",
+        "createdAt"
+      ]
+    },
+    {
+      "name": "Catalog",
+      "fields": [
+        "name",
+        "comment",
+        "owner",
+        "type",
+        "isolationMode",
+        "tags",
+        "storageRoot",
+        "createdAt",
+        "updatedAt"
+      ],
+      "statusValues": [
+        "managed",
+        "foreign",
+        "system",
+        "shared"
+      ],
+      "foreignKey": "metastoreId→Metastore"
+    },
+    {
+      "name": "Schema",
+      "fields": [
+        "name",
+        "comment",
+        "owner",
+        "tags",
+        "storageRoot",
+        "createdAt"
+      ],
+      "foreignKey": "catalogId→Catalog"
+    },
+    {
+      "name": "Table",
+      "fields": [
+        "name",
+        "comment",
+        "owner",
+        "tableType",
+        "dataFormat",
+        "location",
+        "partitionColumns",
+        "tblProperties",
+        "numRecords",
+        "dataSize",
+        "lastUpdated",
+        "retention",
+        "tags",
+        "classificationLabels"
+      ],
+      "statusValues": [
+        "managed",
+        "external",
+        "foreign",
+        "streaming",
+        "materialized_view",
+        "view"
+      ],
+      "foreignKey": "schemaId→Schema"
+    },
+    {
+      "name": "Column",
+      "fields": [
+        "name",
+        "dataType",
+        "nullable",
+        "comment",
+        "tags",
+        "classificationLabels",
+        "position",
+        "mask"
+      ],
+      "foreignKey": "tableId→Table"
+    },
+    {
+      "name": "Volume",
+      "fields": [
+        "name",
+        "comment",
+        "owner",
+        "volumeType",
+        "storageLocation",
+        "tags",
+        "createdAt"
+      ],
+      "statusValues": [
+        "managed",
+        "external"
+      ],
+      "foreignKey": "schemaId→Schema"
+    },
+    {
+      "name": "VolumeFile",
+      "fields": [
+        "path",
+        "name",
+        "size",
+        "modifiedAt",
+        "contentType"
+      ],
+      "foreignKey": "volumeId→Volume"
+    },
+    {
+      "name": "Function",
+      "fields": [
+        "name",
+        "comment",
+        "owner",
+        "language",
+        "signature",
+        "returnType",
+        "routineBody",
+        "isDeterministic",
+        "tags"
+      ],
+      "foreignKey": "schemaId→Schema"
+    },
+    {
+      "name": "AITool",
+      "fields": [
+        "name",
+        "description",
+        "parameters",
+        "returnType",
+        "wrappedFunction",
+        "owner",
+        "tags"
+      ],
+      "foreignKey": "schemaId→Schema"
+    },
+    {
+      "name": "RegisteredModel",
+      "fields": [
+        "name",
+        "comment",
+        "owner",
+        "tags",
+        "createdAt",
+        "updatedAt"
+      ],
+      "foreignKey": "schemaId→Schema"
+    },
+    {
+      "name": "ModelVersion",
+      "fields": [
+        "version",
+        "status",
+        "source",
+        "runId",
+        "tags",
+        "aliases",
+        "createdAt"
+      ],
+      "statusValues": [
+        "pending",
+        "ready",
+        "failed"
+      ],
+      "foreignKey": "modelId→RegisteredModel"
+    },
+    {
+      "name": "ServingEndpoint",
+      "fields": [
+        "name",
+        "state",
+        "config",
+        "trafficPolicy",
+        "owner"
+      ],
+      "statusValues": [
+        "pending",
+        "ready",
+        "updating",
+        "failed"
+      ],
+      "foreignKey": "modelVersionId→ModelVersion"
+    },
+    {
+      "name": "Grant",
+      "fields": [
+        "principal",
+        "principalType",
+        "privilege",
+        "securableType",
+        "securablePath",
+        "grantedBy",
+        "grantedAt"
+      ],
+      "statusValues": [
+        "SELECT",
+        "MODIFY",
+        "INSERT",
+        "UPDATE",
+        "DELETE",
+        "READ_VOLUME",
+        "WRITE_VOLUME",
+        "EXECUTE",
+        "USE_CATALOG",
+        "USE_SCHEMA",
+        "MANAGE",
+        "BROWSE",
+        "ALL_PRIVILEGES"
+      ]
+    },
+    {
+      "name": "Principal",
+      "fields": [
+        "name",
+        "type",
+        "email",
+        "active"
+      ],
+      "statusValues": [
+        "user",
+        "group",
+        "service_principal"
+      ]
+    },
+    {
+      "name": "Tag",
+      "fields": [
+        "key",
+        "value",
+        "appliedTo",
+        "appliedAt"
+      ]
+    },
+    {
+      "name": "ClassificationLabel",
+      "fields": [
+        "name",
+        "category",
+        "sensitivity",
+        "auto",
+        "appliedTo"
+      ],
+      "statusValues": [
+        "pii",
+        "phi",
+        "financial",
+        "confidential",
+        "public"
+      ]
+    },
+    {
+      "name": "RowFilter",
+      "fields": [
+        "name",
+        "functionRef",
+        "appliedColumns",
+        "owner"
+      ],
+      "foreignKey": "tableId→Table"
+    },
+    {
+      "name": "ColumnMask",
+      "fields": [
+        "functionRef",
+        "owner"
+      ],
+      "foreignKey": "columnId→Column"
+    },
+    {
+      "name": "ABACPolicy",
+      "fields": [
+        "name",
+        "matchTags",
+        "action",
+        "filterExpression",
+        "enabled"
+      ],
+      "statusValues": [
+        "enabled",
+        "disabled",
+        "preview"
+      ]
+    },
+    {
+      "name": "TableHistoryEntry",
+      "fields": [
+        "version",
+        "timestamp",
+        "userId",
+        "operation",
+        "operationParameters",
+        "recordsAffected",
+        "isolationLevel"
+      ],
+      "foreignKey": "tableId→Table"
+    },
+    {
+      "name": "LineageEdge",
+      "fields": [
+        "upstream",
+        "downstream",
+        "upstreamType",
+        "downstreamType",
+        "columnLevel",
+        "sourceQuery",
+        "capturedAt"
+      ]
+    },
+    {
+      "name": "QualityAssertion",
+      "fields": [
+        "name",
+        "expression",
+        "severity",
+        "lastResult",
+        "lastRunAt",
+        "source"
+      ],
+      "statusValues": [
+        "pass",
+        "fail",
+        "warn",
+        "stale"
+      ],
+      "foreignKey": "tableId→Table"
+    },
+    {
+      "name": "TableInsight",
+      "fields": [
+        "queryFrequency",
+        "topUsers",
+        "frequentPredicates",
+        "lastQueriedAt"
+      ],
+      "foreignKey": "tableId→Table"
+    },
+    {
+      "name": "Connection",
+      "fields": [
+        "name",
+        "connectionType",
+        "host",
+        "credentials",
+        "owner",
+        "comment"
+      ],
+      "statusValues": [
+        "snowflake",
+        "postgresql",
+        "bigquery",
+        "mysql",
+        "redshift",
+        "databricks"
+      ]
+    },
+    {
+      "name": "ExternalLocation",
+      "fields": [
+        "name",
+        "url",
+        "credentialId",
+        "comment",
+        "owner"
+      ],
+      "foreignKey": "credentialId→StorageCredential"
+    },
+    {
+      "name": "StorageCredential",
+      "fields": [
+        "name",
+        "type",
+        "comment",
+        "owner",
+        "readOnly"
+      ],
+      "statusValues": [
+        "aws_iam_role",
+        "azure_managed_identity",
+        "azure_service_principal",
+        "gcp_service_account"
+      ]
+    },
+    {
+      "name": "Share",
+      "fields": [
+        "name",
+        "comment",
+        "owner",
+        "objects",
+        "createdAt"
+      ]
+    },
+    {
+      "name": "Recipient",
+      "fields": [
+        "name",
+        "comment",
+        "authenticationType",
+        "activationUrl",
+        "sharingCode",
+        "owner"
+      ],
+      "statusValues": [
+        "token",
+        "databricks"
+      ]
+    },
+    {
+      "name": "AuditLogEntry",
+      "fields": [
+        "timestamp",
+        "actor",
+        "actionType",
+        "resourcePath",
+        "requestParameters",
+        "response",
+        "sourceIp",
+        "userAgent"
+      ]
+    },
+    {
+      "name": "SystemTable",
+      "fields": [
+        "name",
+        "schema",
+        "description",
+        "enabled"
+      ],
+      "statusValues": [
+        "audit",
+        "billing",
+        "lineage",
+        "access",
+        "compute",
+        "marketplace"
+      ]
+    },
+    {
+      "name": "GenieQuery",
+      "fields": [
+        "nlPrompt",
+        "generatedSql",
+        "executedAs",
+        "result",
+        "createdAt"
+      ]
+    }
+  ],
+  "intents": [
+    {
+      "id": "create_catalog",
+      "α": "add",
+      "creates": "Catalog",
+      "confirmation": "form"
+    },
+    {
+      "id": "create_schema",
+      "α": "add",
+      "creates": "Schema",
+      "confirmation": "form"
+    },
+    {
+      "id": "create_table",
+      "α": "add",
+      "creates": "Table",
+      "confirmation": "form"
+    },
+    {
+      "id": "create_volume",
+      "α": "add",
+      "creates": "Volume",
+      "confirmation": "form"
+    },
+    {
+      "id": "drop_table_with_cascade",
+      "α": "remove",
+      "target": "entities",
+      "irreversibility": "high",
+      "confirmation": "form"
+    },
+    {
+      "id": "drop_schema",
+      "α": "remove",
+      "target": "entities",
+      "irreversibility": "high",
+      "confirmation": "form"
+    },
+    {
+      "id": "drop_catalog",
+      "α": "remove",
+      "target": "entities",
+      "irreversibility": "high",
+      "confirmation": "form"
+    },
+    {
+      "id": "rename_object",
+      "α": "replace",
+      "target": "table.name",
+      "confirmation": "form"
+    },
+    {
+      "id": "edit_comment",
+      "α": "replace",
+      "target": "table.comment",
+      "confirmation": "enter"
+    },
+    {
+      "id": "transfer_ownership",
+      "α": "replace",
+      "target": "table.owner",
+      "irreversibility": "high",
+      "confirmation": "form"
+    },
+    {
+      "id": "set_default_catalog_for_workspace",
+      "α": "replace",
+      "target": "metastore.defaultCatalog",
+      "confirmation": "click"
+    },
+    {
+      "id": "grant_privilege",
+      "α": "add",
+      "creates": "Grant",
+      "confirmation": "form"
+    },
+    {
+      "id": "revoke_privilege",
+      "α": "remove",
+      "target": "entities",
+      "irreversibility": "high",
+      "confirmation": "click"
+    },
+    {
+      "id": "attach_tag",
+      "α": "add",
+      "creates": "Tag",
+      "confirmation": "form"
+    },
+    {
+      "id": "remove_tag",
+      "α": "remove",
+      "target": "entities",
+      "confirmation": "click"
+    },
+    {
+      "id": "set_classification_label",
+      "α": "add",
+      "creates": "ClassificationLabel",
+      "confirmation": "form"
+    },
+    {
+      "id": "define_row_filter",
+      "α": "add",
+      "creates": "RowFilter",
+      "confirmation": "form"
+    },
+    {
+      "id": "apply_column_mask",
+      "α": "add",
+      "creates": "ColumnMask",
+      "confirmation": "form"
+    },
+    {
+      "id": "create_abac_policy",
+      "α": "add",
+      "creates": "ABACPolicy",
+      "confirmation": "form"
+    },
+    {
+      "id": "time_travel_query",
+      "α": "add",
+      "creates": "GenieQuery",
+      "confirmation": "form"
+    },
+    {
+      "id": "restore_table_version",
+      "α": "replace",
+      "target": "table.version",
+      "irreversibility": "high",
+      "confirmation": "form"
+    },
+    {
+      "id": "open_in_notebook",
+      "α": "add",
+      "confirmation": "click"
+    },
+    {
+      "id": "query_in_sql_editor",
+      "α": "add",
+      "confirmation": "click"
+    },
+    {
+      "id": "sample_data",
+      "α": "add",
+      "confirmation": "click"
+    },
+    {
+      "id": "refresh_metadata",
+      "α": "replace",
+      "target": "table.lastUpdated",
+      "confirmation": "click"
+    },
+    {
+      "id": "view_lineage",
+      "α": "add",
+      "confirmation": "click"
+    },
+    {
+      "id": "browse_volume",
+      "α": "add",
+      "confirmation": "click"
+    },
+    {
+      "id": "upload_to_volume",
+      "α": "add",
+      "creates": "VolumeFile",
+      "confirmation": "form"
+    },
+    {
+      "id": "download_volume_file",
+      "α": "add",
+      "confirmation": "click"
+    },
+    {
+      "id": "delete_volume_file",
+      "α": "remove",
+      "target": "entities",
+      "irreversibility": "high",
+      "confirmation": "click"
+    },
+    {
+      "id": "register_function",
+      "α": "add",
+      "creates": "Function",
+      "confirmation": "form"
+    },
+    {
+      "id": "register_ai_tool",
+      "α": "add",
+      "creates": "AITool",
+      "confirmation": "form"
+    },
+    {
+      "id": "register_model",
+      "α": "add",
+      "creates": "RegisteredModel",
+      "confirmation": "form"
+    },
+    {
+      "id": "promote_model_version",
+      "α": "replace",
+      "target": "modelVersion.aliases",
+      "confirmation": "form"
+    },
+    {
+      "id": "deploy_model_serving",
+      "α": "add",
+      "creates": "ServingEndpoint",
+      "confirmation": "form"
+    },
+    {
+      "id": "stop_serving_endpoint",
+      "α": "remove",
+      "target": "entities",
+      "irreversibility": "high",
+      "confirmation": "form"
+    },
+    {
+      "id": "create_share",
+      "α": "add",
+      "creates": "Share",
+      "confirmation": "form"
+    },
+    {
+      "id": "add_object_to_share",
+      "α": "add",
+      "target": "share.objects",
+      "confirmation": "form"
+    },
+    {
+      "id": "create_recipient",
+      "α": "add",
+      "creates": "Recipient",
+      "confirmation": "form"
+    },
+    {
+      "id": "accept_share",
+      "α": "add",
+      "creates": "Catalog",
+      "confirmation": "form"
+    },
+    {
+      "id": "rotate_recipient_token",
+      "α": "replace",
+      "target": "recipient.activationUrl",
+      "irreversibility": "high",
+      "confirmation": "form"
+    },
+    {
+      "id": "federate_external_catalog",
+      "α": "add",
+      "creates": "Catalog",
+      "confirmation": "form"
+    },
+    {
+      "id": "create_connection",
+      "α": "add",
+      "creates": "Connection",
+      "confirmation": "form"
+    },
+    {
+      "id": "create_storage_credential",
+      "α": "add",
+      "creates": "StorageCredential",
+      "confirmation": "form"
+    },
+    {
+      "id": "create_external_location",
+      "α": "add",
+      "creates": "ExternalLocation",
+      "confirmation": "form"
+    },
+    {
+      "id": "query_with_genie",
+      "α": "add",
+      "creates": "GenieQuery",
+      "confirmation": "enter"
+    },
+    {
+      "id": "audit_query_log",
+      "α": "add",
+      "confirmation": "click"
+    },
+    {
+      "id": "run_quality_assertion",
+      "α": "add",
+      "creates": "QualityAssertion",
+      "confirmation": "click"
+    }
+  ],
+  "roles": [
+    "owner",
+    "viewer",
+    "agent",
+    "observer",
+    "admin"
+  ],
+  "observations": [
+    "3-tier hierarchical browse tree (catalog → schema → object-type → object) as primary navigation, resizable split-pane",
+    "Master-detail shell: tree on left, detail tabs on right, persisted across navigation",
+    "Polymorphic securable: Table/View/Volume/Function/Model/AITool share unified detail tabs (Overview/Permissions/Lineage/History) with type-specific tabs added (Sample Data for Table, Files for Volume, Versions for Model)",
+    "Hero identity uses fully-qualified path catalog.schema.object as canonical id with copy-to-clipboard",
+    "Type badge + format badge differentiate Managed/External/Foreign/Streaming and Delta/Iceberg/Parquet at hero level",
+    "Quick-action toolbar above tabs: Open in Notebook / Query in SQL Editor / Sample / Refresh — context-shaped CTAs",
+    "Sample Data tab auto-fetches first N rows lazy on tab activation, cached per session",
+    "Permissions tab as principal × privilege grid (matrix) rather than list — both axes browsable",
+    "History tab as version timeline with operation-typed rows (Delta time-travel as first-class)",
+    "Lineage tab as graph canvas with toggle for column-level vs table-level granularity, upstream/downstream split",
+    "Quality and Insights tabs surface derived/passive metadata alongside structural metadata — same tab strip",
+    "Tags rendered as chip cluster, key:value pairs, attachable to schema/table/column polymorphically",
+    "Classification labels visually distinct from tags (sensitivity tier coloring) and drive automatic masking policies",
+    "Column tree in Overview shows nullable, type, comment, tags, classification inline — dense table",
+    "Search bar global across catalogs/schemas/tables with type-grouped autocomplete",
+    "Filter chips toolbar (tag, owner, type) above tree for cross-cutting filtering",
+    "Foreign catalog visually marked in tree (federation icon) but treated as first-class — uniform detail surface",
+    "Delta Sharing surfaced as separate top-level area: Shares (out-bound) + Recipients (counterparties) — outside main tree",
+    "Volume browse as file-tree (nested directories) inside detail tab — Volume = securable wrapper around hierarchical files",
+    "Permissions inheritance visualized: catalog-level grants shown as inherited rows on schema/table permission tabs",
+    "Service principals and groups rendered in same picker as users — first-class principals",
+    "Row filters / column masks defined as references to UDF (Function entity) — composition over inline expressions",
+    "ABAC policies separate top-level area; their effect propagates to permission tab as derived row-filter badge on affected tables",
+    "Audit log accessible both as system table query AND as per-resource activity tab — dual surface",
+    "Genie integration: NL prompt input above tree/results, generated SQL shown as preview before execute, permissions enforced at exec time",
+    "Notebook integration: schema browser as side panel inside notebook editor reuses same tree primitive as Catalog Explorer",
+    "Time-travel query via History tab → 'Query at version N' CTA opens SQL editor pre-populated",
+    "Drop with cascade dialog requires type-to-confirm and lists impacted children",
+    "Transfer ownership flagged as high-irreversibility — full form with current+new owner + reason field",
+    "Model detail surfaces Versions list + Aliases (champion/challenger) as separate panels; aliases reassignable via inline action",
+    "Serving endpoint state (pending/ready/updating/failed) shown with traffic-light badge on model detail",
+    "AI Tool detail emphasizes LLM-readable description field — distinct treatment from Function comment"
+  ]
+}

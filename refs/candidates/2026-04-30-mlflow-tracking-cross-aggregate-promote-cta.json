@@ -1,0 +1,76 @@
+{
+  "id": "cross-aggregate-promote-cta",
+  "version": 1,
+  "status": "candidate",
+  "archetype": "detail",
+  "trigger": {
+    "requires": [
+      {
+        "kind": "intent-creates",
+        "fromAggregate": "current",
+        "toAggregate": "different-root"
+      },
+      {
+        "kind": "intent-confirmation",
+        "value": "form"
+      }
+    ]
+  },
+  "structure": {
+    "slot": "primaryCTA",
+    "description": "Detail получает secondary CTA-кнопку 'Promote to <other-aggregate>' (Register Model, Convert to Lead и т.п.), которая открывает форму создания сущности из другого aggregate-root'a с pre-filled lineage-back-reference."
+  },
+  "rationale": {
+    "hypothesis": "Cross-aggregate creation — это не CRUD внутри одного агрегата, а bridge между двумя слоями домена. Surface'ить promote как обычный 'Add' в каталоге model'ей — теряется provenance; promote'ить с detail — естественный witness 'эта сущность пришла отсюда'.",
+    "evidence": [
+      {
+        "source": "mlflow",
+        "description": "Run Detail → 'Register Model' → ModelVersion с sourceRunId pre-filled",
+        "reliability": "high"
+      },
+      {
+        "source": "salesforce",
+        "description": "Lead → Convert → Account+Contact+Opportunity creation с lineage",
+        "reliability": "high"
+      },
+      {
+        "source": "jira",
+        "description": "Issue → 'Create related' с link-type",
+        "reliability": "medium"
+      }
+    ],
+    "counterexample": [
+      {
+        "source": "messenger",
+        "description": "Message не promote'ится в другой aggregate; CTA отсутствует",
+        "reliability": "high"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [
+      {
+        "domain": "sales",
+        "projection": "bid-detail",
+        "reason": "Winning bid → Order — cross-aggregate promote с lineage"
+      },
+      {
+        "domain": "lifequest",
+        "projection": "habit-detail",
+        "reason": "Habit → Goal promote (если Goal в отдельном aggregate)"
+      }
+    ],
+    "shouldNotMatch": [
+      {
+        "domain": "planning",
+        "projection": "poll-detail",
+        "reason": "Poll не имеет cross-aggregate promote intent"
+      },
+      {
+        "domain": "booking",
+        "projection": "booking-detail",
+        "reason": "Booking — терминальный aggregate, не promotee"
+      }
+    ]
+  }
+}

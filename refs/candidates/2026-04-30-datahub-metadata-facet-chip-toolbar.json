@@ -1,0 +1,72 @@
+{
+  "id": "facet-chip-toolbar",
+  "version": 1,
+  "status": "candidate",
+  "archetype": "catalog",
+  "trigger": {
+    "requires": [
+      {
+        "kind": "intent-effect",
+        "α": "replace",
+        "target": "session.searchFilters"
+      },
+      {
+        "kind": "entity-field",
+        "minDistinctEnumFields": 4,
+        "rationale": "≥4 enum/categorical facets justify dedicated chip toolbar over inline dropdowns"
+      }
+    ]
+  },
+  "structure": {
+    "slot": "toolbar",
+    "description": "Horizontal row of facet chips above catalog body (type, platform, env, tag, owner, domain). Each chip opens a popover with multi-select; active filters render as removable chips inline."
+  },
+  "rationale": {
+    "hypothesis": "When a catalog has many faceted attributes, sidebar facets consume horizontal space while inline dropdowns hide active state. Chip toolbar makes both available filters and active filters visible in one strip.",
+    "evidence": [
+      {
+        "source": "DataHub",
+        "description": "Search results header — chips for type/platform/env/tag/term/owner/domain",
+        "reliability": "high"
+      },
+      {
+        "source": "Amplitude",
+        "description": "Event explorer chip-row for property filters",
+        "reliability": "high"
+      },
+      {
+        "source": "Notion",
+        "description": "Database filter pills above table",
+        "reliability": "high"
+      }
+    ],
+    "counterexample": [
+      {
+        "source": "1–2 facets",
+        "description": "With few facets, inline dropdowns are simpler",
+        "reliability": "high"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [
+      {
+        "domain": "delivery",
+        "projection": "order-list",
+        "reason": "status, courier, restaurant, payment-method, time-range — many facets"
+      },
+      {
+        "domain": "invest",
+        "projection": "asset-catalog",
+        "reason": "sector, region, asset-class, currency facets"
+      }
+    ],
+    "shouldNotMatch": [
+      {
+        "domain": "reflect",
+        "projection": "mood-feed",
+        "reason": "Only date facet — chip toolbar overkill"
+      }
+    ]
+  }
+}

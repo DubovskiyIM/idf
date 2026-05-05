@@ -1,0 +1,68 @@
+{
+  "id": "relevance-ranked-results",
+  "version": 1,
+  "status": "candidate",
+  "archetype": "catalog",
+  "trigger": {
+    "requires": [
+      {
+        "kind": "intent-effect",
+        "α": "replace",
+        "target": "session.searchQuery"
+      },
+      {
+        "kind": "entity-field",
+        "fieldRole": "usageScore",
+        "computedFrom": [
+          "lineage",
+          "queryStats",
+          "viewCount"
+        ],
+        "minMatched": 2,
+        "rationale": "ranking signal aggregates real usage, not just text-match"
+      }
+    ]
+  },
+  "structure": {
+    "slot": "sections",
+    "description": "Search result rows display a relevance score (PageRank-like, derived from lineage + query frequency + viewer count) as visible signal alongside text-match. Sort defaults to relevance; users can flip to recency/name."
+  },
+  "rationale": {
+    "hypothesis": "Pure text matching surfaces obscure tables. Usage-weighted ranking elevates the entities people actually use, providing 'social proof of correct entity'. Score visibility lets users judge whether the top hit is authoritative.",
+    "evidence": [
+      {
+        "source": "DataHub",
+        "description": "Search ranks via PageRank on lineage + usage score",
+        "reliability": "high"
+      },
+      {
+        "source": "Google Search",
+        "description": "PageRank as canonical example",
+        "reliability": "high"
+      }
+    ],
+    "counterexample": [
+      {
+        "source": "Cold-start catalog",
+        "description": "Without usage history, ranking signal is uniform",
+        "reliability": "medium"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [
+      {
+        "domain": "workflow",
+        "projection": "workflow-search",
+        "reason": "Run frequency + invocation count = usage signal"
+      }
+    ],
+    "shouldNotMatch": [
+      {
+        "domain": "reflect",
+        "projection": "mood-search",
+        "reason": "No usage stats — single user"
+      }
+    ]
+  }
+}

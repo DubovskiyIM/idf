@@ -1,0 +1,82 @@
+{
+  "id": "type-grouped-autocomplete-search",
+  "version": 1,
+  "status": "candidate",
+  "archetype": null,
+  "trigger": {
+    "requires": [
+      {
+        "kind": "intent-effect",
+        "α": "replace",
+        "target": "session.searchQuery"
+      },
+      {
+        "kind": "entity-kind",
+        "value": "polymorphic-or-multiple",
+        "min": 3,
+        "rationale": "search must span 3+ heterogeneous entity kinds to justify type-grouping"
+      },
+      {
+        "kind": "intent-confirmation",
+        "value": "enter"
+      }
+    ]
+  },
+  "structure": {
+    "slot": "header",
+    "description": "Global search bar in app-shell header with autocomplete dropdown that groups results by entity kind (Datasets / Dashboards / Terms / People). Each group shows top-N with kind icon; type-ahead is the canonical entry point, not navigation menu."
+  },
+  "rationale": {
+    "hypothesis": "When the catalog spans heterogeneous entity kinds, a flat result list buries less-frequent kinds. Grouping by kind preserves discoverability of long-tail entities while keeping the dominant kind on top.",
+    "evidence": [
+      {
+        "source": "DataHub",
+        "description": "Top-bar search with 4 grouped sections in autocomplete: Datasets, Dashboards, Glossary Terms, People",
+        "reliability": "high"
+      },
+      {
+        "source": "Linear",
+        "description": "Cmd-K palette groups by Issue / Project / Doc / Member",
+        "reliability": "high"
+      },
+      {
+        "source": "GitHub",
+        "description": "Top search with type filter chips (repo / code / issue / pr / user) — adjacent solution to same problem",
+        "reliability": "medium"
+      }
+    ],
+    "counterexample": [
+      {
+        "source": "Single-kind catalog",
+        "description": "When there is one dominant entity kind, grouping adds noise — flat list is clearer",
+        "reliability": "high"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [
+      {
+        "domain": "messenger",
+        "projection": "global-search",
+        "reason": "Conversations + Messages + People — 3 kinds warrant grouping"
+      },
+      {
+        "domain": "workflow",
+        "projection": "global-search",
+        "reason": "Workflow + Node + Execution heterogeneous"
+      }
+    ],
+    "shouldNotMatch": [
+      {
+        "domain": "lifequest",
+        "projection": "goal-search",
+        "reason": "Single entity kind — Goal — flat list"
+      },
+      {
+        "domain": "reflect",
+        "projection": "mood-search",
+        "reason": "Single entity kind"
+      }
+    ]
+  }
+}

@@ -1,0 +1,83 @@
+{
+  "id": "dual-addressing-version-stage",
+  "version": 1,
+  "status": "candidate",
+  "archetype": "detail",
+  "trigger": {
+    "requires": [
+      {
+        "kind": "entity-field",
+        "name": "currentStage",
+        "values": [
+          "None",
+          "Staging",
+          "Production",
+          "Archived"
+        ]
+      },
+      {
+        "kind": "sub-entity-exists",
+        "fields": [
+          "alias",
+          "version"
+        ]
+      },
+      {
+        "kind": "intent-effect",
+        "target": "*.currentStage"
+      }
+    ]
+  },
+  "structure": {
+    "slot": "header",
+    "description": "Versioned-сущность в detail-header показывает обе системы адресации: legacy stage-badge (Production/Staging/Archived, single-valued) и aliases-chip-row (champion/challenger/latest, N-to-N). Author-toggle какая система primary, обе видимы."
+  },
+  "rationale": {
+    "hypothesis": "Mature versioning often мигрирует от линейного 'stage' к семантическим aliases (один version — несколько ролей одновременно), но legacy stage остаётся для обратной совместимости. Скрыть один в пользу другого ломает existing процессы; показывать оба — единственный честный путь.",
+    "evidence": [
+      {
+        "source": "mlflow",
+        "description": "ModelVersion имеет currentStage + aliases одновременно, оба видны на detail",
+        "reliability": "high"
+      },
+      {
+        "source": "kubernetes-deployments-revisions",
+        "description": "ReplicaSet revision + label-selector aliases",
+        "reliability": "medium"
+      }
+    ],
+    "counterexample": [
+      {
+        "source": "github-releases",
+        "description": "Single tag-based addressing, dual scheme отсутствует",
+        "reliability": "high"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [
+      {
+        "domain": "workflow",
+        "projection": "workflow-version-detail",
+        "reason": "Workflow version с stage + alias (active/canary/rollback)"
+      }
+    ],
+    "shouldNotMatch": [
+      {
+        "domain": "messenger",
+        "projection": "message-detail",
+        "reason": "Нет versioning"
+      },
+      {
+        "domain": "booking",
+        "projection": "specialist-detail",
+        "reason": "Specialist не versioned"
+      },
+      {
+        "domain": "lifequest",
+        "projection": "habit-detail",
+        "reason": "Habit не имеет dual-addressing"
+      }
+    ]
+  }
+}

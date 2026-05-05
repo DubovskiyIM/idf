@@ -1,0 +1,77 @@
+{
+  "id": "tabbed-detail-by-concern",
+  "version": 1,
+  "status": "candidate",
+  "archetype": "detail",
+  "trigger": {
+    "requires": [
+      {
+        "kind": "sub-entity-exists",
+        "min": 3,
+        "rationale": "≥3 sub-entities/aspects warrant tabs"
+      },
+      {
+        "kind": "entity-field",
+        "minFieldGroups": 4,
+        "rationale": "or ≥4 logical metadata bundles on same URN"
+      }
+    ]
+  },
+  "structure": {
+    "slot": "sections",
+    "description": "Detail layout where the same entity URN surfaces N facets as tabs (Schema / Documentation / Lineage / Properties / Queries / Stats / Validation / Operations / Access). Each tab is a separate aspect of the same identity; aspects compose, not inherit."
+  },
+  "rationale": {
+    "hypothesis": "When detail-page content exceeds one screen and falls into orthogonal concerns owned by different roles (engineer reads Schema, steward reads Documentation, SRE reads Validation), tabs partition the page along role-of-reader rather than creation-order.",
+    "evidence": [
+      {
+        "source": "DataHub",
+        "description": "9-tab dataset detail organized by aspect",
+        "reliability": "high"
+      },
+      {
+        "source": "Datadog",
+        "description": "Service detail tabs: Overview / Resources / Traces / Profiles / Logs",
+        "reliability": "high"
+      },
+      {
+        "source": "MLflow",
+        "description": "Model version tabs: Overview / Artifacts / Lineage",
+        "reliability": "high"
+      }
+    ],
+    "counterexample": [
+      {
+        "source": "Single-concern entity",
+        "description": "Tabs hide content needlessly when one screen suffices",
+        "reliability": "high"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [
+      {
+        "domain": "workflow",
+        "projection": "workflow-detail",
+        "reason": "Definition / Runs / Schedule / Permissions = 4 concerns"
+      },
+      {
+        "domain": "invest",
+        "projection": "portfolio-detail",
+        "reason": "Holdings / Performance / Transactions / Settings"
+      }
+    ],
+    "shouldNotMatch": [
+      {
+        "domain": "messenger",
+        "projection": "message-detail",
+        "reason": "Single concern — message body"
+      },
+      {
+        "domain": "reflect",
+        "projection": "mood-entry-detail",
+        "reason": "Single short note"
+      }
+    ]
+  }
+}

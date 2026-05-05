@@ -1,0 +1,62 @@
+{
+  "id": "assertion-history-timeline",
+  "version": 1,
+  "status": "candidate",
+  "archetype": "detail",
+  "trigger": {
+    "requires": [
+      {
+        "kind": "sub-entity-exists",
+        "value": "Assertion"
+      },
+      {
+        "kind": "entity-field",
+        "onSubEntity": "lastRunStatus",
+        "isHistorical": true,
+        "rationale": "assertion has time-ordered run history with pass/fail states"
+      }
+    ]
+  },
+  "structure": {
+    "slot": "sections",
+    "description": "Validation tab renders each assertion as a horizontal timeline of pass/fail dots over time. Click on a run reveals failure detail. Assertion is itself an entity with its own history, not a snapshot boolean."
+  },
+  "rationale": {
+    "hypothesis": "Knowing 'is the assertion failing now' is less useful than 'how flaky has it been'. Timeline of pass/fail makes flakiness, recent regression, and stable success visually distinct.",
+    "evidence": [
+      {
+        "source": "DataHub",
+        "description": "Assertion history as timeline of green/red dots",
+        "reliability": "high"
+      },
+      {
+        "source": "Datadog Synthetics",
+        "description": "Test result strip over time",
+        "reliability": "high"
+      }
+    ],
+    "counterexample": [
+      {
+        "source": "Stateless check",
+        "description": "If check runs once and is discarded, timeline is meaningless",
+        "reliability": "medium"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [
+      {
+        "domain": "workflow",
+        "projection": "workflow-detail.runs",
+        "reason": "Workflow runs form pass/fail timeline"
+      }
+    ],
+    "shouldNotMatch": [
+      {
+        "domain": "lifequest",
+        "projection": "goal-detail",
+        "reason": "No assertion concept"
+      }
+    ]
+  }
+}

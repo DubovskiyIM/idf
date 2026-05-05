@@ -1,0 +1,80 @@
+{
+  "id": "role-scoped-portal-projection",
+  "version": 1,
+  "status": "candidate",
+  "archetype": "catalog",
+  "trigger": {
+    "requires": [
+      {
+        "kind": "has-role",
+        "value": "external"
+      },
+      {
+        "kind": "intent-count",
+        "forRole": "external",
+        "writes": "<=20%"
+      },
+      {
+        "kind": "sub-entity-exists",
+        "byForeignKey": "submitterId"
+      }
+    ]
+  },
+  "structure": {
+    "slot": "body",
+    "description": "Для external-роли (Customer, Vendor, Partner) рендерится отдельный portal-shell: subset проекций, которые доступны для submitter (свои tickets / orders / docs), плюс read-only knowledge-base. Auth-gated, без admin-меню, без internal-данных (assignee, internal notes). Один home-screen, минимум navigation."
+  },
+  "rationale": {
+    "hypothesis": "Когда роль чётко 'external clientele' (vs internal team), смешивание в один UI с visibility-фильтрами создаёт friction (видны кнопки которые не работают, упомянуты сотрудники). Отдельный portal-shell с урезанной surface даёт фокус на 1-2 действия (submit ticket, browse KB, view status) и предотвращает leak internal-данных.",
+    "evidence": [
+      {
+        "source": "hubspot-crm",
+        "description": "Customer Portal — auth-gated tickets + KB для Customer-роли, отдельный shell",
+        "reliability": "high"
+      },
+      {
+        "source": "zendesk-help-center",
+        "description": "Help Center как separate surface для end-users, agent UI отдельно",
+        "reliability": "high"
+      },
+      {
+        "source": "freshdesk-customer-portal",
+        "description": "Аналогичный split agent-vs-customer",
+        "reliability": "high"
+      }
+    ],
+    "counterexample": [
+      {
+        "source": "linear",
+        "description": "Все пользователи — internal, нет external-роли, portal не нужен",
+        "reliability": "high"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [
+      {
+        "domain": "delivery",
+        "projection": "customer_portal",
+        "reason": "Customer видит свои Order'ы, отслеживает статус, оставляет review — read-mostly + submit"
+      },
+      {
+        "domain": "freelance",
+        "projection": "client_portal",
+        "reason": "Client (external) видит свои Project'ы и invoices"
+      }
+    ],
+    "shouldNotMatch": [
+      {
+        "domain": "planning",
+        "projection": "poll_catalog",
+        "reason": "Все участники — peers, нет external/internal разделения"
+      },
+      {
+        "domain": "lifequest",
+        "projection": "habit_catalog",
+        "reason": "Single-user app, нет external-ролей"
+      }
+    ]
+  }
+}

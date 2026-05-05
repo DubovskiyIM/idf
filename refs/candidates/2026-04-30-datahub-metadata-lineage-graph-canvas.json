@@ -1,0 +1,72 @@
+{
+  "id": "lineage-graph-canvas",
+  "version": 1,
+  "status": "candidate",
+  "archetype": "detail",
+  "trigger": {
+    "requires": [
+      {
+        "kind": "sub-entity-exists",
+        "kind:Edge": true,
+        "rationale": "entity has explicit upstream/downstream edge sub-entity"
+      },
+      {
+        "kind": "entity-field",
+        "fieldRole": "graphEdge",
+        "rationale": "edge has typed direction (upstream/downstream)"
+      }
+    ]
+  },
+  "structure": {
+    "slot": "sections",
+    "description": "Lineage rendered as a directed graph-canvas with current entity centered, upstream-left / downstream-right, typed icons per node kind. Canvas-controls toolbar overlays depth/hop/type/time-range filters. Click on edge or node drills into that entity."
+  },
+  "rationale": {
+    "hypothesis": "Tabular lineage forces the user to mentally reconstruct topology. A 2D canvas with directionality renders dependency graph natively; depth filter prevents combinatorial explosion.",
+    "evidence": [
+      {
+        "source": "DataHub",
+        "description": "Lineage tab — graph canvas with depth/hop/time filters as overlay",
+        "reliability": "high"
+      },
+      {
+        "source": "MLflow",
+        "description": "Model lineage as DAG visualization",
+        "reliability": "high"
+      },
+      {
+        "source": "Apache Atlas",
+        "description": "Same pattern for table lineage",
+        "reliability": "high"
+      }
+    ],
+    "counterexample": [
+      {
+        "source": "Linear lineage (1 hop)",
+        "description": "When most entities have 0–1 upstream, list view is sufficient",
+        "reliability": "medium"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [
+      {
+        "domain": "workflow",
+        "projection": "workflow-detail.dag",
+        "reason": "Workflow nodes form DAG with typed edges"
+      }
+    ],
+    "shouldNotMatch": [
+      {
+        "domain": "messenger",
+        "projection": "conversation-detail",
+        "reason": "Messages are linear, not graph"
+      },
+      {
+        "domain": "reflect",
+        "projection": "mood-detail",
+        "reason": "No edge sub-entity"
+      }
+    ]
+  }
+}

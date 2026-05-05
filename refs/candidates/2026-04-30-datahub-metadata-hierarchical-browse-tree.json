@@ -1,0 +1,82 @@
+{
+  "id": "hierarchical-browse-tree",
+  "version": 1,
+  "status": "candidate",
+  "archetype": "catalog",
+  "trigger": {
+    "requires": [
+      {
+        "kind": "intent-effect",
+        "α": "replace",
+        "target": "session.browseLocation"
+      },
+      {
+        "kind": "entity-field",
+        "fieldRole": "parentRef",
+        "rationale": "self-referencing FK forms hierarchy"
+      },
+      {
+        "kind": "entity-kind",
+        "depth": ">=3",
+        "rationale": "≥3 nesting levels justify tree over flat list"
+      }
+    ]
+  },
+  "structure": {
+    "slot": "sections",
+    "description": "Sidebar/secondary panel with collapsible tree (platform → env → DB → schema → table) as alternative-to-search for known-world discovery. Tree-node click drills filter; current path renders as breadcrumb in header."
+  },
+  "rationale": {
+    "hypothesis": "Search is great when the user knows what to ask. Hierarchical browse is the dual: when the user knows where to look. Both surfaces should coexist for catalogs with deep natural taxonomy.",
+    "evidence": [
+      {
+        "source": "DataHub",
+        "description": "Browse-path tree: platform → env → DB → schema → table",
+        "reliability": "high"
+      },
+      {
+        "source": "AWS S3 Console",
+        "description": "Bucket → folder navigation alongside search",
+        "reliability": "high"
+      },
+      {
+        "source": "Google Drive",
+        "description": "Folder tree + search coexist",
+        "reliability": "high"
+      }
+    ],
+    "counterexample": [
+      {
+        "source": "Flat catalog",
+        "description": "Without natural hierarchy, tree is invented bureaucracy",
+        "reliability": "high"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [
+      {
+        "domain": "workflow",
+        "projection": "node-browser",
+        "reason": "Workflow → SubFlow → Node nesting"
+      },
+      {
+        "domain": "messenger",
+        "projection": "channel-tree",
+        "reason": "Workspace → Channel → Thread hierarchy"
+      }
+    ],
+    "shouldNotMatch": [
+      {
+        "domain": "lifequest",
+        "projection": "habit-list",
+        "reason": "Flat list — no parent ref"
+      },
+      {
+        "domain": "sales",
+        "projection": "listing-feed",
+        "reason": "Flat feed"
+      }
+    ]
+  }
+}

@@ -1,0 +1,67 @@
+{
+  "id": "nested-tree-with-inline-metadata",
+  "version": 1,
+  "status": "candidate",
+  "archetype": "detail",
+  "trigger": {
+    "requires": [
+      {
+        "kind": "sub-entity-exists",
+        "withSelfReference": true,
+        "rationale": "sub-entity has parent FK to same kind (struct → field)"
+      },
+      {
+        "kind": "entity-field",
+        "onSubEntity": [
+          "tags",
+          "owners",
+          "description"
+        ],
+        "minMatched": 2,
+        "rationale": "sub-entity carries first-class metadata, not just data"
+      }
+    ]
+  },
+  "structure": {
+    "slot": "sections",
+    "description": "Sub-entity rendered as a nested expandable tree (column → nested struct field) where each row carries inline metadata controls (tags, glossary terms, business owner, PII flag). Sub-entity is a first-class metadata target, not a row of values."
+  },
+  "rationale": {
+    "hypothesis": "When metadata can be attached at sub-entity granularity (tag a column, not just a dataset), surfacing metadata controls inside the row keeps the editing surface adjacent to the target. A separate metadata page per column would require N navigations for N edits.",
+    "evidence": [
+      {
+        "source": "DataHub",
+        "description": "Schema tab — column rows with inline tag/term/owner/PII pills",
+        "reliability": "high"
+      },
+      {
+        "source": "dbt Cloud",
+        "description": "Column-level docs editable inline in schema view",
+        "reliability": "high"
+      }
+    ],
+    "counterexample": [
+      {
+        "source": "Sub-entity is data-only",
+        "description": "If sub-entity has no metadata of its own (e.g. Position in Portfolio = pure numeric), inline metadata controls are absent",
+        "reliability": "high"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [
+      {
+        "domain": "workflow",
+        "projection": "workflow-detail.nodes",
+        "reason": "Nodes carry tags + owners + retry-policy"
+      }
+    ],
+    "shouldNotMatch": [
+      {
+        "domain": "invest",
+        "projection": "portfolio-detail.positions",
+        "reason": "Position is pure numeric — no per-row metadata"
+      }
+    ]
+  }
+}

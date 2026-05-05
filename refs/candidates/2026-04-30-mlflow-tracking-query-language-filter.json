@@ -1,0 +1,89 @@
+{
+  "id": "query-language-filter",
+  "version": 1,
+  "status": "candidate",
+  "archetype": "catalog",
+  "trigger": {
+    "requires": [
+      {
+        "kind": "intent-effect",
+        "target": "*.filterQuery"
+      },
+      {
+        "kind": "intent-confirmation",
+        "value": "enter"
+      },
+      {
+        "kind": "entity-field",
+        "min": 5,
+        "withRoles": [
+          "numeric",
+          "categorical",
+          "tag"
+        ]
+      }
+    ]
+  },
+  "structure": {
+    "slot": "header",
+    "description": "Catalog header держит single-line query input (моноширинный) с typed-prefixes (`metric:`, `param:`, `tag:`, операторы `>`, `<`, `AND`/`OR`) и autocomplete по доступным ключам — вместо faceted-panel слева."
+  },
+  "rationale": {
+    "hypothesis": "При высокой кардинальности фильтруемых атрибутов (десятки param/metric ключей) faceted-panel разрастается до неюзабельного состояния; structured query выразительнее, копируется/шарится URL'ом и интегрируется с API. Trade-off: power-user-only, нужен autocomplete и явный синтаксис-help.",
+    "evidence": [
+      {
+        "source": "mlflow",
+        "description": "`metrics.accuracy > 0.9 AND params.lr < 0.01` — каноничный filter UX",
+        "reliability": "high"
+      },
+      {
+        "source": "github-issues",
+        "description": "`is:open author:foo label:bug` typed-query поверх faceted",
+        "reliability": "high"
+      },
+      {
+        "source": "linear",
+        "description": "Query DSL для filtered views",
+        "reliability": "high"
+      },
+      {
+        "source": "datadog-logs",
+        "description": "Структурированный query с tag:, service:, env:",
+        "reliability": "high"
+      }
+    ],
+    "counterexample": [
+      {
+        "source": "consumer-shopping",
+        "description": "Faceted-panel выигрывает, когда фильтруемых ключей мало (≤10) и аудитория не техническая",
+        "reliability": "high"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [
+      {
+        "domain": "invest",
+        "projection": "position-list",
+        "reason": "Position имеет много метрик — query DSL уместен для аналитика"
+      },
+      {
+        "domain": "workflow",
+        "projection": "execution-list",
+        "reason": "Execution фильтруется по status:, duration:>, tag: — query-форма органична"
+      }
+    ],
+    "shouldNotMatch": [
+      {
+        "domain": "booking",
+        "projection": "specialist-list",
+        "reason": "Малая кардинальность фильтров, аудитория — клиенты, не аналитики"
+      },
+      {
+        "domain": "lifequest",
+        "projection": "goal-list",
+        "reason": "Goals — личный продукт, query-DSL чрезмерен"
+      }
+    ]
+  }
+}

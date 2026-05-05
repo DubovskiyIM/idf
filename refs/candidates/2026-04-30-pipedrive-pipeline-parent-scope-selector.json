@@ -1,0 +1,77 @@
+{
+  "id": "parent-scope-selector",
+  "version": 1,
+  "status": "candidate",
+  "archetype": "catalog",
+  "trigger": {
+    "requires": [
+      {
+        "kind": "entity-kind",
+        "name": "reference",
+        "asScope": true
+      },
+      {
+        "kind": "intent-effect",
+        "α": "replace",
+        "target": "viewer.active*Id"
+      }
+    ]
+  },
+  "structure": {
+    "slot": "header",
+    "description": "Top-level селектор переключает scope: все catalog/feed-проекции, FK-фильтрованные через выбранный parent, перерисовываются. Selector персистится в viewer state."
+  },
+  "rationale": {
+    "hypothesis": "Когда у пользователя несколько контекстов (несколько pipelines, teams, workspaces), глобальный selector в header дешевле, чем фильтр на каждой странице. Persisting в viewer state делает scope sticky — меньше confusion.",
+    "evidence": [
+      {
+        "source": "pipedrive",
+        "description": "Pipeline (New Business / Renewals / Service) — scoping selector в шапке kanban",
+        "reliability": "high"
+      },
+      {
+        "source": "linear",
+        "description": "Team/Project switcher вверху",
+        "reliability": "high"
+      },
+      {
+        "source": "slack",
+        "description": "Workspace switcher",
+        "reliability": "high"
+      }
+    ],
+    "counterexample": [
+      {
+        "source": "gmail",
+        "description": "Один inbox — нет parent scope, не нужен selector",
+        "reliability": "high"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [
+      {
+        "domain": "workflow",
+        "projection": "workflows",
+        "reason": "Если есть несколько workspace'ов — scope selector"
+      },
+      {
+        "domain": "planning",
+        "projection": "polls",
+        "reason": "При наличии Group/Workspace — scope"
+      }
+    ],
+    "shouldNotMatch": [
+      {
+        "domain": "reflect",
+        "projection": "moods",
+        "reason": "Личный single-user домен — scope не нужен"
+      },
+      {
+        "domain": "invest",
+        "projection": "portfolios",
+        "reason": "Portfolio сам — top-level catalog, не scope"
+      }
+    ]
+  }
+}

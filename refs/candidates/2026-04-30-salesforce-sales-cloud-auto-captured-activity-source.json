@@ -1,0 +1,59 @@
+{
+  "id": "auto-captured-activity-source",
+  "version": 1,
+  "status": "candidate",
+  "archetype": "detail",
+  "trigger": {
+    "requires": [
+      {
+        "kind": "EmailMessage|CallLog|Event"
+      },
+      {
+        "kind": "intent-effect",
+        "source": "external-sync"
+      }
+    ]
+  },
+  "structure": {
+    "slot": "sections",
+    "description": "Активности из внешнего sync'а (Gmail/Outlook/calendar) появляются в timeline с явным source-бейджем ('synced from Gmail'), без manual log-step. Author может один раз confirm/dismiss."
+  },
+  "rationale": {
+    "hypothesis": "Reps не хотят дважды логировать звонки/письма. Auto-capture снимает manual overhead, но без явного source-бейджа путает 'что я делал' vs 'что система угадала'.",
+    "evidence": [
+      {
+        "source": "salesforce-sales-cloud",
+        "description": "Einstein Activity Capture: Gmail/Outlook → Activity Timeline с 'shared from email'",
+        "reliability": "high"
+      },
+      {
+        "source": "hubspot-bidirectional-sync",
+        "description": "Connected inbox — emails автоматически на contact timeline",
+        "reliability": "high"
+      }
+    ],
+    "counterexample": [
+      {
+        "source": "manual-crm-1990s",
+        "description": "Без external sync — manual log остаётся, паттерн не активен",
+        "reliability": "high"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [
+      {
+        "domain": "booking",
+        "projection": "specialist-detail",
+        "reason": "Calendar-sync затягивает встречи в booking-timeline"
+      }
+    ],
+    "shouldNotMatch": [
+      {
+        "domain": "invest",
+        "projection": "portfolio-detail",
+        "reason": "Нет внешнего sync'а активностей пользователя"
+      }
+    ]
+  }
+}

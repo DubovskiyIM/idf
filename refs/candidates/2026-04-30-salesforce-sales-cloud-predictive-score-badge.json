@@ -1,0 +1,64 @@
+{
+  "id": "predictive-score-badge",
+  "version": 1,
+  "status": "candidate",
+  "archetype": "catalog",
+  "trigger": {
+    "requires": [
+      {
+        "kind": "field-role-present",
+        "anyOf": [
+          "score",
+          "rating",
+          "probability"
+        ]
+      },
+      {
+        "kind": "entity-field",
+        "fromExternalSource": "ml-prediction"
+      }
+    ]
+  },
+  "structure": {
+    "slot": "body",
+    "description": "Predictive-score (Hot/Warm/Cold, % win, churn-risk) рендерится inline-бейджем в строке catalog'а с tooltip 'why' (top features, contributing signals)."
+  },
+  "rationale": {
+    "hypothesis": "ML-скор без объяснения — карго-культ. Inline badge даёт fast triage, tooltip с reasoning даёт доверие и actionable signal.",
+    "evidence": [
+      {
+        "source": "salesforce-sales-cloud",
+        "description": "Einstein scoring badges на Lead/Opportunity rows + 'Why this score'",
+        "reliability": "high"
+      },
+      {
+        "source": "hubspot-lead-score",
+        "description": "Score column + breakdown popover",
+        "reliability": "high"
+      }
+    ],
+    "counterexample": [
+      {
+        "source": "github-issue-list",
+        "description": "Нет ML-скоринга на issue'ах — badge некуда вешать",
+        "reliability": "high"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [
+      {
+        "domain": "invest",
+        "projection": "asset-catalog",
+        "reason": "Asset с ML-скором и feature-explanation"
+      }
+    ],
+    "shouldNotMatch": [
+      {
+        "domain": "reflect",
+        "projection": "mood-entry-catalog",
+        "reason": "Нет predictive-score'а"
+      }
+    ]
+  }
+}

@@ -1,0 +1,569 @@
+{
+  "source": "mlflow-experiment-tracking-and-model-registry",
+  "entities": [
+    {
+      "name": "Experiment",
+      "fields": [
+        "name",
+        "experimentId",
+        "artifactLocation",
+        "lifecycleStage",
+        "tags",
+        "description",
+        "owners",
+        "createdAt",
+        "lastUpdateTime"
+      ],
+      "statusValues": [
+        "active",
+        "deleted"
+      ]
+    },
+    {
+      "name": "Run",
+      "fields": [
+        "runName",
+        "runId",
+        "experimentId",
+        "status",
+        "startTime",
+        "endTime",
+        "duration",
+        "user",
+        "sourceType",
+        "sourceName",
+        "gitCommit",
+        "entryPoint",
+        "lifecycleStage",
+        "tags",
+        "note"
+      ],
+      "statusValues": [
+        "RUNNING",
+        "FINISHED",
+        "FAILED",
+        "KILLED",
+        "SCHEDULED"
+      ],
+      "foreignKey": "experimentId→Experiment"
+    },
+    {
+      "name": "RunParam",
+      "fields": [
+        "runId",
+        "key",
+        "value"
+      ],
+      "foreignKey": "runId→Run"
+    },
+    {
+      "name": "RunMetric",
+      "fields": [
+        "runId",
+        "key",
+        "value",
+        "step",
+        "timestamp"
+      ],
+      "foreignKey": "runId→Run"
+    },
+    {
+      "name": "RunTag",
+      "fields": [
+        "runId",
+        "key",
+        "value"
+      ],
+      "foreignKey": "runId→Run"
+    },
+    {
+      "name": "Artifact",
+      "fields": [
+        "runId",
+        "path",
+        "fileSize",
+        "isDir",
+        "mimeType",
+        "rendererKind"
+      ],
+      "foreignKey": "runId→Run"
+    },
+    {
+      "name": "Dataset",
+      "fields": [
+        "name",
+        "digest",
+        "sourceType",
+        "sourceUri",
+        "schema",
+        "profile"
+      ]
+    },
+    {
+      "name": "RunDatasetInput",
+      "fields": [
+        "runId",
+        "datasetDigest",
+        "context",
+        "tags"
+      ],
+      "foreignKey": "runId→Run"
+    },
+    {
+      "name": "RegisteredModel",
+      "fields": [
+        "name",
+        "description",
+        "tags",
+        "owners",
+        "latestVersions",
+        "createdAt",
+        "lastUpdated"
+      ]
+    },
+    {
+      "name": "ModelVersion",
+      "fields": [
+        "name",
+        "version",
+        "status",
+        "currentStage",
+        "aliases",
+        "sourceRunId",
+        "sourceArtifactPath",
+        "gitCommit",
+        "signature",
+        "tags",
+        "description",
+        "createdAt",
+        "lastUpdated"
+      ],
+      "statusValues": [
+        "PENDING_REGISTRATION",
+        "FAILED_REGISTRATION",
+        "READY"
+      ],
+      "foreignKey": "sourceRunId→Run"
+    },
+    {
+      "name": "ModelStage",
+      "fields": [
+        "name",
+        "version",
+        "stage"
+      ],
+      "statusValues": [
+        "None",
+        "Staging",
+        "Production",
+        "Archived"
+      ],
+      "foreignKey": "name→RegisteredModel"
+    },
+    {
+      "name": "ModelAlias",
+      "fields": [
+        "modelName",
+        "alias",
+        "version"
+      ],
+      "foreignKey": "modelName→RegisteredModel"
+    },
+    {
+      "name": "StageTransitionRequest",
+      "fields": [
+        "modelName",
+        "version",
+        "fromStage",
+        "toStage",
+        "requester",
+        "comment",
+        "status",
+        "approver",
+        "decidedAt",
+        "createdAt"
+      ],
+      "statusValues": [
+        "pending",
+        "approved",
+        "rejected",
+        "cancelled"
+      ],
+      "foreignKey": "modelName→RegisteredModel"
+    },
+    {
+      "name": "ModelEndpoint",
+      "fields": [
+        "name",
+        "modelName",
+        "modelVersion",
+        "url",
+        "status",
+        "latencyP50",
+        "latencyP95",
+        "qps",
+        "deployedAt"
+      ],
+      "statusValues": [
+        "pending",
+        "ready",
+        "updating",
+        "failed",
+        "stopped"
+      ],
+      "foreignKey": "modelName→RegisteredModel"
+    },
+    {
+      "name": "Permission",
+      "fields": [
+        "principal",
+        "resourceType",
+        "resourceId",
+        "level"
+      ],
+      "statusValues": [
+        "CAN_READ",
+        "CAN_EDIT",
+        "CAN_MANAGE"
+      ]
+    },
+    {
+      "name": "ChartPanel",
+      "fields": [
+        "experimentId",
+        "kind",
+        "xAxis",
+        "yAxis",
+        "groupBy",
+        "filterQuery",
+        "title"
+      ],
+      "statusValues": [
+        "scatter",
+        "parallel_coordinates",
+        "line",
+        "bar",
+        "contour"
+      ],
+      "foreignKey": "experimentId→Experiment"
+    },
+    {
+      "name": "RunComparison",
+      "fields": [
+        "experimentId",
+        "runIds",
+        "selectedParams",
+        "selectedMetrics",
+        "viewMode"
+      ],
+      "foreignKey": "experimentId→Experiment"
+    }
+  ],
+  "intents": [
+    {
+      "id": "create_experiment",
+      "α": "add",
+      "creates": "Experiment",
+      "confirmation": "form"
+    },
+    {
+      "id": "rename_experiment",
+      "α": "replace",
+      "target": "experiment.name",
+      "confirmation": "enter"
+    },
+    {
+      "id": "delete_experiment",
+      "α": "remove",
+      "target": "entities",
+      "irreversibility": "high",
+      "confirmation": "form"
+    },
+    {
+      "id": "restore_deleted_experiment",
+      "α": "replace",
+      "target": "experiment.lifecycleStage",
+      "confirmation": "click"
+    },
+    {
+      "id": "set_experiment_tag",
+      "α": "add",
+      "creates": "RunTag",
+      "confirmation": "form"
+    },
+    {
+      "id": "start_run",
+      "α": "add",
+      "creates": "Run",
+      "confirmation": "form"
+    },
+    {
+      "id": "log_param",
+      "α": "add",
+      "creates": "RunParam",
+      "confirmation": "form"
+    },
+    {
+      "id": "log_metric",
+      "α": "add",
+      "creates": "RunMetric",
+      "confirmation": "form"
+    },
+    {
+      "id": "log_artifact",
+      "α": "add",
+      "creates": "Artifact",
+      "confirmation": "form"
+    },
+    {
+      "id": "set_run_tag",
+      "α": "add",
+      "creates": "RunTag",
+      "confirmation": "form"
+    },
+    {
+      "id": "rename_run",
+      "α": "replace",
+      "target": "run.runName",
+      "confirmation": "enter"
+    },
+    {
+      "id": "edit_run_note",
+      "α": "replace",
+      "target": "run.note",
+      "confirmation": "form"
+    },
+    {
+      "id": "finish_run",
+      "α": "replace",
+      "target": "run.status",
+      "confirmation": "click"
+    },
+    {
+      "id": "fail_run",
+      "α": "replace",
+      "target": "run.status",
+      "confirmation": "click"
+    },
+    {
+      "id": "kill_run",
+      "α": "replace",
+      "target": "run.status",
+      "irreversibility": "high",
+      "confirmation": "click"
+    },
+    {
+      "id": "delete_run",
+      "α": "remove",
+      "target": "entities",
+      "irreversibility": "high",
+      "confirmation": "form"
+    },
+    {
+      "id": "restore_run",
+      "α": "replace",
+      "target": "run.lifecycleStage",
+      "confirmation": "click"
+    },
+    {
+      "id": "search_runs",
+      "α": "replace",
+      "target": "experiment.filterQuery",
+      "confirmation": "enter"
+    },
+    {
+      "id": "sort_runs_by_metric",
+      "α": "replace",
+      "target": "experiment.sortKey",
+      "confirmation": "click"
+    },
+    {
+      "id": "select_run_for_compare",
+      "α": "replace",
+      "target": "runComparison.runIds",
+      "confirmation": "click"
+    },
+    {
+      "id": "compare_runs",
+      "α": "add",
+      "creates": "RunComparison",
+      "confirmation": "click"
+    },
+    {
+      "id": "add_chart_panel",
+      "α": "add",
+      "creates": "ChartPanel",
+      "confirmation": "form"
+    },
+    {
+      "id": "configure_chart_axes",
+      "α": "replace",
+      "target": "chartPanel.yAxis",
+      "confirmation": "form"
+    },
+    {
+      "id": "remove_chart_panel",
+      "α": "remove",
+      "target": "entities",
+      "confirmation": "click"
+    },
+    {
+      "id": "attach_run_to_dataset",
+      "α": "add",
+      "creates": "RunDatasetInput",
+      "confirmation": "form"
+    },
+    {
+      "id": "preview_artifact",
+      "α": "replace",
+      "target": "artifact.rendererKind",
+      "confirmation": "click"
+    },
+    {
+      "id": "register_model",
+      "α": "add",
+      "creates": "ModelVersion",
+      "confirmation": "form"
+    },
+    {
+      "id": "create_registered_model",
+      "α": "add",
+      "creates": "RegisteredModel",
+      "confirmation": "form"
+    },
+    {
+      "id": "edit_model_description",
+      "α": "replace",
+      "target": "registeredModel.description",
+      "confirmation": "form"
+    },
+    {
+      "id": "set_model_tag",
+      "α": "add",
+      "creates": "RunTag",
+      "confirmation": "form"
+    },
+    {
+      "id": "delete_registered_model",
+      "α": "remove",
+      "target": "entities",
+      "irreversibility": "high",
+      "confirmation": "form"
+    },
+    {
+      "id": "request_stage_transition",
+      "α": "add",
+      "creates": "StageTransitionRequest",
+      "confirmation": "form"
+    },
+    {
+      "id": "approve_stage_transition",
+      "α": "replace",
+      "target": "stageTransitionRequest.status",
+      "confirmation": "form"
+    },
+    {
+      "id": "reject_stage_transition",
+      "α": "replace",
+      "target": "stageTransitionRequest.status",
+      "confirmation": "form"
+    },
+    {
+      "id": "transition_model_stage",
+      "α": "replace",
+      "target": "modelVersion.currentStage",
+      "confirmation": "form"
+    },
+    {
+      "id": "archive_model_version",
+      "α": "replace",
+      "target": "modelVersion.currentStage",
+      "irreversibility": "high",
+      "confirmation": "click"
+    },
+    {
+      "id": "assign_model_alias",
+      "α": "add",
+      "creates": "ModelAlias",
+      "confirmation": "form"
+    },
+    {
+      "id": "remove_model_alias",
+      "α": "remove",
+      "target": "entities",
+      "confirmation": "click"
+    },
+    {
+      "id": "edit_model_version_description",
+      "α": "replace",
+      "target": "modelVersion.description",
+      "confirmation": "form"
+    },
+    {
+      "id": "compare_model_versions",
+      "α": "add",
+      "creates": "RunComparison",
+      "confirmation": "click"
+    },
+    {
+      "id": "deploy_model",
+      "α": "add",
+      "creates": "ModelEndpoint",
+      "confirmation": "form"
+    },
+    {
+      "id": "stop_endpoint",
+      "α": "replace",
+      "target": "modelEndpoint.status",
+      "irreversibility": "high",
+      "confirmation": "click"
+    },
+    {
+      "id": "grant_permission",
+      "α": "add",
+      "creates": "Permission",
+      "confirmation": "form"
+    },
+    {
+      "id": "revoke_permission",
+      "α": "remove",
+      "target": "entities",
+      "confirmation": "click"
+    },
+    {
+      "id": "search_global",
+      "α": "replace",
+      "target": "experiment.filterQuery",
+      "confirmation": "enter"
+    }
+  ],
+  "roles": [
+    "owner",
+    "viewer",
+    "agent",
+    "observer",
+    "admin"
+  ],
+  "observations": [
+    "Three-pane shell: experiments tree (left sidebar) × runs table (center) × inspector/compare (right or modal)",
+    "Run is the primary record — every artifact, metric and registered model traces back to a runId",
+    "SQL-like filter bar (`metrics.x > 0.9 AND params.lr < 0.01`) is the canonical search surface, not a faceted filter panel",
+    "Runs table has dynamic columns: user picks which params/metrics to materialize as columns, sortable on click",
+    "Multi-select runs via checkbox → 'Compare' CTA opens a dedicated screen with parallel-coordinates, scatter, contour, and parallel-metrics plots",
+    "Metrics are time-series (step × value) and rendered as line charts with overlay across selected runs — first-class temporal data, not scalar",
+    "Run Detail uses tabbed layout (Overview / Parameters / Metrics / Artifacts / Tags / Source / Notes) — high-cardinality detail split by concern",
+    "Artifacts viewer is a generic file tree with type-specific renderers (image preview, JSON viewer, prediction trace, eval table, dataset profile)",
+    "'Register Model' is a CTA on Run Detail that lifts a run-output into the Model Registry — cross-domain promotion intent",
+    "Model Registry has dual stage models: legacy stages (None/Staging/Production/Archived) and modern aliases (champion/challenger/latest, N-to-N)",
+    "Stage transitions optionally gated by request-for-comment workflow (StageTransitionRequest with requester/approver/comment) when permissions enabled",
+    "Model Version page exposes an inference snippet (Python + curl) with copy-to-clipboard — code is part of the UI surface",
+    "Lineage is bidirectional and rendered as graph chips: Run ↔ ModelVersion ↔ Dataset",
+    "Permissions are per-resource ACL (experiment, model) with three levels (CAN_READ/CAN_EDIT/CAN_MANAGE) — surface only in Databricks-managed variant",
+    "Source code commit hash is shown as a hyperlink on every run — reproducibility witness",
+    "Compare view does tabular diff (column per run) plus visual diff (parallel coordinates) — two materializations of the same comparison",
+    "Top global search supports typed prefixes: `model:`, `tag:`, `metric:`, `version:>=N` — query language as primary navigation",
+    "Charts on the experiment dashboard are user-configurable widgets (ChartPanel) — dashboard archetype with composable analytical slots",
+    "Soft-delete pattern: experiments and runs have lifecycleStage (active/deleted) with restore intent rather than hard delete",
+    "API-first model: `mlflow.start_run()` context manager creates runs from code, UI is a read-mostly observer with curation actions (rename, tag, register, archive)"
+  ]
+}

@@ -1,0 +1,57 @@
+{
+  "id": "polymorphic-tabbed-detail",
+  "version": 1,
+  "status": "candidate",
+  "archetype": "detail",
+  "trigger": {
+    "requires": [
+      {
+        "kind": "entity-kind",
+        "kind_value": "polymorphic",
+        "discriminatorMin": 3
+      }
+    ]
+  },
+  "structure": {
+    "slot": "sections",
+    "description": "Polymorphic securable рендерит unified base-tabs (Overview/Permissions/History/Lineage) одинаково для всех variants, плюс type-specific tabs добавляются в strip по дискриминатору (Sample Data для Table, Files для Volume, Versions для Model)."
+  },
+  "rationale": {
+    "hypothesis": "Когда несколько типов объектов делят cross-cutting concerns (auth, audit, lineage), пользователь хочет одинаковый ментальный shortcut «посмотреть permissions» независимо от типа. Базовая часть tab strip — invariant, type-specific — additive, не replacement.",
+    "evidence": [
+      {
+        "source": "databricks-unity-catalog",
+        "description": "Table/View/Volume/Function/Model/AITool делят Overview/Permissions/Lineage/History; type-specific добавляются",
+        "reliability": "high"
+      },
+      {
+        "source": "aws-cloudtrail-resources",
+        "description": "Resource detail с unified Properties/Permissions/Tags независимо от resource-type",
+        "reliability": "medium"
+      }
+    ],
+    "counterexample": [
+      {
+        "source": "github-issues-vs-pulls",
+        "description": "Issue и PR разделены по proj-tab, не unified detail",
+        "reliability": "medium"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [
+      {
+        "domain": "gravitino",
+        "projection": "asset_detail",
+        "reason": "Table/Topic/Fileset делят metadata-tabs"
+      }
+    ],
+    "shouldNotMatch": [
+      {
+        "domain": "planning",
+        "projection": "poll_detail",
+        "reason": "Poll — не polymorphic; единственный variant"
+      }
+    ]
+  }
+}

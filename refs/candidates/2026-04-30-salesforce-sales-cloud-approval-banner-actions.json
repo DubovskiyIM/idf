@@ -1,0 +1,64 @@
+{
+  "id": "approval-banner-actions",
+  "version": 1,
+  "status": "candidate",
+  "archetype": "detail",
+  "trigger": {
+    "requires": [
+      {
+        "kind": "ApprovalRequest"
+      },
+      {
+        "kind": "intent-effect",
+        "α": "replace",
+        "targetSuffix": ".approvalRequest.status"
+      },
+      {
+        "kind": "has-role",
+        "roleBase": "owner"
+      }
+    ]
+  },
+  "structure": {
+    "slot": "header",
+    "description": "Когда у viewer'а роль approver текущей pending-заявки, над highlights рендерится цветной banner с прямыми Approve / Reject / Reassign-кнопками — без перехода в отдельный approval-screen."
+  },
+  "rationale": {
+    "hypothesis": "Approval — это action-required signal в чужом workflow. Скрывать его в каком-то inbox означает delay deals. Banner-on-record делает action очевидным в том месте, где approver уже проверяет контекст.",
+    "evidence": [
+      {
+        "source": "salesforce-sales-cloud",
+        "description": "Approval banner с Approve/Reject/Reassign/Recall на pending record",
+        "reliability": "high"
+      },
+      {
+        "source": "github-pr-merge",
+        "description": "Merge button на PR detail, не в /pulls/inbox",
+        "reliability": "high"
+      }
+    ],
+    "counterexample": [
+      {
+        "source": "linear-issue-status-change",
+        "description": "Status changes без approval flow — banner избыточен",
+        "reliability": "high"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [
+      {
+        "domain": "workflow",
+        "projection": "execution-detail",
+        "reason": "Execution с manual approval-step показывает banner для approver'а"
+      }
+    ],
+    "shouldNotMatch": [
+      {
+        "domain": "messenger",
+        "projection": "message-detail",
+        "reason": "Нет approval-граничной семантики"
+      }
+    ]
+  }
+}

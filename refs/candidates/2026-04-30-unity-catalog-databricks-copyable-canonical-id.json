@@ -1,0 +1,61 @@
+{
+  "id": "copyable-canonical-id",
+  "version": 1,
+  "status": "candidate",
+  "archetype": "detail",
+  "trigger": {
+    "requires": [
+      {
+        "kind": "entity-kind",
+        "kind_value": "internal",
+        "withFKChain": "≥2"
+      },
+      {
+        "kind": "field-role-present",
+        "role": "name"
+      }
+    ]
+  },
+  "structure": {
+    "slot": "hero",
+    "description": "Hero показывает fully-qualified path (parent.parent.name) как canonical id с copy-to-clipboard кнопкой; не просто entity.name. Используется как handle для копирования в SQL/CLI."
+  },
+  "rationale": {
+    "hypothesis": "В hierarchical системах name неоднозначен (двe table 'users' в разных schema). Каноническая полная ссылка — реальный handle, который пользователь дальше paste'ит в код/CLI/документ. Copy-button делает это explicit, экономит маршалинг.",
+    "evidence": [
+      {
+        "source": "databricks-unity-catalog",
+        "description": "catalog.schema.object с copy-to-clipboard в hero",
+        "reliability": "high"
+      },
+      {
+        "source": "kubernetes-resource-yaml",
+        "description": "Full resource path namespace/name копируется как kubectl-arg",
+        "reliability": "medium"
+      }
+    ],
+    "counterexample": [
+      {
+        "source": "twitter-tweet",
+        "description": "Tweet id скрыт; URL — handle, но не canonical-name",
+        "reliability": "high"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [
+      {
+        "domain": "gravitino",
+        "projection": "table_detail",
+        "reason": "metalake.catalog.schema.table — paste в SQL"
+      }
+    ],
+    "shouldNotMatch": [
+      {
+        "domain": "messenger",
+        "projection": "message_detail",
+        "reason": "Message не имеет canonical-handle для копирования"
+      }
+    ]
+  }
+}

@@ -1,0 +1,67 @@
+{
+  "id": "bulk-actions-toolbar",
+  "version": 1,
+  "status": "candidate",
+  "archetype": "catalog",
+  "trigger": {
+    "requires": [
+      {
+        "kind": "intent-effect",
+        "α": "replace",
+        "scope": "records"
+      },
+      {
+        "kind": "intent-effect",
+        "α": "remove",
+        "scope": "records"
+      }
+    ]
+  },
+  "structure": {
+    "slot": "toolbar",
+    "description": "При выборе ≥2 строк появляется selection-toolbar с массовыми intent'ами (mass-change-owner, mass-change-status, mass-delete, add-to-campaign), скрывающий обычные filter-controls."
+  },
+  "rationale": {
+    "hypothesis": "Когда intent применим к множеству записей одинаково, повторение по одной — n×latency. Selection-mode переключает фокус toolbar'а с фильтрации на действие.",
+    "evidence": [
+      {
+        "source": "salesforce-sales-cloud",
+        "description": "Mass actions toolbar: change owner, change status, send email, add to campaign, delete",
+        "reliability": "high"
+      },
+      {
+        "source": "gmail-inbox",
+        "description": "Selection bar: archive, delete, label, snooze",
+        "reliability": "high"
+      },
+      {
+        "source": "airtable",
+        "description": "Bulk-edit selection toolbar",
+        "reliability": "medium"
+      }
+    ],
+    "counterexample": [
+      {
+        "source": "single-record-detail",
+        "description": "На detail bulk-toolbar бессмысленен",
+        "reliability": "high"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [
+      {
+        "domain": "messenger",
+        "projection": "message-catalog",
+        "reason": "Mass-mark-read / mass-delete — типичные intent'ы"
+      }
+    ],
+    "shouldNotMatch": [
+      {
+        "domain": "reflect",
+        "projection": "mood-entry-detail",
+        "reason": "Это detail, не catalog"
+      }
+    ]
+  }
+}

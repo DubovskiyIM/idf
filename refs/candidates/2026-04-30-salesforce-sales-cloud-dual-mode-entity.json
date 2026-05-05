@@ -1,0 +1,63 @@
+{
+  "id": "dual-mode-entity",
+  "version": 1,
+  "status": "candidate",
+  "archetype": "detail",
+  "trigger": {
+    "requires": [
+      {
+        "kind": "entity-kind",
+        "discriminator": "merged-personality"
+      },
+      {
+        "kind": "field-role-present",
+        "rolesFromBoth": [
+          "business",
+          "personal"
+        ]
+      }
+    ]
+  },
+  "structure": {
+    "slot": "header",
+    "description": "Сущность с dual identity (B2B+B2C, organization+person) рендерит mode-toggle в header'е detail; layout, related-lists и intent set переключаются согласно mode'у при стабильном record id."
+  },
+  "rationale": {
+    "hypothesis": "Когда домен охватывает оба паттерна (продажи в B2B и в B2C), создавать две сущности дублирует данные. Single record с dual-mode переключает projection без потери identity.",
+    "evidence": [
+      {
+        "source": "salesforce-sales-cloud",
+        "description": "Person Account merges Account + Contact; toggle B2B/B2C режима",
+        "reliability": "high"
+      },
+      {
+        "source": "stripe-customer",
+        "description": "Customer = either business или individual, поля пересекаются и расходятся",
+        "reliability": "medium"
+      }
+    ],
+    "counterexample": [
+      {
+        "source": "github-user",
+        "description": "User и Organization — отдельные сущности, не dual-mode",
+        "reliability": "high"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [
+      {
+        "domain": "booking",
+        "projection": "client-detail",
+        "reason": "Client может быть individual или company"
+      }
+    ],
+    "shouldNotMatch": [
+      {
+        "domain": "messenger",
+        "projection": "message-detail",
+        "reason": "Message — атомарная сущность"
+      }
+    ]
+  }
+}

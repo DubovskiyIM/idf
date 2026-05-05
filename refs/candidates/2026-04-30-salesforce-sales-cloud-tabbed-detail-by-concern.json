@@ -1,0 +1,61 @@
+{
+  "id": "tabbed-detail-by-concern",
+  "version": 1,
+  "status": "candidate",
+  "archetype": "detail",
+  "trigger": {
+    "requires": [
+      {
+        "kind": "sub-entity-exists",
+        "minCount": 4,
+        "ofDistinctConcerns": true
+      },
+      {
+        "kind": "intent-count",
+        "minIntentsOnEntity": 6
+      }
+    ]
+  },
+  "structure": {
+    "slot": "body",
+    "description": "Detail-shell разбивается на табы по concern'ам (Details / Activity / Discussion / Related), каждый таб — отдельная projection над тем же record. Highlights остаются над табами."
+  },
+  "rationale": {
+    "hypothesis": "Когда у записи много граней (бизнес-поля, активности, обсуждения, связанные коллекции), длинная вертикальная простыня теряет навигацию. Concern-табы дают O(1) прыжок к нужному аспекту.",
+    "evidence": [
+      {
+        "source": "salesforce-sales-cloud",
+        "description": "Account/Opportunity/Case detail: Details / Activity / Chatter / News / Related табы",
+        "reliability": "high"
+      },
+      {
+        "source": "linear-issue",
+        "description": "Issue: Discussion / Activity / Subscribers через табы/секции",
+        "reliability": "medium"
+      }
+    ],
+    "counterexample": [
+      {
+        "source": "twitter-tweet",
+        "description": "Tweet — атомарная сущность, разбивать не на что",
+        "reliability": "high"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [
+      {
+        "domain": "delivery",
+        "projection": "order-detail",
+        "reason": "Order имеет позиции, статус-историю, коммуникацию, проблемы — 4+ concern'а"
+      }
+    ],
+    "shouldNotMatch": [
+      {
+        "domain": "lifequest",
+        "projection": "habit-detail",
+        "reason": "Habit — узкая сущность, табы избыточны"
+      }
+    ]
+  }
+}

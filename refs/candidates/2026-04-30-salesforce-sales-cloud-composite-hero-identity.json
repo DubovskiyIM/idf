@@ -1,0 +1,62 @@
+{
+  "id": "composite-hero-identity",
+  "version": 1,
+  "status": "candidate",
+  "archetype": "detail",
+  "trigger": {
+    "requires": [
+      {
+        "kind": "field-role-present",
+        "anyOf": [
+          "money",
+          "percentage",
+          "industry",
+          "owner-ref"
+        ],
+        "minRoles": 3
+      }
+    ]
+  },
+  "structure": {
+    "slot": "hero",
+    "description": "Pinned highlights-панель сверху detail с подборкой ключевых бизнес-полей (revenue, employees, owner, industry/type) — всегда видна, не скроллится."
+  },
+  "rationale": {
+    "hypothesis": "Когда запись характеризуется несколькими 'визитными' полями, скрывать их в Details-секции означает скролл на каждый context-switch. Hero-pin даёт мгновенный 'кто это и сколько он стоит'.",
+    "evidence": [
+      {
+        "source": "salesforce-sales-cloud",
+        "description": "Highlights panel с AnnualRevenue / NumberOfEmployees / Industry / Account Team",
+        "reliability": "high"
+      },
+      {
+        "source": "stripe-customer",
+        "description": "Customer header: lifetime value, currency, country, signed up",
+        "reliability": "high"
+      }
+    ],
+    "counterexample": [
+      {
+        "source": "github-issue",
+        "description": "Issue header — title и labels, без 'business identity'",
+        "reliability": "high"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [
+      {
+        "domain": "invest",
+        "projection": "portfolio-detail",
+        "reason": "Portfolio имеет totalValue + return% + cashBalance"
+      }
+    ],
+    "shouldNotMatch": [
+      {
+        "domain": "messenger",
+        "projection": "conversation-detail",
+        "reason": "У conversation нет business-identity полей"
+      }
+    ]
+  }
+}

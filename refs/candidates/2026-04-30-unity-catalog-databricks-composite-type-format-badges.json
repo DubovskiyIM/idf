@@ -1,0 +1,62 @@
+{
+  "id": "composite-type-format-badges",
+  "version": 1,
+  "status": "candidate",
+  "archetype": "detail",
+  "trigger": {
+    "requires": [
+      {
+        "kind": "entity-field",
+        "field": "type",
+        "withSelectValues": "≥3"
+      },
+      {
+        "kind": "entity-field",
+        "field": "format|kind|backend",
+        "withSelectValues": "≥2"
+      }
+    ]
+  },
+  "structure": {
+    "slot": "hero",
+    "description": "Два независимых badge'а в hero: один для logical kind (Managed/External/Foreign), другой — для physical format (Delta/Iceberg/Parquet). Не сливаются в один, потому что ось ортогональна."
+  },
+  "rationale": {
+    "hypothesis": "Когда сущность имеет два независимых классификационных измерения, single status-badge становится перегруженным. Раздельные badge'а позволяют пользователю фильтровать/опознавать по одной оси, не парсить compound label.",
+    "evidence": [
+      {
+        "source": "databricks-unity-catalog",
+        "description": "Type badge (Managed/External) + Format badge (Delta/Iceberg) at hero level",
+        "reliability": "high"
+      },
+      {
+        "source": "github-repo",
+        "description": "Visibility (public/private) + Language badges независимо",
+        "reliability": "medium"
+      }
+    ],
+    "counterexample": [
+      {
+        "source": "trello-card",
+        "description": "Card имеет один status, формат не релевантен",
+        "reliability": "high"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [
+      {
+        "domain": "gravitino",
+        "projection": "table_detail",
+        "reason": "table-type (managed/external) + format (parquet/iceberg)"
+      }
+    ],
+    "shouldNotMatch": [
+      {
+        "domain": "lifequest",
+        "projection": "goal_detail",
+        "reason": "Goal не имеет ортогональной format-оси"
+      }
+    ]
+  }
+}

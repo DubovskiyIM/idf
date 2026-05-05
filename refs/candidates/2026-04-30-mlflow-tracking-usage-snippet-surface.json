@@ -1,0 +1,83 @@
+{
+  "id": "usage-snippet-surface",
+  "version": 1,
+  "status": "candidate",
+  "archetype": "detail",
+  "trigger": {
+    "requires": [
+      {
+        "kind": "entity-field",
+        "names": [
+          "url"
+        ],
+        "valueRole": "callable-endpoint"
+      },
+      {
+        "kind": "entity-field",
+        "name": "status",
+        "valuesAny": [
+          "ready",
+          "running",
+          "deployed"
+        ]
+      }
+    ]
+  },
+  "structure": {
+    "slot": "sections",
+    "description": "Detail сущности-endpoint'a получает 'Usage' section с language-switched code-snippet (Python/curl/JS), pre-filled с url+auth, copy-to-clipboard кнопкой. Snippet — proper UI primitive, не doc-link."
+  },
+  "rationale": {
+    "hypothesis": "Когда сущность — callable artifact (endpoint, API-key, service URL), 90% смысла detail'a — 'как это вызвать'. Doc-link force'ит mental-context-switch; inline snippet с copy сокращает path до working call до одного клика.",
+    "evidence": [
+      {
+        "source": "mlflow",
+        "description": "Model Version detail имеет Python+curl snippet для inference",
+        "reliability": "high"
+      },
+      {
+        "source": "stripe-keys",
+        "description": "API-key detail с copy-paste snippet",
+        "reliability": "high"
+      },
+      {
+        "source": "openai-playground",
+        "description": "Generated code-snippet для текущей конфигурации",
+        "reliability": "high"
+      }
+    ],
+    "counterexample": [
+      {
+        "source": "booking-detail",
+        "description": "Booking — не callable, snippet бессмыслен",
+        "reliability": "high"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [
+      {
+        "domain": "workflow",
+        "projection": "webhook-endpoint-detail",
+        "reason": "Webhook URL — callable, snippet применим"
+      },
+      {
+        "domain": "delivery",
+        "projection": "tracking-link-detail",
+        "reason": "Public tracking endpoint с share/embed snippet"
+      }
+    ],
+    "shouldNotMatch": [
+      {
+        "domain": "lifequest",
+        "projection": "goal-detail",
+        "reason": "Goal не callable"
+      },
+      {
+        "domain": "messenger",
+        "projection": "conversation-detail",
+        "reason": "Conversation не имеет endpoint-семантики"
+      }
+    ]
+  }
+}

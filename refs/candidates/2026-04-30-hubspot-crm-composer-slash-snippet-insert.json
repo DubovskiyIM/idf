@@ -1,0 +1,76 @@
+{
+  "id": "composer-slash-snippet-insert",
+  "version": 1,
+  "status": "candidate",
+  "archetype": "feed",
+  "trigger": {
+    "requires": [
+      {
+        "kind": "intent-confirmation",
+        "value": "enter"
+      },
+      {
+        "kind": "intent-creates",
+        "creates": "Activity"
+      },
+      {
+        "kind": "intent-effect",
+        "α": "replace",
+        "target": "*.body",
+        "withSourceTemplate": true
+      }
+    ]
+  },
+  "structure": {
+    "slot": "composer",
+    "description": "Composer для message/email/note добавляет inline 'insert' surface: '/' открывает popover поиск Templates/Snippets/Variables (recipient-name, deal-amount), выбор вставляет body-template в textarea с подстановкой переменных из текущего контекста (associated entities). Не отдельный intent 'insert template' — встроенный affordance композера."
+  },
+  "rationale": {
+    "hypothesis": "Когда композер используется часто и repetitive (sales outreach, support replies), inline /-команда быстрее чем 'кнопка template' → modal → выбрать → вставить. Variables подставляются из context связанной entity (Contact name, Deal amount) автоматически, что устраняет copy-paste и ошибки.",
+    "evidence": [
+      {
+        "source": "hubspot-crm",
+        "description": "Composer slash-commands для Templates/Snippets с context-variables",
+        "reliability": "high"
+      },
+      {
+        "source": "notion-slash",
+        "description": "/ как universal insert-affordance в редакторе",
+        "reliability": "high"
+      },
+      {
+        "source": "slack-slash-commands",
+        "description": "/-меню для quick actions в input",
+        "reliability": "high"
+      }
+    ],
+    "counterexample": [
+      {
+        "source": "gmail-compose",
+        "description": "Templates через menu а не /-popover — потому что email composer rare-use, не daily-rep",
+        "reliability": "medium"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [
+      {
+        "domain": "messenger",
+        "projection": "conversation_detail",
+        "reason": "Daily-use chat composer выиграет от /-quick-replies"
+      }
+    ],
+    "shouldNotMatch": [
+      {
+        "domain": "planning",
+        "projection": "poll_create",
+        "reason": "Создание опроса — rare, нет смысла в slash-snippets"
+      },
+      {
+        "domain": "invest",
+        "projection": "asset_detail",
+        "reason": "Не композерный workflow"
+      }
+    ]
+  }
+}

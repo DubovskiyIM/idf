@@ -1,0 +1,60 @@
+{
+  "id": "lineage-graph-with-granularity-toggle",
+  "version": 1,
+  "status": "candidate",
+  "archetype": "detail",
+  "trigger": {
+    "requires": [
+      {
+        "kind": "sub-entity-exists",
+        "entity": "LineageEdge|withUpstreamDownstream"
+      },
+      {
+        "kind": "entity-field",
+        "field": "columnLevel|granularity"
+      }
+    ]
+  },
+  "structure": {
+    "slot": "sections",
+    "description": "Lineage tab — directed graph canvas с upstream-слева/downstream-справа от focal node, плюс toggle table-level vs column-level granularity. Column-level раскрывает поля внутри node-карточки."
+  },
+  "rationale": {
+    "hypothesis": "Lineage имеет двойную природу: для impact-analysis нужен табличный grain, для root-cause нужен columnular. Один view не покрывает оба сценария — toggle дешевле, чем split на два таба.",
+    "evidence": [
+      {
+        "source": "databricks-unity-catalog",
+        "description": "Lineage tab graph canvas с table/column toggle",
+        "reliability": "high"
+      },
+      {
+        "source": "datahub-lineage",
+        "description": "Field-level expand / collapse внутри dataset-node",
+        "reliability": "high"
+      }
+    ],
+    "counterexample": [
+      {
+        "source": "google-analytics-funnel",
+        "description": "Funnel viz fixed-grain, toggle бесполезен",
+        "reliability": "low"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [
+      {
+        "domain": "gravitino",
+        "projection": "table_lineage",
+        "reason": "Column-level lineage — first-class concern"
+      }
+    ],
+    "shouldNotMatch": [
+      {
+        "domain": "workflow",
+        "projection": "workflow_diagram",
+        "reason": "Workflow steps не имеют sub-grain"
+      }
+    ]
+  }
+}

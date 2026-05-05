@@ -1,0 +1,62 @@
+{
+  "id": "typed-multi-owner-roles",
+  "version": 1,
+  "status": "candidate",
+  "archetype": "detail",
+  "trigger": {
+    "requires": [
+      {
+        "kind": "sub-entity-exists",
+        "value": "Ownership"
+      },
+      {
+        "kind": "entity-field",
+        "onOwnership": "ownershipType",
+        "minDistinctValues": 3,
+        "rationale": "≥3 ownership types — multi-owner-by-role rather than single owner field"
+      }
+    ]
+  },
+  "structure": {
+    "slot": "sections",
+    "description": "Owners surfaced as a typed list grouped by role (Technical / Business / Steward / Producer / Consumer). Each role can have N owners; same person can hold multiple roles. Per-role assign and remove controls."
+  },
+  "rationale": {
+    "hypothesis": "A flat 'owner' field forces a fiction: real ownership is multi-faceted (who built it ≠ who is accountable for it ≠ who consumes it). Typed roles let each axis route notifications and policies independently.",
+    "evidence": [
+      {
+        "source": "DataHub",
+        "description": "Ownership grouped by Technical Owner / Business Owner / Steward / Producer / Consumer",
+        "reliability": "high"
+      },
+      {
+        "source": "Atlan",
+        "description": "Same typed-ownership pattern",
+        "reliability": "high"
+      }
+    ],
+    "counterexample": [
+      {
+        "source": "Personal app",
+        "description": "Solo-author entities don't need typed roles",
+        "reliability": "high"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [
+      {
+        "domain": "workflow",
+        "projection": "workflow-detail.owners",
+        "reason": "Author / On-call / Approver typed roles"
+      }
+    ],
+    "shouldNotMatch": [
+      {
+        "domain": "lifequest",
+        "projection": "goal-detail",
+        "reason": "Personal goal — single owner"
+      }
+    ]
+  }
+}

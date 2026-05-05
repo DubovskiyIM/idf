@@ -1,0 +1,64 @@
+{
+  "id": "dashboard-component-grid",
+  "version": 1,
+  "status": "candidate",
+  "archetype": "dashboard",
+  "trigger": {
+    "requires": [
+      {
+        "kind": "Dashboard"
+      },
+      {
+        "kind": "DashboardComponent",
+        "withChartTypes": true
+      }
+    ]
+  },
+  "structure": {
+    "slot": "body",
+    "description": "Dashboard рендерится как grid widget'ов, каждый — reference на underlying Report с типом визуализации (chart/table/metric). Refresh каскадом обновляет все компоненты."
+  },
+  "rationale": {
+    "hypothesis": "Дашборд = композиция отчётов, не самостоятельный отчёт. Разделение Dashboard ↔ DashboardComponent ↔ Report делает виджеты переиспользуемыми и refresh-семантика становится понятной.",
+    "evidence": [
+      {
+        "source": "salesforce-sales-cloud",
+        "description": "Dashboard components — references на Reports, refresh = re-run всех",
+        "reliability": "high"
+      },
+      {
+        "source": "grafana",
+        "description": "Panel = reference на data source query, dashboard refresh каскадом",
+        "reliability": "high"
+      },
+      {
+        "source": "looker-dashboards",
+        "description": "Tiles ссылаются на Looks",
+        "reliability": "high"
+      }
+    ],
+    "counterexample": [
+      {
+        "source": "tableau-worksheet",
+        "description": "Worksheet — самостоятельный отчёт с встроенной визуализацией, не композиция",
+        "reliability": "medium"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [
+      {
+        "domain": "invest",
+        "projection": "portfolio-dashboard",
+        "reason": "Composite widgets — performance / allocation / news"
+      }
+    ],
+    "shouldNotMatch": [
+      {
+        "domain": "messenger",
+        "projection": "conversation-detail",
+        "reason": "Не дашборд"
+      }
+    ]
+  }
+}

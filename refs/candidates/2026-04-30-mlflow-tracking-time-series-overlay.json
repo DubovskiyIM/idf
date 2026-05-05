@@ -1,0 +1,79 @@
+{
+  "id": "time-series-overlay",
+  "version": 1,
+  "status": "candidate",
+  "archetype": "detail",
+  "trigger": {
+    "requires": [
+      {
+        "kind": "sub-entity-exists",
+        "fields": [
+          "step",
+          "value",
+          "timestamp"
+        ]
+      },
+      {
+        "kind": "entity-field",
+        "withRolePresent": "metric-time-series"
+      }
+    ]
+  },
+  "structure": {
+    "slot": "body",
+    "description": "Sub-entity со схемой {parentId, key, value, step, timestamp} рендерится не как table, а как line-chart с overlay по key (одна линия на metric-key) и optional cross-run overlay при multi-select — temporal first."
+  },
+  "rationale": {
+    "hypothesis": "step+value+timestamp — witness того, что это не scalar, а time-series; рендерить таблицей — terminate смысл. Line-chart с overlay позволяет визуально замечать divergence/trend, что и есть основной use-case (training curves, learning rate, loss).",
+    "evidence": [
+      {
+        "source": "mlflow",
+        "description": "RunMetric (key/value/step/timestamp) → line chart с overlay по runs",
+        "reliability": "high"
+      },
+      {
+        "source": "tensorboard",
+        "description": "Scalars панель с overlay по runs",
+        "reliability": "high"
+      },
+      {
+        "source": "grafana-metrics",
+        "description": "Multi-series overlay для метрик с timestamp",
+        "reliability": "high"
+      }
+    ],
+    "counterexample": [
+      {
+        "source": "audit-log",
+        "description": "Event-log с timestamp, но без step+value — это feed, не series",
+        "reliability": "high"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [
+      {
+        "domain": "invest",
+        "projection": "position-history",
+        "reason": "Position имеет PriceTick{step,value,timestamp} — line chart"
+      },
+      {
+        "domain": "reflect",
+        "projection": "mood-history",
+        "reason": "MoodEntry с timestamp+value — temporal series"
+      }
+    ],
+    "shouldNotMatch": [
+      {
+        "domain": "messenger",
+        "projection": "message-list",
+        "reason": "Message имеет timestamp, но не value/step — это feed, не series"
+      },
+      {
+        "domain": "booking",
+        "projection": "booking-detail",
+        "reason": "Booking discrete, не time-series"
+      }
+    ]
+  }
+}

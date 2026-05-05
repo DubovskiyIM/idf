@@ -1,0 +1,60 @@
+{
+  "id": "version-history-timeline",
+  "version": 1,
+  "status": "candidate",
+  "archetype": "detail",
+  "trigger": {
+    "requires": [
+      {
+        "kind": "sub-entity-exists",
+        "entity": "withFields:version+timestamp+operation"
+      },
+      {
+        "kind": "intent-creates",
+        "antagonist": "restore_version"
+      }
+    ]
+  },
+  "structure": {
+    "slot": "sections",
+    "description": "History tab — обратно-хронологический timeline, где каждая row окрашена по operation type (insert/update/merge/delete) и содержит version-number + timestamp + actor + records-affected. Каждая row кликабельна для time-travel."
+  },
+  "rationale": {
+    "hypothesis": "Version-history объектов — это не plain audit-log, а action-able past: пользователь хочет не только увидеть, но и вернуться или query at this point. Operation-typing цветом ускоряет поиск конкретного типа изменения.",
+    "evidence": [
+      {
+        "source": "databricks-unity-catalog",
+        "description": "History tab as version timeline with operation-typed rows",
+        "reliability": "high"
+      },
+      {
+        "source": "git-log-graphical",
+        "description": "Commit timeline с типизацией (merge/feat/fix) и checkout-CTA",
+        "reliability": "high"
+      }
+    ],
+    "counterexample": [
+      {
+        "source": "linear-issue-activity",
+        "description": "Activity feed — без version-restore CTA, не actionable past",
+        "reliability": "medium"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [
+      {
+        "domain": "gravitino",
+        "projection": "table_history",
+        "reason": "Iceberg time-travel"
+      }
+    ],
+    "shouldNotMatch": [
+      {
+        "domain": "messenger",
+        "projection": "message_history",
+        "reason": "Messages не versionируются с restore-семантикой"
+      }
+    ]
+  }
+}

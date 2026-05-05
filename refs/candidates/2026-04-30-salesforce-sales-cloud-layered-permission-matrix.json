@@ -1,0 +1,64 @@
+{
+  "id": "layered-permission-matrix",
+  "version": 1,
+  "status": "candidate",
+  "archetype": "catalog",
+  "trigger": {
+    "requires": [
+      {
+        "kind": "entity-kind",
+        "anyOf": [
+          "Profile",
+          "PermissionSet",
+          "SharingRule"
+        ]
+      },
+      {
+        "kind": "has-role",
+        "roleBase": "admin"
+      }
+    ]
+  },
+  "structure": {
+    "slot": "body",
+    "description": "Permission UI разворачивается как многоосевая матрица: Profile (base) × Permission Sets (additive) × Sharing Rules (criteria) × Role Hierarchy. Effective access вычисляется и показывается отдельной колонкой."
+  },
+  "rationale": {
+    "hypothesis": "Когда RBAC многослойный, единственная таблица 'role × resource' лжёт — нужно показать оси отдельно и вычислить эффективный доступ. Иначе админ не понимает, почему юзер видит/не видит данные.",
+    "evidence": [
+      {
+        "source": "salesforce-sales-cloud",
+        "description": "Profile + PermissionSet + SharingRule + Role Hierarchy как 4 независимых слоя с rollup",
+        "reliability": "high"
+      },
+      {
+        "source": "aws-iam",
+        "description": "User × Group × Policy × ResourceBoundary с policy simulator",
+        "reliability": "high"
+      }
+    ],
+    "counterexample": [
+      {
+        "source": "github-team-access",
+        "description": "Простая 'team has role on repo' — слой один, матрица не нужна",
+        "reliability": "high"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [
+      {
+        "domain": "keycloak",
+        "projection": "permission-matrix",
+        "reason": "Realm × Client × Role × Group — multi-axis по природе"
+      }
+    ],
+    "shouldNotMatch": [
+      {
+        "domain": "lifequest",
+        "projection": "habit-catalog",
+        "reason": "Single-user, нет permission-axes"
+      }
+    ]
+  }
+}

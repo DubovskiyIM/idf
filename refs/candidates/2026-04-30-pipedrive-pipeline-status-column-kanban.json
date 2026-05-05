@@ -1,0 +1,81 @@
+{
+  "id": "status-column-kanban",
+  "version": 1,
+  "status": "candidate",
+  "archetype": "catalog",
+  "trigger": {
+    "requires": [
+      {
+        "kind": "entity-field",
+        "name": "status",
+        "enumSize": [
+          3,
+          8
+        ]
+      },
+      {
+        "kind": "intent-effect",
+        "α": "replace",
+        "target": "*.status",
+        "confirmation": "click"
+      }
+    ]
+  },
+  "structure": {
+    "slot": "body",
+    "description": "Render catalog как горизонтальный kanban с колонками по enum-значениям status; каждая карточка — компактное представление сущности."
+  },
+  "rationale": {
+    "hypothesis": "Когда сущность движется через линейный процесс (deal stages, task lifecycle, lead funnel), kanban делает текущее распределение читаемым с одного взгляда и превращает скрытое поле .status в пространственное измерение, что снимает 80% запросов 'где у нас затыки'.",
+    "evidence": [
+      {
+        "source": "pipedrive",
+        "description": "Pipeline kanban — startup screen, не вкладка; колонки = stages, карточки = deals",
+        "reliability": "high"
+      },
+      {
+        "source": "trello",
+        "description": "Lists как первичный способ группировки card.status",
+        "reliability": "high"
+      },
+      {
+        "source": "linear",
+        "description": "Board-view с колонками по issue.status",
+        "reliability": "high"
+      }
+    ],
+    "counterexample": [
+      {
+        "source": "gmail",
+        "description": "Email/labels не визуализируют как kanban, потому что состояний слишком много и они не упорядочены",
+        "reliability": "high"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [
+      {
+        "domain": "delivery",
+        "projection": "orders",
+        "reason": "Order.status имеет линейный жизненный цикл (created→preparing→ready→delivered)"
+      },
+      {
+        "domain": "workflow",
+        "projection": "executions",
+        "reason": "Execution.status с conditioned transitions"
+      }
+    ],
+    "shouldNotMatch": [
+      {
+        "domain": "messenger",
+        "projection": "conversations",
+        "reason": "Conversation не имеет линейного status enum, чат — поток, не pipeline"
+      },
+      {
+        "domain": "invest",
+        "projection": "positions",
+        "reason": "Position.status бинарный (open/closed), kanban был бы избыточен"
+      }
+    ]
+  }
+}

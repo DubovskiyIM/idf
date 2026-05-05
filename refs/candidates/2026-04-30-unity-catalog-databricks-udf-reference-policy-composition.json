@@ -1,0 +1,61 @@
+{
+  "id": "udf-reference-policy-composition",
+  "version": 1,
+  "status": "candidate",
+  "archetype": null,
+  "trigger": {
+    "requires": [
+      {
+        "kind": "entity-field",
+        "field": "functionRef|udfRef",
+        "entityRef": "Function"
+      },
+      {
+        "kind": "intent-creates",
+        "creates": "RowFilter|ColumnMask|Policy"
+      }
+    ]
+  },
+  "structure": {
+    "slot": "composer",
+    "description": "RowFilter / ColumnMask определяются как ссылка на UDF (entity), а не inline-expression. Picker для filter-creation предлагает existing functions; inline-edit невозможен."
+  },
+  "rationale": {
+    "hypothesis": "Inline-expressions внутри policy resource — anti-pattern для governance: их нельзя ревьюить, версионировать, тестировать как код. Composition over expression делает policy-logic auditable и переиспользуемой.",
+    "evidence": [
+      {
+        "source": "databricks-unity-catalog",
+        "description": "Row filters / column masks как references to UDF",
+        "reliability": "high"
+      },
+      {
+        "source": "snowflake-row-access-policy",
+        "description": "Policy = expression, но рекомендуется через function",
+        "reliability": "medium"
+      }
+    ],
+    "counterexample": [
+      {
+        "source": "spreadsheet-conditional-formatting",
+        "description": "Inline expression — для one-off, не governance",
+        "reliability": "high"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [
+      {
+        "domain": "compliance",
+        "projection": "row_filter_definition",
+        "reason": "Function-ref композиция"
+      }
+    ],
+    "shouldNotMatch": [
+      {
+        "domain": "lifequest",
+        "projection": "habit",
+        "reason": "Нет policy-композиции"
+      }
+    ]
+  }
+}

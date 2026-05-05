@@ -1,0 +1,71 @@
+{
+  "id": "event-condition-action-builder",
+  "version": 1,
+  "status": "candidate",
+  "archetype": "detail",
+  "trigger": {
+    "requires": [
+      {
+        "kind": "intent-creates",
+        "value": "Action"
+      },
+      {
+        "kind": "entity-field",
+        "onAction": [
+          "trigger",
+          "filter",
+          "actionType"
+        ],
+        "minMatched": 3,
+        "rationale": "Action entity has explicit ECA triple"
+      }
+    ]
+  },
+  "structure": {
+    "slot": "sections",
+    "description": "Action authoring form composes (trigger event, filter predicate, action type, config). Examples: assertion-fails → Slack ping, dataset-tagged-PII → auto-policy, dataset-unused-90d → auto-deprecate. Reactive declarative rules surfaced as user-editable rows."
+  },
+  "rationale": {
+    "hypothesis": "Imperative scripts for catalog automation rot. Event-condition-action triples are inspectable, composable, and naturally fit catalog events. Each rule reads as one English sentence.",
+    "evidence": [
+      {
+        "source": "DataHub",
+        "description": "Actions framework — Slack-on-incident, auto-tag-PII, auto-deprecate",
+        "reliability": "high"
+      },
+      {
+        "source": "Zapier",
+        "description": "Trigger + filter + action chain",
+        "reliability": "high"
+      },
+      {
+        "source": "GitHub Actions",
+        "description": "on: + if: + run: triple",
+        "reliability": "high"
+      }
+    ],
+    "counterexample": [
+      {
+        "source": "Static catalog",
+        "description": "If no automation needed, ECA framework is overkill",
+        "reliability": "high"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [
+      {
+        "domain": "workflow",
+        "projection": "automation-rules",
+        "reason": "Pipeline-fail → notify, retry-budget-exceeded → page"
+      }
+    ],
+    "shouldNotMatch": [
+      {
+        "domain": "reflect",
+        "projection": "mood-detail",
+        "reason": "No automation concept"
+      }
+    ]
+  }
+}

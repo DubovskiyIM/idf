@@ -1,0 +1,81 @@
+{
+  "id": "master-detail-inspector-shell",
+  "version": 1,
+  "status": "candidate",
+  "archetype": "catalog",
+  "trigger": {
+    "requires": [
+      {
+        "kind": "entity-field",
+        "withRolePresent": "tree-parent"
+      },
+      {
+        "kind": "sub-entity-exists",
+        "min": 1,
+        "withSecondary": true
+      },
+      {
+        "kind": "intent-confirmation",
+        "value": "click",
+        "on": "selection-intent"
+      }
+    ]
+  },
+  "structure": {
+    "slot": "sections",
+    "description": "Three-pane layout: tree-parent в left-rail (sticky), child-catalog в center (primary working surface), inspector/preview в right-rail (selected child). Right-rail collapsible; на narrow viewports inspector становится modal."
+  },
+  "rationale": {
+    "hypothesis": "Когда у пользователя одновременно нужен (а) контекст parent-выбора, (б) рабочий список children, (в) deep-inspect одного child'a без потери списка — single-pane требует back-forth, two-pane не вмещает inspector. Three-pane — точка равновесия для high-volume catalog work.",
+    "evidence": [
+      {
+        "source": "mlflow",
+        "description": "Experiments tree × Runs table × Run inspector — каноничный three-pane",
+        "reliability": "high"
+      },
+      {
+        "source": "vscode",
+        "description": "Explorer × Editor × Outline/Properties",
+        "reliability": "high"
+      },
+      {
+        "source": "gmail",
+        "description": "Folders × MessageList × ReadingPane",
+        "reliability": "high"
+      }
+    ],
+    "counterexample": [
+      {
+        "source": "consumer-shopping",
+        "description": "Three-pane перегружает; product-detail — full-screen",
+        "reliability": "high"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [
+      {
+        "domain": "messenger",
+        "projection": "conversation-list",
+        "reason": "Folder × Conversation × Message — three-pane естествен"
+      },
+      {
+        "domain": "workflow",
+        "projection": "workflow-list",
+        "reason": "Workflow tree × Executions × Step inspector"
+      }
+    ],
+    "shouldNotMatch": [
+      {
+        "domain": "lifequest",
+        "projection": "goal-list",
+        "reason": "Личный продукт, single-pane достаточно"
+      },
+      {
+        "domain": "booking",
+        "projection": "specialist-list",
+        "reason": "Consumer-style; three-pane перегружает"
+      }
+    ]
+  }
+}

@@ -1,0 +1,81 @@
+{
+  "id": "configurable-pipeline-parent",
+  "version": 1,
+  "status": "candidate",
+  "archetype": "detail",
+  "trigger": {
+    "requires": [
+      {
+        "kind": "entity-field",
+        "field": "stages",
+        "type": "array"
+      },
+      {
+        "kind": "sub-entity-exists",
+        "byForeignKey": true,
+        "minChildCount": 10
+      },
+      {
+        "kind": "field-role-present",
+        "role": "objectKind"
+      }
+    ]
+  },
+  "structure": {
+    "slot": "sections",
+    "description": "Parent-сущность владеет упорядоченным набором stages, который определяет жизненный цикл child-сущностей (Pipeline → Deal/Ticket). Detail родителя рендерит редактор стадий (drag-reorder, add/rename/remove stage), а также pipeline-level политики (SLA, automation), которые применяются ко всем child'ам. Меняется как единый домен-конфиг, а не per-row."
+  },
+  "rationale": {
+    "hypothesis": "Когда у организации несколько параллельных процессов одного типа (New Business vs Renewals vs Upsell deals), вынос pipeline в first-class сущность позволяет иметь разные stage-наборы, разные SLA и разные автоматизации без размножения объектных типов. Политика на parent наследуется детям без копипасты.",
+    "evidence": [
+      {
+        "source": "hubspot-crm",
+        "description": "Pipeline — first-class entity, у Deal и Ticket по нескольку pipeline'ов, SLA конфигурируется на Pipeline а не на Ticket",
+        "reliability": "high"
+      },
+      {
+        "source": "salesforce-opportunity",
+        "description": "Sales Process на уровне RecordType с разными stages",
+        "reliability": "high"
+      },
+      {
+        "source": "linear-workflow",
+        "description": "Workflow на team-level определяет statuses для issues этой team",
+        "reliability": "high"
+      }
+    ],
+    "counterexample": [
+      {
+        "source": "github-project",
+        "description": "Projects v2 имеют columns но они per-project, не reusable policy для всех issues",
+        "reliability": "medium"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [
+      {
+        "domain": "workflow",
+        "projection": "workflow_detail",
+        "reason": "Workflow владеет nodes/branches применяемыми к Execution"
+      },
+      {
+        "domain": "delivery",
+        "projection": "menu_detail",
+        "reason": "Menu владеет items применяемыми к Order (если есть multi-restaurant)"
+      }
+    ],
+    "shouldNotMatch": [
+      {
+        "domain": "messenger",
+        "projection": "conversation_detail",
+        "reason": "Conversation — единичная единица, не template-policy"
+      },
+      {
+        "domain": "lifequest",
+        "projection": "goal_detail",
+        "reason": "Goal — личная цель, не shared-policy для children"
+      }
+    ]
+  }
+}

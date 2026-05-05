@@ -1,0 +1,61 @@
+{
+  "id": "polymorphic-tag-attachment",
+  "version": 1,
+  "status": "candidate",
+  "archetype": null,
+  "trigger": {
+    "requires": [
+      {
+        "kind": "intent-creates",
+        "value": "TagAssociation"
+      },
+      {
+        "kind": "entity-kind",
+        "tagTarget": ">=3",
+        "rationale": "Tag attaches to ≥3 distinct entity kinds"
+      }
+    ]
+  },
+  "structure": {
+    "slot": "body",
+    "description": "Tag is a lightweight polymorphic association applicable to multiple entity kinds (dataset, column, dashboard, term). Tag-input control reused across kinds with same UX; tag detail page lists all targets grouped by kind."
+  },
+  "rationale": {
+    "hypothesis": "Per-kind tag systems force users to learn N taxonomies. A single shared polymorphic tag namespace makes 'tagged-with-PII' a portable concept across entities.",
+    "evidence": [
+      {
+        "source": "DataHub",
+        "description": "Same tag attaches to dataset, column, dashboard, glossary term",
+        "reliability": "high"
+      },
+      {
+        "source": "Notion",
+        "description": "Multi-select properties shared across databases via relation",
+        "reliability": "medium"
+      }
+    ],
+    "counterexample": [
+      {
+        "source": "Domain-bounded tags",
+        "description": "When tags must be scoped to one entity kind for governance, polymorphic attachment leaks semantics",
+        "reliability": "medium"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [
+      {
+        "domain": "workflow",
+        "projection": "global-tag-detail",
+        "reason": "Tag attaches to Workflow + Node + Execution"
+      }
+    ],
+    "shouldNotMatch": [
+      {
+        "domain": "reflect",
+        "projection": "tag-detail",
+        "reason": "Tags only on MoodEntry — single kind"
+      }
+    ]
+  }
+}

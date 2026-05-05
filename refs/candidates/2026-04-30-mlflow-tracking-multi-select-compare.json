@@ -1,0 +1,86 @@
+{
+  "id": "multi-select-compare",
+  "version": 1,
+  "status": "candidate",
+  "archetype": "catalog",
+  "trigger": {
+    "requires": [
+      {
+        "kind": "intent-effect",
+        "target": "*.runIds",
+        "valueShape": "array"
+      },
+      {
+        "kind": "intent-creates",
+        "entityFields": [
+          "runIds",
+          "selectedParams",
+          "selectedMetrics",
+          "viewMode"
+        ]
+      },
+      {
+        "kind": "intent-confirmation",
+        "value": "click",
+        "on": "selection-intent"
+      }
+    ]
+  },
+  "structure": {
+    "slot": "toolbar",
+    "description": "Catalog получает persistent multi-select (checkbox-колонка) + sticky 'Compare' CTA в toolbar, который материализует Comparison-сущность с tabular+visual diff."
+  },
+  "rationale": {
+    "hypothesis": "Когда пользователь сравнивает N>2 записей одного типа, single-detail и side-by-side не масштабируются — нужна выделенная projection с array-input. Selection живёт на уровне catalog, а не модальном окне, чтобы не терять контекст при scroll/filter.",
+    "evidence": [
+      {
+        "source": "mlflow",
+        "description": "Checkbox в runs-table → Compare CTA → /compare экран с parallel-coordinates",
+        "reliability": "high"
+      },
+      {
+        "source": "wandb",
+        "description": "Sticky 'compare runs' bar при селекции ≥2 строк",
+        "reliability": "high"
+      },
+      {
+        "source": "github-pr-files",
+        "description": "Multi-select файлов с follow-up bulk-action — та же механика",
+        "reliability": "medium"
+      }
+    ],
+    "counterexample": [
+      {
+        "source": "messenger",
+        "description": "Множественный select сообщений → bulk-delete, не сравнение; компарировать messages бессмысленно",
+        "reliability": "high"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [
+      {
+        "domain": "invest",
+        "projection": "portfolio-positions",
+        "reason": "Сравнение Position'ов по доходности — естественный multi-select intent"
+      },
+      {
+        "domain": "planning",
+        "projection": "poll-options",
+        "reason": "TimeOption'ы можно сравнивать по голосам/доступности"
+      }
+    ],
+    "shouldNotMatch": [
+      {
+        "domain": "messenger",
+        "projection": "message-list",
+        "reason": "Multi-select есть, но Comparison-сущности нет — bulk-action ≠ compare"
+      },
+      {
+        "domain": "booking",
+        "projection": "specialist-list",
+        "reason": "Specialist-карточки сравниваются inline, без выделенной Comparison-projection"
+      }
+    ]
+  }
+}

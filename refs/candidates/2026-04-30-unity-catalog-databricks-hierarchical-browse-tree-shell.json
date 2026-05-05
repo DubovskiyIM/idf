@@ -1,0 +1,73 @@
+{
+  "id": "hierarchical-browse-tree-shell",
+  "version": 1,
+  "status": "candidate",
+  "archetype": "catalog",
+  "trigger": {
+    "requires": [
+      {
+        "kind": "entity-kind",
+        "kind_value": "internal",
+        "minDepth": 3,
+        "via": "foreignKey"
+      },
+      {
+        "kind": "intent-count",
+        "α": "add",
+        "min": 4
+      }
+    ]
+  },
+  "structure": {
+    "slot": "body",
+    "description": "Когда домен имеет ≥3 уровня вложенности через FK (catalog→schema→table→column), катало-проекция превращается в split-pane: persistent navigation tree слева, detail справа. Tree сохраняет expansion и selection между навигациями."
+  },
+  "rationale": {
+    "hypothesis": "Глубокая иерархия делает breadcrumb-навигацию утомительной (постоянный bounce naverх). Persistent tree даёт пространственную ориентацию и быстрое переключение между siblings без потери контекста родителя.",
+    "evidence": [
+      {
+        "source": "databricks-unity-catalog",
+        "description": "3-tier tree catalog→schema→object-type→object как primary navigation, resizable split-pane",
+        "reliability": "high"
+      },
+      {
+        "source": "aws-iam-console",
+        "description": "Resources/Policies/Identities в дереве слева, detail справа",
+        "reliability": "medium"
+      },
+      {
+        "source": "postgres-pgadmin",
+        "description": "Server→Database→Schema→Table в постоянном tree",
+        "reliability": "high"
+      }
+    ],
+    "counterexample": [
+      {
+        "source": "linear",
+        "description": "Issues — flat list с фильтрами; иерархия слабая (project) и tree избыточен",
+        "reliability": "high"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [
+      {
+        "domain": "gravitino",
+        "projection": "metalake_workspace",
+        "reason": "Metalake→Catalog→Schema→Table — 4 уровня FK"
+      }
+    ],
+    "shouldNotMatch": [
+      {
+        "domain": "messenger",
+        "projection": "conversations",
+        "reason": "Conversations плоские, нет глубокой иерархии"
+      },
+      {
+        "domain": "lifequest",
+        "projection": "goals",
+        "reason": "Goal→Habit — 2 уровня, недостаточно для tree"
+      }
+    ]
+  }
+}

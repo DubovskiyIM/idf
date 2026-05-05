@@ -1,0 +1,85 @@
+{
+  "id": "polymorphic-timeline-composer",
+  "version": 1,
+  "status": "candidate",
+  "archetype": "detail",
+  "trigger": {
+    "requires": [
+      {
+        "kind": "entity-kind",
+        "value": "polymorphic"
+      },
+      {
+        "kind": "intent-creates",
+        "minCount": 3,
+        "sameDiscriminator": true
+      },
+      {
+        "kind": "field-role-present",
+        "role": "occurredAt"
+      },
+      {
+        "kind": "sub-entity-exists",
+        "associationKind": "many-to-many",
+        "minParents": 2
+      }
+    ]
+  },
+  "structure": {
+    "slot": "body",
+    "description": "Render полиморфный child-entity как unified vertical timeline с одним composer-toggle в шапке (note/email/call/meeting/task), где выбор discriminator меняет form-shape без смены контекста. Композер reusable между всеми detail-проекциями родителей."
+  },
+  "rationale": {
+    "hypothesis": "Когда у entity есть один поток событий разных типов с общим occurredAt, ползователь думает о потоке как о ленте, а не о разных таблицах. Унификация composer'а снижает context-switch и убирает дубли формы (5 кнопок 'New X' → 1 toggle).",
+    "evidence": [
+      {
+        "source": "hubspot-crm",
+        "description": "Activity timeline на Contact/Company/Deal/Ticket — один и тот же composer Note/Email/Call/Meeting/Task поверх polymorphic Activity entity",
+        "reliability": "high"
+      },
+      {
+        "source": "salesforce-lightning",
+        "description": "Activities tab с Log a Call / New Task / New Event как сегментированный composer",
+        "reliability": "high"
+      },
+      {
+        "source": "linear-issue",
+        "description": "Comments + status-changes + sub-issue events в одном feed под issue с inline composer",
+        "reliability": "high"
+      }
+    ],
+    "counterexample": [
+      {
+        "source": "github-pr",
+        "description": "Reviews и Comments — разные потоки с разной механикой создания, объединение в один composer ломало бы review-mode",
+        "reliability": "medium"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [
+      {
+        "domain": "messenger",
+        "projection": "conversation_detail",
+        "reason": "Message — polymorphic (text/image/file) с timestamp под Conversation"
+      },
+      {
+        "domain": "lifequest",
+        "projection": "goal_detail",
+        "reason": "Если Habit/Task/Note создаются под Goal с общим timestamp — таймлайн с переключателем типа"
+      }
+    ],
+    "shouldNotMatch": [
+      {
+        "domain": "invest",
+        "projection": "portfolio_detail",
+        "reason": "Position — однородная сущность без discriminator, не таймлайн событий"
+      },
+      {
+        "domain": "planning",
+        "projection": "poll_detail",
+        "reason": "Vote — однородный, TimeOption — структурный child, не event-stream"
+      }
+    ]
+  }
+}

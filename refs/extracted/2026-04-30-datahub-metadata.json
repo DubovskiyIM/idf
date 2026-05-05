@@ -1,0 +1,723 @@
+{
+  "source": "datahub-metadata-catalog",
+  "entities": [
+    {
+      "name": "Dataset",
+      "fields": [
+        "urn",
+        "name",
+        "platform",
+        "environment",
+        "path",
+        "description",
+        "owners",
+        "tags",
+        "glossaryTerms",
+        "domain",
+        "deprecated",
+        "healthStatus",
+        "rowCount",
+        "sizeBytes",
+        "lastUpdated",
+        "siblings"
+      ],
+      "statusValues": [
+        "active",
+        "deprecated",
+        "stale",
+        "incident"
+      ]
+    },
+    {
+      "name": "SchemaField",
+      "fields": [
+        "name",
+        "type",
+        "description",
+        "tags",
+        "glossaryTerms",
+        "businessOwner",
+        "nullable",
+        "isPii"
+      ],
+      "foreignKey": "datasetUrn→Dataset"
+    },
+    {
+      "name": "Dashboard",
+      "fields": [
+        "urn",
+        "title",
+        "platform",
+        "owners",
+        "tags",
+        "domain",
+        "viewerCount",
+        "lastViewed"
+      ]
+    },
+    {
+      "name": "Chart",
+      "fields": [
+        "urn",
+        "title",
+        "platform",
+        "dashboardUrn",
+        "owners",
+        "tags"
+      ],
+      "foreignKey": "dashboardUrn→Dashboard"
+    },
+    {
+      "name": "DataFlow",
+      "fields": [
+        "urn",
+        "name",
+        "orchestrator",
+        "owners",
+        "schedule",
+        "tags"
+      ]
+    },
+    {
+      "name": "DataJob",
+      "fields": [
+        "urn",
+        "name",
+        "flowUrn",
+        "owners",
+        "lastRunStatus",
+        "lastRunAt"
+      ],
+      "foreignKey": "flowUrn→DataFlow",
+      "statusValues": [
+        "success",
+        "failed",
+        "running",
+        "skipped"
+      ]
+    },
+    {
+      "name": "MLModel",
+      "fields": [
+        "urn",
+        "name",
+        "version",
+        "owners",
+        "features",
+        "tags",
+        "domain"
+      ]
+    },
+    {
+      "name": "MLFeature",
+      "fields": [
+        "urn",
+        "name",
+        "type",
+        "owners",
+        "sourceDatasetUrn"
+      ],
+      "foreignKey": "sourceDatasetUrn→Dataset"
+    },
+    {
+      "name": "GlossaryTerm",
+      "fields": [
+        "urn",
+        "name",
+        "definition",
+        "termGroupUrn",
+        "relatedTerms",
+        "appliedToCount",
+        "approvalStatus",
+        "owners"
+      ],
+      "foreignKey": "termGroupUrn→TermGroup",
+      "statusValues": [
+        "proposed",
+        "approved",
+        "rejected",
+        "deprecated"
+      ]
+    },
+    {
+      "name": "TermGroup",
+      "fields": [
+        "urn",
+        "name",
+        "description",
+        "parentGroupUrn",
+        "owners"
+      ],
+      "foreignKey": "parentGroupUrn→TermGroup"
+    },
+    {
+      "name": "Domain",
+      "fields": [
+        "urn",
+        "name",
+        "description",
+        "ownerTeam",
+        "assetCount",
+        "parentDomainUrn"
+      ],
+      "foreignKey": "parentDomainUrn→Domain"
+    },
+    {
+      "name": "Container",
+      "fields": [
+        "urn",
+        "name",
+        "containerType",
+        "platform",
+        "parentContainerUrn",
+        "owners"
+      ],
+      "foreignKey": "parentContainerUrn→Container",
+      "statusValues": [
+        "database",
+        "schema",
+        "folder"
+      ]
+    },
+    {
+      "name": "Tag",
+      "fields": [
+        "urn",
+        "name",
+        "color",
+        "description",
+        "appliedToCount"
+      ]
+    },
+    {
+      "name": "CorpUser",
+      "fields": [
+        "urn",
+        "username",
+        "displayName",
+        "email",
+        "title",
+        "groups"
+      ]
+    },
+    {
+      "name": "CorpGroup",
+      "fields": [
+        "urn",
+        "name",
+        "description",
+        "members"
+      ]
+    },
+    {
+      "name": "Ownership",
+      "fields": [
+        "entityUrn",
+        "ownerUrn",
+        "ownershipType",
+        "source"
+      ],
+      "foreignKey": "entityUrn→Dataset",
+      "statusValues": [
+        "technical_owner",
+        "business_owner",
+        "data_steward",
+        "data_producer",
+        "consumer"
+      ]
+    },
+    {
+      "name": "LineageEdge",
+      "fields": [
+        "upstreamUrn",
+        "downstreamUrn",
+        "edgeType",
+        "transformLogic",
+        "columnMappings",
+        "source",
+        "createdAt"
+      ],
+      "statusValues": [
+        "table_level",
+        "column_level",
+        "sibling"
+      ]
+    },
+    {
+      "name": "Assertion",
+      "fields": [
+        "urn",
+        "datasetUrn",
+        "assertionType",
+        "expression",
+        "lastRunStatus",
+        "lastRunAt",
+        "source"
+      ],
+      "foreignKey": "datasetUrn→Dataset",
+      "statusValues": [
+        "passing",
+        "failing",
+        "error",
+        "disabled"
+      ]
+    },
+    {
+      "name": "Incident",
+      "fields": [
+        "urn",
+        "datasetUrn",
+        "title",
+        "description",
+        "severity",
+        "state",
+        "raisedBy",
+        "createdAt",
+        "resolvedAt"
+      ],
+      "foreignKey": "datasetUrn→Dataset",
+      "statusValues": [
+        "active",
+        "resolved",
+        "acknowledged"
+      ]
+    },
+    {
+      "name": "Query",
+      "fields": [
+        "urn",
+        "sql",
+        "datasetUrn",
+        "executionCount",
+        "topUsers",
+        "lastExecutedAt"
+      ],
+      "foreignKey": "datasetUrn→Dataset"
+    },
+    {
+      "name": "UsageStats",
+      "fields": [
+        "entityUrn",
+        "queryCount",
+        "uniqueUserCount",
+        "topUsers",
+        "windowStart",
+        "windowEnd"
+      ],
+      "foreignKey": "entityUrn→Dataset"
+    },
+    {
+      "name": "ColumnStats",
+      "fields": [
+        "columnName",
+        "datasetUrn",
+        "rowCount",
+        "nullCount",
+        "distinctCount",
+        "min",
+        "max",
+        "computedAt"
+      ],
+      "foreignKey": "datasetUrn→Dataset"
+    },
+    {
+      "name": "IngestionRecipe",
+      "fields": [
+        "urn",
+        "name",
+        "sourceType",
+        "yamlConfig",
+        "schedule",
+        "lastRunStatus",
+        "lastRunAt",
+        "owner"
+      ],
+      "statusValues": [
+        "scheduled",
+        "running",
+        "success",
+        "failed",
+        "disabled"
+      ]
+    },
+    {
+      "name": "Post",
+      "fields": [
+        "urn",
+        "title",
+        "content",
+        "author",
+        "pinnedTo",
+        "createdAt",
+        "postType"
+      ],
+      "statusValues": [
+        "announcement",
+        "deprecation_notice",
+        "general"
+      ]
+    },
+    {
+      "name": "Policy",
+      "fields": [
+        "urn",
+        "name",
+        "policyType",
+        "permissions",
+        "resourceFilter",
+        "actorFilter",
+        "state"
+      ],
+      "statusValues": [
+        "active",
+        "inactive"
+      ]
+    },
+    {
+      "name": "Role",
+      "fields": [
+        "urn",
+        "name",
+        "policies",
+        "description"
+      ],
+      "statusValues": [
+        "admin",
+        "editor",
+        "reader",
+        "curator"
+      ]
+    },
+    {
+      "name": "Action",
+      "fields": [
+        "urn",
+        "name",
+        "trigger",
+        "filter",
+        "actionType",
+        "config",
+        "enabled"
+      ]
+    }
+  ],
+  "intents": [
+    {
+      "id": "search_metadata",
+      "α": "replace",
+      "target": "session.searchQuery",
+      "confirmation": "enter"
+    },
+    {
+      "id": "filter_search_facets",
+      "α": "replace",
+      "target": "session.searchFilters",
+      "confirmation": "click"
+    },
+    {
+      "id": "browse_path",
+      "α": "replace",
+      "target": "session.browseLocation",
+      "confirmation": "click"
+    },
+    {
+      "id": "open_dataset",
+      "α": "replace",
+      "target": "session.currentEntity",
+      "confirmation": "click"
+    },
+    {
+      "id": "switch_detail_tab",
+      "α": "replace",
+      "target": "session.activeTab",
+      "confirmation": "click"
+    },
+    {
+      "id": "set_owner",
+      "α": "add",
+      "creates": "Ownership",
+      "confirmation": "form"
+    },
+    {
+      "id": "remove_owner",
+      "α": "remove",
+      "target": "ownerships",
+      "confirmation": "click"
+    },
+    {
+      "id": "edit_documentation",
+      "α": "replace",
+      "target": "dataset.description",
+      "confirmation": "form"
+    },
+    {
+      "id": "edit_column_description",
+      "α": "replace",
+      "target": "schemaField.description",
+      "confirmation": "enter"
+    },
+    {
+      "id": "attach_tag",
+      "α": "add",
+      "creates": "TagAssociation",
+      "confirmation": "click"
+    },
+    {
+      "id": "remove_tag",
+      "α": "remove",
+      "target": "tagAssociations",
+      "confirmation": "click"
+    },
+    {
+      "id": "attach_term_to_column",
+      "α": "add",
+      "creates": "GlossaryTermAssociation",
+      "confirmation": "click"
+    },
+    {
+      "id": "remove_term",
+      "α": "remove",
+      "target": "glossaryTermAssociations",
+      "confirmation": "click"
+    },
+    {
+      "id": "assign_to_domain",
+      "α": "replace",
+      "target": "dataset.domain",
+      "confirmation": "click"
+    },
+    {
+      "id": "deprecate_dataset",
+      "α": "replace",
+      "target": "dataset.deprecated",
+      "confirmation": "form",
+      "irreversibility": "high"
+    },
+    {
+      "id": "undeprecate_dataset",
+      "α": "replace",
+      "target": "dataset.deprecated",
+      "confirmation": "click"
+    },
+    {
+      "id": "set_pii_classification",
+      "α": "replace",
+      "target": "schemaField.isPii",
+      "confirmation": "click"
+    },
+    {
+      "id": "set_sensitivity_label",
+      "α": "replace",
+      "target": "dataset.sensitivityLabel",
+      "confirmation": "click"
+    },
+    {
+      "id": "navigate_lineage",
+      "α": "replace",
+      "target": "session.lineageFocus",
+      "confirmation": "click"
+    },
+    {
+      "id": "expand_column_lineage",
+      "α": "replace",
+      "target": "session.expandedColumn",
+      "confirmation": "click"
+    },
+    {
+      "id": "filter_lineage_depth",
+      "α": "replace",
+      "target": "session.lineageDepth",
+      "confirmation": "click"
+    },
+    {
+      "id": "filter_lineage_time",
+      "α": "replace",
+      "target": "session.lineageTimeRange",
+      "confirmation": "click"
+    },
+    {
+      "id": "propose_glossary_term",
+      "α": "add",
+      "creates": "GlossaryTerm",
+      "confirmation": "form"
+    },
+    {
+      "id": "approve_term",
+      "α": "replace",
+      "target": "glossaryTerm.approvalStatus",
+      "confirmation": "click",
+      "irreversibility": "high"
+    },
+    {
+      "id": "reject_term",
+      "α": "replace",
+      "target": "glossaryTerm.approvalStatus",
+      "confirmation": "form",
+      "irreversibility": "high"
+    },
+    {
+      "id": "create_term_group",
+      "α": "add",
+      "creates": "TermGroup",
+      "confirmation": "form"
+    },
+    {
+      "id": "create_domain",
+      "α": "add",
+      "creates": "Domain",
+      "confirmation": "form"
+    },
+    {
+      "id": "assign_assets_to_domain",
+      "α": "replace",
+      "target": "dataset.domain",
+      "confirmation": "form"
+    },
+    {
+      "id": "create_tag",
+      "α": "add",
+      "creates": "Tag",
+      "confirmation": "form"
+    },
+    {
+      "id": "post_announcement",
+      "α": "add",
+      "creates": "Post",
+      "confirmation": "form"
+    },
+    {
+      "id": "pin_post_to_entity",
+      "α": "replace",
+      "target": "post.pinnedTo",
+      "confirmation": "click"
+    },
+    {
+      "id": "configure_ingestion_recipe",
+      "α": "add",
+      "creates": "IngestionRecipe",
+      "confirmation": "form"
+    },
+    {
+      "id": "edit_ingestion_recipe",
+      "α": "replace",
+      "target": "ingestionRecipe.yamlConfig",
+      "confirmation": "form"
+    },
+    {
+      "id": "run_ingestion",
+      "α": "add",
+      "creates": "IngestionRun",
+      "confirmation": "click"
+    },
+    {
+      "id": "schedule_ingestion",
+      "α": "replace",
+      "target": "ingestionRecipe.schedule",
+      "confirmation": "form"
+    },
+    {
+      "id": "view_usage_stats",
+      "α": "replace",
+      "target": "session.statsWindow",
+      "confirmation": "click"
+    },
+    {
+      "id": "file_data_incident",
+      "α": "add",
+      "creates": "Incident",
+      "confirmation": "form",
+      "irreversibility": "high"
+    },
+    {
+      "id": "resolve_incident",
+      "α": "replace",
+      "target": "incident.state",
+      "confirmation": "click"
+    },
+    {
+      "id": "view_assertion_history",
+      "α": "replace",
+      "target": "session.assertionFocus",
+      "confirmation": "click"
+    },
+    {
+      "id": "create_assertion",
+      "α": "add",
+      "creates": "Assertion",
+      "confirmation": "form"
+    },
+    {
+      "id": "create_policy",
+      "α": "add",
+      "creates": "Policy",
+      "confirmation": "form"
+    },
+    {
+      "id": "assign_role",
+      "α": "replace",
+      "target": "corpUser.role",
+      "confirmation": "click"
+    },
+    {
+      "id": "create_action",
+      "α": "add",
+      "creates": "Action",
+      "confirmation": "form"
+    },
+    {
+      "id": "toggle_action",
+      "α": "replace",
+      "target": "action.enabled",
+      "confirmation": "click"
+    },
+    {
+      "id": "link_sibling",
+      "α": "add",
+      "creates": "LineageEdge",
+      "confirmation": "form"
+    },
+    {
+      "id": "delete_dataset_metadata",
+      "α": "remove",
+      "target": "datasets",
+      "confirmation": "form",
+      "irreversibility": "high"
+    }
+  ],
+  "roles": [
+    "owner",
+    "viewer",
+    "agent",
+    "observer",
+    "admin"
+  ],
+  "observations": [
+    "Top-level surface is global search bar with type-grouped autocomplete (Datasets / Dashboards / Terms / People) — search is the primary entry point, not navigation",
+    "Search results page uses filter chips (type, platform, env, tag, term, owner, domain) as the canonical facet UI",
+    "Browse-path tree (platform → env → DB → schema → table) is offered as alternative-to-search for known-world discovery",
+    "Dataset detail uses tabbed layout by concern (Schema / Documentation / Lineage / Properties / Queries / Stats / Validation / Operations / Access) — each tab is a separate facet of the same URN",
+    "Hero displays composite identity: name + platform icon + environment badge (PROD/DEV) + breadcrumb path + health badges (deprecated / incident / stale)",
+    "Schema tab is a nested-tree (column → nested struct) where each row carries its own tags / terms / business-owner inline — column is a first-class metadata target",
+    "Lineage tab is a graph-canvas with current entity centered, upstream-left / downstream-right, typed icons per node kind",
+    "Column-level lineage is progressive disclosure: click column → highlights path through systems",
+    "Lineage filters (depth, hop count, type, time range) live as graph-canvas controls, not as a separate page",
+    "Glossary uses hierarchical taxonomy (Term Group → Term → child terms) with approval workflow (Proposal → Approve / Reject) requiring curator role",
+    "Domain pages aggregate assets by business area with owner team highlighted as primary metadata",
+    "Tags are lightweight polymorphic — same tag attaches to dataset, column, dashboard, term",
+    "Ownership is typed (Technical / Business / Steward / Producer / Consumer) — multi-owner-by-role rather than single owner field",
+    "Sibling links surface same-logical-entity across platforms as a horizontal pill row on hero",
+    "Posts/Announcements pinned to home + entity pages — embedded blog as platform-team broadcast surface",
+    "Health badges aggregate multiple aspects (deprecation + incident + freshness) into single hero indicator",
+    "Stats tab shows time-series for row count / null % / distinct values per column — trends, not snapshots",
+    "Validation tab shows pass/fail history of assertions as timeline — assertion is itself an entity with history",
+    "Search ranking exposed as relevance signal via PageRank-like score from lineage + usage stats — usage is first-class authority",
+    "Ingestion has dual surface: YAML recipe editor in UI + CLI for CI — same model, two materializations",
+    "Permissions are policy-based with resource-level conditions (filter by domain/platform/tag) rather than flat role checks",
+    "Actions framework is event-condition-action — Slack-on-incident, auto-tag-PII, auto-deprecate-90d-unused — declarative reactive rules",
+    "Embedded analytics widgets ('Most queried tables', 'Top dashboards', 'Datasets with broken upstream') sit on home as cross-aggregate dashboard",
+    "URN is the canonical identity surface — visible on entity pages, copyable, used for cross-platform referencing",
+    "Aspects-as-facets pattern: same entity surfaces different metadata bundles per tab; aspects compose rather than inherit",
+    "Deprecation requires confirmation form with reason — irreversibility-high marker on destructive metadata transitions",
+    "Approval of glossary term is one-click for curator but has audit-trail implication (irreversibility-high)"
+  ]
+}

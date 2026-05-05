@@ -1,0 +1,65 @@
+{
+  "id": "nl-prompt-sql-preview",
+  "version": 1,
+  "status": "candidate",
+  "archetype": null,
+  "trigger": {
+    "requires": [
+      {
+        "kind": "intent-creates",
+        "creates": "GenieQuery|NLQuery",
+        "withFields": [
+          "nlPrompt",
+          "generatedSql"
+        ]
+      }
+    ]
+  },
+  "structure": {
+    "slot": "composer",
+    "description": "Natural-language prompt input → LLM генерирует SQL/code → SQL отображается как preview-block с edit-affordance перед execute. Permissions enforced на exec, не на generation."
+  },
+  "rationale": {
+    "hypothesis": "LLM-generated mutation/query — дёшево сгенерировать, дорого ошибиться. Preview-step даёт пользователю understandable artifact для проверки, и сохраняет авторство («я знаю, что отправил в БД»). Это fail-safe на translation gap NL→SQL.",
+    "evidence": [
+      {
+        "source": "databricks-unity-catalog",
+        "description": "Genie: NL prompt input → generated SQL preview before execute",
+        "reliability": "high"
+      },
+      {
+        "source": "github-copilot-chat-sql",
+        "description": "Generated query показывается перед run",
+        "reliability": "high"
+      },
+      {
+        "source": "openai-codex-cli",
+        "description": "Generated command — confirm-step",
+        "reliability": "high"
+      }
+    ],
+    "counterexample": [
+      {
+        "source": "alexa-voice-query",
+        "description": "Voice exec без preview — domain forgiving (read-only)",
+        "reliability": "medium"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [
+      {
+        "domain": "gravitino",
+        "projection": "nl_query",
+        "reason": "NL→SQL для Spark/Iceberg"
+      }
+    ],
+    "shouldNotMatch": [
+      {
+        "domain": "messenger",
+        "projection": "compose",
+        "reason": "NL→message — без translation gap"
+      }
+    ]
+  }
+}

@@ -1,0 +1,59 @@
+{
+  "id": "context-action-toolbar",
+  "version": 1,
+  "status": "candidate",
+  "archetype": "detail",
+  "trigger": {
+    "requires": [
+      {
+        "kind": "intent-count",
+        "α": "add",
+        "confirmation": "click",
+        "withTargetEntity": true,
+        "min": 3
+      }
+    ]
+  },
+  "structure": {
+    "slot": "toolbar",
+    "description": "Над tabs или сразу под hero — горизонтальная toolbar из ≥3 click-confirm intent'ов, не создающих дочерние сущности (Open in Notebook, Sample Data, Refresh, View Lineage). Это «что я могу сделать с этим объектом», параллельно к CRUD."
+  },
+  "rationale": {
+    "hypothesis": "Click-intents с шаблоном «открыть в другом инструменте/получить срез данных» — это не CRUD, не state-mutation, и поэтому не должны быть формами или primaryCTA. Они — ambient affordances, и toolbar — естественное место.",
+    "evidence": [
+      {
+        "source": "databricks-unity-catalog",
+        "description": "Open in Notebook / Query in SQL Editor / Sample / Refresh над tabs",
+        "reliability": "high"
+      },
+      {
+        "source": "snowflake-table-detail",
+        "description": "Preview Data / Copy Query / Worksheet кнопки в toolbar",
+        "reliability": "high"
+      }
+    ],
+    "counterexample": [
+      {
+        "source": "twitter-tweet",
+        "description": "Quote/RT/Like — уже body actions, не toolbar; semantic engagement, не contextual",
+        "reliability": "medium"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [
+      {
+        "domain": "gravitino",
+        "projection": "table_detail",
+        "reason": "Sample / Query / Refresh — типичные click-intents"
+      }
+    ],
+    "shouldNotMatch": [
+      {
+        "domain": "planning",
+        "projection": "poll_detail",
+        "reason": "Poll имеет vote (form) и close (form), нет cluster click-intents"
+      }
+    ]
+  }
+}

@@ -1,0 +1,77 @@
+{
+  "id": "derived-card-staleness",
+  "version": 1,
+  "status": "candidate",
+  "archetype": "catalog",
+  "trigger": {
+    "requires": [
+      {
+        "kind": "field-role-present",
+        "role": "date",
+        "semantic": "next-activity|due-date|last-activity"
+      },
+      {
+        "kind": "entity-field",
+        "name": "rottenDays|stalenessThreshold|slaDays",
+        "optional": true
+      }
+    ]
+  },
+  "structure": {
+    "slot": "body",
+    "description": "Каждая карточка получает derived health-indicator (цветной бордер/badge) от age witness'ов (now - lastActivityAt vs threshold) — green/yellow/red. Опционально: отсутствие nextActivityAt → красный (coercive 'always have next step')."
+  },
+  "rationale": {
+    "hypothesis": "Health derived из now() — строго read-only, не требует ручной разметки 'это просрочено'. UI делает время осязаемым: пользователь видит rot до того, как открыл deal. Coercive variant (нет next-activity = красный) превращает invariant в визуальное давление, не блокируя.",
+    "evidence": [
+      {
+        "source": "pipedrive",
+        "description": "Color-coded rot indicator: green/yellow/red/purple от nextActivityAt + stage.rottenDays",
+        "reliability": "high"
+      },
+      {
+        "source": "linear",
+        "description": "Issue.staleness color от updatedAt",
+        "reliability": "high"
+      },
+      {
+        "source": "github-issues",
+        "description": "Stale-bot label по age",
+        "reliability": "high"
+      }
+    ],
+    "counterexample": [
+      {
+        "source": "notion-databases",
+        "description": "Generic catalog не выводит staleness без явной формулы — иногда нет date witness",
+        "reliability": "medium"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [
+      {
+        "domain": "lifequest",
+        "projection": "habits",
+        "reason": "Habit.lastDoneAt + frequency → derived 'overdue' state"
+      },
+      {
+        "domain": "delivery",
+        "projection": "orders",
+        "reason": "Order.preparingSince + sla → red badge"
+      }
+    ],
+    "shouldNotMatch": [
+      {
+        "domain": "messenger",
+        "projection": "messages",
+        "reason": "Message не 'тухнет' — это immutable record, staleness не имеет смысла"
+      },
+      {
+        "domain": "invest",
+        "projection": "assets",
+        "reason": "Asset — справочник, не задача с дедлайном"
+      }
+    ]
+  }
+}

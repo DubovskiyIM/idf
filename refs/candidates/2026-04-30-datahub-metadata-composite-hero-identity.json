@@ -1,0 +1,78 @@
+{
+  "id": "composite-hero-identity",
+  "version": 1,
+  "status": "candidate",
+  "archetype": "detail",
+  "trigger": {
+    "requires": [
+      {
+        "kind": "field-role-present",
+        "values": [
+          "title",
+          "kindIcon",
+          "envBadge",
+          "parentPath"
+        ],
+        "minMatched": 3,
+        "rationale": "≥3 identity-coordinate roles compose into hero"
+      },
+      {
+        "kind": "entity-field",
+        "fieldRole": "healthStatus",
+        "optional": true
+      }
+    ]
+  },
+  "structure": {
+    "slot": "hero",
+    "description": "Hero composes name + platform/kind icon + environment badge (PROD/DEV/STAGING) + breadcrumb path + aggregated health badges into a single identity strip. Each fragment is independently meaningful but read together as 'who this thing is'."
+  },
+  "rationale": {
+    "hypothesis": "When the same logical name (e.g. 'orders') exists in multiple platforms × environments × domains, the name alone is not identity. The user must see all axes simultaneously to be sure they are looking at the right entity.",
+    "evidence": [
+      {
+        "source": "DataHub",
+        "description": "Dataset hero: name + Snowflake icon + PROD badge + db.schema.table breadcrumb + deprecated/incident badges",
+        "reliability": "high"
+      },
+      {
+        "source": "Sentry",
+        "description": "Issue hero: title + project icon + env badge + level badge",
+        "reliability": "high"
+      },
+      {
+        "source": "Kubernetes Lens",
+        "description": "Pod hero: name + cluster + namespace + status",
+        "reliability": "medium"
+      }
+    ],
+    "counterexample": [
+      {
+        "source": "Single-namespace entity",
+        "description": "If name is globally unique within app, composite identity is redundant",
+        "reliability": "high"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [
+      {
+        "domain": "workflow",
+        "projection": "execution-detail",
+        "reason": "name + workflow ref + env + status"
+      },
+      {
+        "domain": "delivery",
+        "projection": "order-detail",
+        "reason": "id + restaurant + status + payment-state"
+      }
+    ],
+    "shouldNotMatch": [
+      {
+        "domain": "reflect",
+        "projection": "mood-detail",
+        "reason": "MoodEntry has only date — single coordinate"
+      }
+    ]
+  }
+}

@@ -1,0 +1,90 @@
+{
+  "id": "configurable-dashboard-widgets",
+  "version": 1,
+  "status": "candidate",
+  "archetype": "catalog",
+  "trigger": {
+    "requires": [
+      {
+        "kind": "intent-creates",
+        "creates": "Widget-like",
+        "entityFields": [
+          "kind",
+          "xAxis",
+          "yAxis"
+        ]
+      },
+      {
+        "kind": "entity-field",
+        "name": "kind",
+        "values": [
+          "scatter",
+          "line",
+          "bar",
+          "parallel_coordinates"
+        ]
+      },
+      {
+        "kind": "sub-entity-exists",
+        "foreignKeyTo": "dashboard-parent"
+      }
+    ]
+  },
+  "structure": {
+    "slot": "body",
+    "description": "Dashboard-archetype получает grid-layout с 'Add Panel' CTA в toolbar. Каждый panel — sub-entity (kind+axes+filterQuery), редактируемый inline через config-modal. Layout persists per-user."
+  },
+  "rationale": {
+    "hypothesis": "Когда analytical surface индивидуальна (разные пользователи смотрят разные срезы), prebuilt-dashboard слабее, чем user-composable: пользователь складывает widget'ы под свою задачу. Trade-off: требует ChartPanel-сущности и authoring UX.",
+    "evidence": [
+      {
+        "source": "mlflow",
+        "description": "Experiment dashboard: добавить scatter/parallel/line panel с произвольными axes",
+        "reliability": "high"
+      },
+      {
+        "source": "grafana-dashboards",
+        "description": "Канонический composable-dashboard pattern",
+        "reliability": "high"
+      },
+      {
+        "source": "datadog-dashboards",
+        "description": "User-composable widget grid",
+        "reliability": "high"
+      }
+    ],
+    "counterexample": [
+      {
+        "source": "fitness-app-summary",
+        "description": "Prebuilt summary без add-widget — целевая аудитория не authoring",
+        "reliability": "high"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [
+      {
+        "domain": "invest",
+        "projection": "portfolio-dashboard",
+        "reason": "Composable dashboard с user-добавляемыми chart panel'ами по позициям"
+      },
+      {
+        "domain": "workflow",
+        "projection": "ops-dashboard",
+        "reason": "Execution-метрики как user-configurable widgets"
+      }
+    ],
+    "shouldNotMatch": [
+      {
+        "domain": "booking",
+        "projection": "specialist-list",
+        "reason": "Catalog, не dashboard; нет ChartPanel-сущности"
+      },
+      {
+        "domain": "messenger",
+        "projection": "conversation-list",
+        "reason": "Linear list, не composable widgets"
+      }
+    ]
+  }
+}

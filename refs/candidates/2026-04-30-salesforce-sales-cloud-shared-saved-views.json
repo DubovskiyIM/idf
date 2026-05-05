@@ -1,0 +1,69 @@
+{
+  "id": "shared-saved-views",
+  "version": 1,
+  "status": "candidate",
+  "archetype": "catalog",
+  "trigger": {
+    "requires": [
+      {
+        "kind": "ListView"
+      },
+      {
+        "kind": "entity-field",
+        "field": "scope",
+        "values": [
+          "private",
+          "role",
+          "org"
+        ]
+      }
+    ]
+  },
+  "structure": {
+    "slot": "toolbar",
+    "description": "Над catalog'ом рендерится view-switcher: dropdown 'My Views / Shared / All', save-as создаёт ListView с явным scope'ом, default-view per user."
+  },
+  "rationale": {
+    "hypothesis": "Когда команды смотрят разные срезы одной коллекции (My Open Cases / Escalated / This Week), ad-hoc filter каждый раз — потеря времени. Persisted views с sharing-scope превращают фильтр в shared knowledge.",
+    "evidence": [
+      {
+        "source": "salesforce-sales-cloud",
+        "description": "List Views с private/role/org scope, view-switcher в шапке",
+        "reliability": "high"
+      },
+      {
+        "source": "linear-views",
+        "description": "Saved views с visibility scope (private/team/workspace)",
+        "reliability": "high"
+      },
+      {
+        "source": "notion-database-views",
+        "description": "Saved views на database, sharable per page",
+        "reliability": "high"
+      }
+    ],
+    "counterexample": [
+      {
+        "source": "instagram-explore",
+        "description": "Persistent personalized view не настраивается пользователем",
+        "reliability": "medium"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [
+      {
+        "domain": "delivery",
+        "projection": "order-catalog",
+        "reason": "Диспетчер хочет 'My zone today' / 'Late deliveries' как shared views"
+      }
+    ],
+    "shouldNotMatch": [
+      {
+        "domain": "reflect",
+        "projection": "mood-entry-catalog",
+        "reason": "Reflect — single-user, sharing-scope бессмыслен"
+      }
+    ]
+  }
+}

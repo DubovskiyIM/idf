@@ -1,0 +1,69 @@
+{
+  "id": "daily-aggregation-screen",
+  "version": 1,
+  "status": "candidate",
+  "archetype": "dashboard",
+  "trigger": {
+    "requires": [
+      {
+        "kind": "sub-entity-exists",
+        "kinds": [
+          "Task",
+          "Event"
+        ],
+        "withDateField": true
+      },
+      {
+        "kind": "has-role",
+        "roleBase": "owner"
+      }
+    ]
+  },
+  "structure": {
+    "slot": "body",
+    "description": "'Today'-проекция аггрегирует across-entity due-today/upcoming: meetings + tasks + suggested follow-ups, отсортированные по времени дня. Не отдельная сущность, а composite view."
+  },
+  "rationale": {
+    "hypothesis": "Когда сущности с временной осью разбросаны по разным catalog'ам, спрашивать 'что у меня сегодня' = 3+ навигаций. Daily-screen сливает в one-glance plan дня.",
+    "evidence": [
+      {
+        "source": "salesforce-mobile-today",
+        "description": "Today screen: meetings + tasks + suggested follow-ups",
+        "reliability": "high"
+      },
+      {
+        "source": "google-calendar-day-view",
+        "description": "Day-view с meetings + tasks из Tasks",
+        "reliability": "high"
+      },
+      {
+        "source": "fantastical",
+        "description": "Combined calendar+reminders day plan",
+        "reliability": "high"
+      }
+    ],
+    "counterexample": [
+      {
+        "source": "github",
+        "description": "Нет 'мой день' концепции — issues fluid",
+        "reliability": "high"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [
+      {
+        "domain": "lifequest",
+        "projection": "today-screen",
+        "reason": "Habits + Tasks + Goals due today — каноничный композит"
+      }
+    ],
+    "shouldNotMatch": [
+      {
+        "domain": "invest",
+        "projection": "portfolio-dashboard",
+        "reason": "Нет 'due-today' семантики у позиций"
+      }
+    ]
+  }
+}

@@ -1,0 +1,65 @@
+{
+  "id": "split-pane-list-detail",
+  "version": 1,
+  "status": "candidate",
+  "archetype": "catalog",
+  "trigger": {
+    "requires": [
+      {
+        "kind": "entity-kind",
+        "hasDetailProjection": true
+      },
+      {
+        "kind": "intent-count",
+        "minIntentsOnDetail": 4
+      }
+    ]
+  },
+  "structure": {
+    "slot": "body",
+    "description": "Catalog рендерится в split-режиме: левая панель — список, правая — detail выбранной строки. Selection синхронизирован, URL отражает selected id."
+  },
+  "rationale": {
+    "hypothesis": "Когда юзер делает scan + edit-many (тристы записей за сессию), full-page navigate в detail и обратно ломает контекст списка. Split сохраняет позицию и фильтр.",
+    "evidence": [
+      {
+        "source": "salesforce-sales-cloud",
+        "description": "Split View на list-page любого объекта",
+        "reliability": "high"
+      },
+      {
+        "source": "outlook-mail",
+        "description": "Inbox split: список писем + reading pane",
+        "reliability": "high"
+      },
+      {
+        "source": "linear-issue-list",
+        "description": "Issue list с side-peek detail",
+        "reliability": "medium"
+      }
+    ],
+    "counterexample": [
+      {
+        "source": "instagram-feed",
+        "description": "Feed — потребительский scroll, нет 'детали для редактирования'",
+        "reliability": "high"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [
+      {
+        "domain": "gravitino",
+        "projection": "catalog-explorer",
+        "reason": "Уже использует split-pane (catalog → table)"
+      }
+    ],
+    "shouldNotMatch": [
+      {
+        "domain": "lifequest",
+        "projection": "goal-catalog",
+        "reason": "Цели — мало интентов на detail, full-page достаточен"
+      }
+    ]
+  }
+}

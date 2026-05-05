@@ -1,0 +1,66 @@
+{
+  "id": "hierarchical-rollup-tree",
+  "version": 1,
+  "status": "candidate",
+  "archetype": "catalog",
+  "trigger": {
+    "requires": [
+      {
+        "kind": "entity-field",
+        "fieldRole": "manager-ref",
+        "selfRecursive": true
+      },
+      {
+        "kind": "field-role-present",
+        "anyOf": [
+          "money",
+          "percentage",
+          "count"
+        ],
+        "isAggregable": true
+      }
+    ]
+  },
+  "structure": {
+    "slot": "body",
+    "description": "Catalog рендерится как expandable tree по manager-hierarchy с rollup totals в каждом узле (rep → manager → VP), summary-row в шапке."
+  },
+  "rationale": {
+    "hypothesis": "Когда сущности живут в иерархии и имеют аддитивные метрики, плоский список заставляет руками собирать роллапы. Tree-with-rollup делает агрегацию визуальной.",
+    "evidence": [
+      {
+        "source": "salesforce-sales-cloud",
+        "description": "Forecast hierarchy: rep → manager → VP с rollup по Pipeline / Best Case / Commit / Closed",
+        "reliability": "high"
+      },
+      {
+        "source": "anaplan",
+        "description": "Multi-dim financial planning с роллапами по orgchart",
+        "reliability": "medium"
+      }
+    ],
+    "counterexample": [
+      {
+        "source": "github-repo-list",
+        "description": "Repos не иерархичны и не агрегируются",
+        "reliability": "high"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [
+      {
+        "domain": "invest",
+        "projection": "portfolio-tree",
+        "reason": "Portfolio с sub-portfolios + totalValue rollup"
+      }
+    ],
+    "shouldNotMatch": [
+      {
+        "domain": "lifequest",
+        "projection": "habit-catalog",
+        "reason": "Habit'ы плоские без иерархии"
+      }
+    ]
+  }
+}

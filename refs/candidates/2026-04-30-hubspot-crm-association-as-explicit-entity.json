@@ -1,0 +1,77 @@
+{
+  "id": "association-as-explicit-entity",
+  "version": 1,
+  "status": "candidate",
+  "archetype": "detail",
+  "trigger": {
+    "requires": [
+      {
+        "kind": "entity-field",
+        "field": "associationType"
+      },
+      {
+        "kind": "entity-field",
+        "fields": [
+          "fromObjectType",
+          "toObjectType"
+        ]
+      },
+      {
+        "kind": "intent-creates",
+        "creates": "Association"
+      }
+    ]
+  },
+  "structure": {
+    "slot": "sections",
+    "description": "На detail каждой связанной сущности рендерится секция 'Associations' с группировкой по toObjectType, кнопкой 'Associate <Type>' и inline-search для поиска цели. Тип связи (associationType: primary/secondary/decision-maker) выбирается при создании. Edit ассоциации = standalone intent, не embedded foreign key."
+  },
+  "rationale": {
+    "hypothesis": "Когда между сущностями A↔B↔C↔D связей много-к-многим с типизированной семантикой (decision-maker vs influencer), embedded FK не выражает: (1) направленность типа связи, (2) метаданные на самой связи, (3) множественность с порядком. Explicit Association entity делает связь first-class и переиспользуемой между detail'ами всех участников.",
+    "evidence": [
+      {
+        "source": "hubspot-crm",
+        "description": "Associations как explicit entity с associationType между Contact↔Company↔Deal↔Ticket",
+        "reliability": "high"
+      },
+      {
+        "source": "salesforce-opportunity-contact-role",
+        "description": "Opportunity Contact Role — explicit join с типом роли",
+        "reliability": "high"
+      },
+      {
+        "source": "notion-relation",
+        "description": "Relation property как first-class, видна на обеих сторонах",
+        "reliability": "medium"
+      }
+    ],
+    "counterexample": [
+      {
+        "source": "github-issue-assignee",
+        "description": "Assignee — обычный FK без metadata, explicit entity overkill",
+        "reliability": "high"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [
+      {
+        "domain": "messenger",
+        "projection": "conversation_detail",
+        "reason": "Если ConversationParticipant имеет role (admin/moderator/member) — explicit join с типом"
+      }
+    ],
+    "shouldNotMatch": [
+      {
+        "domain": "planning",
+        "projection": "vote_detail",
+        "reason": "Vote уже сам по себе join, явная Association избыточна"
+      },
+      {
+        "domain": "lifequest",
+        "projection": "task_detail",
+        "reason": "Task.contactId — простой FK, типизация связи не нужна"
+      }
+    ]
+  }
+}

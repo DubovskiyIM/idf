@@ -1,0 +1,61 @@
+{
+  "id": "dense-inline-column-listing",
+  "version": 1,
+  "status": "candidate",
+  "archetype": "detail",
+  "trigger": {
+    "requires": [
+      {
+        "kind": "sub-entity-exists",
+        "entity": "Column|Field"
+      },
+      {
+        "kind": "entity-field",
+        "entity": "Column",
+        "fieldsMin": 5
+      }
+    ]
+  },
+  "structure": {
+    "slot": "sections",
+    "description": "Column listing — dense table в Overview (не sub-page), где каждая строка содержит name/type/nullable/comment/tags/classification inline. Sortable, без необходимости open per column."
+  },
+  "rationale": {
+    "hypothesis": "Schema columns — это ядро identity таблицы; пользователь чаще всего хочет «прочитать схему», а не drill в одну колонку. Dense inline отдаёт всю важную инфу на одном экране.",
+    "evidence": [
+      {
+        "source": "databricks-unity-catalog",
+        "description": "Column tree dense inline с nullable/type/comment/tags/classification",
+        "reliability": "high"
+      },
+      {
+        "source": "snowflake-table-columns",
+        "description": "Inline-row columns с masked-policy column",
+        "reliability": "high"
+      }
+    ],
+    "counterexample": [
+      {
+        "source": "airtable-column-config",
+        "description": "Каждая column — modal sheet, потому что rich validation/formula",
+        "reliability": "medium"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [
+      {
+        "domain": "gravitino",
+        "projection": "table_overview",
+        "reason": "Column-level metadata выводится sortable table"
+      }
+    ],
+    "shouldNotMatch": [
+      {
+        "domain": "lifequest",
+        "projection": "goal_detail",
+        "reason": "Goal не имеет column-equivalent"
+      }
+    ]
+  }
+}

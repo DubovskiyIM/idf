@@ -1,0 +1,58 @@
+{
+  "id": "sibling-top-level-concerns",
+  "version": 1,
+  "status": "candidate",
+  "archetype": null,
+  "trigger": {
+    "requires": [
+      {
+        "kind": "entity-kind",
+        "kind_value": "internal",
+        "uncoupledByFK": true,
+        "lifecycle": "independent"
+      }
+    ]
+  },
+  "structure": {
+    "slot": "body",
+    "description": "Сущности с независимой lifecycle (Share, Recipient, ABACPolicy, Connection) выносятся в sibling top-level navigation, не вкладываются в основное hierarchical tree, даже если они логически связаны с объектами в дереве."
+  },
+  "rationale": {
+    "hypothesis": "Если сущность имеет own access-control, own creator-flow и cross-cuts через основное дерево — её принудительная вложенность ломает discoverability и ownership. Sibling-area сохраняет conceptual orthogonality.",
+    "evidence": [
+      {
+        "source": "databricks-unity-catalog",
+        "description": "Delta Sharing (Shares + Recipients) outside main tree; ABAC policies separate top-level area",
+        "reliability": "high"
+      },
+      {
+        "source": "kubernetes-namespaces-vs-clusterroles",
+        "description": "ClusterRole — top-level, не вложен в namespace",
+        "reliability": "high"
+      }
+    ],
+    "counterexample": [
+      {
+        "source": "google-drive-folders",
+        "description": "Всё внутри My Drive — flat hierarchy лучше для consumer",
+        "reliability": "medium"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [
+      {
+        "domain": "keycloak",
+        "projection": "realm_navigation",
+        "reason": "Roles/Groups/Identity Providers — sibling concerns"
+      }
+    ],
+    "shouldNotMatch": [
+      {
+        "domain": "lifequest",
+        "projection": "habits",
+        "reason": "Habits всегда attached to Goal, не sibling"
+      }
+    ]
+  }
+}

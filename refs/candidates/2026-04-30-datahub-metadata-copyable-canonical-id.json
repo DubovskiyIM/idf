@@ -1,0 +1,73 @@
+{
+  "id": "copyable-canonical-id",
+  "version": 1,
+  "status": "candidate",
+  "archetype": "detail",
+  "trigger": {
+    "requires": [
+      {
+        "kind": "entity-field",
+        "fieldRole": "canonicalId",
+        "rationale": "URN or globally-unique ID is first-class identity"
+      },
+      {
+        "kind": "has-role",
+        "value": "agent",
+        "optional": true,
+        "rationale": "agent/cross-platform reference benefits most"
+      }
+    ]
+  },
+  "structure": {
+    "slot": "hero",
+    "description": "Canonical ID (URN, DOI, ARN) shown next to entity title with one-click copy button. Often muted styling, monospace font. Target: cross-platform reference, API calls, agent-tool inputs."
+  },
+  "rationale": {
+    "hypothesis": "When entities are referenced across systems (CI, agents, API), the canonical ID is the actual cross-system handle. Hiding it forces the user to inspect URLs or read API docs. Surfacing + copy makes integration trivial.",
+    "evidence": [
+      {
+        "source": "DataHub",
+        "description": "URN visible and copyable on entity page",
+        "reliability": "high"
+      },
+      {
+        "source": "AWS Console",
+        "description": "ARN copy button on every resource",
+        "reliability": "high"
+      },
+      {
+        "source": "GitHub",
+        "description": "Copy node ID / SHA buttons",
+        "reliability": "high"
+      }
+    ],
+    "counterexample": [
+      {
+        "source": "Internal-only entity",
+        "description": "If never referenced externally, canonical ID adds clutter",
+        "reliability": "medium"
+      }
+    ]
+  },
+  "falsification": {
+    "shouldMatch": [
+      {
+        "domain": "workflow",
+        "projection": "workflow-detail",
+        "reason": "Workflow ID used in CI tools"
+      },
+      {
+        "domain": "invest",
+        "projection": "asset-detail",
+        "reason": "ISIN as canonical cross-platform asset id"
+      }
+    ],
+    "shouldNotMatch": [
+      {
+        "domain": "reflect",
+        "projection": "mood-detail",
+        "reason": "Local-only entity"
+      }
+    ]
+  }
+}
