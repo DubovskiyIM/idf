@@ -69,7 +69,9 @@ describe("meta-cli", () => {
     expect(rows).toHaveLength(1);
     const r = rows[0];
     expect(r.alpha).toBe("create");
-    expect(r.target).toBe("BacklogItem");
+    // Source-of-truth: intent.particles.effects[0].target в src/domains/meta/intents.js
+    // (множественное "BacklogItems" — соответствует registry-collection name).
+    expect(r.target).toBe("BacklogItems");
     expect(r.status).toBe("confirmed");
     const ctx = JSON.parse(r.context);
     expect(ctx.section).toBe("P1");

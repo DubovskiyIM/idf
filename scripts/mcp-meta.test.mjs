@@ -109,7 +109,9 @@ describe("mcp-meta · handlers", () => {
     db.close();
     expect(row).toBeTruthy();
     expect(row.alpha).toBe("create");
-    expect(row.target).toBe("BacklogItem");
+    // Source-of-truth: intent.particles.effects[0].target в src/domains/meta/intents.js
+    // (множественное "BacklogItems" — соответствует registry-collection name).
+    expect(row.target).toBe("BacklogItems");
     expect(row.status).toBe("confirmed");
     const ctx = JSON.parse(row.context);
     expect(ctx.title).toBe("Via MCP");
