@@ -519,7 +519,7 @@ function makePatternsRouter() {
    * Required env: CURATOR_PR_ENABLED=1, IDF_SDK_PATH, gh authenticated.
    */
   router.post("/promote-and-pr", async (req, res) => {
-    const { patternId, summary, branch } = req.body || {};
+    const { patternId, summary, branch, archetype } = req.body || {};
     if (!patternId) {
       return res.status(400).json({ error: "missing_patternId" });
     }
@@ -529,12 +529,13 @@ function makePatternsRouter() {
     } catch (err) {
       return res.status(500).json({ error: "load_failed", reason: err.message });
     }
-    const result = await promoteToSdkPr({ patternId, summary, branch });
+    const result = await promoteToSdkPr({ patternId, summary, branch, archetype });
     if (!result.ok) {
       const status =
         result.error === "disabled" ? 403 :
         result.error === "ref-not-found" ? 404 :
         result.error === "collision" ? 409 :
+        result.error === "archetype-missing" || result.error === "unsupported-archetype" ? 400 :
         result.error === "sdk-path-missing" || result.error === "curated-js-missing" ? 503 :
         500;
       return res.status(status).json(result);
