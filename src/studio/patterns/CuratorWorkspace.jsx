@@ -252,10 +252,16 @@ function PatternBody({ pattern, tab, promotions, onChange }) {
     );
   }
   if (tab === "promotions") {
+    // Для PromoteToPrButton — последний shipped promotion из Φ; если есть,
+    // компонент при mount показывает persisted state (PR URL, ветка), а не
+    // зелёную "сделай PR" второй раз. Reload-safe.
+    const shipped = myPromotions
+      .filter((p) => p.status === "shipped" && p.sdkPrUrl)
+      .sort((a, b) => (b.decidedAt || 0) - (a.decidedAt || 0))[0];
     return (
       <div style={{ padding: 16, overflowY: "auto" }}>
-        {pattern.status === "candidate" && pattern.refSource && (
-          <PromoteToPrButton pattern={pattern} />
+        {pattern.refSource && (
+          <PromoteToPrButton pattern={pattern} existingPromotion={shipped} onPrCreated={onChange} />
         )}
         {pattern.status === "candidate" && !showRequestForm && (
           <button

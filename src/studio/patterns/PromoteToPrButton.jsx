@@ -10,16 +10,33 @@ import React, { useState } from "react";
 
 const VALID_ARCHETYPES = ["catalog", "detail", "feed", "cross"];
 
-export default function PromoteToPrButton({ pattern, onPrCreated }) {
+export default function PromoteToPrButton({ pattern, existingPromotion, onPrCreated }) {
   const [busy, setBusy] = useState(false);
-  const [result, setResult] = useState(null);
+  // Если для паттерна уже есть shipped promotion в Φ — pre-fill result-state.
+  // После reload куратор видит реальное состояние (PR URL, ветка), а не
+  // зелёную "сделай PR" — и кнопка "Promote ещё раз" даёт 2-й цикл при
+  // collision'ах или повторных правках.
+  const persisted =
+    existingPromotion && existingPromotion.status === "shipped" && existingPromotion.sdkPrUrl
+      ? {
+          prUrl: existingPromotion.sdkPrUrl,
+          branch: existingPromotion.sdkBranch || "(branch не записана)",
+          log: [],
+          persisted: true,
+        }
+      : null;
+  const [result, setResult] = useState(persisted);
   const [error, setError] = useState(null);
   const [showLog, setShowLog] = useState(false);
   // Если pattern.archetype отсутствует или не из whitelist — куратор должен
-  // явно выбрать. Pre-fill значение из pattern.archetype если оно валидное.
-  const initialArchetype = VALID_ARCHETYPES.includes(pattern.archetype)
-    ? pattern.archetype
-    : "";
+  // явно выбрать. Pre-fill значение из pattern.archetype если оно валидное,
+  // либо из existingPromotion.targetArchetype (для retry-flow).
+  const initialArchetype =
+    existingPromotion?.targetArchetype && VALID_ARCHETYPES.includes(existingPromotion.targetArchetype)
+      ? existingPromotion.targetArchetype
+      : VALID_ARCHETYPES.includes(pattern.archetype)
+        ? pattern.archetype
+        : "";
   const [archetype, setArchetype] = useState(initialArchetype);
 
   const summary =
@@ -131,7 +148,7 @@ export default function PromoteToPrButton({ pattern, onPrCreated }) {
           }}
         >
           <div style={{ color: "#86efac", fontSize: 12, fontWeight: 600, marginBottom: 4 }}>
-            ✓ PR создан в ветке <code>{result.branch}</code>
+            {result.persisted ? "✓ PR уже создан" : "✓ PR создан"} в ветке <code>{result.branch}</code>
           </div>
           {result.prUrl && (
             <a
