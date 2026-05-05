@@ -11,6 +11,7 @@ import PromotionRequestForm from "./PromotionRequestForm.jsx";
 import HeatmapView from "./HeatmapView.jsx";
 import PromoteToPrButton from "./PromoteToPrButton.jsx";
 import MarkShippedRecovery from "./MarkShippedRecovery.jsx";
+import SimilarStableHint from "./SimilarStableHint.jsx";
 
 // Pattern Curator workspace v2 — редизайн после первого UX-фидбека.
 //
@@ -186,7 +187,7 @@ function currentStageFor(pattern, promotions) {
   return "pending";
 }
 
-function PatternHeader({ pattern, promotions, tab, setTab }) {
+function PatternHeader({ pattern, promotions, tab, setTab, onPickPattern }) {
   const stage = currentStageFor(pattern, promotions);
   return (
     <div
@@ -196,7 +197,7 @@ function PatternHeader({ pattern, promotions, tab, setTab }) {
         background: "#0b1220",
       }}
     >
-      <div style={{ display: "flex", alignItems: "baseline", gap: 12, marginBottom: 8 }}>
+      <div style={{ display: "flex", alignItems: "baseline", gap: 12, marginBottom: 8, flexWrap: "wrap" }}>
         <span
           style={{
             fontSize: 15,
@@ -216,6 +217,9 @@ function PatternHeader({ pattern, promotions, tab, setTab }) {
           <span style={{ fontSize: 11, color: "#64748b" }}>
             ref: <code style={{ color: "#94a3b8" }}>{pattern.refSource}</code>
           </span>
+        )}
+        {pattern.status === "candidate" && (
+          <SimilarStableHint patternId={pattern.id} onPick={onPickPattern} />
         )}
         <div style={{ flex: 1 }} />
         <PatternWorkflowDiagram currentStage={stage} />
@@ -511,6 +515,10 @@ export default function CuratorWorkspace() {
                   promotions={promotions}
                   tab={tab}
                   setTab={setTab}
+                  onPickPattern={(id) => {
+                    setSelected(id);
+                    setTab("structure");
+                  }}
                 />
                 <div style={{ flex: 1, minHeight: 0, display: "flex", flexDirection: "column" }}>
                   <PatternBody

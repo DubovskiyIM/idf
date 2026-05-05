@@ -40,6 +40,7 @@ const {
 } = require("../loadCandidatesFromRefs.cjs");
 const { evaluateGenericRequires } = require("../genericTriggerEvaluator.cjs");
 const { promoteToSdkPr, promoteBatchToSdkPr } = require("../curatorPromoter.cjs");
+const { findTopMatches } = require("../patternSimilarity.cjs");
 
 // Кэш загруженных доменов: { [domainName]: { ontology, intents, projections } | null }
 const DOMAIN_CACHE = new Map();
@@ -544,6 +545,42 @@ function makePatternsRouter() {
       return res.status(status).json(result);
     }
     return res.json(result);
+  });
+
+  /**
+   * GET /similar?id=<patternId>&top=3&pool=stable — top-N похожих stable
+   * паттернов на данный candidate. Куратор видит "уже есть похожий" перед
+   * promotion'ом → избегает дублей. Pool по умолчанию stable; можно also
+   * указать candidate (поиск среди других ref-кандидатов).
+   */
+  router.get("/similar", (req, res) => {
+    const id = req.query.id;
+    const top = Math.max(1, Math.min(10, parseInt(req.query.top, 10) || 3));
+    const pool = req.query.pool === "candidate" ? "candidate" : "stable";
+    if (!id) {
+      return res.status(400).json({ error: "missing_id" });
+    }
+    const registry = getDefaultRegistry();
+    try {
+      loadStablePatterns(registry);
+      loadCandidatesFromRefs();
+    } catch (err) {
+      return res.status(500).json({ error: "pattern_bank_load_failed", reason: err.message });
+    }
+    // Subject: ищем сначала среди ref-кандидатов, потом в registry.
+    const refSubject = getRefCandidates().find((p) => p.id === id);
+    const subject = refSubject || registry.getPattern(id);
+    if (!subject) return res.status(404).json({ error: "pattern_not_found", id });
+
+    let poolList;
+    if (pool === "stable") {
+      poolList = (typeof registry.getAllPatterns === "function" ? registry.getAllPatterns() : [])
+        .filter((p) => p.status === "stable");
+    } else {
+      poolList = getRefCandidates();
+    }
+    const matches = findTopMatches(subject, poolList, top);
+    res.json({ id, pool, matches });
   });
 
   /**
